@@ -74,8 +74,131 @@ local Tuning = {
 		PlatformEdgeZ = 7,
 		SafeStrip = 24,
 		TileSize = 12,
-		LobbyOrigin = { 0, 0, -3200 },
+		LobbyOrigin = { 0, 0, -12000 }, -- far enough that the landscape (|z| up to 4000) never reaches it
 		AbyssY = -220,
+	},
+
+	-- The landscape the train rides through (client-only scenery, planned by Logic/Journey).
+	Journey = {
+		BlendAt = 0.35, -- share of a leg where the next biome starts to take over
+		BlendLength = 600, -- studs over which two biomes mix
+		PieceStart = 2400, -- the first set piece of a leg sits past the near window at the leg start
+		PieceGap = { 700, 1300 }, -- clear track between one set piece and the next
+		PlanLength = 9000, -- set pieces are planned this far past the leg start, then trimmed at the dock
+		DockClearance = 400, -- no set piece ends closer than this to a station's sinkhole
+		DockTolerance = 30, -- re-cut the sinkhole when the station lands further than this from the prediction
+		SinkholeMarginX = 70, -- void past each end of the station
+		SinkholeMarginZ = 60, -- void past the station's far edge
+		GorgeHalfWidth = 1100, -- a gorge's void reaches this far out on both sides of the track
+		TunnelCutting = 70, -- open rock cutting before each tunnel portal
+		TypicalLeg = 6000, -- leg length the sky assumes before the route is chosen
+		UnknownShareCap = 0.3, -- and how far through the leg it lets the sky run on that guess
+		-- Time of day by run progress (legs travelled). Hours keep counting past 24 so the
+		-- night interpolates forward. mode: Stop = after `at` legs, Share = at that share of
+		-- the run, End = `at` legs before the Terminus.
+		Sky = {
+			{ mode = "Stop", at = 0, hour = 17.4 },
+			{ mode = "Stop", at = 1, hour = 17.9 },
+			{ mode = "Stop", at = 2, hour = 18.6 },
+			{ mode = "Share", at = 0.45, hour = 22 },
+			{ mode = "Share", at = 0.65, hour = 26 },
+			{ mode = "End", at = 1, hour = 28.8 },
+			{ mode = "End", at = 0, hour = 30.4 },
+		},
+		-- Set pieces. length in studs along the track; reach is the |z| band kept clear of
+		-- ordinary props (sided pieces use one side, the others both); pad extends it along x.
+		Pieces = {
+			{
+				kind = "Tunnel",
+				weight = 1.2,
+				length = { 380, 560 },
+				sided = false,
+				reach = { 0, 300 },
+				pad = 40,
+			},
+			{
+				kind = "Gorge",
+				weight = 1.0,
+				length = { 240, 340 },
+				sided = false,
+				reach = { 0, 1100 },
+				pad = 30,
+			},
+			{
+				kind = "BurningTown",
+				weight = 1.0,
+				length = { 360, 480 },
+				sided = true,
+				reach = { 24, 380 },
+				pad = 30,
+			},
+			{
+				kind = "Halt",
+				weight = 0.8,
+				length = { 120, 150 },
+				sided = true,
+				reach = { 8, 120 },
+				pad = 20,
+			},
+			{
+				kind = "Wreck",
+				weight = 0.8,
+				length = { 160, 220 },
+				sided = true,
+				reach = { 10, 140 },
+				pad = 20,
+			},
+			{
+				kind = "Gantry",
+				weight = 0.7,
+				length = { 16, 16 },
+				sided = false,
+				reach = { 0, 30 },
+				pad = 20,
+			},
+			{
+				kind = "HollowField",
+				weight = 0.7,
+				length = { 260, 360 },
+				sided = true,
+				reach = { 30, 420 },
+				pad = 20,
+			},
+			{
+				kind = "Graveyard",
+				weight = 0.6,
+				length = { 140, 180 },
+				sided = true,
+				reach = { 24, 200 },
+				pad = 20,
+			},
+			{
+				kind = "Lake",
+				weight = 0.6,
+				length = { 300, 420 },
+				sided = true,
+				reach = { 36, 420 },
+				pad = 20,
+			},
+			{
+				kind = "Crossing",
+				weight = 0.6,
+				length = { 30, 30 },
+				sided = false,
+				reach = { 0, 420 },
+				pad = 20,
+			},
+		},
+	},
+
+	Camera = {
+		MinZoom = 0.5, -- first person
+		MaxZoom = 30,
+		StartZoom = 11, -- close third person on every spawn
+		SwayRoll = 0.35, -- degrees of roll at cruise while aboard
+		RailLength = 48, -- a joint kick every rail length (about 0.45 s at cruise)
+		BogieGap = 13, -- the second, softer kick follows after this many studs
+		JointKick = 0.22, -- degrees of pitch per kick at cruise
 	},
 
 	Hollow = {

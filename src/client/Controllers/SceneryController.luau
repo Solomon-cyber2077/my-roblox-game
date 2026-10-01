@@ -1,15 +1,25 @@
 --!strict
 --[[
 	The world rushing past the static train, built and moved entirely on the
-	client so it costs no network traffic:
-	  * a stone causeway with sleepers and rails under and around the train
-	  * floating islands of a broken landscape at a distance on both sides
-	  * ash falling from above and embers rising out of the abyss
+	client so it costs no network traffic.
 
-	Everything scrolls along -X at the current speed with one BulkMoveTo per
-	frame. Speed follows the phase; while a station is sliding in or out the
-	scenery matches the station's own physics velocity so the two never drift.
-	Causeway segments that overlap a present station drop out of sight.
+	The landscape is planned in land coordinates (Logic/Journey) and built in
+	chunks (Scenery/Land layers, Scenery/Features set pieces and sinkholes).
+	Each chunk is welded to one anchored root, so a single BulkMoveTo of the
+	roots scrolls everything to x = landX - odometer every frame.
+
+	Run flow:
+	  * a new run resets the plan (seed, first biome, leg 1) and rebuilds the
+	    whole window under the boarding fade
+	  * Departure starts the next leg: its set pieces are planned from the seed
+	  * in Cruise the dock is predicted from the clock; the station's sinkhole is
+	    cut there, the leg's pieces are trimmed clear of it and the destination
+	    biome blends in from 35% of the leg
+	  * at Arrival the prediction is checked against the real station and the
+	    sinkhole re-cut if it is more than DockTolerance out (dev skips, late joins)
+
+	Speed follows the phase; while a station slides in or out the scenery
+	matches the station's own physics velocity so the two never drift.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -17,320 +27,385 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
-local Tuning = require(Shared.Config.Tuning)
-local Motion = require(Shared.Logic.Motion)
+local Journey = require(Shared.Logic.Journey)
 local MathX = require(Shared.Util.MathX)
-local Kit = require(Shared.Visual.Kit)
+local Motion = require(Shared.Logic.Motion)
+local Safe = require(Shared.Util.Safe)
+local Signal = require(Shared.Util.Signal)
+local Stations = require(Shared.Config.Stations)
+local Tuning = require(Shared.Config.Tuning)
 
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
+local Chunk = require(script.Parent.Parent.Scenery.Chunk)
+local Features = require(script.Parent.Parent.Scenery.Features)
+local Land = require(script.Parent.Parent.Scenery.Land)
+local World = require(script.Parent.Parent.Scenery.World)
 
-type Scroller = {
-	parts: { BasePart },
-	offsets: { CFrame },
-	x: number,
-	span: number,
-	minX: number,
-	isDeck: boolean,
-	halfLength: number,
+export type Context = {
+	tunnel: number, -- 0..1, how far the camera is inside a tunnel bore
+	bridge: number, -- 0..1, the camera is over a gorge
+	biomeA: string,
+	biomeB: string,
+	blend: number, -- weight of biomeB
+	progress: number, -- run progress in legs (Logic/Journey)
 }
 
-local SceneryController = {}
+type Wanted = { key: string, priority: number, build: () -> Chunk.Chunk }
 
-local SEGMENT = 48
-local DECK_SEGMENTS = 26
-local DECK_MIN = -SEGMENT * DECK_SEGMENTS / 2
-local ISLANDS = 34
-local ISLAND_SPAN = 3600
+local SceneryController = {
+	-- Fires a couple of seconds before the locomotive enters a tunnel.
+	TunnelAhead = Signal.new() :: Signal.Signal<>,
+}
+
+local J = Tuning.Journey
+local NEAR_FRONT = 2200
+local FEATURE_FRONT = 2600
+local FAR_FRONT = 4400
+local FEATURE_BACK = -800
+local PRUNE_BEHIND = 3000
+local LOCO_FRONT = 96
+local WHISTLE_LEAD = 230
 
 local folder: Folder
-local scrollers: { Scroller } = {}
+local odometer = 0
 local speed = 0
 local stationModel: Model? = nil
 
-local STONE = Color3.fromRGB(86, 78, 70)
-local ROCK = Color3.fromRGB(54, 48, 44)
+local chunks: { [string]: Chunk.Chunk } = {}
+local dirty: { [string]: boolean } = {}
+local fastUntil = 0
 
-local function decor(part: BasePart)
-	part.CanCollide = false
-	part.CanQuery = false
-	part.CanTouch = false
+local runKey: string? = nil
+local legIndex = 0
+local legStart = 0
+local upcoming: Journey.Sinkhole? = nil
+local transitionLeg = 0
+local arrivalChecked = false
+local lastPhase = ""
+local progress = 0
+local whistled: { [string]: boolean } = {}
+
+local context: Context = {
+	tunnel = 0,
+	bridge = 0,
+	biomeA = Journey.FirstBiome,
+	biomeB = Journey.FirstBiome,
+	blend = 0,
+	progress = 0,
+}
+
+local function qualityDensity(): number
+	local ok, level = pcall(function()
+		return UserSettings():GetService("UserGameSettings").SavedQualityLevel.Value
+	end)
+	if not ok or type(level) ~= "number" or level == 0 then
+		return 0.85 -- Automatic
+	end
+	return math.clamp(0.45 + level * 0.055, 0.5, 1)
 end
 
-local function buildSegment(index: number): Scroller
-	local model = Kit.model("Causeway", folder)
-	local origin = CFrame.new()
-	local parts: { BasePart } = {}
-	local function add(part: BasePart)
-		decor(part)
-		table.insert(parts, part)
-	end
-	add(
-		Kit.block(
-			model,
-			Vector3.new(SEGMENT, 3, 20),
-			origin * CFrame.new(0, -8.0, 0),
-			STONE,
-			{ material = Enum.Material.Cobblestone }
-		)
-	)
-	add(
-		Kit.block(
-			model,
-			Vector3.new(SEGMENT, 0.6, 14),
-			origin * CFrame.new(0, -6.55, 0),
-			Color3.fromRGB(70, 66, 62),
-			{ material = Enum.Material.Pebble }
-		)
-	)
-	for i = 0, 11 do
-		add(
-			Kit.block(
-				model,
-				Vector3.new(1.3, 0.5, 9),
-				origin * CFrame.new(-SEGMENT / 2 + 2 + i * 4, -6.0, 0),
-				Color3.fromRGB(74, 56, 40),
-				{ material = Enum.Material.Wood, shadow = false }
-			)
-		)
-	end
-	for _, side in { -1, 1 } do
-		add(
-			Kit.block(
-				model,
-				Vector3.new(SEGMENT, 0.55, 0.5),
-				origin * CFrame.new(0, -5.475, side * 2.6),
-				Color3.fromRGB(120, 116, 112),
-				{ material = Enum.Material.Metal, shadow = false }
-			)
-		)
-		add(
-			Kit.block(
-				model,
-				Vector3.new(SEGMENT, 2.4, 1.2),
-				origin * CFrame.new(0, -5.3, side * 9.6),
-				STONE,
-				{ material = Enum.Material.Brick }
-			)
-		)
-	end
-	if index % 2 == 0 then
-		add(
-			Kit.block(
-				model,
-				Vector3.new(10, 150, 14),
-				origin * CFrame.new(0, -84, 0),
-				ROCK,
-				{ material = Enum.Material.Brick, shadow = false }
-			)
-		)
-		add(
-			Kit.block(
-				model,
-				Vector3.new(14, 6, 18),
-				origin * CFrame.new(0, -11.5, 0),
-				STONE,
-				{ material = Enum.Material.Brick, shadow = false }
-			)
-		)
-	end
-	if index % 3 == 0 then
-		local side = if index % 2 == 0 then 1 else -1
-		add(
-			Kit.post(
-				model,
-				8,
-				0.35,
-				origin * CFrame.new(0, -0.1, side * 9.6),
-				Color3.fromRGB(44, 44, 48),
-				{ material = Enum.Material.Metal }
-			)
-		)
-		add(
-			Kit.neon(
-				model,
-				Vector3.new(0.7, 0.9, 0.7),
-				origin * CFrame.new(0, 4.2, side * 9.6),
-				Color3.fromRGB(255, 196, 128)
-			)
-		)
-	end
-	local offsets: { CFrame } = {}
-	for _, part in parts do
-		table.insert(offsets, part.CFrame)
-	end
-	return {
-		parts = parts,
-		offsets = offsets,
-		x = DECK_MIN + (index - 0.5) * SEGMENT,
-		span = SEGMENT * DECK_SEGMENTS,
-		minX = DECK_MIN,
-		isDeck = true,
-		halfLength = SEGMENT / 2,
-	}
-end
+-- Chunk bookkeeping ---------------------------------------------------------------------------
 
-local function buildIsland(index: number, rng: Random): Scroller
-	local model = Kit.model("Island", folder)
-	local side = if index % 2 == 0 then 1 else -1
-	local z = side * rng:NextNumber(170, 900)
-	local y = rng:NextNumber(-90, 25)
-	local size = rng:NextNumber(30, 150) * (0.6 + math.abs(z) / 1200)
-	local parts: { BasePart } = {}
-	local function add(part: BasePart)
-		decor(part)
-		part.CastShadow = false
-		table.insert(parts, part)
-	end
-	-- top crust and a tapering rock body underneath
-	add(
-		Kit.block(
-			model,
-			Vector3.new(size, size * 0.18, size * 0.8),
-			CFrame.new(0, y, z) * Kit.angles(0, rng:NextNumber(0, 40), 0),
-			Color3.fromRGB(74, 66, 56),
-			{ material = Enum.Material.Ground }
-		)
-	)
-	for layer = 1, 3 do
-		local s = size * (1 - layer * 0.24)
-		add(
-			Kit.block(
-				model,
-				Vector3.new(s, size * 0.22, s * 0.75),
-				CFrame.new(rng:NextNumber(-4, 4), y - layer * size * 0.17, z)
-					* Kit.angles(rng:NextNumber(-8, 8), rng:NextNumber(0, 90), rng:NextNumber(-8, 8)),
-				Kit.shade(ROCK, 0.85 + layer * 0.05),
-				{ material = Enum.Material.Rock }
-			)
-		)
-	end
-	local feature = rng:NextNumber()
-	if feature < 0.35 then
-		-- ruined colonnade
-		for i = -1, 1 do
-			local h = rng:NextNumber(size * 0.15, size * 0.4)
-			add(
-				Kit.block(
-					model,
-					Vector3.new(size * 0.06, h, size * 0.06),
-					CFrame.new(i * size * 0.18, y + h / 2, z),
-					Color3.fromRGB(150, 140, 126),
-					{ material = Enum.Material.Limestone }
-				)
-			)
+-- Rebuilds every built chunk overlapping land [x0, x1] that starts at least `minAhead` ahead of the train.
+local function invalidate(x0: number, x1: number, minAhead: number?)
+	for key, chunk in chunks do
+		if chunk.x0 < x1 and chunk.x1 > x0 and (minAhead == nil or chunk.x0 - odometer > minAhead) then
+			dirty[key] = true
 		end
-	elseif feature < 0.7 then
-		-- dead tree
-		local h = size * 0.35
-		add(
-			Kit.block(
-				model,
-				Vector3.new(size * 0.04, h, size * 0.04),
-				CFrame.new(0, y + h / 2, z) * Kit.angles(0, 0, rng:NextNumber(-10, 10)),
-				Color3.fromRGB(46, 38, 32),
-				{ material = Enum.Material.Wood }
-			)
-		)
-		add(
-			Kit.block(
-				model,
-				Vector3.new(size * 0.025, h * 0.5, size * 0.025),
-				CFrame.new(size * 0.05, y + h * 0.75, z) * Kit.angles(0, 0, -40),
-				Color3.fromRGB(46, 38, 32),
-				{ material = Enum.Material.Wood }
-			)
-		)
-	elseif feature < 0.85 then
-		-- broken signal gantry
-		add(
-			Kit.block(
-				model,
-				Vector3.new(size * 0.04, size * 0.5, size * 0.04),
-				CFrame.new(-size * 0.15, y + size * 0.25, z),
-				Color3.fromRGB(40, 40, 44),
-				{ material = Enum.Material.Metal }
-			)
-		)
-		add(
-			Kit.block(
-				model,
-				Vector3.new(size * 0.4, size * 0.03, size * 0.03),
-				CFrame.new(0, y + size * 0.48, z) * Kit.angles(0, 0, 12),
-				Color3.fromRGB(40, 40, 44),
-				{ material = Enum.Material.Metal }
-			)
+	end
+end
+
+local function invalidateAll()
+	for key in chunks do
+		dirty[key] = true
+	end
+	fastUntil = os.clock() + 1.5
+end
+
+local function pieceKey(piece: Journey.Piece): string
+	return `P{piece.leg}:{piece.index}`
+end
+
+local function sinkholeKey(sinkhole: Journey.Sinkhole): string
+	return `S{math.floor(sinkhole.center)}`
+end
+
+local function layerBuilder(layer: Land.Layer, k: number): () -> Chunk.Chunk
+	return function()
+		local x0 = k * layer.length
+		local model, root = Chunk.begin(layer.name)
+		Land.build(layer, k, model, x0)
+		return Chunk.finish(
+			`{layer.name}{k}`,
+			layer.name,
+			x0,
+			x0 + layer.length,
+			model,
+			root,
+			folder,
+			layer.hideable
 		)
 	end
-	local offsets: { CFrame } = {}
-	for _, part in parts do
-		table.insert(offsets, part.CFrame)
+end
+
+local function pieceBuilder(piece: Journey.Piece): () -> Chunk.Chunk
+	return function()
+		local model, root = Chunk.begin(piece.kind)
+		Features.build(piece, model)
+		return Chunk.finish(
+			pieceKey(piece),
+			"Feature",
+			piece.at,
+			piece.at + piece.length,
+			model,
+			root,
+			folder,
+			false
+		)
 	end
-	return {
-		parts = parts,
-		offsets = offsets,
-		x = -ISLAND_SPAN / 2 + (index - 0.5) * ISLAND_SPAN / ISLANDS + rng:NextNumber(-40, 40),
-		span = ISLAND_SPAN,
-		minX = -ISLAND_SPAN / 2,
-		isDeck = false,
-		halfLength = size / 2,
-	}
 end
 
-local function emitterPart(name: string, size: Vector3, cframe: CFrame): Part
-	local part = Instance.new("Part")
-	part.Name = name
-	part.Anchored = true
-	part.Transparency = 1
-	part.Size = size
-	part.CFrame = cframe
-	decor(part)
-	part.Parent = folder
-	return part
+local function sinkholeBuilder(sinkhole: Journey.Sinkhole): () -> Chunk.Chunk
+	return function()
+		local model, root = Chunk.begin("Sinkhole")
+		Features.buildSinkhole(sinkhole, model)
+		return Chunk.finish(
+			sinkholeKey(sinkhole),
+			"Feature",
+			sinkhole.rect.x0,
+			sinkhole.rect.x1,
+			model,
+			root,
+			folder,
+			false
+		)
+	end
 end
 
-local function buildAtmospherics()
-	local ash = Instance.new("ParticleEmitter")
-	ash.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	ash.Color = ColorSequence.new(Color3.fromRGB(140, 130, 124))
-	ash.Rate = 60
-	ash.Lifetime = NumberRange.new(6, 9)
-	ash.Speed = NumberRange.new(4, 8)
-	ash.EmissionDirection = Enum.NormalId.Bottom
-	ash.Size =
-		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 0.15) })
-	ash.Transparency =
-		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 1) })
-	ash.Drag = 0.4
-	ash.Parent = emitterPart("Ash", Vector3.new(700, 1, 260), CFrame.new(0, 70, 30))
+local wanted: { Wanted } = {}
+local needed: { [string]: boolean } = {}
 
-	local embers = Instance.new("ParticleEmitter")
-	embers.Texture = "rbxasset://textures/particles/fire_sparks_main.dds"
-	embers.Color = ColorSequence.new(Color3.fromRGB(255, 140, 70), Color3.fromRGB(180, 50, 20))
-	embers.LightEmission = 1
-	embers.Rate = 45
-	embers.Lifetime = NumberRange.new(5, 8)
-	embers.Speed = NumberRange.new(8, 18)
-	embers.EmissionDirection = Enum.NormalId.Top
-	embers.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0) })
-	embers.Parent = emitterPart("Embers", Vector3.new(900, 1, 600), CFrame.new(0, -140, 0))
-	SceneryController.SetWind(0)
+-- Marks a chunk as needed this frame; true when it still has to be built (or rebuilt).
+local function wants(key: string): boolean
+	needed[key] = true
+	return chunks[key] == nil or dirty[key] == true
 end
 
-local windTargets: { ParticleEmitter } = {}
+local function queue(key: string, worldX: number, build: () -> Chunk.Chunk)
+	table.insert(wanted, { key = key, priority = math.abs(worldX), build = build })
+end
 
-function SceneryController.SetWind(strength: number)
-	if #windTargets == 0 then
-		for _, descendant in folder:GetDescendants() do
-			if descendant:IsA("ParticleEmitter") then
-				table.insert(windTargets, descendant)
+local function manageChunks()
+	table.clear(wanted)
+	table.clear(needed)
+	for _, layer in Land.Layers do
+		local first = math.floor((odometer + layer.from) / layer.length)
+		local last = math.floor((odometer + layer.to) / layer.length)
+		for k = first, last do
+			local key = `{layer.name}{k}`
+			if wants(key) then
+				queue(key, (k + 0.5) * layer.length - odometer, layerBuilder(layer, k))
 			end
 		end
 	end
-	for _, emitter in windTargets do
-		emitter.Acceleration = Vector3.new(-strength, 0, 0)
+	for _, piece in World.pieces do
+		local front = if Features.farReach(piece.kind) then FAR_FRONT else FEATURE_FRONT
+		local x0, x1 = piece.at - odometer, piece.at + piece.length - odometer
+		if x1 > FEATURE_BACK and x0 < front then
+			local key = pieceKey(piece)
+			if wants(key) then
+				queue(key, math.max(x0, 0), pieceBuilder(piece))
+			end
+		end
+	end
+	for _, sinkhole in World.sinkholes do
+		local x0, x1 = sinkhole.rect.x0 - odometer, sinkhole.rect.x1 - odometer
+		if x1 > FEATURE_BACK and x0 < FAR_FRONT then
+			local key = sinkholeKey(sinkhole)
+			if wants(key) then
+				queue(key, math.max(x0, 0), sinkholeBuilder(sinkhole))
+			end
+		end
+	end
+
+	for key, chunk in chunks do
+		if not needed[key] then
+			Chunk.destroy(chunk)
+			chunks[key] = nil
+			dirty[key] = nil
+		end
+	end
+
+	table.sort(wanted, function(a, b)
+		return a.priority < b.priority
+	end)
+	local budget = if os.clock() < fastUntil then 60 elseif speed < 1 then 12 else 3
+	for i = 1, math.min(budget, #wanted) do
+		local entry = wanted[i]
+		local ok, built = pcall(entry.build)
+		local old = chunks[entry.key]
+		if old then
+			Chunk.destroy(old)
+		end
+		dirty[entry.key] = nil
+		if ok then
+			chunks[entry.key] = built
+		else
+			chunks[entry.key] = nil
+			warn(`[Scenery] {entry.key}: {built}`)
+		end
 	end
 end
+
+-- The plan ---------------------------------------------------------------------------------------
+
+local function beginLeg(leg: number, stops: number)
+	legIndex = leg
+	legStart = odometer
+	upcoming = nil
+	for _, piece in Journey.legPlan(World.seed, leg, odometer, leg > stops) do
+		table.insert(World.pieces, piece)
+	end
+	-- forget what is far behind
+	local keep: { Journey.Piece } = {}
+	for _, piece in World.pieces do
+		if piece.at + piece.length > odometer - PRUNE_BEHIND then
+			table.insert(keep, piece)
+		end
+	end
+	World.pieces = keep
+	local sinkholes: { Journey.Sinkhole } = {}
+	for _, sinkhole in World.sinkholes do
+		if sinkhole.rect.x1 > odometer - PRUNE_BEHIND then
+			table.insert(sinkholes, sinkhole)
+		end
+	end
+	World.sinkholes = sinkholes
+end
+
+-- Cuts (or re-cuts) the sinkhole for the station the train is heading to.
+local function setUpcoming(center: number, archetype: string)
+	local arch = Stations.List[archetype]
+	if arch == nil then
+		return
+	end
+	local old = upcoming
+	local sinkhole = Journey.sinkhole(center, arch.length, arch.depth, arch.id, arch.terminus == true)
+	if old then
+		local index = table.find(World.sinkholes, old)
+		if index then
+			table.remove(World.sinkholes, index)
+		end
+		invalidate(old.rect.x0 - 20, old.rect.x1 + 20)
+	end
+	table.insert(World.sinkholes, sinkhole)
+	upcoming = sinkhole
+	invalidate(sinkhole.rect.x0 - 20, sinkhole.rect.x1 + 20)
+
+	-- this leg's pieces must end clear of the dock
+	local legPieces: { Journey.Piece } = {}
+	local others: { Journey.Piece } = {}
+	for _, piece in World.pieces do
+		table.insert(if piece.leg == legIndex then legPieces else others, piece)
+	end
+	local kept = Journey.trim(legPieces, sinkhole)
+	local keptSet: { [Journey.Piece]: boolean } = {}
+	for _, piece in kept do
+		keptSet[piece] = true
+		table.insert(others, piece)
+	end
+	for _, piece in legPieces do
+		if not keptSet[piece] then
+			local footprint = Journey.footprint(piece)
+			invalidate(footprint.x0, footprint.x1)
+		end
+	end
+	World.pieces = others
+
+	-- the destination's biome takes over from 35% of the leg
+	if transitionLeg ~= legIndex then
+		transitionLeg = legIndex
+		local at = Journey.blendStart(legStart, center, odometer + NEAR_FRONT + 100)
+		World.addTransition({ at = at, length = J.BlendLength, biome = Journey.biomeFor(archetype) })
+		invalidate(at, odometer + 10000, NEAR_FRONT)
+	end
+end
+
+local function startRun(run: { [string]: any }, phase: string)
+	runKey = run.runId
+	local destination = run.destination
+	local base = if phase == "Boarding" or destination == nil
+		then Journey.FirstBiome
+		else Journey.biomeFor(destination.archetype)
+	World.reset(tonumber(run.seed) or 1931, base)
+	transitionLeg = 0
+	table.clear(whistled)
+	local stops = run.stopCount or Tuning.Run.StationCount
+	local leg = math.max(run.nextStop or 1, 1) + (if phase == "Departure" then 1 else 0)
+	beginLeg(leg, stops)
+	invalidateAll()
+end
+
+local function updatePlan()
+	local run = Registry.StateController.Get({ "run" })
+	local phase = Session.phase()
+	if type(run) ~= "table" then
+		return
+	end
+	if Session.isRunActive() and run.runId and run.runId ~= runKey then
+		startRun(run, phase)
+	end
+	if runKey == nil then
+		return
+	end
+	local stops = run.stopCount or Tuning.Run.StationCount
+	if phase ~= lastPhase then
+		if phase == "Departure" and lastPhase ~= "" then
+			beginLeg((run.nextStop or legIndex) + 1, stops)
+		end
+		arrivalChecked = false
+		lastPhase = phase
+	end
+
+	local destination = run.destination
+	if phase == "Cruise" and destination and run.phaseEndsAt then
+		local predicted = Journey.dockFromCruise(odometer, run.phaseEndsAt - Session.now())
+		if
+			upcoming == nil
+			or math.abs(predicted - (upcoming :: Journey.Sinkhole).center) > J.DockTolerance
+		then
+			setUpcoming(predicted, destination.archetype)
+		end
+	end
+	local root = stationModel and stationModel.PrimaryPart
+	local station = run.station
+	if
+		root
+		and station
+		and (phase == "Arrival" or phase == "Dwell" or phase == "LastCall" or phase == "Terminus")
+	then
+		if not arrivalChecked then
+			arrivalChecked = true
+			local actual = odometer + root.Position.X
+			if
+				upcoming == nil
+				or math.abs(actual - (upcoming :: Journey.Sinkhole).center) > J.DockTolerance
+			then
+				setUpcoming(actual, station.archetype)
+			end
+		end
+	end
+
+	if Session.isRunActive() then
+		local dock = if upcoming then upcoming.center else nil
+		progress = Journey.progress(legIndex, Journey.legShare(odometer, legStart, dock))
+	elseif phase == "Lobby" then
+		progress = 0
+	end
+end
+
+-- Motion ------------------------------------------------------------------------------------------
 
 local function findStation()
 	for _, child in Workspace:GetChildren() do
@@ -345,18 +420,20 @@ end
 local function targetSpeed(dt: number): number
 	local phase = Session.phase()
 	local run = Registry.StateController.Get({ "run" }) or {}
-	local station = stationModel
-	local root = station and station.PrimaryPart
+	local root = stationModel and stationModel.PrimaryPart
 	if (phase == "Arrival" or phase == "Departure") and root then
 		return math.max(-root.AssemblyLinearVelocity.X, 0)
+	end
+	-- the station we just left keeps pulling away for a while: stay locked to it so it
+	-- never slides out of its sinkhole, then carry on toward cruise once it is gone
+	if phase == "Junction" and root and root.AssemblyLinearVelocity.X < -1 then
+		return -root.AssemblyLinearVelocity.X
 	end
 	if phase == "Arrival" then
 		return -Motion.arrivalVelocity(Session.now() - (run.phaseStartedAt or Session.now()))
 	end
 	if phase == "Junction" or phase == "Cruise" or phase == "Boarding" then
-		local train = Registry.StateController.Get({ "train" })
-		local cruise = Tuning.Motion.CruiseSpeed * (if train and train.starving then 0.65 else 1)
-		return MathX.approach(speed, cruise, 9 * dt)
+		return MathX.approach(speed, Tuning.Motion.CruiseSpeed, 9 * dt)
 	end
 	if phase == "Departure" then
 		return MathX.approach(speed, Tuning.Motion.CruiseSpeed, 6 * dt)
@@ -367,18 +444,74 @@ local function targetSpeed(dt: number): number
 	return 0
 end
 
+-- Context and cues ----------------------------------------------------------------------------------
+
+local function updateContext()
+	local camera = Workspace.CurrentCamera
+	local position = camera.CFrame.Position
+	local x = odometer + position.X
+	local nearTrack = math.abs(position.Z) < 40 and position.Y < 40
+	local tunnel, bridge = 0, 0
+	local locoFront = odometer + LOCO_FRONT
+	for _, piece in World.pieces do
+		if piece.kind == "Tunnel" then
+			local entry, exit = Journey.tunnelPortals(piece)
+			if nearTrack then
+				tunnel = math.max(
+					tunnel,
+					MathX.smoothstep(entry - 10, entry + 30, x)
+						* (1 - MathX.smoothstep(exit - 30, exit + 10, x))
+				)
+			end
+			local key = pieceKey(piece)
+			if
+				not whistled[key]
+				and locoFront > entry - WHISTLE_LEAD
+				and locoFront < entry
+				and speed > 20
+			then
+				whistled[key] = true
+				SceneryController.TunnelAhead:Fire()
+			end
+		elseif piece.kind == "Gorge" and nearTrack then
+			bridge = math.max(
+				bridge,
+				MathX.smoothstep(piece.at - 20, piece.at + 10, x)
+					* (1 - MathX.smoothstep(piece.at + piece.length - 10, piece.at + piece.length + 20, x))
+			)
+		end
+	end
+	local a, b, w = Journey.sample(World.base, World.transitions, x)
+	context.tunnel = tunnel
+	context.bridge = bridge
+	context.biomeA = a
+	context.biomeB = b
+	context.blend = w
+	context.progress = progress
+end
+
+local function animate(now: number)
+	for _, chunk in chunks do
+		for _, motor in chunk.rotors do
+			motor.Transform = CFrame.Angles(now * 0.9, 0, 0)
+		end
+		for i, light in chunk.flickers do
+			local base = light:GetAttribute("Flicker")
+			if type(base) == "number" then
+				light.Brightness = base * (0.72 + 0.4 * math.noise(now * 7, i * 1.7, chunk.x0 * 0.01))
+			end
+		end
+	end
+end
+
+-- Lifecycle -------------------------------------------------------------------------------------------
+
 function SceneryController.Init()
 	folder = Instance.new("Folder")
 	folder.Name = "Scenery"
 	folder.Parent = Workspace
-	for i = 1, DECK_SEGMENTS do
-		table.insert(scrollers, buildSegment(i))
-	end
-	local rng = Random.new(1931)
-	for i = 1, ISLANDS do
-		table.insert(scrollers, buildIsland(i, rng))
-	end
-	buildAtmospherics()
+	World.density = qualityDensity()
+	fastUntil = os.clock() + 3
 end
 
 function SceneryController.Start()
@@ -386,47 +519,50 @@ function SceneryController.Start()
 	Workspace.ChildRemoved:Connect(findStation)
 	findStation()
 
-	local allParts: { BasePart } = {}
-	local allFrames: { CFrame } = {}
+	local roots: { BasePart } = {}
+	local frames: { CFrame } = {}
 	RunService.RenderStepped:Connect(function(dt)
 		speed = targetSpeed(dt)
-		local dx = -speed * dt
+		odometer += speed * dt
+		Safe.call("Scenery.plan", updatePlan)
+		Safe.call("Scenery.chunks", manageChunks)
 
+		-- a docked station brings its own track bed: drop ours out of sight under it
 		local stationMin, stationMax = math.huge, -math.huge
 		local root = stationModel and stationModel.PrimaryPart
-		if root and stationModel then
-			local length = 400
+		if root then
 			local plan = Registry.StateController.Get({ "run", "station" })
-			if plan then
-				length = plan.length
-			end
+			local length = if plan then plan.length else 400
 			stationMin, stationMax = root.Position.X - length / 2, root.Position.X + length / 2
 		end
 
-		table.clear(allParts)
-		table.clear(allFrames)
-		for _, scroller in scrollers do
-			scroller.x += dx
-			if scroller.x < scroller.minX then
-				scroller.x += scroller.span
-			end
-			local hide = scroller.isDeck
-				and scroller.x + scroller.halfLength > stationMin
-				and scroller.x - scroller.halfLength < stationMax
-			local frame = CFrame.new(scroller.x, if hide then -4000 else 0, 0)
-			for i, part in scroller.parts do
-				table.insert(allParts, part)
-				table.insert(allFrames, frame * scroller.offsets[i])
-			end
+		table.clear(roots)
+		table.clear(frames)
+		for _, chunk in chunks do
+			local x0 = chunk.x0 - odometer
+			local hide = chunk.hideable and x0 + (chunk.x1 - chunk.x0) > stationMin and x0 < stationMax
+			table.insert(roots, chunk.root)
+			table.insert(frames, CFrame.new(x0, if hide then -4000 else 0, 0))
 		end
-		Workspace:BulkMoveTo(allParts, allFrames, Enum.BulkMoveMode.FireCFrameChanged)
-		SceneryController.SetWind(math.min(speed * 0.12, 14))
+		Workspace:BulkMoveTo(roots, frames, Enum.BulkMoveMode.FireCFrameChanged)
+
+		Safe.call("Scenery.context", updateContext)
+		animate(os.clock())
 	end)
 end
 
 -- Current scroll speed in studs per second (the train's apparent speed).
 function SceneryController.Speed(): number
 	return speed
+end
+
+-- Studs travelled since the client started; rail joints fall every 48 of them.
+function SceneryController.Odometer(): number
+	return odometer
+end
+
+function SceneryController.Context(): Context
+	return context
 end
 
 return SceneryController

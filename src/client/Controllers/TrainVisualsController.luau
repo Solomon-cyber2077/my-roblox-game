@@ -39,10 +39,13 @@ local rigs: { Rig } = {}
 local angle = 0
 local lastPuff = 0
 
+local SMOKE = ColorSequence.new(Color3.fromRGB(70, 66, 64), Color3.fromRGB(150, 144, 138))
+local STARVING_SMOKE = ColorSequence.new(Color3.fromRGB(176, 172, 168), Color3.fromRGB(214, 210, 206))
+
 local function smokeEmitter(parent: BasePart): ParticleEmitter
 	local emitter = Instance.new("ParticleEmitter")
 	emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	emitter.Color = ColorSequence.new(Color3.fromRGB(70, 66, 64), Color3.fromRGB(150, 144, 138))
+	emitter.Color = SMOKE
 	emitter.Rate = 8
 	emitter.Lifetime = NumberRange.new(2.4, 3.6)
 	emitter.Speed = NumberRange.new(8, 12)
@@ -229,12 +232,18 @@ function TrainVisualsController.Start()
 					door.base * CFrame.new(door.slide * MathX.smoothstep(0, 1, rig.doorOpen), 0, 0)
 				)
 			end
+			-- A starving engine (no coal) shows it: thin pale smoke and a dying, sputtering fire.
+			local starving = rig.live and Registry.StateController.Get({ "train", "starving" }) == true
 			if rig.smoke then
-				rig.smoke.Rate = 6 + rigSpeed * 0.3
+				rig.smoke.Rate = if starving then 1.5 + rigSpeed * 0.04 else 6 + rigSpeed * 0.3
 				rig.smoke.Acceleration = Vector3.new(-rigSpeed * 0.9, 3, 0)
+				rig.smoke.Color = if starving then STARVING_SMOKE else SMOKE
 			end
 			if rig.firebox then
-				rig.firebox.Brightness = 1.8 + math.noise(os.clock() * 6) * 0.8
+				local t = os.clock()
+				rig.firebox.Brightness = if starving
+					then math.max(0.15 + math.noise(t * 11) * 0.9, 0.05)
+					else 1.8 + math.noise(t * 6) * 0.8
 			end
 		end
 		if #spinParts > 0 then

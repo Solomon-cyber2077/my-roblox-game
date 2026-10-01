@@ -21,6 +21,15 @@ Read this file before changing code.
   Phase rules shared with the client live in `Logic/RunRules`.
 - **World motion.** The train never moves. A station is one welded assembly on a PrismaticConstraint, driven by
   `Logic/Motion` profiles while arriving or departing and anchored while docked. Scenery is client-only.
+- **The landscape.** `Logic/Journey` plans it in land coordinates (odometer studs): a biome per leg from the
+  destination archetype, seeded set pieces (tunnels, gorges, burning towns and more) and a sinkhole on the +Z side
+  of every station, cut where Cruise predicts the dock and re-cut at Arrival if the station lands elsewhere.
+  `Controllers/SceneryController` builds it in chunks (`Scenery/Land` layers, `Scenery/Features`), each welded to
+  one anchored root, and scrolls the roots with one `BulkMoveTo` per frame. Chunk content must depend only on
+  `Scenery/World` (the plan) and the chunk's own Rng, so a rebuilt chunk comes out the same.
+- **Lighting is client-owned.** `Controllers/AtmosphereController` builds the sky, atmosphere, clouds, post effects
+  and weather and sets them every frame (time of day by run progress, biome air, tunnels, storms). The server
+  does not touch Lighting; `Lighting.Technology` is set to Future in `default.project.json`.
 - **Determinism.** `Util/Rng` (Mulberry32) is derived per purpose from the run seed, so the server, clients and
   tests generate the same layouts, loot and hazard schedules. Clients evaluate fog and collapse fronts locally
   from `run.station.hazards`.

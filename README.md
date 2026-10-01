@@ -15,7 +15,7 @@ monetization and the backlog) is the
 | Folder | Shows up in Studio as | Holds |
 | --- | --- | --- |
 | `src/server` | ServerScriptService.Server | `Services/`: 18 services, booted in order by `init.server.luau`. `Builders/`: the train, stations, Depot Hall and Hollows, built from primitives |
-| `src/client` | StarterPlayer.StarterPlayerScripts.Client | `Controllers/`: state mirror, camera, movement, scenery, audio and effects. `UI/`: HUD, modals and prompts |
+| `src/client` | StarterPlayer.StarterPlayerScripts.Client | `Controllers/`: state mirror, camera, movement, scenery, atmosphere, audio and effects. `Scenery/`: the chunked landscape (biomes, props, layers, set pieces, sinkholes). `UI/`: HUD, modals and prompts |
 | `src/shared` | ReplicatedStorage.Shared | `Config/`: every tunable number. `Logic/`: pure game rules, unit-tested. `Net/`, `Types`, `Util/`, `Visual/` |
 | `tests` | Not synced | Lune specs for `src/shared` |
 | `.lune` | Not synced | The test runner, the quality gate and the report script |

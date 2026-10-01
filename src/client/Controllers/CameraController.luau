@@ -1,7 +1,14 @@
 --!strict
 --[[
 	Camera feel: impulse shakes with decay, a low rumble that follows hazard
-	intensity and train speed, sprint FOV, and the spectator subject.
+	intensity and train speed (more in tunnels and on bridges), ride sway and
+	rail-joint kicks while aboard a moving train, sprint FOV, and the
+	spectator subject.
+
+	The camera is reset on every spawn and every phase change: Custom type,
+	the humanoid as subject, zoom clamped to Tuning.Camera and a close start,
+	so a camera left Scriptable by anything (a test command, a plugin) can
+	never stick.
 ]]
 
 local Players = game:GetService("Players")
@@ -12,19 +19,88 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local MathX = require(Shared.Util.MathX)
+local Tuning = require(Shared.Config.Tuning)
 
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 
 local CameraController = {}
 
+local CAM = Tuning.Camera
+local TRAIN_MIN_X, TRAIN_MAX_X = -97, 97
+
 local trauma = 0
 local fov = 70
 local spectateTarget: Player? = nil
+local resetSerial = 0
+
+local function ownHumanoid(): Humanoid?
+	local character = Players.LocalPlayer.Character
+	return character and character:FindFirstChildOfClass("Humanoid")
+end
+
+-- Puts the camera back in the default player camera, following us, at a close zoom.
+local function resetCamera(pinZoom: boolean)
+	local player = Players.LocalPlayer
+	local camera = Workspace.CurrentCamera
+	camera.CameraType = Enum.CameraType.Custom
+	if spectateTarget == nil then
+		local humanoid = ownHumanoid()
+		if humanoid then
+			camera.CameraSubject = humanoid
+		end
+	end
+	player.CameraMode = Enum.CameraMode.Classic
+	if not pinZoom then
+		player.CameraMinZoomDistance = CAM.MinZoom
+		player.CameraMaxZoomDistance = CAM.MaxZoom
+		return
+	end
+	-- Pinning min = max for a frame makes the camera module adopt the start zoom.
+	resetSerial += 1
+	local serial = resetSerial
+	player.CameraMinZoomDistance = CAM.StartZoom
+	player.CameraMaxZoomDistance = CAM.StartZoom
+	task.spawn(function()
+		RunService.RenderStepped:Wait()
+		RunService.RenderStepped:Wait()
+		if serial == resetSerial then
+			player.CameraMinZoomDistance = CAM.MinZoom
+			player.CameraMaxZoomDistance = CAM.MaxZoom
+		end
+	end)
+end
+
+local function onCharacter(character: Model)
+	character:WaitForChild("Humanoid", 10)
+	resetCamera(true)
+end
+
+-- True while our character stands inside the train's body.
+local function aboard(): boolean
+	local character = Players.LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if root == nil then
+		return false
+	end
+	local p = root.Position
+	return p.X > TRAIN_MIN_X and p.X < TRAIN_MAX_X and math.abs(p.Z) < 7.5 and p.Y > -2 and p.Y < 14
+end
 
 function CameraController.Init() end
 
 function CameraController.Start()
+	local player = Players.LocalPlayer
+	player.CharacterAdded:Connect(onCharacter)
+	if player.Character then
+		task.spawn(onCharacter, player.Character)
+	end
+	Registry.StateController.Observe("public", { "run", "phase" }, function()
+		if Workspace.CurrentCamera.CameraType ~= Enum.CameraType.Custom then
+			resetCamera(false)
+		end
+	end)
+
 	-- The default camera reads Camera.CFrame to find its look direction, so a
 	-- shake left in place would accumulate into drift. Remove last frame's offset
 	-- before the camera module runs, and re-apply a fresh one after it.
@@ -37,28 +113,62 @@ function CameraController.Start()
 		end
 	end)
 
+	local lastJoint = 0
+	local secondKickAt = math.huge
+	local kick = 0
 	RunService:BindToRenderStep("LTO_CameraFeel", Enum.RenderPriority.Camera.Value + 1, function(dt: number)
 		local camera = Workspace.CurrentCamera
 		local phase = Session.phase()
 		local station = Registry.StateController.Get({ "run", "station" })
+		local scenery = Registry.SceneryController
+		local speed = if scenery then scenery.Speed() else 0
+		local pace = math.min(speed / Tuning.Motion.CruiseSpeed, 1)
+		local context = if scenery then scenery.Context() else nil
 
 		-- Ambient rumble: hazard tension at a station, wheels on the rails while moving.
 		local rumble = 0
 		if station and (phase == "Dwell" or phase == "LastCall" or phase == "Departure") then
 			rumble = HazardSchedule.intensity(station.hazards, Session.now() - station.startedAt) * 0.12
 		end
-		local speed = if Registry.SceneryController then Registry.SceneryController.Speed() else 0
-		rumble += math.min(speed / 110, 1) * 0.05
+		local echo = if context then 1 + 0.6 * context.tunnel + 0.4 * context.bridge else 1
+		rumble += pace * 0.05 * echo
 
 		trauma = math.max(trauma - dt * 1.4, 0)
 		local shake = trauma * trauma + rumble
+		local t = os.clock()
+		local offset = CFrame.identity
 		if shake > 0.001 then
-			local t = os.clock()
-			applied = CFrame.Angles(
+			offset = CFrame.Angles(
 				math.rad((math.noise(t * 12, 1) * 2) * shake),
 				math.rad((math.noise(t * 12, 2) * 2) * shake),
 				math.rad((math.noise(t * 12, 3) * 1.5) * shake)
 			)
+		end
+
+		-- Ride sway and rail joints, only while riding a moving train.
+		if scenery and speed > 3 and aboard() then
+			local odometer = scenery.Odometer()
+			local joint = math.floor(odometer / CAM.RailLength)
+			if joint ~= lastJoint then
+				lastJoint = joint
+				kick = 1
+				secondKickAt = joint * CAM.RailLength + CAM.BogieGap
+			elseif odometer >= secondKickAt then
+				secondKickAt = math.huge
+				kick = math.max(kick, 0.6)
+			end
+			local roll = math.noise(t * 0.55, 7.3) * 2 * CAM.SwayRoll * pace
+			local pitch = -CAM.JointKick * kick * pace * echo
+			offset *= CFrame.new(0, -0.04 * kick * pace, 0) * CFrame.Angles(
+				math.rad(pitch),
+				0,
+				math.rad(roll)
+			)
+		end
+		kick *= math.exp(-dt * 16)
+
+		if offset ~= CFrame.identity then
+			applied = offset
 			camera.CFrame *= applied
 		end
 
@@ -79,13 +189,13 @@ end
 function CameraController.SetSpectateTarget(player: Player?)
 	spectateTarget = player
 	local camera = Workspace.CurrentCamera
+	camera.CameraType = Enum.CameraType.Custom
 	local subject: Instance? = nil
 	if player and player.Character then
 		subject = player.Character:FindFirstChildOfClass("Humanoid")
 	end
 	if subject == nil then
-		local own = Players.LocalPlayer.Character
-		subject = own and own:FindFirstChildOfClass("Humanoid")
+		subject = ownHumanoid()
 	end
 	if subject then
 		camera.CameraSubject = subject
