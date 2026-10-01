@@ -18,6 +18,16 @@
           "$path": "src/client"
         }
       }
+    },
+    "Workspace": {
+      "$properties": {
+        "FallenPartsDestroyHeight": -500
+      }
+    },
+    "Players": {
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
     }
   }
 }

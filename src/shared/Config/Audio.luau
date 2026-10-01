@@ -1,0 +1,58 @@
+--!strict
+--[[
+	Sound cues. Every id is from Roblox's licensed audio library (Pro Sound
+	Effects and Roblox's own uploads), so they are cleared for use in any
+	experience without uploading anything.
+
+	volume     0..1 base volume
+	maxSeconds stop a long recording early
+	spatial    true plays at a world position (3D falloff)
+	loop       for beds and machinery
+]]
+
+export type Cue = {
+	id: number,
+	volume: number,
+	maxSeconds: number?,
+	spatial: boolean?,
+	loop: boolean?,
+	pitch: number?,
+}
+
+local Cues: { [string]: Cue } = {
+	Whistle = { id = 9119628070, volume = 0.7, maxSeconds = 4 },
+	Departure = { id = 9119628064, volume = 0.75, maxSeconds = 5 },
+	Brakes = { id = 9114659986, volume = 0.6 },
+	DoorsOpen = { id = 9120301474, volume = 0.5 },
+	Alarm = { id = 9113085203, volume = 0.45, maxSeconds = 2.5 },
+	Deposit = { id = 9113849492, volume = 0.6 },
+	Loot = { id = 17208319162, volume = 0.6 },
+	Heal = { id = 9114171855, volume = 0.6 },
+	Hit = { id = 9113570506, volume = 0.8 },
+	HollowSpawn = { id = 9125475729, volume = 0.9, spatial = true },
+	HollowStrike = { id = 9125471724, volume = 0.9, spatial = true },
+	Flash = { id = 9113024908, volume = 0.8, spatial = true },
+	FlareLaunch = { id = 12222095, volume = 0.8, spatial = true, maxSeconds = 3 },
+	FlareBurst = { id = 9114361763, volume = 0.7, spatial = true, maxSeconds = 3 },
+	Toll = { id = 9113804436, volume = 0.35, maxSeconds = 4 },
+	Eliminated = { id = 9126213744, volume = 0.7 },
+	Rumble = { id = 9113218938, volume = 0.7, spatial = true, maxSeconds = 2.5 },
+	Collapse = { id = 9118582680, volume = 0.9, spatial = true, maxSeconds = 3 },
+	SteamLeak = { id = 9116496074, volume = 0.6, spatial = true, loop = true },
+	Victory = { id = 9112766203, volume = 0.5, maxSeconds = 6 },
+	Purchase = { id = 9113728042, volume = 0.6 },
+	Clutch = { id = 9125573009, volume = 0.6, maxSeconds = 2 },
+	Click = { id = 15675059323, volume = 0.4 },
+
+	-- Beds
+	TrainRun = { id = 9120247081, volume = 0.55, loop = true },
+	Wind = { id = 9113286969, volume = 0.4, loop = true },
+	StationEerie = { id = 9125440141, volume = 0.35, loop = true },
+	DepotHall = { id = 9114872503, volume = 0.3, loop = true },
+}
+
+for _, cue in Cues do
+	table.freeze(cue)
+end
+
+return table.freeze(Cues)

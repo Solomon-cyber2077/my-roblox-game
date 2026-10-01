@@ -1,0 +1,353 @@
+--!strict
+--[[
+	Item definitions. `value` is the item's worth in coal-equivalent units and is
+	only used to balance loot tables (see tests/Loot.spec.luau).
+
+	`model` is a list of primitives shared by the backpack icon renderer and the
+	world pickup builder, so an item looks the same in a slot and on the ground.
+	Colours are RGB 0-255; sizes and offsets are studs; rot is degrees.
+]]
+
+export type Primitive = {
+	shape: "Block" | "Ball" | "Cylinder" | "Wedge",
+	size: { number },
+	color: { number },
+	material: string,
+	offset: { number }?,
+	rot: { number }?,
+	neon: boolean?,
+}
+
+export type ItemDef = {
+	id: string,
+	name: string,
+	kind: "Cargo" | "Relic" | "Tool",
+	slots: number,
+	heavy: boolean,
+	coal: number?,
+	parts: number?,
+	brass: number?,
+	use: ("Rescue" | "Heal" | "Stun")?,
+	rarity: string?,
+	value: number,
+	description: string,
+	model: { Primitive },
+}
+
+local Items: { [string]: ItemDef } = {
+	CoalLump = {
+		id = "CoalLump",
+		name = "Coal Lump",
+		kind = "Cargo",
+		slots = 1,
+		heavy = false,
+		coal = 2,
+		value = 2,
+		description = "Two coal for the bunker.",
+		model = {
+			{ shape = "Ball", size = { 1.3, 1.1, 1.2 }, color = { 30, 29, 28 }, material = "Slate" },
+			{
+				shape = "Ball",
+				size = { 0.8, 0.7, 0.8 },
+				color = { 42, 40, 38 },
+				material = "Slate",
+				offset = { 0.5, 0.25, 0.2 },
+			},
+		},
+	},
+	CoalSack = {
+		id = "CoalSack",
+		name = "Coal Sack",
+		kind = "Cargo",
+		slots = 2,
+		heavy = true,
+		coal = 8,
+		value = 8,
+		description = "Eight coal. Heavy: slows you down.",
+		model = {
+			{ shape = "Block", size = { 1.6, 1.9, 1.3 }, color = { 112, 86, 58 }, material = "Fabric" },
+			{
+				shape = "Cylinder",
+				size = { 0.5, 0.7, 0.7 },
+				color = { 84, 64, 42 },
+				material = "Fabric",
+				offset = { 0, 1.05, 0 },
+				rot = { 0, 0, 90 },
+			},
+			{
+				shape = "Ball",
+				size = { 0.6, 0.5, 0.6 },
+				color = { 30, 29, 28 },
+				material = "Slate",
+				offset = { 0.2, 1.3, 0.1 },
+			},
+		},
+	},
+	Scrap = {
+		id = "Scrap",
+		name = "Scrap",
+		kind = "Cargo",
+		slots = 1,
+		heavy = false,
+		parts = 1,
+		value = 3,
+		description = "One part for repairs and upgrades.",
+		model = {
+			{
+				shape = "Wedge",
+				size = { 0.5, 0.9, 1.4 },
+				color = { 128, 131, 136 },
+				material = "DiamondPlate",
+				rot = { 0, 30, 0 },
+			},
+			{
+				shape = "Block",
+				size = { 1.2, 0.3, 0.6 },
+				color = { 150, 104, 66 },
+				material = "CorrodedMetal",
+				offset = { 0.2, -0.3, 0.1 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.25, 0.7, 0.7 },
+				color = { 110, 112, 118 },
+				material = "Metal",
+				offset = { -0.4, 0.2, 0.3 },
+			},
+		},
+	},
+	GearCrate = {
+		id = "GearCrate",
+		name = "Gear Crate",
+		kind = "Cargo",
+		slots = 2,
+		heavy = true,
+		parts = 5,
+		value = 15,
+		description = "Five parts. Heavy: slows you down.",
+		model = {
+			{ shape = "Block", size = { 1.8, 1.4, 1.4 }, color = { 124, 92, 60 }, material = "WoodPlanks" },
+			{
+				shape = "Block",
+				size = { 1.86, 0.18, 1.46 },
+				color = { 70, 72, 76 },
+				material = "Metal",
+				offset = { 0, 0.4, 0 },
+			},
+			{
+				shape = "Block",
+				size = { 1.86, 0.18, 1.46 },
+				color = { 70, 72, 76 },
+				material = "Metal",
+				offset = { 0, -0.4, 0 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.2, 0.8, 0.8 },
+				color = { 176, 141, 87 },
+				material = "Metal",
+				offset = { 0, 0, 0.75 },
+				rot = { 0, 90, 0 },
+			},
+		},
+	},
+	PocketWatch = {
+		id = "PocketWatch",
+		name = "Pocket Watch",
+		kind = "Relic",
+		slots = 1,
+		heavy = false,
+		brass = 10,
+		rarity = "Common",
+		value = 10,
+		description = "A relic worth 10 Brass when banked on the train.",
+		model = {
+			{
+				shape = "Cylinder",
+				size = { 0.3, 1.2, 1.2 },
+				color = { 201, 160, 82 },
+				material = "Metal",
+				rot = { 0, 90, 0 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.32, 0.9, 0.9 },
+				color = { 236, 226, 200 },
+				material = "SmoothPlastic",
+				rot = { 0, 90, 0 },
+				offset = { 0, 0, 0.02 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.15, 0.35, 0.35 },
+				color = { 201, 160, 82 },
+				material = "Metal",
+				offset = { 0, 0.7, 0 },
+				rot = { 0, 0, 90 },
+			},
+		},
+	},
+	SignalLamp = {
+		id = "SignalLamp",
+		name = "Signal Lamp",
+		kind = "Relic",
+		slots = 1,
+		heavy = false,
+		brass = 20,
+		rarity = "Rare",
+		value = 20,
+		description = "A relic worth 20 Brass when banked on the train.",
+		model = {
+			{
+				shape = "Cylinder",
+				size = { 0.3, 1.1, 1.1 },
+				color = { 60, 62, 66 },
+				material = "Metal",
+				rot = { 0, 0, 90 },
+				offset = { 0, -0.6, 0 },
+			},
+			{
+				shape = "Ball",
+				size = { 0.9, 0.9, 0.9 },
+				color = { 120, 230, 150 },
+				material = "Glass",
+				neon = true,
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.25, 0.8, 0.8 },
+				color = { 60, 62, 66 },
+				material = "Metal",
+				rot = { 0, 0, 90 },
+				offset = { 0, 0.55, 0 },
+			},
+		},
+	},
+	TicketPunch = {
+		id = "TicketPunch",
+		name = "Gilded Ticket Punch",
+		kind = "Relic",
+		slots = 1,
+		heavy = false,
+		brass = 40,
+		rarity = "Mythic",
+		value = 40,
+		description = "A relic worth 40 Brass when banked on the train.",
+		model = {
+			{ shape = "Block", size = { 1.4, 0.35, 0.5 }, color = { 222, 178, 74 }, material = "Foil" },
+			{
+				shape = "Block",
+				size = { 1.2, 0.3, 0.45 },
+				color = { 222, 178, 74 },
+				material = "Foil",
+				offset = { 0.1, 0.45, 0 },
+				rot = { 0, 0, -18 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.5, 0.4, 0.4 },
+				color = { 92, 70, 40 },
+				material = "Wood",
+				offset = { -0.65, 0.2, 0 },
+				rot = { 0, 0, 90 },
+			},
+		},
+	},
+	Flare = {
+		id = "Flare",
+		name = "Signal Flare",
+		kind = "Tool",
+		slots = 1,
+		heavy = false,
+		use = "Rescue",
+		value = 20,
+		description = "Fire it at the train's signal mast to bring back every eliminated crew member once.",
+		model = {
+			{
+				shape = "Cylinder",
+				size = { 1.5, 0.45, 0.45 },
+				color = { 196, 40, 32 },
+				material = "SmoothPlastic",
+				rot = { 0, 0, 90 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.3, 0.5, 0.5 },
+				color = { 236, 226, 200 },
+				material = "SmoothPlastic",
+				rot = { 0, 0, 90 },
+				offset = { 0, 0.85, 0 },
+			},
+		},
+	},
+	Tonic = {
+		id = "Tonic",
+		name = "Tonic",
+		kind = "Tool",
+		slots = 1,
+		heavy = false,
+		use = "Heal",
+		value = 6,
+		description = "Restores 50 health.",
+		model = {
+			{
+				shape = "Cylinder",
+				size = { 1.1, 0.7, 0.7 },
+				color = { 92, 168, 104 },
+				material = "Glass",
+				rot = { 0, 0, 90 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.4, 0.3, 0.3 },
+				color = { 92, 168, 104 },
+				material = "Glass",
+				rot = { 0, 0, 90 },
+				offset = { 0, 0.7, 0 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.2, 0.32, 0.32 },
+				color = { 150, 110, 70 },
+				material = "Wood",
+				rot = { 0, 0, 90 },
+				offset = { 0, 0.95, 0 },
+			},
+		},
+	},
+	Flashbulb = {
+		id = "Flashbulb",
+		name = "Flashbulb",
+		kind = "Tool",
+		slots = 1,
+		heavy = false,
+		use = "Stun",
+		value = 8,
+		description = "Stuns Hollows within 18 studs for 3 seconds.",
+		model = {
+			{
+				shape = "Ball",
+				size = { 0.9, 0.9, 0.9 },
+				color = { 255, 250, 228 },
+				material = "Glass",
+				neon = true,
+				offset = { 0, 0.35, 0 },
+			},
+			{
+				shape = "Cylinder",
+				size = { 0.5, 0.55, 0.55 },
+				color = { 176, 141, 87 },
+				material = "Metal",
+				rot = { 0, 0, 90 },
+				offset = { 0, -0.25, 0 },
+			},
+		},
+	},
+}
+
+for id, def in Items do
+	assert(def.id == id, `item {id} has mismatched id {def.id}`)
+	table.freeze(def)
+end
+
+return table.freeze(Items)
