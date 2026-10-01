@@ -1,0 +1,326 @@
+--!strict
+--[[
+	How each biome looks and what its air is like. The landscape builders read
+	the ground and prop tables; AtmosphereController reads the weather, clouds
+	and air tint. Biome ids come from Logic/Journey.
+
+	Prop weights are relative within a list. Weather kinds: None, Ash, Snow,
+	Rain (drizzle drawn as squashed sparkles) and Embers.
+]]
+
+export type Weighted = { kind: string, weight: number }
+
+export type Def = {
+	id: string,
+	ground: Color3,
+	groundMaterial: Enum.Material,
+	patches: { Color3 },
+	fields: { Color3 }?, -- strips across the track (farmland)
+	hill: Color3,
+	ridge: Color3,
+	snowcap: boolean,
+	rock: Color3,
+	foliage: { Color3 },
+	trunk: Color3,
+	tufts: Color3,
+	near: { Weighted }, -- near-field props
+	mid: { Weighted }, -- mid-field clumps
+	nearCount: number, -- props per near chunk side at full density
+	mounds: number, -- buried-ball mounds per near chunk side
+	sea: boolean, -- the platform side opens onto the sea
+	-- the air
+	weather: string,
+	weatherRate: number,
+	storm: boolean,
+	cloudCover: number,
+	cloudDensity: number,
+	cloudColor: Color3,
+	tint: Color3, -- multiplies the Atmosphere colour
+	density: number, -- added to the Atmosphere density
+	haze: number, -- added to the Atmosphere haze
+}
+
+local rgb = Color3.fromRGB
+
+local Defs: { [string]: Def } = {
+	Corridor = {
+		id = "Corridor",
+		ground = rgb(92, 88, 70),
+		groundMaterial = Enum.Material.Ground,
+		patches = { rgb(80, 76, 66), rgb(104, 100, 74), rgb(70, 66, 60) },
+		hill = rgb(84, 86, 64),
+		ridge = rgb(84, 90, 100),
+		snowcap = false,
+		rock = rgb(92, 86, 80),
+		foliage = { rgb(68, 84, 50), rgb(84, 92, 54), rgb(60, 72, 48) },
+		trunk = rgb(58, 46, 36),
+		tufts = rgb(110, 112, 70),
+		near = {
+			{ kind = "Siding", weight = 2.5 },
+			{ kind = "SignalBox", weight = 0.8 },
+			{ kind = "WaterTower", weight = 0.6 },
+			{ kind = "Shed", weight = 1.2 },
+			{ kind = "SleeperStack", weight = 1.2 },
+			{ kind = "Tree", weight = 1.4 },
+			{ kind = "Bush", weight = 1.2 },
+			{ kind = "Wagon", weight = 0.9 },
+		},
+		mid = {
+			{ kind = "Grove", weight = 1 },
+			{ kind = "Shed", weight = 0.6 },
+			{ kind = "Chimney", weight = 0.25 },
+		},
+		nearCount = 4,
+		mounds = 1,
+		sea = false,
+		weather = "Ash",
+		weatherRate = 25,
+		storm = false,
+		cloudCover = 0.62,
+		cloudDensity = 0.45,
+		cloudColor = rgb(190, 176, 168),
+		tint = rgb(255, 250, 244),
+		density = 0,
+		haze = 0,
+	},
+	Farmland = {
+		id = "Farmland",
+		ground = rgb(98, 112, 60),
+		groundMaterial = Enum.Material.Grass,
+		patches = { rgb(110, 124, 64), rgb(86, 100, 54), rgb(120, 116, 70) },
+		fields = {
+			rgb(176, 152, 82),
+			rgb(126, 142, 66),
+			rgb(104, 84, 60),
+			rgb(150, 160, 78),
+			rgb(196, 170, 96),
+			rgb(88, 110, 58),
+		},
+		hill = rgb(96, 114, 62),
+		ridge = rgb(96, 108, 120),
+		snowcap = false,
+		rock = rgb(120, 112, 100),
+		foliage = { rgb(76, 104, 52), rgb(98, 118, 58), rgb(66, 92, 50), rgb(122, 116, 56) },
+		trunk = rgb(70, 54, 40),
+		tufts = rgb(140, 150, 80),
+		near = {
+			{ kind = "Tree", weight = 2.4 },
+			{ kind = "Farmhouse", weight = 0.7 },
+			{ kind = "Barn", weight = 0.6 },
+			{ kind = "Windmill", weight = 0.35 },
+			{ kind = "Haystack", weight = 1.4 },
+			{ kind = "Fence", weight = 1.2 },
+			{ kind = "Scarecrow", weight = 0.5 },
+			{ kind = "Bush", weight = 1.0 },
+		},
+		mid = {
+			{ kind = "Grove", weight = 1.4 },
+			{ kind = "Farmhouse", weight = 0.5 },
+			{ kind = "Windmill", weight = 0.3 },
+		},
+		nearCount = 4,
+		mounds = 1,
+		sea = false,
+		weather = "None",
+		weatherRate = 0,
+		storm = false,
+		cloudCover = 0.48,
+		cloudDensity = 0.35,
+		cloudColor = rgb(230, 214, 200),
+		tint = rgb(255, 246, 230),
+		density = -0.06,
+		haze = -0.3,
+	},
+	Coalfield = {
+		id = "Coalfield",
+		ground = rgb(62, 58, 54),
+		groundMaterial = Enum.Material.Ground,
+		patches = { rgb(40, 38, 36), rgb(74, 66, 58), rgb(54, 50, 46) },
+		hill = rgb(52, 48, 44),
+		ridge = rgb(70, 66, 68),
+		snowcap = false,
+		rock = rgb(48, 46, 44),
+		foliage = { rgb(60, 62, 44), rgb(72, 68, 46) },
+		trunk = rgb(40, 34, 30),
+		tufts = rgb(84, 80, 58),
+		near = {
+			{ kind = "SlagHeap", weight = 1.6 },
+			{ kind = "Chimney", weight = 0.9 },
+			{ kind = "Headframe", weight = 0.6 },
+			{ kind = "Terrace", weight = 1.1 },
+			{ kind = "Wagon", weight = 1.2 },
+			{ kind = "DeadTree", weight = 1.2 },
+			{ kind = "Siding", weight = 0.8 },
+		},
+		mid = {
+			{ kind = "SlagHeap", weight = 1.4 },
+			{ kind = "Chimney", weight = 0.8 },
+			{ kind = "Terrace", weight = 0.5 },
+		},
+		nearCount = 4,
+		mounds = 2,
+		sea = false,
+		weather = "Ash",
+		weatherRate = 70,
+		storm = false,
+		cloudCover = 0.82,
+		cloudDensity = 0.6,
+		cloudColor = rgb(124, 108, 96),
+		tint = rgb(214, 176, 140),
+		density = 0.12,
+		haze = 0.8,
+	},
+	BurningTown = {
+		id = "BurningTown",
+		ground = rgb(78, 66, 58),
+		groundMaterial = Enum.Material.Ground,
+		patches = { rgb(56, 48, 44), rgb(96, 82, 70), rgb(44, 38, 36) },
+		hill = rgb(70, 62, 54),
+		ridge = rgb(80, 66, 70),
+		snowcap = false,
+		rock = rgb(84, 76, 70),
+		foliage = { rgb(64, 58, 40), rgb(80, 64, 44) },
+		trunk = rgb(34, 28, 24),
+		tufts = rgb(96, 86, 60),
+		near = {
+			{ kind = "House", weight = 2.2 },
+			{ kind = "RuinFire", weight = 1.2 },
+			{ kind = "Church", weight = 0.35 },
+			{ kind = "DeadTree", weight = 1.2 },
+			{ kind = "Fence", weight = 0.6 },
+			{ kind = "Wagon", weight = 0.4 },
+		},
+		mid = {
+			{ kind = "House", weight = 1.2 },
+			{ kind = "RuinFire", weight = 0.8 },
+			{ kind = "Church", weight = 0.3 },
+		},
+		nearCount = 4,
+		mounds = 1,
+		sea = false,
+		weather = "Embers",
+		weatherRate = 40,
+		storm = false,
+		cloudCover = 0.75,
+		cloudDensity = 0.55,
+		cloudColor = rgb(150, 100, 84),
+		tint = rgb(255, 196, 160),
+		density = 0.08,
+		haze = 0.6,
+	},
+	Highland = {
+		id = "Highland",
+		ground = rgb(82, 96, 66),
+		groundMaterial = Enum.Material.Grass,
+		patches = { rgb(96, 104, 74), rgb(70, 82, 58), rgb(110, 98, 74) },
+		hill = rgb(76, 88, 62),
+		ridge = rgb(78, 88, 104),
+		snowcap = true,
+		rock = rgb(104, 104, 100),
+		foliage = { rgb(44, 66, 48), rgb(52, 74, 52), rgb(40, 58, 44) },
+		trunk = rgb(62, 48, 38),
+		tufts = rgb(122, 120, 82),
+		near = {
+			{ kind = "Pine", weight = 3 },
+			{ kind = "Boulder", weight = 1.6 },
+			{ kind = "Bush", weight = 0.8 },
+			{ kind = "Fence", weight = 0.4 },
+			{ kind = "Shed", weight = 0.3 },
+		},
+		mid = { { kind = "PineGrove", weight = 1.6 }, { kind = "Boulder", weight = 0.6 } },
+		nearCount = 5,
+		mounds = 3,
+		sea = false,
+		weather = "Rain",
+		weatherRate = 160,
+		storm = true,
+		cloudCover = 0.9,
+		cloudDensity = 0.7,
+		cloudColor = rgb(132, 136, 146),
+		tint = rgb(214, 222, 236),
+		density = 0.1,
+		haze = 1.2,
+	},
+	Mountain = {
+		id = "Mountain",
+		ground = rgb(196, 200, 206),
+		groundMaterial = Enum.Material.Snow,
+		patches = { rgb(150, 150, 150), rgb(214, 218, 224), rgb(120, 116, 110) },
+		hill = rgb(186, 190, 198),
+		ridge = rgb(120, 126, 140),
+		snowcap = true,
+		rock = rgb(96, 94, 92),
+		foliage = { rgb(46, 62, 52), rgb(54, 70, 58) },
+		trunk = rgb(58, 46, 40),
+		tufts = rgb(170, 170, 160),
+		near = {
+			{ kind = "SnowPine", weight = 3 },
+			{ kind = "RockWall", weight = 1.4 },
+			{ kind = "Boulder", weight = 1.4 },
+			{ kind = "Shed", weight = 0.3 },
+		},
+		mid = { { kind = "PineGrove", weight = 1.2 }, { kind = "RockWall", weight = 0.8 } },
+		nearCount = 4,
+		mounds = 3,
+		sea = false,
+		weather = "Snow",
+		weatherRate = 120,
+		storm = false,
+		cloudCover = 0.7,
+		cloudDensity = 0.5,
+		cloudColor = rgb(220, 224, 236),
+		tint = rgb(222, 232, 255),
+		density = 0.04,
+		haze = 0.4,
+	},
+	Coast = {
+		id = "Coast",
+		ground = rgb(196, 178, 132),
+		groundMaterial = Enum.Material.Sand,
+		patches = { rgb(176, 160, 118), rgb(140, 146, 96), rgb(210, 194, 150) },
+		hill = rgb(170, 160, 112),
+		ridge = rgb(110, 120, 140),
+		snowcap = false,
+		rock = rgb(132, 124, 112),
+		foliage = { rgb(110, 120, 70), rgb(126, 132, 84) },
+		trunk = rgb(96, 80, 60),
+		tufts = rgb(170, 168, 110),
+		near = {
+			{ kind = "Dune", weight = 2 },
+			{ kind = "Reeds", weight = 1.6 },
+			{ kind = "Fence", weight = 0.8 },
+			{ kind = "Lighthouse", weight = 0.12 },
+			{ kind = "Shed", weight = 0.4 },
+		},
+		mid = { { kind = "Dune", weight = 1.4 }, { kind = "Lighthouse", weight = 0.1 } },
+		nearCount = 3,
+		mounds = 1,
+		sea = true,
+		weather = "None",
+		weatherRate = 0,
+		storm = false,
+		cloudCover = 0.5,
+		cloudDensity = 0.35,
+		cloudColor = rgb(255, 222, 204),
+		tint = rgb(255, 236, 222),
+		density = -0.04,
+		haze = 0,
+	},
+}
+
+local Biomes = {}
+
+function Biomes.get(id: string): Def
+	return Defs[id] or Defs.Corridor
+end
+
+-- One of the two biomes at a blend point, chosen with probability `w` for `b`.
+function Biomes.pick(a: string, b: string, w: number, roll: number): Def
+	return Biomes.get(if roll < w then b else a)
+end
+
+function Biomes.mixColor(a: Color3, b: Color3, w: number): Color3
+	return a:Lerp(b, w)
+end
+
+return Biomes

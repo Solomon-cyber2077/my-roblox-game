@@ -37,6 +37,7 @@ local Cues: { [string]: Cue } = {
 	Toll = { id = 9113804436, volume = 0.35, maxSeconds = 4 },
 	Eliminated = { id = 9126213744, volume = 0.7 },
 	Rumble = { id = 9113218938, volume = 0.7, spatial = true, maxSeconds = 2.5 },
+	Thunder = { id = 9113218938, volume = 0.55, maxSeconds = 4, pitch = 0.62 },
 	Collapse = { id = 9118582680, volume = 0.9, spatial = true, maxSeconds = 3 },
 	SteamLeak = { id = 9116496074, volume = 0.6, spatial = true, loop = true },
 	Victory = { id = 9112766203, volume = 0.5, maxSeconds = 6 },

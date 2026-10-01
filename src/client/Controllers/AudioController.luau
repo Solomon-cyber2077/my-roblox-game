@@ -5,6 +5,10 @@
 	wind, station eeriness, the hall) are mixed every frame from game state:
 	train speed drives the chug and the wind, the station's hazard intensity
 	drives the eerie bed, and the hall bed plays only in the Depot.
+
+	The landscape shapes the mix too: inside a tunnel the world takes a hallway
+	reverb and the wheels get louder, the whistle blows as the locomotive nears
+	a portal, and the wind rises and brightens on gorge bridges.
 ]]
 
 local Players = game:GetService("Players")
@@ -71,6 +75,11 @@ function AudioController.Init()
 end
 
 function AudioController.Start()
+	Registry.SceneryController.TunnelAhead:Connect(function()
+		AudioController.Play("Whistle")
+	end)
+	local reverb = Enum.ReverbType.NoReverb
+
 	for _, name in { "TrainRun", "Wind", "StationEerie", "DepotHall" } do
 		local sound = makeSound(name, SoundService)
 		if sound then
@@ -92,20 +101,29 @@ function AudioController.Start()
 		if station and (phase == "Dwell" or phase == "LastCall" or phase == "Departure") then
 			tension = HazardSchedule.intensity(station.hazards, Session.now() - station.startedAt)
 		end
+		local context = Registry.SceneryController.Context()
+		local tunnel = if inLobby then 0 else context.tunnel
+		local bridge = if inLobby then 0 else context.bridge
+		local wantReverb = if tunnel > 0.4 then Enum.ReverbType.Hallway else Enum.ReverbType.NoReverb
+		if wantReverb ~= reverb then
+			reverb = wantReverb
+			SoundService.AmbientReverb = reverb
+		end
+		local pace = math.min(speed / Tuning.Motion.CruiseSpeed, 1)
 		local targets = {
-			TrainRun = if inLobby
-				then 0
-				else Audio.TrainRun.volume * math.min(speed / Tuning.Motion.CruiseSpeed, 1),
+			TrainRun = if inLobby then 0 else Audio.TrainRun.volume * pace * (1 + 0.35 * tunnel),
 			Wind = if inLobby
 				then 0
-				else Audio.Wind.volume * (0.35 + 0.65 * math.min(speed / Tuning.Motion.CruiseSpeed, 1)),
+				else Audio.Wind.volume * (0.35 + 0.65 * pace) * (1 + 1.4 * bridge) * (1 - 0.6 * tunnel),
 			StationEerie = if inLobby then 0 else Audio.StationEerie.volume * (0.3 + tension),
 			DepotHall = if inLobby then Audio.DepotHall.volume else 0,
 		}
 		for name, sound in beds do
 			sound.Volume = MathX.lerp(sound.Volume, targets[name] or 0, MathX.damp(0.4, dt))
 			if name == "TrainRun" then
-				sound.PlaybackSpeed = 0.7 + 0.5 * math.min(speed / Tuning.Motion.CruiseSpeed, 1)
+				sound.PlaybackSpeed = 0.7 + 0.5 * pace
+			elseif name == "Wind" then
+				sound.PlaybackSpeed = 1 + 0.18 * bridge
 			end
 		end
 	end)
