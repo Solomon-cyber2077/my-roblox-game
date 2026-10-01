@@ -1,0 +1,263 @@
+--!strict
+--[[
+	Station archetypes. Lengths and depths are multiples of the 12-stud tile.
+
+	loot:       weight multipliers per item category (coal, parts, relic, tools)
+	hazard:     multipliers on collapse speed, fog reach and Hollow pressure
+	containers: base container counts before difficulty scaling
+	structures: blocking buildings (footprint in tiles) and props
+	palette:    RGB colours the builder uses for ground, accent and trim
+]]
+
+export type StructureRule = {
+	kind: string,
+	count: number,
+	zones: { string },
+}
+
+export type Archetype = {
+	id: string,
+	name: string,
+	tier: number,
+	minStation: number,
+	weight: number,
+	length: number,
+	depth: number,
+	dwellMultiplier: number,
+	hint: string,
+	loot: { coal: number, parts: number, relic: number, tools: number },
+	hazard: { collapse: number, fog: number, hollows: number },
+	containers: { [string]: number },
+	looseItems: number,
+	structures: { StructureRule },
+	lampSpacing: number,
+	ground: string,
+	palette: { ground: { number }, accent: { number }, trim: { number }, light: { number } },
+	terminus: boolean?,
+}
+
+local Archetypes: { [string]: Archetype } = {
+	Halt = {
+		id = "Halt",
+		name = "Whistle-Stop Halt",
+		tier = 1,
+		minStation = 1,
+		weight = 1.0,
+		length = 240,
+		depth = 144,
+		dwellMultiplier = 0.95,
+		hint = "Balanced haul",
+		loot = { coal = 1.0, parts = 1.0, relic = 0.8, tools = 1.0 },
+		hazard = { collapse = 0.9, fog = 1.0, hollows = 0.8 },
+		containers = { Crate = 8, Locker = 3, CoalBin = 2, ToolChest = 1, Vault = 1 },
+		looseItems = 6,
+		structures = {
+			{ kind = "StationHouse", count = 1, zones = { "Near", "Mid" } },
+			{ kind = "Shed", count = 3, zones = { "Mid", "Far" } },
+			{ kind = "WaterTower", count = 1, zones = { "Far" } },
+		},
+		lampSpacing = 36,
+		ground = "Cobblestone",
+		palette = {
+			ground = { 128, 116, 100 },
+			accent = { 150, 110, 70 },
+			trim = { 58, 50, 44 },
+			light = { 255, 196, 128 },
+		},
+	},
+	CoalYard = {
+		id = "CoalYard",
+		name = "Coaling Yard",
+		tier = 2,
+		minStation = 1,
+		weight = 1.0,
+		length = 300,
+		depth = 180,
+		dwellMultiplier = 1.0,
+		hint = "Coal-rich",
+		loot = { coal = 2.2, parts = 0.7, relic = 0.7, tools = 0.8 },
+		hazard = { collapse = 1.25, fog = 1.0, hollows = 0.9 },
+		containers = { Crate = 6, Locker = 2, CoalBin = 7, ToolChest = 1, Vault = 1 },
+		looseItems = 12,
+		structures = {
+			{ kind = "CoalTower", count = 1, zones = { "Mid" } },
+			{ kind = "CoalHeap", count = 5, zones = { "Mid", "Far" } },
+			{ kind = "Hopper", count = 3, zones = { "Near", "Mid" } },
+			{ kind = "Shed", count = 2, zones = { "Far" } },
+		},
+		lampSpacing = 42,
+		ground = "Slate",
+		palette = {
+			ground = { 92, 86, 80 },
+			accent = { 120, 84, 52 },
+			trim = { 34, 33, 33 },
+			light = { 255, 170, 96 },
+		},
+	},
+	SignalWorks = {
+		id = "SignalWorks",
+		name = "Signal Works",
+		tier = 2,
+		minStation = 2,
+		weight = 1.0,
+		length = 288,
+		depth = 204,
+		dwellMultiplier = 1.0,
+		hint = "Parts-rich",
+		loot = { coal = 0.7, parts = 2.2, relic = 0.9, tools = 1.2 },
+		hazard = { collapse = 0.9, fog = 1.0, hollows = 1.3 },
+		containers = { Crate = 6, Locker = 3, CoalBin = 1, ToolChest = 5, Vault = 1 },
+		looseItems = 6,
+		structures = {
+			{ kind = "Workshop", count = 4, zones = { "Mid", "Far" } },
+			{ kind = "SignalBox", count = 1, zones = { "Near" } },
+			{ kind = "CableDrums", count = 4, zones = { "Near", "Mid", "Far" } },
+		},
+		lampSpacing = 36,
+		ground = "Concrete",
+		palette = {
+			ground = { 132, 130, 124 },
+			accent = { 168, 54, 42 },
+			trim = { 60, 62, 64 },
+			light = { 230, 236, 255 },
+		},
+	},
+	Market = {
+		id = "Market",
+		name = "Ashfall Market",
+		tier = 2,
+		minStation = 3,
+		weight = 1.0,
+		length = 300,
+		depth = 192,
+		dwellMultiplier = 1.05,
+		hint = "Relics",
+		loot = { coal = 0.9, parts = 0.9, relic = 1.8, tools = 1.1 },
+		hazard = { collapse = 1.0, fog = 1.25, hollows = 1.0 },
+		containers = { Crate = 9, Locker = 2, CoalBin = 1, ToolChest = 1, Vault = 3 },
+		looseItems = 6,
+		structures = {
+			{ kind = "Stall", count = 12, zones = { "Near", "Mid", "Far" } },
+			{ kind = "Fountain", count = 1, zones = { "Mid" } },
+		},
+		lampSpacing = 30,
+		ground = "Pavement",
+		palette = {
+			ground = { 146, 132, 116 },
+			accent = { 132, 46, 52 },
+			trim = { 70, 60, 52 },
+			light = { 255, 186, 120 },
+		},
+	},
+	Viaduct = {
+		id = "Viaduct",
+		name = "Viaduct Halt",
+		tier = 3,
+		minStation = 4,
+		weight = 0.8,
+		length = 360,
+		depth = 108,
+		dwellMultiplier = 0.9,
+		hint = "Relics, fragile ground",
+		loot = { coal = 1.0, parts = 1.0, relic = 2.0, tools = 1.4 },
+		hazard = { collapse = 1.5, fog = 0.9, hollows = 0.9 },
+		containers = { Crate = 6, Locker = 2, CoalBin = 2, ToolChest = 2, Vault = 2 },
+		looseItems = 6,
+		structures = {
+			{ kind = "SignalBox", count = 2, zones = { "Mid", "Far" } },
+			{ kind = "Shed", count = 2, zones = { "Far" } },
+		},
+		lampSpacing = 30,
+		ground = "Brick",
+		palette = {
+			ground = { 150, 96, 74 },
+			accent = { 176, 141, 87 },
+			trim = { 78, 50, 40 },
+			light = { 255, 206, 150 },
+		},
+	},
+	Minehead = {
+		id = "Minehead",
+		name = "Minehead",
+		tier = 3,
+		minStation = 5,
+		weight = 0.9,
+		length = 288,
+		depth = 216,
+		dwellMultiplier = 1.1,
+		hint = "Coal and parts",
+		loot = { coal = 1.8, parts = 1.6, relic = 1.0, tools = 1.0 },
+		hazard = { collapse = 1.0, fog = 1.2, hollows = 1.5 },
+		containers = { Crate = 6, Locker = 2, CoalBin = 4, ToolChest = 3, Vault = 1 },
+		looseItems = 8,
+		structures = {
+			{ kind = "Headframe", count = 1, zones = { "Mid" } },
+			{ kind = "TunnelMouth", count = 1, zones = { "Far" } },
+			{ kind = "Shed", count = 3, zones = { "Near", "Mid" } },
+			{ kind = "CoalHeap", count = 2, zones = { "Mid", "Far" } },
+		},
+		lampSpacing = 36,
+		ground = "Ground",
+		palette = {
+			ground = { 112, 96, 78 },
+			accent = { 140, 98, 58 },
+			trim = { 46, 40, 34 },
+			light = { 255, 176, 100 },
+		},
+	},
+	Terminus = {
+		id = "Terminus",
+		name = "Terminus",
+		tier = 1,
+		minStation = 99,
+		weight = 0,
+		length = 324,
+		depth = 156,
+		dwellMultiplier = 1,
+		hint = "End of the line",
+		loot = { coal = 0, parts = 0, relic = 0, tools = 0 },
+		hazard = { collapse = 0, fog = 0, hollows = 0 },
+		containers = {},
+		looseItems = 0,
+		structures = {
+			{ kind = "Concourse", count = 1, zones = { "Mid" } },
+		},
+		lampSpacing = 24,
+		ground = "Marble",
+		palette = {
+			ground = { 196, 186, 168 },
+			accent = { 201, 160, 82 },
+			trim = { 120, 104, 82 },
+			light = { 255, 226, 170 },
+		},
+		terminus = true,
+	},
+}
+
+-- Footprints in tiles (width along the track, depth away from it).
+local Footprints: { [string]: { number } } = {
+	StationHouse = { 3, 2 },
+	Shed = { 2, 2 },
+	WaterTower = { 2, 2 },
+	CoalTower = { 2, 2 },
+	CoalHeap = { 2, 2 },
+	Hopper = { 1, 2 },
+	Workshop = { 3, 3 },
+	SignalBox = { 2, 2 },
+	CableDrums = { 1, 1 },
+	Stall = { 1, 1 },
+	Fountain = { 2, 2 },
+	Headframe = { 3, 3 },
+	TunnelMouth = { 4, 2 },
+	Concourse = { 6, 3 },
+}
+
+for _, def in Archetypes do
+	table.freeze(def)
+end
+
+return table.freeze({
+	List = table.freeze(Archetypes),
+	Footprints = table.freeze(Footprints),
+	Order = table.freeze({ "Halt", "CoalYard", "SignalWorks", "Market", "Viaduct", "Minehead" }),
+})

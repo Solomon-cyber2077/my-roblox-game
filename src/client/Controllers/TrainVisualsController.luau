@@ -1,0 +1,257 @@
+--!strict
+--[[
+	Client-side life on the static train (and the lobby's display train):
+	turning wheels and coupling rods, sliding doors, chimney smoke and cylinder
+	steam that follow speed, the tender's coal heap, breach steam and a
+	flickering firebox. All of it is local CFrame and emitter work on anchored
+	parts the server never touches again, so none of it replicates.
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local MathX = require(ReplicatedStorage.Shared.Util.MathX)
+
+local Registry = require(script.Parent.Parent.Registry)
+
+type Spin = { part: BasePart, base: CFrame, radius: number, pivot: Vector3? }
+type Rod = { part: BasePart, base: CFrame, radius: number, phase: number }
+type Door = { part: BasePart, base: CFrame, slide: number }
+
+type Rig = {
+	model: Model,
+	spins: { Spin },
+	rods: { Rod },
+	doors: { Door },
+	heap: { BasePart },
+	smoke: ParticleEmitter?,
+	vents: { ParticleEmitter },
+	firebox: PointLight?,
+	breaches: { [BasePart]: ParticleEmitter },
+	doorOpen: number,
+	live: boolean,
+}
+
+local TrainVisualsController = {}
+
+local rigs: { Rig } = {}
+local angle = 0
+local lastPuff = 0
+
+local function smokeEmitter(parent: BasePart): ParticleEmitter
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	emitter.Color = ColorSequence.new(Color3.fromRGB(70, 66, 64), Color3.fromRGB(150, 144, 138))
+	emitter.Rate = 8
+	emitter.Lifetime = NumberRange.new(2.4, 3.6)
+	emitter.Speed = NumberRange.new(8, 12)
+	emitter.SpreadAngle = Vector2.new(12, 12)
+	emitter.EmissionDirection = Enum.NormalId.Right
+	emitter.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 9) })
+	emitter.Transparency =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 1) })
+	emitter.RotSpeed = NumberRange.new(-30, 30)
+	emitter.Parent = parent
+	return emitter
+end
+
+local function steamEmitter(parent: BasePart, rate: number): ParticleEmitter
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	emitter.Color = ColorSequence.new(Color3.fromRGB(236, 236, 236))
+	emitter.Rate = rate
+	emitter.Lifetime = NumberRange.new(0.6, 1.1)
+	emitter.Speed = NumberRange.new(6, 10)
+	emitter.SpreadAngle = Vector2.new(25, 25)
+	emitter.Size =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(1, 4) })
+	emitter.Transparency =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+	emitter.Parent = parent
+	return emitter
+end
+
+local function rigFor(model: Model, live: boolean): Rig
+	local rig: Rig = {
+		model = model,
+		spins = {},
+		rods = {},
+		doors = {},
+		heap = {},
+		smoke = nil,
+		vents = {},
+		firebox = nil,
+		breaches = {},
+		doorOpen = 0,
+		live = live,
+	}
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			local radius = part:GetAttribute("WheelRadius")
+			local crank = part:GetAttribute("CrankRadius")
+			local slide = part:GetAttribute("DoorSlide")
+			if type(radius) == "number" then
+				local pivot = part:GetAttribute("WheelPivot")
+				table.insert(rig.spins, {
+					part = part,
+					base = part.CFrame,
+					radius = radius,
+					pivot = if typeof(pivot) == "Vector3" then pivot else nil,
+				})
+			elseif type(crank) == "number" then
+				table.insert(rig.rods, {
+					part = part,
+					base = part.CFrame,
+					radius = crank,
+					phase = math.rad((part:GetAttribute("CrankPhase") :: number?) or 0),
+				})
+			elseif type(slide) == "number" then
+				table.insert(rig.doors, { part = part, base = part.CFrame, slide = slide })
+			end
+			if part:GetAttribute("CoalTier") then
+				table.insert(rig.heap, part)
+			end
+			if part.Name == "ChimneyTop" then
+				rig.smoke = smokeEmitter(part)
+			elseif part.Name == "SteamVent" then
+				table.insert(rig.vents, steamEmitter(part, 0))
+			elseif part.Name == "Firebox" then
+				rig.firebox = part:FindFirstChildOfClass("PointLight")
+			end
+		end
+	end
+	return rig
+end
+
+local function updateBreaches(rig: Rig)
+	for _, part in rig.model:GetDescendants() do
+		if part:IsA("BasePart") and part:GetAttribute("BreachAnchor") then
+			local active = part:GetAttribute("Breach") == true
+			local emitter: ParticleEmitter? = rig.breaches[part]
+			if active and emitter == nil then
+				local steam = steamEmitter(part, 40)
+				steam.EmissionDirection = Enum.NormalId.Front
+				steam.Speed = NumberRange.new(10, 16)
+				rig.breaches[part] = steam
+				if Registry.AudioController then
+					Registry.AudioController.Loop(`breach_{part.Name}`, "SteamLeak", part)
+				end
+			elseif not active and emitter then
+				emitter:Destroy()
+				rig.breaches[part] = nil
+				if Registry.AudioController then
+					Registry.AudioController.StopLoop(`breach_{part.Name}`)
+				end
+			end
+		end
+	end
+end
+
+local function track(model: Model, live: boolean)
+	local rig = rigFor(model, live)
+	table.insert(rigs, rig)
+	if live then
+		model:GetAttributeChangedSignal("CoalFill"):Connect(function()
+			local fill: number = (model:GetAttribute("CoalFill") :: number?) or 0
+			for _, lump in rig.heap do
+				lump.Transparency = if (lump:GetAttribute("CoalTier") :: number) <= fill + 0.001 then 0 else 1
+			end
+		end)
+		for _, part in model:GetDescendants() do
+			if part:IsA("BasePart") and part:GetAttribute("BreachAnchor") then
+				part:GetAttributeChangedSignal("Breach"):Connect(function()
+					updateBreaches(rig)
+				end)
+			end
+		end
+	end
+end
+
+function TrainVisualsController.Init() end
+
+function TrainVisualsController.Start()
+	task.spawn(function()
+		local train = Workspace:WaitForChild("Train", 60) :: Model?
+		if train then
+			track(train, true)
+		end
+	end)
+	task.spawn(function()
+		local hall = Workspace:WaitForChild("DepotHall", 60)
+		local display = hall and hall:WaitForChild("DisplayTrain", 30) :: Model?
+		if display then
+			track(display, false)
+		end
+	end)
+
+	local spinParts: { BasePart } = {}
+	local spinFrames: { CFrame } = {}
+	RunService.RenderStepped:Connect(function(dt: number)
+		local speed = if Registry.SceneryController then Registry.SceneryController.Speed() else 0
+		angle += speed / 2.8 * dt
+		table.clear(spinParts)
+		table.clear(spinFrames)
+		for _, rig in rigs do
+			local rigSpeed = if rig.live then speed else 0
+			local theta = if rig.live then angle else 0
+			if rig.live then
+				for _, spin in rig.spins do
+					local a = theta * 2.8 / spin.radius
+					table.insert(spinParts, spin.part)
+					if spin.pivot then
+						local pivot = CFrame.new(spin.pivot)
+						table.insert(
+							spinFrames,
+							pivot * CFrame.Angles(0, 0, -a) * pivot:Inverse() * spin.base
+						)
+					else
+						table.insert(spinFrames, spin.base * CFrame.Angles(-a, 0, 0))
+					end
+				end
+				for _, rod in rig.rods do
+					local a = theta + rod.phase
+					local offset = Vector3.new(
+						rod.radius * math.cos(a) - rod.radius * math.cos(rod.phase),
+						-rod.radius * math.sin(a) + rod.radius * math.sin(rod.phase),
+						0
+					)
+					table.insert(spinParts, rod.part)
+					table.insert(spinFrames, rod.base + offset)
+				end
+			end
+			local doorsOpen = rig.model:GetAttribute("DoorsOpen") == true
+			rig.doorOpen = MathX.approach(rig.doorOpen, if doorsOpen then 1 else 0, dt * 1.6)
+			for _, door in rig.doors do
+				table.insert(spinParts, door.part)
+				table.insert(
+					spinFrames,
+					door.base * CFrame.new(door.slide * MathX.smoothstep(0, 1, rig.doorOpen), 0, 0)
+				)
+			end
+			if rig.smoke then
+				rig.smoke.Rate = 6 + rigSpeed * 0.3
+				rig.smoke.Acceleration = Vector3.new(-rigSpeed * 0.9, 3, 0)
+			end
+			if rig.firebox then
+				rig.firebox.Brightness = 1.8 + math.noise(os.clock() * 6) * 0.8
+			end
+		end
+		if #spinParts > 0 then
+			Workspace:BulkMoveTo(spinParts, spinFrames, Enum.BulkMoveMode.FireCFrameChanged)
+		end
+		-- cylinder puffs twice per wheel turn
+		if speed > 4 and angle - lastPuff > math.pi then
+			lastPuff = angle
+			for _, rig in rigs do
+				if rig.live then
+					for _, vent in rig.vents do
+						vent:Emit(6)
+					end
+				end
+			end
+		end
+	end)
+end
+
+return TrainVisualsController

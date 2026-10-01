@@ -1,0 +1,17 @@
+---
+base: roblox
+name: spec
+globals:
+  Shared:
+    any: true
+  describe:
+    args:
+      - type: string
+      - type: function
+  it:
+    args:
+      - type: string
+      - type: function
+  expect:
+    args:
+      - type: any

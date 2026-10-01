@@ -1,0 +1,4 @@
+# StyLua formats with Unix line endings; keep every checkout consistent with it.
+* text=auto eol=lf
+*.rbxm binary
+*.rbxl binary
