@@ -8,7 +8,8 @@
 
 	Each hazard parameter is a linear blend of its { atD0, atD1 } pair from
 	Config/Difficulty, then scaled by the archetype's hazard biases and by the
-	crew's train upgrades.
+	crew's train upgrades. Stops with big enterable buildings stay open longer and
+	draw more Hollows, in proportion to the building tiles they hold.
 ]]
 
 local Shared = script.Parent.Parent
@@ -18,6 +19,7 @@ local UpgradesConfig = require(Shared.Config.Upgrades)
 local Stations = require(Shared.Config.Stations)
 local MathX = require(Shared.Util.MathX)
 local Types = require(Shared.Types)
+local BuildingGen = require(script.Parent.BuildingGen)
 
 type Archetype = Stations.Archetype
 
@@ -64,10 +66,13 @@ function DifficultyModel.params(
 	local fogBias = math.max(bias.fog, 0.01)
 	local collapseBias = math.max(bias.collapse, 0.01)
 	local hollowBias = math.max(bias.hollows, 0.01)
+	local tiles = BuildingGen.tiles(archetype.landmarks)
+	local sizeDwell = 1 + Difficulty.SizeDwellPerTile * tiles
+	local sizeCap = 1 + Difficulty.SizeCapPerTile * tiles
 
 	return {
 		difficulty = d,
-		dwell = math.floor(blend(Difficulty.Dwell, d) * archetype.dwellMultiplier + 0.5),
+		dwell = math.floor(blend(Difficulty.Dwell, d) * archetype.dwellMultiplier * sizeDwell + 0.5),
 		lastCall = Tuning.Run.LastCallSeconds,
 		fogStartU = MathX.clamp(blend(Difficulty.FogStartU, d) / fogBias, 0.08, 0.9),
 		fogEndFraction = MathX.clamp(blend(Difficulty.FogEndFraction, d) / fogBias, 0.05, 1),
@@ -78,10 +83,10 @@ function DifficultyModel.params(
 		collapseLag = blend(Difficulty.CollapseLag, d) / collapseBias,
 		collapseWarn = blend(Difficulty.CollapseWarn, d),
 		collapseJitter = Difficulty.CollapseJitter,
-		spawnInterval = blend(Difficulty.SpawnInterval, d) / hollowBias,
+		spawnInterval = blend(Difficulty.SpawnInterval, d) / hollowBias / sizeCap,
 		spawnRamp = Difficulty.SpawnRamp,
 		firstSpawnU = blend(Difficulty.FirstSpawnU, d),
-		hollowCap = DifficultyModel.hollowCap(d, crewCount, bias.hollows),
+		hollowCap = DifficultyModel.hollowCap(d, crewCount, bias.hollows * sizeCap),
 		hollowWalk = blend(Difficulty.HollowWalk, d),
 		hollowChase = blend(Difficulty.HollowChase, d),
 		hollowDamage = math.floor(blend(Difficulty.HollowDamage, d) + 0.5),

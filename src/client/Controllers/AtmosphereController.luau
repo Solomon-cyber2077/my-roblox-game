@@ -25,6 +25,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Audio = require(Shared.Config.Audio)
 local Journey = require(Shared.Logic.Journey)
 local Omens = require(Shared.Logic.Omens)
 local MathX = require(Shared.Util.MathX)
@@ -68,6 +69,26 @@ local rays: SunRaysEffect
 local focus: DepthOfFieldEffect
 local heavens: Heavens.Rig
 local weathers: { [string]: Weather } = {}
+
+-- The near rain: showers drift through the run from its seed, so every client is rained
+-- on at the same moments. It falls in a square around the camera, splashes at the feet,
+-- and stops (and goes muffled) under any roof: a car, a building, a tunnel.
+local RAIN_AREA = 110
+local RAIN_FALL = 95
+local rainFolder: Folder
+local rainPart: BasePart
+local rainEmitter: ParticleEmitter
+local splashPart: BasePart
+local splashEmitter: ParticleEmitter
+local rainSound: Sound
+local rainMuffle: EqualizerSoundEffect
+local shelterParams = RaycastParams.new()
+shelterParams.FilterType = Enum.RaycastFilterType.Exclude
+shelterParams.IgnoreWater = true
+local sheltered = false
+local shelterCheckAt = 0
+local rainNow = 0
+local rainShown = 0
 local flareUntil = 0
 local hour = LOBBY_HOUR
 local omenNow: Omens.Omen? = nil
@@ -189,6 +210,115 @@ local WEATHER_KINDS: { { kind: string, fall: number, lifetime: number } } = {
 	{ kind = "Ash", fall = 6, lifetime = 5 },
 	{ kind = "Embers", fall = 3, lifetime = 4 },
 }
+
+local function rainLayer(name: string, size: Vector3): (BasePart, ParticleEmitter)
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Transparency = 1
+	part.Size = size
+	part.Parent = rainFolder
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Name = name
+	emitter.Rate = 0
+	emitter.LockedToPart = false
+	emitter.Parent = part
+	return part, emitter
+end
+
+local function buildRain()
+	rainFolder = Instance.new("Folder")
+	rainFolder.Name = "Rain"
+	rainFolder.Parent = Workspace
+
+	rainPart, rainEmitter = rainLayer("Showers", Vector3.new(RAIN_AREA, 1, RAIN_AREA))
+	rainEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	rainEmitter.EmissionDirection = Enum.NormalId.Bottom
+	rainEmitter.Orientation = Enum.ParticleOrientation.VelocityParallel
+	rainEmitter.Color = ColorSequence.new(rgb(186, 198, 214))
+	rainEmitter.Size = NumberSequence.new(0.09)
+	rainEmitter.Squash = NumberSequence.new(7)
+	rainEmitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.6),
+		NumberSequenceKeypoint.new(0.15, 0.3),
+		NumberSequenceKeypoint.new(1, 0.45),
+	})
+	rainEmitter.LightEmission = 0.15
+	rainEmitter.LightInfluence = 0.8
+	rainEmitter.Lifetime = NumberRange.new(0.55, 0.7)
+	rainEmitter.Speed = NumberRange.new(RAIN_FALL * 0.95, RAIN_FALL * 1.05)
+
+	splashPart, splashEmitter = rainLayer("Splashes", Vector3.new(46, 0.2, 46))
+	splashEmitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	splashEmitter.EmissionDirection = Enum.NormalId.Top
+	splashEmitter.Color = ColorSequence.new(rgb(206, 216, 228))
+	splashEmitter.Size =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.12), NumberSequenceKeypoint.new(1, 0.32) })
+	splashEmitter.Squash = NumberSequence.new(-0.6)
+	splashEmitter.Transparency =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+	splashEmitter.Lifetime = NumberRange.new(0.12, 0.22)
+	splashEmitter.Speed = NumberRange.new(2, 5)
+	splashEmitter.SpreadAngle = Vector2.new(60, 60)
+	splashEmitter.Acceleration = Vector3.new(0, -30, 0)
+
+	local cue = Audio.Rain
+	rainSound = Instance.new("Sound")
+	rainSound.Name = "Rain"
+	rainSound.SoundId = `rbxassetid://{cue.id}`
+	rainSound.Looped = true
+	rainSound.Volume = 0
+	rainSound.PlaybackSpeed = cue.pitch or 1
+	rainSound.Parent = rainFolder
+	rainMuffle = Instance.new("EqualizerSoundEffect")
+	rainMuffle.LowGain = 2
+	rainMuffle.MidGain = -4
+	rainMuffle.HighGain = 0
+	rainMuffle.Parent = rainSound
+	rainSound:Play()
+end
+
+-- How hard it rains at this point of the run, 0..1. Fronts drift past as the run goes on,
+-- the same for every client because they come from the seed and the run's progress.
+local function rainAt(seed: number, progress: number, dark: number): number
+	local front = math.noise(progress * 0.85 + (seed % 997) * 0.013, 0.37)
+	return MathX.saturate((front + 0.06) * 2.8) * (0.6 + 0.4 * dark)
+end
+
+local function updateRain(dt: number, camera: Vector3, ground: number, rain: number, wind: number)
+	local clock = os.clock()
+	if clock >= shelterCheckAt then
+		shelterCheckAt = clock + 0.2
+		local character = Players.LocalPlayer.Character
+		local ignore: { Instance } = { rainFolder }
+		if character then
+			table.insert(ignore, character)
+		end
+		for _, name in { "Hollows", "Heavens", "Weather" } do
+			local folder = Workspace:FindFirstChild(name)
+			if folder then
+				table.insert(ignore, folder)
+			end
+		end
+		shelterParams.FilterDescendantsInstances = ignore
+		sheltered = Workspace:Raycast(camera, Vector3.new(0, 90, 0), shelterParams) ~= nil
+	end
+	rainShown = MathX.lerp(rainShown, rain, MathX.damp(1.5, dt))
+	local near = if sheltered then 0 else rainShown
+	local tilt = math.atan2(wind, RAIN_FALL)
+	rainPart.CFrame = CFrame.new(camera.X + wind * 0.3, camera.Y + 30, camera.Z) * CFrame.Angles(0, 0, -tilt)
+	rainEmitter.Rate = 1100 * near
+	splashPart.CFrame = CFrame.new(camera.X, ground + 0.15, camera.Z)
+	splashEmitter.Rate = if wind > 20 then 0 else 240 * near
+	rainSound.Volume = Audio.Rain.volume * rainShown * (if sheltered then 0.55 else 1)
+	rainMuffle.HighGain = if sheltered then -30 else 0
+	-- a wet sheen on every surface while it pours
+	Lighting.EnvironmentSpecularScale = 0.6 + 0.45 * rainShown
+end
 
 local function buildWeather()
 	local folder = Instance.new("Folder")
@@ -318,6 +448,7 @@ end
 function AtmosphereController.Init()
 	buildLighting()
 	buildWeather()
+	buildRain()
 end
 
 function AtmosphereController.Start()
@@ -381,7 +512,10 @@ function AtmosphereController.Start()
 		local seed = Registry.StateController.Get({ "run", "seed" }) or 0
 		local omen = devOmen or (if inLobby then nil else Omens.at(seed, now, dark))
 		omenNow = omen
-		local storm = math.max(MathX.lerp(a.storm, b.storm, w), S.DryLightning * dark)
+		rainNow = if inLobby or scenery == nil
+			then 0
+			else rainAt(seed, scenery.progress, dark) * (1 - darkness)
+		local storm = math.max(MathX.lerp(a.storm, b.storm, w), S.DryLightning * dark, 0.45 * rainNow)
 		local strike = devStrike or Omens.omenStrike(omen, now) or Omens.strike(seed, now, storm)
 		if inLobby or darkness > 0.5 then
 			strike = nil
@@ -447,6 +581,8 @@ function AtmosphereController.Start()
 			rates[b.weather] = (rates[b.weather] or 0) + b.weatherRate * w * exposed
 		end
 		updateWeather(around, rates, speed)
+		local ground = if root then root.Position.Y - 3 else camera.CFrame.Position.Y - 5
+		updateRain(dt, camera.CFrame.Position, ground, rainNow, speed)
 	end
 
 	RunService.RenderStepped:Connect(function(dt)
@@ -461,6 +597,11 @@ end
 -- The omen under way, if any (the soundscape follows it).
 function AtmosphereController.Omen(): Omens.Omen?
 	return omenNow
+end
+
+-- How hard it is raining on the run right now, 0..1 (sheltered or not).
+function AtmosphereController.Rain(): number
+	return rainNow
 end
 
 -- How deep into the night the camera's run is: 0 at dusk and dawn, 1 at the darkest hour.

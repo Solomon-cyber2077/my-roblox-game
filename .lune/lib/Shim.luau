@@ -97,6 +97,10 @@ function Shim.install()
 			if name == "ReplicatedStorage" then
 				return { Shared = Loader.roots.Shared }
 			end
+			if name == "CollectionService" then
+				-- builders tag lamps for the client; headless there is no one to tell
+				return { AddTag = function() end }
+			end
 			error(`the Lune shim has no service {name}`)
 		end,
 	}

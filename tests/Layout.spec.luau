@@ -1,7 +1,8 @@
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Stations = require(Shared.Config.Stations)
 
-local ALL = { "Halt", "CoalYard", "SignalWorks", "Market", "Viaduct", "Minehead", "Terminus" }
+local ALL = table.clone(Stations.Order)
+table.insert(ALL, "Terminus")
 
 local function covers(plan)
 	local hits = {}
@@ -83,8 +84,39 @@ describe("LayoutGen", function()
 		for _, n in Stations.List.Halt.containers do
 			base += n
 		end
-		expect(#plan.containers).toBe(base)
-		expect(#plan2.containers).toBeGreaterThan(#plan.containers)
+		local function outdoors(p)
+			local count = 0
+			for _, c in p.containers do
+				if c.building == nil then
+					count += 1
+				end
+			end
+			return count
+		end
+		expect(outdoors(plan)).toBe(base)
+		expect(outdoors(plan2)).toBeGreaterThan(outdoors(plan))
+	end)
+
+	it("places every landmark the archetype asks for, with searchable rooms", function()
+		for _, id in ALL do
+			local wanted = #(Stations.List[id].landmarks or {})
+			local placed = 0
+			for seed = 1, 10 do
+				local plan = LayoutGen.generate(id, seed, 1)
+				placed += #plan.buildings
+				for _, building in plan.buildings do
+					local slab = plan.slabs[building.slab]
+					expect(slab.kind).toBe("Foundation")
+					expect(slab.building).toBe(building.id)
+				end
+				for _, c in plan.containers do
+					if c.building then
+						expect(plan.slabs[c.slab].building).toBe(c.building)
+					end
+				end
+			end
+			expect(placed / 10).toBeAtLeast(wanted * 0.9)
+		end
 	end)
 
 	it("places every structure the archetype asks for on typical seeds", function()

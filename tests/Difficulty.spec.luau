@@ -64,8 +64,15 @@ describe("DifficultyModel", function()
 		local halt = Stations.List.Halt
 		expect(DifficultyModel.hollowCap(0, 1, 1)).toBe(1)
 		expect(DifficultyModel.hollowCap(0.5, 4, 1)).toBe(6)
-		expect(DifficultyModel.hollowCap(1, 8, 1)).toBe(10)
-		expect(DifficultyModel.params(0.5, halt, 4, nil).hollowCap).toBe(5) -- 0.8 bias
+		expect(DifficultyModel.hollowCap(1, 8, 1)).toBe(11)
+		expect(DifficultyModel.params(0.5, halt, 4, nil).hollowCap).toBe(5) -- 0.8 bias, a small booking hall
+	end)
+
+	it("keeps big stops open longer and fuller than small ones", function()
+		local halt = DifficultyModel.params(0.5, Stations.List.Halt, 4, nil)
+		local school = DifficultyModel.params(0.5, Stations.List.Schoolhouse, 4, nil)
+		expect(school.dwell).toBeGreaterThan(halt.dwell * 1.4)
+		expect(school.hollowCap).toBeGreaterThan(halt.hollowCap)
 	end)
 
 	it("applies upgrades", function()
@@ -81,6 +88,7 @@ describe("DifficultyModel", function()
 
 	it("matches the published dwell range of 60 to 95 seconds before archetype scaling", function()
 		local neutral = table.clone(Stations.List.CoalYard)
+		neutral.landmarks = nil
 		expect(DifficultyModel.params(0, neutral, 1, nil).dwell).toBe(95)
 		expect(DifficultyModel.params(1, neutral, 1, nil).dwell).toBe(60)
 	end)

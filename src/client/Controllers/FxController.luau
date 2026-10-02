@@ -184,8 +184,15 @@ local function onFx(kind: string, data: { [string]: any }?)
 		flash(d.position, d.radius or 18)
 	elseif kind == "Hit" then
 		Overlay.pulse(Theme.Color.signal, 0.75, 0.6)
-		Registry.CameraController.Shake(0.7)
+		Registry.CameraController.Shake(if d.knockback then 1.2 else 0.7)
 		Registry.MovementController.ApplyHitSlow()
+		if typeof(d.knockback) == "Vector3" then
+			local character = Players.LocalPlayer.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if root then
+				root.AssemblyLinearVelocity += d.knockback
+			end
+		end
 		audio("Hit")
 	elseif kind == "FogTick" then
 		Overlay.pulse(Color3.fromRGB(110, 120, 104), 0.35, 0.4)
@@ -199,6 +206,8 @@ local function onFx(kind: string, data: { [string]: any }?)
 			3
 		)
 		audio("HollowSpawn", d.position)
+	elseif kind == "Sound" then
+		audio(d.cue, d.position)
 	elseif kind == "HollowStrike" then
 		audio("HollowStrike", d.position)
 	elseif kind == "Eliminated" then

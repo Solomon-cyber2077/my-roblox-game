@@ -154,10 +154,10 @@ local KEYS: { Key } = {
 	},
 	{ -- embers of the sunset
 		hour = 18.9,
-		brightness = 1.0,
-		exposure = 0.08,
-		ambient = rgb(50, 38, 50),
-		outdoor = rgb(92, 66, 82),
+		brightness = 1.25,
+		exposure = 0.16,
+		ambient = rgb(62, 50, 62),
+		outdoor = rgb(116, 90, 104),
 		shift = rgb(100, 52, 46),
 		air = rgb(162, 70, 58),
 		decay = rgb(54, 26, 46),
@@ -173,17 +173,17 @@ local KEYS: { Key } = {
 	},
 	{ -- the last light, a bruise
 		hour = 19.6,
-		brightness = 0.5,
-		exposure = 0.1,
-		ambient = rgb(38, 34, 50),
-		outdoor = rgb(64, 58, 86),
+		brightness = 0.95,
+		exposure = 0.26,
+		ambient = rgb(62, 58, 80),
+		outdoor = rgb(104, 98, 132),
 		shift = rgb(60, 50, 80),
 		air = rgb(92, 62, 98),
 		decay = rgb(34, 24, 48),
 		clouds = rgb(78, 58, 88),
 		rays = 0.01,
 		tint = rgb(234, 232, 255),
-		saturation = -0.12,
+		saturation = -0.06,
 		haze = 1.8,
 		density = 0.44,
 		cover = 0.08,
@@ -192,17 +192,17 @@ local KEYS: { Key } = {
 	},
 	{ -- night, the moon up and amber
 		hour = 22,
-		brightness = 0.3,
-		exposure = 0.16,
-		ambient = rgb(29, 28, 38),
-		outdoor = rgb(54, 50, 68),
+		brightness = 0.8,
+		exposure = 0.34,
+		ambient = rgb(60, 56, 74),
+		outdoor = rgb(110, 100, 124),
 		shift = rgb(120, 80, 64),
 		air = rgb(60, 44, 54),
 		decay = rgb(24, 20, 32),
 		clouds = rgb(56, 44, 56),
 		rays = 0,
 		tint = rgb(228, 226, 255),
-		saturation = -0.2,
+		saturation = -0.1,
 		haze = 1.5,
 		density = 0.44,
 		cover = 0.1,
@@ -211,17 +211,17 @@ local KEYS: { Key } = {
 	},
 	{ -- two in the morning: the blood moon, the darkest hour
 		hour = 26,
-		brightness = 0.28,
-		exposure = 0.16,
-		ambient = rgb(30, 26, 34),
-		outdoor = rgb(62, 48, 58),
+		brightness = 0.75,
+		exposure = 0.34,
+		ambient = rgb(66, 52, 62),
+		outdoor = rgb(122, 94, 106),
 		shift = rgb(150, 60, 52),
 		air = rgb(66, 32, 40),
 		decay = rgb(26, 14, 22),
 		clouds = rgb(54, 30, 38),
 		rays = 0,
 		tint = rgb(238, 220, 228),
-		saturation = -0.22,
+		saturation = -0.1,
 		haze = 1.4,
 		density = 0.46,
 		cover = 0.14,
@@ -230,10 +230,10 @@ local KEYS: { Key } = {
 	},
 	{ -- before dawn, the moon gone pale and low
 		hour = 28.9,
-		brightness = 0.5,
-		exposure = 0.14,
-		ambient = rgb(38, 38, 52),
-		outdoor = rgb(68, 68, 92),
+		brightness = 0.95,
+		exposure = 0.3,
+		ambient = rgb(64, 64, 86),
+		outdoor = rgb(112, 112, 144),
 		shift = rgb(60, 60, 80),
 		air = rgb(96, 90, 118),
 		decay = rgb(46, 40, 64),
@@ -366,8 +366,8 @@ local BLOOD_CLOUD = rgb(92, 16, 18)
 local BLOOD_DECAY = rgb(26, 4, 8)
 local DREAD_TINT = rgb(196, 214, 255)
 local FLASH = rgb(206, 204, 255)
-local TUNNEL_OUTDOOR = rgb(18, 18, 22)
-local DREAD = { saturation = 0.5, contrast = 0.2, tint = 0.5, density = 0.16, haze = 0.8, exposure = 0.12 }
+local TUNNEL_OUTDOOR = rgb(40, 38, 44)
+local DREAD = { saturation = 0.5, contrast = 0.2, tint = 0.5, density = 0.16, haze = 0.8, exposure = 0.05 }
 
 local function lerpColor(a: Color3, b: Color3, t: number): Color3
 	return a:Lerp(b, t)
@@ -644,7 +644,7 @@ function Sky.finish(state: State, tunnel: number, flash: number, red: boolean): 
 	local open = 1 - tunnel
 	local color = if red then BLOOD else FLASH
 	out.brightness = state.brightness * open + 3 * flash
-	out.exposure = state.exposure - 0.35 * tunnel
+	out.exposure = state.exposure - 0.18 * tunnel
 	out.ambient = state.ambient:Lerp(rgb(40, 34, 32), tunnel * 0.5)
 	out.outdoor = state.outdoor:Lerp(TUNNEL_OUTDOOR, tunnel)
 	out.density = MathX.lerp(state.density, 0.12, tunnel)

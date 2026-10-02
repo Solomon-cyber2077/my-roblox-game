@@ -133,6 +133,7 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 		rng = Random.new(info.layoutSeed % 2147483647),
 	}
 	Registry.HollowService.Configure(info.hazards)
+	Registry.HollowService.Prepare(plan)
 	connection = RunService.Heartbeat:Connect(step)
 end
 

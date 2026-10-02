@@ -26,10 +26,19 @@ return table.freeze({
 	SpawnInterval = table.freeze({ 14, 6 }), -- seconds between Hollow spawns at the start of the ramp
 	SpawnRamp = 2.5, -- spawn rate multiplier reached at departure: 1 + SpawnRamp
 	FirstSpawnU = table.freeze({ 0.40, 0.15 }),
-	HollowCap = table.freeze({ Base = 1, PerDifficulty = 5, PerExtraCrew = 0.6, Max = 10 }),
-	HollowWalk = table.freeze({ 9, 12 }),
-	HollowChase = table.freeze({ 17, 21 }),
-	HollowDamage = table.freeze({ 25, 40 }),
+	HollowCap = table.freeze({ Base = 1, PerDifficulty = 5, PerExtraCrew = 0.6, Max = 16 }),
+	HollowWalk = table.freeze({ 11, 14 }),
+	HollowChase = table.freeze({ 22, 26 }), -- between the crew's jog (20) and sprint (31)
+	HollowDamage = table.freeze({ 20, 32 }),
+	-- how often each kind of Hollow comes
+	HollowKinds = table.freeze({
+		Stalker = table.freeze({ 1, 0.55 }),
+		Crawler = table.freeze({ 0.18, 0.32 }),
+		Brute = table.freeze({ 0.04, 0.2 }),
+	}),
+	-- bigger stops take longer and hold more Hollows: per tile of enterable building
+	SizeDwellPerTile = 0.035, -- dwell multiplier added per building tile
+	SizeCapPerTile = 0.025, -- Hollow cap multiplier added per building tile
 
 	DepartureAccel = table.freeze({ 4, 6 }), -- studs per second squared
 	ChaseWindow = table.freeze({ 7, 5 }), -- seconds the boarding volume stays live while pulling out

@@ -14,12 +14,15 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
+local Buildings = require(Shared.Config.Buildings)
 local ItemModel = require(Shared.Visual.ItemModel)
 local Kit = require(Shared.Visual.Kit)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Loot = require(Shared.Config.Loot)
 local Stations = require(Shared.Config.Stations)
 
+local BuildingBuilder = require(script.Parent.BuildingBuilder)
+local FurnitureKit = require(script.Parent.FurnitureKit)
 local StructureKit = require(script.Parent.StructureKit)
 
 type Plan = LayoutGen.Plan
@@ -33,6 +36,7 @@ export type Built = {
 	slabParts: { [number]: BasePart },
 	containers: { [number]: ContainerHandle },
 	loose: { [number]: LooseHandle },
+	buildings: { [number]: BuildingBuilder.Handle },
 }
 
 local StationBuilder = {}
@@ -43,6 +47,9 @@ local TACTILE = Color3.fromRGB(226, 182, 58)
 local SLEEPER = Color3.fromRGB(74, 56, 40)
 local RAIL = Color3.fromRGB(120, 116, 112)
 local BALLAST = Color3.fromRGB(70, 66, 62)
+local EARTH = Color3.fromRGB(78, 62, 48)
+local DEEP_ROCK = Color3.fromRGB(46, 42, 40)
+local ROOT = Color3.fromRGB(58, 44, 34)
 
 local function material(name: string): Enum.Material
 	local ok, value = pcall(function()
@@ -127,6 +134,21 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			{ material = Enum.Material.Metal, collide = false }
 		)
 	end
+	-- the embankment carries on down under the bed, tapering into the dark
+	Kit.block(
+		track,
+		Vector3.new(plan.length - 2, 18, 13),
+		L(0, -23.75, trackZ - 0.5) * Kit.angles(0, 0.3, 0),
+		DEEP_ROCK,
+		{ material = Enum.Material.Slate }
+	)
+	Kit.block(
+		track,
+		Vector3.new(plan.length - 18, 22, 8),
+		L(0, -43.5, trackZ - 1) * Kit.angles(2, -0.4, 0),
+		Kit.shade(DEEP_ROCK, 0.8),
+		{ material = Enum.Material.Slate }
+	)
 	for _, part in track:GetChildren() do
 		if part:IsA("BasePart") then
 			Kit.weld(part, root)
@@ -174,13 +196,31 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 				ROCK,
 				{ material = Enum.Material.Rock }
 			)
-			for _, part in { coping, tactile, face, under } do
+			-- the platform's own keel: it is a cliff top, not a tray
+			local keel = Kit.block(
+				slabModel,
+				Vector3.new(slab.sizeX - 6, 26, slab.sizeZ - 3),
+				L(slab.x, -26.5, slab.z + 1) * Kit.angles(0, 0.4, 0),
+				DEEP_ROCK,
+				{ material = Enum.Material.Slate }
+			)
+			local root2 = Kit.block(
+				slabModel,
+				Vector3.new(slab.sizeX - 30, 30, slab.sizeZ - 10),
+				L(slab.x, -54, slab.z + 2) * Kit.angles(3, -0.6, 0),
+				Kit.shade(DEEP_ROCK, 0.75),
+				{ material = Enum.Material.Slate }
+			)
+			for _, part in { coping, tactile, face, under, keel, root2 } do
 				Kit.weld(part, top)
 			end
 		else
 			local foundation = slab.kind == "Foundation"
-			local color = if foundation
-				then Kit.shade(palette.ground, 0.82)
+			local building = if slab.building then plan.buildings[slab.building] else nil
+			local floorDef = if building then Buildings.Defs[building.kind] else nil
+			local color = if floorDef
+				then Kit.rgb(floorDef.floor)
+				elseif foundation then Kit.shade(palette.ground, 0.82)
 				else Kit.jitter(palette.ground, 0.07, rng:NextNumber())
 			top = Kit.block(
 				slabModel,
@@ -188,18 +228,75 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 				L(slab.x, -1, slab.z),
 				color,
 				{
-					material = if foundation then Enum.Material.Concrete else groundMaterial,
+					material = if floorDef
+						then material(floorDef.floorMaterial)
+						elseif foundation then Enum.Material.Concrete
+						else groundMaterial,
 				}
 			)
-			local depth = 4 + rng:NextNumber() * 10 + (slab.z / plan.depth) * 6
+			-- earth under the ground, then a narrower keel of rock: the island reads as land
+			-- torn out of the country, not a tray, and each slab takes its share down with it
+			local depth = 8 + rng:NextNumber() * 8 + (slab.z / plan.depth) * 6
 			local under = Kit.block(
 				slabModel,
 				Vector3.new(slab.sizeX - 0.8, depth, slab.sizeZ - 0.8),
 				L(slab.x, -2 - depth / 2, slab.z) * Kit.angles(0, rng:NextNumber() * 6 - 3, 0),
-				Kit.jitter(ROCK, 0.12, rng:NextNumber()),
-				{ material = Enum.Material.Rock }
+				Kit.jitter(EARTH, 0.12, rng:NextNumber()),
+				{ material = Enum.Material.Ground }
 			)
 			Kit.weld(under, top)
+			local keelDepth = 12 + rng:NextNumber() * 18
+			local keel = Kit.block(
+				slabModel,
+				Vector3.new((slab.sizeX - 0.8) * 0.7, keelDepth, (slab.sizeZ - 0.8) * 0.7),
+				L(
+					slab.x + rng:NextNumber() * 2 - 1,
+					-2 - depth + 0.6 - keelDepth / 2,
+					slab.z + rng:NextNumber() * 2 - 1
+				)
+					* Kit.angles(rng:NextNumber() * 8 - 4, rng:NextNumber() * 40, rng:NextNumber() * 8 - 4),
+				Kit.jitter(DEEP_ROCK, 0.12, rng:NextNumber()),
+				{ material = Enum.Material.Slate }
+			)
+			Kit.weld(keel, top)
+			local edge = slab.gx == 0 or slab.gx + slab.w == plan.cols or slab.gz + slab.d == plan.rows
+			if edge then
+				-- the torn edge shows: rock teeth and roots hanging into the drop
+				if rng:NextNumber() < 0.7 then
+					local s = 3 + rng:NextNumber() * 4
+					local long = 10 + rng:NextNumber() * 16
+					local tooth = Kit.wedge(
+						slabModel,
+						Vector3.new(s, long, s * 1.3),
+						L(
+							slab.x + rng:NextNumber() * 4 - 2,
+							-2 - depth - keelDepth * 0.6 - long / 2,
+							slab.z + rng:NextNumber() * 4 - 2
+						) * Kit.angles(180, rng:NextNumber() * 360, rng:NextNumber() * 10 - 5),
+						Kit.jitter(DEEP_ROCK, 0.1, rng:NextNumber()),
+						{ material = Enum.Material.Slate }
+					)
+					Kit.weld(tooth, top)
+				end
+				for _ = 1, rng:NextInteger(1, 3) do
+					local long = 5 + rng:NextNumber() * 10
+					local root3 = Kit.cylinder(
+						slabModel,
+						long,
+						0.3 + rng:NextNumber() * 0.3,
+						L(
+							slab.x + rng:NextNumber() * 10 - 5,
+							-2 - rng:NextNumber() * depth * 0.6 - long / 2,
+							slab.z + rng:NextNumber() * 10 - 5
+						)
+							* Kit.angles(0, rng:NextNumber() * 360, 0)
+							* Kit.angles(0, 0, 90 + rng:NextNumber() * 30 - 15),
+						ROOT,
+						{ material = Enum.Material.Wood, collide = false }
+					)
+					Kit.weld(root3, top)
+				end
+			end
 			if plan.archetype == "Viaduct" and slab.gz == plan.rows - 1 then
 				local parapet = Kit.block(
 					slabModel,
@@ -249,23 +346,51 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 		attachTo(piece, structure.slab)
 	end
 
+	-- Enterable buildings ---------------------------------------------------------------------------
+	local buildings: { [number]: BuildingBuilder.Handle } = {}
+	for _, building in plan.buildings do
+		local piece = Kit.model(building.kind, model)
+		buildings[building.id] = BuildingBuilder.build(
+			building.plan,
+			piece,
+			L(building.x, 0, building.z),
+			palette.accent,
+			plan.seed + building.id * 7919
+		)
+		attachTo(piece, building.slab)
+	end
+
 	-- Containers ---------------------------------------------------------------------------------
 	local containers: { [number]: ContainerHandle } = {}
 	for _, def in plan.containers do
 		local piece = Kit.model(`Container_{def.id}`, model)
-		local promptPart = StructureKit.container(def.kind, {
-			parent = piece,
-			base = slabParts[def.slab],
-			frame = L(def.x, 0, def.z) * Kit.angles(0, def.rot, 0),
-			width = 4,
-			depth = 4,
-			palette = palette,
-			rng = Random.new(def.id * 104729 + plan.seed % 99991),
-		})
+		local frame = L(def.x, 0, def.z) * Kit.angles(0, def.rot, 0)
+		local containerRng = Random.new(def.id * 104729 + plan.seed % 99991)
+		local look = def.look
+		local promptPart = if look
+			then FurnitureKit.build(
+				look,
+				{ parent = piece, frame = frame, rng = containerRng, accent = palette.accent }
+			)
+			else StructureKit.container(def.kind, {
+				parent = piece,
+				base = slabParts[def.slab],
+				frame = frame,
+				width = 4,
+				depth = 4,
+				palette = palette,
+				rng = containerRng,
+			})
 		promptPart.Name = "PromptPart"
 		piece.PrimaryPart = promptPart
 		piece:SetAttribute("ContainerKind", def.kind)
-		piece:SetAttribute("ContainerName", Loot.Containers[def.kind].name)
+		piece:SetAttribute(
+			"ContainerName",
+			if look then Buildings.Furniture[look].name else Loot.Containers[def.kind].name
+		)
+		if def.building then
+			piece:SetAttribute("Building", def.building)
+		end
 		piece:SetAttribute("Zone", def.zone)
 		attachTo(piece, def.slab)
 		containers[def.id] = { def = def, promptPart = promptPart, model = piece }
@@ -318,6 +443,7 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 		slabParts = slabParts,
 		containers = containers,
 		loose = loose,
+		buildings = buildings,
 	}
 end
 

@@ -6,12 +6,18 @@
 	hazard:     multipliers on collapse speed, fog reach and Hollow pressure
 	containers: base container counts before difficulty scaling
 	structures: blocking buildings (footprint in tiles) and props
+	landmarks:  enterable buildings (Config/Buildings) the crew search room by room
 	palette:    RGB colours the builder uses for ground, accent and trim
 ]]
 
 export type StructureRule = {
 	kind: string,
 	count: number,
+	zones: { string },
+}
+
+export type LandmarkRule = {
+	kind: string,
 	zones: { string },
 }
 
@@ -30,6 +36,7 @@ export type Archetype = {
 	containers: { [string]: number },
 	looseItems: number,
 	structures: { StructureRule },
+	landmarks: { LandmarkRule }?,
 	lampSpacing: number,
 	ground: string,
 	palette: { ground: { number }, accent: { number }, trim: { number }, light: { number } },
@@ -49,12 +56,14 @@ local Archetypes: { [string]: Archetype } = {
 		hint = "Balanced haul",
 		loot = { coal = 1.0, parts = 1.0, relic = 0.8, tools = 1.0 },
 		hazard = { collapse = 0.9, fog = 1.0, hollows = 0.8 },
-		containers = { Crate = 8, Locker = 3, CoalBin = 2, ToolChest = 1, Vault = 1 },
+		containers = { Crate = 6, CoalBin = 2, ToolChest = 1 },
 		looseItems = 6,
 		structures = {
-			{ kind = "StationHouse", count = 1, zones = { "Near", "Mid" } },
 			{ kind = "Shed", count = 3, zones = { "Mid", "Far" } },
 			{ kind = "WaterTower", count = 1, zones = { "Far" } },
+		},
+		landmarks = {
+			{ kind = "BookingHall", zones = { "Near", "Mid" } },
 		},
 		lampSpacing = 36,
 		ground = "Cobblestone",
@@ -77,13 +86,16 @@ local Archetypes: { [string]: Archetype } = {
 		hint = "Coal-rich",
 		loot = { coal = 2.2, parts = 0.7, relic = 0.7, tools = 0.8 },
 		hazard = { collapse = 1.25, fog = 1.0, hollows = 0.9 },
-		containers = { Crate = 6, Locker = 2, CoalBin = 7, ToolChest = 1, Vault = 1 },
+		containers = { Crate = 5, CoalBin = 6, ToolChest = 1, Vault = 1 },
 		looseItems = 12,
 		structures = {
 			{ kind = "CoalTower", count = 1, zones = { "Mid" } },
-			{ kind = "CoalHeap", count = 5, zones = { "Mid", "Far" } },
+			{ kind = "CoalHeap", count = 4, zones = { "Mid", "Far" } },
 			{ kind = "Hopper", count = 3, zones = { "Near", "Mid" } },
-			{ kind = "Shed", count = 2, zones = { "Far" } },
+			{ kind = "Shed", count = 1, zones = { "Far" } },
+		},
+		landmarks = {
+			{ kind = "BoilerHouse", zones = { "Mid", "Far" } },
 		},
 		lampSpacing = 42,
 		ground = "Slate",
@@ -106,10 +118,13 @@ local Archetypes: { [string]: Archetype } = {
 		hint = "Parts-rich",
 		loot = { coal = 0.7, parts = 2.2, relic = 0.9, tools = 1.2 },
 		hazard = { collapse = 0.9, fog = 1.0, hollows = 1.3 },
-		containers = { Crate = 6, Locker = 3, CoalBin = 1, ToolChest = 5, Vault = 1 },
+		containers = { Crate = 5, CoalBin = 1, ToolChest = 3, Vault = 1 },
 		looseItems = 6,
+		landmarks = {
+			{ kind = "Workshop", zones = { "Mid" } },
+		},
 		structures = {
-			{ kind = "Workshop", count = 4, zones = { "Mid", "Far" } },
+			{ kind = "Workshop", count = 2, zones = { "Mid", "Far" } },
 			{ kind = "SignalBox", count = 1, zones = { "Near" } },
 			{ kind = "CableDrums", count = 4, zones = { "Near", "Mid", "Far" } },
 		},
@@ -134,10 +149,13 @@ local Archetypes: { [string]: Archetype } = {
 		hint = "Relics",
 		loot = { coal = 0.9, parts = 0.9, relic = 1.8, tools = 1.1 },
 		hazard = { collapse = 1.0, fog = 1.25, hollows = 1.0 },
-		containers = { Crate = 9, Locker = 2, CoalBin = 1, ToolChest = 1, Vault = 3 },
+		containers = { Crate = 7, CoalBin = 1, ToolChest = 1, Vault = 2 },
 		looseItems = 6,
+		landmarks = {
+			{ kind = "GeneralStore", zones = { "Mid" } },
+		},
 		structures = {
-			{ kind = "Stall", count = 12, zones = { "Near", "Mid", "Far" } },
+			{ kind = "Stall", count = 9, zones = { "Near", "Mid", "Far" } },
 			{ kind = "Fountain", count = 1, zones = { "Mid" } },
 		},
 		lampSpacing = 30,
@@ -161,11 +179,14 @@ local Archetypes: { [string]: Archetype } = {
 		hint = "Relics, fragile ground",
 		loot = { coal = 1.0, parts = 1.0, relic = 2.0, tools = 1.4 },
 		hazard = { collapse = 1.5, fog = 0.9, hollows = 0.9 },
-		containers = { Crate = 6, Locker = 2, CoalBin = 2, ToolChest = 2, Vault = 2 },
+		containers = { Crate = 5, CoalBin = 2, ToolChest = 2, Vault = 1 },
 		looseItems = 6,
 		structures = {
-			{ kind = "SignalBox", count = 2, zones = { "Mid", "Far" } },
-			{ kind = "Shed", count = 2, zones = { "Far" } },
+			{ kind = "SignalBox", count = 1, zones = { "Mid", "Far" } },
+			{ kind = "Shed", count = 1, zones = { "Far" } },
+		},
+		landmarks = {
+			{ kind = "Chapel", zones = { "Mid", "Far" } },
 		},
 		lampSpacing = 30,
 		ground = "Brick",
@@ -188,13 +209,16 @@ local Archetypes: { [string]: Archetype } = {
 		hint = "Coal and parts",
 		loot = { coal = 1.8, parts = 1.6, relic = 1.0, tools = 1.0 },
 		hazard = { collapse = 1.0, fog = 1.2, hollows = 1.5 },
-		containers = { Crate = 6, Locker = 2, CoalBin = 4, ToolChest = 3, Vault = 1 },
+		containers = { Crate = 5, CoalBin = 4, ToolChest = 2, Vault = 1 },
 		looseItems = 8,
 		structures = {
 			{ kind = "Headframe", count = 1, zones = { "Mid" } },
 			{ kind = "TunnelMouth", count = 1, zones = { "Far" } },
-			{ kind = "Shed", count = 3, zones = { "Near", "Mid" } },
+			{ kind = "Shed", count = 2, zones = { "Near", "Mid" } },
 			{ kind = "CoalHeap", count = 2, zones = { "Mid", "Far" } },
+		},
+		landmarks = {
+			{ kind = "LampRoom", zones = { "Near", "Mid" } },
 		},
 		lampSpacing = 36,
 		ground = "Ground",
@@ -203,6 +227,125 @@ local Archetypes: { [string]: Archetype } = {
 			accent = { 140, 98, 58 },
 			trim = { 46, 40, 34 },
 			light = { 255, 176, 100 },
+		},
+	},
+	Schoolhouse = {
+		id = "Schoolhouse",
+		name = "Ashgrove",
+		tier = 2,
+		minStation = 2,
+		weight = 1.1,
+		length = 300,
+		depth = 192,
+		dwellMultiplier = 1.0,
+		hint = "A whole school to search",
+		loot = { coal = 1.2, parts = 1.1, relic = 1.3, tools = 1.0 },
+		hazard = { collapse = 0.9, fog = 1.0, hollows = 1.0 },
+		containers = { Crate = 3, CoalBin = 2, ToolChest = 1 },
+		looseItems = 6,
+		structures = {
+			{ kind = "Shed", count = 2, zones = { "Far" } },
+			{ kind = "WaterTower", count = 1, zones = { "Far" } },
+		},
+		landmarks = {
+			{ kind = "School", zones = { "Mid" } },
+		},
+		lampSpacing = 36,
+		ground = "Pavement",
+		palette = {
+			ground = { 124, 118, 108 },
+			accent = { 128, 52, 46 },
+			trim = { 54, 50, 48 },
+			light = { 255, 204, 140 },
+		},
+	},
+	Infirmary = {
+		id = "Infirmary",
+		name = "Brannoc Infirmary",
+		tier = 2,
+		minStation = 3,
+		weight = 0.9,
+		length = 288,
+		depth = 180,
+		dwellMultiplier = 1.0,
+		hint = "Tonics, tools, a locked dispensary",
+		loot = { coal = 0.9, parts = 1.0, relic = 1.1, tools = 1.8 },
+		hazard = { collapse = 1.0, fog = 1.1, hollows = 1.1 },
+		containers = { Crate = 3, CoalBin = 2, ToolChest = 1 },
+		looseItems = 5,
+		structures = {
+			{ kind = "Shed", count = 2, zones = { "Mid", "Far" } },
+		},
+		landmarks = {
+			{ kind = "Clinic", zones = { "Mid" } },
+		},
+		lampSpacing = 30,
+		ground = "Concrete",
+		palette = {
+			ground = { 140, 138, 130 },
+			accent = { 92, 104, 96 },
+			trim = { 62, 64, 62 },
+			light = { 236, 240, 255 },
+		},
+	},
+	RailwayHotel = {
+		id = "RailwayHotel",
+		name = "Gallowmere Junction",
+		tier = 3,
+		minStation = 4,
+		weight = 0.9,
+		length = 312,
+		depth = 192,
+		dwellMultiplier = 1.0,
+		hint = "Guest rooms and a coal cellar",
+		loot = { coal = 1.4, parts = 1.0, relic = 1.6, tools = 1.0 },
+		hazard = { collapse = 1.1, fog = 1.0, hollows = 1.25 },
+		containers = { Crate = 3, CoalBin = 2, ToolChest = 1 },
+		looseItems = 6,
+		structures = {
+			{ kind = "Shed", count = 2, zones = { "Far" } },
+			{ kind = "Fountain", count = 1, zones = { "Near", "Mid" } },
+		},
+		landmarks = {
+			{ kind = "Hotel", zones = { "Mid" } },
+		},
+		lampSpacing = 30,
+		ground = "Brick",
+		palette = {
+			ground = { 140, 102, 84 },
+			accent = { 52, 74, 60 },
+			trim = { 70, 50, 42 },
+			light = { 255, 196, 128 },
+		},
+	},
+	PostTown = {
+		id = "PostTown",
+		name = "Wickham Cross",
+		tier = 3,
+		minStation = 5,
+		weight = 0.9,
+		length = 324,
+		depth = 192,
+		dwellMultiplier = 0.95,
+		hint = "A strongroom full of relics",
+		loot = { coal = 1.0, parts = 1.3, relic = 1.8, tools = 1.1 },
+		hazard = { collapse = 1.1, fog = 1.15, hollows = 1.2 },
+		containers = { Crate = 3, CoalBin = 2, ToolChest = 1 },
+		looseItems = 6,
+		structures = {
+			{ kind = "Stall", count = 4, zones = { "Near", "Mid" } },
+		},
+		landmarks = {
+			{ kind = "PostOffice", zones = { "Mid" } },
+			{ kind = "GeneralStore", zones = { "Near", "Mid", "Far" } },
+		},
+		lampSpacing = 30,
+		ground = "Cobblestone",
+		palette = {
+			ground = { 130, 120, 108 },
+			accent = { 120, 40, 36 },
+			trim = { 60, 54, 50 },
+			light = { 255, 190, 120 },
 		},
 	},
 	Terminus = {
@@ -259,5 +402,16 @@ end
 return table.freeze({
 	List = table.freeze(Archetypes),
 	Footprints = table.freeze(Footprints),
-	Order = table.freeze({ "Halt", "CoalYard", "SignalWorks", "Market", "Viaduct", "Minehead" }),
+	Order = table.freeze({
+		"Halt",
+		"CoalYard",
+		"SignalWorks",
+		"Market",
+		"Viaduct",
+		"Minehead",
+		"Schoolhouse",
+		"Infirmary",
+		"RailwayHotel",
+		"PostTown",
+	}),
 })

@@ -213,15 +213,17 @@ for _, id in archetypes do
 	})
 end
 
-table.insert(targets, {
-	name = "Hollow",
-	budget = { parts = 40, lights = 2, shadows = 0, emitters = 3 },
-	build = function()
-		local model = HollowBuilder.build(CFrame.new(0, 5, 0))
-		solveJoints(model)
-		return { { instance = model } }
-	end,
-})
+for _, kind in HollowBuilder.Kinds do
+	table.insert(targets, {
+		name = `Hollow/{kind}`,
+		budget = { parts = 80, lights = 1, shadows = 0, emitters = 3 },
+		build = function()
+			local model = HollowBuilder.build(CFrame.new(0, 5, 0), kind)
+			solveJoints(model)
+			return { { instance = model } }
+		end,
+	})
+end
 
 table.insert(targets, {
 	name = "Items",

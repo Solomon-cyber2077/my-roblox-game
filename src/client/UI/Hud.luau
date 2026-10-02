@@ -285,8 +285,8 @@ function Hud.mount(gui: ScreenGui)
 	})
 	backpackHint.Parent = backpack
 	local staminaFrame, setStamina = Ui.meter({
-		Size = UDim2.new(1, 0, 0, 4),
-		Position = UDim2.fromOffset(0, -14),
+		Size = UDim2.new(1, 0, 0, 8),
+		Position = UDim2.fromOffset(0, -18),
 		FillColor = Theme.Color.sky,
 	})
 	staminaFrame.Parent = backpack
@@ -572,7 +572,10 @@ function Hud.mount(gui: ScreenGui)
 
 		local movement = Registry.MovementController
 		if movement then
-			setStamina(movement.StaminaFraction(), nil, true)
+			local fraction = movement.StaminaFraction()
+			local color = if movement.IsExhausted() then Color3.fromRGB(214, 86, 64) else Theme.Color.sky
+			staminaFrame.Visible = fraction < 0.999 or movement.IsSprinting()
+			setStamina(fraction, color, true)
 		end
 	end)
 end
