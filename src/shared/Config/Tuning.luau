@@ -196,6 +196,29 @@ local Tuning = {
 		},
 	},
 
+	-- Omens and storms in the night sky (Logic/Omens). Every client rolls the same schedule
+	-- from the run seed and the server clock. `dark` is how deep into the night the run is:
+	-- 0 at dusk and dawn, 1 at the darkest hour (Scenery/Sky).
+	Sky = {
+		OmenSlot = 45, -- seconds of server time per omen roll; an omen never crosses its slot
+		OmenChance = { 0.2, 0.6 }, -- chance of an omen per slot at the edge of night, and at its depth
+		OmenMinDark = 0.25, -- none in the dusk or the dawn
+		Omens = {
+			{ kind = "Hush", weight = 1.0, duration = 6, minDark = 0.25 }, -- every sound dies away
+			{ kind = "TallOnes", weight = 1.0, duration = 6, minDark = 0.35 }, -- lightning shows figures
+			{ kind = "Blink", weight = 1.1, duration = 2.4, minDark = 0.5 }, -- the moon closes, and opens
+			{ kind = "Bleed", weight = 0.8, duration = 10, minDark = 0.55 }, -- the sky floods red
+			{ kind = "Eye", weight = 0.5, duration = 8, minDark = 0.8 }, -- the moon looks down
+		},
+		RevealAt = { 0.08, 0.42, 0.74 }, -- TallOnes: lightning at these shares of the omen
+		StrikeSlot = 3, -- seconds per lightning roll
+		StrikeChance = 0.55, -- chance of a strike per slot in a full storm
+		StrikeSeconds = 1.1, -- a strike's flicker
+		StrikeRange = { 1500, 6500 }, -- studs from the train
+		ThunderSpeed = 1200, -- studs per second
+		DryLightning = 0.2, -- storm level every biome reaches at the darkest hour: far-off flickers
+	},
+
 	Camera = {
 		MinZoom = 0.5, -- first person
 		MaxZoom = 30,

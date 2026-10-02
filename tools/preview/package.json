@@ -1,0 +1,12 @@
+{
+  "name": "last-train-out-preview",
+  "private": true,
+  "type": "module",
+  "description": "Draws `lune run preview` exports with three.js in headless Chromium: stills, ride videos and a live viewer.",
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

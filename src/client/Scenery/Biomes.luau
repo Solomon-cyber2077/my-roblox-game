@@ -1,8 +1,9 @@
 --!strict
 --[[
 	How each biome looks and what its air is like. The landscape builders read
-	the ground, relief and prop tables; AtmosphereController reads the weather,
-	clouds and air tint. Biome ids come from Logic/Journey.
+	the ground, relief and prop tables; the sky (Scenery/Sky, AtmosphereController)
+	reads the weather, storms, clouds, air tint and the glow on the night horizon.
+	Biome ids come from Logic/Journey.
 
 	The palette is stylised, not photographic: an autumn countryside going to
 	ruin, pitched a little richer than life so it survives the dusk and night
@@ -40,7 +41,9 @@ export type Def = {
 	-- the air
 	weather: string,
 	weatherRate: number,
-	storm: boolean,
+	storm: number, -- 0..1: how often lightning strikes (Logic/Omens)
+	glow: number, -- 0..1: fires, furnaces or worse lighting the night horizon (Scenery/Heavens)
+	glowColor: Color3,
 	cloudCover: number,
 	cloudDensity: number,
 	cloudColor: Color3,
@@ -64,7 +67,7 @@ local AUTUMN = {
 local EERIE: { Weighted } = {
 	{ kind = "Grave", weight = 1.2 },
 	{ kind = "LanternPost", weight = 0.8 },
-	{ kind = "LoneHollow", weight = 0.35 },
+	{ kind = "LoneHollow", weight = 0.7 }, -- something standing out there, twice as often
 	{ kind = "Cart", weight = 0.8 },
 	{ kind = "DeadTree", weight = 1 },
 }
@@ -113,7 +116,9 @@ local Defs: { [string]: Def } = {
 		sea = false,
 		weather = "Ash",
 		weatherRate = 22,
-		storm = false,
+		storm = 0.25,
+		glow = 0.45,
+		glowColor = rgb(255, 112, 54),
 		cloudCover = 0.66,
 		cloudDensity = 0.48,
 		cloudColor = rgb(176, 162, 156),
@@ -173,7 +178,9 @@ local Defs: { [string]: Def } = {
 		sea = false,
 		weather = "None",
 		weatherRate = 0,
-		storm = false,
+		storm = 0.2,
+		glow = 0.35,
+		glowColor = rgb(255, 124, 62),
 		cloudCover = 0.52,
 		cloudDensity = 0.38,
 		cloudColor = rgb(226, 204, 186),
@@ -221,7 +228,9 @@ local Defs: { [string]: Def } = {
 		sea = false,
 		weather = "Ash",
 		weatherRate = 70,
-		storm = false,
+		storm = 0.35,
+		glow = 0.7,
+		glowColor = rgb(255, 136, 56),
 		cloudCover = 0.84,
 		cloudDensity = 0.62,
 		cloudColor = rgb(118, 102, 92),
@@ -266,7 +275,9 @@ local Defs: { [string]: Def } = {
 		sea = false,
 		weather = "Embers",
 		weatherRate = 45,
-		storm = false,
+		storm = 0.45,
+		glow = 1,
+		glowColor = rgb(255, 86, 38),
 		cloudCover = 0.78,
 		cloudDensity = 0.58,
 		cloudColor = rgb(150, 96, 80),
@@ -312,7 +323,9 @@ local Defs: { [string]: Def } = {
 		sea = false,
 		weather = "Rain",
 		weatherRate = 160,
-		storm = true,
+		storm = 1,
+		glow = 0.3,
+		glowColor = rgb(126, 178, 150),
 		cloudCover = 0.92,
 		cloudDensity = 0.72,
 		cloudColor = rgb(124, 128, 140),
@@ -351,7 +364,9 @@ local Defs: { [string]: Def } = {
 		sea = false,
 		weather = "Snow",
 		weatherRate = 120,
-		storm = false,
+		storm = 0.35,
+		glow = 0.25,
+		glowColor = rgb(136, 168, 204),
 		cloudCover = 0.72,
 		cloudDensity = 0.52,
 		cloudColor = rgb(214, 220, 234),
@@ -391,7 +406,9 @@ local Defs: { [string]: Def } = {
 		sea = true,
 		weather = "None",
 		weatherRate = 0,
-		storm = false,
+		storm = 0,
+		glow = 0.12,
+		glowColor = rgb(255, 142, 92),
 		cloudCover = 0.5,
 		cloudDensity = 0.35,
 		cloudColor = rgb(255, 214, 192),

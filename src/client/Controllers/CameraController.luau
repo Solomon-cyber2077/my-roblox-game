@@ -31,6 +31,8 @@ local TRAIN_MIN_X, TRAIN_MAX_X = -97, 97
 
 local trauma = 0
 local fov = 70
+local throb = 0 -- a heartbeat's squeeze, decaying
+local THROB_FOV = 2.6 -- degrees the view narrows at a full throb
 local spectateTarget: Player? = nil
 local resetSerial = 0
 
@@ -177,13 +179,20 @@ function CameraController.Start()
 			+ (if sprinting then 7 else 0)
 			+ (if phase == "LastCall" or phase == "Departure" then 3 else 0)
 		fov = MathX.lerp(fov, target, MathX.damp(0.12, dt))
-		camera.FieldOfView = fov
+		-- a heartbeat squeezes the view for an instant
+		throb *= math.exp(-dt * 9)
+		camera.FieldOfView = fov - THROB_FOV * throb
 	end)
 end
 
 -- Adds a one-off shake. 0.3 is a nudge, 1 is a heavy hit.
 function CameraController.Shake(amount: number)
 	trauma = math.min(trauma + amount, 1.2)
+end
+
+-- A heartbeat's throb (0..1): the view narrows for an instant and eases back.
+function CameraController.Pulse(amount: number)
+	throb = math.max(throb, math.min(amount, 1))
 end
 
 function CameraController.SetSpectateTarget(player: Player?)

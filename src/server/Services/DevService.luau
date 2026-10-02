@@ -15,6 +15,12 @@
 	  hollow               spawn a Hollow near you
 	  coal <n> / parts <n> set train stores
 	  state                print run, crew, train and backpack to the output
+	  sky <hour> | sky     pin every client's sky to an hour (26 is two in the morning), or free it
+	  omen <kind>          every client sees an omen now: Hush, TallOnes, Blink, Bleed or Eye
+	  strike               a lightning strike now
+
+	The sky commands set attributes on ReplicatedStorage that AtmosphereController reads in
+	Studio only (DevSkyHour, DevOmen, DevStrike).
 ]]
 
 local Players = game:GetService("Players")
@@ -131,6 +137,28 @@ Commands.state = function(player)
 			`[Dev] position {r.Position} stationLocal={localPos} hollows={Registry.HollowService.Count()} safeStrip={Tuning.World.SafeStrip}`
 		)
 	end
+end
+
+Commands.sky = function(_, args)
+	local hour = tonumber(args[1])
+	ReplicatedStorage:SetAttribute("DevSkyHour", hour)
+	print(`[Dev] sky {if hour then `pinned at {hour}` else "follows the run"}`)
+end
+
+Commands.omen = function(_, args)
+	local kind = args[1] or "Blink"
+	for _, spec in Tuning.Sky.Omens do
+		if spec.kind == kind then
+			ReplicatedStorage:SetAttribute("DevOmen", `{kind}@{workspace:GetServerTimeNow() + 0.5}`)
+			print(`[Dev] omen {kind}`)
+			return
+		end
+	end
+	print(`[Dev] unknown omen {kind}`)
+end
+
+Commands.strike = function()
+	ReplicatedStorage:SetAttribute("DevStrike", workspace:GetServerTimeNow() + 0.2)
 end
 
 function DevService.IsGod(player: Player): boolean
