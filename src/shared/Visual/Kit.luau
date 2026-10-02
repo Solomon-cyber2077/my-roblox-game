@@ -222,4 +222,20 @@ function Kit.angles(x: number, y: number, z: number): CFrame
 	return CFrame.Angles(RAD(x), RAD(y), RAD(z))
 end
 
+--[[
+	The frame for a member running from a to b: at the midpoint, looking from a to
+	b, its X axis level. CFrame.lookAt has no unique answer for a member that runs
+	straight up or down; this one keeps X along world X there, so square and flat
+	members stay aligned with their neighbours.
+]]
+function Kit.between(a: Vector3, b: Vector3): CFrame
+	local mid = (a + b) / 2
+	local direction = b - a
+	local horizontal = math.sqrt(direction.X * direction.X + direction.Z * direction.Z)
+	if horizontal < 1e-6 * direction.Magnitude then
+		return CFrame.new(mid) * CFrame.Angles(if direction.Y > 0 then math.pi / 2 else -math.pi / 2, 0, 0)
+	end
+	return CFrame.lookAt(mid, b)
+end
+
 return table.freeze(Kit)

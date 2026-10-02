@@ -4,9 +4,10 @@
 	  lune run check
 
 	Steps, in order: formatting (StyLua), lint (selene), a fresh Rojo sourcemap,
-	strict type checking (luau-lsp) and the unit tests. The first failure stops the
-	run with that tool's exit code. The Roblox type definitions luau-lsp needs are
-	downloaded into .tooling/ the first time.
+	strict type checking (luau-lsp), the unit tests and the visual audit (every
+	model the game builds, checked for z-fighting, clashes and budgets). The first
+	failure stops the run with that tool's exit code. The Roblox type definitions
+	luau-lsp needs are downloaded into .tooling/ the first time.
 ]]
 
 local fs = require("@lune/fs")
@@ -35,6 +36,7 @@ local STEPS: { Step } = {
 		args = { "analyze", "--sourcemap=sourcemap.json", `--definitions=@roblox={DEFINITIONS}`, "src" },
 	},
 	{ name = "tests", program = "lune", args = { "run", "test" } },
+	{ name = "audit", program = "lune", args = { "run", "audit" } },
 }
 
 local function ensureDefinitions()

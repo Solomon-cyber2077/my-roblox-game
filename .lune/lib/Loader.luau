@@ -1,7 +1,11 @@
 --[[
-	Loads the pure shared modules outside Roblox. Builds a proxy tree that mirrors
-	the Rojo mapping so `require(script.Parent.X)` works under Lune, and reads all
-	sources up front because Lune's filesystem calls cannot run inside metamethods.
+	Loads game modules outside Roblox. Builds a proxy tree that mirrors the Rojo
+	mapping so `require(script.Parent.X)` works under Lune, and reads all sources
+	up front because Lune's filesystem calls cannot run inside metamethods.
+
+	The unit tests load only the pure shared layer. The audit also loads client
+	and server builders; it puts Lune's Roblox datatypes and a small `game` shim
+	into `env`, which every module loaded afterwards sees as globals.
 ]]
 
 local fs = require("@lune/fs")
@@ -9,7 +13,12 @@ local luau = require("@lune/luau")
 
 local ROOTS: { [string]: string } = {
 	Shared = "src/shared",
+	Client = "src/client",
+	Server = "src/server",
 }
+
+-- Extra globals for every module loaded from now on (empty for the pure unit tests).
+local GLOBAL_ENV: { [string]: any } = {}
 
 -- Module proxy tree --------------------------------------------------------------
 
@@ -120,6 +129,9 @@ local function loadFile(file: string, scriptNode: any, extraEnv: { [string]: any
 			return require(target)
 		end,
 	}
+	for key, value in GLOBAL_ENV do
+		env[key] = value
+	end
 	if extraEnv then
 		for key, value in extraEnv do
 			env[key] = value
@@ -147,6 +159,7 @@ for name, path in ROOTS do
 end
 
 return {
+	env = GLOBAL_ENV,
 	roots = roots,
 	requireNode = requireNode,
 	loadFile = loadFile,

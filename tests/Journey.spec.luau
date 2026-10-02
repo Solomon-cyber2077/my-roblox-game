@@ -135,6 +135,11 @@ describe("Journey stations", function()
 		local dock = Journey.dockFromCruise(1000, 20)
 		expect(dock).toBeCloseTo(1000 + Tuning.Motion.CruiseSpeed * 20 + Motion.arrivalDistance(), 1e-6)
 		expect(Journey.dockFromCruise(1000, -3)).toBeCloseTo(1000 + Motion.arrivalDistance(), 1e-6)
+		-- still spinning up: 70 -> 110 at SpinUp, then cruise for the rest
+		local a = Tuning.Motion.SpinUp
+		local spin = (110 - 70) / a
+		local expected = 1000 + (110 * 110 - 70 * 70) / (2 * a) + 110 * (20 - spin) + Motion.arrivalDistance()
+		expect(Journey.dockFromCruise(1000, 20, 70)).toBeCloseTo(expected, 1e-6)
 	end)
 
 	it("opens the sinkhole on the platform side around the station", function()
@@ -175,11 +180,11 @@ end)
 describe("Journey sky", function()
 	it("runs from dusk at the lobby through the night to sunrise at the Terminus", function()
 		local stops = Tuning.Run.StationCount
-		expect(Journey.hour(0, stops)).toBeCloseTo(17.4, 1e-6)
-		expect(Journey.hour(1, stops)).toBeCloseTo(17.9, 1e-6)
-		expect(Journey.hour(2, stops)).toBeCloseTo(18.6, 1e-6)
-		expect(Journey.clock(Journey.hour(stops, stops))).toBeCloseTo(4.8, 1e-6)
-		expect(Journey.clock(Journey.hour(stops + 1, stops))).toBeCloseTo(6.4, 1e-6)
+		expect(Journey.hour(0, stops)).toBeCloseTo(18.3, 1e-6)
+		expect(Journey.hour(1, stops)).toBeCloseTo(18.9, 1e-6)
+		expect(Journey.hour(2, stops)).toBeCloseTo(19.6, 1e-6)
+		expect(Journey.clock(Journey.hour(stops, stops))).toBeCloseTo(4.9, 1e-6)
+		expect(Journey.clock(Journey.hour(stops + 1, stops))).toBeCloseTo(6.5, 1e-6)
 		local last = -1
 		for p = 0, stops + 1, 0.25 do
 			local hour = Journey.hour(p, stops)
@@ -196,5 +201,6 @@ describe("Journey sky", function()
 		expect(Journey.progress(2, 0)).toBe(1)
 		expect(Journey.legShare(1500, 1000, 2000)).toBeCloseTo(0.5, 1e-6)
 		expect(Journey.legShare(99999, 0, nil)).toBe(J.UnknownShareCap)
+		expect(Journey.legShare(500, 500, 500)).toBe(1)
 	end)
 end)

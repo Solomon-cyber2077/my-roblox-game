@@ -105,7 +105,7 @@ local Items: { [string]: ItemDef } = {
 				size = { 1.2, 0.3, 0.6 },
 				color = { 150, 104, 66 },
 				material = "CorrodedMetal",
-				offset = { 0.2, -0.3, 0.1 },
+				offset = { 0.2, -0.29, 0.1 },
 			},
 			{
 				shape = "Cylinder",

@@ -156,7 +156,7 @@ Builders.StationHouse = function(ctx)
 		Color3.fromRGB(236, 226, 200),
 		{ collide = false }
 	)
-	Kit.cylinder(ctx.parent, 0.3, 3.6, clock.CFrame * CFrame.new(-0.05, 0, 0), C.iron, { collide = false })
+	Kit.cylinder(ctx.parent, 0.3, 3.6, clock.CFrame * CFrame.new(-0.07, 0, 0), C.iron, { collide = false })
 end
 
 Builders.Shed = function(ctx)
@@ -727,9 +727,10 @@ ContainerBuilders.Crate = function(ctx)
 			{ material = Enum.Material.Wood, collide = false }
 		)
 	end
+	-- the upright slat is a touch deeper than the bands so their faces never share a plane
 	Kit.block(
 		ctx.parent,
-		Vector3.new(0.22, 2.46, 2.46),
+		Vector3.new(0.22, 2.46, 2.5),
 		f(ctx, 0, 1.2, 0),
 		C.woodDark,
 		{ material = Enum.Material.Wood, collide = false }
@@ -775,17 +776,18 @@ ContainerBuilders.CoalBin = function(ctx)
 	for _, x in { -2.1, 2.1 } do
 		Kit.block(
 			ctx.parent,
-			Vector3.new(0.3, 2.4, 3.2),
+			Vector3.new(0.3, 2.4, 3.1),
 			f(ctx, x, 1.4, 0),
 			C.rust,
 			{ material = Enum.Material.CorrodedMetal }
 		)
 	end
+	-- end walls sit between the side walls, a little lower, so the corners are clean
 	for _, z in { -1.5, 1.5 } do
 		Kit.block(
 			ctx.parent,
-			Vector3.new(4.4, 2.4, 0.3),
-			f(ctx, 0, 1.4, z),
+			Vector3.new(3.9, 2.3, 0.3),
+			f(ctx, 0, 1.35, z),
 			C.rust,
 			{ material = Enum.Material.CorrodedMetal }
 		)
