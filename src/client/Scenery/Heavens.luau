@@ -156,7 +156,7 @@ local GLOW_HEIGHT = 0.36 -- of the width: tall enough to show over the ridges
 local GLOW_LIFT = 1.5 -- degrees the dome's base sits above the horizon line
 -- Stacked domes, sized as the moon's halo is so each adds the same small step of light
 -- toward the middle, and no rim shows. `u` is a dome's share of the billboard's width.
-local GLOW_STEP = 0.022
+local GLOW_STEP = 0.014
 local function glowProfile(u: number): number
 	return 0.55 * math.exp(-u / 0.32)
 end
