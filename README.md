@@ -78,7 +78,7 @@ game.ReplicatedStorage.Remotes.Dev:FireServer("state")
 | `hollow` | Spawn a Hollow near you |
 | `coal 50`, `parts 20` | Set the train's stores |
 | `state` | Print the run, crew, train and backpack to the Output |
-| `sky 26` / `sky` | Pin every client's sky to an hour (18.3 dusk, 22 moonrise, 26 the blood moon, 30.5 sunrise), or let it follow the run again |
+| `sky 26` / `sky` | Pin every client's sky to an hour (18.3 dusk, 21 the amber moon rising, 26 the blood moon, 30.5 sunrise), or let it follow the run again |
 | `omen Eye` | Every client sees an omen now: `Hush`, `TallOnes`, `Blink`, `Bleed` or `Eye` |
 | `strike` | A lightning strike now |
 
