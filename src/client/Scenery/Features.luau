@@ -25,14 +25,15 @@ local Kit = require(Shared.Visual.Kit)
 local Rng = require(Shared.Util.Rng)
 local Tuning = require(Shared.Config.Tuning)
 
+local Bands = require(script.Parent.Bands)
 local Biomes = require(script.Parent.Biomes)
 local Props = require(script.Parent.Props)
 local World = require(script.Parent.World)
 
 local Features = {}
 
-local GROUND = -14
-local FORMATION = -6.85
+local GROUND = Bands.Ground
+local FORMATION = Bands.Formation
 local ABYSS = Tuning.World.AbyssY - 12
 local GORGE_FLOOR = -330
 local BORE = 9.5 -- tunnel wall inner face, |z|
@@ -89,7 +90,7 @@ local function beam(
 	part(
 		parent,
 		Vector3.new(thickness, thickness, (b - a).Magnitude),
-		CFrame.lookAt((a + b) / 2, b),
+		Kit.between(a, b),
 		color,
 		material or M.Metal
 	)
@@ -105,6 +106,48 @@ local function occluder(p: BasePart): BasePart
 	return p
 end
 
+-- Ground within a set piece (a hill, a cliff): things may stand sunk into it (lune run audit).
+local function earth(p: BasePart): BasePart
+	p:SetAttribute("Earth", true)
+	return p
+end
+
+-- Ground already spoken for in a set piece: circles { x, z, radius }.
+type Taken = { { number } }
+
+--[[
+	Up to `count` spots from `sample` for things of `radius`, each clear of every
+	circle in `taken` (which it then joins), each built with `place`. Gives up
+	after four tries a spot.
+]]
+local function scatter(
+	taken: Taken,
+	count: number,
+	radius: number,
+	sample: () -> (number, number),
+	place: (number, number) -> ()
+)
+	local placed = 0
+	for _ = 1, count * 4 do
+		if placed >= count then
+			break
+		end
+		local x, z = sample()
+		local clear = true
+		for _, spot in taken do
+			if (spot[1] - x) ^ 2 + (spot[2] - z) ^ 2 < (spot[3] + radius) ^ 2 then
+				clear = false
+				break
+			end
+		end
+		if clear then
+			table.insert(taken, { x, z, radius })
+			placed += 1
+			place(x, z)
+		end
+	end
+end
+
 local function translucent(parent: Instance, size: Vector3, cf: CFrame, color: Color3, transparency: number)
 	local p = part(parent, size, cf, color, M.SmoothPlastic)
 	p.Transparency = transparency
@@ -116,6 +159,53 @@ end
 
 local function ctxFor(x: number, rng: Rng.Rng, shadow: boolean): Props.Ctx
 	return { rng = rng, biome = World.pick(x, rng), shadow = shadow }
+end
+
+--[[
+	Flat patches lying on the ground (scorch marks, trampled grass), placed so no
+	two overlap: up to `count` rectangles of width `w` by `w * aspect`, at random
+	in x 0..len and |z| zNear..zFar on `side`, each turned at random.
+]]
+local function patches(
+	model: Model,
+	rng: Rng.Rng,
+	count: number,
+	len: number,
+	side: number,
+	zNear: number,
+	zFar: number,
+	wMin: number,
+	wMax: number,
+	aspect: number,
+	color: Color3,
+	material: Enum.Material
+)
+	local placed: { { x: number, z: number, r: number } } = {}
+	for _ = 1, count * 3 do
+		if #placed >= count then
+			break
+		end
+		local w = rng:range(wMin, wMax)
+		local r = w * math.sqrt(1 + aspect * aspect) / 2 -- half the diagonal
+		local x, z = rng:range(0, len), side * rng:range(zNear, zFar)
+		local clear = true
+		for _, other in placed do
+			if (other.x - x) ^ 2 + (other.z - z) ^ 2 < (other.r + r) ^ 2 then
+				clear = false
+				break
+			end
+		end
+		if clear then
+			table.insert(placed, { x = x, z = z, r = r })
+			part(
+				model,
+				Vector3.new(w, 0.2, w * aspect),
+				CFrame.new(x, GROUND + 0.1, z) * Kit.angles(0, rng:range(0, 90), 0),
+				color,
+				material
+			)
+		end
+	end
 end
 
 -- Tunnel -----------------------------------------------------------------------------------------
@@ -131,65 +221,80 @@ local function tunnel(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 	-- cuttings: rock walls rising toward each portal
 	for _, cutting in { { x = p1 / 2, yaw = 90 }, { x = len - p1 / 2, yaw = -90 } } do
 		for _, side in { -1, 1 } do
-			wedge(
-				model,
-				Vector3.new(24, 34, p1),
-				CFrame.new(cutting.x, GROUND + 17, side * (BORE + 12)) * Kit.angles(0, cutting.yaw, 0),
-				rock,
-				M.Slate,
-				true
+			earth(
+				wedge(
+					model,
+					Vector3.new(24, 34, p1),
+					CFrame.new(cutting.x, GROUND + 17, side * (BORE + 12)) * Kit.angles(0, cutting.yaw, 0),
+					rock,
+					M.Slate,
+					true
+				)
 			)
 		end
 	end
 
-	-- the hill the bore runs through
+	--[[
+		The hill the bore runs through. Its core rests on the bore's ceiling and
+		ends just inside the portals, so the portal faces stand clear; its flanks
+		run on past them beside the cuttings. Behind the lining a fill closes the
+		gap between the lining and the flanks.
+	]]
 	local hillTop = 67
 	local hillLen = p2 - p1 + 20
 	local hillX = len / 2
-	part(
-		model,
-		Vector3.new(hillLen, hillTop - BORE_TOP, 24),
-		CFrame.new(hillX, (hillTop + BORE_TOP) / 2, 0),
-		rock,
-		M.Rock,
-		true
+	earth(
+		part(
+			model,
+			Vector3.new(p2 - p1 + 4, hillTop - BORE_TOP - 1, 24),
+			CFrame.new(hillX, (hillTop + BORE_TOP + 1) / 2, 0),
+			rock,
+			M.Rock,
+			true
+		)
 	)
 	local slope = hillTop - GROUND
 	for _, side in { -1, 1 } do
 		local yaw = if side > 0 then 180 else 0
-		wedge(
-			model,
-			Vector3.new(hillLen, slope, 190),
-			CFrame.new(hillX, GROUND + slope / 2, side * (12 + 95)) * Kit.angles(0, yaw, 0),
-			Kit.shade(rock, 0.95),
-			M.Rock,
-			true
+		earth(
+			wedge(
+				model,
+				Vector3.new(hillLen, slope, 190),
+				CFrame.new(hillX, GROUND + slope / 2, side * (12 + 95)) * Kit.angles(0, yaw, 0),
+				Kit.shade(rock, 0.95),
+				M.Rock,
+				true
+			)
 		)
-		-- the bore's side walls fill the gap between the track and the slope
+		local fillTop, fillBottom = BORE_TOP + 1.5, GROUND - 0.2
 		part(
 			model,
-			Vector3.new(hillLen, BORE_TOP - FORMATION, 3),
-			CFrame.new(hillX, (BORE_TOP + FORMATION) / 2, side * (BORE + 1.5)),
+			Vector3.new(p2 - p1, fillTop - fillBottom, 2.5),
+			CFrame.new(hillX, (fillTop + fillBottom) / 2, side * (BORE + 2.25)),
 			dark,
 			M.Slate
 		)
 	end
 	if def.snowcap then
-		part(
-			model,
-			Vector3.new(hillLen * 0.9, 1.5, 30),
-			CFrame.new(hillX, hillTop + 0.6, 0),
-			rgb(230, 234, 240),
-			M.Snow
+		earth(
+			part(
+				model,
+				Vector3.new(hillLen * 0.9, 1.5, 30),
+				CFrame.new(hillX, hillTop + 0.6, 0),
+				rgb(230, 234, 240),
+				M.Snow
+			)
 		)
 	end
-	for _ = 1, 8 do
-		local side = rng:sign()
-		local d = rng:range(4, 160)
-		local x = rng:range(p1 + 10, p2 - 10)
-		local y = if d < 12 then hillTop else hillTop - slope * (d - 12) / 190
+	-- pines and boulders over the hill, apart from one another
+	scatter({}, 8, Props.radius("Boulder"), function()
+		return rng:range(p1 + 10, p2 - 10), rng:sign() * rng:range(4, 160)
+	end, function(x, z)
+		-- on the flanks, sunk deep enough that no downhill edge lifts clear of the slope
+		local d = math.abs(z)
+		local y = if d < 12 then hillTop else hillTop - slope * (d - 12) / 190 - 2
 		local ctx = ctxFor(piece.at + x, rng, false)
-		local cf = CFrame.new(x, y, side * d)
+		local cf = CFrame.new(x, y, z)
 		if rng:chance(0.6) then
 			if def.snowcap then
 				Props.snowPine(model, cf, ctx)
@@ -199,16 +304,17 @@ local function tunnel(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 		else
 			Props.boulder(model, cf, ctx)
 		end
-	end
+	end)
 
-	-- the bore: lined walls and ceiling the camera will not clip through
+	-- the bore: lined walls (from the ground up, under the ballast shoulders) and a
+	-- ceiling, which the camera will not clip through
 	local bore = p2 - p1
 	for _, side in { -1, 1 } do
 		occluder(
 			part(
 				model,
-				Vector3.new(bore, BORE_TOP - FORMATION, 1.5),
-				CFrame.new(len / 2, (BORE_TOP + FORMATION) / 2, side * (BORE + 0.75)),
+				Vector3.new(bore, BORE_TOP - GROUND, 1.5),
+				CFrame.new(len / 2, (BORE_TOP + GROUND) / 2, side * (BORE + 0.75)),
 				Kit.shade(STONE, 0.5),
 				M.Brick
 			)
@@ -244,31 +350,38 @@ local function tunnel(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 		part(model, Vector3.new(1.2, 0.3, 0.8), CFrame.new(x, 9.1, side * (BORE - 0.35)), IRON, M.Metal)
 	end
 
-	-- portals: masonry faces with an arched opening
+	--[[
+		Portals: masonry faces with an arched opening. The jambs stand a fifth of a
+		stud proud of the lining and the head a fifth below the ceiling, so the
+		opening is framed in dressed stone; the corner voussoirs and the keystone
+		stand proud of the face.
+	]]
+	local jamb = BORE - 0.2
 	for _, px in { p1, p2 } do
 		local face = Kit.jitter(STONE, 0.05, rng:next())
 		for _, side in { -1, 1 } do
 			part(
 				model,
-				Vector3.new(6, 46, 34),
-				CFrame.new(px, GROUND + 23, side * (BORE + 17)),
+				Vector3.new(6, 46, 43.5 - jamb),
+				CFrame.new(px, GROUND + 23, side * (jamb + 43.5) / 2),
 				face,
 				M.Cobblestone,
 				true
 			)
 			wedge(
 				model,
-				Vector3.new(6, 4, 4),
+				Vector3.new(6.2, 4, 4),
 				CFrame.new(px, BORE_TOP - 2, side * (BORE - 2))
 					* Kit.angles(0, if side > 0 then 180 else 0, 180),
 				face,
 				M.Cobblestone
 			)
 		end
+		local head = BORE_TOP - 0.2
 		part(
 			model,
-			Vector3.new(6, 17, 2 * BORE),
-			CFrame.new(px, BORE_TOP + 8.5, 0),
+			Vector3.new(6, 32 - head, 2 * jamb),
+			CFrame.new(px, (32 + head) / 2, 0),
 			face,
 			M.Cobblestone,
 			true
@@ -298,43 +411,66 @@ local function gorge(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 	local half = Tuning.Journey.GorgeHalfWidth
 	local def = World.dominant(piece.at + len / 2)
 	local rock = Kit.jitter(def.rock, 0.06, rng:next())
-	local depth = GROUND - GORGE_FLOOR
-	-- canyon walls at both ends, out to the mid field, and the far rims
+	--[[
+		Canyon walls at both ends, out to the mid field, and the far rims. A wall
+		meets the near ground and then the mid ground, so its segments keep their
+		tops just under whichever surface they meet (inside that slab), alternating
+		between two levels so overlapping neighbours never share a plane.
+	]]
+	local reaches = {
+		{ z0 = 9, z1 = Bands.NearZ, segments = 2, top = GROUND - 0.1 },
+		{ z0 = Bands.NearZ - 4, z1 = half, segments = 3, top = Bands.MidTop - 0.1 },
+	}
 	for _, wall in { { x = -15, dir = 1 }, { x = len + 15, dir = -1 } } do
 		for _, side in { -1, 1 } do
-			local segments = 4
-			for i = 1, segments do
-				local z0 = 9 + (half - 9) * (i - 1) / segments
-				local z1 = 9 + (half - 9) * i / segments
-				local jag = rng:range(-8, 8)
-				part(
-					model,
-					Vector3.new(30 + rng:range(0, 16), depth, z1 - z0 + 4),
-					CFrame.new(wall.x + jag * wall.dir, GROUND - depth / 2, side * (z0 + z1) / 2)
-						* Kit.angles(0, rng:range(-4, 4), 0),
-					Kit.shade(rock, 0.85 + 0.1 * rng:next()),
-					M.Slate,
-					i == 1
-				)
+			local n = 0
+			for r, reach in reaches do
+				for i = 1, reach.segments do
+					n += 1
+					local z0 = reach.z0 + (reach.z1 - reach.z0) * (i - 1) / reach.segments - 2
+					local z1 = reach.z0 + (reach.z1 - reach.z0) * i / reach.segments + 2
+					if r == 1 and i == reach.segments then
+						z1 = reach.z1 -- the near ground ends here: no lip above the mid ground
+					end
+					local top = reach.top - 0.1 * (n % 2)
+					local jag = rng:range(-8, 8)
+					earth(
+						part(
+							model,
+							Vector3.new(30 + rng:range(0, 16), top - GORGE_FLOOR, z1 - z0),
+							CFrame.new(wall.x + jag * wall.dir, (top + GORGE_FLOOR) / 2, side * (z0 + z1) / 2)
+								* Kit.angles(0, rng:range(-4, 4), 0),
+							Kit.shade(rock, 0.85 + 0.1 * rng:next()),
+							M.Slate,
+							n == 1
+						)
+					)
+				end
 			end
 		end
 	end
+	-- the far rims stand a stud proud of the mid ground's cut edge
+	local rimTop = Bands.MidTop - 0.3
 	for _, side in { -1, 1 } do
-		part(
-			model,
-			Vector3.new(len + 60, depth, 30),
-			CFrame.new(len / 2, GROUND - depth / 2, side * (half + 15)),
-			Kit.shade(rock, 0.8),
-			M.Slate
+		earth(
+			part(
+				model,
+				Vector3.new(len + 60, rimTop - GORGE_FLOOR, 30),
+				CFrame.new(len / 2, (rimTop + GORGE_FLOOR) / 2, side * (half + 14)),
+				Kit.shade(rock, 0.8),
+				M.Slate
+			)
 		)
 	end
-	-- the floor, a river and mist
-	part(
-		model,
-		Vector3.new(len + 40, 4, 2 * half),
-		CFrame.new(len / 2, GORGE_FLOOR - 2, 0),
-		Kit.shade(rock, 0.5),
-		M.Rock
+	-- the floor (reaching under every wall's foot), a river and mist
+	earth(
+		part(
+			model,
+			Vector3.new(len + 120, 4, 2 * half + 80),
+			CFrame.new(len / 2, GORGE_FLOOR - 2, 0),
+			Kit.shade(rock, 0.5),
+			M.Rock
+		)
 	)
 	local river = part(
 		model,
@@ -413,12 +549,13 @@ local function gorge(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 					M.Metal,
 					true
 				)
+				-- the two halves' diagonals cross mid-span, so they differ in gauge
 				local forward = x < len / 2
 				beam(
 					model,
 					Vector3.new(x, high, z),
 					Vector3.new(x + (if forward then 12 else -12), low, z),
-					0.6,
+					if forward then 0.6 else 0.54,
 					steel
 				)
 			end
@@ -472,17 +609,7 @@ local function burningTown(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 		true
 	)
 	-- scorched ground and a few ruins smouldering on their own
-	for _ = 1, 6 do
-		local w = rng:range(20, 50)
-		part(
-			model,
-			Vector3.new(w, 0.2, w * 0.7),
-			CFrame.new(rng:range(0, len), GROUND + 0.12, side * rng:range(30, 300))
-				* Kit.angles(0, rng:range(0, 90), 0),
-			rgb(30, 26, 24),
-			M.Slate
-		)
-	end
+	patches(model, rng, 6, len, side, 30, 300, 20, 50, 0.7, rgb(30, 26, 24), M.Slate)
 	for _ = 1, 3 do
 		Props.smoke(
 			model,
@@ -508,10 +635,11 @@ local function halt(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 		M.Concrete,
 		true
 	)
+	-- the edge coping, standing a touch proud of the platform's face and ends
 	part(
 		model,
-		Vector3.new(len * 0.8, 0.3, 1),
-		CFrame.new(len / 2, platformTop + 0.1, side * 9.5),
+		Vector3.new(len * 0.8 + 0.2, 0.3, 1),
+		CFrame.new(len / 2, platformTop + 0.1, side * 9.45),
 		rgb(196, 186, 150),
 		M.Concrete
 	)
@@ -607,7 +735,7 @@ local function wreck(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 		part(model, Vector3.new(30, 9, 11), cf, Kit.shade(livery, 0.8 + 0.1 * i), M.SmoothPlastic, true)
 		part(
 			model,
-			Vector3.new(30, 1, 12),
+			Vector3.new(30.4, 1, 12),
 			cf * CFrame.new(0, 4.8, 0),
 			rgb(40, 38, 38),
 			M.CorrodedMetal,
@@ -728,34 +856,20 @@ end
 local function hollowField(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 	local side = piece.side
 	local len = piece.length
-	for _ = 1, 5 do
-		local w = rng:range(40, 90)
-		part(
-			model,
-			Vector3.new(w, 0.2, w * 0.8),
-			CFrame.new(rng:range(0, len), GROUND + 0.1, side * rng:range(40, 380))
-				* Kit.angles(0, rng:range(0, 90), 0),
-			rgb(84, 76, 58),
-			M.Grass
-		)
-	end
-	local count = rng:int(18, 26)
-	for _ = 1, count do
-		local z = side * rng:range(36, 400)
+	patches(model, rng, 5, len, side, 40, 380, 40, 90, 0.8, rgb(84, 76, 58), M.Grass)
+	local taken: Taken = {}
+	scatter(taken, 4, Props.radius("DeadTree"), function()
+		return rng:range(0, len), side * rng:range(40, 300)
+	end, function(x, z)
+		Props.deadTree(model, CFrame.new(x, GROUND, z), ctxFor(piece.at, rng, false))
+	end)
+	-- the still crowd, all facing the line
+	scatter(taken, rng:int(18, 26), 2, function()
+		return rng:range(0, len), side * rng:range(36, 400)
+	end, function(x, z)
 		local yaw = (if side > 0 then 0 else 180) + rng:range(-15, 15)
-		Props.hollow(
-			model,
-			CFrame.new(rng:range(0, len), GROUND, z) * Kit.angles(0, yaw, 0),
-			rng:range(0.9, 1.25)
-		)
-	end
-	for _ = 1, 4 do
-		Props.deadTree(
-			model,
-			CFrame.new(rng:range(0, len), GROUND, side * rng:range(40, 300)),
-			ctxFor(piece.at, rng, false)
-		)
-	end
+		Props.hollow(model, CFrame.new(x, GROUND, z) * Kit.angles(0, yaw, 0), rng:range(0.9, 1.25))
+	end)
 	Props.fence(model, CFrame.new(len / 2, GROUND, side * 28), ctxFor(piece.at, rng, false))
 end
 
@@ -786,6 +900,20 @@ local function graveyard(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 			M.Cobblestone
 		)
 	end
+	-- piers at the corners, where the walls meet, and taller ones either side of the gate
+	local pier = Kit.shade(stone, 0.92)
+	for _, corner in { { 0, z0 }, { len, z0 }, { 0, z1 }, { len, z1 } } do
+		part(
+			model,
+			Vector3.new(1.8, 3.6, 1.8),
+			CFrame.new(corner[1], GROUND + 1.5, side * corner[2]),
+			pier,
+			M.Cobblestone
+		)
+	end
+	for _, x in { len / 2 - 5, len / 2 + 5 } do
+		part(model, Vector3.new(1.8, 4.4, 1.8), CFrame.new(x, GROUND + 1.9, side * z0), pier, M.Cobblestone)
+	end
 	for x = 12, len - 12, 10 do
 		for z = z0 + 14, z1 - 14, 14 do
 			if rng:chance(0.7) then
@@ -794,7 +922,7 @@ local function graveyard(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 				local grey = Kit.jitter(stone, 0.12, rng:next())
 				if rng:chance(0.3) then
 					part(model, Vector3.new(0.5, 4, 0.5), cf * CFrame.new(0, 2, 0), grey, M.Limestone)
-					part(model, Vector3.new(2.2, 0.5, 0.5), cf * CFrame.new(0, 2.9, 0), grey, M.Limestone)
+					part(model, Vector3.new(2.2, 0.5, 0.4), cf * CFrame.new(0, 2.9, 0), grey, M.Limestone)
 				else
 					part(
 						model,
@@ -835,13 +963,12 @@ local function graveyard(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 		true
 	)
 	part(model, Vector3.new(3, 6, 0.3), crypt * CFrame.new(0, 3, -5.05), rgb(20, 18, 18), M.Metal)
-	for _ = 1, 2 do
-		Props.deadTree(
-			model,
-			CFrame.new(rng:range(0, len), GROUND, side * rng:range(z0 + 10, z1 - 10)),
-			ctxFor(piece.at, rng, true)
-		)
-	end
+	-- by the front wall, between it and the first row of graves, clear of the gate
+	scatter({ { len / 2, side * z0, 8 } }, 2, Props.radius("DeadTree"), function()
+		return rng:range(6, len - 6), side * (z0 + 6)
+	end, function(x, z)
+		Props.deadTree(model, CFrame.new(x, GROUND, z), ctxFor(piece.at, rng, true))
+	end)
 end
 
 -- Lake ----------------------------------------------------------------------------------------------------------------
@@ -852,25 +979,33 @@ local function lake(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 	local water = rgb(56, 88, 100)
 	local shore = Kit.jitter(rgb(96, 90, 70), 0.05, rng:next())
 	local center = side * rng:range(170, 230)
+	-- three overlapping basins make one ragged lake; each muddy shore and each water
+	-- surface has its own level, a tenth of a stud apart, so none of them flicker
 	for i = 1, 3 do
 		local w = len * rng:range(0.45, 0.75)
 		local d = rng:range(120, 220)
 		local cf = CFrame.new(len * (0.2 + 0.3 * (i - 1)), 0, center + rng:range(-40, 40))
 			* Kit.angles(0, rng:range(-25, 25), 0)
-		part(model, Vector3.new(w + 16, 0.2, d + 16), cf * CFrame.new(0, GROUND + 0.1, 0), shore, M.Mud)
+		local shoreTop = GROUND + 0.05 + 0.1 * (i - 1)
+		local waterTop = GROUND + 0.45 + 0.1 * (i - 1)
+		part(model, Vector3.new(w + 16, 0.2, d + 16), cf * CFrame.new(0, shoreTop - 0.1, 0), shore, M.Mud)
 		local surface = part(
 			model,
 			Vector3.new(w, 0.3, d),
-			cf * CFrame.new(0, GROUND + 0.3 + i * 0.02, 0),
+			cf * CFrame.new(0, waterTop - 0.15, 0),
 			water,
 			M.SmoothPlastic
 		)
 		surface.Reflectance = 0.28
 	end
 	local ctx = ctxFor(piece.at, rng, false)
-	for _ = 1, 8 do
-		Props.reeds(model, CFrame.new(rng:range(0, len), GROUND, center + side * rng:range(-120, -60)), ctx)
-	end
+	-- reeds along the near shore, clear of the jetty and its boat
+	local taken: Taken = { { len * 0.5 + 2, center - side * 60, 17 } }
+	scatter(taken, 8, Props.radius("Reeds"), function()
+		return rng:range(0, len), center + side * rng:range(-120, -60)
+	end, function(x, z)
+		Props.reeds(model, CFrame.new(x, GROUND, z), ctx)
+	end)
 	-- a jetty and a rowboat
 	local jetty = CFrame.new(len * 0.5, GROUND + 1.2, center - side * 70)
 	part(model, Vector3.new(4, 0.4, 30), jetty * CFrame.new(0, 0, side * 10), rgb(96, 74, 54), M.WoodPlanks)
@@ -892,13 +1027,12 @@ local function lake(model: Model, piece: Journey.Piece, rng: Rng.Rng)
 		rgb(110, 70, 48),
 		M.WoodPlanks
 	)
-	for _ = 1, 4 do
-		Props.tree(
-			model,
-			CFrame.new(rng:range(0, len), GROUND, center + side * rng:range(110, 180)),
-			ctxFor(piece.at, rng, false)
-		)
-	end
+	-- trees along the far shore
+	scatter(taken, 4, Props.radius("Tree"), function()
+		return rng:range(0, len), center + side * rng:range(110, 180)
+	end, function(x, z)
+		Props.tree(model, CFrame.new(x, GROUND, z), ctxFor(piece.at, rng, false))
+	end)
 end
 
 -- Level crossing --------------------------------------------------------------------------------------------------------
@@ -977,19 +1111,21 @@ local function harbour(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 	local r = sinkhole.rect
 	local len = r.x1 - r.x0
 	local stone = Kit.jitter(STONE, 0.05, rng:next())
+	-- the basin fills the cut exactly, level with the open sea it opens onto
 	local water = part(
 		model,
-		Vector3.new(len, 1, r.z1 - r.z0 + 200),
-		CFrame.new(len / 2, -15.7, (r.z0 + r.z1 + 200) / 2),
+		Vector3.new(len, Bands.SeaThickness, r.z1 - r.z0),
+		CFrame.new(len / 2, Bands.SeaNear - Bands.SeaThickness / 2, (r.z0 + r.z1) / 2),
 		rgb(44, 78, 92),
 		M.SmoothPlastic
 	)
 	water.Reflectance = 0.25
-	for _, x in { -8, len + 8 } do
+	-- quays along both ends, from under the platform's edge out past the basin
+	for _, x in { -7.5, len + 7.5 } do
 		part(
 			model,
-			Vector3.new(16, 22, r.z1 - r.z0 + 40),
-			CFrame.new(x, -23, (r.z0 + r.z1 + 40) / 2),
+			Vector3.new(16, 22, r.z1 - r.z0 + 41),
+			CFrame.new(x, -23, (r.z0 - 1 + r.z1 + 40) / 2),
 			stone,
 			M.Cobblestone,
 			true
@@ -1005,11 +1141,18 @@ local function harbour(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 			)
 		end
 	end
-	Props.lighthouse(
-		model,
-		CFrame.new(len + 30, -12, r.z1 + 30),
-		{ rng = rng, biome = Biomes.get("Coast"), shadow = true }
+	-- the lighthouse on a rock rising out of the water off the quay's end
+	local coast = Biomes.get("Coast")
+	earth(
+		part(
+			model,
+			Vector3.new(20, 4, 20),
+			CFrame.new(len + 30, -14.5, r.z1 + 30) * Kit.angles(0, 20, 0),
+			Kit.jitter(coast.rock, 0.06, rng:next()),
+			M.Rock
+		)
 	)
+	Props.lighthouse(model, CFrame.new(len + 30, -12, r.z1 + 30), { rng = rng, biome = coast, shadow = true })
 end
 
 local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
@@ -1018,20 +1161,27 @@ local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 	local width = r.z1 - r.z0
 	local def = World.dominant(sinkhole.center)
 	local rock = Kit.jitter(def.rock, 0.05, rng:next())
-	local depth = GROUND - ABYSS
-	-- rim cliffs on three sides, jagged, darkening with depth
-	local function cliff(cx: number, cz: number, sx: number, sz: number)
-		for layer = 0, 1 do
-			local h = depth / 2
-			local y = GROUND - h / 2 - layer * h
-			part(
-				model,
-				Vector3.new(sx + rng:range(0, 6), h, sz + rng:range(0, 6)),
-				CFrame.new(cx + rng:range(-3, 3), y, cz + rng:range(-3, 3))
-					* Kit.angles(0, rng:range(-3, 3), 0),
-				Kit.shade(rock, 0.8 - layer * 0.3),
-				M.Slate,
-				layer == 0
+	--[[
+		Rim cliffs on three sides, jagged, darkening with depth: two courses per
+		segment. Tops stay just under the ground (inside the near slab). The end
+		walls and the far wall each alternate between their own two top levels and
+		their own two course joints, so no two segments share a plane, corners
+		included.
+	]]
+	local function cliff(cx: number, cz: number, sx: number, sz: number, top: number, joint: number)
+		for course = 0, 1 do
+			local y1 = if course == 0 then top else joint
+			local y0 = if course == 0 then joint else ABYSS
+			earth(
+				part(
+					model,
+					Vector3.new(sx + rng:range(0, 6), y1 - y0, sz + rng:range(0, 6)),
+					CFrame.new(cx + rng:range(-3, 3), (y0 + y1) / 2, cz + rng:range(-3, 3))
+						* Kit.angles(0, rng:range(-3, 3), 0),
+					Kit.shade(rock, 0.8 - course * 0.3),
+					M.Slate,
+					course == 0
+				)
 			)
 		end
 	end
@@ -1039,14 +1189,16 @@ local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 	for i = 1, segments do
 		local z0 = r.z0 + 2 + (width - 2) * (i - 1) / segments
 		local z1 = r.z0 + 2 + (width - 2) * i / segments
-		cliff(-9, (z0 + z1) / 2, 18, z1 - z0)
-		cliff(len + 9, (z0 + z1) / 2, 18, z1 - z0)
+		local odd = i % 2
+		cliff(-9, (z0 + z1) / 2, 18, z1 - z0, GROUND - 0.08 - 0.08 * odd, -120 - odd)
+		cliff(len + 9, (z0 + z1) / 2, 18, z1 - z0, GROUND - 0.08 - 0.08 * odd, -120 - odd)
 	end
 	local runs = math.max(2, math.floor(len / 80))
 	for i = 1, runs do
 		local x0 = -18 + (len + 36) * (i - 1) / runs
 		local x1 = -18 + (len + 36) * i / runs
-		cliff((x0 + x1) / 2, r.z1 + 9, x1 - x0, 18)
+		local odd = i % 2
+		cliff((x0 + x1) / 2, r.z1 + 9, x1 - x0, 18, GROUND - 0.24 - 0.08 * odd, -122 - odd)
 	end
 	-- broken lips of ground hanging over the edge
 	for _ = 1, 10 do
@@ -1054,13 +1206,15 @@ local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 		local onEnd = rng:chance(0.5)
 		local x = if onEnd then (if rng:chance(0.5) then 2 else len - 2) else rng:range(0, len)
 		local z = if onEnd then rng:range(r.z0 + 12, r.z1) else r.z1 - 2
-		part(
-			model,
-			Vector3.new(s, s * 0.6, s),
-			CFrame.new(x, GROUND - s * 0.2, z)
-				* Kit.angles(rng:range(-20, 20), rng:range(0, 90), rng:range(-20, 20)),
-			Kit.shade(rock, 0.9),
-			M.Rock
+		earth(
+			part(
+				model,
+				Vector3.new(s, s * 0.6, s),
+				CFrame.new(x, GROUND - s * 0.2, z)
+					* Kit.angles(rng:range(-20, 20), rng:range(0, 90), rng:range(-20, 20)),
+				Kit.shade(rock, 0.9),
+				M.Rock
+			)
 		)
 	end
 	-- rock spires rising out of the dark
@@ -1075,13 +1229,15 @@ local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 			M.Slate
 		)
 	end
-	-- the floor, embers and their glow
-	part(
-		model,
-		Vector3.new(len + 40, 4, width + 40),
-		CFrame.new(len / 2, ABYSS - 2, (r.z0 + r.z1) / 2),
-		rgb(22, 18, 18),
-		M.Basalt
+	-- the floor (reaching under every cliff's foot), embers and their glow
+	earth(
+		part(
+			model,
+			Vector3.new(len + 60, 4, width + 60),
+			CFrame.new(len / 2, ABYSS - 2, (r.z0 + r.z1) / 2),
+			rgb(22, 18, 18),
+			M.Basalt
+		)
 	)
 	local embers = Instance.new("ParticleEmitter")
 	embers.Texture = "rbxasset://textures/particles/fire_sparks_main.dds"
@@ -1102,7 +1258,7 @@ local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 	for i, y in { -50, -95, -150 } do
 		translucent(
 			model,
-			Vector3.new(len, 0.4, width),
+			Vector3.new(len - 1, 0.4, width),
 			CFrame.new(len / 2, y, (r.z0 + r.z1) / 2),
 			rgb(126, 116, 114),
 			0.9 - i * 0.05

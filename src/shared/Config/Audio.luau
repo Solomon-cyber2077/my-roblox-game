@@ -50,6 +50,15 @@ local Cues: { [string]: Cue } = {
 	Wind = { id = 9113286969, volume = 0.4, loop = true },
 	StationEerie = { id = 9125440141, volume = 0.35, loop = true },
 	DepotHall = { id = 9114872503, volume = 0.3, loop = true },
+
+	-- The stops' soundscape: the same recordings slowed and shaped (AudioController
+	-- adds the filters and reverb), so nothing new needs clearing.
+	Drone = { id = 9113286969, volume = 0.38, loop = true, pitch = 0.32 }, -- wind, slowed to a moan
+	Howl = { id = 9113286969, volume = 0.2, loop = true, pitch = 0.6 }, -- gusts that come and go
+	DistantBell = { id = 9113804436, volume = 0.24, maxSeconds = 7, pitch = 0.62, spatial = true },
+	DistantCry = { id = 9125475729, volume = 0.2, maxSeconds = 4, pitch = 0.48, spatial = true },
+	Heartbeat = { id = 9113570506, volume = 0.5, maxSeconds = 1, pitch = 0.42 },
+	RailClack = { id = 15675059323, volume = 0.14, maxSeconds = 1, pitch = 0.45 },
 }
 
 for _, cue in Cues do

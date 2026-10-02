@@ -148,8 +148,8 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			)
 			local coping = Kit.block(
 				slabModel,
-				Vector3.new(slab.sizeX, 0.3, 1.4),
-				L(slab.x, 0.15, 0.7),
+				Vector3.new(slab.sizeX, 0.3, 1.55),
+				L(slab.x, 0.15, 0.625),
 				COPING,
 				{ material = Enum.Material.Concrete }
 			)
@@ -162,8 +162,8 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			)
 			local face = Kit.block(
 				slabModel,
-				Vector3.new(slab.sizeX, 6, 0.6),
-				L(slab.x, -3, 0.3),
+				Vector3.new(slab.sizeX + 0.1, 6, 0.6),
+				L(slab.x, -3, 0.25),
 				Kit.shade(palette.trim, 1.1),
 				{ material = Enum.Material.Brick }
 			)

@@ -9,11 +9,15 @@
 	  * the biome under the camera (Scenery/Biomes): air tint, density and haze,
 	    cloud cover, weather and storms with lightning
 	  * tunnels: the sky darkens while the camera is inside a bore
+	  * dread: a Hollow close by drains the colour, hardens the contrast and pulls
+	    the fog in
 	  * the older local modifiers: the Depot Hall grade, fog proximity, the Last
 	    Call pulse, the spectator's desaturation and the flare flash
 
-	Night stays readable: the outdoor ambient never drops below a blue moonlit
-	floor and exposure rises after dark.
+	The night is dark and cold on purpose: low moonlight, a blue-grey haze that
+	swallows the distance, colour drained out, so that lamps, fires, lit windows
+	and a Hollow's eyes are what the eye goes to. It never goes black: the outdoor
+	ambient keeps a moonlit floor, enough to see where to step.
 ]]
 
 local Lighting = game:GetService("Lighting")
@@ -41,6 +45,8 @@ type SkyKey = {
 	decay: Color3, -- Atmosphere.Decay
 	clouds: Color3,
 	rays: number,
+	tint: Color3, -- the grade's colour: warm at the ends of the day, cold at night
+	saturation: number,
 }
 
 type Weather = {
@@ -55,103 +61,108 @@ local AtmosphereController = {}
 
 local rgb = Color3.fromRGB
 
--- Hours past 24 are the small hours of the next morning (see Journey.hour).
+-- Hours past 24 are the small hours of the next morning (see Journey.hour). The run
+-- spans 18.3 (the lobby at sunset) to 30.5 (sunrise at the Terminus): Tuning.Journey.Sky.
 local SKY: { SkyKey } = {
-	{
-		hour = 16.5,
-		brightness = 2.8,
-		exposure = 0.25,
-		ambient = rgb(78, 66, 70),
-		outdoor = rgb(150, 128, 118),
-		air = rgb(206, 170, 140),
-		decay = rgb(110, 72, 60),
-		clouds = rgb(236, 214, 196),
-		rays = 0.05,
-	},
-	{
-		hour = 17.4,
-		brightness = 2.6,
-		exposure = 0.3,
-		ambient = rgb(76, 64, 70),
-		outdoor = rgb(146, 122, 116),
-		air = rgb(214, 166, 136),
-		decay = rgb(116, 70, 58),
-		clouds = rgb(240, 196, 170),
-		rays = 0.07,
-	},
-	{
-		hour = 18.6,
-		brightness = 1.6,
-		exposure = 0.4,
-		ambient = rgb(70, 58, 70),
-		outdoor = rgb(122, 100, 112),
-		air = rgb(196, 128, 116),
-		decay = rgb(96, 50, 60),
-		clouds = rgb(220, 140, 130),
+	{ -- the sun on the horizon
+		hour = 18.3,
+		brightness = 1.8,
+		exposure = 0.1,
+		ambient = rgb(66, 54, 58),
+		outdoor = rgb(120, 98, 96),
+		air = rgb(196, 132, 110),
+		decay = rgb(100, 52, 48),
+		clouds = rgb(218, 142, 120),
 		rays = 0.08,
+		tint = rgb(255, 238, 222),
+		saturation = -0.04,
 	},
-	{
+	{ -- embers of the sunset
+		hour = 18.9,
+		brightness = 1.2,
+		exposure = 0.1,
+		ambient = rgb(56, 46, 56),
+		outdoor = rgb(98, 80, 92),
+		air = rgb(156, 102, 104),
+		decay = rgb(78, 42, 52),
+		clouds = rgb(176, 108, 106),
+		rays = 0.05,
+		tint = rgb(255, 236, 228),
+		saturation = -0.08,
+	},
+	{ -- the last blue light
 		hour = 19.6,
-		brightness = 0.9,
-		exposure = 0.5,
-		ambient = rgb(56, 56, 76),
-		outdoor = rgb(92, 92, 124),
-		air = rgb(110, 104, 140),
-		decay = rgb(50, 44, 76),
-		clouds = rgb(120, 110, 150),
-		rays = 0.02,
-	},
-	{
-		hour = 22,
-		brightness = 0.5,
-		exposure = 0.6,
-		ambient = rgb(46, 50, 72),
-		outdoor = rgb(78, 86, 118),
-		air = rgb(64, 74, 108),
-		decay = rgb(26, 30, 52),
-		clouds = rgb(70, 76, 104),
-		rays = 0,
-	},
-	{
-		hour = 26,
-		brightness = 0.5,
-		exposure = 0.6,
-		ambient = rgb(44, 48, 70),
-		outdoor = rgb(78, 86, 118),
-		air = rgb(60, 70, 104),
-		decay = rgb(24, 28, 50),
-		clouds = rgb(66, 72, 100),
-		rays = 0,
-	},
-	{
-		hour = 28.8,
-		brightness = 0.8,
-		exposure = 0.55,
-		ambient = rgb(54, 54, 78),
-		outdoor = rgb(92, 92, 126),
-		air = rgb(112, 110, 150),
-		decay = rgb(60, 52, 84),
-		clouds = rgb(130, 120, 160),
+		brightness = 0.6,
+		exposure = 0.12,
+		ambient = rgb(42, 42, 56),
+		outdoor = rgb(70, 72, 96),
+		air = rgb(88, 86, 112),
+		decay = rgb(42, 38, 60),
+		clouds = rgb(98, 94, 124),
 		rays = 0.01,
+		tint = rgb(236, 238, 255),
+		saturation = -0.12,
 	},
-	{
-		hour = 30.4,
-		brightness = 2.2,
-		exposure = 0.35,
-		ambient = rgb(80, 68, 74),
-		outdoor = rgb(160, 138, 128),
-		air = rgb(232, 180, 150),
-		decay = rgb(130, 88, 76),
-		clouds = rgb(255, 212, 186),
+	{ -- night
+		hour = 22,
+		brightness = 0.34,
+		exposure = 0.18,
+		ambient = rgb(30, 32, 44),
+		outdoor = rgb(50, 56, 78),
+		air = rgb(46, 52, 70),
+		decay = rgb(20, 22, 34),
+		clouds = rgb(50, 54, 72),
+		rays = 0,
+		tint = rgb(224, 232, 255),
+		saturation = -0.18,
+	},
+	{ -- two in the morning, the darkest hour
+		hour = 26,
+		brightness = 0.3,
+		exposure = 0.18,
+		ambient = rgb(26, 28, 40),
+		outdoor = rgb(46, 52, 72),
+		air = rgb(40, 46, 64),
+		decay = rgb(16, 18, 30),
+		clouds = rgb(44, 48, 66),
+		rays = 0,
+		tint = rgb(222, 230, 255),
+		saturation = -0.2,
+	},
+	{ -- before dawn
+		hour = 28.9,
+		brightness = 0.55,
+		exposure = 0.16,
+		ambient = rgb(40, 40, 56),
+		outdoor = rgb(72, 74, 100),
+		air = rgb(100, 98, 130),
+		decay = rgb(54, 48, 74),
+		clouds = rgb(114, 108, 144),
+		rays = 0.01,
+		tint = rgb(236, 236, 255),
+		saturation = -0.12,
+	},
+	{ -- sunrise at the Terminus
+		hour = 30.5,
+		brightness = 2.0,
+		exposure = 0.15,
+		ambient = rgb(76, 64, 70),
+		outdoor = rgb(152, 128, 118),
+		air = rgb(228, 172, 142),
+		decay = rgb(126, 84, 72),
+		clouds = rgb(252, 206, 180),
 		rays = 0.1,
+		tint = rgb(255, 240, 226),
+		saturation = -0.02,
 	},
 }
 
 local LOBBY =
 	Vector3.new(Tuning.World.LobbyOrigin[1], Tuning.World.LobbyOrigin[2], Tuning.World.LobbyOrigin[3])
-local LOBBY_HOUR = SKY[2].hour
-local BASE_DENSITY = 0.36
-local BASE_HAZE = 2.1
+local LOBBY_HOUR = Journey.hour(0, Tuning.Run.StationCount)
+local BASE_DENSITY = 0.42
+local BASE_HAZE = 2.6
+local DREAD_NEAR, DREAD_FAR = 10, 60 -- a Hollow this close is full dread, this far none
 local WEATHER_BAND = 290 -- weather falls in two bands beside the train, never inside the cars
 local TUNNEL_OUTDOOR = rgb(18, 18, 22)
 
@@ -189,6 +200,8 @@ local function skyAt(h: number): SkyKey
 				decay = a.decay:Lerp(b.decay, t),
 				clouds = a.clouds:Lerp(b.clouds, t),
 				rays = MathX.lerp(a.rays, b.rays, t),
+				tint = a.tint:Lerp(b.tint, t),
+				saturation = MathX.lerp(a.saturation, b.saturation, t),
 			}
 		end
 	end
@@ -211,8 +224,8 @@ local function buildLighting()
 
 	atmosphere = Instance.new("Atmosphere")
 	atmosphere.Density = BASE_DENSITY
-	atmosphere.Offset = 0.22
-	atmosphere.Glare = 0.35
+	atmosphere.Offset = 0.25
+	atmosphere.Glare = 0.2
 	atmosphere.Haze = BASE_HAZE
 	atmosphere.Parent = Lighting
 
@@ -222,18 +235,16 @@ local function buildLighting()
 	sky.StarCount = 3000
 	sky.Parent = Lighting
 
+	-- lamps, fires, lit windows and eyes bloom out of the dark
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.55
-	bloom.Size = 26
-	bloom.Threshold = 1.4
+	bloom.Intensity = 0.85
+	bloom.Size = 30
+	bloom.Threshold = 1.05
 	bloom.Parent = Lighting
 
 	local base = Instance.new("ColorCorrectionEffect")
 	base.Name = "BaseGrade"
-	base.Saturation = -0.08
-	base.Contrast = 0.1
-	base.Brightness = 0.01
-	base.TintColor = rgb(255, 244, 232)
+	base.Contrast = 0.14
 	base.Parent = Lighting
 
 	grade = Instance.new("ColorCorrectionEffect")
@@ -384,6 +395,7 @@ function AtmosphereController.Start()
 	local cloudTint = Color3.new(1, 1, 1)
 	local airTint = Color3.new(1, 1, 1)
 	local biomeDensity, biomeHaze = 0, 0
+	local dread = 0
 
 	RunService.RenderStepped:Connect(function(dt)
 		local character = Players.LocalPlayer.Character
@@ -421,10 +433,17 @@ function AtmosphereController.Start()
 		cloudDensity = MathX.lerp(cloudDensity, MathX.lerp(a.cloudDensity, b.cloudDensity, w), blend)
 		darkness = MathX.lerp(darkness, tunnel, MathX.damp(0.15, dt))
 
+		-- dread: rises quickly as a Hollow closes in, ebbs slowly once it has gone
+		local nearest = if Registry.HollowAnimator then Registry.HollowAnimator.Nearest(focus) else math.huge
+		local targetDread = if inLobby
+			then 0
+			else 1 - MathX.saturate((nearest - DREAD_NEAR) / (DREAD_FAR - DREAD_NEAR))
+		dread = MathX.lerp(dread, targetDread, MathX.damp(if targetDread > dread then 0.25 else 2, dt))
+
 		-- local grade and air
 		local targetDensity, targetHaze = BASE_DENSITY + biomeDensity, BASE_HAZE + biomeHaze
-		local targetSat, targetContrast, targetBrightness = 0, 0, 0
-		local targetTint = Color3.new(1, 1, 1)
+		local targetSat, targetContrast, targetBrightness = key.saturation, 0, 0
+		local targetTint = key.tint
 		if inLobby then
 			targetDensity, targetHaze = 0.18, 0.8
 			targetTint = rgb(255, 236, 214)
@@ -446,6 +465,10 @@ function AtmosphereController.Start()
 				targetTint = Color3.new(1, 0.9 - 0.06 * pulse, 0.88 - 0.08 * pulse)
 				targetContrast = 0.12
 			end
+			targetSat -= 0.25 * dread
+			targetContrast += 0.1 * dread
+			targetTint = targetTint:Lerp(rgb(196, 214, 255), 0.35 * dread)
+			targetDensity += 0.08 * dread
 			targetDensity = MathX.lerp(targetDensity, 0.12, darkness)
 			targetHaze = MathX.lerp(targetHaze, 0, darkness)
 		end

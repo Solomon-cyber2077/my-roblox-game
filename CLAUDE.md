@@ -51,6 +51,13 @@ Read this file before changing code.
 ## Checks
 
 - `lune run check` runs StyLua, selene (tests use `tests/selene.toml`), a fresh Rojo sourcemap, luau-lsp in
-  strict mode and the unit tests. It must pass before every commit.
+  strict mode, the unit tests and the visual audit (`.lune/audit.luau`). It must pass before every commit.
+- The audit builds every model headless (through `.lune/lib/Shim`) and fails on z-fighting (two visible faces in
+  one plane, `lib/Faces`), clashes (separate props or set pieces sunk into each other, `lib/Clash`), props
+  outgrowing their `Props.radius` footprint, and part, light, emitter and particle budgets. Before a landscape
+  change, also run `AUDIT_SEEDS=6 lune run audit Scenery`.
+- Landscape rules the audit relies on: every ground layer has its own height band (`Scenery/Bands`); flat overlays
+  never overlap; props are packed inside their chunk and band by footprint; set-piece ground that props may stand
+  in carries the `Earth` attribute; members between two points use `Kit.between`, never `CFrame.lookAt`.
 - New pure logic gets a spec in `tests/`. Spec files receive `Shared`, `describe`, `it` and `expect` as globals.
 - In Studio, `Remotes.Dev` (Studio-only) runs the developer console commands listed in README.md.

@@ -121,4 +121,13 @@ function HollowAnimator.Start()
 	end)
 end
 
+-- Distance from `position` to the nearest Hollow, or math.huge when there is none.
+function HollowAnimator.Nearest(position: Vector3): number
+	local best = math.huge
+	for _, rig in rigs do
+		best = math.min(best, (rig.root.Position - position).Magnitude)
+	end
+	return best
+end
+
 return HollowAnimator

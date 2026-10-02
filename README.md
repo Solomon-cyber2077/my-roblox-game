@@ -51,7 +51,9 @@ monetization and the backlog) is the
 
 | Command | What it does |
 | --- | --- |
-| `lune run check` | Formatting, lint, strict type check and the unit tests, stopping at the first failure |
+| `lune run check` | Formatting, lint, strict type check, the unit tests and the visual audit, stopping at the first failure |
+| `lune run audit` | Builds every model the game makes (train, lobby, stations, Hollow, items, every prop, a landscape window per biome) headless and fails on z-fighting, clashing objects or budget overruns. `lune run audit Scenery` filters by name; `AUDIT_SEEDS=6` sweeps more world seeds, `AUDIT_PROP_SEEDS=24` more prop seeds, `AUDIT_SHOW=n` prints more findings |
+| `lune run preview <biome> <out.json> [seed] [odometer]` | Exports a stretch of the journey (train, landscape, set pieces) as JSON parts and lights, for viewing outside Roblox. `Gallery` as the biome lays every prop in a row |
 | `lune run test` | The unit tests only. `lune run test Ledger` runs the specs whose file name contains `Ledger` |
 | `lune run report` | Prints the difficulty and hazard tables the blueprint quotes |
 

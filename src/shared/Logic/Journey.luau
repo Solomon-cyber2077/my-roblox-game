@@ -213,9 +213,24 @@ end
 
 -- Stations --------------------------------------------------------------------------------
 
--- Land x where the station will dock, seen from Cruise with `secondsLeft` of cruise to run.
-function Journey.dockFromCruise(odometer: number, secondsLeft: number): number
-	return odometer + Tuning.Motion.CruiseSpeed * math.max(secondsLeft, 0) + Motion.arrivalDistance()
+--[[
+	Land x where the station will dock, seen from Cruise with `secondsLeft` of
+	cruise to run at the current scenery `speed` (cruise speed when omitted). A
+	scenery still spinning up gains Tuning.Motion.SpinUp studs/s² until cruise.
+]]
+function Journey.dockFromCruise(odometer: number, secondsLeft: number, speed: number?): number
+	local cruise = Tuning.Motion.CruiseSpeed
+	local accel = Tuning.Motion.SpinUp
+	local t = math.max(secondsLeft, 0)
+	local v = math.min(speed or cruise, cruise)
+	local distance: number
+	local spinUp = (cruise - v) / accel
+	if spinUp >= t then
+		distance = v * t + accel * t * t / 2
+	else
+		distance = (cruise * cruise - v * v) / (2 * accel) + cruise * (t - spinUp)
+	end
+	return odometer + distance + Motion.arrivalDistance()
 end
 
 function Journey.sinkhole(
@@ -298,7 +313,10 @@ end
 
 -- How far through a leg the train is. Before the dock is known, a capped guess.
 function Journey.legShare(odometer: number, legStart: number, dock: number?): number
-	if dock and dock > legStart then
+	if dock then
+		if dock <= legStart then
+			return 1 -- joined at the station itself
+		end
 		return MathX.saturate((odometer - legStart) / (dock - legStart))
 	end
 	return math.clamp((odometer - legStart) / J.TypicalLeg, 0, J.UnknownShareCap)

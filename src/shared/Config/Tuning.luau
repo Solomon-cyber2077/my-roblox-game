@@ -29,6 +29,9 @@ local Tuning = {
 	Motion = {
 		CruiseSpeed = 110, -- studs per second, the speed the world scrolls past the train
 		DepartureLingerSeconds = 12, -- after the chase window the station keeps sliding, then despawns
+		SpinUp = 9, -- studs/s² the scenery gains toward cruise while boarding or at a junction
+		DepartureSpinUp = 6, -- studs/s² when no departing station is there to follow
+		RunEndBrake = 12, -- studs/s² the scenery loses when a run ends on the line
 	},
 
 	Train = {
@@ -93,17 +96,19 @@ local Tuning = {
 		TunnelCutting = 70, -- open rock cutting before each tunnel portal
 		TypicalLeg = 6000, -- leg length the sky assumes before the route is chosen
 		UnknownShareCap = 0.3, -- and how far through the leg it lets the sky run on that guess
+		BuiltAhead = 2200, -- the near landscape is built this far ahead; later changes start beyond it
+		PruneBehind = 3000, -- set pieces and sinkholes this far behind the train are forgotten
 		-- Time of day by run progress (legs travelled). Hours keep counting past 24 so the
 		-- night interpolates forward. mode: Stop = after `at` legs, Share = at that share of
 		-- the run, End = `at` legs before the Terminus.
 		Sky = {
-			{ mode = "Stop", at = 0, hour = 17.4 },
-			{ mode = "Stop", at = 1, hour = 17.9 },
-			{ mode = "Stop", at = 2, hour = 18.6 },
-			{ mode = "Share", at = 0.45, hour = 22 },
-			{ mode = "Share", at = 0.65, hour = 26 },
-			{ mode = "End", at = 1, hour = 28.8 },
-			{ mode = "End", at = 0, hour = 30.4 },
+			{ mode = "Stop", at = 0, hour = 18.3 }, -- the lobby: the sun just touching the horizon
+			{ mode = "Stop", at = 1, hour = 18.9 }, -- first stop: sunset embers
+			{ mode = "Stop", at = 2, hour = 19.6 }, -- second stop: the last blue light
+			{ mode = "Share", at = 0.4, hour = 22 },
+			{ mode = "Share", at = 0.65, hour = 26 }, -- two in the morning
+			{ mode = "End", at = 1, hour = 28.9 }, -- the last stop before dawn
+			{ mode = "End", at = 0, hour = 30.5 }, -- the Terminus at sunrise
 		},
 		-- Set pieces. length in studs along the track; reach is the |z| band kept clear of
 		-- ordinary props (sided pieces use one side, the others both); pad extends it along x.

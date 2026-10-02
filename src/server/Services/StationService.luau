@@ -55,11 +55,20 @@ local function now(): number
 	return Workspace:GetServerTimeNow()
 end
 
+--[[
+	Anchoring keeps whatever velocity the assembly had when it was moving, and an
+	anchored part with a velocity is a conveyor belt: everyone standing on the
+	platform would slide along with it for the whole stop (badly so when a dev skip
+	docks the station mid-brake). Stop the motor, anchor, then zero the motion.
+]]
 local function anchorAt(station: Active, cframe: CFrame)
 	local root = station.built.root
+	station.prismatic.ActuatorType = Enum.ActuatorType.None
+	station.prismatic.Velocity = 0
 	root.Anchored = true
 	root.CFrame = cframe
-	station.prismatic.ActuatorType = Enum.ActuatorType.None
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.AssemblyAngularVelocity = Vector3.zero
 end
 
 local function release(station: Active)
