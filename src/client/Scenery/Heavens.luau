@@ -136,14 +136,14 @@ local MARIA = {
 	{ x = 0.05, y = 0.022, size = 0.032, alpha = 0.2 },
 	{ x = -0.058, y = 0.012, size = 0.028, alpha = 0.16 },
 }
--- Scud crossing the moon's face, soft above and below and dark against the light: width,
--- height, height on the billboard, speed, alpha, phase. Each fades in and out across the
--- face, so none is ever seen against the open sky.
+-- Scud crossing the moon's face: thin streaks that fade out toward both ends, dark against
+-- the light behind them (width, height, height on the billboard, speed, alpha, phase). Each
+-- fades in and out as it crosses, and with the light behind it.
 local SCUD = {
-	{ w = 0.62, h = 0.032, y = 0.47, speed = 1, alpha = 0.34, at = 0.1 },
-	{ w = 0.5, h = 0.045, y = 0.53, speed = 0.8, alpha = 0.28, at = 0.6 },
-	{ w = 0.7, h = 0.026, y = 0.5, speed = 1.25, alpha = 0.32, at = 0.35 },
-	{ w = 0.55, h = 0.04, y = 0.56, speed = 0.9, alpha = 0.26, at = 0.85 },
+	{ w = 0.56, h = 0.016, y = 0.47, speed = 1, alpha = 0.4, at = 0.1 },
+	{ w = 0.46, h = 0.022, y = 0.53, speed = 0.8, alpha = 0.34, at = 0.6 },
+	{ w = 0.64, h = 0.013, y = 0.5, speed = 1.25, alpha = 0.38, at = 0.35 },
+	{ w = 0.5, h = 0.019, y = 0.56, speed = 0.9, alpha = 0.3, at = 0.85 },
 }
 local SCUD_TRAVEL = { 0.2, 0.8 } -- across the billboard
 
@@ -364,8 +364,7 @@ local function buildMoon(anchor: BasePart): MoonRig
 	for _, spec in SCUD do
 		local f = frame(gui, 9)
 		f.Size = UDim2.fromScale(spec.w, spec.h)
-		round(f)
-		gradient(f, 90, SOFT)
+		gradient(f, 0, SOFT)
 		table.insert(scud, f)
 	end
 	return {
@@ -564,9 +563,10 @@ local function poseMoon(m: MoonRig, state: Sky.State, info: Info)
 	m.lid.BackgroundColor3 = state.decay:Lerp(Color3.new(0, 0, 0), 0.5)
 	setTransparency(m.lid, if moon.lid > 0.001 then visible else 0)
 
-	-- scud across the face, faster as the train runs, dark against the light behind it
+	-- scud across the face, faster as the train runs, dark against the light behind it (so
+	-- gone while the lid is shut)
 	local scudColor = state.clouds:Lerp(Color3.new(0, 0, 0), 0.55)
-	local cloud = visible * (0.35 + 0.65 * state.cover)
+	local cloud = visible * (0.35 + 0.65 * state.cover) * (1 - moon.lid)
 	local from, to = SCUD_TRAVEL[1], SCUD_TRAVEL[2]
 	for i, wisp in m.scud do
 		local spec = SCUD[i]
