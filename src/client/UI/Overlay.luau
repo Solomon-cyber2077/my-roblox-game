@@ -5,6 +5,7 @@
 	  alerts         big centre banners for phase changes and alarms
 	  popups         "+8 COAL" style receipts rising from the backpack
 	  vignette       edge pulses for hits and fog
+	  dread          a dark vignette that closes in while a Hollow is near
 	  fade           full-screen fades for boarding and teleports
 ]]
 
@@ -34,8 +35,19 @@ local alertScale: UIScale
 local popups: Frame
 local fadeFrame: Frame
 local edges: { Frame } = {}
+local shade: { Frame } = {}
+local shadeShown = 0
 local alertToken = 0
 local feedOrder = 0
+
+-- The dread vignette reaches further in than the pulse edges, and sits under them.
+local SHADE_SPECS = {
+	{ size = UDim2.fromScale(1, 0.34), pos = UDim2.fromScale(0, 0), rotation = 90 },
+	{ size = UDim2.fromScale(1, 0.34), pos = UDim2.fromScale(0, 0.66), rotation = -90 },
+	{ size = UDim2.fromScale(0.26, 1), pos = UDim2.fromScale(0, 0), rotation = 0 },
+	{ size = UDim2.fromScale(0.26, 1), pos = UDim2.fromScale(0.74, 0), rotation = 180 },
+}
+local SHADE_MAX = 0.8 -- opacity at the screen's edge at full dread
 
 function Overlay.mount(gui: ScreenGui)
 	feed = Ui.new("Frame", {
@@ -102,6 +114,29 @@ function Overlay.mount(gui: ScreenGui)
 			Parent = edge,
 		})
 		table.insert(edges, edge)
+	end
+
+	for _, spec in SHADE_SPECS do
+		local edge = Ui.new("Frame", {
+			Name = "Dread",
+			Size = spec.size,
+			Position = spec.pos,
+			BackgroundColor3 = Theme.Color.black,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 19,
+			Parent = gui,
+		})
+		Ui.new("UIGradient", {
+			Rotation = spec.rotation,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(0.45, 0.55),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+			Parent = edge,
+		})
+		table.insert(shade, edge)
 	end
 
 	fadeFrame = Ui.new("Frame", {
@@ -212,6 +247,18 @@ function Overlay.pulse(color: Color3, strength: number, seconds: number)
 			{ BackgroundTransparency = 1 },
 			TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		)
+	end
+end
+
+-- Dread from 0 to 1: the edges of the screen darken as a Hollow closes in.
+function Overlay.dread(level: number)
+	local alpha = math.floor(level * SHADE_MAX * 100 + 0.5) / 100
+	if alpha == shadeShown then
+		return
+	end
+	shadeShown = alpha
+	for _, edge in shade do
+		edge.BackgroundTransparency = 1 - alpha
 	end
 end
 

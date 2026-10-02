@@ -6,3 +6,4 @@ sourcemap.json
 *.rbxl.lock
 *.rbxlx.lock
 .tooling/
+node_modules/

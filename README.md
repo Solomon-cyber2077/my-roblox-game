@@ -18,7 +18,8 @@ monetization and the backlog) is the
 | `src/client` | StarterPlayer.StarterPlayerScripts.Client | `Controllers/`: state mirror, camera, movement, scenery, atmosphere, audio and effects. `Scenery/`: the chunked landscape (biomes, props, layers, set pieces, sinkholes). `UI/`: HUD, modals and prompts |
 | `src/shared` | ReplicatedStorage.Shared | `Config/`: every tunable number. `Logic/`: pure game rules, unit-tested. `Net/`, `Types`, `Util/`, `Visual/` |
 | `tests` | Not synced | Lune specs for `src/shared` |
-| `.lune` | Not synced | The test runner, the quality gate and the report script |
+| `.lune` | Not synced | The test runner, the quality gate, the visual audit, the preview exporter and the report script |
+| `tools/preview` | Not synced | The three.js viewer that draws preview exports outside Roblox |
 
 `init.server.luau` and `init.client.luau` are the entry scripts. Other `.luau` files are ModuleScripts.
 
@@ -52,8 +53,9 @@ monetization and the backlog) is the
 | Command | What it does |
 | --- | --- |
 | `lune run check` | Formatting, lint, strict type check, the unit tests and the visual audit, stopping at the first failure |
-| `lune run audit` | Builds every model the game makes (train, lobby, stations, Hollow, items, every prop, a landscape window per biome) headless and fails on z-fighting, clashing objects or budget overruns. `lune run audit Scenery` filters by name; `AUDIT_SEEDS=6` sweeps more world seeds, `AUDIT_PROP_SEEDS=24` more prop seeds, `AUDIT_SHOW=n` prints more findings |
-| `lune run preview <biome> <out.json> [seed] [odometer]` | Exports a stretch of the journey (train, landscape, set pieces) as JSON parts and lights, for viewing outside Roblox. `Gallery` as the biome lays every prop in a row |
+| `lune run audit` | Builds every model the game makes (train, lobby, stations, Hollow, items, every prop, a landscape window per biome) headless and fails on z-fighting, clashing objects or budget overruns. The `Sky` target poses the sky objects through a whole night in every biome and every omen. `lune run audit Scenery` filters by name; `AUDIT_SEEDS=6` sweeps more world seeds, `AUDIT_PROP_SEEDS=24` more prop seeds, `AUDIT_SHOW=n` prints more findings |
+| `lune run preview <biome> <out.json> [seed] [odometer]` | Exports a stretch of the journey (train, landscape, set pieces, and the sky the client would draw) as JSON, for viewing outside Roblox. `--hour=26` sets the time of night, `--dread=0.6` a Hollow's nearness, `--omen=Blink@0.35` an omen part-way through, `--flash=1` lightning. `--ride=12 --fps=24` exports twelve seconds at cruise with a sky frame per 1/24 s (`--hours=19.5:22` sweeps the hour, `--omen=Blink@3,Eye@9` starts omens at those seconds). `Gallery` as the biome lays every prop in a row |
+| `node tools/preview/render.mjs <out.json> <out.png>` | Draws a preview export with three.js in headless Chromium (`npm install` in `tools/preview` once). `--cam=ahead` (or `station`, `far`, `wide`, `behind`, or `x,y,z:x,y,z`), `--video=12` renders a ride to MP4 with ffmpeg. An approximation of Roblox's lighting for judging mood and layout, not a pixel match |
 | `lune run test` | The unit tests only. `lune run test Ledger` runs the specs whose file name contains `Ledger` |
 | `lune run report` | Prints the difficulty and hazard tables the blueprint quotes |
 
@@ -76,5 +78,8 @@ game.ReplicatedStorage.Remotes.Dev:FireServer("state")
 | `hollow` | Spawn a Hollow near you |
 | `coal 50`, `parts 20` | Set the train's stores |
 | `state` | Print the run, crew, train and backpack to the Output |
+| `sky 26` / `sky` | Pin every client's sky to an hour (18.3 dusk, 22 moonrise, 26 the blood moon, 30.5 sunrise), or let it follow the run again |
+| `omen Eye` | Every client sees an omen now: `Hush`, `TallOnes`, `Blink`, `Bleed` or `Eye` |
+| `strike` | A lightning strike now |
 
 The remote does not exist in live servers.

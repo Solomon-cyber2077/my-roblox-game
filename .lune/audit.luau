@@ -134,6 +134,7 @@ type Item = {
 	layer: string?,
 	context: boolean?,
 	problems: { string }?, -- found while building (a prop outgrowing its footprint)
+	note: string?, -- printed under the target's line
 	group: number?, -- clash group for parts no prop claimed (a set piece's own masonry)
 }
 type Target = { name: string, budget: Budget?, build: () -> { Item } }
@@ -360,6 +361,148 @@ table.insert(targets, {
 			end
 		end
 		return list
+	end,
+})
+
+--[[
+	The sky objects (Scenery/Heavens) are BillboardGuis, not parts: built once, then posed
+	every frame. This target builds the rig headless and runs the client's per-frame sky
+	(Scenery/Sky compose, approach and finish, then Heavens.update) through a whole night in
+	every biome, with every omen at several moments, lightning, a tunnel, a station's fog,
+	dread and the Depot Hall. A runtime error, a NaN or an out-of-range value shows up here
+	instead of in Studio, and the rig's frames are held to a budget.
+]]
+local SKY_FRAMES = 400
+
+local function finite(x: number): boolean
+	return x == x and x > -math.huge and x < math.huge
+end
+
+table.insert(targets, {
+	name = "Sky",
+	build = function()
+		local Sky = load(Client.Scenery.Sky)
+		local Heavens = load(Client.Scenery.Heavens)
+		local Omens = load(Shared.Logic.Omens)
+		local folder = Instance.new("Folder")
+		local rig = Heavens.build(folder)
+		local problems: { string } = {}
+		local frames = 0
+		for _, d in rig.anchor:GetDescendants() do
+			if d:IsA("GuiObject") then
+				frames += 1
+			end
+		end
+		if frames > SKY_FRAMES then
+			table.insert(problems, `the sky objects hold {frames} frames, past {SKY_FRAMES}`)
+		end
+		local function check(label: string, state: any)
+			for _, key in { "brightness", "exposure", "density", "haze", "cover", "cloudDensity", "stars" } do
+				if not finite(state[key]) then
+					table.insert(problems, `{label}: {key} is {state[key]}`)
+				end
+			end
+			for _, key in { "ambient", "outdoor", "shift", "air", "decay", "clouds", "tint", "glowColor" } do
+				local c = state[key]
+				if not (c.R >= 0 and c.R <= 1 and c.G >= 0 and c.G <= 1 and c.B >= 0 and c.B <= 1) then
+					table.insert(problems, `{label}: {key} out of range`)
+				end
+			end
+			local moon = state.moon
+			if
+				not (
+					moon.visible >= 0
+					and moon.visible <= 1
+					and finite(moon.size)
+					and finite(moon.brightness)
+				)
+			then
+				table.insert(problems, `{label}: the moon is off ({moon.visible}, {moon.size})`)
+			end
+		end
+		local kinds: { string | false } = { false }
+		local durations: { [string]: number } = {}
+		for _, spec in Tuning.Sky.Omens do
+			table.insert(kinds, spec.kind)
+			durations[spec.kind] = spec.duration
+		end
+		local current = nil
+		local step = 0
+		for _, id in Biomes.ids() do
+			local def = Biomes.get(id)
+			for hour = 18.3, 30.5, 0.61 do
+				for _, kind in kinds do
+					for _, progress in { 0.05, 0.3, 0.5, 0.9 } do
+						step += 1
+						local duration = if kind then durations[kind] else 1
+						local now = 5000 + progress * duration
+						local omen = if kind
+							then {
+								kind = kind,
+								start = 5000,
+								duration = duration,
+								progress = progress,
+								seed = step,
+							}
+							else nil
+						local strike = Omens.omenStrike(omen, now) or Omens.strike(step, now, def.storm)
+						if strike == nil and step % 3 == 0 then
+							strike = {
+								start = now,
+								seed = step,
+								pulses = { { at = 0, width = 0.1, peak = 1 } },
+								distance = 3000,
+								azimuth = step,
+								red = kind == "Bleed",
+							}
+						end
+						local lobby = step % 23 == 0
+						local target = Sky.compose({
+							hour = hour,
+							a = def,
+							b = Biomes.get(Biomes.ids()[step % #Biomes.ids() + 1]),
+							w = (step % 5) / 4,
+							lobby = lobby,
+							fog = (step % 4) / 3,
+							alarm = if step % 7 == 0 then 0.5 else nil,
+							dread = (step % 6) / 5,
+							eliminated = step % 11 == 0,
+							flare = if step % 13 == 0 then 0.7 else 0,
+							omen = omen,
+							now = now,
+						})
+						current = Sky.approach(current, target, 1 / 60)
+						local tunnel = if step % 9 == 0 then 1 else 0
+						local drawn = Sky.finish(
+							current,
+							tunnel,
+							Omens.flash(strike, now),
+							strike ~= nil and strike.red
+						)
+						local label =
+							`{id} at {string.format("%.1f", hour)}{if kind then ` during {kind}` else ""}`
+						check(label, drawn)
+						Heavens.update(rig, drawn, {
+							now = now,
+							focus = roblox.Vector3.new(step, 10, -step),
+							omen = omen,
+							strike = strike,
+							drift = 1 + (step % 3),
+						})
+					end
+				end
+			end
+			if #problems > 12 then
+				break
+			end
+		end
+		return {
+			{
+				instance = folder,
+				problems = problems,
+				note = `sky: {frames} frames (budget {SKY_FRAMES}), posed {step} times without a fault`,
+			},
+		}
 	end,
 })
 
@@ -716,6 +859,11 @@ for _, target in targets do
 			table.insert(counts, `{name} {layer.parts}{extra}`)
 		end
 		print(`    window: {table.concat(counts, ", ")}`)
+	end
+	for _, item in built :: { Item } do
+		if item.note then
+			print(`    {item.note}`)
+		end
 	end
 	for _, problem in problems do
 		print(`    over budget: {problem}`)

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Last Train Out preview</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				background: #000;
+				overflow: hidden;
+			}
+			canvas {
+				display: block;
+			}
+		</style>
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./node_modules/three/build/three.module.js",
+					"three/addons/": "./node_modules/three/examples/jsm/"
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<canvas id="view"></canvas>
+		<script type="module">
+			import { Viewer, CAL } from './viewer.js';
+
+			window.CAL = CAL;
+			window.startViewer = async (url, width, height) => {
+				const data = await (await fetch(url)).json();
+				const viewer = new Viewer(document.getElementById('view'), width, height);
+				viewer.load(data);
+				window.viewer = viewer;
+				return { parts: data.parts.length, lights: data.lights.length, frames: (data.frames || []).length };
+			};
+			window.viewerReady = true;
+		</script>
+	</body>
+</html>

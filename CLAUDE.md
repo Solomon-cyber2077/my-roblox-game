@@ -30,6 +30,13 @@ Read this file before changing code.
 - **Lighting is client-owned.** `Controllers/AtmosphereController` builds the sky, atmosphere, clouds, post effects
   and weather and sets them every frame (time of day by run progress, biome air, tunnels, storms). The server
   does not touch Lighting; `Lighting.Technology` is set to Future in `default.project.json`.
+- **The sky.** `Scenery/Sky` is the look as data and math: hour keys, the moon's path and colour through the night,
+  and `compose`/`approach`/`finish`, which turn the hour, biome, dread and the omen into Lighting values.
+  `Scenery/Heavens` draws what the engine cannot: the moon (the engine's is hidden), horizon glows, the TallOnes
+  and lightning bolts, as BillboardGuis of Frames on one anchor that follows the camera at 16000 studs, so they sit
+  at infinity behind the landscape. `Logic/Omens` schedules omens and lightning from the run seed and the server
+  clock, so every client sees and hears the same ones; the controllers only read it. `lune run preview` and the
+  audit's `Sky` target run the same modules headless.
 - **Determinism.** `Util/Rng` (Mulberry32) is derived per purpose from the run seed, so the server, clients and
   tests generate the same layouts, loot and hazard schedules. Clients evaluate fog and collapse fronts locally
   from `run.station.hazards`.
@@ -60,4 +67,7 @@ Read this file before changing code.
   never overlap; props are packed inside their chunk and band by footprint; set-piece ground that props may stand
   in carries the `Earth` attribute; members between two points use `Kit.between`, never `CFrame.lookAt`.
 - New pure logic gets a spec in `tests/`. Spec files receive `Shared`, `describe`, `it` and `expect` as globals.
+- To look at a change without Studio: `lune run preview <biome> out.json --hour=26`, then
+  `node tools/preview/render.mjs out.json out.png --cam=ahead` (see README.md). The viewer approximates Roblox's
+  lighting; use it to judge composition and mood, and confirm in Studio.
 - In Studio, `Remotes.Dev` (Studio-only) runs the developer console commands listed in README.md.

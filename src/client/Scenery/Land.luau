@@ -73,6 +73,7 @@ local MID_Z = Bands.MidZ
 local FAR_Z = Bands.FarZ
 
 local HEDGE_D = 3.2
+local EERIE_CHANCE = 0.2 -- per near chunk side: a grave, a lantern, a Hollow standing in a field
 local SHORE = 70 -- coast: sand from the track out to here, then sea
 local PYLON_Z = -720
 local LINE_CLEARANCE = 24 -- either side of the power line, past its widest arms
@@ -654,7 +655,7 @@ local function buildNear(model: Model, x0: number, length: number, rng: Rng.Rng)
 		)
 
 		-- once in a while, something by the line that makes you look twice
-		if rng:chance(0.14 * density) then
+		if rng:chance(EERIE_CHANCE * density) then
 			placeProps(model, x0, length, rng, side, 30, 150, 1, function(pick)
 				return pick.eerie
 			end, packer, false, GROUND)
