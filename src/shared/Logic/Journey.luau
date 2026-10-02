@@ -72,6 +72,10 @@ local BIOMES: { [string]: Biome } = {
 	Market = "BurningTown",
 	Viaduct = "Highland",
 	Minehead = "Mountain",
+	Schoolhouse = "Farmland",
+	Infirmary = "Highland",
+	RailwayHotel = "Corridor",
+	PostTown = "BurningTown",
 	Terminus = "Coast",
 }
 

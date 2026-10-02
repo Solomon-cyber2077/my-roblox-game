@@ -223,6 +223,7 @@ Enter.Dwell = function()
 	local built = Registry.StationService.Built()
 	if built then
 		Registry.LootService.Activate(built, plan)
+		Registry.BuildingService.Activate(built, plan)
 	end
 	Registry.HazardDirector.Begin(plan, info)
 	Registry.CrewService.SpawnPendingJoiners()

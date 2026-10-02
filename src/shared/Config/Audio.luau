@@ -64,6 +64,22 @@ local Cues: { [string]: Cue } = {
 	SkyToll = { id = 9113804436, volume = 0.55, maxSeconds = 9, pitch = 0.36 }, -- a bell the size of the sky
 	SkyGroan = { id = 9113218938, volume = 0.6, maxSeconds = 6, pitch = 0.3 }, -- the sky groans
 	SkyHeart = { id = 9113570506, volume = 0.75, maxSeconds = 1.5, pitch = 0.28 }, -- the Eye's pulse
+
+	-- weather
+	Rain = { id = 9116496074, volume = 0.34, loop = true, pitch = 0.55 }, -- the steam hiss slowed into rain
+
+	-- the Hollows, layered from the same few recordings at other speeds
+	HollowScream = { id = 9125475729, volume = 1, spatial = true, pitch = 1.3, maxSeconds = 2.2 },
+	HollowWake = { id = 9125475729, volume = 0.85, spatial = true, pitch = 0.72, maxSeconds = 3 },
+	HollowSwipe = { id = 9125471724, volume = 0.85, spatial = true, pitch = 1.35, maxSeconds = 1 },
+	HollowSlam = { id = 9113218938, volume = 1, spatial = true, pitch = 0.8, maxSeconds = 2 },
+	HollowScrabble = { id = 9118582680, volume = 0.55, spatial = true, pitch = 1.7, maxSeconds = 1.2 },
+	HollowStep = { id = 9113218938, volume = 0.35, spatial = true, pitch = 1.6, maxSeconds = 0.5 },
+
+	-- building interactions
+	Breaker = { id = 15675059323, volume = 0.9, spatial = true, pitch = 0.55 },
+	DoorForce = { id = 9118582680, volume = 0.75, spatial = true, pitch = 1.25, maxSeconds = 1.5 },
+	Winded = { id = 9113570506, volume = 0.45, maxSeconds = 0.8, pitch = 0.5 },
 }
 
 for _, cue in Cues do

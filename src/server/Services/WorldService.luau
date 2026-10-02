@@ -24,6 +24,7 @@ local function setupCollisionGroups()
 		{ "Players", "Players" }, -- nobody can block a doorway with their body
 		{ "Station", "Train" }, -- the moving station slides past the static train
 		{ "Hollows", "Hollows" },
+		{ "Hollows", "Players" }, -- a Hollow can never stand on (or be blocked by) the crew
 		{ "Hollows", "Train" },
 		{ "Debris", "Train" },
 		{ "Debris", "Station" },

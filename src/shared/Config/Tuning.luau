@@ -52,18 +52,22 @@ local Tuning = {
 
 	Crew = {
 		MaxHealth = 100,
-		WalkSpeed = 16,
-		SprintSpeed = 25,
+		WalkSpeed = 20, -- a jog: Hollows on the hunt are a little faster
+		SprintSpeed = 31, -- and a sprint outruns them, while the breath lasts
 		StaminaMax = 100,
-		StaminaDrainPerSecond = 16,
-		StaminaRegenPerSecond = 25,
-		StaminaRegenDelay = 1.0,
+		StaminaDrainPerSecond = 18, -- about five and a half seconds of sprint
+		StaminaRegenPerSecond = 22,
+		StaminaRegenDelay = 0.9,
+		ExhaustedResume = 0.35, -- run dry and you cannot sprint again until this share is back
+		WindedSeconds = 1.6, -- running dry leaves you winded: slower for this long
+		WindedMultiplier = 0.85,
+		SprintFov = 9, -- degrees the camera widens at full sprint
 		BackpackSlots = 4,
 		HeavySpeedMultiplier = 0.86, -- per heavy item, stacking
 		JumpHeight = 7.2,
 		HeavyJumpHeight = 5.0,
-		HitSlowMultiplier = 0.6,
-		HitSlowSeconds = 0.8,
+		HitSlowMultiplier = 0.7,
+		HitSlowSeconds = 0.6,
 		PositionTickHz = 10,
 		FallDepth = 40, -- below platform height, in studs
 		StragglerDepthMin = 0.6, -- share of the clear depth where stragglers spawn
@@ -230,13 +234,35 @@ local Tuning = {
 	},
 
 	Hollow = {
-		StrikeRange = 4.5,
-		StrikeCooldown = 1.5,
-		SightRange = 80,
-		AwarenessRange = 26,
+		StrikeRange = 6.5, -- a strike starts when the target is this close to the Hollow's root
+		HitRange = 8, -- and lands if the target is still this close when the windup ends
+		WindupSeconds = 0.3, -- the tell: the Hollow rears back before it strikes
+		RecoverSeconds = 0.4,
+		StrikeCooldown = 0.9, -- from one strike's start to the next
+		LungeRange = 16, -- a hunter this close bursts forward
+		LungeBoost = 1.45, -- its speed multiplier while lunging
+		LungeSeconds = 0.55,
+		LungeCooldown = 3.5,
+		SightRange = 95,
+		AwarenessRange = 30,
 		SafeMargin = 3,
-		ThinkHz = 8,
+		ThinkHz = 12,
 		RetreatSeconds = 6,
+		StopShort = 2.4, -- hunters aim this far short of the target, so they never stand on it
+		PathEvery = 0.6, -- seconds between path recomputes when the target is out of sight
+		EmergeSeconds = 1.7, -- a spawn or a wake: it cannot move or strike yet
+		WakeRange = 16, -- a sleeper wakes when crew come this close
+		WakeSight = 30, -- or into its line of sight this close
+		SleeperStir = 0.5, -- share of the dwell after which sleepers wake on their own
+		LitFlee = 1.2, -- seconds a Hollow caught in a lit building cowers before it flees
+	},
+
+	-- The kinds of Hollow (Config/Difficulty holds how often each comes). speed scales the
+	-- hazard's walk and chase, damage its strike; reach scales the strike and hit ranges.
+	HollowKinds = {
+		Stalker = { speed = 1, damage = 1, reach = 1, windup = 1, knockback = 0 },
+		Crawler = { speed = 1.1, damage = 0.7, reach = 0.75, windup = 0.7, knockback = 0 },
+		Brute = { speed = 0.8, damage = 1.55, reach = 1.3, windup = 1.6, knockback = 70 },
 	},
 
 	Tools = {

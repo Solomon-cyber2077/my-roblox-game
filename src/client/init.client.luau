@@ -16,6 +16,7 @@ local ORDER = {
 	"TrainVisualsController",
 	"StationVisualsController",
 	"HollowAnimator",
+	"BuildingVisuals",
 	"AtmosphereController",
 	"UIController",
 	"FxController",

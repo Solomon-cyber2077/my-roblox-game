@@ -1,12 +1,22 @@
 --!strict
 --[[
-	The Hollow: a gaunt, eight-stud figure assembled from primitives on a
-	Humanoid rig. Joints are Motor6Ds so clients can animate the limbs
-	procedurally (HollowAnimator) with no animation assets.
+	The Hollows, built from primitives on a Humanoid rig. Three kinds share one
+	skeleton of Motor6Ds so the client can animate every joint procedurally
+	(HollowAnimator) with no animation assets:
 
-	It is built to read in the dark rather than in daylight: pale eyes that
-	light the ground in front of it, faint cold veins that trace the silhouette,
-	and a low mist dragging from its feet. In fog the eyes show first.
+	  Stalker  the lost porter: too tall, too thin, in the rags of a railway greatcoat.
+	           No eyes, only sockets with a pinprick of shine, and a jaw that drops open.
+	  Crawler  something that was a passenger, folded wrong: it runs on all fours in a
+	           torn nightshirt, its head turned upside down.
+	  Brute    the stoker: a soot-black hulk in a leather apron, embers smouldering in the
+	           cracks of its chest, one forearm ending in a shovel blade.
+
+	Skeleton (Part0 -> Part1, joint name):
+	  Root -> Pelvis (RootJoint), Pelvis -> Chest (Waist), Chest -> Head (Neck), Head -> Jaw (Jaw)
+	  Chest -> UpperArm (L/RShoulder) -> Forearm (L/RElbow) -> Hand (L/RWrist)
+	  Pelvis -> Thigh (L/RHip) -> Shin (L/RKnee)
+	Limb bones are cylinders whose joint sits at their top end, so a Transform swings
+	the limb about that joint. Only the invisible root collides.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,21 +25,65 @@ local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 
 local HollowBuilder = {}
 
-local SKIN = Color3.fromRGB(22, 20, 24)
-local CLOTH = Color3.fromRGB(34, 30, 34)
-local EYE = Color3.fromRGB(190, 236, 255)
-local VEIN = Color3.fromRGB(70, 150, 170)
+local rgb = Color3.fromRGB
 
-local LEG_LENGTH = 3.6
-local HIP_HEIGHT = 3.4
+type Spec = {
+	hip: number, -- Humanoid.HipHeight
+	root: Vector3,
+}
 
-local function limb(model: Model, name: string, size: Vector3, color: Color3): BasePart
-	local part =
-		Kit.block(model, size, CFrame.new(), color, { material = Enum.Material.Slate, collide = false })
-	part.Name = name
+local SPECS: { [string]: Spec } = {
+	Stalker = { hip = 3.9, root = Vector3.new(2.4, 2.6, 1.4) },
+	Crawler = { hip = 1.3, root = Vector3.new(2.4, 1.4, 3.0) },
+	Brute = { hip = 4.1, root = Vector3.new(3.4, 3.2, 2.0) },
+}
+
+local ICHOR = rgb(18, 12, 14)
+local MOUTH = rgb(46, 12, 14)
+local TOOTH = rgb(196, 184, 148)
+local SHINE = rgb(236, 226, 170)
+local BRASS = rgb(124, 100, 58)
+
+-- Helpers ---------------------------------------------------------------------------------
+
+local function loose(part: BasePart): BasePart
 	part.Anchored = false
 	part.Massless = true
+	part.CanCollide = false
+	part.CanQuery = false
 	return part
+end
+
+local function block(
+	model: Model,
+	name: string,
+	size: Vector3,
+	color: Color3,
+	material: Enum.Material?
+): BasePart
+	local part = loose(Kit.block(model, size, CFrame.new(), color, { material = material, collide = false }))
+	part.Name = name
+	return part
+end
+
+-- A limb bone: a cylinder of `length` whose top end is the joint (see boneC1).
+local function bone(
+	model: Model,
+	name: string,
+	length: number,
+	diameter: number,
+	color: Color3,
+	material: Enum.Material?
+): BasePart
+	local part = loose(
+		Kit.cylinder(model, length, diameter, CFrame.new(), color, { material = material, collide = false })
+	)
+	part.Name = name
+	return part
+end
+
+local function boneC1(length: number): CFrame
+	return CFrame.Angles(0, 0, -math.pi / 2) * CFrame.new(0, length / 2, 0)
 end
 
 local function joint(name: string, part0: BasePart, part1: BasePart, c0: CFrame, c1: CFrame): Motor6D
@@ -43,143 +97,632 @@ local function joint(name: string, part0: BasePart, part1: BasePart, c0: CFrame,
 	return motor
 end
 
-function HollowBuilder.build(at: CFrame): (Model, Humanoid)
-	local model = Kit.model("Hollow")
+local function stick(to: BasePart, part: BasePart, offset: CFrame): BasePart
+	loose(part)
+	local weld = Instance.new("Weld")
+	weld.Part0 = to
+	weld.Part1 = part
+	weld.C0 = offset
+	weld.Parent = part
+	return part
+end
 
-	local root =
-		Kit.block(model, Vector3.new(2.2, 2.2, 1.2), at, Color3.new(), { transparency = 1, shadow = false })
+-- Decorations, welded to a body part at `offset` in that part's frame.
+local function deco(
+	model: Model,
+	to: BasePart,
+	size: Vector3,
+	offset: CFrame,
+	color: Color3,
+	material: Enum.Material?
+): BasePart
+	return stick(
+		to,
+		Kit.block(model, size, CFrame.new(), color, { material = material, collide = false }),
+		offset
+	)
+end
+
+local function decoWedge(
+	model: Model,
+	to: BasePart,
+	size: Vector3,
+	offset: CFrame,
+	color: Color3,
+	material: Enum.Material?
+): BasePart
+	return stick(
+		to,
+		Kit.wedge(model, size, CFrame.new(), color, { material = material, collide = false }),
+		offset
+	)
+end
+
+local function decoBall(
+	model: Model,
+	to: BasePart,
+	diameter: number,
+	offset: CFrame,
+	color: Color3,
+	material: Enum.Material?
+): BasePart
+	return stick(
+		to,
+		Kit.ball(model, diameter, CFrame.new(), color, { material = material, collide = false }),
+		offset
+	)
+end
+
+local function decoRod(
+	model: Model,
+	to: BasePart,
+	length: number,
+	diameter: number,
+	offset: CFrame,
+	color: Color3,
+	material: Enum.Material?
+): BasePart
+	return stick(
+		to,
+		Kit.cylinder(model, length, diameter, CFrame.new(), color, { material = material, collide = false }),
+		offset
+	)
+end
+
+local function shine(model: Model, to: BasePart, offset: CFrame, size: number)
+	local eye =
+		stick(to, Kit.neon(model, Vector3.one * size, CFrame.new(), SHINE, Enum.PartType.Ball), offset)
+	eye.Name = "Eye"
+	eye.Transparency = 0.15
+end
+
+-- A limb from `parent`: upper bone, lower bone and an end piece. Returns the end piece.
+local function limb(
+	model: Model,
+	side: string,
+	names: { string }, -- upper, lower, end part names
+	joints: { string }, -- the three joint names
+	parent: BasePart,
+	at: CFrame,
+	upper: number,
+	lower: number,
+	thick: number,
+	upperColor: Color3,
+	lowerColor: Color3,
+	upperMaterial: Enum.Material?,
+	lowerMaterial: Enum.Material?,
+	endSize: Vector3,
+	endColor: Color3
+): (BasePart, BasePart, BasePart)
+	local a = bone(model, side .. names[1], upper, thick, upperColor, upperMaterial)
+	local b = bone(model, side .. names[2], lower, thick * 0.82, lowerColor, lowerMaterial)
+	local c = block(model, side .. names[3], endSize, endColor, lowerMaterial)
+	joint(side .. joints[1], parent, a, at, boneC1(upper))
+	-- a bone's own frame runs along X, with its far end at -X
+	joint(
+		side .. joints[2],
+		a,
+		b,
+		CFrame.new(-upper / 2, 0, 0) * CFrame.Angles(0, 0, -math.pi / 2),
+		boneC1(lower)
+	)
+	joint(
+		side .. joints[3],
+		b,
+		c,
+		CFrame.new(-lower / 2, 0, 0) * CFrame.Angles(0, 0, -math.pi / 2),
+		CFrame.new(0, endSize.Y / 2, 0)
+	)
+	return a, b, c
+end
+
+local function emitter(parent: BasePart, props: { [string]: any }): ParticleEmitter
+	local e = Instance.new("ParticleEmitter")
+	for key, value in props do
+		(e :: any)[key] = value
+	end
+	e.Parent = parent
+	return e
+end
+
+-- Kinds -----------------------------------------------------------------------------------
+
+local function stalker(model: Model, root: BasePart)
+	local SKIN = rgb(150, 156, 146)
+	local SKIN_DARK = rgb(118, 124, 114)
+	local COAT = rgb(44, 58, 50)
+	local LAPEL = rgb(30, 40, 34)
+	local TROUSER = rgb(40, 40, 44)
+	local cloth = Enum.Material.Fabric
+	local skin = Enum.Material.SmoothPlastic
+
+	local pelvis = block(model, "Pelvis", Vector3.new(1.7, 0.9, 0.95), COAT, cloth)
+	local chest = block(model, "Chest", Vector3.new(1.9, 2.8, 1.05), COAT, cloth)
+	local head = block(model, "Head", Vector3.new(0.95, 1.25, 1.05), SKIN, skin)
+	local jaw = block(model, "Jaw", Vector3.new(0.78, 0.32, 0.9), SKIN_DARK, skin)
+	joint("RootJoint", root, pelvis, CFrame.new(0, -0.65, 0), CFrame.new())
+	joint("Waist", pelvis, chest, CFrame.new(0, 0.42, 0) * Kit.angles(-20, 0, 0), CFrame.new(0, -1.4, 0))
+	joint("Neck", chest, head, CFrame.new(0, 1.42, -0.32) * Kit.angles(4, 0, 0), CFrame.new(0, -0.6, 0.12))
+	joint("Jaw", head, jaw, CFrame.new(0, -0.56, 0.3), CFrame.new(0, 0.1, 0.42))
+
+	-- the open coat over a starved ribcage
+	local ribs = deco(model, chest, Vector3.new(0.72, 2.0, 0.1), CFrame.new(0, 0.2, -0.575), SKIN_DARK, skin)
+	for i = 0, 4 do
+		decoRod(model, ribs, 0.78 - i * 0.05, 0.09, CFrame.new(0, 0.7 - i * 0.34, -0.06), SKIN, skin)
+	end
+	for _, side in { -1, 1 } do
+		decoWedge(
+			model,
+			chest,
+			Vector3.new(0.12, 2.3, 0.5),
+			CFrame.new(side * 0.52, 0.05, -0.6) * Kit.angles(0, side * 90, 0),
+			LAPEL,
+			cloth
+		)
+		decoBall(model, chest, 0.14, CFrame.new(side * 0.62, -0.75, -0.6), BRASS, Enum.Material.Metal)
+	end
+	-- coat tails in tatters, hanging past the knees
+	for i, x in { -0.62, 0.05, 0.6 } do
+		deco(
+			model,
+			pelvis,
+			Vector3.new(0.5 + (i % 2) * 0.12, 2.5 + i * 0.25, 0.08 + i * 0.01),
+			CFrame.new(x, -1.55 - i * 0.12, 0.42 + i * 0.015) * Kit.angles(-3 - i * 3, 0, (i - 2) * 5),
+			COAT,
+			cloth
+		)
+	end
+
+	-- a crushed porter's cap and the skull behind the face
+	decoBall(model, head, 1.08, CFrame.new(0, 0.32, 0.12), SKIN_DARK, skin)
+	decoRod(model, head, 0.34, 1.16, CFrame.new(0.05, 0.86, 0.08) * Kit.angles(0, 0, 98), LAPEL, cloth)
+	decoWedge(
+		model,
+		head,
+		Vector3.new(1.0, 0.12, 0.4),
+		CFrame.new(0.05, 0.72, -0.62) * Kit.angles(0, 180, 0),
+		LAPEL,
+		cloth
+	)
+	deco(
+		model,
+		head,
+		Vector3.new(0.22, 0.16, 0.05),
+		CFrame.new(0.05, 0.86, -0.53),
+		BRASS,
+		Enum.Material.Metal
+	)
+
+	-- no eyes: dark sockets with a pinprick of shine deep inside
+	for _, side in { -0.22, 0.22 } do
+		deco(model, head, Vector3.new(0.3, 0.24, 0.08), CFrame.new(side, 0.12, -0.53), ICHOR, skin)
+		shine(model, head, CFrame.new(side, 0.1, -0.58), 0.07)
+	end
+	deco(model, head, Vector3.new(0.6, 0.22, 0.08), CFrame.new(0, -0.38, -0.53), MOUTH, skin)
+	for i = -2, 2 do
+		decoWedge(
+			model,
+			head,
+			Vector3.new(0.07, 0.16, 0.05),
+			CFrame.new(i * 0.12, -0.36, -0.59) * Kit.angles(0, 0, 180),
+			TOOTH,
+			skin
+		)
+	end
+	for i = -1, 1 do
+		decoWedge(model, jaw, Vector3.new(0.07, 0.18, 0.05), CFrame.new(i * 0.16, 0.24, -0.38), TOOTH, skin)
+	end
+
+	-- arms far too long, with fingers to match
+	for _, side in { "L", "R" } do
+		local s = if side == "L" then -1 else 1
+		local _, _, hand = limb(
+			model,
+			side,
+			{ "UpperArm", "Forearm", "Hand" },
+			{ "Shoulder", "Elbow", "Wrist" },
+			chest,
+			CFrame.new(s * 1.12, 1.12, 0),
+			2.5,
+			2.35,
+			0.4,
+			COAT,
+			SKIN,
+			cloth,
+			skin,
+			Vector3.new(0.42, 0.5, 0.22),
+			SKIN_DARK
+		)
+		for f = -1, 1 do
+			local finger = deco(
+				model,
+				hand,
+				Vector3.new(0.07, 1.05 - math.abs(f) * 0.15, 0.07),
+				CFrame.new(f * 0.13, -0.72 + math.abs(f) * 0.07, 0) * Kit.angles(0, 0, f * 6),
+				SKIN,
+				skin
+			)
+			decoWedge(
+				model,
+				finger,
+				Vector3.new(0.06, 0.24, 0.1),
+				CFrame.new(0, -0.62, -0.02) * Kit.angles(180, 0, 0),
+				ICHOR,
+				skin
+			)
+		end
+		local thigh, shin, foot = limb(
+			model,
+			side,
+			{ "Thigh", "Shin", "Foot" },
+			{ "Hip", "Knee", "Ankle" },
+			pelvis,
+			CFrame.new(s * 0.5, -0.4, 0),
+			2.1,
+			1.85,
+			0.46,
+			TROUSER,
+			SKIN,
+			cloth,
+			skin,
+			Vector3.new(0.4, 0.2, 0.9),
+			SKIN_DARK
+		)
+		local _ = thigh
+		-- trousers torn off at the knee
+		decoRod(model, shin, 0.32, 0.5, CFrame.new(0.72, 0, 0), TROUSER, cloth)
+		local _ = foot
+	end
+
+	-- black ichor drips from the jaw; a low mist drags at the feet
+	emitter(jaw, {
+		Name = "Drip",
+		Texture = "rbxasset://textures/particles/sparkles_main.dds",
+		Color = ColorSequence.new(ICHOR),
+		Size = NumberSequence.new(0.14),
+		Squash = NumberSequence.new(1.4),
+		Rate = 2.5,
+		Lifetime = NumberRange.new(0.6, 0.9),
+		Speed = NumberRange.new(0, 0.2),
+		Acceleration = Vector3.new(0, -38, 0),
+		LightInfluence = 1,
+	})
+	emitter(root, {
+		Name = "FootMist",
+		Texture = "rbxasset://textures/particles/smoke_main.dds",
+		Color = ColorSequence.new(rgb(52, 54, 60)),
+		Rate = 5,
+		Lifetime = NumberRange.new(2, 3),
+		Speed = NumberRange.new(0.3, 0.8),
+		SpreadAngle = Vector2.new(70, 70),
+		EmissionDirection = Enum.NormalId.Bottom,
+		Acceleration = Vector3.new(0, 0.5, 0),
+		Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 5) }),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.25, 0.8),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+		RotSpeed = NumberRange.new(-15, 15),
+	})
+end
+
+local function crawler(model: Model, root: BasePart)
+	local SKIN = rgb(104, 98, 96)
+	local SKIN_DARK = rgb(78, 72, 72)
+	local SHIRT = rgb(170, 160, 140)
+	local STAIN = rgb(108, 90, 76)
+	local HAIR = rgb(22, 20, 20)
+	local cloth = Enum.Material.Fabric
+	local skin = Enum.Material.SmoothPlastic
+
+	local pelvis = block(model, "Pelvis", Vector3.new(1.35, 0.8, 0.9), SHIRT, cloth)
+	local chest = block(model, "Chest", Vector3.new(1.5, 2.3, 0.85), SHIRT, cloth)
+	local head = block(model, "Head", Vector3.new(0.9, 1.05, 0.95), SKIN, skin)
+	local jaw = block(model, "Jaw", Vector3.new(0.72, 0.3, 0.8), SKIN_DARK, skin)
+	joint("RootJoint", root, pelvis, CFrame.new(0, 0.05, 0.95), CFrame.new())
+	-- the spine runs forward along the ground
+	joint("Waist", pelvis, chest, CFrame.new(0, 0.15, -0.3) * Kit.angles(-82, 0, 0), CFrame.new(0, -1.15, 0))
+	-- and the head is turned upside down
+	joint("Neck", chest, head, CFrame.new(0, 1.2, 0.05) * Kit.angles(70, 0, 180), CFrame.new(0, -0.45, 0))
+	joint("Jaw", head, jaw, CFrame.new(0, -0.5, 0.28), CFrame.new(0, 0.1, 0.38))
+
+	-- stains down the nightshirt and a spine that shows through it
+	deco(model, chest, Vector3.new(0.6, 1.1, 0.06), CFrame.new(0.25, -0.3, -0.45), STAIN, cloth)
+	for i = 0, 4 do
+		decoBall(model, chest, 0.26, CFrame.new(0, 0.9 - i * 0.45, 0.44), SKIN_DARK, skin)
+	end
+	-- lank hair hanging from the crown
+	for i = -2, 2 do
+		deco(
+			model,
+			head,
+			Vector3.new(0.14, 1.2 + (i % 2) * 0.35, 0.1),
+			CFrame.new(i * 0.17, 1.05, 0.18 + (i % 2) * 0.06) * Kit.angles(-8, 0, i * 3),
+			HAIR,
+			cloth
+		)
+	end
+	-- too many shining eyes, and a mouth full of teeth
+	for i, offset in { { -0.22, 0.14 }, { 0.22, 0.14 }, { -0.1, 0.32 }, { 0.14, 0.34 } } do
+		shine(model, head, CFrame.new(offset[1], offset[2], -0.5), if i <= 2 then 0.08 else 0.05)
+	end
+	deco(model, head, Vector3.new(0.62, 0.2, 0.08), CFrame.new(0, -0.32, -0.48), MOUTH, skin)
+	for i = -2, 2 do
+		decoWedge(
+			model,
+			head,
+			Vector3.new(0.06, 0.15, 0.05),
+			CFrame.new(i * 0.11, -0.3, -0.53) * Kit.angles(0, 0, 180),
+			TOOTH,
+			skin
+		)
+		decoWedge(model, jaw, Vector3.new(0.06, 0.15, 0.05), CFrame.new(i * 0.13, 0.22, -0.34), TOOTH, skin)
+	end
+
+	for _, side in { "L", "R" } do
+		local s = if side == "L" then -1 else 1
+		local _, _, hand = limb(
+			model,
+			side,
+			{ "UpperArm", "Forearm", "Hand" },
+			{ "Shoulder", "Elbow", "Wrist" },
+			chest,
+			CFrame.new(s * 0.95, 0.95, 0) * Kit.angles(100, 0, 0),
+			1.6,
+			1.6,
+			0.34,
+			SHIRT,
+			SKIN,
+			cloth,
+			skin,
+			Vector3.new(0.5, 0.18, 0.6),
+			SKIN_DARK
+		)
+		for f = -1, 1 do
+			decoWedge(
+				model,
+				hand,
+				Vector3.new(0.08, 0.1, 0.45),
+				CFrame.new(f * 0.16, -0.02, -0.5),
+				ICHOR,
+				skin
+			)
+		end
+		limb(
+			model,
+			side,
+			{ "Thigh", "Shin", "Foot" },
+			{ "Hip", "Knee", "Ankle" },
+			pelvis,
+			CFrame.new(s * 0.48, -0.25, 0) * Kit.angles(55, 0, s * 18),
+			1.5,
+			1.6,
+			0.38,
+			SKIN,
+			SKIN,
+			skin,
+			skin,
+			Vector3.new(0.36, 0.18, 0.8),
+			SKIN_DARK
+		)
+	end
+
+	emitter(root, {
+		Name = "Dust",
+		Texture = "rbxasset://textures/particles/smoke_main.dds",
+		Color = ColorSequence.new(rgb(70, 66, 62)),
+		Rate = 0,
+		Lifetime = NumberRange.new(0.6, 1),
+		Speed = NumberRange.new(1, 3),
+		SpreadAngle = Vector2.new(80, 80),
+		EmissionDirection = Enum.NormalId.Bottom,
+		Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1.8) }),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.6),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+	})
+end
+
+local function brute(model: Model, root: BasePart)
+	local SOOT = rgb(46, 40, 38)
+	local BURN = rgb(98, 46, 36)
+	local APRON = rgb(66, 44, 30)
+	local STRAP = rgb(40, 28, 20)
+	local IRON = rgb(78, 72, 66)
+	local RUST = rgb(104, 62, 40)
+	local EMBER = rgb(255, 122, 42)
+	local skin = Enum.Material.Slate
+	local leather = Enum.Material.Leather
+
+	local pelvis = block(model, "Pelvis", Vector3.new(2.5, 1.3, 1.6), APRON, leather)
+	local chest = block(model, "Chest", Vector3.new(3.6, 3.2, 2.1), SOOT, skin)
+	local head = block(model, "Head", Vector3.new(1.15, 1.15, 1.2), SOOT, skin)
+	local jaw = block(model, "Jaw", Vector3.new(1.0, 0.38, 1.0), BURN, skin)
+	joint("RootJoint", root, pelvis, CFrame.new(0, -0.85, 0), CFrame.new())
+	joint("Waist", pelvis, chest, CFrame.new(0, 0.62, 0) * Kit.angles(-24, 0, 0), CFrame.new(0, -1.6, 0))
+	joint("Neck", chest, head, CFrame.new(0, 1.42, -0.75) * Kit.angles(20, 0, 0), CFrame.new(0, -0.35, 0))
+	joint("Jaw", head, jaw, CFrame.new(0, -0.55, 0.3), CFrame.new(0, 0.12, 0.45))
+
+	-- hunched shoulders, burn scars and the leather apron
+	for _, side in { -1, 1 } do
+		decoBall(model, chest, 1.9, CFrame.new(side * 1.45, 1.15, 0.2), SOOT, skin)
+		deco(
+			model,
+			chest,
+			Vector3.new(0.3, 3.5, 0.12),
+			CFrame.new(side * 0.75, 0.1, -1.23) * Kit.angles(0, 0, side * -8),
+			STRAP,
+			leather
+		)
+	end
+	deco(model, chest, Vector3.new(2.2, 2.3, 0.14), CFrame.new(0, -0.45, -1.12), APRON, leather)
+	deco(model, pelvis, Vector3.new(2.3, 2.2, 0.14), CFrame.new(0, -1.25, -0.86), APRON, leather)
+
+	-- embers in the cracks of its chest: the only warm thing about it
+	local cracks = {
+		{ size = Vector3.new(0.12, 1.4, 0.06), at = CFrame.new(-1.2, 0.3, -1.08) * Kit.angles(0, 0, 25) },
+		{ size = Vector3.new(0.1, 0.9, 0.06), at = CFrame.new(-1.45, -0.5, -1.08) * Kit.angles(0, 0, -15) },
+		{ size = Vector3.new(0.12, 1.2, 0.06), at = CFrame.new(1.25, 0.1, -1.08) * Kit.angles(0, 0, -30) },
+		{ size = Vector3.new(0.1, 1.6, 0.06), at = CFrame.new(0.4, 0.6, 1.08) * Kit.angles(0, 0, 40) },
+		{ size = Vector3.new(0.1, 1.1, 0.06), at = CFrame.new(-0.6, -0.4, 1.08) * Kit.angles(0, 0, -20) },
+	}
+	local core: BasePart? = nil
+	for _, crack in cracks do
+		local glow = stick(chest, Kit.neon(model, crack.size, CFrame.new(), EMBER), crack.at)
+		glow.Name = "Ember"
+		core = core or glow
+	end
+	local warmth = Kit.pointLight(chest, EMBER, 1.1, 11, false)
+	warmth.Name = "EmberGlow"
+	for _, side in { -0.24, 0.24 } do
+		local slit = stick(
+			head,
+			Kit.neon(model, Vector3.new(0.24, 0.07, 0.06), CFrame.new(), EMBER),
+			CFrame.new(side, 0.12, -0.6)
+		)
+		slit.Name = "Eye"
+	end
+	for i = -1, 1 do
+		decoWedge(
+			model,
+			jaw,
+			Vector3.new(0.12, 0.2, 0.08),
+			CFrame.new(i * 0.28, 0.27, -0.42),
+			TOOTH,
+			Enum.Material.SmoothPlastic
+		)
+	end
+
+	for _, side in { "L", "R" } do
+		local s = if side == "L" then -1 else 1
+		local _, forearm, hand = limb(
+			model,
+			side,
+			{ "UpperArm", "Forearm", "Hand" },
+			{ "Shoulder", "Elbow", "Wrist" },
+			chest,
+			CFrame.new(s * 2.05, 1.0, 0.1),
+			2.5,
+			2.4,
+			1.05,
+			SOOT,
+			SOOT,
+			skin,
+			skin,
+			if side == "L" then Vector3.new(1.15, 0.95, 1.0) else Vector3.new(0.5, 0.5, 0.5),
+			if side == "L" then SOOT else IRON
+		)
+		if side == "R" then
+			-- the shovel it was stoking with, grown into the arm
+			decoRod(model, forearm, 0.5, 1.2, CFrame.new(-1.15, 0, 0), RUST, Enum.Material.CorrodedMetal)
+			local blade = deco(
+				model,
+				hand,
+				Vector3.new(1.7, 2.3, 0.16),
+				CFrame.new(0, -1.35, 0),
+				IRON,
+				Enum.Material.CorrodedMetal
+			)
+			blade.Name = "Blade"
+			deco(
+				model,
+				blade,
+				Vector3.new(1.5, 0.4, 0.2),
+				CFrame.new(0, -1.0, 0),
+				RUST,
+				Enum.Material.CorrodedMetal
+			)
+		else
+			for k = -1, 1 do
+				decoBall(model, hand, 0.42, CFrame.new(k * 0.36, -0.42, -0.4), BURN, skin)
+			end
+		end
+		local _, shin, boot = limb(
+			model,
+			side,
+			{ "Thigh", "Shin", "Foot" },
+			{ "Hip", "Knee", "Ankle" },
+			pelvis,
+			CFrame.new(s * 0.75, -0.55, 0),
+			2.0,
+			1.85,
+			0.95,
+			APRON,
+			SOOT,
+			leather,
+			skin,
+			Vector3.new(1.0, 0.55, 1.5),
+			STRAP
+		)
+		decoRod(model, shin, 0.5, 0.95, CFrame.new(-0.7, 0, 0), STRAP, leather)
+		local _ = boot
+	end
+
+	emitter(chest, {
+		Name = "Soot",
+		Texture = "rbxasset://textures/particles/smoke_main.dds",
+		Color = ColorSequence.new(rgb(30, 28, 28)),
+		Rate = 4,
+		Lifetime = NumberRange.new(1.5, 2.5),
+		Speed = NumberRange.new(1, 2),
+		EmissionDirection = Enum.NormalId.Top,
+		Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 3) }),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.6),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+	})
+	if core then
+		emitter(core, {
+			Name = "Sparks",
+			Texture = "rbxasset://textures/particles/fire_sparks_main.dds",
+			Color = ColorSequence.new(EMBER),
+			LightEmission = 1,
+			Rate = 6,
+			Lifetime = NumberRange.new(0.5, 1),
+			Speed = NumberRange.new(1, 3),
+			SpreadAngle = Vector2.new(50, 50),
+			Size = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.18),
+				NumberSequenceKeypoint.new(1, 0),
+			}),
+			Acceleration = Vector3.new(0, 4, 0),
+		})
+	end
+end
+
+local KINDS: { [string]: (Model, BasePart) -> () } = {
+	Stalker = stalker,
+	Crawler = crawler,
+	Brute = brute,
+}
+
+-- Public ------------------------------------------------------------------------------------
+
+-- Height of the root's centre above the floor when standing.
+function HollowBuilder.rootHeight(kind: string): number
+	local spec = SPECS[kind] or SPECS.Stalker
+	return spec.hip + spec.root.Y / 2
+end
+
+function HollowBuilder.build(at: CFrame, kind: string?): (Model, Humanoid)
+	local id = if kind and SPECS[kind] then kind else "Stalker"
+	local spec = SPECS[id]
+	local model = Kit.model("Hollow")
+	model:SetAttribute("Kind", id)
+
+	local root = Kit.block(model, spec.root, at, Color3.new(), { transparency = 1, shadow = false })
 	root.Name = "HumanoidRootPart"
 	root.Anchored = false
 	root.CanCollide = true
 
-	local torso = limb(model, "Torso", Vector3.new(1.9, 3.2, 1.0), SKIN)
-	local head = limb(model, "Head", Vector3.new(1.0, 1.6, 1.1), SKIN)
-	local leftArm = limb(model, "LeftArm", Vector3.new(0.45, 4.4, 0.45), SKIN)
-	local rightArm = limb(model, "RightArm", Vector3.new(0.45, 4.4, 0.45), SKIN)
-	local leftLeg = limb(model, "LeftLeg", Vector3.new(0.55, LEG_LENGTH, 0.55), SKIN)
-	local rightLeg = limb(model, "RightLeg", Vector3.new(0.55, LEG_LENGTH, 0.55), SKIN)
-
-	joint("RootJoint", root, torso, CFrame.new(0, 0.4, 0) * Kit.angles(-14, 0, 0), CFrame.new(0, -1.6, 0))
-	joint("Neck", torso, head, CFrame.new(0, 1.6, -0.25) * Kit.angles(-20, 0, 0), CFrame.new(0, -0.7, 0))
-	joint("LeftShoulder", torso, leftArm, CFrame.new(-1.15, 1.35, 0), CFrame.new(0, 2.0, 0))
-	joint("RightShoulder", torso, rightArm, CFrame.new(1.15, 1.35, 0), CFrame.new(0, 2.0, 0))
-	joint("LeftHip", root, leftLeg, CFrame.new(-0.55, -1.0, 0), CFrame.new(0, LEG_LENGTH / 2, 0))
-	joint("RightHip", root, rightLeg, CFrame.new(0.55, -1.0, 0), CFrame.new(0, LEG_LENGTH / 2, 0))
-
-	-- Eyes glow so a Hollow in fog reads before its silhouette does.
-	for _, side in { -0.24, 0.24 } do
-		local eye = Kit.neon(model, Vector3.new(0.22, 0.14, 0.1), CFrame.new(), EYE)
-		eye.Name = "Eye"
-		eye.Anchored = false
-		eye.Massless = true
-		local weld = Instance.new("Weld")
-		weld.Part0 = head
-		weld.Part1 = eye
-		weld.C0 = CFrame.new(side, 0.25, -0.56)
-		weld.Parent = eye
-	end
-	local glow = Kit.pointLight(head, EYE, 1.3, 11, false)
-	glow.Name = "EyeGlow"
-
-	-- Cold veins along the body: barely there in light, a traced outline in the dark.
-	local veins: { { part: BasePart, size: Vector3, c0: CFrame } } = {
-		{
-			part = torso,
-			size = Vector3.new(0.08, 1.6, 0.06),
-			c0 = CFrame.new(-0.35, 0.3, -0.52) * Kit.angles(0, 0, 18),
-		},
-		{
-			part = torso,
-			size = Vector3.new(0.08, 1.2, 0.06),
-			c0 = CFrame.new(0.3, -0.4, -0.52) * Kit.angles(0, 0, -24),
-		},
-		{
-			part = torso,
-			size = Vector3.new(0.08, 0.9, 0.06),
-			c0 = CFrame.new(0.15, 0.9, -0.52) * Kit.angles(0, 0, 35),
-		},
-		{ part = leftArm, size = Vector3.new(0.06, 2.4, 0.06), c0 = CFrame.new(0, -0.4, -0.245) },
-		{ part = rightArm, size = Vector3.new(0.06, 2.2, 0.06), c0 = CFrame.new(0, -0.2, -0.245) },
-	}
-	for _, vein in veins do
-		local line = Kit.neon(model, vein.size, CFrame.new(), VEIN)
-		line.Name = "Vein"
-		line.Anchored = false
-		line.Massless = true
-		line.Transparency = 0.25
-		local weld = Instance.new("Weld")
-		weld.Part0 = vein.part
-		weld.Part1 = line
-		weld.C0 = vein.c0
-		weld.Parent = line
-	end
-
-	-- Claws and tattered cloak.
-	for _, arm in { leftArm, rightArm } do
-		for i = -1, 1 do
-			local claw =
-				Kit.wedge(model, Vector3.new(0.1, 0.9, 0.25), CFrame.new(), SKIN, { collide = false })
-			claw.Anchored = false
-			claw.Massless = true
-			local weld = Instance.new("Weld")
-			weld.Part0 = arm
-			weld.Part1 = claw
-			weld.C0 = CFrame.new(i * 0.15, -2.55, -0.05) * Kit.angles(180, 0, 0)
-			weld.Parent = claw
-		end
-	end
-	for i = 1, 5 do
-		-- alternate thickness and depth so neighbouring rags never share a face
-		local rag = Kit.wedge(
-			model,
-			Vector3.new(0.12 + (i % 2) * 0.04, 2.4 + (i % 2) * 0.8, 0.9),
-			CFrame.new(),
-			CLOTH,
-			{ material = Enum.Material.Fabric, collide = false }
-		)
-		rag.Anchored = false
-		rag.Massless = true
-		local weld = Instance.new("Weld")
-		weld.Part0 = torso
-		weld.Part1 = rag
-		weld.C0 = CFrame.new(-0.9 + (i - 1) * 0.45, -1.8, 0.45 + (i % 2) * 0.06) * Kit.angles(10, 90, 180)
-		weld.Parent = rag
-	end
-
-	local smoke = Instance.new("ParticleEmitter")
-	smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	smoke.Color = ColorSequence.new(Color3.fromRGB(20, 18, 22))
-	smoke.Rate = 6
-	smoke.Lifetime = NumberRange.new(1, 1.8)
-	smoke.Speed = NumberRange.new(0.4, 1.2)
-	smoke.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.2), NumberSequenceKeypoint.new(1, 3) })
-	smoke.Transparency =
-		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.55), NumberSequenceKeypoint.new(1, 1) })
-	smoke.Parent = torso
-
-	-- A low mist that drags behind it as it moves.
-	local mist = Instance.new("ParticleEmitter")
-	mist.Name = "FootMist"
-	mist.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	mist.Color = ColorSequence.new(Color3.fromRGB(46, 48, 56))
-	mist.Rate = 9
-	mist.Lifetime = NumberRange.new(2.2, 3.4)
-	mist.Speed = NumberRange.new(0.3, 0.9)
-	mist.SpreadAngle = Vector2.new(70, 70)
-	mist.EmissionDirection = Enum.NormalId.Bottom
-	mist.Acceleration = Vector3.new(0, 0.6, 0)
-	mist.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2.2), NumberSequenceKeypoint.new(1, 5.5) })
-	mist.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.25, 0.72),
-		NumberSequenceKeypoint.new(1, 1),
-	})
-	mist.RotSpeed = NumberRange.new(-15, 15)
-	mist.Parent = root
+	KINDS[id](model, root)
 
 	local humanoid = Instance.new("Humanoid")
 	humanoid.RigType = Enum.HumanoidRigType.R15
-	humanoid.HipHeight = HIP_HEIGHT
+	humanoid.HipHeight = spec.hip
 	humanoid.MaxHealth = 10000
 	humanoid.Health = 10000
 	humanoid.BreakJointsOnDeath = false
@@ -187,6 +730,7 @@ function HollowBuilder.build(at: CFrame): (Model, Humanoid)
 	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 	humanoid.NameDisplayDistance = 0
 	humanoid.AutoJumpEnabled = false
+	humanoid.MaxSlopeAngle = 50
 	humanoid.Parent = model
 	for _, state in
 		{
@@ -210,5 +754,7 @@ function HollowBuilder.build(at: CFrame): (Model, Humanoid)
 	end
 	return model, humanoid
 end
+
+HollowBuilder.Kinds = { "Stalker", "Crawler", "Brute" }
 
 return HollowBuilder

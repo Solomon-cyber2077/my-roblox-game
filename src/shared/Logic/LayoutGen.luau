@@ -13,10 +13,12 @@
 ]]
 
 local Shared = script.Parent.Parent
+local Buildings = require(Shared.Config.Buildings)
 local Loot = require(Shared.Config.Loot)
 local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 local Rng = require(Shared.Util.Rng)
+local BuildingGen = require(script.Parent.BuildingGen)
 
 export type Slab = {
 	id: number,
@@ -31,7 +33,26 @@ export type Slab = {
 	kind: "Safe" | "Floor" | "Foundation",
 	zone: string,
 	structure: number?,
+	building: number?,
 }
+
+-- An enterable building: its foundation slab and its own plan (Logic/BuildingGen), whose
+-- building-local coordinates sit at station-local (x, z).
+export type Building = {
+	id: number,
+	kind: string,
+	slab: number,
+	gx: number,
+	gz: number,
+	w: number,
+	d: number,
+	x: number,
+	z: number,
+	zone: string,
+	plan: BuildingGen.Plan,
+}
+
+export type Sleeper = { x: number, y: number, z: number, rot: number, kind: string, building: number }
 
 export type Structure = {
 	id: number,
@@ -48,7 +69,9 @@ export type Structure = {
 
 export type Container = {
 	id: number,
-	kind: string,
+	kind: string, -- the loot table (Config/Loot)
+	look: string?, -- the furniture it is, inside a building (Config/Buildings)
+	building: number?,
 	zone: string,
 	slab: number,
 	x: number,
@@ -69,13 +92,16 @@ export type Plan = {
 	safeRows: number,
 	slabs: { Slab },
 	structures: { Structure },
+	buildings: { Building },
 	containers: { Container },
 	loose: { Loose },
 	props: { Prop },
+	sleepers: { Sleeper },
 	spawnLanes: { number },
 }
 
 local CONTAINER_ORDER = { "Crate", "Locker", "CoalBin", "ToolChest", "Vault" }
+local LANDMARK = 1000 -- occupancy ids at and above this are enterable buildings
 local COAL_NEIGHBOURS = { CoalHeap = true, Hopper = true, CoalTower = true }
 local TOOL_NEIGHBOURS = { Workshop = true, Shed = true, SignalBox = true, Headframe = true }
 local NO_ROTATE = { TunnelMouth = true, Concourse = true }
@@ -180,6 +206,48 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		return #queue == walkable
 	end
 
+	-- Enterable buildings first: they are the biggest, and the stop is built around them --
+	local buildings: { Building } = {}
+	local landmarks: { Stations.LandmarkRule } = arch.landmarks or {}
+	for _, rule in landmarks do
+		local def = Buildings.Defs[rule.kind]
+		local w, d = def.size[1], def.size[2]
+		for _attempt = 1, 80 do
+			local zone = rng:pick(rule.zones)
+			local zoneRows: { number } = {}
+			for gz = safeRows, rows - d do
+				if zoneOf(gz + d // 2) == zone then
+					table.insert(zoneRows, gz)
+				end
+			end
+			if #zoneRows > 0 then
+				local gz = rng:pick(zoneRows)
+				local gx = rng:int(0, cols - w)
+				if canPlace(gx, gz, w, d) then
+					local id = #buildings + 1
+					fill(gx, gz, w, d, LANDMARK + id)
+					if connected() then
+						table.insert(buildings, {
+							id = id,
+							kind = rule.kind,
+							slab = 0,
+							gx = gx,
+							gz = gz,
+							w = w,
+							d = d,
+							x = tileX(gx) + (w - 1) * tile / 2,
+							z = tileZ(gz) + (d - 1) * tile / 2,
+							zone = zoneOf(gz + d // 2),
+							plan = BuildingGen.generate(rule.kind, Rng.derive(seed, "landmark", id)),
+						})
+						break
+					end
+					fill(gx, gz, w, d, 0)
+				end
+			end
+		end
+	end
+
 	-- Structures -------------------------------------------------------------------
 	local structures: { Structure } = {}
 	for _, rule in arch.structures do
@@ -272,6 +340,31 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		})
 		for x = structure.gx, structure.gx + structure.w - 1 do
 			for z = structure.gz, structure.gz + structure.d - 1 do
+				slabOfTile[index(x, z)] = id
+			end
+		end
+	end
+
+	for _, building in buildings do
+		local id = #slabs + 1
+		building.slab = id
+		table.insert(slabs, {
+			id = id,
+			gx = building.gx,
+			gz = building.gz,
+			w = building.w,
+			d = building.d,
+			x = building.x,
+			z = building.z,
+			sizeX = building.w * tile,
+			sizeZ = building.d * tile,
+			kind = "Foundation",
+			zone = building.zone,
+			structure = nil,
+			building = building.id,
+		})
+		for x = building.gx, building.gx + building.w - 1 do
+			for z = building.gz, building.gz + building.d - 1 do
 				slabOfTile[index(x, z)] = id
 			end
 		end
@@ -376,6 +469,37 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 					rot = rng:int(0, 3) * 90 + rng:range(-8, 8),
 				})
 			end
+		end
+	end
+
+	-- What the buildings hold: their furniture you can search, and what sleeps inside --
+	local sleepers: { Sleeper } = {}
+	for _, building in buildings do
+		for _, item in building.plan.items do
+			if item.container then
+				local def = Loot.Containers[item.container]
+				table.insert(containers, {
+					id = #containers + 1,
+					kind = item.container,
+					look = item.kind,
+					building = building.id,
+					zone = if def and def.farOnly then "Far" else building.zone,
+					slab = building.slab,
+					x = building.x + item.x,
+					z = building.z + item.z,
+					rot = item.rot,
+				})
+			end
+		end
+		for _, spot in building.plan.sleepers do
+			table.insert(sleepers, {
+				x = building.x + spot.x,
+				y = 0,
+				z = building.z + spot.z,
+				rot = spot.rot,
+				kind = spot.kind,
+				building = building.id,
+			})
 		end
 	end
 
@@ -491,9 +615,11 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		safeRows = safeRows,
 		slabs = slabs,
 		structures = structures,
+		buildings = buildings,
 		containers = containers,
 		loose = loose,
 		props = props,
+		sleepers = sleepers,
 		spawnLanes = lanes,
 	}
 end
