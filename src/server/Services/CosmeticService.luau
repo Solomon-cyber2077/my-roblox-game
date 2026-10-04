@@ -59,11 +59,14 @@ function CosmeticService.Apply(player: Player)
 	folder.Name = "Cosmetics"
 	folder.Parent = character
 
-	local hip = (character:FindFirstChild("LowerTorso") or character:FindFirstChild("Torso")) :: BasePart?
+	local lower = character:FindFirstChild("LowerTorso") :: BasePart?
+	local hip = lower or character:FindFirstChild("Torso") :: BasePart?
 	if hip then
+		-- at the belt: an R6 torso is one block, so its belt sits lower on it
+		local belt = if lower then -0.15 else -0.75
 		local lantern = CosmeticModels.lantern(
 			equipped(player, "Lantern").look,
-			hip.CFrame * CFrame.new(hip.Size.X / 2 + 0.4, -0.15, 0.05)
+			hip.CFrame * CFrame.new(hip.Size.X / 2 + 0.4, belt, 0.05)
 		)
 		attach(lantern, hip)
 		lantern.Parent = folder

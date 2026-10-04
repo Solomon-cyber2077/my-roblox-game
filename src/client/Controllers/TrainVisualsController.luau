@@ -2,9 +2,11 @@
 --[[
 	Client-side life on the static train (and the lobby's display train):
 	turning wheels and coupling rods, sliding doors, chimney smoke and cylinder
-	steam that follow speed, the tender's coal heap, breach steam and a
-	flickering firebox. All of it is local CFrame and emitter work on anchored
-	parts the server never touches again, so none of it replicates.
+	steam that follow speed, the tender's coal heap, breach steam, and every fire
+	aboard: the firebox (it roars up when coal goes in, and gutters when there is
+	none), the guard's stove and the lantern over his chairs. All of it is local
+	CFrame and emitter work on anchored parts the server never touches again, so
+	none of it replicates.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -28,6 +30,10 @@ type Rig = {
 	smoke: ParticleEmitter?,
 	vents: { ParticleEmitter },
 	firebox: PointLight?,
+	flames: { ParticleEmitter },
+	glows: { PointLight }, -- the stove and the lantern: they flicker on their own
+	flare: number, -- 0..1 the fire roaring after a shovel of coal
+	lastFill: number,
 	breaches: { [BasePart]: ParticleEmitter },
 	doorOpen: number,
 	live: boolean,
@@ -85,6 +91,10 @@ local function rigFor(model: Model, live: boolean): Rig
 		smoke = nil,
 		vents = {},
 		firebox = nil,
+		flames = {},
+		glows = {},
+		flare = 0,
+		lastFill = -1,
 		breaches = {},
 		doorOpen = 0,
 		live = live,
@@ -121,6 +131,18 @@ local function rigFor(model: Model, live: boolean): Rig
 				table.insert(rig.vents, steamEmitter(part, 0))
 			elseif part.Name == "Firebox" then
 				rig.firebox = part:FindFirstChildOfClass("PointLight")
+			elseif part.Name == "FireFlame" then
+				for _, emitter in part:GetChildren() do
+					if emitter:IsA("ParticleEmitter") then
+						table.insert(rig.flames, emitter)
+					end
+				end
+			elseif part.Name == "StoveGlow" or part.Name == "LanternFlame" then
+				local light = part:FindFirstChildOfClass("PointLight")
+				if light then
+					light:SetAttribute("Base", light.Brightness)
+					table.insert(rig.glows, light)
+				end
 			end
 		end
 	end
@@ -157,6 +179,14 @@ local function track(model: Model, live: boolean)
 	if live then
 		model:GetAttributeChangedSignal("CoalFill"):Connect(function()
 			local fill: number = (model:GetAttribute("CoalFill") :: number?) or 0
+			-- coal going in: the fire roars up and throws sparks
+			if rig.lastFill >= 0 and fill > rig.lastFill + 0.005 then
+				rig.flare = 1
+				for _, emitter in rig.flames do
+					emitter:Emit(if emitter.Name == "Sparks" then 26 else 10)
+				end
+			end
+			rig.lastFill = fill
 			for _, lump in rig.heap do
 				lump.Transparency = if (lump:GetAttribute("CoalTier") :: number) <= fill + 0.001 then 0 else 1
 			end
@@ -239,11 +269,20 @@ function TrainVisualsController.Start()
 				rig.smoke.Acceleration = Vector3.new(-rigSpeed * 0.9, 3, 0)
 				rig.smoke.Color = if starving then STARVING_SMOKE else SMOKE
 			end
+			local t = os.clock()
+			rig.flare = math.max(rig.flare - dt * 0.6, 0)
 			if rig.firebox then
-				local t = os.clock()
 				rig.firebox.Brightness = if starving
 					then math.max(0.15 + math.noise(t * 11) * 0.9, 0.05)
-					else 1.8 + math.noise(t * 6) * 0.8
+					else 1.8 + math.noise(t * 6) * 0.8 + 2.4 * rig.flare
+			end
+			for _, emitter in rig.flames do
+				local base = if emitter.Name == "Sparks" then 4 else 18
+				emitter.Rate = if starving then base * 0.15 else base * (1 + 1.5 * rig.flare)
+			end
+			for i, light in rig.glows do
+				local base = (light:GetAttribute("Base") :: number?) or 1
+				light.Brightness = base * (0.82 + 0.3 * math.noise(t * 4.5, i * 7.1))
 			end
 		end
 		if #spinParts > 0 then

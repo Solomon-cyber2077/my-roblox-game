@@ -43,6 +43,9 @@ export type Plan = {
 	stationChecked: boolean,
 	lastPhase: string,
 	progress: number,
+	skyProgress: number, -- progress as the sky and the clock count it (Journey.skyProgress)
+	skyLeg: number, -- the leg skyShare belongs to
+	skyShare: number, -- the leg's share as the sky counts it: it never runs backwards
 }
 
 export type RunState = {
@@ -50,9 +53,10 @@ export type RunState = {
 	seed: number?,
 	stopCount: number?,
 	nextStop: number?,
+	phaseStartedAt: number?,
 	phaseEndsAt: number?,
 	destination: { archetype: string }?,
-	station: { archetype: string }?,
+	station: { archetype: string, startedAt: number?, dwell: number? }?,
 }
 
 export type Input = {
@@ -92,6 +96,9 @@ function JourneyPlan.new(): Plan
 		stationChecked = false,
 		lastPhase = "",
 		progress = 0,
+		skyProgress = 0,
+		skyLeg = 0,
+		skyShare = 0,
 	}
 end
 
@@ -240,9 +247,37 @@ function JourneyPlan.step(plan: Plan, input: Input): Result
 
 	if input.active then
 		local dock = if plan.upcoming then plan.upcoming.center else nil
-		plan.progress = Journey.progress(plan.leg, Journey.legShare(input.odometer, plan.legStart, dock))
+		local share = Journey.legShare(input.odometer, plan.legStart, dock)
+		plan.progress = Journey.progress(plan.leg, share)
+		-- a dock first predicted (or re-cut) further off shrinks the share; the clock waits for it
+		-- instead of running backwards
+		if plan.skyLeg ~= plan.leg then
+			plan.skyLeg = plan.leg
+			plan.skyShare = share
+		else
+			plan.skyShare = math.max(plan.skyShare, share)
+		end
+		-- how far through the stop the crew is: the clock keeps running while the doors are open
+		local stay = 0
+		if phase == "Terminus" then
+			-- the sun comes up over the last platform
+			local started = run.phaseStartedAt or input.now
+			local length = if run.phaseEndsAt then run.phaseEndsAt - started else 1
+			stay = MathX.saturate((input.now - started) / math.max(length, 1))
+		elseif
+			(phase == "Dwell" or phase == "LastCall")
+			and station
+			and station.startedAt
+			and station.dwell
+		then
+			stay = MathX.saturate((input.now - station.startedAt) / math.max(station.dwell, 1))
+		end
+		plan.skyProgress = Journey.skyProgress(plan.leg, plan.skyShare, stay)
 	elseif phase == "Lobby" then
 		plan.progress = 0
+		plan.skyProgress = 0
+		plan.skyLeg = 0
+		plan.skyShare = 0
 	end
 	return result
 end

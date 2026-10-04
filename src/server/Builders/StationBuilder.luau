@@ -297,16 +297,6 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 					Kit.weld(root3, top)
 				end
 			end
-			if plan.archetype == "Viaduct" and slab.gz == plan.rows - 1 then
-				local parapet = Kit.block(
-					slabModel,
-					Vector3.new(slab.sizeX - 0.2, 1.2, 1),
-					L(slab.x, 0.6, slab.z + slab.sizeZ / 2 - 0.5),
-					palette.trim,
-					{ material = Enum.Material.Brick }
-				)
-				Kit.weld(parapet, top)
-			end
 		end
 		top.Name = "Top"
 		top:SetAttribute("SlabId", slab.id)
@@ -419,7 +409,7 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			parent = piece,
 			base = slabParts[prop.slab],
 			frame = L(prop.x, 0, prop.z) * Kit.angles(0, prop.rot, 0),
-			width = 4,
+			width = prop.size or 4,
 			depth = 4,
 			palette = palette,
 			rng = Random.new(math.floor(prop.x * 31 + prop.z * 17) + plan.seed % 7907),

@@ -109,6 +109,9 @@ export type State = {
 	glowColor: Color3,
 	flash: number, -- lightning 0..1
 	flashColor: Color3,
+	bloom: number, -- BloomEffect.Intensity
+	bloomThreshold: number, -- BloomEffect.Threshold: only light brighter than this blooms
+	bloomSize: number, -- BloomEffect.Size
 	moon: Moon,
 	hidden: boolean, -- no sky objects (the Depot Hall)
 }
@@ -268,96 +271,153 @@ local KEYS: { Key } = {
 	},
 }
 
+--[[
+	The moon's night. A full moon rises as the sun sets, so it is already climbing,
+	huge and amber, when the train makes its first stop. It rides over the stations'
+	side of the line (+Z) and stands high enough to clear their roofs and the trees on
+	their far edge. It turns copper as it climbs; from midnight the eclipse creeps across
+	it until at two it hangs blood red in its ring; then it pales and sinks into the dawn.
+	The HUD's night dial names these phases (Sky.Phases).
+]]
 local MOON: { MoonKey } = {
 	{
-		hour = 20.2,
-		elevation = -3,
-		azimuth = 26,
-		size = 10.5,
-		color = rgb(236, 140, 72),
-		glow = rgb(196, 96, 52),
-		brightness = 1.25,
+		hour = 18.2,
+		elevation = -2,
+		azimuth = 62,
+		size = 11.5,
+		color = rgb(244, 160, 84),
+		glow = rgb(206, 110, 58),
+		brightness = 1.45,
 		umbra = 0,
 		ring = 0,
 	},
 	{
-		hour = 21.2,
-		elevation = 6,
-		azimuth = 31,
-		size = 10,
-		color = rgb(226, 112, 58),
-		glow = rgb(184, 80, 46),
-		brightness = 1.3,
+		hour = 18.9, -- the first stop: just over the trees
+		elevation = 11,
+		azimuth = 68,
+		size = 11,
+		color = rgb(240, 148, 76),
+		glow = rgb(200, 100, 54),
+		brightness = 1.5,
 		umbra = 0,
 		ring = 0,
+	},
+	{
+		hour = 19.6, -- the second stop
+		elevation = 16,
+		azimuth = 72,
+		size = 10.5,
+		color = rgb(236, 136, 70),
+		glow = rgb(196, 92, 50),
+		brightness = 1.5,
+		umbra = 0,
+		ring = 0,
+	},
+	{
+		hour = 21.4,
+		elevation = 22,
+		azimuth = 78,
+		size = 9.8,
+		color = rgb(226, 112, 58),
+		glow = rgb(184, 80, 46),
+		brightness = 1.5,
+		umbra = 0,
+		ring = 0.1,
 	},
 	{
 		hour = 23,
-		elevation = 14,
-		azimuth = 39,
-		size = 9,
+		elevation = 26,
+		azimuth = 84,
+		size = 9.2,
 		color = rgb(210, 90, 56),
 		glow = rgb(166, 52, 36),
-		brightness = 1.35,
+		brightness = 1.55,
 		umbra = 0.15,
 		ring = 0.3,
 	},
 	{
 		hour = 24.6,
-		elevation = 19,
-		azimuth = 46,
-		size = 8.4,
+		elevation = 29,
+		azimuth = 90,
+		size = 8.8,
 		color = rgb(190, 54, 42),
 		glow = rgb(152, 32, 26),
-		brightness = 1.4,
+		brightness = 1.6,
 		umbra = 0.45,
 		ring = 0.7,
 	},
 	{
-		hour = 26,
-		elevation = 21,
-		azimuth = 52,
-		size = 8.2,
-		color = rgb(164, 36, 32),
-		glow = rgb(134, 22, 20),
-		brightness = 1.45,
+		hour = 26, -- two in the morning: the blood moon
+		elevation = 30,
+		azimuth = 96,
+		size = 8.6,
+		color = rgb(170, 38, 32),
+		glow = rgb(140, 22, 20),
+		brightness = 1.65,
 		umbra = 0.62,
 		ring = 1,
 	},
 	{
 		hour = 27.6,
-		elevation = 15,
-		azimuth = 59,
-		size = 8.8,
+		elevation = 23,
+		azimuth = 104,
+		size = 9,
 		color = rgb(186, 76, 58),
 		glow = rgb(142, 54, 46),
-		brightness = 1.4,
+		brightness = 1.55,
 		umbra = 0.3,
 		ring = 0.5,
 	},
 	{
 		hour = 29,
-		elevation = 5,
-		azimuth = 66,
+		elevation = 10,
+		azimuth = 112,
 		size = 9.8,
 		color = rgb(216, 198, 186),
 		glow = rgb(150, 140, 150),
-		brightness = 1.35,
+		brightness = 1.45,
 		umbra = 0,
 		ring = 0,
 	},
 	{
-		hour = 29.8,
+		hour = 29.9,
 		elevation = -3,
-		azimuth = 70,
+		azimuth = 117,
 		size = 10.2,
 		color = rgb(214, 200, 190),
 		glow = rgb(140, 130, 140),
-		brightness = 1.2,
+		brightness = 1.3,
 		umbra = 0,
 		ring = 0,
 	},
 }
+
+-- What the night dial calls each stretch of the night, from the hour it starts.
+Sky.Phases = table.freeze({
+	{ from = -math.huge, name = "SUNSET" },
+	{ from = 18.2, name = "MOONRISE" },
+	{ from = 19.2, name = "AMBER MOON" },
+	{ from = 21.6, name = "COPPER MOON" },
+	{ from = 23.4, name = "ECLIPSE" },
+	{ from = 25.3, name = "BLOOD MOON" },
+	{ from = 26.9, name = "MOON WANING" },
+	{ from = 28.6, name = "PALE MOON" },
+	{ from = 29.9, name = "DAWN" },
+})
+
+-- The phase of the night at `hour`, and the next one with the hour it starts (nil at dawn).
+function Sky.phase(hour: number): (string, string?, number?)
+	local phases = Sky.Phases
+	for i = #phases, 1, -1 do
+		if hour >= phases[i].from then
+			local following = phases[i + 1]
+			return phases[i].name,
+				if following then following.name else nil,
+				if following then following.from else nil
+		end
+	end
+	return phases[1].name, phases[2].name, phases[2].from
+end
 
 local BLOOD = rgb(255, 34, 26) -- the Bleed: the moon, its light, its bolt
 local BLOOD_GLOW = rgb(200, 16, 12)
@@ -368,6 +428,16 @@ local DREAD_TINT = rgb(196, 214, 255)
 local FLASH = rgb(206, 204, 255)
 local TUNNEL_OUTDOOR = rgb(40, 38, 44)
 local DREAD = { saturation = 0.5, contrast = 0.2, tint = 0.5, density = 0.16, haze = 0.8, exposure = 0.05 }
+local BLOOM = { intensity = 0.55, threshold = 1.3, size = 24 }
+local LOBBY = {
+	brightness = 0.7, -- the low sun through the glazing
+	exposure = -0.14,
+	ambient = rgb(108, 96, 88),
+	outdoor = rgb(114, 100, 92),
+	bloom = 0.25,
+	bloomThreshold = 1.8,
+	bloomSize = 16,
+}
 
 local function lerpColor(a: Color3, b: Color3, t: number): Color3
 	return a:Lerp(b, t)
@@ -548,17 +618,32 @@ function Sky.compose(i: Inputs): State
 		glowColor = glowColor,
 		flash = 0,
 		flashColor = FLASH,
+		-- lamps, fires and the moon glow, but only what is really bright: a lit sign or a
+		-- window must never smear into the text around it
+		bloom = BLOOM.intensity,
+		bloomThreshold = BLOOM.threshold,
+		bloomSize = BLOOM.size,
 		moon = moon,
 		hidden = i.lobby,
 	}
 
 	if i.lobby then
-		-- the Depot Hall keeps its warm, clear grade
+		--[[
+			The Depot Hall: warm, soft and even. The ambient carries most of the light, the
+			lamps only warm it, so every corner reads (and every poster) with no hot spot
+			anywhere and nothing blooming but the bulbs themselves.
+		]]
+		state.brightness = LOBBY.brightness
+		state.exposure = LOBBY.exposure
+		state.ambient = LOBBY.ambient
+		state.outdoor = LOBBY.outdoor
 		state.density, state.haze = 0.18, 0.8
-		state.tint = rgb(255, 236, 214)
-		state.saturation = 0.05
-		state.lift = -0.07
-		state.contrast = 0.08
+		state.tint = rgb(255, 238, 222)
+		state.saturation = 0.04
+		state.lift = -0.02
+		state.contrast = 0.04
+		state.bloom, state.bloomThreshold, state.bloomSize =
+			LOBBY.bloom, LOBBY.bloomThreshold, LOBBY.bloomSize
 	else
 		state.density = lerp(state.density, 0.78, i.fog)
 		state.haze = lerp(state.haze, 4, i.fog)
@@ -606,6 +691,9 @@ local SMOOTH_NUMBERS = {
 	"blur",
 	"glow",
 	"stars",
+	"bloom",
+	"bloomThreshold",
+	"bloomSize",
 }
 
 -- Eases `current` toward `target`; the moon, the clock and the omens follow at once.
@@ -657,6 +745,7 @@ function Sky.finish(state: State, tunnel: number, flash: number, red: boolean): 
 	out.lift = state.lift + 0.25 * flash
 	out.flash = flash
 	out.flashColor = color
+	out.bloom = state.bloom + 0.4 * flash
 	return out
 end
 

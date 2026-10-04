@@ -33,6 +33,7 @@ local Remotes: { [string]: RemoteDef } = {
 	ShopPurchase = { direction = "ToServer", args = { "id" }, rate = 2, burst = 3 },
 	ShopEquip = { direction = "ToServer", args = { "id" }, rate = 4, burst = 4 },
 	JoinInProgress = { direction = "ToServer", args = {}, rate = 1, burst = 1 },
+	Struggle = { direction = "ToServer", args = {}, rate = 12, burst = 14 }, -- fighting out of a Hollow's grip
 
 	-- Server to client
 	Snapshot = { direction = "ToClient", args = {}, rate = 0, burst = 0 },

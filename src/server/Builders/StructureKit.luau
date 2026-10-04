@@ -12,6 +12,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 
+local StationDressing = require(script.Parent.StationDressing)
+
 export type Palette = { ground: Color3, accent: Color3, trim: Color3, light: Color3 }
 
 export type Context = {
@@ -37,7 +39,7 @@ local C = {
 	iron = Color3.fromRGB(52, 52, 56),
 	rust = Color3.fromRGB(116, 70, 44),
 	coal = Color3.fromRGB(28, 27, 26),
-	glassWarm = Color3.fromRGB(255, 196, 120),
+	glassWarm = Color3.fromRGB(222, 160, 98), -- lit from inside, too dim to glare
 	glass = Color3.fromRGB(150, 170, 180),
 	canvasA = Color3.fromRGB(150, 44, 48),
 	canvasB = Color3.fromRGB(226, 214, 186),
@@ -85,7 +87,7 @@ local function windowRow(ctx: Context, width: number, faceZ: number, y: number, 
 			if lit then C.glassWarm else C.glass,
 			{
 				material = if lit then Enum.Material.Neon else Enum.Material.Glass,
-				transparency = if lit then 0.35 else 0.3,
+				transparency = if lit then 0.45 else 0.3,
 				collide = false,
 				shadow = false,
 			}
@@ -994,10 +996,13 @@ Props.Railing = function(ctx)
 	)
 end
 
+-- Station props: the few here, and the trees, boundaries, platform and yard (StationDressing).
 function StructureKit.prop(kind: string, ctx: Context)
 	local builder = Props[kind]
 	if builder then
 		builder(ctx)
+	else
+		StationDressing.build(kind, ctx)
 	end
 end
 

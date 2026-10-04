@@ -35,6 +35,9 @@ local throb = 0 -- a heartbeat's squeeze, decaying
 local THROB_FOV = 2.6 -- degrees the view narrows at a full throb
 local spectateTarget: Player? = nil
 local resetSerial = 0
+local focusPoint: Vector3? = nil -- a point the view is dragged toward (a Hollow's face, in its grip)
+local BOB_DROP = 0.12 -- studs the view dips at each footfall in first person
+local BOB_SWAY = 0.04 -- studs it sways side to side with the stride
 
 local function ownHumanoid(): Humanoid?
 	local character = Players.LocalPlayer.Character
@@ -98,7 +101,11 @@ function CameraController.Start()
 		task.spawn(onCharacter, player.Character)
 	end
 	Registry.StateController.Observe("public", { "run", "phase" }, function()
-		if Workspace.CurrentCamera.CameraType ~= Enum.CameraType.Custom then
+		local trainCam = Registry.TrainCamController
+		if
+			Workspace.CurrentCamera.CameraType ~= Enum.CameraType.Custom
+			and not (trainCam and trainCam.Active())
+		then
 			resetCamera(false)
 		end
 	end)
@@ -169,9 +176,31 @@ function CameraController.Start()
 		end
 		kick *= math.exp(-dt * 16)
 
+		-- the view bobs with your steps: plainly in first person, barely over the shoulder
+		local animator = Registry.CharacterAnimator
+		if animator and camera.CameraType == Enum.CameraType.Custom then
+			local stepPhase, amount = animator.Stride()
+			if amount > 0.05 then
+				local close = (camera.Focus.Position - camera.CFrame.Position).Magnitude < 1.5
+				local scale = amount * (if close then 1 else 0.25)
+				offset *= CFrame.new(
+					math.cos(stepPhase) * BOB_SWAY * scale,
+					-math.abs(math.sin(stepPhase)) * BOB_DROP * scale,
+					0
+				) * CFrame.Angles(0, 0, math.cos(stepPhase) * 0.005 * scale)
+			end
+		end
+
 		if offset ~= CFrame.identity then
 			applied = offset
 			camera.CFrame *= applied
+		end
+
+		-- in a Hollow's grip the view is dragged round to its face
+		local point = focusPoint
+		if point and camera.CameraType == Enum.CameraType.Custom then
+			local from = camera.CFrame
+			camera.CFrame = from:Lerp(CFrame.lookAt(from.Position, point), 1 - math.exp(-dt * 2.4))
 		end
 
 		local sprinting = Registry.MovementController and Registry.MovementController.IsSprinting()
@@ -188,6 +217,11 @@ end
 -- Adds a one-off shake. 0.3 is a nudge, 1 is a heavy hit.
 function CameraController.Shake(amount: number)
 	trauma = math.min(trauma + amount, 1.2)
+end
+
+-- Drags the view toward `point` every frame until it is cleared with nil.
+function CameraController.Focus(point: Vector3?)
+	focusPoint = point
 end
 
 -- A heartbeat's throb (0..1): the view narrows for an instant and eases back.

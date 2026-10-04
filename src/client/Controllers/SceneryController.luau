@@ -46,6 +46,7 @@ export type Context = {
 	biomeB: string,
 	blend: number, -- weight of biomeB
 	progress: number, -- run progress in legs (Logic/Journey)
+	skyProgress: number, -- run progress as the sky and the clock count it (Journey.skyProgress)
 }
 
 type Wanted = { key: string, priority: number, build: () -> Chunk.Chunk }
@@ -80,6 +81,7 @@ local context: Context = {
 	biomeB = Journey.FirstBiome,
 	blend = 0,
 	progress = 0,
+	skyProgress = 0,
 }
 
 local function qualityDensity(): number
@@ -341,6 +343,7 @@ local function updateContext()
 	context.biomeB = b
 	context.blend = w
 	context.progress = plan.progress
+	context.skyProgress = plan.skyProgress
 end
 
 local function animate(now: number)

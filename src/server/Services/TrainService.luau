@@ -1,7 +1,8 @@
 --!strict
 --[[
 	The train: its shared stores (through Logic/Ledger), coal burn per leg,
-	hull breaches, the workshop, the signal mast, doors and livery.
+	hull breaches, the workshop, the signal mast, doors, livery and its seats
+	(every one takes a Sit prompt; jump to stand).
 	The train never moves; see StationService for the moving world.
 ]]
 
@@ -159,9 +160,38 @@ local function tick(dt: number)
 	publish()
 end
 
+-- A Sit prompt on every seat, hidden while someone is sitting in it.
+local function seatPrompts()
+	for _, seat in built.seats do
+		local name = (seat:GetAttribute("SeatName") :: string?) or "Seat"
+		local prompt = makePrompt(seat, "Sit", name, "Sit", 0)
+		prompt.MaxActivationDistance = 5.5
+		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+			prompt.Enabled = seat.Occupant == nil
+		end)
+		prompt.Triggered:Connect(function(player)
+			local character = player.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if
+				humanoid
+				and root
+				and humanoid.Health > 0
+				and seat.Occupant == nil
+				and not humanoid.Sit
+				and not root.Anchored
+				and (root.Position - seat.Position).Magnitude < 9
+			then
+				seat:Sit(humanoid)
+			end
+		end)
+	end
+end
+
 function TrainService.Init()
 	built = TrainBuilder.build(CFrame.new(0, Tuning.World.FloorY, 0), Workspace)
 	built.model:SetAttribute("DoorsOpen", false)
+	seatPrompts()
 	makePrompt(built.workbench, "Workshop", "Workbench", "Upgrades", 0)
 	local mastPrompt = makePrompt(built.mast, "Flare", "Signal mast", "Fire Signal Flare", 0.6)
 	mastPrompt.Triggered:Connect(function(player)

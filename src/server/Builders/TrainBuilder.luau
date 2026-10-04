@@ -24,6 +24,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 
+local TrainInterior = require(script.Parent.TrainInterior)
+
 local TrainBuilder = {}
 
 local WIDTH = 13
@@ -77,6 +79,7 @@ export type Built = {
 	mast: BasePart,
 	mastLamp: BasePart,
 	routeTable: BasePart,
+	seats: { Seat },
 }
 
 type Span = { number }
@@ -866,18 +869,6 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		{ transparency = 1, collide = false, shadow = false }
 	)
 	mast.Name = "SignalMast"
-	-- stove
-	Kit.cylinder(
-		model,
-		3,
-		2.2,
-		at(-69.5, 1.5, -4.4) * Kit.angles(0, 0, 90),
-		C.coal,
-		{ material = Enum.Material.Metal }
-	)
-	local stoveGlow = Kit.neon(model, Vector3.new(0.8, 0.6, 0.1), at(-69.5, 1.2, -3.25), C.fire)
-	Kit.pointLight(stoveGlow, C.fire, 1.4, 10, false)
-	Kit.post(model, 8, 0.6, at(-69.5, 7, -4.4), C.coal, { material = Enum.Material.Metal })
 	breachAnchor("BV1", -84, 5.2, -5.6)
 	breachAnchor("BV2", -72, 5.2, -5.6)
 	gangway(-66, -63)
@@ -911,22 +902,6 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	)
 	routeTable.Name = "RouteTable"
 	tableTop.Name = "RouteTableTop"
-	for _, x in { -57.5, -51.5, -34.5, -28.5 } do
-		Kit.block(
-			model,
-			Vector3.new(4.6, 1.8, 2.0),
-			at(x, 0.9, -(LINE_IN - 0.18 - 1.0)),
-			C.seat,
-			{ material = Enum.Material.Fabric }
-		)
-		Kit.block(
-			model,
-			Vector3.new(4.6, 1.55, 0.6),
-			at(x, 1.8 + 1.55 / 2, -(LINE_IN - 0.3 - 0.3)),
-			C.seat,
-			{ material = Enum.Material.Fabric }
-		)
-	end
 	breachAnchor("CR1", -55, 5.2, -5.6)
 	breachAnchor("CR2", -31, 5.2, -5.6)
 	gangway(-23, -20)
@@ -1098,35 +1073,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	)
 	-- backhead: firebox, gauges, regulator
 	tag(Kit.block(model, Vector3.new(0.6, WALL_H, WIDTH), at(cx1 - 0.3, WALL_H / 2, 0), body), "Body")
-	local firebox = Kit.neon(model, Vector3.new(0.2, 1.6, 2), at(cx1 - 0.7, 2.2, 0), C.fire)
-	firebox.Name = "Firebox"
-	Kit.pointLight(firebox, C.fire, 2.2, 14, true)
-	for i, dz in { -1.6, 1.6 } do
-		local gauge = Kit.cylinder(
-			model,
-			0.25,
-			1.2,
-			at(cx1 - 0.7, 6.6, dz),
-			C.brass,
-			{ material = Enum.Material.Metal, collide = false }
-		)
-		Kit.cylinder(
-			model,
-			0.05,
-			1,
-			gauge.CFrame * CFrame.new(-0.15, 0, 0),
-			Color3.fromRGB(236, 226, 200),
-			{ collide = false }
-		)
-		gauge.Name = if i == 1 then "CoalGauge" else "PressureGauge"
-	end
-	Kit.block(
-		model,
-		Vector3.new(0.3, 0.3, 2.2),
-		at(cx1 - 0.9, 5, 0) * Kit.angles(30, 0, 0),
-		C.brass,
-		{ material = Enum.Material.Metal, collide = false }
-	)
+	-- the furnace and the gauges on this wall are furnished by TrainInterior
 	breachAnchor("CAB", 58, 5.2, -5.6)
 
 	-- running gear and frame
@@ -1320,6 +1267,10 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	-- Couplings between the tender and the cab
 	buffers(52, -1)
 
+	-- Inside: seats, lamps, the furnace, the stove and every sign (TrainInterior) ---------------
+	local furnished =
+		TrainInterior.furnish(model, origin, { lineIn = LINE_IN, ceiling = CEIL_BOTTOM, doorTop = DOOR_H })
+
 	model.PrimaryPart = boiler
 	Kit.setCollisionGroup(model, "Train")
 	for _, part in model:GetDescendants() do
@@ -1330,8 +1281,9 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	model.Parent = parent
 
 	local spawnPoints: { CFrame } = {}
+	-- down the middle of the aisle, clear of the seats
 	for _, x in { -14, -8, 8, 14, -56, -50, -36, -30 } do
-		table.insert(spawnPoints, at(x, 3, 1.5))
+		table.insert(spawnPoints, at(x, 3, 0))
 	end
 
 	return {
@@ -1345,6 +1297,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		mast = mast,
 		mastLamp = mastLamp,
 		routeTable = routeTable,
+		seats = furnished.seats,
 	}
 end
 

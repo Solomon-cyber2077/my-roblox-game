@@ -30,7 +30,8 @@ local function build(
 	prompt: ProximityPrompt,
 	inputType: Enum.ProximityPromptInputType
 ): BillboardGui
-	local danger = prompt:GetAttribute("Action") == "Breach"
+	local kind = prompt:GetAttribute("Action")
+	local danger = kind == "Breach" or kind == "Pry"
 	local billboard = Ui.new("BillboardGui", {
 		Name = "Prompt",
 		AlwaysOnTop = true,

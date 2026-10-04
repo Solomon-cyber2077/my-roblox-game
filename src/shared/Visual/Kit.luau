@@ -34,7 +34,7 @@ function Kit.shade(color: Color3, factor: number): Color3
 end
 
 function Kit.make(
-	className: "Part" | "WedgePart" | "CornerWedgePart",
+	className: "Part" | "WedgePart" | "CornerWedgePart" | "Seat",
 	parent: Instance?,
 	size: Vector3,
 	cframe: CFrame,
@@ -80,6 +80,17 @@ function Kit.wedge(
 	options: Options?
 ): BasePart
 	return Kit.make("WedgePart", parent, size, cframe, color, options)
+end
+
+--[[
+	A seat cushion players can sit on. The sitter faces the frame's -Z. CanTouch is off
+	(as for every Kit part), so nobody sits by walking into it: the game seats them through
+	a prompt (TrainService).
+]]
+function Kit.seat(parent: Instance?, size: Vector3, cframe: CFrame, color: Color3, options: Options?): Seat
+	local seat = Kit.make("Seat", parent, size, cframe, color, options) :: Seat
+	seat.Name = "Seat"
+	return seat
 end
 
 -- Cylinder whose axis runs along the given frame's X axis.

@@ -57,7 +57,20 @@ describe("DifficultyModel", function()
 		for _, id in Stations.Order do
 			local params = DifficultyModel.params(1, Stations.List[id], 8, nil)
 			expect(params.hollowChase).toBeLessThan(Tuning.Crew.SprintSpeed)
+			-- even the quickest kind, at the quick end of its pace
+			for _, kind in Tuning.HollowKinds do
+				local fastest = params.hollowChase * kind.chase * (1 + Tuning.Hollow.PaceSpread)
+				expect(fastest).toBeLessThan(Tuning.Crew.SprintSpeed)
+			end
 		end
+	end)
+
+	it("gives each body its own pace: the Crawler bolts, the Brute plods", function()
+		local kinds = Tuning.HollowKinds
+		expect(kinds.Crawler.chase).toBeGreaterThan(kinds.Stalker.chase)
+		expect(kinds.Stalker.chase).toBeGreaterThan(kinds.Brute.chase)
+		-- same-kind hunters drift apart: no two share a pace exactly
+		expect(Tuning.Hollow.PaceSpread).toBeGreaterThan(0)
 	end)
 
 	it("caps Hollows by crew size and difficulty", function()

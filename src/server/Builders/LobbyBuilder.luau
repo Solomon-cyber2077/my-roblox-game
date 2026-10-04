@@ -45,6 +45,8 @@ local C = {
 	glass = Color3.fromRGB(150, 170, 168),
 	night = Color3.fromRGB(46, 58, 80),
 	warm = Color3.fromRGB(255, 206, 140),
+	dusk = Color3.fromRGB(214, 168, 118), -- lit glass: warm, but too dim to glare
+	fill = Color3.fromRGB(255, 226, 190),
 	board = Color3.fromRGB(22, 26, 34),
 	brass = Color3.fromRGB(201, 160, 82),
 	canvas = Color3.fromRGB(132, 46, 52),
@@ -71,7 +73,7 @@ local function label(part: BasePart, face: Enum.NormalId, text: string, color: C
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = face
 	gui.CanvasSize = canvas or Vector2.new(800, 160)
-	gui.LightInfluence = 0.15
+	gui.LightInfluence = 0.55
 	gui.Parent = part
 	local textLabel = Instance.new("TextLabel")
 	textLabel.BackgroundTransparency = 1
@@ -213,10 +215,14 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	end
 	local display = TrainBuilder.build(at(0, 0, TRACK_Z), model)
 	display.model.Name = "DisplayTrain"
-	-- seen from the platform, the display train's cabin lamps need no shadows
+	-- seen from the platform, the display train's cabin lamps need no shadows, and its little
+	-- table and desk lamps none at all: the ceiling globes light its windows
 	for _, descendant in display.model:GetDescendants() do
 		if descendant:IsA("PointLight") then
 			descendant.Shadows = false
+			if descendant.Range <= 11 then
+				descendant.Enabled = false
+			end
 		end
 	end
 	for _, blocker in display.doorBlockers do
@@ -234,8 +240,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	block(Vector3.new(2 * HALF_X, 1.2, 0.6), at(0, 0.6, BACK_Z - 0.3), C.stone, Enum.Material.Concrete)
 	for _, x in { -90, -66, 66, 90 } do
 		decor(Vector3.new(11, 15, 0.3), at(x, 18, BACK_Z - 0.15), C.iron, Enum.Material.Metal)
-		decor(Vector3.new(10, 14, 0.3), at(x, 18, BACK_Z - 0.4), C.warm, Enum.Material.Neon).Transparency =
-			0.5
+		decor(Vector3.new(10, 14, 0.3), at(x, 18, BACK_Z - 0.4), C.dusk, Enum.Material.Neon).Transparency =
+			0.62
 		for k = -1, 1 do
 			decor(Vector3.new(0.25, 14, 0.2), at(x + k * 2.6, 18, BACK_Z - 0.62), C.iron, Enum.Material.Metal)
 		end
@@ -447,7 +453,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 		local lamp =
 			Kit.neon(model, Vector3.new(1.4, 1.4, 1.4), at(x, 18.4, pendantZ), C.warm, Enum.PartType.Ball)
-		Kit.pointLight(lamp, C.warm, 1.5, 46, (x + 99) % 44 == 0)
+		Kit.pointLight(lamp, C.warm, 0.7, 38, (x + 99) % 44 == 0)
 	end
 	-- purlins along the hall at every rib joint, carrying the roof
 	for i = 2, SEGMENTS do
@@ -459,6 +465,20 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.Material.Metal,
 			{ collide = false, shadow = true }
 		)
+	end
+
+	-- Fill: soft lights high between the trusses wash the whole hall evenly, so the lamps below
+	-- only warm it and no corner or poster sits in a hot spot
+	for _, x in { -66, -22, 22, 66 } do
+		local fill = block(
+			Vector3.one,
+			at(x, 30, 13),
+			C.fill,
+			nil,
+			{ transparency = 1, collide = false, shadow = false }
+		)
+		fill.Name = "FillLight"
+		Kit.pointLight(fill, C.fill, 0.85, 60, false)
 	end
 
 	-- Roof: slate over the eaves, dirty glass over the middle on glazing bars --------------------------
@@ -601,8 +621,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	-- ticket office windows either side of the board
 	for _, x in { -36, 36 } do
 		block(Vector3.new(16, 11, 1.4), at(x, 5.5, BACK_Z - 0.7), C.wood, Enum.Material.WoodPlanks)
-		decor(Vector3.new(12, 5, 0.3), at(x, 6.8, BACK_Z - 1.5), C.warm, Enum.Material.Neon).Transparency =
-			0.45
+		decor(Vector3.new(12, 5, 0.3), at(x, 6.8, BACK_Z - 1.5), C.dusk, Enum.Material.Neon).Transparency =
+			0.55
 		decor(Vector3.new(14, 0.5, 1.2), at(x, 4.1, BACK_Z - 1.8), C.brass, Enum.Material.Metal)
 		local sign = decor(Vector3.new(12, 1.8, 0.3), at(x, 10.2, BACK_Z - 1.55), C.board)
 		label(sign, Enum.NormalId.Front, "TICKETS", Color3.fromRGB(240, 210, 150))
@@ -645,7 +665,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 	end
 	local kioskLamp = Kit.neon(model, Vector3.new(1, 1, 1), at(kx, 10, kz), C.warm, Enum.PartType.Ball)
-	Kit.pointLight(kioskLamp, C.warm, 1.4, 22, false)
+	Kit.pointLight(kioskLamp, C.warm, 0.75, 22, false)
 
 	-- Line Mastery: an honours board in a carved frame, the line painted on it in gilt -----------------
 	local lx, lz = -54, 36
@@ -672,7 +692,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = Enum.NormalId.Front
 		gui.CanvasSize = Vector2.new(1000, 690)
-		gui.LightInfluence = 0.4
+		gui.LightInfluence = 0.85
 		gui.Parent = ledgerFace
 		local gold = Color3.fromRGB(232, 196, 118)
 		local cream = Color3.fromRGB(236, 226, 200)
@@ -777,7 +797,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			C.warm,
 			Enum.PartType.Ball
 		)
-		Kit.pointLight(bulb, C.warm, 1.1, 14, false)
+		Kit.pointLight(bulb, C.warm, 0.55, 14, false)
 	end
 	local ledger = block(
 		Vector3.new(12, 6, 4),
@@ -929,7 +949,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = if side > 0 then Enum.NormalId.Left else Enum.NormalId.Right
 		gui.CanvasSize = Vector2.new(560, 720)
-		gui.LightInfluence = 0.35
+		-- printed paper: lit by the hall like everything else, so it never glows
+		gui.LightInfluence = 1
 		gui.Parent = paper
 		if poster.band then
 			local band = Instance.new("Frame")
@@ -1000,7 +1021,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		stoveAt * CFrame.new(1.62, 1.4, 0),
 		Color3.fromRGB(255, 120, 50)
 	)
-	Kit.pointLight(grate, Color3.fromRGB(255, 150, 80), 1.3, 18, false)
+	Kit.pointLight(grate, Color3.fromRGB(255, 150, 80), 0.9, 18, false)
 	local chairColor = Color3.fromRGB(70, 92, 76)
 	local function armchair(x: number, z: number, yaw: number, wide: number)
 		local f = at(x, 0, z) * Kit.angles(0, yaw, 0)
@@ -1065,7 +1086,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		Color3.fromRGB(226, 196, 140),
 		{ material = Enum.Material.Fabric, collide = false }
 	)
-	Kit.pointLight(shade, C.warm, 1, 16, false)
+	Kit.pointLight(shade, C.warm, 0.55, 16, false)
 	Kit.ball(
 		model,
 		0.7,
@@ -1182,7 +1203,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = Enum.NormalId.Left
 		gui.CanvasSize = Vector2.new(640, 480)
-		gui.LightInfluence = 0.5
+		gui.LightInfluence = 0.9
 		gui.Parent = menu
 		local t = Instance.new("TextLabel")
 		t.BackgroundTransparency = 1
@@ -1198,7 +1219,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local pendant =
 		Kit.neon(model, Vector3.new(0.8, 0.8, 0.8), at(tx + 4, 11, tz), C.warm, Enum.PartType.Ball)
 	Kit.post(model, 9, 0.12, at(tx + 4, 16, tz), C.iron, { material = Enum.Material.Metal, collide = false })
-	Kit.pointLight(pendant, C.warm, 1.2, 20, false)
+	Kit.pointLight(pendant, C.warm, 0.65, 20, false)
 	for _, dz in { -6, 6 } do
 		local tableAt = at(tx - 6, 0, tz + dz)
 		Kit.post(model, 2.8, 0.5, tableAt * CFrame.new(0, 1.4, 0), C.iron, { material = Enum.Material.Metal })
@@ -1319,7 +1340,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = Enum.NormalId.Front
 		gui.CanvasSize = Vector2.new(260, 240)
-		gui.LightInfluence = 0.6
+		gui.LightInfluence = 1
 		gui.Parent = paper
 		local t = Instance.new("TextLabel")
 		t.BackgroundTransparency = 1
@@ -1360,14 +1381,14 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			C.iron,
 			{ material = Enum.Material.Metal, collide = false }
 		)
-		Kit.pointLight(lantern, C.warm, 1.3, 24, false)
+		Kit.pointLight(lantern, C.warm, 0.75, 22, false)
 	end
 	for _, x in { -78, -54, 54, 78 } do
 		decor(Vector3.new(0.6, 1.4, 0.5), at(x, 13, BACK_Z - 0.25), C.brass, Enum.Material.Metal)
 		decor(Vector3.new(0.3, 0.3, 1.2), at(x, 13.4, BACK_Z - 0.9), C.brass, Enum.Material.Metal)
 		local globe =
 			Kit.neon(model, Vector3.new(1, 1, 1), at(x, 13.4, BACK_Z - 1.9), C.warm, Enum.PartType.Ball)
-		Kit.pointLight(globe, C.warm, 0.9, 18, false)
+		Kit.pointLight(globe, C.warm, 0.55, 18, false)
 	end
 
 	local spawnPoints: { CFrame } = {}

@@ -1254,6 +1254,34 @@ local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 		local glow = emitter(model, Vector3.one, CFrame.new(len * u, ABYSS + 30, (r.z0 + r.z1) / 2))
 		Kit.pointLight(glow, rgb(255, 110, 50), 1.6, 60, false)
 	end
+	-- a sea of fog not far under the station's rim: the drop past its fences goes down into
+	-- it, the station's keel and the rock teeth under it fading as they go
+	translucent(
+		model,
+		Vector3.new(len - 1.3, 0.5, width - 2.6),
+		CFrame.new(len / 2, -30, (r.z0 + r.z1) / 2 + 1),
+		rgb(118, 122, 128),
+		0.62
+	)
+	local sea = Instance.new("ParticleEmitter")
+	sea.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	sea.Color = ColorSequence.new(rgb(132, 136, 142), rgb(96, 100, 108))
+	sea.LightInfluence = 0.7
+	sea.Rate = 14
+	sea.Lifetime = NumberRange.new(9, 13)
+	sea.Speed = NumberRange.new(0.5, 1.5)
+	sea.SpreadAngle = Vector2.new(180, 10)
+	sea.RotSpeed = NumberRange.new(-5, 5)
+	sea.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 24), NumberSequenceKeypoint.new(1, 40) })
+	sea.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.3, 0.6),
+		NumberSequenceKeypoint.new(0.7, 0.6),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	sea.Shape = Enum.ParticleEmitterShape.Box
+	sea.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+	sea.Parent = emitter(model, Vector3.new(len, 4, width), CFrame.new(len / 2, -26, (r.z0 + r.z1) / 2))
 	-- mist layers, thickening with depth
 	for i, y in { -50, -95, -150 } do
 		translucent(

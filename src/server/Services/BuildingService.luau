@@ -40,7 +40,7 @@ local BuildingService = {}
 
 local active: { [number]: Active } = {}
 local LIT = Color3.fromRGB(255, 214, 160)
-local WINDOW_LIT = Color3.fromRGB(255, 190, 120)
+local WINDOW_LIT = Color3.fromRGB(216, 156, 96) -- warm, but too dim to glare across the yard
 
 local function canInteract(player: Player): boolean
 	return RunRules.isStationOpen(Registry.RunDirector.Phase())
@@ -115,7 +115,7 @@ local function powerUp(player: Player, state: Active, fuse: ProximityPrompt)
 	for _, pane in state.handle.glass do
 		pane.Material = Enum.Material.Neon
 		pane.Color = WINDOW_LIT
-		pane.Transparency = 0.35
+		pane.Transparency = 0.5
 	end
 	NetService.FireAll("Fx", "Sound", { cue = "Breaker", position = state.handle.fuse.Position })
 	NetService.FireAll("Notify", "Station", `{player.DisplayName} got the lights on in the {def.name}.`)

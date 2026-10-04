@@ -109,6 +109,11 @@ local SHAPES: { [string]: (Sound) -> () } = {
 	Heartbeat = function(sound)
 		equalize(sound, 6, -18, -45)
 	end,
+	FogWhisper = function(sound)
+		tremolo(sound, 0.55, 0.7)
+		equalize(sound, -6, -2, -14)
+		reverb(sound, 9, -2, -10)
+	end,
 	RailClack = function(sound)
 		equalize(sound, 3, -4, -24)
 	end,

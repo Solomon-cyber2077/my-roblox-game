@@ -8,6 +8,10 @@
 	structures: blocking buildings (footprint in tiles) and props
 	landmarks:  enterable buildings (Config/Buildings) the crew search room by room
 	palette:    RGB colours the builder uses for ground, accent and trim
+	edge:       the boundary round the open sides: the fence (or wall, or hedge) along
+	            both ends and the far edge, and the trees standing along them
+	dressing:   what the yard is littered with, the things that say what this place was
+	            (StationDressing builds them all)
 ]]
 
 export type StructureRule = {
@@ -40,6 +44,9 @@ export type Archetype = {
 	lampSpacing: number,
 	ground: string,
 	palette: { ground: { number }, accent: { number }, trim: { number }, light: { number } },
+	edge: { fence: string, trees: { string }, treeChance: number },
+	dressing: { string },
+	yardTrees: number,
 	terminus: boolean?,
 }
 
@@ -50,8 +57,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 1,
 		minStation = 1,
 		weight = 1.0,
-		length = 240,
-		depth = 144,
+		length = 276,
+		depth = 168,
 		dwellMultiplier = 0.95,
 		hint = "Balanced haul",
 		loot = { coal = 1.0, parts = 1.0, relic = 0.8, tools = 1.0 },
@@ -73,6 +80,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 58, 50, 44 },
 			light = { 255, 196, 128 },
 		},
+		edge = { fence = "FencePicket", trees = { "Oak", "Oak", "Poplar" }, treeChance = 0.8 },
+		dressing = { "Haystack", "Cart", "Pump", "Wheelbarrow", "Puddle", "Barrels", "Scarecrow" },
+		yardTrees = 3,
 	},
 	CoalYard = {
 		id = "CoalYard",
@@ -80,8 +90,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 2,
 		minStation = 1,
 		weight = 1.0,
-		length = 300,
-		depth = 180,
+		length = 312,
+		depth = 192,
 		dwellMultiplier = 1.0,
 		hint = "Coal-rich",
 		loot = { coal = 2.2, parts = 0.7, relic = 0.7, tools = 0.8 },
@@ -105,6 +115,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 34, 33, 33 },
 			light = { 255, 170, 96 },
 		},
+		edge = { fence = "FenceRail", trees = { "DeadTree", "Poplar", "DeadTree" }, treeChance = 0.6 },
+		dressing = { "Barrels", "Wheelbarrow", "Puddle", "Bonfire", "Cart", "MineCart" },
+		yardTrees = 2,
 	},
 	SignalWorks = {
 		id = "SignalWorks",
@@ -112,8 +125,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 2,
 		minStation = 2,
 		weight = 1.0,
-		length = 288,
-		depth = 204,
+		length = 300,
+		depth = 216,
 		dwellMultiplier = 1.0,
 		hint = "Parts-rich",
 		loot = { coal = 0.7, parts = 2.2, relic = 0.9, tools = 1.2 },
@@ -136,6 +149,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 60, 62, 64 },
 			light = { 230, 236, 255 },
 		},
+		edge = { fence = "FenceIron", trees = { "Poplar", "Birch" }, treeChance = 0.65 },
+		dressing = { "SignalPost", "Barrels", "Puddle", "Wheelbarrow", "Bonfire" },
+		yardTrees = 2,
 	},
 	Market = {
 		id = "Market",
@@ -143,8 +159,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 2,
 		minStation = 3,
 		weight = 1.0,
-		length = 300,
-		depth = 192,
+		length = 312,
+		depth = 204,
 		dwellMultiplier = 1.05,
 		hint = "Relics",
 		loot = { coal = 0.9, parts = 0.9, relic = 1.8, tools = 1.1 },
@@ -166,6 +182,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 70, 60, 52 },
 			light = { 255, 186, 120 },
 		},
+		edge = { fence = "WallStone", trees = { "DeadTree", "Oak" }, treeChance = 0.6 },
+		dressing = { "Barrels", "Cart", "Bonfire", "Puddle", "Pump", "PillarBox" },
+		yardTrees = 2,
 	},
 	Viaduct = {
 		id = "Viaduct",
@@ -173,8 +192,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 3,
 		minStation = 4,
 		weight = 0.8,
-		length = 360,
-		depth = 108,
+		length = 372,
+		depth = 120,
 		dwellMultiplier = 0.9,
 		hint = "Relics, fragile ground",
 		loot = { coal = 1.0, parts = 1.0, relic = 2.0, tools = 1.4 },
@@ -196,6 +215,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 78, 50, 40 },
 			light = { 255, 206, 150 },
 		},
+		edge = { fence = "WallStone", trees = { "Pine", "Birch", "Pine" }, treeChance = 0.55 },
+		dressing = { "Graves", "Puddle", "Bonfire", "Barrels" },
+		yardTrees = 1,
 	},
 	Minehead = {
 		id = "Minehead",
@@ -203,8 +225,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 3,
 		minStation = 5,
 		weight = 0.9,
-		length = 288,
-		depth = 216,
+		length = 300,
+		depth = 228,
 		dwellMultiplier = 1.1,
 		hint = "Coal and parts",
 		loot = { coal = 1.8, parts = 1.6, relic = 1.0, tools = 1.0 },
@@ -228,6 +250,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 46, 40, 34 },
 			light = { 255, 176, 100 },
 		},
+		edge = { fence = "FenceRail", trees = { "Pine", "DeadTree", "Pine" }, treeChance = 0.75 },
+		dressing = { "MineCart", "Barrels", "Bonfire", "Puddle", "Wheelbarrow" },
+		yardTrees = 3,
 	},
 	Schoolhouse = {
 		id = "Schoolhouse",
@@ -235,8 +260,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 2,
 		minStation = 2,
 		weight = 1.1,
-		length = 300,
-		depth = 192,
+		length = 312,
+		depth = 204,
 		dwellMultiplier = 1.0,
 		hint = "A whole school to search",
 		loot = { coal = 1.2, parts = 1.1, relic = 1.3, tools = 1.0 },
@@ -258,6 +283,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 54, 50, 48 },
 			light = { 255, 204, 140 },
 		},
+		edge = { fence = "FencePicket", trees = { "Oak", "Oak", "Poplar" }, treeChance = 0.8 },
+		dressing = { "Swings", "Haystack", "Puddle", "Pump", "Scarecrow", "Graves" },
+		yardTrees = 3,
 	},
 	Infirmary = {
 		id = "Infirmary",
@@ -265,8 +293,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 2,
 		minStation = 3,
 		weight = 0.9,
-		length = 288,
-		depth = 180,
+		length = 300,
+		depth = 192,
 		dwellMultiplier = 1.0,
 		hint = "Tonics, tools, a locked dispensary",
 		loot = { coal = 0.9, parts = 1.0, relic = 1.1, tools = 1.8 },
@@ -287,6 +315,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 62, 64, 62 },
 			light = { 236, 240, 255 },
 		},
+		edge = { fence = "FenceIron", trees = { "Poplar", "Pine" }, treeChance = 0.7 },
+		dressing = { "Puddle", "Barrels", "Pump", "Graves", "Well" },
+		yardTrees = 2,
 	},
 	RailwayHotel = {
 		id = "RailwayHotel",
@@ -294,8 +325,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 3,
 		minStation = 4,
 		weight = 0.9,
-		length = 312,
-		depth = 192,
+		length = 324,
+		depth = 204,
 		dwellMultiplier = 1.0,
 		hint = "Guest rooms and a coal cellar",
 		loot = { coal = 1.4, parts = 1.0, relic = 1.6, tools = 1.0 },
@@ -317,6 +348,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 70, 50, 42 },
 			light = { 255, 196, 128 },
 		},
+		edge = { fence = "Hedge", trees = { "Oak", "Poplar" }, treeChance = 0.7 },
+		dressing = { "Topiary", "Puddle", "Well", "Barrels", "Topiary" },
+		yardTrees = 2,
 	},
 	PostTown = {
 		id = "PostTown",
@@ -324,8 +358,8 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 3,
 		minStation = 5,
 		weight = 0.9,
-		length = 324,
-		depth = 192,
+		length = 336,
+		depth = 204,
 		dwellMultiplier = 0.95,
 		hint = "A strongroom full of relics",
 		loot = { coal = 1.0, parts = 1.3, relic = 1.8, tools = 1.1 },
@@ -347,6 +381,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 60, 54, 50 },
 			light = { 255, 190, 120 },
 		},
+		edge = { fence = "WallStone", trees = { "Oak", "DeadTree" }, treeChance = 0.6 },
+		dressing = { "PillarBox", "Cart", "Puddle", "Barrels", "Pump" },
+		yardTrees = 2,
 	},
 	Terminus = {
 		id = "Terminus",
@@ -373,6 +410,9 @@ local Archetypes: { [string]: Archetype } = {
 			trim = { 120, 104, 82 },
 			light = { 255, 226, 170 },
 		},
+		edge = { fence = "FenceIron", trees = {}, treeChance = 0 },
+		dressing = {},
+		yardTrees = 0,
 		terminus = true,
 	},
 }
@@ -399,9 +439,31 @@ for _, def in Archetypes do
 	table.freeze(def)
 end
 
+local CANOPY_HALF_SPAN = 72 -- the platform canopy reaches at most this far either side of the middle
+local CANOPY_COLUMN_Z = 20.5 -- its columns stand at the back of the platform
+local CANOPY_BAY = 24 -- between columns
+
+-- Where the canopy's columns stand along the platform (x), for a canopy reaching `half` each way.
+-- None stands within a bay of the middle, where the station's name board is.
+local function canopyColumns(half: number): { number }
+	local xs: { number } = {}
+	local x = half - 6
+	while x > 12 do
+		table.insert(xs, x)
+		table.insert(xs, -x)
+		x -= CANOPY_BAY
+	end
+	return xs
+end
+
 return table.freeze({
 	List = table.freeze(Archetypes),
 	Footprints = table.freeze(Footprints),
+	CanopyHalfSpan = CANOPY_HALF_SPAN,
+	CanopyColumnZ = CANOPY_COLUMN_Z,
+	canopyColumns = canopyColumns,
+	EdgeInset = 0.8, -- the boundary stands this far in from the station edge
+	DressingCount = 6, -- things scattered round the yard
 	Order = table.freeze({
 		"Halt",
 		"CoalYard",

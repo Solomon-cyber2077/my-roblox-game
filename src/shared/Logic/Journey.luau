@@ -331,6 +331,17 @@ function Journey.progress(leg: number, share: number): number
 	return math.max(leg - 1, 0) + MathX.saturate(share)
 end
 
+--[[
+	Run progress as the sky and the clock count it. The line takes most of each leg's
+	hours and the rest pass while the train stands at the stop, so the night (and the
+	HUD's clock) never stops. leg and share as for Journey.progress; stay is how far
+	through the stop the crew is: 0 as the doors open, 1 as they close.
+]]
+function Journey.skyProgress(leg: number, share: number, stay: number): number
+	local stop = J.StopHours
+	return math.max(leg - 1, 0) + (1 - stop) * MathX.saturate(share) + stop * MathX.saturate(stay)
+end
+
 -- Continuous hour for a run progress; past 24 means the small hours of the next day.
 function Journey.hour(progress: number, stops: number): number
 	local total = stops + 1

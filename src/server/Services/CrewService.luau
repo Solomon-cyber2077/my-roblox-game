@@ -5,6 +5,11 @@
 	Status is derived ten times a second from each root part against the train's
 	boarding volume (Aboard / Afield). Stragglers stay Stragglers until they board.
 	Every elimination path ends in CrewService.Eliminate, which names the cause.
+
+	Every character is a blocky R6 rig in the player's own avatar, built here from their
+	HumanoidDescription. It has no default Animate script: every client animates it
+	procedurally (CharacterAnimator), and its joints hold on death so a body falls as a
+	body. Health comes back slowly, as it did with the default character scripts.
 ]]
 
 local Players = game:GetService("Players")
@@ -42,6 +47,9 @@ local CrewService = {}
 local members: { [Player]: Member } = {}
 local pendingJoin: { [Player]: boolean } = {}
 local spawnGeneration: { [Player]: number } = {}
+
+local REGEN_SHARE = 0.01 -- of max health per second, as the default Health script gave
+local descriptions: { [number]: HumanoidDescription } = {}
 
 local CAUSE_TEXT: { [string]: string } = {
 	LeftBehind = "was left behind",
@@ -83,6 +91,75 @@ local function onDied(player: Player, character: Model)
 	end
 end
 
+-- The player's own avatar (fetched once a server), or a plain crew member's for test players.
+local function describe(player: Player): HumanoidDescription
+	local cached = descriptions[player.UserId]
+	if cached then
+		return cached:Clone()
+	end
+	local description: HumanoidDescription? = nil
+	if player.UserId > 0 then
+		local ok, result = pcall(function()
+			return Players:GetHumanoidDescriptionFromUserId(player.UserId)
+		end)
+		if ok then
+			description = result
+		end
+	end
+	if description == nil then
+		local plain = Instance.new("HumanoidDescription")
+		local skin = Color3.fromRGB(226, 178, 140)
+		plain.HeadColor = skin
+		plain.LeftArmColor = skin
+		plain.RightArmColor = skin
+		plain.TorsoColor = Color3.fromRGB(58, 66, 82)
+		plain.LeftLegColor = Color3.fromRGB(46, 42, 40)
+		plain.RightLegColor = Color3.fromRGB(46, 42, 40)
+		description = plain
+	end
+	local final = description :: HumanoidDescription
+	descriptions[player.UserId] = final
+	return final:Clone()
+end
+
+-- A blocky R6 body in the player's avatar, ready for CharacterAnimator, or nil if it failed.
+local function buildR6(player: Player): Model?
+	local ok, result = pcall(function()
+		local description = describe(player)
+		-- Preserve clothes, colours and accessories; package meshes can make an R6 rig
+		-- non-blocky and invalidate the hands/feet assumed by the procedural poses.
+		for _, property in { "Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg" } do
+			(description :: any)[property] = 0
+		end
+		local body = Players:CreateHumanoidModelFromDescription(
+			description,
+			Enum.HumanoidRigType.R6,
+			Enum.AssetTypeVerification.Always
+		)
+		description:Destroy()
+		return body
+	end)
+	if not ok or result == nil then
+		warn(`[Crew] could not build an R6 body for {player.Name}: {result}`)
+		return nil
+	end
+	local model = result :: Model
+	model.Name = player.Name
+	-- every client animates it (CharacterAnimator); the default animations would fight that
+	for _, descendant in model:GetDescendants() do
+		if descendant.Name == "Animate" and (descendant:IsA("LocalScript") or descendant:IsA("Script")) then
+			descendant:Destroy()
+		end
+	end
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.DisplayName = player.DisplayName
+		humanoid.BreakJointsOnDeath = false
+	end
+	model:SetAttribute("Procedural", true)
+	return model
+end
+
 -- Loads a fresh character at `cframe`. Yields until the character exists.
 function CrewService.LoadCharacterAt(player: Player, cframe: CFrame)
 	if player.Parent == nil then
@@ -93,9 +170,32 @@ function CrewService.LoadCharacterAt(player: Player, cframe: CFrame)
 	pcall(function()
 		player:RequestStreamAroundAsync(cframe.Position, 5)
 	end)
-	player:LoadCharacterAsync()
-	if spawnGeneration[player] ~= generation then
+	local body = buildR6(player)
+	if spawnGeneration[player] ~= generation or not player:IsDescendantOf(Players) then
+		if body then
+			body:Destroy()
+		end
 		return -- a newer spawn request superseded this one
+	end
+	if body then
+		local old = player.Character
+		body:PivotTo(cframe)
+		player.Character = body
+		body.Parent = Workspace
+		if old and old ~= body then
+			old:Destroy()
+		end
+		local bodyRoot = body:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if bodyRoot then
+			pcall(function()
+				bodyRoot:SetNetworkOwner(player)
+			end)
+		end
+	else
+		player:LoadCharacterAsync()
+	end
+	if spawnGeneration[player] ~= generation then
+		return
 	end
 	local character = player.Character
 	if character == nil then
@@ -191,6 +291,25 @@ function CrewService.Start()
 		while true do
 			task.wait(1 / Tuning.Crew.PositionTickHz)
 			Safe.call("CrewService.positionTick", positionTick)
+		end
+	end)
+	-- health creeps back, a point a second, except in a Hollow's hands
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			for _, player in Players:GetPlayers() do
+				local character = player.Character
+				local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+				if
+					humanoid
+					and humanoid.Health > 0
+					and humanoid.Health < humanoid.MaxHealth
+					and not Registry.HollowService.IsHeld(player)
+				then
+					humanoid.Health =
+						math.min(humanoid.MaxHealth, humanoid.Health + humanoid.MaxHealth * REGEN_SHARE)
+				end
+			end
 		end
 	end)
 end

@@ -90,6 +90,8 @@ function DifficultyModel.params(
 		hollowWalk = blend(Difficulty.HollowWalk, d),
 		hollowChase = blend(Difficulty.HollowChase, d),
 		hollowDamage = math.floor(blend(Difficulty.HollowDamage, d) + 0.5),
+		grabMash = blend(Difficulty.GrabMash, d),
+		grabSlip = blend(Difficulty.GrabSlip, d),
 		departureAccel = blend(Difficulty.DepartureAccel, d),
 		chaseWindow = blend(Difficulty.ChaseWindow, d) + effects.ChaseSecondsPerLevel * whistle,
 		lootMul = blend(Difficulty.LootMultiplier, d),

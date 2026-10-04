@@ -12,7 +12,8 @@
 	  search               search the nearest unsearched container
 	  tp train|edge|mid|far  move to the train or a station zone
 	  give <itemId>        put an item in your backpack
-	  hollow               spawn a Hollow near you
+	  hollow [kind]        spawn a Hollow near you (Stalker, Crawler or Brute)
+	  grab [kind]          a Hollow seizes you at once (a station must be docked)
 	  coal <n> / parts <n> set train stores
 	  state                print run, crew, train and backpack to the output
 	  sky <hour> | sky     pin every client's sky to an hour (26 is two in the morning), or free it
@@ -98,13 +99,17 @@ Commands.give = function(player, args)
 	end
 end
 
-Commands.hollow = function(player)
+Commands.hollow = function(player, args)
 	local r = root(player)
 	if r then
 		local localPos = Registry.StationService.ToLocal(r.Position)
-		local spawned = Registry.HollowService.TrySpawn(localPos.X + 10, localPos.Z + 30)
+		local spawned = Registry.HollowService.TrySpawn(localPos.X + 10, localPos.Z + 30, args[1])
 		print(`[Dev] hollow spawned: {spawned}`)
 	end
+end
+
+Commands.grab = function(player, args)
+	print(`[Dev] grab: {Registry.HollowService.DevGrab(player, args[1])}`)
 end
 
 Commands.coal = function(_, args)

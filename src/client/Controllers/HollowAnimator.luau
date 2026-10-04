@@ -1,21 +1,22 @@
 --!strict
 --[[
 	Procedural animation for the Hollows. Every client writes each joint's
-	Motor6D.Transform from the creature's kind, its state (the State, StateAt and
-	Emerge attributes the server sets) and its velocity. No animation assets.
+	Motor6D.Transform from the creature's state (the State, StateAt, Emerge and Grab
+	attributes the server sets) and its velocity; Animation/HollowPoses does the body
+	math. No animation assets.
 
 	  Stalker  a limp when it prowls (one leg strides, the other drags), head lolling;
-	           on the hunt it pitches forward and runs with its arms flung back. It rears
-	           and screams before it strikes, then rakes down with both hands.
-	  Crawler  a four-legged scuttle with its upside-down head chattering; it crouches,
-	           then pounces.
-	  Brute    a heavy, rolling stomp that shakes the ground; it raises the shovel over its
-	           head and slams it down with a shockwave.
+	           on the hunt it pitches forward and runs with its arms flung back
+	  Crawler  a spider's walk on planted hands and feet, elbows and knees high over its
+	           back; it rears like a mantis, then pounces
+	  Brute    a heavy, rolling stomp that shakes the ground
 
 	Spawning is a show too: Hollows claw up out of the ground, haul themselves over the
-	station's edge out of the dark, or wake in jerks from a slump in a building. Heads
-	twitch at random, held for a beat and released. Poses are smoothed so a state change
-	never pops, and the effects (dust, trails, sounds, shockwaves) hang off state changes.
+	station's edge out of the dark, or wake in jerks from a slump in a building. A strike
+	that lands is a grab (Config/Grabs): the Hollow holds its victim in one of three ways
+	and squeezes, bites or yanks on the grab's rhythm. Heads twitch at random, held for a
+	beat and released. Poses are smoothed so a state change never pops, and the effects
+	(dust, trails, sounds, shockwaves, the Brute's embers) hang off state changes.
 ]]
 
 local Players = game:GetService("Players")
@@ -24,16 +25,20 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
-local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Shared = ReplicatedStorage.Shared
+local Grabs = require(Shared.Config.Grabs)
+local Tuning = require(Shared.Config.Tuning)
 
 local Registry = require(script.Parent.Parent.Registry)
+local HollowPoses = require(script.Parent.Parent.Animation.HollowPoses)
 
-type Pose = { [string]: CFrame }
+type Pose = HollowPoses.Pose
 
 type Rig = {
 	model: Model,
 	root: BasePart,
 	kind: string,
+	skeleton: HollowPoses.Rig,
 	motors: { [string]: Motor6D },
 	pose: Pose,
 	phase: number,
@@ -48,6 +53,8 @@ type Rig = {
 	stepSide: number,
 	slammed: boolean,
 	lungeAt: number,
+	bites: number, -- bites of the current hold already sounded
+	embers: PointLight?,
 }
 
 local HollowAnimator = {}
@@ -59,28 +66,6 @@ local fxFolder: Folder
 
 local function A(x: number, y: number, z: number): CFrame
 	return CFrame.Angles(x, y, z)
-end
-
-local function clamp01(x: number): number
-	return math.clamp(x, 0, 1)
-end
-
-local function easeOut(t: number): number
-	local u = 1 - clamp01(t)
-	return 1 - u * u * u
-end
-
-local function blend(a: Pose, b: Pose, t: number): Pose
-	local out: Pose = {}
-	for name, value in a do
-		out[name] = value:Lerp(b[name] or I, t)
-	end
-	for name, value in b do
-		if (out[name] :: CFrame?) == nil then
-			out[name] = I:Lerp(value, t)
-		end
-	end
-	return out
 end
 
 -- Effects ---------------------------------------------------------------------------------
@@ -206,10 +191,7 @@ local function makeTrails(rig: Rig)
 end
 
 local function ground(rig: Rig): Vector3
-	local height = rig.root.Size.Y / 2
-	local humanoid = rig.model:FindFirstChildOfClass("Humanoid")
-	local hip = if humanoid then humanoid.HipHeight else 3
-	return rig.root.Position - Vector3.new(0, height + hip, 0)
+	return rig.root.Position + Vector3.new(0, rig.skeleton.ground, 0)
 end
 
 -- Called when a rig's state changes: sounds and effects that go with the new state.
@@ -243,244 +225,35 @@ local function onState(rig: Rig, state: string)
 		if rig.kind ~= "Brute" then
 			audio("HollowSwipe", position, 1, pitch)
 		end
-	end
-end
-
--- Poses --------------------------------------------------------------------------------------
-
-local function stalkerGait(out: Pose, p: number, stride: number, hunt: boolean, now: number, seed: number)
-	local lean = if hunt then -0.5 else -0.1
-	local l, r = math.sin(p), math.sin(p + math.pi)
-	-- the left leg strides, the right drags: a limp
-	out.LHip = A(l * 0.62 * stride, 0, -0.04)
-	out.RHip = A(r * 0.4 * stride, 0, 0.06)
-	out.LKnee = A(-math.max(0, math.cos(p)) * 1.1 * stride - 0.06, 0, 0)
-	out.RKnee = A(-math.max(0, math.cos(p + math.pi)) * 0.45 * stride - 0.05, 0, 0)
-	out.LAnkle = A(math.max(0, -math.cos(p)) * 0.3 * stride, 0, 0)
-	out.RAnkle = A(0.25 * stride, 0, 0)
-	local bob = math.abs(l) * 0.22 * stride
-	out.RootJoint = CFrame.new(0, bob - 0.1 * stride, 0)
-		* A(lean * 0.4, l * 0.08 * stride, l * 0.1 * stride + 0.06)
-	out.Waist = A(lean * 0.6 + math.sin(p * 2) * 0.03, l * 0.12 * stride, 0)
-	if hunt then
-		local reach = l * 0.8 * stride
-		out.LShoulder = A(-0.6 + reach, 0, -0.25)
-		out.RShoulder = A(-0.6 - reach, 0, 0.25)
-		out.LElbow = A(0.55, 0, 0)
-		out.RElbow = A(0.55, 0, 0)
-		out.Neck = A(0.55, 0, 0)
-		out.Jaw = A(-0.25 - 0.1 * math.sin(now * 9 + seed), 0, 0)
-	else
-		out.LShoulder = A(-r * 0.25 * stride + 0.05, 0, -0.06 - 0.04 * math.sin(p * 0.5))
-		out.RShoulder = A(-l * 0.25 * stride + 0.05, 0, 0.06 + 0.04 * math.sin(p * 0.5))
-		out.LElbow = A(0.15 + 0.1 * math.max(0, l), 0, 0)
-		out.RElbow = A(0.15 + 0.1 * math.max(0, r), 0, 0)
-		out.Neck = A(-0.1, 0.25 * math.sin(now * 0.7 + seed), 0.38)
-		out.Jaw = A(-0.12, 0, 0)
-	end
-	out.LWrist = A(0.2, 0, 0)
-	out.RWrist = A(0.2, 0, 0)
-end
-
-local function crawlerGait(out: Pose, p: number, stride: number, hunt: boolean, now: number, seed: number)
-	local a, b = math.sin(p), math.sin(p + math.pi)
-	-- diagonal pairs: left arm with right leg, right arm with left leg
-	out.LShoulder = A(a * 0.5 * stride, 0, -0.15)
-	out.RShoulder = A(b * 0.5 * stride, 0, 0.15)
-	out.LElbow = A(-0.5 - math.max(0, math.cos(p)) * 0.6 * stride, 0, 0)
-	out.RElbow = A(-0.5 - math.max(0, math.cos(p + math.pi)) * 0.6 * stride, 0, 0)
-	out.LHip = A(0.2 + b * 0.45 * stride, 0, 0)
-	out.RHip = A(0.2 + a * 0.45 * stride, 0, 0)
-	out.LKnee = A(-1.75 - math.max(0, math.cos(p + math.pi)) * 0.4 * stride, 0, 0)
-	out.RKnee = A(-1.75 - math.max(0, math.cos(p)) * 0.4 * stride, 0, 0)
-	out.LAnkle = A(0.9, 0, 0)
-	out.RAnkle = A(0.9, 0, 0)
-	out.RootJoint = CFrame.new(0, math.abs(a) * 0.15 * stride, 0) * A(0, a * 0.12 * stride, a * 0.1 * stride)
-	out.Waist = A(0, b * 0.15 * stride, 0)
-	out.Neck = A(0, math.sin(now * 1.7 + seed) * 0.4, 0)
-	out.Jaw = A(if hunt then -0.35 - 0.25 * math.abs(math.sin(now * 16)) else -0.1, 0, 0)
-end
-
-local function bruteGait(out: Pose, p: number, stride: number, hunt: boolean, now: number, seed: number)
-	local l, r = math.sin(p), math.sin(p + math.pi)
-	out.LHip = A(l * 0.45 * stride, 0, -0.05)
-	out.RHip = A(r * 0.45 * stride, 0, 0.05)
-	out.LKnee = A(-math.max(0, math.cos(p)) * 0.8 * stride - 0.1, 0, 0)
-	out.RKnee = A(-math.max(0, math.cos(p + math.pi)) * 0.8 * stride - 0.1, 0, 0)
-	out.RootJoint = CFrame.new(0, -math.abs(l) * 0.25 * stride, 0) * A(0, l * 0.1 * stride, l * 0.12 * stride)
-	out.Waist = A((if hunt then -0.25 else 0) + math.sin(now * 1.2 + seed) * 0.03, -l * 0.15 * stride, 0)
-	-- the fist swings; the shovel arm hangs heavy and scrapes
-	out.LShoulder = A(-r * 0.5 * stride, 0, -0.2)
-	out.RShoulder = A(-l * 0.2 * stride + 0.1, 0, 0.18)
-	out.LElbow = A(0.4, 0, 0)
-	out.RElbow = A(0.2, 0, 0)
-	out.Neck = A(if hunt then 0.3 else 0.1, math.sin(now * 0.6 + seed) * 0.2, 0)
-	out.Jaw = A(if hunt then -0.3 else -0.1, 0, 0)
-end
-
-local function gait(
-	kind: string,
-	out: Pose,
-	p: number,
-	stride: number,
-	hunt: boolean,
-	now: number,
-	seed: number
-)
-	if kind == "Crawler" then
-		crawlerGait(out, p, stride, hunt, now, seed)
-	elseif kind == "Brute" then
-		bruteGait(out, p, stride, hunt, now, seed)
-	else
-		stalkerGait(out, p, stride, hunt, now, seed)
-	end
-end
-
-local function dormant(kind: string, now: number, seed: number): Pose
-	local breathe = math.sin(now * 1.3 + seed) * 0.04
-	if kind == "Crawler" then
-		return {
-			RootJoint = CFrame.new(0, -0.9, 0) * A(0, 0, 0.6),
-			LHip = A(1.2, 0, 0),
-			RHip = A(1.2, 0, 0),
-			LKnee = A(-2.2, 0, 0),
-			RKnee = A(-2.2, 0, 0),
-			LShoulder = A(-0.6, 0, -0.4),
-			RShoulder = A(-0.6, 0, 0.4),
-			Waist = A(0.2 + breathe, 0, 0),
-			Neck = A(-0.6, 0, 0),
-		}
-	elseif kind == "Brute" then
-		return {
-			RootJoint = CFrame.new(0, -2.3, 0.4) * A(-0.1, 0, 0),
-			LHip = A(1.3, 0, -0.1),
-			RHip = A(0.4, 0, 0.1),
-			LKnee = A(-1.6, 0, 0),
-			RKnee = A(-1.9, 0, 0),
-			Waist = A(-0.55 + breathe, 0, 0),
-			Neck = A(-0.7, 0, 0),
-			LShoulder = A(0.3, 0, -0.1),
-			RShoulder = A(0.6, 0, 0.1),
-			LElbow = A(0.6, 0, 0),
-			RElbow = A(0.3, 0, 0),
-		}
-	end
-	return {
-		RootJoint = CFrame.new(0, -2.9, 0.6) * A(-0.15, 0, 0.08),
-		LHip = A(1.45, 0, -0.12),
-		RHip = A(1.35, 0, 0.18),
-		LKnee = A(-0.25, 0, 0),
-		RKnee = A(-0.55, 0, 0),
-		Waist = A(-0.55 + breathe, 0, 0.1),
-		Neck = A(-0.75, 0.2, 0.35),
-		LShoulder = A(0.1, 0, -0.15),
-		RShoulder = A(0.25, 0, 0.12),
-		LElbow = A(0.2, 0, 0),
-		RElbow = A(0.4, 0, 0),
-		Jaw = A(-0.2, 0, 0),
-	}
-end
-
-local function emerge(rig: Rig, out: Pose, t: number, now: number)
-	local style = rig.emerge
-	local under = 1 - easeOut(t)
-	local depth = if rig.kind == "Crawler" then 4.5 elseif rig.kind == "Brute" then 10 else 9
-	local claw = math.sin(now * 14 + rig.seed) * 0.18 * under
-	if style == "Climb" then
-		out.RootJoint = CFrame.new(0, -depth * under, 3.5 * under) * A(-0.9 * under, 0, 0)
-		out.LShoulder = A(1.7 + 0.9 * under + claw, 0, -0.3)
-		out.RShoulder = A(1.7 + 0.9 * under - claw, 0, 0.3)
-		out.LElbow = A(0.9 * under, 0, 0)
-		out.RElbow = A(0.9 * under, 0, 0)
-		out.Neck = A(0.4 * under, 0, 0)
-	else
-		out.RootJoint = CFrame.new(0, -depth * under, 0) * A(-0.6 * under, 0, 0)
-		out.LShoulder = A(2.8 * under + claw, 0, -0.3 * under)
-		out.RShoulder = A(2.8 * under - claw, 0, 0.3 * under)
-		out.LElbow = A(0.6 * under, 0, 0)
-		out.RElbow = A(0.6 * under, 0, 0)
-		out.Neck = A(-0.8 * under + 0.3 * t, 0, 0)
-	end
-	-- it screams as it frees itself
-	out.Jaw = A(-0.9 * clamp01((t - 0.65) / 0.2) * clamp01((1 - t) / 0.1 + 0.3), 0, 0)
-end
-
-local function attack(rig: Rig, out: Pose, windup: number?, strike: number?, now: number)
-	local kind = rig.kind
-	if windup then
-		local e = easeOut(windup)
-		local shake = math.sin(now * 50) * 0.04 * e
-		if kind == "Crawler" then
-			out.RootJoint = CFrame.new(0, -0.5 * e, 0.6 * e) * A(0.15 * e, 0, 0)
-			out.LHip = A(0.6 * e, 0, 0)
-			out.RHip = A(0.6 * e, 0, 0)
-			out.LShoulder = A(-0.4 * e, 0, -0.2)
-			out.RShoulder = A(-0.4 * e, 0, 0.2)
-			out.Neck = A(0.5 * e + shake, 0, 0)
-			out.Jaw = A(-1.0 * e, 0, 0)
-		elseif kind == "Brute" then
-			out.Waist = A(0.35 * e, 0, 0)
-			out.LShoulder = A(2.9 * e, 0, -0.25 * e)
-			out.RShoulder = A(2.9 * e, 0, 0.25 * e)
-			out.LElbow = A(0.3 * e, 0, 0)
-			out.RElbow = A(0.3 * e, 0, 0)
-			out.Neck = A(0.5 * e + shake, 0, 0)
-			out.Jaw = A(-0.8 * e, 0, 0)
-		else
-			out.Waist = A(-0.1 + 0.45 * e, 0, 0)
-			out.LShoulder = A(2.6 * e, 0, -0.35 * e)
-			out.RShoulder = A(2.6 * e, 0, 0.35 * e)
-			out.LElbow = A(0.5 * e, 0, 0)
-			out.RElbow = A(0.5 * e, 0, 0)
-			out.Neck = A(0.5 * e + shake, shake, 0)
-			out.Jaw = A(-0.95 * e, 0, 0)
+	elseif state == "Grab" then
+		-- the snatch: a scream in the victim's face and the ground jolting
+		rig.bites = 0
+		audio("HollowScream", position, 1.15, if rig.kind == "Brute" then 0.7 else pitch * 1.1)
+		audio("HollowScrabble", position, 0.9, 1.4)
+		shakeNear(position, 24, 0.6)
+		if rig.kind == "Brute" then
+			burst(ground(rig) + rig.root.CFrame.LookVector * 4, Color3.fromRGB(64, 58, 52), 18, 10, 3, 2)
 		end
-	elseif strike then
-		local s = easeOut(strike)
-		if kind == "Crawler" then
-			out.RootJoint = CFrame.new(0, math.sin(math.pi * s) * 1.4, -2.5 * s) * A(-0.3 * s, 0, 0)
-			out.LShoulder = A(1.3 * s, 0, -0.2)
-			out.RShoulder = A(1.3 * s, 0, 0.2)
-			out.LHip = A(-0.6 * s, 0, 0)
-			out.RHip = A(-0.6 * s, 0, 0)
-			out.Jaw = A(-1.0 * (1 - s), 0, 0)
-		elseif kind == "Brute" then
-			out.RootJoint = CFrame.new(0, -0.6 * s, -0.4 * s)
-			out.Waist = A(0.35 - 1.05 * s, 0, 0)
-			out.LShoulder = A(2.9 - 2.4 * s, 0, -0.25)
-			out.RShoulder = A(2.9 - 2.4 * s, 0, 0.25)
-			out.Neck = A(0.3, 0, 0)
-			out.Jaw = A(-0.8 * (1 - s), 0, 0)
-		else
-			out.RootJoint = CFrame.new(0, 0, -0.8 * s)
-			out.Waist = A(0.35 - 0.85 * s, 0, 0)
-			out.LShoulder = A(2.6 - 2.25 * s, 0, -0.35 * (1 - s))
-			out.RShoulder = A(2.6 - 2.25 * s, 0, 0.35 * (1 - s))
-			out.LElbow = A(0.5 * (1 - s), 0, 0)
-			out.RElbow = A(0.5 * (1 - s), 0, 0)
-			out.Neck = A(0.5, 0, 0)
-			out.Jaw = A(-0.95 * (1 - s) - 0.1, 0, 0)
-		end
+	elseif state == "Reel" then
+		audio("HollowWake", position, 0.9, pitch * 1.25)
 	end
 end
 
-local function cower(rig: Rig, out: Pose, now: number, stunned: boolean)
-	local shiver = math.sin(now * 40) * 0.05
-	if rig.kind == "Crawler" then
-		out.RootJoint = CFrame.new(0, -0.6, 0.4) * A(0, 0, shiver)
-		out.Neck = A(-0.6, 0.6 + shiver, 0)
-		out.LShoulder = A(-0.8, 0, -0.5)
-		out.RShoulder = A(-0.8, 0, 0.5)
-		return
+-- A bite, squeeze or yank of a hold: the sound of it, and the Brute's embers flaring.
+local function onBite(rig: Rig, def: Grabs.Def)
+	local position = rig.root.Position
+	if rig.kind == "Brute" then
+		audio("HollowSlam", position, 0.55, 1.15)
+	elseif def.lying then
+		audio("HollowScrabble", position, 0.8, 0.9)
+	else
+		audio("HollowSwipe", position, 0.8, 0.75)
 	end
-	out.LShoulder = A(2.1 + shiver, 0, 0.55)
-	out.RShoulder = A(2.1 - shiver, 0, -0.55)
-	out.LElbow = A(1.5, 0, 0)
-	out.RElbow = A(1.5, 0, 0)
-	out.Waist = A((if stunned then 0.35 else 0.15) + shiver, 0, 0)
-	out.Neck = A(-0.4, (if stunned then 0 else 0.8) + shiver, 0)
-	out.Jaw = A(-0.5, 0, 0)
-	out.RootJoint = CFrame.new(0, -0.4, 0.3) * A(0, 0, shiver)
+	if rig.embers then
+		local embers = rig.embers :: PointLight
+		embers.Brightness = 3.2
+		TweenService:Create(embers, TweenInfo.new(0.5), { Brightness = 1.1 }):Play()
+	end
 end
 
 -- Frame ------------------------------------------------------------------------------------------
@@ -505,16 +278,16 @@ local function animate(rig: Rig, dt: number, now: number, clock: number)
 
 	local velocity = rig.root.AssemblyLinearVelocity
 	local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
-	local strideLength = if rig.kind == "Brute" then 9 elseif rig.kind == "Crawler" then 5 else 7.5
-	local stride = math.min(speed / 12, 1.4)
 	local before = rig.phase
-	rig.phase += dt * (1.5 + speed / strideLength * math.pi)
-	-- a footfall every half turn: the Brute shakes the ground, the Crawler kicks up dust
+	rig.phase += dt * HollowPoses.cadence(rig.kind, speed)
+	-- a footfall every half turn: the Brute shakes the ground
 	if math.floor(before / math.pi) ~= math.floor(rig.phase / math.pi) and speed > 4 then
 		if rig.kind == "Brute" then
 			audio("HollowStep", rig.root.Position, 1, 0.9 + rig.stepSide * 0.08)
 			shakeNear(rig.root.Position, 16, 0.25)
 			rig.stepSide = -rig.stepSide
+		elseif rig.kind == "Crawler" and speed > 10 then
+			audio("HollowScrabble", rig.root.Position, 0.25, 1.9)
 		end
 	end
 	if rig.kind == "Crawler" then
@@ -524,60 +297,68 @@ local function animate(rig: Rig, dt: number, now: number, clock: number)
 		end
 	end
 
+	-- a hold: its id and how long it has gone on, and a sound on every bite
+	local grabId = if state == "Grab" then model:GetAttribute("GrabStyle") :: string? else nil
+	local grabAt = (model:GetAttribute("GrabAt") :: number?) or now
+	local grabTime = now - grabAt
+	if grabId then
+		local def = Grabs.ById[grabId]
+		if def and grabTime > Tuning.Grab.Settle then
+			local bites = math.floor((grabTime - Tuning.Grab.Settle) / def.bite)
+			if bites > rig.bites then
+				rig.bites = bites
+				onBite(rig, def)
+			end
+		end
+	end
+
 	-- random head twitches: snap, hold, release
 	if clock >= rig.twitchNext then
 		rig.twitch = A((math.random() - 0.5) * 0.9, (math.random() - 0.5) * 1.4, (math.random() - 0.5) * 1.2)
 		rig.twitchUntil = clock + 0.15 + math.random() * 0.45
 		rig.twitchNext = clock + (if state == "Dormant" then 3 else 1.2) + math.random() * 3
 	end
-	local twitching = clock < rig.twitchUntil
+	local twitching = clock < rig.twitchUntil and state ~= "Emerge" and state ~= "Grab"
 
-	local target: Pose = {}
-	local hunt = state == "Hunt" or state == "Windup" or state == "Recover"
-	if state == "Dormant" then
-		target = dormant(rig.kind, now, rig.seed)
-	elseif state == "Emerge" and rig.emerge == "Wake" then
-		local t = clamp01(elapsed / H.EmergeSeconds)
-		-- it unfolds in jerks, not smoothly
-		local jerk = math.floor(t * 5) / 5 + (t * 5 % 1) ^ 6 / 5
-		local standing: Pose = {}
-		gait(rig.kind, standing, 0, 0, true, now, rig.seed)
-		target = blend(dormant(rig.kind, now, rig.seed), standing, jerk)
-		if t < 0.25 then
-			target.Neck = A(0.35, 0, 0) -- the head comes up first
-		end
-		target.Jaw = A(-0.9 * clamp01((t - 0.7) / 0.15), 0, 0)
-	elseif state == "Emerge" then
-		gait(rig.kind, target, rig.phase, 0, false, now, rig.seed)
-		emerge(rig, target, clamp01(elapsed / H.EmergeSeconds), now)
-	elseif stunned or state == "Stunned" then
-		cower(rig, target, now, true)
-	elseif state == "Repelled" then
-		gait(rig.kind, target, rig.phase, stride, false, now, rig.seed)
-		cower(rig, target, now, false)
-	else
-		gait(rig.kind, target, rig.phase, stride, hunt, now, rig.seed)
-		local kind = (Tuning.HollowKinds :: any)[rig.kind]
-		local windupSeconds = H.WindupSeconds * (if kind then kind.windup else 1)
-		if state == "Windup" then
-			attack(rig, target, clamp01(elapsed / windupSeconds), nil, now)
-		elseif state == "Recover" and elapsed < 0.3 then
-			attack(rig, target, nil, clamp01(elapsed / 0.18), now)
-			if rig.kind == "Brute" and not rig.slammed and elapsed > 0.12 then
-				rig.slammed = true
-				local at = rig.root.Position + rig.root.CFrame.LookVector * 4
-				shockwave(at - Vector3.new(0, rig.root.Size.Y / 2 + 3.6, 0))
-				audio("HollowSlam", at)
-				shakeNear(at, 30, 1)
-			end
-		end
+	local kindDef = (Tuning.HollowKinds :: any)[rig.kind]
+	local target = HollowPoses.pose(rig.skeleton, {
+		state = state,
+		elapsed = elapsed,
+		speed = speed,
+		phase = rig.phase,
+		now = now,
+		seed = rig.seed,
+		emerge = rig.emerge,
+		stunned = stunned,
+		windup = H.WindupSeconds * (if kindDef then kindDef.windup else 1),
+		grab = grabId,
+		grabTime = grabTime,
+	})
+	if
+		state == "Recover"
+		and rig.kind == "Brute"
+		and elapsed < 0.3
+		and not rig.slammed
+		and elapsed > 0.12
+	then
+		rig.slammed = true
+		local at = rig.root.Position + rig.root.CFrame.LookVector * 4
+		shockwave(at - Vector3.new(0, rig.root.Size.Y / 2 + 3.6, 0))
+		audio("HollowSlam", at)
+		shakeNear(at, 30, 1)
 	end
-	if twitching and state ~= "Emerge" then
+	if twitching then
 		target.Neck = (target.Neck or I) * rig.twitch
 	end
 
-	-- smooth toward the target: fast through strikes, slower otherwise
-	local rate = if state == "Windup" or state == "Recover" then 30 elseif state == "Emerge" then 22 else 12
+	-- smooth toward the target: fast through strikes and grabs, slower otherwise
+	local rate = if state == "Windup"
+			or state == "Recover"
+			or state == "Grab"
+		then 26
+		elseif state == "Emerge" then 22
+		elseif rig.kind == "Crawler" then 18
+		else 12
 	local alpha = 1 - math.exp(-rate * dt)
 	for name, motor in rig.motors do
 		local goal = target[name] or I
@@ -593,6 +374,7 @@ local function register(model: Instance)
 		return
 	end
 	local root = model:WaitForChild("HumanoidRootPart", 5) :: BasePart?
+	model:WaitForChild("Humanoid", 5)
 	if root == nil then
 		return
 	end
@@ -602,11 +384,13 @@ local function register(model: Instance)
 			motors[descendant.Name] = descendant
 		end
 	end
+	local chest = model:FindFirstChild("Chest")
 	local seed = (model:GetAttribute("Seed") :: number?) or math.random(1, 1e6)
 	local rig: Rig = {
 		model = model,
 		root = root,
 		kind = (model:GetAttribute("Kind") :: string?) or "Stalker",
+		skeleton = HollowPoses.rigOf(model),
 		motors = motors,
 		pose = {},
 		phase = seed % 7,
@@ -621,6 +405,8 @@ local function register(model: Instance)
 		stepSide = 1,
 		slammed = false,
 		lungeAt = (model:GetAttribute("LungeAt") :: number?) or 0,
+		bites = 0,
+		embers = if chest then chest:FindFirstChild("EmberGlow") :: PointLight? else nil,
 	}
 	makeTrails(rig)
 	rigs[model] = rig

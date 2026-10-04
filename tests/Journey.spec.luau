@@ -203,4 +203,16 @@ describe("Journey sky", function()
 		expect(Journey.legShare(99999, 0, nil)).toBe(J.UnknownShareCap)
 		expect(Journey.legShare(500, 500, 500)).toBe(1)
 	end)
+
+	it("lets the night run on while the train stands at a stop", function()
+		local stop = J.StopHours
+		-- docked at the first stop the doors have just opened: most of the leg's night has passed
+		expect(Journey.skyProgress(1, 1, 0)).toBeCloseTo(1 - stop, 1e-9)
+		-- the doors closing finish it, and the next leg starts exactly there
+		expect(Journey.skyProgress(1, 1, 1)).toBeCloseTo(1, 1e-9)
+		expect(Journey.skyProgress(2, 0, 0)).toBeCloseTo(1, 1e-9)
+		-- halfway through a stop the clock has moved on from the arrival
+		expect(Journey.skyProgress(3, 1, 0.5)).toBeGreaterThan(Journey.skyProgress(3, 1, 0))
+		expect(Journey.skyProgress(0, 0, 0)).toBe(0)
+	end)
 end)

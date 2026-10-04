@@ -208,6 +208,17 @@ local function onFx(kind: string, data: { [string]: any }?)
 		audio("HollowSpawn", d.position)
 	elseif kind == "Sound" then
 		audio(d.cue, d.position)
+	elseif kind == "Grabbed" then
+		Registry.GrabController.Seized()
+	elseif kind == "Bite" then
+		Registry.GrabController.Bite()
+	elseif kind == "Pried" then
+		local helper = Players:GetPlayerByUserId(d.by or 0)
+		Registry.GrabController.Pried(if helper then helper.DisplayName else "Someone")
+	elseif kind == "Escaped" then
+		if typeof(d.knockback) == "Vector3" then
+			Registry.GrabController.Thrown(d.knockback)
+		end
 	elseif kind == "HollowStrike" then
 		audio("HollowStrike", d.position)
 	elseif kind == "Eliminated" then

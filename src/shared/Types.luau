@@ -44,6 +44,8 @@ export type HazardParams = {
 	hollowWalk: number,
 	hollowChase: number,
 	hollowDamage: number,
+	grabMash: number,
+	grabSlip: number,
 	departureAccel: number,
 	chaseWindow: number,
 	lootMul: number,

@@ -62,6 +62,9 @@ local function play(seed: number, options: { [string]: any }?)
 			if first and opts.onPhase then
 				opts.onPhase(phase, plan, odometer, x)
 			end
+			if opts.onFrame then
+				opts.onFrame(phase, plan)
+			end
 			first = false
 			now += DT
 			if opts.skip and opts.skip(phase, run.nextStop, elapsed) then
@@ -104,6 +107,8 @@ local function play(seed: number, options: { [string]: any }?)
 			frames("Terminus", Tuning.Run.TerminusSeconds, docked)
 			break
 		end
+		run.station =
+			{ archetype = option.archetype, startedAt = now, dwell = 45 + Tuning.Run.LastCallSeconds }
 		frames("Dwell", 45, docked)
 		frames("LastCall", Tuning.Run.LastCallSeconds, docked)
 		frames("Departure", 6, departing(0))
@@ -178,6 +183,31 @@ describe("JourneyPlan runs", function()
 			end,
 		})
 		expect(last).toBeGreaterThan(STOPS)
+	end)
+
+	it("keeps the clock running through every stop, without a jump", function()
+		local last = -1
+		local biggest = 0
+		local plan = play(4, {
+			onFrame = function(_, p)
+				if last >= 0 then
+					if p.skyProgress - last > 0.02 then
+						print("JUMP", _, last, p.skyProgress, p.leg)
+					end
+					biggest = math.max(biggest, p.skyProgress - last)
+				end
+				expect(p.skyProgress).toBeAtLeast(last - 1e-9)
+				last = p.skyProgress
+			end,
+		})
+		-- no frame moves the night on by more than a sliver
+		expect(biggest).toBeLessThan(0.02)
+		-- the last frame falls a sliver short of the Terminus phase's end
+		expect(plan.skyProgress).toBeCloseTo(STOPS + 1, 1e-2)
+		expect(Journey.clock(Journey.hour(plan.skyProgress, STOPS))).toBeCloseTo(
+			J.Sky[#J.Sky].hour % 24,
+			1e-2
+		)
 	end)
 end)
 
