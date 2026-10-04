@@ -102,6 +102,7 @@ local Tuning = {
 		UnknownShareCap = 0.3, -- and how far through the leg it lets the sky run on that guess
 		BuiltAhead = 2200, -- the near landscape is built this far ahead; later changes start beyond it
 		PruneBehind = 3000, -- set pieces and sinkholes this far behind the train are forgotten
+		StopHours = 0.15, -- share of a leg's night that passes while the train stands at its stop
 		-- Time of day by run progress (legs travelled). Hours keep counting past 24 so the
 		-- night interpolates forward. mode: Stop = after `at` legs, Share = at that share of
 		-- the run, End = `at` legs before the Terminus.
@@ -233,6 +234,21 @@ local Tuning = {
 		JointKick = 0.22, -- degrees of pitch per kick at cruise
 	},
 
+	TrainCamera = {
+		OrbitNear = 45,
+		OrbitFar = 260,
+		GamepadYaw = 1.8, -- radians per second at full stick
+		GamepadPitch = 1.2,
+		GamepadDeadzone = 0.12,
+		ZoomSpeed = 90,
+		MoonDistance = 240,
+		MoonHeight = 4,
+		MoonMargin = 6, -- degrees of space around the train and moon
+		TrainRadius = 105, -- covers the whole consist in the moon shot
+		TrainHalfHeight = 10,
+		TrainHalfWidth = 8,
+	},
+
 	Hollow = {
 		StrikeRange = 6.5, -- a strike starts when the target is this close to the Hollow's root
 		HitRange = 8, -- and lands if the target is still this close when the windup ends
@@ -255,14 +271,56 @@ local Tuning = {
 		WakeSight = 30, -- or into its line of sight this close
 		SleeperStir = 0.5, -- share of the dwell after which sleepers wake on their own
 		LitFlee = 1.2, -- seconds a Hollow caught in a lit building cowers before it flees
+		PaceSpread = 0.06, -- each Hollow keeps its own pace, up to this share off its kind's
+		FlankAngle = 58, -- degrees between hunters closing on the same crew member
+		FlankUntil = 11, -- hunters fan out around a target until this close, then go straight in
+		Spacing = 1.5, -- studs Hollows keep between their bodies (on top of their kinds' radii)
 	},
 
-	-- The kinds of Hollow (Config/Difficulty holds how often each comes). speed scales the
-	-- hazard's walk and chase, damage its strike; reach scales the strike and hit ranges.
+	--[[
+		The kinds of Hollow (Config/Difficulty holds how often each comes). walk and chase
+		scale the hazard's speeds by body: the Crawler creeps, then bolts; the Brute is slow
+		but never stops. reach scales the strike and hit ranges, radius is the body's
+		footprint (they keep apart by it). A strike that lands becomes a grab
+		(Config/Grabs): grip scales how hard it is to break free, crush the damage.
+	]]
 	HollowKinds = {
-		Stalker = { speed = 1, damage = 1, reach = 1, windup = 1, knockback = 0 },
-		Crawler = { speed = 1.1, damage = 0.7, reach = 0.75, windup = 0.7, knockback = 0 },
-		Brute = { speed = 0.8, damage = 1.55, reach = 1.3, windup = 1.6, knockback = 70 },
+		Stalker = { walk = 1, chase = 1, reach = 1, windup = 1, radius = 1.6, grip = 1, crush = 1 },
+		Crawler = {
+			walk = 0.8,
+			chase = 1.1,
+			reach = 0.9,
+			windup = 0.7,
+			radius = 2.6,
+			grip = 0.8,
+			crush = 0.85,
+		},
+		Brute = {
+			walk = 0.9,
+			chase = 0.82,
+			reach = 1.25,
+			windup = 1.4,
+			radius = 2.2,
+			grip = 1.2,
+			crush = 1.4,
+		},
+	},
+
+	--[[
+		Grabs (Logic/Grab). Every press of the struggle key adds the stop's grabMash to the
+		victim's escape, which slips back at grabSlip per second; reaching Escape breaks the
+		hold. Meanwhile the Hollow bites, squeezes or yanks once per its grab's rhythm.
+	]]
+	Grab = {
+		Escape = 1,
+		DpsShare = 0.4, -- damage per second while held, as a share of the stop's hollowDamage
+		AllyPresses = 2.5, -- a crewmate prying at the Hollow counts as this many presses
+		Grace = 2.5, -- seconds after breaking free before anything can grab you again
+		Stagger = 1.6, -- seconds a Hollow reels when its victim breaks free
+		Throw = 42, -- studs per second the victim is flung clear when they break free
+		MaxSeconds = 14, -- no hold lasts longer than this
+		Settle = 0.3, -- seconds the snatch takes before the hold begins to hurt
+		PryInterval = 0.15, -- server limit per helper, matching a deliberate button mash
 	},
 
 	Tools = {

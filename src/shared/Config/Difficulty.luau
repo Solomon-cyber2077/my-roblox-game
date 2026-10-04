@@ -30,6 +30,8 @@ return table.freeze({
 	HollowWalk = table.freeze({ 11, 14 }),
 	HollowChase = table.freeze({ 22, 26 }), -- between the crew's jog (20) and sprint (31)
 	HollowDamage = table.freeze({ 20, 32 }),
+	GrabMash = table.freeze({ 0.15, 0.105 }), -- escape won per press of the struggle key
+	GrabSlip = table.freeze({ 0.2, 0.3 }), -- escape lost per second of a hold
 	-- how often each kind of Hollow comes
 	HollowKinds = table.freeze({
 		Stalker = table.freeze({ 1, 0.55 }),

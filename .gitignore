@@ -7,3 +7,27 @@ sourcemap.json
 *.rbxlx.lock
 .tooling/
 node_modules/
+
+# Added by AI kit
+.env
+.env.*
+*.key
+*.pem
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+.claude/settings.local.json
+*.rbxm
+*.rbxmx
+*.zip
+*.7z
+*.exe
+*.dll
+*.mp4
+*.wav
+*.mp3
+*.ogg
+out.json
+out.png

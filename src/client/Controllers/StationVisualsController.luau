@@ -3,8 +3,9 @@
 	Client-side station effects:
 	  * collapse telegraphs: a slab with a CollapseAt time cracks, glows ember red,
 	    sheds dust and rumbles until it falls (pillar 3: no hit without a tell)
-	  * the fog wall: a moving front evaluated locally from the replicated hazard
-	    parameters, so it needs no network traffic
+	  * the fog (Scenery/StationFog): a moving front evaluated locally from the
+	    replicated hazard parameters, so it needs no network traffic, and the things
+	    that live in it
 	  * searched containers darken so the crew can read the station at a glance
 ]]
 
@@ -18,6 +19,7 @@ local HazardSchedule = require(Shared.Logic.HazardSchedule)
 
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
+local StationFog = require(script.Parent.Parent.Scenery.StationFog)
 
 type Telegraph = {
 	part: BasePart,
@@ -35,9 +37,8 @@ local EMBER = Color3.fromRGB(255, 96, 40)
 
 local telegraphs: { [BasePart]: Telegraph } = {}
 local effects: Folder
-local fogFront: Part
-local fogVolume: Part
 local station: Model? = nil
+local whispering = false
 
 local function decor(part: BasePart)
 	part.Anchored = true
@@ -142,57 +143,7 @@ function StationVisualsController.Init()
 	effects.Name = "StationEffects"
 	effects.Parent = Workspace
 
-	fogFront = Instance.new("Part")
-	fogFront.Name = "FogFront"
-	fogFront.Transparency = 1
-	fogFront.Size = Vector3.new(400, 60, 4)
-	decor(fogFront)
-	fogFront.Parent = effects
-	local wall = Instance.new("ParticleEmitter")
-	wall.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	wall.Color = ColorSequence.new(Color3.fromRGB(150, 138, 126), Color3.fromRGB(96, 88, 82))
-	wall.Rate = 160
-	wall.Lifetime = NumberRange.new(4, 6)
-	wall.Speed = NumberRange.new(2, 5)
-	wall.EmissionDirection = Enum.NormalId.Front
-	wall.SpreadAngle = Vector2.new(30, 10)
-	wall.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 10), NumberSequenceKeypoint.new(1, 22) })
-	wall.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.55),
-		NumberSequenceKeypoint.new(0.5, 0.35),
-		NumberSequenceKeypoint.new(1, 1),
-	})
-	wall.RotSpeed = NumberRange.new(-12, 12)
-	wall.Shape = Enum.ParticleEmitterShape.Box
-	wall.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
-	wall.Enabled = false
-	wall.Parent = fogFront
-
-	-- Behind the front: slow, heavy puffs spread through the whole fogged volume.
-	fogVolume = Instance.new("Part")
-	fogVolume.Name = "FogVolume"
-	fogVolume.Transparency = 1
-	decor(fogVolume)
-	fogVolume.Parent = effects
-	local bank = Instance.new("ParticleEmitter")
-	bank.Name = "Bank"
-	bank.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	bank.Color = ColorSequence.new(Color3.fromRGB(132, 122, 112), Color3.fromRGB(88, 82, 78))
-	bank.Rate = 0
-	bank.Lifetime = NumberRange.new(6, 9)
-	bank.Speed = NumberRange.new(0.5, 2)
-	bank.SpreadAngle = Vector2.new(180, 30)
-	bank.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 16), NumberSequenceKeypoint.new(1, 30) })
-	bank.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.3, 0.55),
-		NumberSequenceKeypoint.new(0.7, 0.55),
-		NumberSequenceKeypoint.new(1, 1),
-	})
-	bank.RotSpeed = NumberRange.new(-8, 8)
-	bank.Shape = Enum.ParticleEmitterShape.Box
-	bank.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
-	bank.Parent = fogVolume
+	StationFog.build(effects)
 end
 
 function StationVisualsController.Start()
@@ -201,7 +152,7 @@ function StationVisualsController.Start()
 		onChild(child)
 	end
 
-	RunService.RenderStepped:Connect(function()
+	RunService.RenderStepped:Connect(function(dt: number)
 		local now = Session.now()
 		-- telegraph pulses
 		for part, entry in telegraphs do
@@ -219,34 +170,38 @@ function StationVisualsController.Start()
 			end
 		end
 
-		-- fog front
+		-- the fog
 		local phase = Session.phase()
 		local info = Registry.StateController.Get({ "run", "station" })
 		local root = station and station.Parent and station.PrimaryPart
-		local emitter = fogFront:FindFirstChildOfClass("ParticleEmitter") :: ParticleEmitter
-		local bank = fogVolume:FindFirstChild("Bank") :: ParticleEmitter
-		if
-			info
-			and root
-			and not info.terminus
-			and (phase == "Dwell" or phase == "LastCall" or phase == "Departure")
-		then
+		local open = phase == "Dwell" or phase == "LastCall" or phase == "Departure"
+		if info and root and not info.terminus and open then
 			local run = Registry.StateController.Get({ "run" }) or {}
 			local t = (if phase == "Departure" then run.phaseStartedAt or now else now) - info.startedAt
 			local geo = { depth = info.depth, safe = Tuning.World.SafeStrip }
-			local z = HazardSchedule.fogFront(info.hazards, geo, t)
 			local frame = root.CFrame * ROOT_OFFSET:Inverse()
-			local width = info.length + 60
-			fogFront.Size = Vector3.new(width, 60, 4)
-			fogFront.CFrame = frame * CFrame.new(0, 24, z) * CFrame.Angles(0, math.pi, 0)
-			emitter.Enabled = z < info.depth + 4
-			local volumeDepth = math.max(info.depth - z + 40, 1)
-			fogVolume.Size = Vector3.new(width, 40, volumeDepth)
-			fogVolume.CFrame = frame * CFrame.new(0, 14, z + volumeDepth / 2 + 2)
-			bank.Rate = if z < info.depth then math.clamp(width * volumeDepth / 450, 12, 140) else 0
+			local camera = Workspace.CurrentCamera
+			StationFog.update({
+				station = frame,
+				length = info.length,
+				depth = info.depth,
+				front = HazardSchedule.fogFront(info.hazards, geo, t),
+				waiting = math.clamp(t / math.max(HazardSchedule.fogStartTime(info.hazards), 1), 0, 1),
+				camera = frame:PointToObjectSpace(camera.CFrame.Position),
+				archetype = info.archetype,
+				now = now,
+			}, dt)
+			local anchor = StationFog.anchor()
+			if not whispering and anchor and Registry.AudioController then
+				whispering = true
+				Registry.AudioController.Loop("fogWhisper", "FogWhisper", anchor)
+			end
 		else
-			emitter.Enabled = false
-			bank.Rate = 0
+			StationFog.clear()
+			if whispering and Registry.AudioController then
+				whispering = false
+				Registry.AudioController.StopLoop("fogWhisper")
+			end
 		end
 	end)
 end

@@ -64,6 +64,7 @@ local STUDIO = RunService:IsStudio()
 local atmosphere: Atmosphere
 local skyBox: Sky
 local clouds: Clouds
+local bloom: BloomEffect
 local grade: ColorCorrectionEffect
 local rays: SunRaysEffect
 local focus: DepthOfFieldEffect
@@ -93,6 +94,7 @@ local flareUntil = 0
 local hour = LOBBY_HOUR
 local omenNow: Omens.Omen? = nil
 local darkNow = 0
+local moonNow: Sky.Moon? = nil
 
 -- Building -----------------------------------------------------------------------------------------
 
@@ -121,11 +123,11 @@ local function buildLighting()
 	skyBox.StarCount = 0
 	skyBox.Parent = Lighting
 
-	-- lamps, fires, lit windows, eyes and the moon bloom out of the dark
-	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.85
-	bloom.Size = 30
-	bloom.Threshold = 1.05
+	-- lamps, fires, eyes and the moon bloom out of the dark (Scenery/Sky sets how much)
+	bloom = Instance.new("BloomEffect")
+	bloom.Intensity = 0.55
+	bloom.Size = 24
+	bloom.Threshold = 1.3
 	bloom.Parent = Lighting
 
 	local base = Instance.new("ColorCorrectionEffect")
@@ -399,6 +401,9 @@ local function apply(state: Sky.State)
 	grade.Brightness = state.lift
 	focus.Enabled = state.blur > 0.01
 	focus.FarIntensity = state.blur
+	bloom.Intensity = state.bloom
+	bloom.Threshold = state.bloomThreshold
+	bloom.Size = math.floor(state.bloomSize + 0.5)
 	if math.abs(state.stars - starsShown) >= STAR_STEP then
 		starsShown = state.stars
 		skyBox.StarCount = math.floor(state.stars)
@@ -473,7 +478,7 @@ function AtmosphereController.Start()
 		local targetHour = if pinned
 			then pinned
 			elseif inLobby or scenery == nil then LOBBY_HOUR
-			else Journey.hour(scenery.progress, stops)
+			else Journey.hour(scenery.skyProgress, stops)
 		if math.abs(targetHour - hour) > 3 then
 			hour = targetHour
 		else
@@ -557,6 +562,7 @@ function AtmosphereController.Start()
 		current = Sky.approach(current, target, dt)
 		local drawn = Sky.finish(current :: Sky.State, darkness, flash, strike ~= nil and strike.red)
 		apply(drawn)
+		moonNow = if drawn.hidden then nil else drawn.moon
 
 		-- the deck streams back over the train; the moon's scud runs with it
 		local speed = if Registry.SceneryController then Registry.SceneryController.Speed() else 0
@@ -607,6 +613,16 @@ end
 -- How deep into the night the camera's run is: 0 at dusk and dawn, 1 at the darkest hour.
 function AtmosphereController.Dark(): number
 	return darkNow
+end
+
+-- The hour the sky is showing (past 24 is the small hours), for the HUD's night dial.
+function AtmosphereController.Hour(): number
+	return hour
+end
+
+-- Where the moon hangs and how it looks right now, after omens and cloud (the train camera frames it).
+function AtmosphereController.Moon(): Sky.Moon?
+	return moonNow
 end
 
 return AtmosphereController

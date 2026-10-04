@@ -79,7 +79,8 @@ export type Container = {
 	rot: number,
 }
 export type Loose = { id: number, item: string, slab: number, x: number, z: number }
-export type Prop = { kind: string, slab: number, x: number, z: number, rot: number }
+-- size: a prop that spans a length (a fence along its tile, the platform canopy) is told how long.
+export type Prop = { kind: string, slab: number, x: number, z: number, rot: number, size: number? }
 
 export type Plan = {
 	archetype: string,
@@ -529,69 +530,190 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		})
 	end
 
-	-- Decorative props ------------------------------------------------------------------
+	-- The platform ----------------------------------------------------------------------
+	--[[
+		A canopy on iron columns over its middle (its own lanterns light it), lamp standards
+		beyond, benches, the name boards, and the clutter of a country station kept clear of
+		all of them. Both ends are railed off.
+	]]
 	local props: { Prop } = {}
+	local half = arch.length / 2
+	local taken: { { number } } = {} -- {x0, x1, z0, z1} on the platform
+	local function room(x0: number, x1: number, z0: number, z1: number): boolean
+		for _, r in taken do
+			if x0 < r[2] and r[1] < x1 and z0 < r[4] and r[3] < z1 then
+				return false
+			end
+		end
+		return x0 > -half + 3 and x1 < half - 3
+	end
+	local function onPlatform(kind: string, x: number, z: number, hx: number, hz: number, rot: number?)
+		table.insert(props, { kind = kind, slab = 1, x = x, z = z, rot = rot or 0 })
+		table.insert(taken, { x - hx, x + hx, z - hz, z + hz })
+	end
+	local canopy = if arch.terminus then 0 else math.clamp(half - 60, 30, Stations.CanopyHalfSpan)
+	if canopy > 0 then
+		table.insert(props, { kind = "Canopy", slab = 1, x = 0, z = 0, rot = 0, size = canopy * 2 })
+		for _, x in Stations.canopyColumns(canopy) do
+			table.insert(
+				taken,
+				{ x - 1.2, x + 1.2, Stations.CanopyColumnZ - 1.2, Stations.CanopyColumnZ + 1.2 }
+			)
+		end
+	end
 	local spacing = arch.lampSpacing
 	local lampCount = math.floor(arch.length / spacing)
 	for i = 0, lampCount - 1 do
-		local x = -arch.length / 2 + spacing * (i + 0.5)
-		table.insert(props, { kind = "Lamp", slab = 1, x = x, z = safe - 3, rot = 0 })
+		local x = -half + spacing * (i + 0.5)
+		if math.abs(x) > canopy + 2 then
+			onPlatform("Lamp", x, safe - 3, 1, 1)
+		end
 		if i % 2 == 0 and i < lampCount - 1 then
-			table.insert(props, { kind = "Bench", slab = 1, x = x + spacing / 2, z = 12, rot = 0 })
+			onPlatform("Bench", x + spacing / 2, 12, 2.8, 1.2)
 		end
 	end
-	table.insert(props, { kind = "Sign", slab = 1, x = 0, z = safe - 6, rot = 0 })
+	onPlatform("Sign", 0, safe - 6, 7.4, 0.6)
 	if arch.length >= 280 then
-		table.insert(props, { kind = "Sign", slab = 1, x = -arch.length / 3, z = safe - 6, rot = 0 })
-		table.insert(props, { kind = "Sign", slab = 1, x = arch.length / 3, z = safe - 6, rot = 0 })
+		onPlatform("Sign", -arch.length / 3, safe - 6, 7.4, 0.6)
+		onPlatform("Sign", arch.length / 3, safe - 6, 7.4, 0.6)
+	end
+	-- a luggage trolley, milk churns, the fire buckets and the timetable, wherever they fit
+	for _, spot in
+		{
+			{ kind = "Trolley", x = canopy + 13, z = 15.5, hx = 3.2, hz = 1.8, rot = 8 },
+			{ kind = "Churns", x = -(canopy + 10), z = 16.5, hx = 2.4, hz = 1.6, rot = 0 },
+			{ kind = "FireBuckets", x = 9.5, z = 21.6, hx = 2.2, hz = 0.8, rot = 0 },
+			{ kind = "Timetable", x = -11, z = 21.4, hx = 2.4, hz = 0.8, rot = 0 },
+			{ kind = "Planter", x = canopy * 0.55, z = 16.2, hx = 2, hz = 1, rot = 0 },
+			{ kind = "Planter", x = -canopy * 0.55, z = 16.2, hx = 2, hz = 1, rot = 0 },
+		}
+	do
+		for _, dx in { 0, 6, -6, 12, -12 } do
+			local x = spot.x + dx
+			if room(x - spot.hx, x + spot.hx, spot.z - spot.hz, spot.z + spot.hz) then
+				onPlatform(spot.kind, x, spot.z, spot.hx, spot.hz, spot.rot)
+				break
+			end
+		end
+	end
+	for _, side in { -1, 1 } do
+		table.insert(props, {
+			kind = "PlatformEnd",
+			slab = 1,
+			x = side * (half - 0.6),
+			z = safe / 2,
+			rot = if side > 0 then 0 else 180,
+			size = safe - 2,
+		})
 	end
 
-	local decorLamps = cols // 5
-	for _ = 1, decorLamps do
-		local candidates = freeTiles(nil)
+	-- The edge ------------------------------------------------------------------------
+	--[[
+		A boundary round the three open sides: fences, walls or a hedge along both ends and
+		the far edge, and a treeline standing along them, so nobody walks off into the dark by
+		accident. Each piece stands on the slab of the tile it is on and goes down with it when
+		the ground collapses. Tiles a building or structure fills make their own boundary.
+	]]
+	local edge = arch.edge
+	local function tree(gx: number, gz: number, x: number, z: number)
+		local i = index(gx, gz)
+		if #edge.trees > 0 and not claimed[i] then
+			table.insert(props, {
+				kind = rng:pick(edge.trees),
+				slab = slabOfTile[i],
+				x = x,
+				z = z,
+				rot = rng:range(0, 360),
+			})
+		end
+	end
+	for gx = 0, cols - 1 do
+		local i = index(gx, rows - 1)
+		if occupancy[i] == 0 then
+			table.insert(props, {
+				kind = edge.fence,
+				slab = slabOfTile[i],
+				x = tileX(gx),
+				z = arch.depth - Stations.EdgeInset,
+				rot = 0,
+				size = tile,
+			})
+			if rng:chance(edge.treeChance) then
+				tree(gx, rows - 1, tileX(gx) + rng:range(-3.5, 3.5), arch.depth - 2.8)
+			end
+		end
+	end
+	for _, gx in { 0, cols - 1 } do
+		local s = if gx == 0 then -1 else 1
+		for gz = safeRows, rows - 1 do
+			local i = index(gx, gz)
+			if occupancy[i] == 0 then
+				-- the far corner belongs to the far fence
+				local last = gz == rows - 1
+				local cut = if last then 2 * Stations.EdgeInset + 1 else 0
+				table.insert(props, {
+					kind = edge.fence,
+					slab = slabOfTile[i],
+					x = s * (half - Stations.EdgeInset),
+					z = tileZ(gz) - cut / 2,
+					rot = 90,
+					size = tile - cut,
+				})
+				if gz % 2 == 1 and rng:chance(edge.treeChance) then
+					tree(gx, gz, s * (half - 2.8), tileZ(gz) + rng:range(-3, 3))
+				end
+			end
+		end
+	end
+
+	-- The yard ---------------------------------------------------------------------------
+	-- Inner tiles only: the edge strip belongs to the boundary.
+	local function innerTiles(): { { number } }
+		local out: { { number } } = {}
+		for _, cell in freeTiles(nil) do
+			if cell[1] > 0 and cell[1] < cols - 1 and cell[2] < rows - 1 then
+				table.insert(out, cell)
+			end
+		end
+		return out
+	end
+	local function onTile(kind: string, jitter: number, corner: boolean?): boolean
+		local candidates = innerTiles()
 		if #candidates == 0 then
-			break
+			return false
 		end
 		local cell = rng:pick(candidates)
 		local i = index(cell[1], cell[2])
 		claimed[i] = true
+		local x, z = tileX(cell[1]), tileZ(cell[2])
+		if corner then
+			x, z = x + tile / 2 - 1, z + tile / 2 - 1
+		end
 		table.insert(props, {
-			kind = "Lamp",
+			kind = kind,
 			slab = slabOfTile[i],
-			x = tileX(cell[1]) + tile / 2 - 1,
-			z = tileZ(cell[2]) + tile / 2 - 1,
-			rot = 0,
+			x = x + rng:range(-jitter, jitter),
+			z = z + rng:range(-jitter, jitter),
+			rot = if corner then 0 else rng:range(0, 360),
 		})
+		return true
 	end
-
+	for _ = 1, cols // 5 do
+		onTile("Lamp", 0, true)
+	end
 	if not arch.terminus then
-		local decorCrates = cols // 4
-		for _ = 1, decorCrates do
-			local candidates = freeTiles(nil)
-			if #candidates == 0 then
+		for _ = 1, cols // 4 do
+			onTile("DecorCrates", 3)
+		end
+		-- the things that say what this place was: a haycart, a well, a swing in the school yard
+		for n = 1, Stations.DressingCount do
+			if #arch.dressing == 0 or not onTile(arch.dressing[(n - 1) % #arch.dressing + 1], 2) then
 				break
 			end
-			local cell = rng:pick(candidates)
-			local i = index(cell[1], cell[2])
-			claimed[i] = true
-			table.insert(props, {
-				kind = "DecorCrates",
-				slab = slabOfTile[i],
-				x = tileX(cell[1]) + rng:range(-3, 3),
-				z = tileZ(cell[2]) + rng:range(-3, 3),
-				rot = rng:range(0, 360),
-			})
 		end
-		for gx = 0, cols - 1 do
-			local i = index(gx, rows - 1)
-			if occupancy[i] == 0 and rng:chance(0.6) then
-				table.insert(props, {
-					kind = "Railing",
-					slab = slabOfTile[i],
-					x = tileX(gx),
-					z = arch.depth - 1,
-					rot = rng:range(-6, 6),
-				})
+		for _ = 1, arch.yardTrees do
+			if #edge.trees == 0 or not onTile(rng:pick(edge.trees), 2) then
+				break
 			end
 		end
 	end

@@ -1,6 +1,7 @@
 --!strict
 --[[
-	In-run HUD: station clock, train gauges, backpack, crew roster and stamina.
+	In-run HUD: station clock, the night dial (24-hour time and the moon's phases), train
+	gauges, backpack, crew roster and stamina.
 	Visible only to crew members while a run is active; the lobby has its own panel.
 ]]
 
@@ -18,6 +19,7 @@ local MathX = require(Shared.Util.MathX)
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
+local Sky = require(script.Parent.Parent.Scenery.Sky)
 local ItemIcon = require(script.Parent.ItemIcon)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
@@ -110,6 +112,141 @@ function Hud.mount(gui: ScreenGui)
 	})
 	Ui.corner(3).Parent = lastCallZone
 	local clockScale = Ui.new("UIScale", { Parent = clock })
+
+	-- Night dial: the 24-hour time, the night from dusk to dawn with the moon on it, and
+	-- what the moon is doing now and next, so the crew know when the blood moon comes
+	local dial = Ui.panel({
+		Name = "NightDial",
+		Size = UDim2.fromOffset(380, 50),
+		Position = UDim2.new(0.5, 0, 0, 114),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Parent = container,
+	})
+	local dialTime = Ui.text({
+		Text = "18:00",
+		Font = Theme.Font.display,
+		TextSize = 28,
+		Color = Theme.Color.brassLight,
+		Position = UDim2.fromOffset(12, 0),
+		Size = UDim2.new(0, 74, 1, 0),
+	})
+	dialTime.Parent = dial
+	local track = Ui.new("Frame", {
+		Name = "Track",
+		BackgroundColor3 = Theme.Color.steelLine,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(92, 25),
+		Size = UDim2.fromOffset(150, 2),
+		Parent = dial,
+	})
+	local DIAL_FROM, DIAL_TO = 18, 30.5 -- six in the evening to half past six in the morning
+	local function along(hour: number): UDim2
+		return UDim2.fromScale(MathX.saturate((hour - DIAL_FROM) / (DIAL_TO - DIAL_FROM)), 0.5)
+	end
+	for h = DIAL_FROM, 30, 2 do
+		Ui.new("Frame", {
+			BackgroundColor3 = Theme.Color.textDim,
+			BackgroundTransparency = 0.4,
+			BorderSizePixel = 0,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = along(h),
+			Size = UDim2.fromOffset(1, if h % 6 == 0 then 9 else 5),
+			Parent = track,
+		})
+	end
+	-- the marks the crew watch for: moonrise, the blood moon at two, sunrise at the Terminus
+	for _, mark in
+		{
+			{ hour = 18.2, color = Color3.fromRGB(240, 160, 84), size = 6 },
+			{ hour = 26, color = Theme.Color.signal, size = 9 },
+			{ hour = 30.5, color = Theme.Color.brassLight, size = 6 },
+		}
+	do
+		local dot = Ui.new("Frame", {
+			BackgroundColor3 = mark.color,
+			BorderSizePixel = 0,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = along(mark.hour),
+			Size = UDim2.fromOffset(mark.size, mark.size),
+			Parent = track,
+		})
+		Ui.corner(mark.size).Parent = dot
+	end
+	local moonMark = Ui.new("Frame", {
+		Name = "Moon",
+		BackgroundColor3 = Color3.fromRGB(240, 160, 84),
+		BorderSizePixel = 0,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = along(DIAL_FROM),
+		Size = UDim2.fromOffset(14, 14),
+		ZIndex = 3,
+		Parent = track,
+	})
+	Ui.corner(7).Parent = moonMark
+	local moonRing = Ui.stroke(Theme.Color.white, 1.5, 0.3)
+	moonRing.Parent = moonMark
+	local dialPhase = Ui.text({
+		Text = "",
+		Font = Theme.Font.display,
+		TextSize = 16,
+		Color = Theme.Color.white,
+		Position = UDim2.new(1, -12, 0, 6),
+		AnchorPoint = Vector2.new(1, 0),
+		Size = UDim2.fromOffset(124, 20),
+		XAlign = Enum.TextXAlignment.Right,
+	})
+	dialPhase.Parent = dial
+	local dialNext = Ui.text({
+		Text = "",
+		Font = Theme.Font.body,
+		TextSize = 12,
+		Color = Theme.Color.textDim,
+		Position = UDim2.new(1, -12, 0, 27),
+		AnchorPoint = Vector2.new(1, 0),
+		Size = UDim2.fromOffset(124, 16),
+		XAlign = Enum.TextXAlignment.Right,
+	})
+	-- Long names such as "COPPER MOON AT 21:36" must fit beside the night track.
+	dialNext.TextScaled = true
+	Ui.new("UITextSizeConstraint", { MinTextSize = 8, MaxTextSize = 12, Parent = dialNext })
+	dialNext.Parent = dial
+	local PHASE_COLORS: { [string]: Color3 } = {
+		SUNSET = Theme.Color.caution,
+		MOONRISE = Color3.fromRGB(240, 160, 84),
+		["AMBER MOON"] = Color3.fromRGB(236, 146, 76),
+		["COPPER MOON"] = Color3.fromRGB(218, 112, 66),
+		ECLIPSE = Color3.fromRGB(200, 82, 60),
+		["BLOOD MOON"] = Theme.Color.signal,
+		["MOON WANING"] = Color3.fromRGB(196, 110, 92),
+		["PALE MOON"] = Color3.fromRGB(214, 206, 196),
+		DAWN = Theme.Color.brassLight,
+	}
+	local function clockText(hour: number): string
+		local h = hour % 24
+		local minutes = math.floor(h * 60 + 1e-6) % 1440
+		return string.format("%02d:%02d", minutes // 60, minutes % 60)
+	end
+	local function updateDial(now: number)
+		local atmosphere = Registry.AtmosphereController
+		if atmosphere == nil then
+			return
+		end
+		local hour = atmosphere.Hour()
+		dialTime.Text = clockText(hour)
+		local name, nextName, nextFrom = Sky.phase(hour)
+		local color = PHASE_COLORS[name] or Theme.Color.white
+		dialPhase.Text = name
+		dialPhase.TextColor3 = color
+		dialNext.Text = if nextName and nextFrom
+			then `{nextName} AT {clockText(nextFrom)}`
+			else `SUNRISE AT {clockText(DIAL_TO)}`
+		moonMark.Position = along(hour)
+		local moon = atmosphere.Moon()
+		local blood = name == "BLOOD MOON"
+		moonMark.BackgroundColor3 = if moon then moon.color else color
+		moonRing.Color = if blood then Theme.Color.signal else Theme.Color.white
+		moonRing.Transparency = if blood then 0.1 + 0.4 * (0.5 + 0.5 * math.sin(now * 4)) else 0.35
+	end
 
 	-- Train gauges -----------------------------------------------------------------------------
 	local gauges = Ui.panel({
@@ -554,6 +691,7 @@ function Hud.mount(gui: ScreenGui)
 		barFrame.Visible = showBar
 		local pulse = if phase == "LastCall" or phase == "Departure" then 1 + 0.04 * math.sin(now * 10) else 1
 		clockScale.Scale = pulse
+		updateDial(now)
 
 		-- Leg coal cost marker
 		local train = State.Get({ "train" })

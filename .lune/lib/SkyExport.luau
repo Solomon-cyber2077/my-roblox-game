@@ -47,7 +47,7 @@ function SkyExport.state(state: any, wind: any, latitude: number): { [string]: a
 		moonSize = 0,
 		sunSize = 14,
 		rays = state.rays,
-		bloom = { intensity = 0.85, size = 30, threshold = 1.05 },
+		bloom = { intensity = state.bloom, size = state.bloomSize, threshold = state.bloomThreshold },
 		grades = {
 			{ contrast = 0.14 },
 			{

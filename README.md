@@ -14,8 +14,8 @@ monetization and the backlog) is the
 
 | Folder | Shows up in Studio as | Holds |
 | --- | --- | --- |
-| `src/server` | ServerScriptService.Server | `Services/`: 18 services, booted in order by `init.server.luau`. `Builders/`: the train, stations, Depot Hall and Hollows, built from primitives |
-| `src/client` | StarterPlayer.StarterPlayerScripts.Client | `Controllers/`: state mirror, camera, movement, scenery, atmosphere, audio and effects. `Scenery/`: the chunked landscape (biomes, props, layers, set pieces, sinkholes). `UI/`: HUD, modals and prompts |
+| `src/server` | ServerScriptService.Server | `Services/`: 19 services, booted in order by `init.server.luau`. `Builders/`: the train and its interior, stations and their dressing, Depot Hall and Hollows, built from primitives |
+| `src/client` | StarterPlayer.StarterPlayerScripts.Client | `Controllers/`: state mirror, camera and the train camera, movement, the crew's and the Hollows' animation, grabs, scenery, atmosphere, audio and effects. `Animation/`: the bodies as pure pose math (R6 crew, Hollows with IK). `Scenery/`: the chunked landscape (biomes, props, layers, set pieces, sinkholes), the sky and the stations' fog. `UI/`: HUD, modals and prompts |
 | `src/shared` | ReplicatedStorage.Shared | `Config/`: every tunable number. `Logic/`: pure game rules, unit-tested. `Net/`, `Types`, `Util/`, `Visual/` |
 | `tests` | Not synced | Lune specs for `src/shared` |
 | `.lune` | Not synced | The test runner, the quality gate, the visual audit, the preview exporter and the report script |
@@ -48,6 +48,25 @@ monetization and the backlog) is the
    git push
    ```
 
+## Playing
+
+| Key | Does |
+| --- | --- |
+| WASD, Shift | Move; sprint while your breath lasts |
+| E | Search, take, sit, patch, pull a crewmate free (whatever the prompt says) |
+| 1-6, G, right-click | Use a tool, drop the last item, drop the one you click |
+| Space (gamepad A, or tap the plate) | In a Hollow's grip: struggle. Mash it to break free |
+| C (gamepad D-pad up) | Aboard: the train camera, watching the train from outside. F (D-pad right) cuts between shots |
+
+The train camera also has **Next**, **Back**, and **+ / −** buttons for touch and mouse.
+Drag to orbit, scroll to zoom, or use the right stick and triggers on a gamepad. The Moon
+shot keeps the whole train and the moon in view across wide and portrait screens.
+
+A Hollow that catches you holds on and bites, squeezes or yanks on its own rhythm until you fight free, a
+crewmate pulls you loose, or a Flashbulb makes it let go; each kind has three holds. The clock under the
+station ticket is the night's: the moon rises with the sunset, turns copper, and at two in the morning hangs
+blood red.
+
 ## Commands
 
 | Command | What it does |
@@ -75,7 +94,8 @@ game.ReplicatedStorage.Remotes.Dev:FireServer("state")
 | `search` | Search the nearest unsearched container |
 | `tp train`, `tp edge`, `tp mid`, `tp far` | Move to the train or a station zone |
 | `give CoalSack` | Put an item in your backpack |
-| `hollow` | Spawn a Hollow near you |
+| `hollow`, `hollow Crawler` | Spawn a Hollow near you (of a kind: `Stalker`, `Crawler` or `Brute`) |
+| `grab`, `grab Brute` | A Hollow seizes you at once (a station must be docked): to try the holds and the struggle |
 | `coal 50`, `parts 20` | Set the train's stores |
 | `state` | Print the run, crew, train and backpack to the Output |
 | `sky 26` / `sky` | Pin every client's sky to an hour (18.3 dusk, 21 the amber moon rising, 26 the blood moon, 30.5 sunrise), or let it follow the run again |

@@ -170,8 +170,121 @@ end
 local targets: { Target } = {}
 
 table.insert(targets, {
+	name = "GrabLifecycle",
+	build = function()
+		local run = require("./lib/HollowLifecycle")
+		return { { instance = Instance.new("Folder"), note = run() } }
+	end,
+})
+
+table.insert(targets, {
+	name = "TrainCamera",
+	build = function()
+		local framing = load(Client.Camera.TrainFraming)
+		local sky = load(Client.Scenery.Sky)
+		local problems: { string } = {}
+		local shots = 0
+		for _, aspect in { 16 / 9, 4 / 3, 1, 9 / 16 } do
+			for hour = 18.3, 29.8, 0.1 do
+				local moon = sky.moon(hour)
+				local center = roblox.Vector3.new(0, 6, 0)
+				local eye, focus, fov = framing.moon(center, moon.direction, moon.size, aspect)
+				local look = (focus - eye).Unit
+				local right = look:Cross(roblox.Vector3.yAxis).Unit
+				local up = right:Cross(look).Unit
+				local tangent = math.tan(math.rad(fov / 2))
+				local function visible(offset: any): boolean
+					local depth = offset:Dot(look)
+					return depth > 0
+						and math.abs(offset:Dot(up)) < depth * tangent
+						and math.abs(offset:Dot(right)) < depth * tangent * aspect
+				end
+				local good = visible(moon.direction)
+				for _, x in { -105, 105 } do
+					for _, y in { -6, 10 } do
+						for _, z in { -8, 8 } do
+							good = good and visible(center + roblox.Vector3.new(x, y, z) - eye)
+						end
+					end
+				end
+				local moonAngle = math.deg(math.acos(math.clamp(look:Dot(moon.direction), -1, 1)))
+				good = good and moonAngle + moon.size / 2 < fov / 2
+				if not good then
+					table.insert(problems, `train or moon cropped at {hour}, aspect {aspect}`)
+				end
+				shots += 1
+			end
+		end
+		return {
+			{
+				instance = Instance.new("Folder"),
+				problems = problems,
+				note = `train and moon framed in {shots} night/aspect combinations`,
+			},
+		}
+	end,
+})
+
+table.insert(targets, {
+	name = "StationFog",
+	budget = { parts = 72, lights = 2, shadows = 0, emitters = 53, particles = 5000 },
+	build = function()
+		local fog = load(Client.Scenery.StationFog)
+		local root = Instance.new("Folder")
+		local clears = 0
+		roblox.implementMethod("ParticleEmitter", "Clear", function()
+			clears += 1
+		end)
+		fog.build(root)
+		local function pose(now: number, front: number)
+			fog.update({
+				station = CFrame.new(),
+				length = 360,
+				depth = 180,
+				front = front,
+				waiting = 1,
+				camera = roblox.Vector3.zero,
+				archetype = "Halt",
+				now = now,
+			}, 1 / 60)
+		end
+		pose(100, 100)
+		fog.clear()
+		local problems: { string } = {}
+		local emitters = 0
+		for _, item in root:GetDescendants() do
+			if item:IsA("ParticleEmitter") then
+				emitters += 1
+				if item.Rate ~= 0 then
+					table.insert(problems, "emitter remains active after departure")
+				end
+			elseif item:IsA("BasePart") and item.Transparency ~= 1 then
+				table.insert(problems, "fog figure remains visible after departure")
+			elseif item:IsA("PointLight") and item.Brightness ~= 0 then
+				table.insert(problems, "fog light remains lit after departure")
+			end
+		end
+		if clears ~= emitters then
+			table.insert(problems, "live particles not cleared on departure")
+		end
+		fog.clear()
+		if clears ~= emitters then
+			table.insert(problems, "idle fog is repeatedly clearing particles")
+		end
+		pose(200, 60)
+		return {
+			{
+				instance = root,
+				problems = problems,
+				note = `fog resumes after clearing all {emitters} emitters`,
+			},
+		}
+	end,
+})
+
+table.insert(targets, {
 	name = "Train",
-	budget = { parts = 1100, lights = 16, shadows = 10, emitters = 0 },
+	budget = { parts = 1800, lights = 34, shadows = 10, emitters = 4 },
 	build = function()
 		return { { instance = TrainBuilder.build(CFrame.new(), nil).model } }
 	end,
@@ -200,7 +313,7 @@ table.sort(archetypes)
 for _, id in archetypes do
 	table.insert(targets, {
 		name = `Station/{id}`,
-		budget = { parts = 3000, lights = 40, shadows = 12, emitters = 60 },
+		budget = { parts = 4200, lights = 40, shadows = 12, emitters = 60 },
 		build = function()
 			local plan = LayoutGen.generate(id, 424242, 1)
 			local edge = Tuning.World.PlatformEdgeZ
@@ -216,7 +329,7 @@ end
 for _, kind in HollowBuilder.Kinds do
 	table.insert(targets, {
 		name = `Hollow/{kind}`,
-		budget = { parts = 80, lights = 1, shadows = 0, emitters = 3 },
+		budget = { parts = 130, lights = 1, shadows = 0, emitters = 3 },
 		build = function()
 			local model = HollowBuilder.build(CFrame.new(0, 5, 0), kind)
 			solveJoints(model)
@@ -224,6 +337,105 @@ for _, kind in HollowBuilder.Kinds do
 		end,
 	})
 end
+
+--[[
+	The Hollows' bodies in motion (Animation/HollowPoses): every grab must put the Hollow's
+	hands on its victim through the whole hold, and the Crawler's spider walk must reach
+	every foothold at every speed. A limb sent further than it can stretch is a problem.
+]]
+table.insert(targets, {
+	name = "Grabs",
+	build = function()
+		local HollowPoses = load(Client.Animation.HollowPoses)
+		local Grabs = load(Shared.Config.Grabs)
+		local problems: { string } = {}
+		local worst = 0
+		local posed = 0
+		local function input(state: string, extra: { [string]: any }): any
+			local base = {
+				state = state,
+				elapsed = 0.2,
+				speed = 0,
+				phase = 0,
+				now = 100,
+				seed = 7,
+				emerge = "Rise",
+				stunned = false,
+				windup = 0.3,
+				grab = nil,
+				grabTime = 0,
+			}
+			for key, value in extra do
+				base[key] = value
+			end
+			return base
+		end
+		for _, kind in HollowBuilder.Kinds do
+			local rig = HollowPoses.rigOf(HollowBuilder.build(CFrame.new(), kind))
+			for _, def in Grabs.Kinds[kind] do
+				for t = 0.1, 4, 0.15 do
+					HollowPoses.pose(rig, input("Grab", { grab = def.id, grabTime = t, now = 100 + t }))
+					posed += 1
+					local short = HollowPoses.shortfall()
+					worst = math.max(worst, short)
+					if short > 0.3 then
+						table.insert(
+							problems,
+							string.format(
+								"%s %s: a hand falls %.2f studs short %.1fs in",
+								kind,
+								def.id,
+								short,
+								t
+							)
+						)
+						break
+					end
+				end
+			end
+			if kind == "Crawler" then
+				for _, state in
+					{ "Prowl", "Hunt", "Windup", "Recover", "Dormant", "Emerge", "Repelled", "Reel" }
+				do
+					for speed = 0, 30, 3 do
+						for phase = 0, 6.2, 0.4 do
+							HollowPoses.pose(
+								rig,
+								input(state, { speed = speed, phase = phase, elapsed = phase / 6.2 * 1.5 })
+							)
+							posed += 1
+							local short = HollowPoses.shortfall()
+							worst = math.max(worst, short)
+							if short > 0.3 then
+								table.insert(
+									problems,
+									string.format(
+										"Crawler %s at %d studs/s: a limb falls %.2f studs short",
+										state,
+										speed,
+										short
+									)
+								)
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+		return {
+			{
+				instance = Instance.new("Folder"),
+				problems = problems,
+				note = string.format(
+					"grabs and gaits: posed %d times, the furthest reach %.2f studs short",
+					posed,
+					worst
+				),
+			},
+		}
+	end,
+})
 
 table.insert(targets, {
 	name = "Items",

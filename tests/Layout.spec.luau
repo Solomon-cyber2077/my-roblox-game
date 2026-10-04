@@ -133,6 +133,124 @@ describe("LayoutGen", function()
 		end
 	end)
 
+	it("fences every open edge tile and rails off both ends of the platform", function()
+		for _, id in ALL do
+			local arch = Stations.List[id]
+			for seed = 1, 4 do
+				local plan = LayoutGen.generate(id, seed * 31, 1)
+				local filled = {}
+				for _, block in plan.structures do
+					for gx = block.gx, block.gx + block.w - 1 do
+						for gz = block.gz, block.gz + block.d - 1 do
+							filled[gz * plan.cols + gx] = true
+						end
+					end
+				end
+				for _, block in plan.buildings do
+					for gx = block.gx, block.gx + block.w - 1 do
+						for gz = block.gz, block.gz + block.d - 1 do
+							filled[gz * plan.cols + gx] = true
+						end
+					end
+				end
+				local fences = {}
+				local ends = 0
+				for _, prop in plan.props do
+					if prop.kind == arch.edge.fence then
+						local gx = math.floor((prop.x + plan.length / 2) / plan.tile)
+						local gz = math.floor(prop.z / plan.tile)
+						fences[gz * plan.cols + math.clamp(gx, 0, plan.cols - 1)] = true
+					elseif prop.kind == "PlatformEnd" then
+						ends += 1
+						expect(plan.slabs[prop.slab].kind).toBe("Safe")
+					end
+				end
+				expect(ends).toBe(2)
+				local rows, cols = plan.rows, plan.cols
+				for gx = 0, cols - 1 do
+					local key = (rows - 1) * cols + gx
+					expect(filled[key] or fences[key]).toBe(true)
+				end
+				for gz = plan.safeRows, rows - 1 do
+					for _, gx in { 0, cols - 1 } do
+						local key = gz * cols + gx
+						expect(filled[key] or fences[key]).toBe(true)
+					end
+				end
+			end
+		end
+	end)
+
+	it("keeps the platform's clutter clear of its benches, signs and canopy columns", function()
+		local reach = {
+			Bench = 2.8,
+			Sign = 7.4,
+			Lamp = 1,
+			Trolley = 3.2,
+			Churns = 2.4,
+			FireBuckets = 2.2,
+			Timetable = 2.4,
+			Planter = 2,
+		}
+		for _, id in ALL do
+			local plan = LayoutGen.generate(id, 5, 1)
+			local spots = {}
+			for _, prop in plan.props do
+				if prop.slab == 1 and reach[prop.kind] then
+					table.insert(spots, prop)
+				end
+			end
+			local canopy = 0
+			for _, prop in plan.props do
+				if prop.kind == "Canopy" then
+					canopy = (prop.size or 0) / 2
+				end
+			end
+			for i, a in spots do
+				for j = i + 1, #spots do
+					local b = spots[j]
+					local apart = math.abs(a.x - b.x) >= reach[a.kind] + reach[b.kind] - 1e-6
+						or math.abs(a.z - b.z) >= 1.6
+					expect(apart).toBe(true)
+				end
+				for _, x in Stations.canopyColumns(canopy) do
+					local clear = math.abs(a.x - x) >= reach[a.kind] + 1.2 - 1e-6
+						or math.abs(a.z - Stations.CanopyColumnZ) >= 2
+					expect(clear).toBe(true)
+				end
+			end
+		end
+	end)
+
+	it("dresses the yard away from the edge and from the containers", function()
+		for _, id in ALL do
+			local arch = Stations.List[id]
+			local dressing = {}
+			for _, kind in arch.dressing do
+				dressing[kind] = true
+			end
+			for seed = 1, 4 do
+				local plan = LayoutGen.generate(id, seed * 17, 1)
+				local count = 0
+				for _, prop in plan.props do
+					if dressing[prop.kind] then
+						count += 1
+						expect(math.abs(prop.x)).toBeLessThan(plan.length / 2 - plan.tile + 2.5)
+						expect(prop.z).toBeLessThan(plan.depth - plan.tile + 2.5)
+						expect(prop.z).toBeGreaterThan(plan.safeRows * plan.tile - 2.5)
+						for _, container in plan.containers do
+							local d = math.sqrt((prop.x - container.x) ^ 2 + (prop.z - container.z) ^ 2)
+							expect(d).toBeGreaterThan(2)
+						end
+					end
+				end
+				if not arch.terminus then
+					expect(count).toBeGreaterThan(2)
+				end
+			end
+		end
+	end)
+
 	it("finds the slab under a point", function()
 		local plan = LayoutGen.generate("Halt", 3, 1)
 		expect(LayoutGen.slabAt(plan, 0, 5).kind).toBe("Safe")

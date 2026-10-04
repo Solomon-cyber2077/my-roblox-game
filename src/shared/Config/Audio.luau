@@ -68,6 +68,9 @@ local Cues: { [string]: Cue } = {
 	-- weather
 	Rain = { id = 9116496074, volume = 0.34, loop = true, pitch = 0.55 }, -- the steam hiss slowed into rain
 
+	-- the fog: a scream slowed until it is many voices whispering, out where the fog lies
+	FogWhisper = { id = 9125475729, volume = 0.5, loop = true, spatial = true, pitch = 0.36 },
+
 	-- the Hollows, layered from the same few recordings at other speeds
 	HollowScream = { id = 9125475729, volume = 1, spatial = true, pitch = 1.3, maxSeconds = 2.2 },
 	HollowWake = { id = 9125475729, volume = 0.85, spatial = true, pitch = 0.72, maxSeconds = 3 },

@@ -12,6 +12,8 @@ local ORDER = {
 	"AudioController",
 	"MovementController",
 	"CameraController",
+	"TrainCamController",
+	"CharacterAnimator",
 	"SceneryController",
 	"TrainVisualsController",
 	"StationVisualsController",
@@ -19,6 +21,7 @@ local ORDER = {
 	"BuildingVisuals",
 	"AtmosphereController",
 	"UIController",
+	"GrabController",
 	"FxController",
 }
 

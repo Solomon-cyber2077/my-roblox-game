@@ -6,8 +6,8 @@
 
 	  Stalker  the lost porter: too tall, too thin, in the rags of a railway greatcoat.
 	           No eyes, only sockets with a pinprick of shine, and a jaw that drops open.
-	  Crawler  something that was a passenger, folded wrong: it runs on all fours in a
-	           torn nightshirt, its head turned upside down.
+	  Crawler  the passenger: a tall woman in a ruined nightgown, folded wrong onto limbs
+	           far too long, elbows and knees above her back, her head upside down.
 	  Brute    the stoker: a soot-black hulk in a leather apron, embers smouldering in the
 	           cracks of its chest, one forearm ending in a shovel blade.
 
@@ -34,7 +34,7 @@ type Spec = {
 
 local SPECS: { [string]: Spec } = {
 	Stalker = { hip = 3.9, root = Vector3.new(2.4, 2.6, 1.4) },
-	Crawler = { hip = 1.3, root = Vector3.new(2.4, 1.4, 3.0) },
+	Crawler = { hip = 2.6, root = Vector3.new(3.4, 1.8, 6.0) },
 	Brute = { hip = 4.1, root = Vector3.new(3.4, 3.2, 2.0) },
 }
 
@@ -407,105 +407,222 @@ local function stalker(model: Model, root: BasePart)
 	})
 end
 
+--[[
+	The passenger: a tall woman in a ruined nightgown, folded wrong. She goes on all fours
+	on limbs far too long, elbows and knees jutting high over her back like a spider,
+	her head turned upside down under the end of her spine, her hair dragging on the
+	ground. Lace at her throat, frills at her sleeves, a sash and a locket from a wedding
+	that never happened, a bonnet hanging off the back of her skull.
+]]
 local function crawler(model: Model, root: BasePart)
-	local SKIN = rgb(104, 98, 96)
-	local SKIN_DARK = rgb(78, 72, 72)
-	local SHIRT = rgb(170, 160, 140)
-	local STAIN = rgb(108, 90, 76)
-	local HAIR = rgb(22, 20, 20)
+	local GOWN = rgb(206, 196, 176)
+	local GOWN_DARK = rgb(160, 148, 128)
+	local LACE = rgb(232, 226, 210)
+	local STAIN = rgb(98, 56, 44)
+	local SKIN = rgb(150, 144, 140)
+	local SKIN_DARK = rgb(112, 106, 104)
+	local BRUISE = rgb(92, 84, 96)
+	local HAIR = rgb(20, 18, 20)
+	local SASH = rgb(74, 88, 116)
 	local cloth = Enum.Material.Fabric
 	local skin = Enum.Material.SmoothPlastic
 
-	local pelvis = block(model, "Pelvis", Vector3.new(1.35, 0.8, 0.9), SHIRT, cloth)
-	local chest = block(model, "Chest", Vector3.new(1.5, 2.3, 0.85), SHIRT, cloth)
-	local head = block(model, "Head", Vector3.new(0.9, 1.05, 0.95), SKIN, skin)
-	local jaw = block(model, "Jaw", Vector3.new(0.72, 0.3, 0.8), SKIN_DARK, skin)
-	joint("RootJoint", root, pelvis, CFrame.new(0, 0.05, 0.95), CFrame.new())
-	-- the spine runs forward along the ground
-	joint("Waist", pelvis, chest, CFrame.new(0, 0.15, -0.3) * Kit.angles(-82, 0, 0), CFrame.new(0, -1.15, 0))
-	-- and the head is turned upside down
-	joint("Neck", chest, head, CFrame.new(0, 1.2, 0.05) * Kit.angles(70, 0, 180), CFrame.new(0, -0.45, 0))
-	joint("Jaw", head, jaw, CFrame.new(0, -0.5, 0.28), CFrame.new(0, 0.1, 0.38))
+	local pelvis = block(model, "Pelvis", Vector3.new(2.2, 1.3, 1.6), GOWN, cloth)
+	local chest = block(model, "Chest", Vector3.new(2.4, 3.6, 1.4), GOWN, cloth)
+	local head = block(model, "Head", Vector3.new(1.3, 1.5, 1.35), SKIN, skin)
+	local jaw = block(model, "Jaw", Vector3.new(1.0, 0.42, 1.1), SKIN_DARK, skin)
+	joint("RootJoint", root, pelvis, CFrame.new(0, 0.2, 1.7), CFrame.new())
+	-- the spine runs forward along the ground, its front end a little raised
+	joint("Waist", pelvis, chest, CFrame.new(0, 0.2, -0.7) * Kit.angles(-84, 0, 0), CFrame.new(0, -1.85, 0))
+	-- and the head hangs under the end of it, upside down, looking ahead
+	joint("Neck", chest, head, CFrame.new(0, 1.9, -0.1) * Kit.angles(70, 0, 180), CFrame.new(0, -0.7, 0))
+	joint("Jaw", head, jaw, CFrame.new(0, -0.66, 0.36), CFrame.new(0, 0.12, 0.5))
 
-	-- stains down the nightshirt and a spine that shows through it
-	deco(model, chest, Vector3.new(0.6, 1.1, 0.06), CFrame.new(0.25, -0.3, -0.45), STAIN, cloth)
-	for i = 0, 4 do
-		decoBall(model, chest, 0.26, CFrame.new(0, 0.9 - i * 0.45, 0.44), SKIN_DARK, skin)
+	-- the gown: torn open down the back over a spine that shows, stained at the front
+	for i = 0, 5 do
+		decoBall(model, chest, 0.42 - i * 0.02, CFrame.new(0, 1.35 - i * 0.55, 0.62), SKIN_DARK, skin)
 	end
-	-- lank hair hanging from the crown
+	deco(model, chest, Vector3.new(0.9, 3.0, 0.08), CFrame.new(0, -0.1, 0.71), SKIN, skin)
+	for _, side in { -1, 1 } do
+		-- ragged edges of the tear
+		deco(
+			model,
+			chest,
+			Vector3.new(0.14, 2.8, 0.12),
+			CFrame.new(side * 0.52, -0.2, 0.74) * Kit.angles(0, 0, side * 4),
+			GOWN_DARK,
+			cloth
+		)
+	end
+	deco(model, chest, Vector3.new(1.3, 1.5, 0.08), CFrame.new(0.4, 0.5, -0.71), STAIN, cloth)
+	deco(model, chest, Vector3.new(0.8, 0.9, 0.08), CFrame.new(-0.6, -0.9, -0.715), STAIN, cloth)
+	-- a lace collar round the throat, its points hanging toward the ground
+	deco(model, chest, Vector3.new(2.6, 0.32, 1.6), CFrame.new(0, 1.66, 0), LACE, cloth)
+	for i = -3, 3 do
+		decoWedge(
+			model,
+			chest,
+			Vector3.new(0.3, 0.42, 0.1),
+			CFrame.new(i * 0.34, 1.62, -0.86) * Kit.angles(-90, 0, 0),
+			LACE,
+			cloth
+		)
+	end
+	-- the locket, swinging under her
+	decoRod(
+		model,
+		chest,
+		0.9,
+		0.06,
+		CFrame.new(0, 1.3, -0.9) * Kit.angles(0, 0, 90),
+		BRASS,
+		Enum.Material.Metal
+	)
+	decoBall(model, chest, 0.42, CFrame.new(0, 0.82, -1.0), BRASS, Enum.Material.Metal)
+	deco(model, chest, Vector3.new(0.26, 0.3, 0.08), CFrame.new(0, 0.82, -1.22), LACE, skin)
+
+	-- the skirt in tatters, its strips dragging on the ground behind her
+	for i, spec in
+		{
+			{ x = -0.85, z = 0.55, w = 0.6, len = 3.0 },
+			{ x = -0.3, z = 0.72, w = 0.7, len = 2.6 },
+			{ x = 0.35, z = 0.7, w = 0.55, len = 3.2 },
+			{ x = 0.9, z = 0.5, w = 0.6, len = 2.8 },
+			{ x = -1.05, z = -0.2, w = 0.5, len = 2.4 },
+			{ x = 1.06, z = -0.25, w = 0.5, len = 2.7 },
+		}
+	do
+		deco(
+			model,
+			pelvis,
+			Vector3.new(spec.w, spec.len, 0.07 + i * 0.004),
+			CFrame.new(spec.x, -0.4 - spec.len / 2, spec.z) * Kit.angles(-6 + i * 2, 0, (i - 3.5) * 3),
+			if i % 3 == 0 then GOWN_DARK else GOWN,
+			cloth
+		)
+	end
+	deco(model, pelvis, Vector3.new(2.32, 0.4, 1.72), CFrame.new(0, 0.3, 0), SASH, cloth)
+	for _, side in { -1, 1 } do
+		deco(
+			model,
+			pelvis,
+			Vector3.new(0.22, 1.9, 0.06),
+			CFrame.new(side * 0.25, -0.6, 0.9) * Kit.angles(-8, 0, side * 10),
+			SASH,
+			cloth
+		)
+	end
+	deco(model, pelvis, Vector3.new(0.7, 0.6, 0.08), CFrame.new(-0.4, -0.2, 0.83), STAIN, cloth)
+
+	-- the face: too many eyes, a mouth full of teeth
+	for i, offset in { { -0.3, 0.18 }, { 0.3, 0.18 }, { -0.13, 0.42 }, { 0.17, 0.44 }, { 0.43, 0.38 } } do
+		deco(model, head, Vector3.new(0.22, 0.2, 0.06), CFrame.new(offset[1], offset[2], -0.68), ICHOR, skin)
+		shine(model, head, CFrame.new(offset[1], offset[2], -0.72), if i <= 2 then 0.1 else 0.06)
+	end
+	deco(model, head, Vector3.new(0.86, 0.26, 0.08), CFrame.new(0, -0.42, -0.66), MOUTH, skin)
+	for i = -3, 3 do
+		decoWedge(
+			model,
+			head,
+			Vector3.new(0.07, 0.22, 0.05),
+			CFrame.new(i * 0.115, -0.4, -0.72) * Kit.angles(0, 0, 180),
+			TOOTH,
+			skin
+		)
+	end
 	for i = -2, 2 do
+		decoWedge(model, jaw, Vector3.new(0.07, 0.22, 0.05), CFrame.new(i * 0.15, 0.3, -0.5), TOOTH, skin)
+	end
+	-- hair from the crown: the head is upside down, so it hangs to the ground
+	for i = -3, 4 do
+		local long = 2.2 + ((i * 7) % 5) * 0.2
 		deco(
 			model,
 			head,
-			Vector3.new(0.14, 1.2 + (i % 2) * 0.35, 0.1),
-			CFrame.new(i * 0.17, 1.05, 0.18 + (i % 2) * 0.06) * Kit.angles(-8, 0, i * 3),
+			Vector3.new(0.16 + (i % 2) * 0.05, long, 0.1),
+			CFrame.new(i * 0.15 - 0.07, 0.7 + long / 2, 0.15 + (i % 3) * 0.12)
+				* Kit.angles(-6 + (i % 3) * 5, 0, i * 2),
 			HAIR,
 			cloth
 		)
 	end
-	-- too many shining eyes, and a mouth full of teeth
-	for i, offset in { { -0.22, 0.14 }, { 0.22, 0.14 }, { -0.1, 0.32 }, { 0.14, 0.34 } } do
-		shine(model, head, CFrame.new(offset[1], offset[2], -0.5), if i <= 2 then 0.08 else 0.05)
-	end
-	deco(model, head, Vector3.new(0.62, 0.2, 0.08), CFrame.new(0, -0.32, -0.48), MOUTH, skin)
-	for i = -2, 2 do
-		decoWedge(
+	-- the bonnet, hanging off the back of her skull by its ribbon
+	decoRod(model, head, 0.9, 1.5, CFrame.new(0, 0.35, 0.38) * Kit.angles(0, 90, 0), LACE, cloth)
+	decoRod(model, head, 0.2, 1.62, CFrame.new(0, 0.35, -0.12) * Kit.angles(0, 90, 0), GOWN_DARK, cloth)
+	for _, side in { -1, 1 } do
+		deco(
 			model,
 			head,
-			Vector3.new(0.06, 0.15, 0.05),
-			CFrame.new(i * 0.11, -0.3, -0.53) * Kit.angles(0, 0, 180),
-			TOOTH,
-			skin
+			Vector3.new(0.14, 1.6, 0.05),
+			CFrame.new(side * 0.6, -0.3, 0.5) * Kit.angles(0, 0, side * -12),
+			SASH,
+			cloth
 		)
-		decoWedge(model, jaw, Vector3.new(0.06, 0.15, 0.05), CFrame.new(i * 0.13, 0.22, -0.34), TOOTH, skin)
 	end
 
+	-- limbs far too long, elbows and knees above her back (Animation/HollowPoses walks them)
 	for _, side in { "L", "R" } do
 		local s = if side == "L" then -1 else 1
-		local _, _, hand = limb(
+		local upper, forearm, hand = limb(
 			model,
 			side,
 			{ "UpperArm", "Forearm", "Hand" },
 			{ "Shoulder", "Elbow", "Wrist" },
 			chest,
-			CFrame.new(s * 0.95, 0.95, 0) * Kit.angles(100, 0, 0),
-			1.6,
-			1.6,
-			0.34,
-			SHIRT,
+			CFrame.new(s * 1.3, 1.45, 0) * Kit.angles(90, 0, 0),
+			3.2,
+			3.5,
+			0.46,
+			GOWN,
 			SKIN,
 			cloth,
 			skin,
-			Vector3.new(0.5, 0.18, 0.6),
+			Vector3.new(0.8, 0.26, 1.0),
 			SKIN_DARK
 		)
-		for f = -1, 1 do
+		-- a frilled cuff at the elbow, knuckles at the wrist
+		decoRod(model, upper, 0.36, 0.72, CFrame.new(-1.45, 0, 0), LACE, cloth)
+		decoBall(model, forearm, 0.48, CFrame.new(-1.72, 0, 0), SKIN_DARK, skin)
+		deco(model, forearm, Vector3.new(1.1, 0.3, 0.4), CFrame.new(0.3, 0.12, 0.08), BRUISE, skin)
+		for f = -1.5, 1.5 do
 			decoWedge(
 				model,
 				hand,
-				Vector3.new(0.08, 0.1, 0.45),
-				CFrame.new(f * 0.16, -0.02, -0.5),
+				Vector3.new(0.1, 0.12, 0.72),
+				CFrame.new(f * 0.2, -0.02, -0.82),
 				ICHOR,
 				skin
 			)
 		end
-		limb(
+		local thigh, shin, foot = limb(
 			model,
 			side,
 			{ "Thigh", "Shin", "Foot" },
 			{ "Hip", "Knee", "Ankle" },
 			pelvis,
-			CFrame.new(s * 0.48, -0.25, 0) * Kit.angles(55, 0, s * 18),
-			1.5,
-			1.6,
-			0.38,
+			CFrame.new(s * 0.8, -0.3, 0.2),
+			2.8,
+			3.2,
+			0.5,
 			SKIN,
 			SKIN,
 			skin,
 			skin,
-			Vector3.new(0.36, 0.18, 0.8),
+			Vector3.new(0.55, 0.26, 1.2),
 			SKIN_DARK
 		)
+		decoBall(model, thigh, 0.56, CFrame.new(-1.38, 0, 0), SKIN_DARK, skin)
+		deco(model, shin, Vector3.new(1.2, 0.35, 0.42), CFrame.new(-0.4, 0.1, 0.12), BRUISE, skin)
+		for t = -1, 1 do
+			decoWedge(
+				model,
+				foot,
+				Vector3.new(0.12, 0.12, 0.5),
+				CFrame.new(t * 0.17, -0.02, -0.8),
+				SKIN_DARK,
+				skin
+			)
+		end
 	end
 
 	emitter(root, {
@@ -517,9 +634,24 @@ local function crawler(model: Model, root: BasePart)
 		Speed = NumberRange.new(1, 3),
 		SpreadAngle = Vector2.new(80, 80),
 		EmissionDirection = Enum.NormalId.Bottom,
-		Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1.8) }),
+		Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(1, 2.4) }),
 		Transparency = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 0.6),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+	})
+	-- a cold breath from the upside-down mouth
+	emitter(jaw, {
+		Name = "Breath",
+		Texture = "rbxasset://textures/particles/smoke_main.dds",
+		Color = ColorSequence.new(rgb(176, 180, 186)),
+		Rate = 2,
+		Lifetime = NumberRange.new(0.8, 1.3),
+		Speed = NumberRange.new(0.4, 0.9),
+		EmissionDirection = Enum.NormalId.Front,
+		Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1.1) }),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.75),
 			NumberSequenceKeypoint.new(1, 1),
 		}),
 	})

@@ -241,6 +241,7 @@ end
 Enter.Departure = function()
 	local params = state.params :: Types.HazardParams
 	Registry.HazardDirector.Freeze()
+	Registry.HollowService.LetGo()
 	Registry.StationService.BeginDeparture(params.departureAccel)
 end
 
