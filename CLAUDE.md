@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # Last Train Out: working notes
 
 Co-op Roblox game synced with Rojo. The design source of truth is the blueprint doc linked in README.md.

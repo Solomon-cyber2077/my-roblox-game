@@ -3,6 +3,27 @@
 Co-op Roblox game synced with Rojo. The design source of truth is the blueprint doc linked in README.md.
 Read this file before changing code.
 
+## Project
+1-8 player co-op survival on a train: ten generated stops to loot, then the Terminus. Luau, Rojo, Lune tests.
+Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune run check`.
+
+## File map
+- src/server: `init.server.luau` boots `Services/` (19); `Builders/` make train, stations, lobby, Hollows
+- src/client: `Controllers/`, `Animation/`, `Camera/`, `Scenery/` (land, sky, fog), `UI/`
+- src/shared: `Config/` numbers, `Logic/` pure rules, `Net/Remotes`, `Types`, `Util/`, `Visual/Kit`
+- tests/: Lune specs; .lune/: check, test, audit, preview; tools/preview: three.js viewer
+
+## Features that exist now
+- Lobby, route vote, 11-phase run, stations with loot, fog/collapse hazards, left-behind rule
+- Hollows (several kinds) with grabs, struggle and crewmate pry; enterable buildings
+- Chunked biome landscape, set pieces, day-night sky, blood moon, shared omens, weather
+- Inventory, ledger, shop/workshop, cosmetics/outfitter, progression, spectate, summary
+- Train camera, R6 procedural crew animation, Studio dev console
+
+## Known bugs / unfinished work
+- No TODO/FIXME notes in src. Robux product ids unbound until publish (`Config/Cosmetics`).
+- Commit 2d369e2 snapshotted uncommitted work without running `lune run check` (unverified).
+
 ## Architecture
 
 - **Server-authoritative.** `src/server/init.server.luau` requires every service in `ORDER`, puts each in
@@ -85,3 +106,14 @@ Read this file before changing code.
   `node tools/preview/render.mjs out.json out.png --cam=ahead` (see README.md). The viewer approximates Roblox's
   lighting; use it to judge composition and mood, and confirm in Studio.
 - In Studio, `Remotes.Dev` (Studio-only) runs the developer console commands listed in README.md.
+
+## Rules
+- Make small changes. Never rewrite working files. Explain before deleting anything.
+- One task per session. Stop when the task is done.
+- Verify before saying done: run the tests, or state exactly how I can check it.
+- Commit after each completed task with a clear message. Never push.
+- Never print or commit secrets (keys, tokens, passwords).
+- At the end of every task, update HANDOFF.md with: 1. features completed, 2. known bugs/regressions, 3. next logical step.
+- When asked for "the next task": do only the first unchecked item in TASKS.md, tick it off, then stop. If none are left, say so and stop.
+- Keep output short. Name files instead of pasting them. Do not dump large logs.
+- Codex: use medium effort and delegate small scoped edits to the grunt subagent.
