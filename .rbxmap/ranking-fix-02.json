@@ -1,0 +1,401 @@
+{
+  "lobby lighting": {
+    "query": "lobby lighting",
+    "matches": [
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController",
+        "file": "src/client/Controllers/AtmosphereController.luau",
+        "class": "ModuleScript",
+        "desc": "Owns global Lighting, Atmosphere and ClockTime every frame: lobby lighting, mood, sky color, fog, t\u2026",
+        "lines": "465-530",
+        "why": "lobby: desc+body; lighting: path+name+desc",
+        "preview": [
+          "472: local inLobby = (around - LOBBY).Magnitude < 420",
+          "480: elseif inLobby or scenery == nil then LOBBY_HOUR",
+          "487: local dark = if inLobby then 0 else Sky.darkness(hour)"
+        ],
+        "in": "AtmosphereController.Start"
+      },
+      {
+        "rbx": "ServerScriptService > Server > Builders > LobbyBuilder",
+        "file": "src/server/Builders/LobbyBuilder.luau",
+        "class": "ModuleScript",
+        "desc": "Build the physical lobby: Depot Hall structure, lamps and fixtures. Global environment belongs to t\u2026",
+        "lines": "419-484",
+        "why": "lobby: path+name+desc; lighting: body",
+        "preview": [
+          "434: C.ironLight"
+        ],
+        "in": "LobbyBuilder.build"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > UI > Lobby",
+        "file": "src/client/UI/Lobby.luau",
+        "class": "ModuleScript",
+        "desc": "Depot Hall UI: profile card, the ready toggle, join-in-progress, shortcuts to the Outfitter and the\u2026",
+        "lines": "153-195",
+        "why": "lobby: path+name+funcs; lighting: body",
+        "preview": [
+          "167: LightInfluence = 0,"
+        ],
+        "in": "task.spawn(fn)"
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 354
+  },
+  "make the lobby darker": {
+    "query": "make the lobby darker",
+    "matches": [
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController",
+        "file": "src/client/Controllers/AtmosphereController.luau",
+        "class": "ModuleScript",
+        "desc": "Owns global Lighting, Atmosphere and ClockTime every frame: lobby lighting, mood, sky color, fog, t\u2026",
+        "lines": "465-530",
+        "why": "lobby: desc+body; darker: path+name+desc",
+        "preview": [
+          "472: local inLobby = (around - LOBBY).Magnitude < 420",
+          "480: elseif inLobby or scenery == nil then LOBBY_HOUR",
+          "487: local dark = if inLobby then 0 else Sky.darkness(hour)"
+        ],
+        "in": "AtmosphereController.Start"
+      },
+      {
+        "rbx": "ServerScriptService > Server > Services > LobbyService",
+        "file": "src/server/Services/LobbyService.luau",
+        "class": "ModuleScript",
+        "desc": "The Depot Hall: ready-ups, lobby spawning, kiosk prompts and late joining.",
+        "lines": "44-57",
+        "why": "lobby: path+name+desc",
+        "preview": [
+          "49: built = LobbyBuilder.build(CFrame.new(origin[1], origin[2], origin[3]), Workspace)"
+        ],
+        "in": "LobbyService.Init"
+      },
+      {
+        "rbx": "ServerScriptService > Server > Builders > LobbyBuilder",
+        "file": "src/server/Builders/LobbyBuilder.luau",
+        "class": "ModuleScript",
+        "desc": "Build the physical lobby: Depot Hall structure, lamps and fixtures. Global environment belongs to t\u2026",
+        "lines": "92-157",
+        "why": "lobby: path+name+desc",
+        "preview": [
+          "95: function LobbyBuilder.build(origin: CFrame, parent: Instance): Built"
+        ],
+        "in": "LobbyBuilder.build"
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 373
+  },
+  "change time of day": {
+    "query": "change time of day",
+    "matches": [
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController",
+        "file": "src/client/Controllers/AtmosphereController.luau",
+        "class": "ModuleScript",
+        "desc": "Owns global Lighting, Atmosphere and ClockTime every frame: lobby lighting, mood, sky color, fog, t\u2026",
+        "lines": "456-521",
+        "why": "time: path+name+desc; day: path+name+desc",
+        "preview": [
+          "459: function AtmosphereController.Start()",
+          "474: -- time of day"
+        ],
+        "in": "AtmosphereController.Start"
+      },
+      {
+        "rbx": "ServerScriptService > Server > Services > ProgressionService",
+        "file": "src/server/Services/ProgressionService.luau",
+        "class": "ModuleScript",
+        "desc": "End-of-run payouts, lifetime stats, Crew Rank and Line Mastery milestones.",
+        "lines": "31-96",
+        "why": "time: desc+body; day: body",
+        "preview": [
+          "39: local day = Catalog.dayNumber(os.time())"
+        ],
+        "in": "ProgressionService.PayRun"
+      },
+      {
+        "rbx": "ServerScriptService > Server > Services > DataService",
+        "file": "src/server/Services/DataService.luau",
+        "class": "ModuleScript",
+        "desc": "Player profiles with session locking. A profile is loaded with UpdateAsync, which stamps a lock { j\u2026",
+        "lines": "102-143",
+        "why": "time: desc+body; day: body",
+        "preview": [
+          "109: local now = os.time()"
+        ],
+        "in": "tryLoad"
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 328
+  },
+  "sky color": {
+    "query": "sky color",
+    "matches": [
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Scenery > Sky",
+        "file": "src/client/Scenery/Sky.luau",
+        "class": "ModuleScript",
+        "desc": "The sky as data and math: what the light, the air, the clouds and the moon should be for an hour of\u2026",
+        "lines": "557-622",
+        "why": "sky: path+name+desc; color: funcs+body",
+        "preview": [
+          "561: moon.color = moon.color:Lerp(BLOOD, 0.75 * bleed)",
+          "576: local glowColor = a.glowColor:Lerp(b.glowColor, w)",
+          "580: :Lerp(glowColor, 0.05 * glow)"
+        ],
+        "in": "Sky.compose"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController",
+        "file": "src/client/Controllers/AtmosphereController.luau",
+        "class": "ModuleScript",
+        "desc": "Owns global Lighting, Atmosphere and ClockTime every frame: lobby lighting, mood, sky color, fog, t\u2026",
+        "lines": "98-163",
+        "why": "sky: path+name+desc; color: path+name+desc",
+        "preview": [
+          "103: if child:IsA(\"Atmosphere\") or child:IsA(\"PostEffect\") or child:IsA(\"Sky\") then"
+        ],
+        "in": "buildLighting"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AudioController",
+        "file": "src/client/Controllers/AudioController.luau",
+        "class": "ModuleScript",
+        "desc": "Plays cues from Config/Audio. One-shots are pooled per cue; spatial cues are parented to a throwawa\u2026",
+        "lines": "226-291",
+        "why": "sky: funcs+body; color: body",
+        "preview": [
+          "267: local atmosphere = Registry.AtmosphereController"
+        ],
+        "in": "AudioController.Start"
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 376
+  },
+  "lobby lamps": {
+    "query": "lobby lamps",
+    "matches": [
+      {
+        "rbx": "ServerScriptService > Server > Builders > LobbyBuilder",
+        "file": "src/server/Builders/LobbyBuilder.luau",
+        "class": "ModuleScript",
+        "desc": "Build the physical lobby: Depot Hall structure, lamps and fixtures. Global environment belongs to t\u2026",
+        "lines": "92-157",
+        "why": "lobby: path+name+desc; lamps: path+name+desc",
+        "preview": [
+          "95: function LobbyBuilder.build(origin: CFrame, parent: Instance): Built"
+        ],
+        "in": "LobbyBuilder.build"
+      },
+      {
+        "rbx": "ServerScriptService > Server > Services > LobbyService",
+        "file": "src/server/Services/LobbyService.luau",
+        "class": "ModuleScript",
+        "desc": "The Depot Hall: ready-ups, lobby spawning, kiosk prompts and late joining.",
+        "lines": "44-57",
+        "why": "lobby: path+name+desc; lamps: body",
+        "preview": [
+          "49: built = LobbyBuilder.build(CFrame.new(origin[1], origin[2], origin[3]), Workspace)"
+        ],
+        "in": "LobbyService.Init"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController",
+        "file": "src/client/Controllers/AtmosphereController.luau",
+        "class": "ModuleScript",
+        "desc": "Owns global Lighting, Atmosphere and ClockTime every frame: lobby lighting, mood, sky color, fog, t\u2026",
+        "lines": "465-530",
+        "why": "lobby: desc+body; lamps: body",
+        "preview": [
+          "472: local inLobby = (around - LOBBY).Magnitude < 420"
+        ],
+        "in": "AtmosphereController.Start"
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 347
+  },
+  "build the lobby": {
+    "query": "build the lobby",
+    "matches": [
+      {
+        "rbx": "ServerScriptService > Server > Builders > LobbyBuilder",
+        "file": "src/server/Builders/LobbyBuilder.luau",
+        "class": "ModuleScript",
+        "desc": "Build the physical lobby: Depot Hall structure, lamps and fixtures. Global environment belongs to t\u2026",
+        "lines": "92-157",
+        "why": "build: path+name+desc; lobby: path+name+desc",
+        "preview": [
+          "95: function LobbyBuilder.build(origin: CFrame, parent: Instance): Built"
+        ],
+        "in": "LobbyBuilder.build"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController",
+        "file": "src/client/Controllers/AtmosphereController.luau",
+        "class": "ModuleScript",
+        "desc": "Owns global Lighting, Atmosphere and ClockTime every frame: lobby lighting, mood, sky color, fog, t\u2026",
+        "lines": "465-530",
+        "why": "build: funcs+body; lobby: desc+body",
+        "preview": [
+          "472: local inLobby = (around - LOBBY).Magnitude < 420"
+        ],
+        "in": "AtmosphereController.Start"
+      },
+      {
+        "rbx": "ServerScriptService > Server > Services > LobbyService",
+        "file": "src/server/Services/LobbyService.luau",
+        "class": "ModuleScript",
+        "desc": "The Depot Hall: ready-ups, lobby spawning, kiosk prompts and late joining.",
+        "lines": "44-57",
+        "why": "build: body; lobby: path+name+desc",
+        "preview": [
+          "49: built = LobbyBuilder.build(CFrame.new(origin[1], origin[2], origin[3]), Workspace)"
+        ],
+        "in": "LobbyService.Init"
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 349
+  },
+  "shop purchase": {
+    "query": "shop purchase",
+    "matches": [
+      {
+        "rbx": "ServerScriptService > Server > Services > ShopService",
+        "file": "src/server/Services/ShopService.luau",
+        "class": "ModuleScript",
+        "desc": "The Outfitter. Brass purchases and equipping go through Logic/Catalog checks.",
+        "lines": "53-86",
+        "why": "shop: path+name+desc; purchase: desc+tags+funcs",
+        "preview": [
+          "56: local function processReceipt(receipt: { [string]: any }): Enum.ProductPurchaseDecision",
+          "59: return Enum.ProductPurchaseDecision.NotProcessedYet",
+          "63: return Enum.ProductPurchaseDecision.NotProcessedYet"
+        ],
+        "in": "processReceipt"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > UI > Outfitter",
+        "file": "src/client/UI/Outfitter.luau",
+        "class": "ModuleScript",
+        "desc": "The Outfitter (cosmetic shop). Flow: category tab -> item grid -> preview + action.",
+        "lines": "203-268",
+        "why": "shop: desc+tags+body; purchase: tags+body",
+        "preview": [
+          "254: MarketplaceService:PromptProductPurchase(Players.LocalPlayer, productId)"
+        ],
+        "in": "Outfitter.mount"
+      },
+      {
+        "rbx": "ReplicatedStorage > Shared > Logic > Catalog",
+        "file": "src/shared/Logic/Catalog.luau",
+        "class": "ModuleScript",
+        "desc": "Cosmetic ownership and purchase rules, shared by ShopService (authority) and the Outfitter UI (to e\u2026",
+        "lines": "81-101",
+        "why": "shop: desc+body; purchase: desc+body",
+        "preview": [
+          "91: elseif def.gamePass then"
+        ],
+        "in": "Catalog.unlockText"
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 355
+  },
+  "player data saving": {
+    "query": "player data saving",
+    "matches": [
+      {
+        "rbx": "ServerScriptService > Server > Services > DataService",
+        "file": "src/server/Services/DataService.luau",
+        "class": "ModuleScript",
+        "desc": "Player profiles with session locking. A profile is loaded with UpdateAsync, which stamps a lock { j\u2026",
+        "lines": "196-237",
+        "why": "player: desc+tags+funcs; data: path+name+tags; saving: body",
+        "preview": [
+          "200: Players.PlayerAdded:Connect(onPlayerAdded)",
+          "201: Players.PlayerRemoving:Connect(onPlayerRemoving)",
+          "203: task.spawn(onPlayerAdded, player)"
+        ],
+        "in": "DataService.Start"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > UI > Summary",
+        "file": "src/client/UI/Summary.luau",
+        "class": "ModuleScript",
+        "desc": "End-of-run receipt: outcome, payout lines in ledger type, XP, rank-ups and milestones.",
+        "lines": "35-100",
+        "why": "player: path; data: tags+body",
+        "preview": [
+          "95: \"Progress is not saved in this session (DataStores unavailable).\","
+        ],
+        "in": "Summary.show"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Scenery > Sky",
+        "file": "src/client/Scenery/Sky.luau",
+        "class": "ModuleScript",
+        "desc": "The sky as data and math: what the light, the air, the clouds and the moon should be for an hour of\u2026",
+        "lines": "1-33",
+        "why": "player: path; data: desc+body",
+        "preview": [
+          "3: The sky as data and math: what the light, the air, the clouds and the moon should"
+        ]
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 354
+  },
+  "lights": {
+    "query": "lights",
+    "matches": [
+      {
+        "rbx": "ServerScriptService > Server > Builders > LobbyBuilder",
+        "file": "src/server/Builders/LobbyBuilder.luau",
+        "class": "ModuleScript",
+        "desc": "Build the physical lobby: Depot Hall structure, lamps and fixtures. Global environment belongs to t\u2026",
+        "lines": "419-484",
+        "why": "lights: path+name+funcs",
+        "preview": [
+          "434: C.ironLight",
+          "456: Kit.pointLight(lamp, C.warm, 0.7, 38, (x + 99) % 44 == 0)",
+          "470: -- Fill: soft lights high between the trusses wash the whole hall evenly, so the lamps be\u2026"
+        ],
+        "in": "LobbyBuilder.build"
+      },
+      {
+        "rbx": "ReplicatedStorage > Shared > Visual > Kit",
+        "file": "src/shared/Visual/Kit.luau",
+        "class": "ModuleScript",
+        "desc": "Part factory used by every procedural builder.",
+        "lines": "169-192",
+        "why": "lights: funcs+body",
+        "preview": [
+          "169: return light"
+        ],
+        "in": "Kit.spotLight"
+      },
+      {
+        "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController",
+        "file": "src/client/Controllers/AtmosphereController.luau",
+        "class": "ModuleScript",
+        "desc": "Owns global Lighting, Atmosphere and ClockTime every frame: lobby lighting, mood, sky color, fog, t\u2026",
+        "lines": "98-163",
+        "why": "lights: desc+tags+funcs",
+        "preview": [
+          "101: local function buildLighting()"
+        ],
+        "in": "buildLighting"
+      }
+    ],
+    "next": "read_lines(file, start, end) for the range above",
+    "approx_tokens": 323
+  }
+}

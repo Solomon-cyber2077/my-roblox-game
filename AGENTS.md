@@ -117,3 +117,20 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
 - When asked for "the next task": do only the first unchecked item in TASKS.md, tick it off, then stop. If none are left, say so and stop.
 - Keep output short. Name files instead of pasting them. Do not dump large logs.
 - Codex: use medium effort and delegate small scoped edits to the grunt subagent.
+
+<!-- rbxmap:start -->
+## rbxmap workflow
+- ALWAYS call `find_script` first with plain words; then use `read_lines` only for its returned range (max 150 lines). Never browse folders or grep the project.
+- Do not use Roblox_Studio `script_search`, `script_grep`, or `search_game_tree` to find scripts. Studio-only content is not indexed; if no result, say so and ask me; never guess paths.
+- Edit script files on disk; Rojo syncs them to Studio. Do not use Studio `multi_edit` or `execute_luau` for edits.
+- Use Roblox_Studio only for playtesting/checking: `start_stop_play`, `get_console_output`, `screen_capture`, `get_studio_state`.
+- After every change, playtest, read the console for errors, and report what you saw. If playtesting is unavailable, say so and list manual Studio steps.
+- Never claim a change works without running it.
+- Lobby brightness, exposure and ambient live in the LOBBY table in `Scenery/Sky.luau` and `AtmosphereController` cannot override them. The lobby floor is mostly lit by the fill and pendant PointLights in `Builders/LobbyBuilder` (about lines 438-482). Changes under 30% to the global values are barely visible. Rojo only updates Studio's edit copy, so stop and restart play to see changes.
+- After adding or renaming scripts, call `refresh`; if MCP is unavailable, use the rbxmap CLI `index`.
+- After changing a brief's file list, run `task rehash <id>`; use `remotes` to inspect remotes.
+- Codex is planner: verify paths with `map`/`find_script`, write briefs, and never edit game code. Claude Code builds from the brief and edits only listed files.
+- Every generated brief must require on-disk edits (never Studio) and the checks `start_stop_play`, `get_console_output`, and `screen_capture`.
+- Builder reads the brief first, rechecks stale ranges, sets in-progress/done, runs `check`, and reports results plus Studio steps.
+- CLI fallback from the game folder: `C:\Users\tameg\Documents\rbxmap\.venv\Scripts\python.exe -c "from rbxmap.cli import main; main()" --project "C:\Users\tameg\Documents\Roblox\my-roblox-game" <command>`.
+<!-- rbxmap:end -->

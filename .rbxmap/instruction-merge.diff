@@ -1,0 +1,37 @@
+diff --git "a/C:\\Users\\tameg\\Documents\\rbxmap-backups\\20261006-setup-01\\AGENTS.md" b/AGENTS.md
+index 91d7b1d..3eddd30 100644
+--- "a/C:\\Users\\tameg\\Documents\\rbxmap-backups\\20261006-setup-01\\AGENTS.md"
++++ b/AGENTS.md
+@@ -117,3 +117,24 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune run check`.
++
++<!-- rbxmap:start -->
++## rbxmap finding
++- Call MCP `find_script` first with plain words; never browse folders or grep the whole project.
++- Read only returned `read_lines` ranges (max 150 lines); use `outline` for structure and `dependencies` for further ranges.
++- `find_symbol` locates a function, remote, or service and its uses. Studio-only content is not indexed; if nothing matches, say so.
++- After adding, renaming, or deleting scripts, call MCP `refresh` or CLI `index`.
++- Use `MAP.md` as fallback only if MCP is unavailable. Run the absolute CLI from the game folder, or put `--project` before the command: `C:\Users\tameg\Documents\rbxmap\.venv\Scripts\rbxmap.exe` (`find`, `lines`, `outline`, `index`).
++- You cannot playtest; provide manual Studio test steps for every change.
++
++## rbxmap planner (Codex)
++- Design only: write `DESIGN.md` and task briefs; never edit game code.
++- Call `map` and `find_script` before naming files; mark unverified paths `UNVERIFIED`.
++- Create small briefs with absolute CLI `task new`; include goal, files, constraints, acceptance checks, and Studio steps.
++- After changing a brief's file list, run absolute CLI `task rehash <id>`; read remotes with absolute CLI `remotes`.
++
++## rbxmap builder (Claude Code)
++- Read the brief first; if stale, recheck listed ranges. Edit only its files and request approval for another file.
++- Set task status in-progress when starting. Run the absolute CLI `check` when available and report the result.
++- Finish by setting status done and appending a three-line summary with manual Studio test steps.
++<!-- rbxmap:end -->
+diff --git "a/C:\\Users\\tameg\\Documents\\rbxmap-backups\\20261006-setup-01\\CLAUDE.md" b/CLAUDE.md
+index 43c994c..2a2f0b5 100644
+--- "a/C:\\Users\\tameg\\Documents\\rbxmap-backups\\20261006-setup-01\\CLAUDE.md"
++++ b/CLAUDE.md
+@@ -1 +1,6 @@
+ @AGENTS.md
++
++<!-- rbxmap:start -->
++## rbxmap builder role
++Read the brief first, implement only its listed files, and use the inherited finding, planner, and builder instructions. Set in-progress/done status and report check results plus Studio test steps.
++<!-- rbxmap:end -->

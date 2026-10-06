@@ -1,0 +1,45 @@
+{
+ "query": "shop purchase",
+ "matches": [
+  {
+   "rbx": "ServerScriptService > Server > Services > ShopService",
+   "file": "src/server/Services/ShopService.luau",
+   "class": "ModuleScript",
+   "desc": "The Outfitter. Brass purchases and equipping go through Logic/Catalog checks.",
+   "lines": "53-86",
+   "why": "shop: path+name+desc; purchase: desc+tags+funcs",
+   "preview": [
+    "56: local function processReceipt(receipt: { [string]: any }): Enum.ProductPurchaseDecision",
+    "59: return Enum.ProductPurchaseDecision.NotProcessedYet",
+    "63: return Enum.ProductPurchaseDecision.NotProcessedYet"
+   ],
+   "in": "processReceipt"
+  },
+  {
+   "rbx": "StarterPlayer > StarterPlayerScripts > Client > UI > Outfitter",
+   "file": "src/client/UI/Outfitter.luau",
+   "class": "ModuleScript",
+   "desc": "The Outfitter (cosmetic shop). Flow: category tab -> item grid -> preview + action.",
+   "lines": "203-268",
+   "why": "shop: desc+tags+body; purchase: tags+body",
+   "preview": [
+    "254: MarketplaceService:PromptProductPurchase(Players.LocalPlayer, productId)"
+   ],
+   "in": "Outfitter.mount"
+  },
+  {
+   "rbx": "ReplicatedStorage > Shared > Logic > Catalog",
+   "file": "src/shared/Logic/Catalog.luau",
+   "class": "ModuleScript",
+   "desc": "Cosmetic ownership and purchase rules, shared by ShopService (authority) and the Outfitter UI (to e…",
+   "lines": "81-101",
+   "why": "shop: desc+body; purchase: desc+body",
+   "preview": [
+    "91: elseif def.gamePass then"
+   ],
+   "in": "Catalog.unlockText"
+  }
+ ],
+ "next": "read_lines(file, start, end) for the range above",
+ "approx_tokens": 355
+}

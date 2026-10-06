@@ -1,0 +1,7 @@
+{
+  "_help": "Map a Roblox path or file path to your own description. It overrides the auto one.",
+  "ServerScriptService > Example": "What this script does",
+  "src/client/Controllers/AtmosphereController.luau": "Per-frame controller for time of day and weather: applies Sky.compose results to Lighting, Atmosphere and ClockTime, plus fog, rain and storms. Cannot override the lobby's brightness, exposure or ambient (those are in Scenery/Sky.luau).",
+  "src/server/Builders/LobbyBuilder.luau": "Build the physical lobby: Depot Hall structure, lamps and fixtures. Global environment belongs to the client controller.",
+  "src/client/Scenery/Sky.luau": "Holds the fixed lobby brightness, exposure and ambient values (LOBBY table used by Sky.compose); global lobby lighting lives here. Make the lobby darker or brighter here. Also sky colors, moon and omens as data."
+}

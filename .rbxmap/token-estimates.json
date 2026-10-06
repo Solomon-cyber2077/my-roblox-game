@@ -1,0 +1,43 @@
+{
+  "method": "File-reading estimate only, not measured agent usage; top returned range only, not complete investigation. Baselines are selected likely files. LobbyBuilder is a single file, not a folder in this repository.",
+  "estimates": [
+    {
+      "task": "lobby lighting",
+      "baseline_files": [
+        "src/server/Builders/LobbyBuilder.luau",
+        "src/client/Controllers/AtmosphereController.luau"
+      ],
+      "without": 16965,
+      "with": 971,
+      "ratio": 17.5,
+      "find_tokens": 357,
+      "read_tokens": 614
+    },
+    {
+      "task": "shop purchase",
+      "baseline_files": [
+        "src/server/Services/ShopService.luau",
+        "src/client/UI/Outfitter.luau"
+      ],
+      "without": 4574,
+      "with": 734,
+      "ratio": 6.2,
+      "find_tokens": 355,
+      "read_tokens": 379
+    },
+    {
+      "task": "player data saving",
+      "baseline_files": [
+        "src/server/Services/DataService.luau"
+      ],
+      "without": 1927,
+      "with": 705,
+      "ratio": 2.7,
+      "find_tokens": 354,
+      "read_tokens": 351
+    }
+  ],
+  "map_cli_tokens": 873,
+  "map_cli_truncated": null,
+  "full_map_file_tokens": 6826
+}

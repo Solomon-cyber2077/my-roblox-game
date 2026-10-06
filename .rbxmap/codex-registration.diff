@@ -1,0 +1,7 @@
+--- backup/config.toml
++++ config.toml
+@@ -93,0 +94,4 @@
++
++[mcp_servers.rbxmap]
++command = "C:/Users/tameg/Documents/rbxmap/.venv/Scripts/rbxmap.exe"
++args = ["--project", "C:/Users/tameg/Documents/Roblox/my-roblox-game", "serve"]

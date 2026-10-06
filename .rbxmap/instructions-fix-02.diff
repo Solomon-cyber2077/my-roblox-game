@@ -1,0 +1,65 @@
+diff --git "a/C:\\Users\\tameg\\Documents\\rbxmap-backups\\20261006-fix-02\\AGENTS.md" b/AGENTS.md
+index 3eddd30..c064aa9 100644
+--- "a/C:\\Users\\tameg\\Documents\\rbxmap-backups\\20261006-fix-02\\AGENTS.md"
++++ b/AGENTS.md
+@@ -119,22 +119,18 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
+ - Codex: use medium effort and delegate small scoped edits to the grunt subagent.
+ 
+ <!-- rbxmap:start -->
+-## rbxmap finding
+-- Call MCP `find_script` first with plain words; never browse folders or grep the whole project.
+-- Read only returned `read_lines` ranges (max 150 lines); use `outline` for structure and `dependencies` for further ranges.
+-- `find_symbol` locates a function, remote, or service and its uses. Studio-only content is not indexed; if nothing matches, say so.
+-- After adding, renaming, or deleting scripts, call MCP `refresh` or CLI `index`.
+-- Use `MAP.md` as fallback only if MCP is unavailable. Run the absolute CLI from the game folder, or put `--project` before the command: `C:\Users\tameg\Documents\rbxmap\.venv\Scripts\rbxmap.exe` (`find`, `lines`, `outline`, `index`).
+-- You cannot playtest; provide manual Studio test steps for every change.
+-
+-## rbxmap planner (Codex)
+-- Design only: write `DESIGN.md` and task briefs; never edit game code.
+-- Call `map` and `find_script` before naming files; mark unverified paths `UNVERIFIED`.
+-- Create small briefs with absolute CLI `task new`; include goal, files, constraints, acceptance checks, and Studio steps.
+-- After changing a brief's file list, run absolute CLI `task rehash <id>`; read remotes with absolute CLI `remotes`.
+-
+-## rbxmap builder (Claude Code)
+-- Read the brief first; if stale, recheck listed ranges. Edit only its files and request approval for another file.
+-- Set task status in-progress when starting. Run the absolute CLI `check` when available and report the result.
+-- Finish by setting status done and appending a three-line summary with manual Studio test steps.
++## rbxmap workflow
++- ALWAYS call `find_script` first with plain words; then use `read_lines` only for its returned range (max 150 lines). Never browse folders or grep the project.
++- Do not use Roblox_Studio `script_search`, `script_grep`, or `search_game_tree` to find scripts. Studio-only content is not indexed; if no result, say so and ask me; never guess paths.
++- Edit script files on disk; Rojo syncs them to Studio. Do not use Studio `multi_edit` or `execute_luau` for edits.
++- Use Roblox_Studio only for playtesting/checking: `start_stop_play`, `get_console_output`, `screen_capture`, `get_studio_state`.
++- After every change, playtest, read the console for errors, and report what you saw. If playtesting is unavailable, say so and list manual Studio steps.
++- Never claim a change works without running it.
++- Lobby lighting, atmosphere, sky, fog, and time of day belong in `AtmosphereController`, not `LobbyBuilder`.
++- After adding or renaming scripts, call `refresh`; if MCP is unavailable, use the rbxmap CLI `index`.
++- After changing a brief's file list, run `task rehash <id>`; use `remotes` to inspect remotes.
++- Codex is planner: verify paths with `map`/`find_script`, write briefs, and never edit game code. Claude Code builds from the brief and edits only listed files.
++- Every generated brief must require on-disk edits (never Studio) and the checks `start_stop_play`, `get_console_output`, and `screen_capture`.
++- Builder reads the brief first, rechecks stale ranges, sets in-progress/done, runs `check`, and reports results plus Studio steps.
++- CLI fallback from the game folder: `C:\Users\tameg\Documents\rbxmap\.venv\Scripts\python.exe -c "from rbxmap.cli import main; main()" --project "C:\Users\tameg\Documents\Roblox\my-roblox-game" <command>`.
+ <!-- rbxmap:end -->
+diff --git "a/C:\\Users\\tameg\\Documents\\rbxmap-backups\\20261006-fix-02\\CLAUDE.md" b/CLAUDE.md
+index 2a2f0b5..07db534 100644
+--- "a/C:\\Users\\tameg\\Documents\\rbxmap-backups\\20261006-fix-02\\CLAUDE.md"
++++ b/CLAUDE.md
+@@ -1,6 +1,17 @@
+ @AGENTS.md
+ 
+ <!-- rbxmap:start -->
+-## rbxmap builder role
+-Read the brief first, implement only its listed files, and use the inherited finding, planner, and builder instructions. Set in-progress/done status and report check results plus Studio test steps.
++## rbxmap workflow
++- Read the brief first; use `find_script` first for code, then `read_lines` only for its returned range (max 150 lines). Never browse folders or grep the project.
++- Do not use Roblox_Studio `script_search`, `script_grep`, or `search_game_tree` to find scripts. Studio-only content is not indexed; if no result, say so and ask me; never guess paths.
++- Edit script files on disk; Rojo syncs them to Studio. Do not use Studio `multi_edit` or `execute_luau` for edits.
++- Use Roblox_Studio only for checking: `start_stop_play`, `get_console_output`, `screen_capture`, `get_studio_state`.
++- After every change, playtest, read the console for errors, and report what you saw. If unavailable, say so and list manual Studio steps.
++- Never claim a change works without running it.
++- Lobby lighting, atmosphere, sky, fog, and time of day belong in `AtmosphereController`, not `LobbyBuilder`.
++- After adding or renaming scripts, call `refresh`; if MCP is unavailable, use the rbxmap CLI `index`.
++- Edit only files listed in the brief; set task in-progress/done, run `check`, and report results plus Studio steps.
++- Codex is the planner: it verifies paths and writes briefs without editing game code. Claude Code is the builder: it edits only the brief's listed files.
++- Every generated brief must require on-disk edits (never Studio) and the checks `start_stop_play`, `get_console_output`, and `screen_capture`.
++- CLI fallback: `C:\Users\tameg\Documents\rbxmap\.venv\Scripts\python.exe -c "from rbxmap.cli import main; main()" --project "C:\Users\tameg\Documents\Roblox\my-roblox-game" <command>`.
+ <!-- rbxmap:end -->

@@ -1,0 +1,20 @@
+{
+ "checks": {
+  "rojo": {
+   "status": "ok",
+   "exit_code": 0,
+   "output": "Building project 'my-roblox-game'\nBuilt project to check.rbxl"
+  },
+  "selene": {
+   "status": "ok",
+   "exit_code": 0,
+   "output": "Results:\n0 errors\n0 warnings\n0 parse errors"
+  },
+  "stylua": {
+   "status": "ok",
+   "exit_code": 0,
+   "output": ""
+  }
+ },
+ "reminder": "Checks cannot playtest. Test the change in Studio by hand (see the brief's manual steps)."
+}

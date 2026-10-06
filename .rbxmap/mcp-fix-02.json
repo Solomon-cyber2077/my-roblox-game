@@ -1,0 +1,30 @@
+{
+  "tool_count": 11,
+  "tools": [
+    "find_script",
+    "read_lines",
+    "outline",
+    "find_symbol",
+    "dependencies",
+    "map",
+    "refresh",
+    "list_tasks",
+    "read_task",
+    "update_task_status",
+    "append_task_note"
+  ],
+  "result": {
+    "meta": null,
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"query\":\"lobby lighting\",\"matches\":[{\"rbx\":\"StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController\",\"file\":\"src/client/Controllers/AtmosphereController.luau\",\"class\":\"ModuleScript\",\"desc\":\"Owns global Lighting, Atmosphere and ClockTime every frame: lobby lighting, mood, sky color, fog, t\u2026\",\"lines\":\"465-530\",\"why\":\"lobby: desc+body; lighting: path+name+desc\",\"preview\":[\"472: local inLobby = (around - LOBBY).Magnitude < 420\",\"480: elseif inLobby or scenery == nil then LOBBY_HOUR\",\"487: local dark = if inLobby then 0 else Sky.darkness(hour)\"],\"in\":\"AtmosphereController.Start\"},{\"rbx\":\"ServerScriptService > Server > Builders > LobbyBuilder\",\"file\":\"src/server/Builders/LobbyBuilder.luau\",\"class\":\"ModuleScript\",\"desc\":\"Build the physical lobby: Depot Hall structure, lamps and fixtures. Global environment belongs to t\u2026\",\"lines\":\"419-484\",\"why\":\"lobby: path+name+desc; lighting: body\",\"preview\":[\"434: C.ironLight\"],\"in\":\"LobbyBuilder.build\"},{\"rbx\":\"StarterPlayer > StarterPlayerScripts > Client > UI > Lobby\",\"file\":\"src/client/UI/Lobby.luau\",\"class\":\"ModuleScript\",\"desc\":\"Depot Hall UI: profile card, the ready toggle, join-in-progress, shortcuts to the Outfitter and the\u2026\",\"lines\":\"153-195\",\"why\":\"lobby: path+name+funcs; lighting: body\",\"preview\":[\"167: LightInfluence = 0,\"],\"in\":\"task.spawn(fn)\"}],\"next\":\"read_lines(file, start, end) for the range above\",\"approx_tokens\":354}",
+        "annotations": null,
+        "meta": null
+      }
+    ],
+    "structured_content": null,
+    "is_error": false,
+    "result_type": "complete"
+  }
+}

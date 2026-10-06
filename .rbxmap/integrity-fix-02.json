@@ -1,0 +1,14 @@
+{
+  "compact_map_tokens": 873,
+  "map_file_approx_tokens": 6979,
+  "AGENTS.md_outside_unchanged": true,
+  "CLAUDE.md_outside_unchanged": true,
+  "all_source_bytes_unchanged": true,
+  "source_file_set_unchanged": true,
+  "git_index_unchanged": true,
+  "handoff_unchanged": true,
+  "status_before": "MM AGENTS.md\n M CLAUDE.md\n M HANDOFF.md\n?? .mcp.json\n?? .rbxmap/\n?? DESIGN.md\n?? MAP.md\n",
+  "status_after": "MM AGENTS.md\n M CLAUDE.md\n M HANDOFF.md\n?? .mcp.json\n?? .rbxmap/\n?? DESIGN.md\n?? MAP.md\n?? tasks/\n",
+  "MAP.md_outside_unchanged": true,
+  "temporary_build_unchanged": true
+}

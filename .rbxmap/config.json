@@ -1,0 +1,15 @@
+{
+  "_help": "remote_wrappers maps your own remote helper calls to a kind, e.g. {\"Net.Fire\": \"fire_server\", \"Net.On\": \"on_client_event\"}. Kinds: fire_server, fire_client, on_server_event, on_client_event, invoke_server, on_server_invoke.",
+  "remote_wrappers": {
+    "Net.Fire": "fire_server",
+    "Net.On": "on_client_event",
+    "NetService.Handle": "on_server_event",
+    "NetService.Fire": "fire_client",
+    "NetService.FireAll": "fire_client",
+    "NetService.FireList": "fire_client",
+    "Registry.NetService.Handle": "on_server_event",
+    "Registry.NetService.Fire": "fire_client",
+    "Registry.NetService.FireAll": "fire_client",
+    "Registry.NetService.FireList": "fire_client"
+  }
+}

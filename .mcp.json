@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rbxmap": {
+      "type": "stdio",
+      "command": "C:/Users/tameg/Documents/rbxmap/.venv/Scripts/rbxmap.exe",
+      "args": ["--project", "C:/Users/tameg/Documents/Roblox/my-roblox-game", "serve"]
+    },
+    "Roblox_Studio": {
+      "type": "stdio",
+      "command": "cmd.exe",
+      "args": ["/c", "cd /d %LOCALAPPDATA%\\Roblox && .\\mcp.bat"]
+    }
+  }
+}

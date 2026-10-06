@@ -1,0 +1,183 @@
+{
+  "lobby": [
+    "LobbyBuilder",
+    "Lobby"
+  ],
+  "lighting": [
+    "Lighting",
+    "Atmosphere",
+    "ColorCorrection",
+    "Bloom",
+    "Brightness",
+    "ClockTime",
+    "Ambient",
+    "FogEnd",
+    "FogColor",
+    "AtmosphereController"
+  ],
+  "shop": [
+    "Shop",
+    "Purchase",
+    "MarketplaceService"
+  ],
+  "ui": [
+    "ScreenGui",
+    "Frame"
+  ],
+  "gui": [
+    "ScreenGui",
+    "Frame",
+    "TextLabel"
+  ],
+  "data": [
+    "DataStore"
+  ],
+  "save": [
+    "DataStore",
+    "SetAsync",
+    "UpdateAsync"
+  ],
+  "sky": [
+    "Sky",
+    "Skybox",
+    "Atmosphere",
+    "Clouds",
+    "AtmosphereController"
+  ],
+  "fog": [
+    "FogEnd",
+    "FogStart",
+    "FogColor",
+    "Atmosphere",
+    "AtmosphereController"
+  ],
+  "sound": [
+    "Sound",
+    "SoundService",
+    "SoundId"
+  ],
+  "music": [
+    "Sound",
+    "SoundService",
+    "SoundId"
+  ],
+  "leaderboard": [
+    "leaderstats",
+    "Leaderboard",
+    "OrderedDataStore"
+  ],
+  "money": [
+    "Coins",
+    "Cash",
+    "Currency",
+    "leaderstats"
+  ],
+  "purchase": [
+    "MarketplaceService",
+    "ProcessReceipt",
+    "PromptProductPurchase",
+    "GamePass"
+  ],
+  "gamepass": [
+    "GamePass",
+    "UserOwnsGamePassAsync"
+  ],
+  "camera": [
+    "Camera",
+    "CurrentCamera"
+  ],
+  "input": [
+    "UserInputService",
+    "ContextActionService",
+    "InputBegan"
+  ],
+  "controls": [
+    "UserInputService",
+    "ContextActionService",
+    "InputBegan"
+  ],
+  "animation": [
+    "Animator",
+    "AnimationTrack",
+    "LoadAnimation"
+  ],
+  "spawn": [
+    "SpawnLocation",
+    "CharacterAdded",
+    "Spawn"
+  ],
+  "remote": [
+    "RemoteEvent",
+    "RemoteFunction",
+    "FireServer",
+    "OnServerEvent"
+  ],
+  "network": [
+    "RemoteEvent",
+    "FireServer",
+    "FireClient"
+  ],
+  "tween": [
+    "TweenService",
+    "TweenInfo"
+  ],
+  "effects": [
+    "ParticleEmitter",
+    "Beam",
+    "Trail",
+    "Bloom"
+  ],
+  "vfx": [
+    "ParticleEmitter",
+    "Beam",
+    "Trail"
+  ],
+  "teleport": [
+    "TeleportService"
+  ],
+  "badge": [
+    "BadgeService",
+    "AwardBadge"
+  ],
+  "player": [
+    "Players",
+    "PlayerAdded",
+    "Character"
+  ],
+  "atmosphere": [
+    "AtmosphereController"
+  ],
+  "time of day": [
+    "AtmosphereController"
+  ],
+  "time": [
+    "AtmosphereController"
+  ],
+  "day": [
+    "AtmosphereController"
+  ],
+  "darker": [
+    "AtmosphereController"
+  ],
+  "brighter": [
+    "AtmosphereController"
+  ],
+  "ambient": [
+    "AtmosphereController"
+  ],
+  "lamps": [
+    "LobbyBuilder"
+  ],
+  "lights": [
+    "LobbyBuilder"
+  ],
+  "build the lobby": [
+    "LobbyBuilder"
+  ],
+  "build": [
+    "LobbyBuilder"
+  ],
+  "color": [
+    "AtmosphereController"
+  ]
+}

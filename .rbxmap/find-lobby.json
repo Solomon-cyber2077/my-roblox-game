@@ -1,0 +1,45 @@
+{
+ "query": "lobby lighting",
+ "matches": [
+  {
+   "rbx": "ServerScriptService > Server > Builders > LobbyBuilder",
+   "file": "src/server/Builders/LobbyBuilder.luau",
+   "class": "ModuleScript",
+   "desc": "The Depot Hall: a Victorian train shed where players wait between runs.",
+   "lines": "419-484",
+   "why": "lobby: path+name+funcs; lighting: body",
+   "preview": [
+    "434: C.ironLight",
+    "456: Kit.pointLight(lamp, C.warm, 0.7, 38, (x + 99) % 44 == 0)",
+    "470: -- Fill: soft lights high between the trusses wash the whole hall evenly, so the lamps be…"
+   ],
+   "in": "LobbyBuilder.build"
+  },
+  {
+   "rbx": "StarterPlayer > StarterPlayerScripts > Client > UI > Lobby",
+   "file": "src/client/UI/Lobby.luau",
+   "class": "ModuleScript",
+   "desc": "Depot Hall UI: profile card, the ready toggle, join-in-progress, shortcuts to the Outfitter and the…",
+   "lines": "153-195",
+   "why": "lobby: path+name+funcs; lighting: body",
+   "preview": [
+    "167: LightInfluence = 0,"
+   ],
+   "in": "task.spawn(fn)"
+  },
+  {
+   "rbx": "StarterPlayer > StarterPlayerScripts > Client > Controllers > AtmosphereController",
+   "file": "src/client/Controllers/AtmosphereController.luau",
+   "class": "ModuleScript",
+   "desc": "The one owner of Lighting. Builds the sky, atmosphere, clouds, post effects, weather and the sky ob…",
+   "lines": "465-530",
+   "why": "lobby: body; lighting: path+name+desc",
+   "preview": [
+    "472: local inLobby = (around - LOBBY).Magnitude < 420"
+   ],
+   "in": "AtmosphereController.Start"
+  }
+ ],
+ "next": "read_lines(file, start, end) for the range above",
+ "approx_tokens": 357
+}

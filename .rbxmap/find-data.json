@@ -1,0 +1,44 @@
+{
+ "query": "player data saving",
+ "matches": [
+  {
+   "rbx": "ServerScriptService > Server > Services > DataService",
+   "file": "src/server/Services/DataService.luau",
+   "class": "ModuleScript",
+   "desc": "Player profiles with session locking. A profile is loaded with UpdateAsync, which stamps a lock { j…",
+   "lines": "196-237",
+   "why": "player: desc+tags+funcs; data: path+name+tags; saving: body",
+   "preview": [
+    "200: Players.PlayerAdded:Connect(onPlayerAdded)",
+    "201: Players.PlayerRemoving:Connect(onPlayerRemoving)",
+    "203: task.spawn(onPlayerAdded, player)"
+   ],
+   "in": "DataService.Start"
+  },
+  {
+   "rbx": "StarterPlayer > StarterPlayerScripts > Client > UI > Summary",
+   "file": "src/client/UI/Summary.luau",
+   "class": "ModuleScript",
+   "desc": "End-of-run receipt: outcome, payout lines in ledger type, XP, rank-ups and milestones.",
+   "lines": "35-100",
+   "why": "player: path; data: tags+body",
+   "preview": [
+    "95: \"Progress is not saved in this session (DataStores unavailable).\","
+   ],
+   "in": "Summary.show"
+  },
+  {
+   "rbx": "StarterPlayer > StarterPlayerScripts > Client > Scenery > Sky",
+   "file": "src/client/Scenery/Sky.luau",
+   "class": "ModuleScript",
+   "desc": "The sky as data and math: what the light, the air, the clouds and the moon should be for an hour of…",
+   "lines": "1-33",
+   "why": "player: path; data: desc+body",
+   "preview": [
+    "3: The sky as data and math: what the light, the air, the clouds and the moon should"
+   ]
+  }
+ ],
+ "next": "read_lines(file, start, end) for the range above",
+ "approx_tokens": 354
+}
