@@ -22,7 +22,7 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
 
 ## Known bugs / unfinished work
 - No TODO/FIXME notes in src. Robux product ids unbound until publish (`Config/Cosmetics`).
-- Commit 2d369e2 snapshotted uncommitted work without running `lune run check` (unverified).
+- Commit 2d369e2 passed `lune run check` (verified 2026-10-04).
 
 ## Architecture
 

@@ -480,6 +480,18 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		fill.Name = "FillLight"
 		Kit.pointLight(fill, C.fill, 0.85, 60, false)
 	end
+	-- a back row reaches the departure board and back wall, out of range of the row above
+	for _, x in { -44, 0, 44 } do
+		local fill = block(
+			Vector3.one,
+			at(x, 26, BACK_Z - 20),
+			C.fill,
+			nil,
+			{ transparency = 1, collide = false, shadow = false }
+		)
+		fill.Name = "FillLight"
+		Kit.pointLight(fill, C.fill, 0.85, 45, false)
+	end
 
 	-- Roof: slate over the eaves, dirty glass over the middle on glazing bars --------------------------
 	for i = 1, SEGMENTS do
