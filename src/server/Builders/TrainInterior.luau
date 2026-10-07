@@ -4,10 +4,10 @@
 	linings, windows, ceilings, racks), this furnishes it, in the same train space (x along
 	the track, +X the locomotive, y = 0 the floor, +Z the platform side).
 
-	  Crew saloon  bays of facing velvet banquettes (two seats each, every one sittable)
+	  Crew saloon  bays of facing velvet window seats (one each, every one sittable)
 	               round wall tables with lamps, paintings of the
 	               line on the end walls
-	  Guard's van  a pot-bellied stove, two wing chairs on a rug, the guard's
+	  Guard's van  a pot-bellied stove, a wing chair on a rug, the guard's
 	               cat asleep on a cushion, a bunk, the guard's desk and lamp, a lantern
 	  Workshop     a lathe, a stool at the
 	               bench and a lamp over it
@@ -102,58 +102,400 @@ local function letter(
 	label.Parent = gui
 end
 
--- A little painting of the line: a sky, a horizon, and a moon or a sun.
+-- A little oil painting of the line, laid out on a 240 x 180 grid and drawn at PAINT_SCALE: a
+-- three-tone sky with streaked clouds and stars (or a skein of birds), the sun or a cratered moon
+-- in its halo, two ranges of peaks (the far one snow-capped, the near one lit along a flank), a
+-- lake with the orb's light broken on it, a stone viaduct with a train crossing it under its own
+-- smoke, and in front pines, a semaphore signal and telegraph poles strung with sagging wires,
+-- all under a warm varnish that darkens to the edges. Returns the painting's title.
+local PAINT_SCALE = 2
 local PAINTINGS = {
-	{ top = rgb(238, 150, 86), bottom = rgb(92, 48, 86), land = rgb(36, 28, 34), orb = rgb(255, 214, 140) },
 	{
-		top = rgb(244, 214, 160),
-		bottom = rgb(96, 140, 168),
-		land = rgb(40, 58, 70),
-		orb = rgb(255, 236, 190),
+		title = "DUSK AT THE VIADUCT",
+		top = rgb(78, 48, 92),
+		mid = rgb(226, 116, 78),
+		horizon = rgb(252, 198, 124),
+		peaks = rgb(116, 66, 90),
+		land = rgb(32, 22, 30),
+		water = rgb(140, 76, 88),
+		orb = rgb(255, 224, 156),
+		orbY = 96,
+		orbSize = 28,
+		moon = false,
+		lamps = true,
 	},
-	{ top = rgb(26, 30, 58), bottom = rgb(70, 50, 82), land = rgb(14, 12, 18), orb = rgb(236, 128, 70) },
-	{ top = rgb(60, 70, 96), bottom = rgb(170, 140, 150), land = rgb(30, 34, 30), orb = rgb(240, 232, 214) },
+	{
+		title = "THE HIGH LINE AT NOON",
+		top = rgb(78, 132, 178),
+		mid = rgb(150, 192, 214),
+		horizon = rgb(240, 226, 192),
+		peaks = rgb(108, 132, 158),
+		land = rgb(38, 60, 44),
+		water = rgb(86, 136, 162),
+		orb = rgb(255, 246, 214),
+		orbY = 30,
+		orbSize = 18,
+		moon = false,
+		lamps = false,
+	},
+	{
+		title = "UNDER THE AMBER MOON",
+		top = rgb(10, 12, 30),
+		mid = rgb(38, 32, 66),
+		horizon = rgb(108, 58, 74),
+		peaks = rgb(42, 36, 64),
+		land = rgb(9, 9, 15),
+		water = rgb(32, 28, 54),
+		orb = rgb(240, 136, 76),
+		orbY = 44,
+		orbSize = 24,
+		moon = true,
+		lamps = true,
+	},
+	{
+		title = "LAST LIGHT OVER THE PASS",
+		top = rgb(36, 46, 78),
+		mid = rgb(102, 100, 138),
+		horizon = rgb(204, 166, 166),
+		peaks = rgb(80, 82, 112),
+		land = rgb(22, 26, 28),
+		water = rgb(88, 88, 120),
+		orb = rgb(244, 236, 218),
+		orbY = 38,
+		orbSize = 18,
+		moon = true,
+		lamps = true,
+	},
 }
 
-local function paint(canvas: BasePart, face: Enum.NormalId, style: number)
+local function paint(canvas: BasePart, face: Enum.NormalId, style: number): string
 	local spec = PAINTINGS[(style - 1) % #PAINTINGS + 1]
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = face
-	gui.CanvasSize = Vector2.new(240, 180)
+	gui.CanvasSize = Vector2.new(240, 180) * PAINT_SCALE
 	gui.LightInfluence = 1
+	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	gui.Parent = canvas
-	local sky = Instance.new("Frame")
-	sky.Size = UDim2.fromScale(1, 1)
-	sky.BorderSizePixel = 0
-	sky.BackgroundColor3 = Color3.new(1, 1, 1)
-	sky.Parent = gui
-	local gradient = Instance.new("UIGradient")
-	gradient.Rotation = 90
-	gradient.Color = ColorSequence.new(spec.top, spec.bottom)
-	gradient.Parent = sky
-	local orb = Instance.new("Frame")
-	orb.AnchorPoint = Vector2.new(0.5, 0.5)
-	orb.Position = UDim2.fromScale(0.68, 0.42)
-	orb.Size = UDim2.fromOffset(46, 46)
-	orb.BorderSizePixel = 0
-	orb.BackgroundColor3 = spec.orb
-	orb.Parent = gui
-	local round = Instance.new("UICorner")
-	round.CornerRadius = UDim.new(1, 0)
-	round.Parent = orb
-	for i, hill in { { 0.25, 0.68, 0.7 }, { 0.75, 0.74, 0.9 } } do
-		local land = Instance.new("Frame")
-		land.AnchorPoint = Vector2.new(0.5, 0)
-		land.Position = UDim2.fromScale(hill[1], hill[2])
-		land.Size = UDim2.fromScale(hill[3], 0.6)
-		land.BorderSizePixel = 0
-		land.BackgroundColor3 = spec.land
-		land.ZIndex = 2 + i
-		land.Parent = gui
-		local hump = Instance.new("UICorner")
-		hump.CornerRadius = UDim.new(0.5, 0)
-		hump.Parent = land
+	-- the same brushwork for the same style every time (Park-Miller)
+	local seed = style * 48271 % 2147483647
+	local function rand(): number
+		seed = seed * 16807 % 2147483647
+		return seed / 2147483647
 	end
+	local function shape(
+		x: number,
+		y: number,
+		w: number,
+		h: number,
+		color: Color3,
+		z: number,
+		alpha: number?
+	): Frame
+		local f = Instance.new("Frame")
+		f.AnchorPoint = Vector2.new(0.5, 0.5)
+		f.Position = UDim2.fromOffset(x * PAINT_SCALE, y * PAINT_SCALE)
+		f.Size = UDim2.fromOffset(w * PAINT_SCALE, h * PAINT_SCALE)
+		f.BackgroundColor3 = color
+		f.BackgroundTransparency = alpha or 0
+		f.BorderSizePixel = 0
+		f.ZIndex = z
+		f.Parent = gui
+		return f
+	end
+	local function round(f: Frame): Frame
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0.5, 0)
+		corner.Parent = f
+		return f
+	end
+	local function dot(x: number, y: number, d: number, color: Color3, z: number, alpha: number?): Frame
+		return round(shape(x, y, d, d, color, z, alpha))
+	end
+	local function line(
+		x0: number,
+		y0: number,
+		x1: number,
+		y1: number,
+		thick: number,
+		color: Color3,
+		z: number,
+		alpha: number?
+	)
+		local dx, dy = x1 - x0, y1 - y0
+		local f = shape((x0 + x1) / 2, (y0 + y1) / 2, math.sqrt(dx * dx + dy * dy), thick, color, z, alpha)
+		f.Rotation = math.deg(math.atan2(dy, dx))
+	end
+	-- a summit: a square turned on its corner, its top `size * 0.7071` above `y`
+	local function peak(x: number, y: number, size: number, color: Color3, z: number, alpha: number?)
+		shape(x, y, size, size, color, z, alpha).Rotation = 45
+	end
+	local function gradient(f: Frame, rotation: number, color: ColorSequence?, alpha: NumberSequence?)
+		local g = Instance.new("UIGradient")
+		g.Rotation = rotation
+		if color then
+			g.Color = color
+		end
+		if alpha then
+			g.Transparency = alpha
+		end
+		g.Parent = f
+	end
+	local white = Color3.new(1, 1, 1)
+	local black = Color3.new(0, 0, 0)
+	local HORIZON = 112 -- the lake's far shore
+	local DECK = 103 -- the viaduct's rail level
+
+	-- the sky, the stars or the birds
+	gradient(
+		shape(120, 90, 240, 180, white, 1),
+		90,
+		ColorSequence.new({
+			ColorSequenceKeypoint.new(0, spec.top),
+			ColorSequenceKeypoint.new(0.4, spec.mid),
+			ColorSequenceKeypoint.new(HORIZON / 180, spec.horizon),
+			ColorSequenceKeypoint.new(1, spec.horizon),
+		})
+	)
+	local ox, oy, od = 172, spec.orbY, spec.orbSize
+	if spec.moon then
+		for _ = 1, 24 do
+			local x, y = 4 + rand() * 232, 4 + rand() * 70
+			local d = if rand() > 0.82 then 1.6 else 1
+			if (x - ox) ^ 2 + (y - oy) ^ 2 > (od * 1.3) ^ 2 then
+				dot(x, y, d, white, 2, 0.15 + rand() * 0.5)
+			end
+		end
+	else
+		local ink = spec.land:Lerp(spec.mid, 0.25)
+		for i = 1, 4 do
+			local bx, by = 46 + i * 9 + rand() * 6, 34 + i * 3 + rand() * 4
+			line(bx - 2.6, by - 1.4, bx, by, 0.8, ink, 6)
+			line(bx, by, bx + 2.6, by - 1.4, 0.8, ink, 6)
+		end
+	end
+	-- the orb in its halo; the moon gets her seas
+	for i, k in { 2.8, 2.0, 1.45 } do
+		dot(ox, oy, od * k, spec.orb, 3, ({ 0.9, 0.82, 0.68 })[i])
+	end
+	dot(ox, oy, od, spec.orb, 4)
+	if spec.moon then
+		local sea = spec.orb:Lerp(black, 0.22)
+		for _, c in { { -0.2, -0.14, 0.24 }, { 0.17, 0.1, 0.18 }, { -0.06, 0.24, 0.13 }, { 0.22, -0.2, 0.1 } } do
+			dot(ox + c[1] * od, oy + c[2] * od, c[3] * od, sea, 5, 0.45)
+		end
+	end
+	-- clouds in long streaks, each with its lit underside
+	for i = 1, 6 do
+		local cx, cy = 10 + rand() * 220, 12 + rand() * 66
+		local w, h = 28 + rand() * 52, 2.4 + rand() * 2.6
+		local body = if spec.moon
+			then spec.top:Lerp(spec.mid, 0.7)
+			else spec.mid:Lerp(spec.orb, 0.25 + rand() * 0.3)
+		round(shape(cx, cy, w, h, body, 6, 0.2 + rand() * 0.3))
+		round(shape(cx + w * 0.06, cy + h * 0.55, w * 0.72, 1.1, spec.orb, 6, 0.55 + i * 0.03))
+	end
+
+	-- the far range with snow on its summits, the near range lit along one flank
+	local haze = spec.peaks:Lerp(spec.horizon, 0.45)
+	local snow = spec.orb:Lerp(white, 0.4):Lerp(spec.horizon, 0.3)
+	for _, p in { { 10, 62 }, { 46, 80 }, { 84, 58 }, { 120, 86 }, { 158, 64 }, { 196, 82 }, { 234, 60 } } do
+		local s = p[2]
+		peak(p[1], HORIZON + 2, s, haze, 7)
+		local cap = s * 0.26
+		peak(p[1], HORIZON + 2 - (s - cap) * 0.7071, cap, snow, 8, 0.1)
+	end
+	local rim = spec.peaks:Lerp(spec.orb, 0.45)
+	for _, p in { { 26, 46 }, { 70, 38 }, { 104, 50 }, { 142, 36 }, { 182, 48 }, { 222, 40 } } do
+		local s = p[2]
+		local top = HORIZON + 4 - s * 0.7071
+		peak(p[1], HORIZON + 4, s, spec.peaks, 9)
+		line(p[1] - s * 0.25, top + s * 0.25, p[1], top, 1, rim, 9, 0.35)
+	end
+
+	-- the lake: the far shore and its trees, the orb's light broken on the water, ripples
+	gradient(
+		shape(120, HORIZON + 10, 240, 20, white, 10),
+		90,
+		ColorSequence.new(spec.water:Lerp(spec.horizon, 0.35), spec.water:Lerp(black, 0.25))
+	)
+	local shore = spec.land:Lerp(spec.peaks, 0.45)
+	shape(120, HORIZON + 0.6, 240, 2, shore, 11)
+	for i = 0, 23 do
+		local th = 1.5 + rand() * 2.5
+		shape(i * 10 + rand() * 6, HORIZON - th / 2, 1.4, th, shore, 11)
+	end
+	for i = 0, 5 do
+		shape(
+			ox + (rand() - 0.5) * 2,
+			HORIZON + 3 + i * 2.6,
+			od * (1.1 - i * 0.15),
+			0.9,
+			spec.orb,
+			11,
+			0.3 + i * 0.1
+		)
+	end
+	local ripple = spec.water:Lerp(spec.horizon, 0.55)
+	for _ = 1, 10 do
+		shape(rand() * 240, HORIZON + 3 + rand() * 16, 5 + rand() * 14, 0.6, ripple, 11, 0.45)
+	end
+
+	-- the viaduct: its deck and parapet, piers springing into arches, lit down one edge
+	local stone = spec.land:Lerp(spec.peaks, 0.35)
+	shape(120, DECK + 2, 240, 4, stone, 12)
+	shape(120, DECK + 0.3, 240, 0.6, spec.orb, 12, 0.55)
+	for i = 0, 9 do
+		local px = 10 + i * 25
+		shape(px, DECK + 16, 5, 28, stone, 12)
+		peak(px - 3, DECK + 5.5, 6, stone, 12)
+		peak(px + 3, DECK + 5.5, 6, stone, 12)
+		shape(px - 2.1, DECK + 17, 0.8, 26, spec.orb, 12, 0.75)
+	end
+
+	-- the train crossing it, heading left: the engine, her tender and three coaches
+	local iron = spec.land:Lerp(black, 0.35)
+	local wheel = iron:Lerp(black, 0.4)
+	local roof = spec.land:Lerp(spec.orb, 0.16)
+	local glow = rgb(255, 210, 130)
+	shape(78, DECK - 3.5, 18, 5, iron, 13) -- boiler
+	shape(68.6, DECK - 3.6, 2.6, 5.6, iron:Lerp(black, 0.3), 13) -- smokebox
+	shape(71.5, DECK - 7.6, 2.2, 3.6, iron, 13) -- chimney
+	shape(71.5, DECK - 9.4, 3.2, 0.9, iron, 13) -- its cap
+	round(shape(78.5, DECK - 6.4, 2.8, 2, iron, 13)) -- dome
+	shape(89.5, DECK - 5, 6.4, 9, iron, 13) -- cab
+	shape(89.5, DECK - 9.8, 7.8, 1, roof, 13)
+	shape(90, DECK - 6.4, 2.4, 2.4, if spec.lamps then glow else roof, 14)
+	shape(98.5, DECK - 3.2, 9.4, 5.6, iron, 13) -- tender
+	for _, wx in { 72, 76, 80, 84, 88, 95, 101 } do
+		dot(wx, DECK - 0.8, 2.4, wheel, 14)
+	end
+	line(64, DECK - 0.6, 67.6, DECK - 1.8, 0.8, iron, 13) -- the pilot
+	if spec.lamps then
+		dot(67, DECK - 4.6, 1.8, glow, 14)
+		gradient(shape(54, DECK - 4.4, 24, 3.4, glow, 13, 0.5), 0, nil, NumberSequence.new(1, 0))
+	end
+	local coach = iron:Lerp(spec.land, 0.5)
+	local pane = spec.water:Lerp(white, 0.3)
+	for c = 0, 2 do
+		local cx = 112.5 + c * 19
+		shape(cx, DECK - 3.6, 17, 6.2, coach, 13)
+		shape(cx, DECK - 7, 17.6, 1.2, roof, 13)
+		for j = 0, 4 do
+			local lit = spec.lamps and (j + c) % 4 ~= 0
+			shape(
+				cx - 6 + j * 3,
+				DECK - 4.4,
+				1.7,
+				1.9,
+				if lit then glow else pane,
+				14,
+				if lit then 0 else 0.35
+			)
+		end
+		dot(cx - 5.5, DECK - 0.5, 2, wheel, 14)
+		dot(cx + 5.5, DECK - 0.5, 2, wheel, 14)
+		shape(cx - 9.6, DECK - 2.4, 2.2, 0.7, iron, 13) -- the coupling
+	end
+	-- her smoke, blown back along the train
+	local smoke = if spec.moon then spec.peaks:Lerp(spec.orb, 0.25) else spec.mid:Lerp(spec.horizon, 0.5)
+	for i = 1, 9 do
+		dot(
+			72 + i * 5.6 + (rand() - 0.5) * 2,
+			DECK - 10 - i * 2 - i * i * 0.12,
+			3 + i * 1.5,
+			smoke,
+			14,
+			0.25 + i * 0.07
+		)
+	end
+
+	-- pines standing behind the near banks
+	local function pine(x: number, foot: number, h: number, color: Color3, z: number)
+		shape(x, foot - h * 0.1, math.max(h * 0.06, 0.8), h * 0.2, color, z)
+		for t = 0, 3 do
+			peak(x, foot - h * 0.2 - t * h * 0.17, h * (0.36 - t * 0.065), color, z)
+		end
+	end
+	local needles = spec.land:Lerp(spec.peaks, 0.15)
+	for _, t in
+		{
+			{ 8, 128, 24 },
+			{ 17, 129, 30 },
+			{ 50, 134, 20 },
+			{ 196, 137, 26 },
+			{ 206, 136, 32 },
+			{ 230, 133, 22 },
+		}
+	do
+		pine(t[1], t[2], t[3], needles, 14)
+	end
+	-- the near banks, lit along their crests, and the grass in front
+	local crest = spec.land:Lerp(spec.orb, 0.3)
+	for _, b in { { 30, 146, 120, 8 }, { 120, 154, 130, -4 }, { 214, 150, 120, -6 } } do
+		shape(b[1], b[2], b[3], 40, spec.land, 15).Rotation = b[4]
+		local r = math.rad(b[4])
+		shape(b[1] + math.sin(r) * 20, b[2] - math.cos(r) * 20, b[3], 1, crest, 15, 0.35).Rotation = b[4]
+	end
+	shape(120, 166, 240, 28, spec.land, 15)
+	local blade = spec.land:Lerp(spec.peaks, 0.3)
+	for _ = 1, 18 do
+		local gx, gy = rand() * 240, 150 + rand() * 28
+		line(gx, gy, gx + (rand() - 0.5) * 3, gy - 3 - rand() * 3, 0.7, blade, 16)
+	end
+	-- two big pines at the edges, cut by the frame
+	pine(4, 194, 72, spec.land:Lerp(black, 0.2), 16)
+	pine(237, 190, 60, spec.land:Lerp(black, 0.2), 16)
+
+	-- the semaphore signal, its arm at danger and its lamp lit
+	shape(34, 141, 1.6, 26, iron, 16)
+	dot(34, 127.6, 1.8, iron, 16)
+	shape(34, 154, 4, 1.2, iron, 16)
+	shape(34, 136, 3.6, 4.6, iron, 16)
+	local red = rgb(255, 70, 50)
+	dot(34, 135.4, 1.6, if spec.lamps then red else red:Lerp(black, 0.4), 17)
+	if spec.lamps then
+		dot(34, 135.4, 5.5, red, 17, 0.72)
+	end
+	line(35, 131, 45, 128.5, 2, rgb(176, 40, 34), 16)
+	line(41.2, 129.5, 43.4, 128.95, 2.05, rgb(236, 228, 210), 16)
+
+	-- telegraph poles going away to the right, their wires sagging between them
+	local poles = { { 146, 158, 36 }, { 180, 150, 28 }, { 208, 144, 22 } }
+	local ends = {}
+	for i, p in poles do
+		local x, foot, h = p[1], p[2], p[3]
+		local arm = h * 0.13
+		shape(x, foot - h / 2, 0.6 + h * 0.03, h, iron, 16)
+		shape(x, foot - h + 2.5, arm * 2, 1, iron, 16)
+		dot(x - arm + 0.5, foot - h + 1.6, 1, iron, 16)
+		dot(x + arm - 0.5, foot - h + 1.6, 1, iron, 16)
+		ends[i] = { x - arm + 0.5, x + arm - 0.5, foot - h + 2 }
+	end
+	local wire = iron:Lerp(spec.orb, 0.2)
+	for i = 1, #ends - 1 do
+		local a, b = ends[i], ends[i + 1]
+		for k = 1, 2 do
+			local x0, x1 = a[k], b[k]
+			local mx, my = (x0 + x1) / 2, (a[3] + b[3]) / 2 + 1.6
+			line(x0, a[3], mx, my, 0.5, wire, 17, 0.2)
+			line(mx, my, x1, b[3], 0.5, wire, 17, 0.2)
+		end
+	end
+	for k = 1, 2 do
+		line(ends[#ends][k], ends[#ends][3], 244, ends[#ends][3] + 1.5, 0.5, wire, 17, 0.2)
+	end
+
+	-- the varnish, warm all over and darkening to the edges
+	shape(120, 90, 240, 180, rgb(255, 214, 150), 18, 0.88)
+	local edge = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.45),
+		NumberSequenceKeypoint.new(0.16, 1),
+		NumberSequenceKeypoint.new(0.84, 1),
+		NumberSequenceKeypoint.new(1, 0.45),
+	})
+	gradient(shape(120, 90, 240, 180, black, 19), 0, nil, edge)
+	gradient(shape(120, 90, 240, 180, black, 19), 90, nil, edge)
+	return spec.title
 end
 
 function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnished
@@ -279,43 +621,47 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	local function picture(x: number, z: number, inward: number, style: number)
 		local frame = decor(Vector3.new(0.12, 1.9, 2.5), at(x + inward * 0.07, 5.55, z), C.woodDark, M.Wood)
 		frame.Name = "PictureFrame"
+		-- a gilt slip round the canvas, standing a hair off the frame's face
+		local slip = decor(Vector3.new(0.07, 1.68, 2.28), at(x + inward * 0.12, 5.55, z), C.gilt, M.Metal)
+		slip.Name = "PictureSlip"
 		local canvas =
 			decor(Vector3.new(0.05, 1.56, 2.16), at(x + inward * 0.155, 5.55, z), C.cream, M.SmoothPlastic)
 		canvas.Name = "Painting"
-		paint(canvas, if inward > 0 then Enum.NormalId.Right else Enum.NormalId.Left, style)
+		local title = paint(canvas, if inward > 0 then Enum.NormalId.Right else Enum.NormalId.Left, style)
+		-- its title on a brass plaque screwed to the lining under the frame
+		local plaque = plate(
+			Vector3.new(x + inward * 0.035, 4.42, z),
+			Vector3.new(inward, 0, 0),
+			Vector3.new(1.3, 0.2, 0.05),
+			C.brass,
+			M.Metal,
+			title,
+			C.board,
+			PLATE_FONT,
+			1
+		)
+		plaque.Name = "PicturePlaque"
 	end
 
 	-- Crew saloon ---------------------------------------------------------------------------------
 
-	-- A velvet banquette for two against wall `side` (1 platform, -1 far), its sitters facing `facing` (1 = +X).
-	local BENCH_Z = 3.56 -- the bench's middle, out from the aisle
-	local BENCH_W = 4.12
+	-- A velvet window seat for one against wall `side` (1 platform, -1 far), its sitter facing
+	-- `facing` (1 = +X). The aisle side is left open for the runner and the crew walking it.
+	local BENCH_W = 2.3
+	local BENCH_Z = 5.62 - BENCH_W / 2 -- the seat's middle, its outer end a hand off the lining
 	local function bench(x: number, side: number, facing: number)
 		local yaw = if facing > 0 then -90 else 90
 		local zc = side * BENCH_Z
-		solid(Vector3.new(2.55, 1.4, BENCH_W), at(x - facing * 0.275, 0.7, zc), C.woodDark, M.Wood)
-		for k = -1, 1, 2 do
-			seat(
-				Vector3.new(1.95, 0.5, 2.0),
-				at(x, 1.65, zc + k * 1.03) * Kit.angles(0, yaw, 0),
-				C.velvet,
-				"Saloon seat"
-			)
-		end
-		local back = at(x - facing * 1.275, 3.0, zc) * Kit.angles(0, 0, facing * 8)
-		solid(Vector3.new(0.55, 3.2, BENCH_W), back, C.velvet, M.Fabric)
-		decor(Vector3.new(0.6, 0.16, BENCH_W + 0.08), back * CFrame.new(0, 1.66, 0), C.woodDark, M.Wood)
-		for k = -1, 1, 2 do
-			decor(
-				Vector3.new(0.06, 0.85, 1.4),
-				back * CFrame.new(facing * 0.305, 1.0, k * 1.03),
-				C.lace,
-				M.Fabric
-			)
-		end
-		-- the armrest at the aisle end
-		solid(Vector3.new(2.0, 0.24, 0.3), at(x, 2.45, side * 1.66), C.woodDark, M.Wood)
-		decor(Vector3.new(0.22, 0.56, 0.22), at(x + facing * 0.75, 2.05, side * 1.66), C.woodDark, M.Wood)
+		solid(Vector3.new(2.3, 1.25, BENCH_W), at(x - facing * 0.25, 0.625, zc), C.woodDark, M.Wood)
+		seat(Vector3.new(1.75, 0.45, 1.8), at(x, 1.475, zc) * Kit.angles(0, yaw, 0), C.velvet, "Saloon seat")
+		local back = at(x - facing * 1.15, 2.7, zc) * Kit.angles(0, 0, facing * 8)
+		solid(Vector3.new(0.5, 2.9, BENCH_W), back, C.velvet, M.Fabric)
+		decor(Vector3.new(0.55, 0.15, BENCH_W + 0.08), back * CFrame.new(0, 1.5, 0), C.woodDark, M.Wood)
+		decor(Vector3.new(0.06, 0.78, 1.25), back * CFrame.new(facing * 0.28, 0.9, 0), C.lace, M.Fabric)
+		-- the armrest at the aisle end, on a turned leg
+		local az = side * (BENCH_Z - BENCH_W / 2 + 0.15)
+		solid(Vector3.new(1.8, 0.22, 0.28), at(x, 2.25, az), C.woodDark, M.Wood)
+		decor(Vector3.new(0.2, 0.89, 0.2), at(x + facing * 0.68, 1.695, az), C.woodDark, M.Wood)
 	end
 
 	local function bay(x0: number, side: number)
@@ -323,15 +669,15 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		bench(x0 + 5.75, side, -1)
 		local tx = x0 + 3.65
 		-- the table, wall-hung with a brass pedestal at the aisle end
-		solid(Vector3.new(2.0, 0.16, 3.3), at(tx, 3.08, side * 3.95), C.polish, M.Wood)
-		post(2.9, 0.3, at(tx, 1.45, side * 2.75), C.brass, M.Metal, true)
-		disc(0.08, 1.0, at(tx, 0.04, side * 2.75), C.brass, M.Metal)
-		decor(Vector3.new(0.6, 0.06, 0.6), at(tx, 2.97, side * 2.75), C.brass, M.Metal)
+		solid(Vector3.new(1.8, 0.16, 2.5), at(tx, 2.88, side * 4.3), C.polish, M.Wood)
+		post(2.7, 0.3, at(tx, 1.35, side * 3.4), C.brass, M.Metal, true)
+		disc(0.08, 1.0, at(tx, 0.04, side * 3.4), C.brass, M.Metal)
+		decor(Vector3.new(0.6, 0.06, 0.6), at(tx, 2.77, side * 3.4), C.brass, M.Metal)
 		-- its lamp: a brass column under a silk shade
-		disc(0.08, 0.6, at(tx, 3.2, side * 5.0), C.brass, M.Metal)
-		post(0.8, 0.1, at(tx, 3.64, side * 5.0), C.brass, M.Metal)
-		post(0.5, 0.95, at(tx, 4.25, side * 5.0), C.shade, M.Fabric)
-		local bulb = Kit.neon(model, Vector3.one * 0.3, at(tx, 4.05, side * 5.0), C.warm, Enum.PartType.Ball)
+		disc(0.08, 0.6, at(tx, 3.0, side * 5.0), C.brass, M.Metal)
+		post(0.8, 0.1, at(tx, 3.44, side * 5.0), C.brass, M.Metal)
+		post(0.5, 0.95, at(tx, 4.05, side * 5.0), C.shade, M.Fabric)
+		local bulb = Kit.neon(model, Vector3.one * 0.3, at(tx, 3.85, side * 5.0), C.warm, Enum.PartType.Ball)
 		Kit.pointLight(bulb, C.warm, 0.6, 11, false)
 	end
 
@@ -387,46 +733,40 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	for i = 1, 3 do
 		ball(0.42, at(sx - 2.55 + i * 0.22, 0.98, -5.15 + (i % 2) * 0.2), C.coal, M.Slate)
 	end
-	-- the rug and two wing chairs drawn up to the fire
+	-- the rug and the wing chair drawn up to the fire
 	-- (each layer a hair thicker than the carpet runner and the one under it)
 	decor(Vector3.new(5.0, 0.07, 4.2), at(-73.0, 0.035, -2.4), C.rug, M.Fabric)
 	decor(Vector3.new(4.2, 0.08, 3.4), at(-73.0, 0.04, -2.4), C.rugGold, M.Fabric)
 	decor(Vector3.new(3.4, 0.09, 2.6), at(-73.0, 0.045, -2.4), C.rug, M.Fabric)
+	-- the wing chair, built a size down (S) so it keeps to the corner
 	local function armchair(cx: number, cz: number, yaw: number)
+		local S = 0.88
 		local f = at(cx, 0, cz) * Kit.angles(0, yaw, 0)
-		solid(Vector3.new(2.6, 1.3, 2.4), f * CFrame.new(0, 0.95, 0.1), C.velvetGreen, M.Fabric)
+		local function o(x: number, y: number, z: number): CFrame
+			return f * CFrame.new(x * S, y * S, z * S)
+		end
+		solid(Vector3.new(2.6, 1.3, 2.4) * S, o(0, 0.95, 0.1), C.velvetGreen, M.Fabric)
 		for _, lx in { -1.05, 1.05 } do
 			for _, lz in { -0.95, 1.05 } do
-				post(0.3, 0.3, f * CFrame.new(lx, 0.15, lz), C.woodDark, M.Wood)
+				post(0.3 * S, 0.3 * S, o(lx, 0.15, lz), C.woodDark, M.Wood)
 			end
 		end
-		seat(
-			Vector3.new(2.0, 0.45, 2.0),
-			f * CFrame.new(0, 1.825, -0.05),
-			Kit.shade(C.velvetGreen, 1.12),
-			"Armchair"
-		)
-		local back = f * CFrame.new(0, 3.0, 1.0) * Kit.angles(8, 0, 0)
-		solid(Vector3.new(2.6, 2.6, 0.6), back, C.velvetGreen, M.Fabric)
-		decor(Vector3.new(1.4, 0.8, 0.06), back * CFrame.new(0, 0.85, -0.33), C.lace, M.Fabric)
+		seat(Vector3.new(2.0, 0.45, 2.0) * S, o(0, 1.825, -0.05), Kit.shade(C.velvetGreen, 1.12), "Armchair")
+		local back = o(0, 3.0, 1.0) * Kit.angles(8, 0, 0)
+		solid(Vector3.new(2.6, 2.6, 0.6) * S, back, C.velvetGreen, M.Fabric)
+		decor(Vector3.new(1.4, 0.8, 0.06) * S, back * CFrame.new(0, 0.85 * S, -0.33 * S), C.lace, M.Fabric)
 		for _, side in { -1, 1 } do
+			solid(Vector3.new(0.5, 1.4, 1.0) * S, o(side * 1.02, 3.55, 0.55), C.velvetGreen, M.Fabric)
 			solid(
-				Vector3.new(0.5, 1.4, 1.0),
-				f * CFrame.new(side * 1.02, 3.55, 0.55),
-				C.velvetGreen,
-				M.Fabric
-			)
-			solid(
-				Vector3.new(0.55, 0.9, 2.3),
-				f * CFrame.new(side * 1.3, 2.05, 0.05),
+				Vector3.new(0.55, 0.9, 2.3) * S,
+				o(side * 1.3, 2.05, 0.05),
 				Kit.shade(C.velvetGreen, 0.9),
 				M.Fabric
 			)
 		end
 	end
 	armchair(-72.6, -4.0, -90)
-	armchair(-69.2, -0.9, 0)
-	-- the side table between them
+	-- the side table beside it
 	post(2.3, 0.3, at(-71.4, 1.15, -1.7), C.woodDark, M.Wood, true)
 	disc(0.14, 1.4, at(-71.4, 2.37, -1.7), C.polish, M.Wood)
 	-- the guard's cat, asleep on her cushion by the fire
