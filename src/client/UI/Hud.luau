@@ -249,54 +249,92 @@ function Hud.mount(gui: ScreenGui)
 	end
 
 	-- Train gauges -----------------------------------------------------------------------------
+	-- A solid black plate read left to right, row by row: the name, its figure, then a lit tube.
+	local NEON = {
+		coal = Color3.fromRGB(255, 190, 84),
+		parts = Color3.fromRGB(150, 214, 255),
+		hull = Color3.fromRGB(96, 255, 150),
+		caution = Color3.fromRGB(255, 176, 54),
+		signal = Color3.fromRGB(255, 72, 56),
+	}
 	local gauges = Ui.panel({
 		Name = "Gauges",
-		Size = UDim2.fromOffset(262, 118),
+		Size = UDim2.fromOffset(236, 96),
 		Position = UDim2.fromOffset(14, 12),
+		BackgroundColor3 = Theme.Color.black,
+		BackgroundTransparency = 0,
 		Parent = container,
 	})
-	Ui.padding(10, 12).Parent = gauges
+	Ui.padding(10, 14, 10, 12).Parent = gauges
 	local function gaugeRow(
 		order: number,
 		label: string,
 		color: Color3
 	): (TextLabel, (number, Color3?, boolean?) -> (), Frame)
 		local row = Ui.new("Frame", {
-			Size = UDim2.new(1, 0, 0, 28),
-			Position = UDim2.fromOffset(0, (order - 1) * 33),
+			Size = UDim2.new(1, 0, 0, 22),
+			Position = UDim2.fromOffset(0, (order - 1) * 27),
 			BackgroundTransparency = 1,
 			Parent = gauges,
 		})
 		local name = Ui.text({
 			Text = label,
 			Font = Theme.Font.display,
-			TextSize = 15,
+			TextSize = 14,
 			Color = Theme.Color.textDim,
-			Size = UDim2.fromOffset(56, 28),
+			Size = UDim2.fromOffset(44, 22),
 		})
 		name.Parent = row
-		local meter, set = Ui.meter({
-			Size = UDim2.new(1, -140, 0, 10),
-			Position = UDim2.new(0, 58, 0.5, -5),
-			FillColor = color,
-		})
-		meter.Parent = row
 		local value = Ui.text({
 			Text = "",
 			Font = Theme.Font.display,
-			TextSize = 17,
+			TextSize = 16,
 			Color = Theme.Color.white,
-			Size = UDim2.fromOffset(76, 28),
-			Position = UDim2.fromScale(1, 0),
-			AnchorPoint = Vector2.new(1, 0),
+			Size = UDim2.fromOffset(54, 22),
+			Position = UDim2.fromOffset(44, 0),
 			XAlign = Enum.TextXAlignment.Right,
 		})
 		value.Parent = row
-		return value, set, meter
+		local meter, set = Ui.meter({
+			Size = UDim2.new(1, -108, 0, 8),
+			Position = UDim2.new(0, 108, 0.5, -4),
+			FillColor = color,
+		})
+		meter.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
+		meter.BackgroundTransparency = 0
+		meter.Parent = row
+		-- quarter marks etched into the empty tube
+		for q = 1, 3 do
+			Ui.new("Frame", {
+				Name = "Tick",
+				Size = UDim2.new(0, 1, 1, 0),
+				Position = UDim2.fromScale(q / 4, 0),
+				BackgroundColor3 = Color3.fromRGB(58, 58, 64),
+				BorderSizePixel = 0,
+				Parent = meter,
+			})
+		end
+		-- the lit tube: a glowing rim round the fill, a sheen across its top
+		local fill = meter:FindFirstChild("Fill") :: Frame
+		fill.ZIndex = 2
+		local glow = Ui.stroke(color, 1.5, 0.45)
+		glow.Parent = fill
+		Ui.new("UIGradient", {
+			Rotation = 90,
+			Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(190, 190, 190)),
+			Parent = fill,
+		})
+		local function setNeon(fraction: number, tint: Color3?, instant: boolean?)
+			set(fraction, tint, instant)
+			if tint then
+				glow.Color = tint
+			end
+		end
+		return value, setNeon, meter
 	end
-	local coalValue, setCoal, coalMeter = gaugeRow(1, "COAL", Theme.Color.brass)
-	local partsValue, setParts = gaugeRow(2, "PARTS", Theme.Color.parts)
-	local hullValue, setHull = gaugeRow(3, "HULL", Theme.Color.hull)
+	local coalValue, setCoal, coalMeter = gaugeRow(1, "COAL", NEON.coal)
+	local partsValue, setParts = gaugeRow(2, "PARTS", NEON.parts)
+	local hullValue, setHull = gaugeRow(3, "HULL", NEON.hull)
 	local costMarker = Ui.new("Frame", {
 		Name = "LegCost",
 		BackgroundColor3 = Theme.Color.signal,
@@ -304,6 +342,7 @@ function Hud.mount(gui: ScreenGui)
 		BorderSizePixel = 0,
 		Visible = false,
 		Size = UDim2.fromScale(0, 1),
+		ZIndex = 3,
 		Parent = coalMeter,
 	})
 	local warning = Ui.text({
@@ -311,30 +350,50 @@ function Hud.mount(gui: ScreenGui)
 		Font = Theme.Font.display,
 		TextSize = 14,
 		Color = Theme.Color.signal,
-		Position = UDim2.new(0, 0, 1, 2),
+		Position = UDim2.new(0, 0, 1, 14),
 		Size = UDim2.new(1, 0, 0, 18),
 	})
 	warning.Parent = gauges
 
 	-- Crew roster ------------------------------------------------------------------------------
+	-- Operators go by call signs, not names: a letter by seat on the run, a digit from the key.
 	local roster = Ui.panel({
 		Name = "Crew",
-		Size = UDim2.fromOffset(220, 40),
+		Size = UDim2.fromOffset(142, 40),
 		Position = UDim2.new(1, -14, 0, 12),
 		AnchorPoint = Vector2.new(1, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = Theme.Color.black,
+		BackgroundTransparency = 0,
 		Parent = container,
 	})
 	Ui.padding(8, 10).Parent = roster
 	Ui.list(Enum.FillDirection.Vertical, 4).Parent = roster
 	local rosterTitle = Ui.text({
-		Text = "CREW",
+		Text = "OPERATORS",
 		Font = Theme.Font.display,
 		TextSize = 14,
 		Color = Theme.Color.brass,
 		LayoutOrder = 0,
 	})
 	rosterTitle.Parent = roster
+
+	local function callSigns(map: { [string]: any }): { [string]: string }
+		local keys = {}
+		for key in map do
+			table.insert(keys, key)
+		end
+		table.sort(keys)
+		local signs = {}
+		for i, key in keys do
+			local sum = 0
+			for b = 1, #key do
+				sum += string.byte(key, b) * b
+			end
+			signs[key] = `{string.char(64 + (i - 1) % 26 + 1)}{sum % 9 + 1}`
+		end
+		return signs
+	end
 
 	local function renderRoster(crew: { [string]: any }?)
 		for _, child in roster:GetChildren() do
@@ -344,6 +403,7 @@ function Hud.mount(gui: ScreenGui)
 		end
 		local entries = {}
 		local map: { [string]: any } = crew or {}
+		local signs = callSigns(map)
 		for key, entry in map do
 			table.insert(entries, { key = key, entry = entry })
 		end
@@ -353,45 +413,58 @@ function Hud.mount(gui: ScreenGui)
 			if aliveA ~= aliveB then
 				return aliveA
 			end
-			return a.entry.name < b.entry.name
+			return signs[a.key] < signs[b.key]
 		end)
 		for i, item in entries do
 			local entry = item.entry
 			local status = Theme.Status[entry.status] or Theme.Status.Lobby
+			local isMe = item.key == Session.userKey
 			local row = Ui.new("Frame", {
 				Name = "Member",
-				Size = UDim2.new(1, 0, 0, 22),
+				Size = UDim2.new(1, 0, 0, 20),
 				BackgroundTransparency = 1,
 				LayoutOrder = i,
 				Parent = roster,
 			})
+			-- your own sign carries a brass tab in front of it
+			if isMe then
+				Ui.new("Frame", {
+					Size = UDim2.fromOffset(2, 12),
+					Position = UDim2.new(0, -6, 0.5, -6),
+					BackgroundColor3 = Theme.Color.brass,
+					BorderSizePixel = 0,
+					Parent = row,
+				})
+			end
 			local name = Ui.text({
-				Text = entry.name,
-				Font = if item.key == Session.userKey then Theme.Font.bodyBold else Theme.Font.body,
-				TextSize = 15,
-				Color = if entry.status == "Eliminated" then Theme.Color.textDim else Theme.Color.white,
-				Size = UDim2.new(1, -76, 1, 0),
+				Text = signs[item.key],
+				Font = Theme.Font.display,
+				TextSize = 16,
+				Color = if entry.status == "Eliminated"
+					then Theme.Color.textDim
+					elseif isMe then Theme.Color.brassLight
+					else Theme.Color.white,
+				Size = UDim2.new(0, 26, 1, 0),
 			})
-			name.TextTruncate = Enum.TextTruncate.AtEnd
 			name.Parent = row
 			local pill = Ui.new("TextLabel", {
-				Size = UDim2.fromOffset(70, 18),
+				Size = UDim2.fromOffset(56, 16),
 				Position = UDim2.fromScale(1, 0.5),
 				AnchorPoint = Vector2.new(1, 0.5),
 				BackgroundColor3 = status.color,
 				BackgroundTransparency = 0.15,
 				Text = status.text,
 				FontFace = Theme.Font.display,
-				TextSize = 12,
+				TextSize = 11,
 				TextColor3 = Theme.Color.ink,
 				Parent = row,
 			})
-			Ui.corner(9).Parent = pill
+			Ui.corner(8).Parent = pill
 			if entry.load and entry.load > 0 and entry.status ~= "Eliminated" then
 				for d = 1, math.min(entry.load, 6) do
 					Ui.new("Frame", {
 						Size = UDim2.fromOffset(4, 4),
-						Position = UDim2.new(1, -74 - d * 6, 0.5, -2),
+						Position = UDim2.new(1, -58 - d * 6, 0.5, -2),
 						BackgroundColor3 = Theme.Color.brass,
 						BorderSizePixel = 0,
 						Parent = row,
@@ -558,13 +631,7 @@ function Hud.mount(gui: ScreenGui)
 		partsValue.Text = tostring(train.parts)
 		setParts(math.min(train.parts / 20, 1))
 		local hull = train.integrity / math.max(train.integrityMax, 1)
-		setHull(
-			hull,
-			if hull > 0.6
-				then Theme.Color.hull
-				elseif hull > 0.3 then Theme.Color.caution
-				else Theme.Color.signal
-		)
+		setHull(hull, if hull > 0.6 then NEON.hull elseif hull > 0.3 then NEON.caution else NEON.signal)
 		hullValue.Text = `{math.floor(hull * 100 + 0.5)}%`
 		local breaches = 0
 		for _ in train.breaches or {} do

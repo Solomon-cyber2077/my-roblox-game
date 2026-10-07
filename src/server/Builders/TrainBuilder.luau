@@ -43,6 +43,7 @@ local LINE_IN = WALL_IN - LINE_T -- inner face of the side linings
 local CEIL_BOTTOM = WALL_H - 0.12 -- underside of the ceiling lining
 local FRAME_W = 0.22 -- brass door frame width
 local RAIL_EDGE = LINE_IN - 0.3 -- end-wall chair rails stop where the side walls' rails begin
+local RUNNER_W = 2.8 -- the aisle's carpet runner
 
 local C = {
 	floor = Color3.fromRGB(104, 78, 54),
@@ -67,11 +68,12 @@ local C = {
 	ceiling = Color3.fromRGB(234, 224, 200),
 	rib = Color3.fromRGB(88, 60, 38),
 	curtain = Color3.fromRGB(118, 36, 34),
-	carpet = Color3.fromRGB(104, 32, 32),
+	carpet = Color3.fromRGB(140, 22, 30),
+	carpetEdge = Color3.fromRGB(196, 150, 72),
 	globe = Color3.fromRGB(255, 226, 176),
 }
 
--- How a carriage is lined inside: curtains and a carpet in the passenger cars, bare in the workshop.
+-- How a carriage is lined inside: curtains in the passenger cars, the runner from the workshop back.
 type Lining = { curtains: boolean, carpet: boolean, bareSide: number? } -- bareSide: a wall left without a rack
 
 export type Built = {
@@ -899,12 +901,19 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		ceiling(x0, x1)
 		racks(x0, x1, lining.bareSide)
 		if lining.carpet then
-			trimPart(
-				Vector3.new(len - 2 * WALL_T - 2, 0.06, 2.6),
-				at(cx, 0.03, 0),
-				C.carpet,
-				Enum.Material.Fabric
-			)
+			-- a red runner down the aisle, its gilt borders woven a hair proud of the pile. It is
+			-- cut at each car's end, a step short of the door: bare boards at the thresholds and
+			-- nothing on the gangways' diamond plate, as a carriage's own carpet would be.
+			local runLen = len - 2 * WALL_T - 1.2
+			trimPart(Vector3.new(runLen, 0.06, RUNNER_W), at(cx, 0.03, 0), C.carpet, Enum.Material.Fabric)
+			for _, side in { -1, 1 } do
+				trimPart(
+					Vector3.new(runLen - 0.3, 0.065, 0.14),
+					at(cx, 0.0325, side * (RUNNER_W / 2 - 0.22)),
+					C.carpetEdge,
+					Enum.Material.Fabric
+				)
+			end
 		end
 	end
 
@@ -1059,7 +1068,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	gangway(-23, -20)
 
 	-- Workshop, two cars: the bench in the first, stores in the second -----------------
-	car(-20, -1.5, { -6.25 }, true, true, { curtains = false, carpet = false, bareSide = -1 })
+	car(-20, -1.5, { -6.25 }, true, true, { curtains = false, carpet = true, bareSide = -1 })
 	gangway(-1.5, 1.5)
 	car(1.5, 20, { 6.25 }, false, true, { curtains = false, carpet = false })
 	local BX = -6.8 -- the workbench's middle
