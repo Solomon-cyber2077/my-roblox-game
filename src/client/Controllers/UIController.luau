@@ -64,6 +64,8 @@ end
 function UIController.Start()
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
+	-- health reads off the screen's edges (Overlay.vitals), not a bar
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
 	task.spawn(setCore, "ResetButtonCallback", false)
 
 	Overlay.mount(gui)

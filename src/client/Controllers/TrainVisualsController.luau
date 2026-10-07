@@ -16,6 +16,7 @@ local Workspace = game:GetService("Workspace")
 local MathX = require(ReplicatedStorage.Shared.Util.MathX)
 
 local Registry = require(script.Parent.Parent.Registry)
+local ChalkSlate = require(script.Parent.Parent.UI.ChalkSlate)
 
 type Spin = { part: BasePart, base: CFrame, radius: number, pivot: Vector3? }
 type Rod = { part: BasePart, base: CFrame, radius: number, phase: number }
@@ -208,6 +209,7 @@ function TrainVisualsController.Start()
 		local train = Workspace:WaitForChild("Train", 60) :: Model?
 		if train then
 			track(train, true)
+			ChalkSlate.hang(train)
 		end
 	end)
 	task.spawn(function()

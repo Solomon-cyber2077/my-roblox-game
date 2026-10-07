@@ -161,7 +161,7 @@ function Ui.ticket(props: { [any]: any }): Frame
 	local frame = Ui.new("Frame", props)
 	frame.BackgroundColor3 = props.BackgroundColor3 or Theme.Color.paper
 	frame.BorderSizePixel = 0
-	Ui.corner(4).Parent = frame
+	Ui.corner(2).Parent = frame
 	local perforation = Ui.new("Frame", {
 		Name = "Perforation",
 		BackgroundTransparency = 1,
@@ -216,7 +216,7 @@ function Ui.button(
 		BorderSizePixel = 0,
 		Selectable = true,
 	})
-	Ui.corner(5).Parent = button
+	Ui.corner(2).Parent = button
 	local stroke = Ui.stroke(s.stroke, 1, 0.2)
 	stroke.Parent = button
 	local scale = Ui.new("UIScale", { Parent = button })
