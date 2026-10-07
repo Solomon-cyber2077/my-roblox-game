@@ -46,6 +46,7 @@ local C = {
 	floor = Color3.fromRGB(104, 78, 54),
 	frame = Color3.fromRGB(34, 32, 32),
 	wheel = Color3.fromRGB(40, 36, 36),
+	driver = Color3.fromRGB(132, 34, 28), -- 1800s red driving wheels
 	glass = Color3.fromRGB(176, 196, 206),
 	interior = Color3.fromRGB(142, 108, 72),
 	brass = Color3.fromRGB(201, 160, 82),
@@ -1106,7 +1107,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				0.7,
 				5.6,
 				at(x, -2.4, side * 5.3) * Kit.angles(0, 90, 0),
-				C.wheel,
+				C.driver,
 				{ material = Enum.Material.Metal }
 			)
 			driver:SetAttribute("WheelRadius", 2.8)
@@ -1193,16 +1194,25 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		C.brass,
 		{ material = Enum.Material.Metal, collide = false }
 	)
-	Kit.post(model, 4.6, 2.2, at(91, 12.4, 0), Color3.fromRGB(24, 24, 26), { material = Enum.Material.Metal })
-	local chimneyTop = Kit.post(
+	-- 1800s balloon stack: a narrow neck flaring into a wide crown
+	local soot = Color3.fromRGB(24, 24, 26)
+	Kit.post(model, 3.4, 1.8, at(91, 11.8, 0), soot, { material = Enum.Material.Metal })
+	Kit.post(model, 0.8, 2.6, at(91, 13.7, 0), soot, { material = Enum.Material.Metal })
+	Kit.post(model, 0.8, 3.4, at(91, 14.3, 0), soot, { material = Enum.Material.Metal })
+	local chimneyTop = Kit.post(model, 1.2, 4.2, at(91, 15.1, 0), soot, { material = Enum.Material.Metal })
+	chimneyTop.Name = "ChimneyTop"
+	Kit.post(model, 0.3, 4.4, at(91, 15.6, 0), C.brass, { material = Enum.Material.Metal, collide = false })
+	-- brass bell between the domes
+	Kit.post(model, 1.4, 0.4, at(75.5, 10.8, 0), C.iron, { material = Enum.Material.Metal })
+	Kit.block(
 		model,
-		0.7,
-		2.9,
-		at(91, 14.9, 0),
-		Color3.fromRGB(24, 24, 26),
+		Vector3.new(0.2, 1.6, 1.8),
+		at(75.5, 12.1, 0),
+		C.iron,
 		{ material = Enum.Material.Metal }
 	)
-	chimneyTop.Name = "ChimneyTop"
+	Kit.ball(model, 1.4, at(75.5, 11.7, 0), C.brass, { material = Enum.Material.Metal, collide = false }).Name =
+		"Bell"
 	tag(Kit.post(model, 2.2, 3, at(80, 10.8, 0), trim, { material = Enum.Material.Metal }), "Trim")
 	tag(Kit.ball(model, 3, at(80, 11.9, 0), trim, { material = Enum.Material.Metal }), "Trim")
 	tag(Kit.post(model, 1.6, 2.4, at(71, 10.5, 0), body), "Body")
@@ -1237,16 +1247,35 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			{ material = Enum.Material.Metal, collide = false }
 		)
 	end
-	-- headlamp
+	-- headlamp: a big 1800s oil-lamp box on a bracket, brass-trimmed under a peaked hood
+	tag(
+		Kit.block(
+			model,
+			Vector3.new(2.6, 2.8, 2.8),
+			at(94.3, 11.6, 0),
+			accent,
+			{ material = Enum.Material.Metal }
+		),
+		"Accent"
+	)
 	Kit.block(
 		model,
-		Vector3.new(1.6, 2, 2),
-		at(94.8, 11.2, 0),
-		Color3.fromRGB(24, 24, 26),
+		Vector3.new(2.9, 0.3, 3.1),
+		at(94.3, 10.15, 0),
+		C.brass,
 		{ material = Enum.Material.Metal }
 	)
+	for _, side in { -1, 1 } do
+		Kit.wedge(
+			model,
+			Vector3.new(3.1, 0.9, 1.6),
+			at(94.3, 13.5, side * 0.8) * Kit.angles(0, if side > 0 then 180 else 0, 0),
+			C.iron,
+			{ material = Enum.Material.Metal, collide = false }
+		)
+	end
 	local headlamp = tag(
-		Kit.neon(model, Vector3.new(0.2, 1.4, 1.4), at(95.7, 11.2, 0), Color3.fromRGB(255, 236, 190)),
+		Kit.neon(model, Vector3.new(0.2, 1.9, 1.9), at(95.7, 11.6, 0), Color3.fromRGB(255, 236, 190)),
 		"Lamp"
 	)
 	headlamp.Name = "Headlamp"
