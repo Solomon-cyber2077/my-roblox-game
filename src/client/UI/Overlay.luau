@@ -103,6 +103,17 @@ function Overlay.mount(gui: ScreenGui)
 		Parent = gui,
 	})
 
+	-- Edge effects get their own ScreenGui that covers the top bar's inset too, so the
+	-- vignettes shade the whole screen instead of leaving a lighter band along the top.
+	local screen = Instance.new("ScreenGui")
+	screen.Name = "LastTrainOutEdges"
+	screen.ResetOnSpawn = false
+	screen.IgnoreGuiInset = true
+	screen.ScreenInsets = Enum.ScreenInsets.None
+	screen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	screen.DisplayOrder = gui.DisplayOrder + 1
+	screen.Parent = gui.Parent
+
 	-- Vignette: four edge bands with gradients toward the centre.
 	local specs = {
 		{ size = UDim2.fromScale(1, 0.22), pos = UDim2.fromScale(0, 0), rotation = 90 },
@@ -119,7 +130,7 @@ function Overlay.mount(gui: ScreenGui)
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			ZIndex = 20,
-			Parent = gui,
+			Parent = screen,
 		})
 		Ui.new("UIGradient", {
 			Rotation = spec.rotation,
@@ -141,7 +152,7 @@ function Overlay.mount(gui: ScreenGui)
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			ZIndex = 19,
-			Parent = gui,
+			Parent = screen,
 		})
 		Ui.new("UIGradient", {
 			Rotation = spec.rotation,
@@ -165,7 +176,7 @@ function Overlay.mount(gui: ScreenGui)
 				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
 				ZIndex = 18,
-				Parent = gui,
+				Parent = screen,
 			})
 			Ui.new("UIGradient", {
 				Rotation = spec.rotation,
@@ -182,13 +193,12 @@ function Overlay.mount(gui: ScreenGui)
 
 	fadeFrame = Ui.new("Frame", {
 		Name = "Fade",
-		Size = UDim2.new(1, 0, 1, 80),
-		Position = UDim2.fromOffset(0, -60),
+		Size = UDim2.fromScale(1, 1),
 		BackgroundColor3 = Theme.Color.black,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ZIndex = 50,
-		Parent = gui,
+		Parent = screen,
 	})
 end
 
