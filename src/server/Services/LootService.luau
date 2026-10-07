@@ -57,7 +57,8 @@ local function makePrompt(
 	return prompt
 end
 
-local function spawnPickup(itemId: string, position: Vector3): boolean
+-- floorY: the floor the pickup rests on, for a container on an upper floor; nil on the ground.
+local function spawnPickup(itemId: string, position: Vector3, floorY: number?): boolean
 	local built = StationService.Built()
 	local plan = StationService.Plan()
 	if built == nil or plan == nil then
@@ -69,7 +70,7 @@ local function spawnPickup(itemId: string, position: Vector3): boolean
 		return false
 	end
 	local base = built.slabParts[slab.id]
-	local ground = StationService.ToWorld(localPos.X, 0.75, math.max(localPos.Z, 1))
+	local ground = StationService.ToWorld(localPos.X, (floorY or 0) + 0.75, math.max(localPos.Z, 1))
 	local piece = StationBuilder.pickup(itemId, built.model, base, ground)
 	local body = piece.PrimaryPart :: BasePart
 	local prompt = makePrompt(body, "Pickup", Items[itemId].name, "Pick up", 0.25, slab.id)
@@ -110,7 +111,7 @@ local function onSearch(
 	local origin = handle.promptPart.Position
 	for i, itemId in leftovers do
 		local angle = i * 2.1
-		spawnPickup(itemId, origin + Vector3.new(math.cos(angle) * 3, 0, math.sin(angle) * 3))
+		spawnPickup(itemId, origin + Vector3.new(math.cos(angle) * 3, 0, math.sin(angle) * 3), handle.def.y)
 	end
 	NetService.Fire(
 		"Fx",
