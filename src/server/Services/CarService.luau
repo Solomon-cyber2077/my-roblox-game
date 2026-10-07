@@ -1,7 +1,7 @@
 --!strict
 --[[
-	Boarding cars: every carriage of the Depot Hall's display train with a side door,
-	except the front one, is a party room for 2-4 players. Hold E (tap on touch) at the door to board or to
+	Boarding cars: every carriage of the Depot Hall's display train with a side door
+	is a party room for 2-4 players. Hold E (tap on touch) at the door to board or to
 	get out; rules in Logic/CarBoarding. A full car, or one whose countdown runs out,
 	goes black and teleports its players to a reserved server, where the run starts
 	at once. In Studio, where teleports fail, the run starts here instead.
@@ -233,10 +233,7 @@ function CarService.Init()
 	local folder = Instance.new("Folder")
 	folder.Name = "CarDoors"
 	folder.Parent = if display then display.Parent else Workspace
-	-- every carriage but the front one (the stores car behind the tender, built last) boards
-	local cabins = LobbyService.DisplayCabins()
-	for index = 1, #cabins - 1 do
-		local cabin = cabins[index]
+	for index, cabin in LobbyService.DisplayCabins() do
 		local door = cabin.door
 		-- the door's frame: +Z points out of the car, and floor level is half a door below
 		local ground = door * CFrame.new(0, -door.Position.Y + cabin.floor.Position.Y, 0)
