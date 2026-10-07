@@ -1070,6 +1070,29 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			{ material = Enum.Material.Metal }
 		)
 	end
+	Kit.block(
+		model,
+		Vector3.new(1.2, 0.8, 0.8),
+		at(BX - 2.8, 3.6, -4.4),
+		C.iron,
+		{ material = Enum.Material.Metal }
+	)
+	Kit.block(
+		model,
+		Vector3.new(9, 4, 0.2),
+		at(BX, 5.6, -5.72),
+		Color3.fromRGB(92, 70, 48),
+		{ material = Enum.Material.WoodPlanks, collide = false }
+	)
+	for i, dx in { -3.4, -2, -0.6, 0.8, 2.2, 3.6 } do
+		Kit.block(
+			model,
+			Vector3.new(0.25, 1.4 + (i % 3) * 0.4, 0.15),
+			at(BX + dx, 5.6, -5.57),
+			C.iron,
+			{ material = Enum.Material.Metal, collide = false }
+		)
+	end
 	local workbench = Kit.block(
 		model,
 		Vector3.new(8, 4, 3),
@@ -1078,6 +1101,15 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		{ transparency = 1, collide = false, shadow = false }
 	)
 	workbench.Name = "Workbench"
+	for _, x in { 13.5, 16.5 } do
+		Kit.block(
+			model,
+			Vector3.new(2.6, 2.4, 2.6),
+			at(x, 1.2, -4.4),
+			Color3.fromRGB(124, 92, 60),
+			{ material = Enum.Material.WoodPlanks }
+		)
+	end
 	breachAnchor("WS1", -12, 5.2, -5.6)
 	breachAnchor("WS2", 12, 5.2, -5.6)
 	buffers(20, 1)
