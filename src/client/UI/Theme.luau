@@ -3,7 +3,8 @@
 	Visual language: "railway ephemera". Steel panels with brass rules for live
 	information, cream ticket stock for anything you hold or earn, signal red
 	for danger. Condensed display type for clocks and headings, a humanist sans
-	for reading, a typewriter face for ledgers and receipts.
+	for reading, a typewriter face for ledgers and receipts, chalk for the train's slates.
+	Square corners, flat fills and hairline rules: no glows, no gradients, no pills.
 ]]
 
 local Theme = {}
@@ -38,6 +39,7 @@ Theme.Font = table.freeze({
 	bodyBold = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold),
 	type = Font.new("rbxasset://fonts/families/SpecialElite.json"),
 	sign = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold),
+	chalk = Font.new("rbxasset://fonts/families/PatrickHand.json"),
 })
 
 Theme.Rarity = table.freeze({
@@ -55,7 +57,7 @@ Theme.Status = table.freeze({
 	Lobby = { text = "DEPOT", color = Color3.fromRGB(176, 170, 158) },
 })
 
-Theme.Corner = 6
+Theme.Corner = 2
 Theme.Tween = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 Theme.TweenSlow = TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 

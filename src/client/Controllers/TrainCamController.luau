@@ -264,7 +264,7 @@ function TrainCamController.Start()
 	chip = Ui.button("TRAIN CAMERA  [C]", "Secondary", toggle, {
 		Name = "TrainCamChip",
 		Size = UDim2.fromOffset(176, 30),
-		Position = UDim2.new(1, -16, 1, -96),
+		Position = UDim2.new(1, -16, 1, -210), -- above the pocket watch
 		AnchorPoint = Vector2.new(1, 1),
 		TextSize = 14,
 	})
@@ -272,8 +272,9 @@ function TrainCamController.Start()
 	chip.Parent = screen
 	bar = Ui.panel({
 		Name = "TrainCamBar",
-		Size = UDim2.new(1, -32, 0, 82),
-		Position = UDim2.new(0.5, 0, 1, -112),
+		-- stops short of the HUD's pocket watch in the bottom right
+		Size = UDim2.new(1, -240, 0, 82),
+		Position = UDim2.new(0.5, -104, 1, -112),
 		AnchorPoint = Vector2.new(0.5, 1),
 		Visible = false,
 		Parent = screen,

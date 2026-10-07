@@ -6,6 +6,7 @@
 	  popups         "+8 COAL" style receipts rising from the backpack
 	  vignette       edge pulses for hits and fog
 	  dread          a dark vignette that closes in while a Hollow is near
+	  vitals         wounds and a spent sprint shown on the screen's edges and colour, not bars
 	  fade           full-screen fades for boarding and teleports
 ]]
 
@@ -48,6 +49,21 @@ local SHADE_SPECS = {
 	{ size = UDim2.fromScale(0.26, 1), pos = UDim2.fromScale(0.74, 0), rotation = 180 },
 }
 local SHADE_MAX = 0.8 -- opacity at the screen's edge at full dread
+
+-- Your body instead of bars: wounds bleed in from the edges and drain the colour, a spent
+-- sprint closes the edges in grey.
+local wounds: { Frame } = {}
+local breath: { Frame } = {}
+local vitalsGrade: ColorCorrectionEffect? = nil
+local WOUND_COLOR = Color3.fromRGB(86, 8, 6)
+local BREATH_COLOR = Color3.fromRGB(18, 20, 26)
+-- they stay out at the rim, clear of the middle of the view
+local VITAL_SPECS = {
+	{ size = UDim2.fromScale(1, 0.24), pos = UDim2.fromScale(0, 0), rotation = 90 },
+	{ size = UDim2.fromScale(1, 0.24), pos = UDim2.fromScale(0, 0.76), rotation = -90 },
+	{ size = UDim2.fromScale(0.18, 1), pos = UDim2.fromScale(0, 0), rotation = 0 },
+	{ size = UDim2.fromScale(0.18, 1), pos = UDim2.fromScale(0.82, 0), rotation = 180 },
+}
 
 function Overlay.mount(gui: ScreenGui)
 	feed = Ui.new("Frame", {
@@ -139,6 +155,31 @@ function Overlay.mount(gui: ScreenGui)
 		table.insert(shade, edge)
 	end
 
+	for _, set in { { list = wounds, color = WOUND_COLOR }, { list = breath, color = BREATH_COLOR } } do
+		for _, spec in VITAL_SPECS do
+			local edge = Ui.new("Frame", {
+				Name = "Vitals",
+				Size = spec.size,
+				Position = spec.pos,
+				BackgroundColor3 = set.color,
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				ZIndex = 18,
+				Parent = gui,
+			})
+			Ui.new("UIGradient", {
+				Rotation = spec.rotation,
+				Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0),
+					NumberSequenceKeypoint.new(0.35, 0.75),
+					NumberSequenceKeypoint.new(1, 1),
+				}),
+				Parent = edge,
+			})
+			table.insert(set.list, edge)
+		end
+	end
+
 	fadeFrame = Ui.new("Frame", {
 		Name = "Fade",
 		Size = UDim2.new(1, 0, 1, 80),
@@ -163,7 +204,7 @@ function Overlay.feed(kind: string, text: string)
 		Parent = feed,
 	})
 	row.Size = UDim2.fromOffset(0, 24)
-	Ui.corner(4).Parent = row
+	Ui.corner(2).Parent = row
 	Ui.padding(3, 10, 3, 12).Parent = row
 	Ui.new("Frame", {
 		Size = UDim2.new(0, 3, 1, 4),
@@ -260,6 +301,27 @@ function Overlay.dread(level: number)
 	for _, edge in shade do
 		edge.BackgroundTransparency = 1 - alpha
 	end
+end
+
+-- Wound 0..1 (missing health) and winded 0..1 (spent stamina), set every frame.
+function Overlay.vitals(wound: number, winded: number)
+	for _, edge in wounds do
+		edge.BackgroundTransparency = 1 - wound * 0.6
+	end
+	for _, edge in breath do
+		edge.BackgroundTransparency = 1 - winded * 0.45
+	end
+	local camera = workspace.CurrentCamera
+	if vitalsGrade == nil or vitalsGrade.Parent ~= camera then
+		local grade = Instance.new("ColorCorrectionEffect")
+		grade.Name = "Vitals"
+		grade.Parent = camera
+		vitalsGrade = grade
+	end
+	local grade = vitalsGrade :: ColorCorrectionEffect
+	grade.Saturation = -0.75 * wound - 0.15 * winded
+	grade.Contrast = 0.12 * wound
+	grade.Enabled = wound > 0.001 or winded > 0.001
 end
 
 function Overlay.fade(toBlack: boolean, seconds: number?)
