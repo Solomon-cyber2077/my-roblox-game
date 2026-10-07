@@ -26,6 +26,20 @@ local Tuning = {
 		WideJunctions = { [4] = true, [8] = true }, -- legs that offer three options
 	},
 
+	-- Boarding cars on the Depot Hall's display train: a full car, or a car whose countdown runs out,
+	-- leaves for its own server.
+	Cars = {
+		MinPlayers = 2, -- the countdown starts once this many are aboard
+		MaxPlayers = 4, -- a full car leaves at once
+		CountdownSeconds = 40,
+		ExitWindowSeconds = 10, -- after the countdown starts, the door lets people out this long
+		HoldSeconds = 0.6, -- hold E to board or leave (touch players tap)
+		FadeSeconds = 1, -- the screen goes black this long before the teleport
+		ArrivalWaitSeconds = 20, -- a car's server waits this long for the whole car to arrive
+		PromptDistance = 8,
+		CameraZoom = 4.5, -- the camera's distance cap aboard: a car is narrower than the default zoom
+	},
+
 	Motion = {
 		CruiseSpeed = 110, -- studs per second, the speed the world scrolls past the train
 		DepartureLingerSeconds = 12, -- after the chase window the station keeps sliding, then despawns

@@ -1,7 +1,8 @@
 --!strict
 --[[
 	The Depot Hall: ready-ups, lobby spawning, kiosk prompts and late joining.
-	A player is "in the lobby" whenever they are not a live crew member.
+	A player is "in the lobby" whenever they are not a live crew member and not
+	aboard a boarding car (CarService); car players are ready by being aboard.
 ]]
 
 local Players = game:GetService("Players")
@@ -21,6 +22,7 @@ local LobbyService = {}
 local built: LobbyBuilder.Built? = nil
 local ready: { [Player]: boolean } = {}
 local spawnIndex = 0
+local crewOverride: { Player }? = nil
 
 local function publishReady()
 	local map: { [string]: boolean } = {}
@@ -59,7 +61,9 @@ function LobbyService.Start()
 		publishReady()
 	end, function(player)
 		local phase = Registry.RunDirector.Phase()
-		return (phase == "Lobby" or phase == "Countdown") and not Registry.CrewService.IsMember(player)
+		return (phase == "Lobby" or phase == "Countdown")
+			and not Registry.CrewService.IsMember(player)
+			and not Registry.CarService.IsAboard(player)
 	end)
 
 	Players.PlayerRemoving:Connect(function(player)
@@ -76,6 +80,10 @@ end
 
 function LobbyService.DisplayTrain(): Model?
 	return if built then built.displayTrain else nil
+end
+
+function LobbyService.DisplayCabins(): { LobbyBuilder.Cabin }
+	return if built then built.displayCabins else {}
 end
 
 function LobbyService.Board(): BasePart?
@@ -96,7 +104,7 @@ end
 function LobbyService.LobbyPlayers(): { Player }
 	local out: { Player } = {}
 	for _, player in Players:GetPlayers() do
-		if not Registry.CrewService.IsMember(player) then
+		if not Registry.CrewService.IsMember(player) and not Registry.CarService.IsAboard(player) then
 			table.insert(out, player)
 		end
 	end
@@ -115,6 +123,22 @@ function LobbyService.ReadyCount(): number
 		end
 	end
 	return count
+end
+
+-- The crew for the next Boarding: a launching car's players if one was set, else the hall.
+function LobbyService.SetCrew(crew: { Player })
+	crewOverride = crew
+end
+
+function LobbyService.TakeCrew(): { Player }
+	local crew = crewOverride or LobbyService.LobbyPlayers()
+	crewOverride = nil
+	return crew
+end
+
+function LobbyService.ClearReady(player: Player)
+	ready[player] = nil
+	publishReady()
 end
 
 function LobbyService.ResetReady()
