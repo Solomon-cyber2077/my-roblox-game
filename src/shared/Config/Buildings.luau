@@ -800,7 +800,8 @@ local Furniture: { [string]: Furniture } = {
 	LampRack = { w = 4, d = 1.2, name = "Lamp Rack" },
 	ShopShelf = { w = 4, d = 1.6, name = "Shop Shelves" },
 	Lantern = { w = 1.4, d = 1.4, name = "Lantern" },
-	Stairs = { w = 22, d = 4.6, name = "Stairs" }, -- the stairwell's ramp (BuildingBuilder draws it)
+	-- the stairwell's ramp (BuildingBuilder draws it), wide enough for Hollows to path up
+	Stairs = { w = 22, d = 6.2, name = "Stairs" },
 }
 
 for _, room in Rooms do
