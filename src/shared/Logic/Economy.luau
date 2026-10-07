@@ -8,12 +8,14 @@
 	      + 10 per flare rescue
 	      + 80 for being aboard at the Terminus (40 if the crew won without you)
 	XP    = that Brass + 25 for finishing the run
+	A run at tier t > 1 adds BrassBonusPerTier per tier (Config/Difficulty.RunTier).
 	The first run of each UTC day doubles the Brass (bonus capped at 400).
 	A private-server run with one player pays 60%.
 ]]
 
 local Shared = script.Parent.Parent
 local Tuning = require(Shared.Config.Tuning)
+local RunTier = require(script.Parent.RunTier)
 local Types = require(Shared.Types)
 
 export type Line = { label: string, amount: number }
@@ -22,6 +24,7 @@ export type Options = {
 	outcome: Types.Outcome?,
 	dailyBonus: boolean,
 	soloCharter: boolean,
+	tier: number?,
 }
 
 local Economy = {}
@@ -50,6 +53,12 @@ function Economy.payout(tally: Types.CrewTally, options: Options): Payout
 	end
 
 	local brass = base
+	local tier = RunTier.clamp(options.tier)
+	if tier > 1 and brass > 0 then
+		local boosted = math.floor(brass * RunTier.brassMultiplier(tier))
+		add(`Tier {tier} bonus`, boosted - brass)
+		brass = boosted
+	end
 	if options.soloCharter then
 		local reduced = math.floor(brass * e.CharterSoloMultiplier)
 		add("Solo charter run", reduced - brass)

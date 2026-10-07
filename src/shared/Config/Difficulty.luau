@@ -5,12 +5,23 @@
 	only reader; the production blueprint quotes these numbers.
 
 	Base curve:  R(n) = Start + Span * ((n - 1) / (N - 1)) ^ Exponent
-	Station D:   D = clamp(R(n) + TierOffset[tier], 0, 1)
+	Station D:   D = clamp(R(n) + TierOffset[tier] + RunTier offset, 0, 1)
+
+	RunTier is the opt-in run difficulty the host picks in the lobby (Logic/RunTier).
+	Tier 1 adds nothing; each tier above 1 adds OffsetPerTier to every stop's D and
+	BrassBonusPerTier to the run's Brass. Winning at tier N unlocks N + 1, up to Max.
 ]]
 
 return table.freeze({
 	Base = table.freeze({ Start = 0.08, Span = 0.80, Exponent = 1.4 }),
 	TierOffset = table.freeze({ -0.08, 0, 0.10 }),
+	RunTier = table.freeze({
+		Default = 1,
+		Max = 5,
+		OffsetPerTier = 0.06,
+		BrassBonusPerTier = 0.20,
+		LobbyRefreshSeconds = 1,
+	}),
 
 	Dwell = table.freeze({ 95, 60 }), -- seconds the doors stay open, before archetype scaling
 

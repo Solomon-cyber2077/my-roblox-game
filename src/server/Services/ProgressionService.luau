@@ -3,7 +3,7 @@
 	End-of-run payouts, lifetime stats, Crew Rank and Line Mastery milestones.
 	Charter (private server) rules: a solo run pays 60%, Brass from charter runs is
 	capped per day, and the owner earns a Charter Stamp for each run with 3+ crew
-	that clears 5+ stations.
+	that clears 5+ stations. A victory at run tier N unlocks tier N + 1 (Logic/RunTier).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,6 +16,7 @@ local Catalog = require(Shared.Logic.Catalog)
 local Economy = require(Shared.Logic.Economy)
 local Milestones = require(Shared.Logic.Milestones)
 local Rank = require(Shared.Logic.Rank)
+local RunTier = require(Shared.Logic.RunTier)
 local Types = require(Shared.Types)
 
 local DataService = require(script.Parent.DataService)
@@ -34,7 +35,8 @@ function ProgressionService.Start() end
 function ProgressionService.PayRun(
 	outcome: Types.Outcome,
 	tallies: { [Player]: Types.CrewTally },
-	stationsCleared: number
+	stationsCleared: number,
+	tier: number
 )
 	local day = Catalog.dayNumber(os.time())
 	local charter = isCharter()
@@ -48,11 +50,13 @@ function ProgressionService.PayRun(
 		local profile = DataService.GetProfile(player)
 		if profile then
 			local rankBefore = Rank.fromXp(profile.xp)
+			local tierBefore = profile.unlockedTier
 			local dailyBonus = profile.daily.lastBonusDay ~= day
 			local payout = Economy.payout(tally, {
 				outcome = outcome,
 				dailyBonus = dailyBonus,
 				soloCharter = charter and crewCount == 1,
+				tier = tier,
 			})
 			local brass = payout.brass
 			if charter then
@@ -68,6 +72,7 @@ function ProgressionService.PayRun(
 			DataService.Update(player, function(p)
 				p.brass += brass
 				p.xp += payout.xp
+				p.unlockedTier = RunTier.afterRun(p.unlockedTier, tier, outcome == "Victory")
 				if dailyBonus and payout.brass > 0 then
 					p.daily.lastBonusDay = day
 				end
@@ -125,6 +130,8 @@ function ProgressionService.PayRun(
 				rankAfter = Rank.fromXp(profile.xp),
 				milestones = granted,
 				stations = stationsCleared,
+				tier = tier,
+				unlockedTier = if profile.unlockedTier > tierBefore then profile.unlockedTier else nil,
 				tally = tally,
 				saved = DataService.IsOnline(player),
 			})

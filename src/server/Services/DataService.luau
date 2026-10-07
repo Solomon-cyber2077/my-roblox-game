@@ -17,6 +17,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
+local Difficulty = require(Shared.Config.Difficulty)
 local Progression = require(Shared.Config.Progression)
 local Tuning = require(Shared.Config.Tuning)
 local Rank = require(Shared.Logic.Rank)
@@ -48,6 +49,7 @@ local function defaultProfile(): Profile
 		version = SCHEMA_VERSION,
 		brass = 0,
 		xp = 0,
+		unlockedTier = Difficulty.RunTier.Default,
 		owned = {},
 		equipped = equipped,
 		milestones = {},
@@ -90,6 +92,7 @@ local function publish(player: Player)
 		brass = profile.brass,
 		xp = profile.xp,
 		rank = Rank.fromXp(profile.xp),
+		unlockedTier = profile.unlockedTier,
 		owned = profile.owned,
 		equipped = profile.equipped,
 		milestones = profile.milestones,
@@ -266,6 +269,11 @@ end
 -- Immediate save, used after a Robux purchase is granted.
 function DataService.SaveNow(player: Player): boolean
 	return save(player, false)
+end
+
+function DataService.UnlockedTier(player: Player): number
+	local profile = DataService.GetProfile(player)
+	return if profile then profile.unlockedTier else Difficulty.RunTier.Default
 end
 
 function DataService.Rank(player: Player): number

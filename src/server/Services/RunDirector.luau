@@ -44,6 +44,7 @@ type RunState = {
 	seed: number,
 	nextStop: number,
 	stationsCleared: number,
+	runTier: number,
 	lastArchetype: string?,
 	chosen: Types.RouteOption?,
 	cruiseSeconds: number,
@@ -61,6 +62,7 @@ local state: RunState = {
 	seed = 0,
 	nextStop = 1,
 	stationsCleared = 0,
+	runTier = 1,
 	lastArchetype = nil,
 	chosen = nil,
 	cruiseSeconds = 30,
@@ -139,6 +141,8 @@ Enter.Boarding = function()
 	state.outcome = nil
 	StateService.Set({ "stats" }, { coalDelivered = 0, partsDelivered = 0, relics = 0, stationsCleared = 0 })
 	local crew = Registry.LobbyService.TakeCrew()
+	state.runTier = Registry.LobbyService.TierFor(crew)
+	StateService.Set({ "run", "tier" }, state.runTier)
 	Registry.TrainService.ResetForRun()
 	Registry.TrainService.SetDoors(false)
 	Registry.CrewService.BeginRun(crew)
@@ -149,8 +153,12 @@ end
 Enter.Junction = function()
 	local options = RouteGen.options(state.seed, state.nextStop, Tuning.Run.StationCount, state.lastArchetype)
 	Registry.RouteService.Open(options)
-	local d =
-		DifficultyModel.forStop(math.min(state.nextStop, Tuning.Run.StationCount), Tuning.Run.StationCount, 2)
+	local d = DifficultyModel.forStop(
+		math.min(state.nextStop, Tuning.Run.StationCount),
+		Tuning.Run.StationCount,
+		2,
+		state.runTier
+	)
 	Registry.TrainService.SetBreachRate(DifficultyModel.breachRate(d, Registry.TrainService.Get().upgrades))
 end
 
@@ -159,7 +167,7 @@ Enter.Cruise = function()
 	local arch = Stations.List[option.archetype]
 	local d = if arch.terminus
 		then 0
-		else DifficultyModel.forStop(state.nextStop, Tuning.Run.StationCount, option.tier)
+		else DifficultyModel.forStop(state.nextStop, Tuning.Run.StationCount, option.tier, state.runTier)
 	local train = Registry.TrainService.Get()
 	state.chosen = option
 	state.lastArchetype = option.archetype
@@ -273,7 +281,12 @@ Enter.RunEnd = function(previous, outcome)
 	Registry.HazardDirector.Stop()
 	Registry.HollowService.Clear()
 	local finalOutcome = state.outcome :: Types.Outcome
-	Registry.ProgressionService.PayRun(finalOutcome, Registry.CrewService.Tallies(), state.stationsCleared)
+	Registry.ProgressionService.PayRun(
+		finalOutcome,
+		Registry.CrewService.Tallies(),
+		state.stationsCleared,
+		state.runTier
+	)
 	local text = {
 		Victory = "The train reached the Terminus.",
 		Wiped = "The whole crew was lost.",

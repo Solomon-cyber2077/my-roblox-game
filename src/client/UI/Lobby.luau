@@ -1,7 +1,8 @@
 --!strict
 --[[
 	Depot Hall UI: profile card, the ready toggle, join-in-progress, shortcuts to
-	the Outfitter and the Ledger, and the in-world departure board.
+	the Outfitter and the Ledger, the run tier picker (host only) and the in-world
+	departure board.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -145,6 +146,41 @@ function Lobby.mount(gui: ScreenGui)
 		end
 	end)
 
+	-- Run tier: everyone sees it, only the host can change it ---------------------------------
+	local tierRow = Ui.new("Frame", {
+		Name = "RunTier",
+		Size = UDim2.fromOffset(420, 36),
+		Position = UDim2.new(0.5, 0, 1, -150),
+		AnchorPoint = Vector2.new(0.5, 1),
+		BackgroundTransparency = 1,
+		Parent = container,
+	})
+	local tierLabel = Ui.text({
+		Text = "",
+		Font = Theme.Font.display,
+		TextSize = 20,
+		Color = Theme.Color.white,
+		Position = UDim2.fromOffset(48, 0),
+		Size = UDim2.new(1, -96, 1, 0),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	outlined(tierLabel).Parent = tierRow
+	local function pickTier(step: number)
+		local tier = State.Get({ "lobby", "tier" }) or {}
+		local nextTier = math.clamp((tier.selected or 1) + step, 1, tier.max or 1)
+		if nextTier ~= tier.selected then
+			Net.Fire("SetRunTier", nextTier)
+		end
+	end
+	local tierDown = Ui.button("<", "Secondary", function()
+		pickTier(-1)
+	end, { Size = UDim2.fromOffset(40, 36), TextSize = 20 })
+	tierDown.Parent = tierRow
+	local tierUp = Ui.button(">", "Secondary", function()
+		pickTier(1)
+	end, { Size = UDim2.fromOffset(40, 36), Position = UDim2.new(1, -40, 0, 0), TextSize = 20 })
+	tierUp.Parent = tierRow
+
 	-- Shortcuts -------------------------------------------------------------------------------
 	local shortcuts = Ui.new("Frame", {
 		Size = UDim2.fromOffset(180, 88),
@@ -252,6 +288,18 @@ function Lobby.mount(gui: ScreenGui)
 		local now = Session.now()
 		local readyCount, needed = readyLine()
 		local mine = State.Get({ "lobby", "ready", Session.userKey }) == true
+
+		local tier = State.Get({ "lobby", "tier" }) or {}
+		local selected, maxTier = tier.selected or 1, tier.max or 1
+		local isHost = tier.host == Session.userKey
+		tierRow.Visible = panel.Visible and not RunRules.isRunPhase(phase :: any) and phase ~= "RunEnd"
+		tierLabel.Text = if isHost
+			then `RUN TIER {selected}  ·  CREW CAN PLAY UP TO {maxTier}`
+			else `RUN TIER {selected}  ·  HOST PICKS (UP TO {maxTier})`
+		tierDown.Visible = isHost
+		tierUp.Visible = isHost
+		Ui.setButtonEnabled(tierDown, selected > 1)
+		Ui.setButtonEnabled(tierUp, selected < maxTier)
 
 		local head, rows = "PLATFORM 1  ·  LAST TRAIN OUT", ""
 		if RunRules.isRunPhase(phase :: any) or phase == "RunEnd" then
