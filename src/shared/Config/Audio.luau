@@ -51,7 +51,7 @@ local Cues: { [string]: Cue } = {
 	StationEerie = { id = 9125440141, volume = 0.35, loop = true },
 	DepotHall = { id = 9114872503, volume = 0.3, loop = true },
 	-- Satie, Gnossienne No. 3 (APM Music), from the lobby piano (Builders/LobbyBuilder)
-	LobbyPiano = { id = 1837474268, volume = 0.4, loop = true, spatial = true },
+	LobbyPiano = { id = 1837474268, volume = 0.48, loop = true, spatial = true },
 
 	-- The stops' soundscape: the same recordings slowed and shaped (AudioController
 	-- adds the filters and reverb), so nothing new needs clearing.

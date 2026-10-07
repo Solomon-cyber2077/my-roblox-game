@@ -67,6 +67,6 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 3. Next: walk the cars in Play to confirm the look.
 
 ## 2026-10-06: Lobby piano music and notes
-1. Done: Satie's Gnossienne No. 3 (APM, id 1837474268, cue `LobbyPiano` in `Config/Audio`, volume 0.4) loops from a hidden `PianoVoice` part in the lobby piano (`Builders/LobbyBuilder`), 3D roll-off 24-140 studs. New client `Controllers/PianoNotes` floats gold/cream/amber note glyphs off it (rise, sway, fade over 3-4.6 s; none when the camera is >110 studs away). Notes checked in Studio play, console clean; `lune run check` passes.
+1. Done: Satie's Gnossienne No. 3 (APM, id 1837474268, cue `LobbyPiano` in `Config/Audio`, volume 0.48 after a +20% bump) loops from a hidden `PianoVoice` part in the lobby piano (`Builders/LobbyBuilder`), 3D roll-off 24-140 studs. New client `Controllers/PianoNotes` floats gold/cream/amber note glyphs off it (rise, sway, fade over 3-4.6 s; none when the camera is >110 studs away). Notes checked in Studio play, console clean; `lune run check` passes.
 2. Known: music audibility/volume not checked by ear (MCP can't hear audio).
 3. Next: listen in Studio and tune `LobbyPiano.volume` or the roll-off if it masks the DepotHall bed.
