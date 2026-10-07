@@ -210,7 +210,7 @@ function BuildingService.IsLitAt(position: Vector3): boolean
 			if
 				math.abs(localPos.X - state.building.x) <= plan.outerX
 				and math.abs(localPos.Z - state.building.z) <= plan.outerZ
-				and localPos.Y < plan.height + 2
+				and localPos.Y < (if plan.upper then plan.upper.top + 2 else plan.height + 2)
 			then
 				return true
 			end
