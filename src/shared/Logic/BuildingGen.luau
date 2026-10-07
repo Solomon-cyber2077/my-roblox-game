@@ -714,7 +714,13 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 				elseif which == "sides" then
 					sides = SIDES_OF[r.doorSide]
 				elseif which == "long" then
-					sides = if rect.x1 - rect.x0 >= rect.z1 - rect.z0 then { "N", "S" } else { "E", "W" }
+					local wide = rect.x1 - rect.x0 >= rect.z1 - rect.z0
+					sides = if wide then { "N", "S" } else { "E", "W" }
+					-- too narrow for a row down both walls and a way between them: one row, away from the door
+					local across = if wide then rect.z1 - rect.z0 else rect.x1 - rect.x0
+					if across < 2 * f.d + B.Aisle then
+						sides = { if table.find(sides, far) then far else sides[1] }
+					end
 				else
 					sides = { far, SIDES_OF[r.doorSide][1], SIDES_OF[r.doorSide][2], r.doorSide }
 				end
@@ -824,9 +830,10 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 				items[last].container = "ToolChest"
 			end
 		end
-		-- a lantern somebody left burning by the way in (or, with no room for it, a lamp that works)
+		-- a lantern somebody left burning by the way in (or, with no room for it, a lamp that works);
+		-- the stairwell's foot gets one too, its ceiling lamp being a whole storey up
 		local lantern = false
-		if r == frontRoom then
+		if r == frontRoom or r.kind == "Stairwell" then
 			local f = B.Furniture.Lantern
 			local corners = {
 				{ x = rect.x0 + f.w / 2 + 0.4, z = rect.z0 + f.d / 2 + 0.4 },
