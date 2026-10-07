@@ -54,7 +54,7 @@ function Lobby.mount(gui: ScreenGui)
 		Parent = container,
 	})
 	local nameLabel = Ui.text({
-		Text = Session.player.DisplayName,
+		Text = `OPERATOR: {Session.player.DisplayName}`,
 		Font = Theme.Font.display,
 		TextSize = 24,
 		Color = Theme.Color.white,
@@ -65,15 +65,15 @@ function Lobby.mount(gui: ScreenGui)
 	local rankLabel = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 17,
+		TextSize = 20,
 		Color = Theme.Color.white,
 		Position = UDim2.fromOffset(4, 36),
-		Size = UDim2.new(1, -40, 0, 18),
+		Size = UDim2.new(1, -40, 0, 22),
 	})
 	outlined(rankLabel).Parent = card
 	local xpFrame, setXp = Ui.meter({
 		Size = UDim2.new(1, -44, 0, 6),
-		Position = UDim2.fromOffset(4, 60),
+		Position = UDim2.fromOffset(4, 62),
 		FillColor = Theme.Color.brass,
 	})
 	xpFrame.BackgroundColor3 = Theme.Color.paperShade
@@ -84,18 +84,18 @@ function Lobby.mount(gui: ScreenGui)
 		Font = Theme.Font.display,
 		TextSize = 22,
 		Color = Theme.Color.brassLight,
-		Position = UDim2.fromOffset(4, 74),
+		Position = UDim2.fromOffset(4, 76),
 		Size = UDim2.new(0.6, 0, 0, 24),
 	})
 	outlined(brassLabel).Parent = card
 	local savingLabel = Ui.text({
 		Text = "",
-		Font = Theme.Font.bodyBold,
-		TextSize = 13,
-		Color = Theme.Color.signal,
-		Position = UDim2.new(1, -14, 0, 80),
+		Font = Theme.Font.display,
+		TextSize = 17,
+		Color = Theme.Color.white,
+		Position = UDim2.new(1, -14, 0, 79),
 		AnchorPoint = Vector2.new(1, 0),
-		Size = UDim2.fromOffset(160, 16),
+		Size = UDim2.fromOffset(180, 20),
 		XAlign = Enum.TextXAlignment.Right,
 	})
 	outlined(savingLabel).Parent = card
@@ -148,12 +148,12 @@ function Lobby.mount(gui: ScreenGui)
 
 	-- Shortcuts -------------------------------------------------------------------------------
 	local shortcuts = Ui.new("Frame", {
-		Size = UDim2.fromOffset(380, 40),
+		Size = UDim2.fromOffset(180, 88),
 		Position = UDim2.fromOffset(14, 132),
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
-	Ui.list(Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Left).Parent = shortcuts
+	Ui.list(Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Left).Parent = shortcuts
 	Ui.button("OUTFITTER", "Secondary", function()
 		Registry.UIController.Open("Outfitter")
 	end, { Size = UDim2.fromOffset(180, 40), LayoutOrder = 1 }).Parent =
