@@ -138,7 +138,7 @@ Enter.Boarding = function()
 	state.lastArchetype = nil
 	state.outcome = nil
 	StateService.Set({ "stats" }, { coalDelivered = 0, partsDelivered = 0, relics = 0, stationsCleared = 0 })
-	local crew = Registry.LobbyService.LobbyPlayers()
+	local crew = Registry.LobbyService.TakeCrew()
 	Registry.TrainService.ResetForRun()
 	Registry.TrainService.SetDoors(false)
 	Registry.CrewService.BeginRun(crew)
@@ -348,6 +348,16 @@ function RunDirector.DevWarp(seconds: number)
 		state.endsAt -= seconds
 		StateService.Set({ "run", "phaseEndsAt" }, state.endsAt)
 	end
+end
+
+-- Starts a run at once for `crew`: a departing boarding car (Studio), or a car's reserved server.
+function RunDirector.Launch(crew: { Player }): boolean
+	if state.phase ~= "Lobby" and state.phase ~= "Countdown" then
+		return false
+	end
+	Registry.LobbyService.SetCrew(crew)
+	transition("Boarding", nil)
+	return true
 end
 
 function RunDirector.Phase(): Phase

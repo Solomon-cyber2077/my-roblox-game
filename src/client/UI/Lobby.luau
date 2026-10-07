@@ -17,6 +17,7 @@ local Format = require(Shared.Util.Format)
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
+local CarBoarding = require(script.Parent.CarBoarding)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
@@ -210,9 +211,17 @@ function Lobby.mount(gui: ScreenGui)
 			readyCount += 1
 		end
 		local crew = State.Get({ "crew" }) or {}
+		-- players aboard a boarding car leave with their car, not the hall's countdown
+		local inCars: { [string]: boolean } = {}
+		for _, car in State.Get({ "lobby", "cars" }) or {} do
+			for _, key in car.occupants do
+				inCars[key] = true
+			end
+		end
 		local inLobby = 0
 		for _, player in game:GetService("Players"):GetPlayers() do
-			if crew[tostring(player.UserId)] == nil then
+			local key = tostring(player.UserId)
+			if crew[key] == nil and not inCars[key] then
 				inLobby += 1
 			end
 		end
@@ -236,6 +245,8 @@ function Lobby.mount(gui: ScreenGui)
 	RunService.RenderStepped:Connect(function()
 		local member = Session.isMember()
 		container.Visible = not member
+		-- aboard a boarding car you are ready already: its countdown (UI/CarBoarding) replaces this panel
+		panel.Visible = CarBoarding.MyCar() == nil
 		local phase = Session.phase()
 		local run = State.Get({ "run" }) or {}
 		local now = Session.now()

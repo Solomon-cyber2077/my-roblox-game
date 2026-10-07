@@ -86,7 +86,11 @@ export type Built = {
 	mastLamp: BasePart,
 	routeTable: BasePart,
 	seats: { Seat },
+	cabins: { Cabin },
 }
+
+-- A carriage with a side door: its floor (centre at floor level, size across the inner walls) and door.
+export type Cabin = { floor: CFrame, size: Vector3, door: CFrame }
 
 type Span = { number }
 
@@ -132,6 +136,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 
 	local doorBlockers: { BasePart } = {}
 	local breachAnchors: { BasePart } = {}
+	local cabins: { Cabin } = {}
 
 	local function bogie(x: number)
 		Kit.block(model, Vector3.new(8, 1.2, 10), at(x, -3, 0), C.frame, { material = Enum.Material.Metal })
@@ -878,6 +883,13 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			end
 		end
 		sideWall(x0, x1, 1, doors, SIDE_DOOR_W, lining, WALL_T, WALL_T, SIDE_DOOR_H, true)
+		if #doors > 0 then
+			table.insert(cabins, {
+				floor = at(cx, 0, 0),
+				size = Vector3.new(len - 2 * WALL_T, 0, 2 * WALL_IN),
+				door = at(doors[1], SIDE_DOOR_H / 2, HALF),
+			})
+		end
 		sideWall(x0, x1, -1, {}, SIDE_DOOR_W, lining, WALL_T, WALL_T, SIDE_DOOR_H, true)
 		endWall(x0 + WALL_T / 2, rearGangway, 1)
 		endWall(x1 - WALL_T / 2, frontGangway, -1)
@@ -1552,6 +1564,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		mastLamp = mastLamp,
 		routeTable = routeTable,
 		seats = furnished.seats,
+		cabins = cabins,
 	}
 end
 

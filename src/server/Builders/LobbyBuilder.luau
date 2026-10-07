@@ -29,7 +29,10 @@ export type Built = {
 	outfitter: BasePart,
 	ledger: BasePart,
 	displayTrain: Model,
+	displayCabins: { Cabin },
 }
+
+export type Cabin = TrainBuilder.Cabin
 
 local LobbyBuilder = {}
 
@@ -230,7 +233,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	end
 	-- invisible barriers fill the open gaps between the display train's cars, from the ballast up
 	-- to the roofline, so nobody walks or drops between them; their tops are flush with the roofs
-	-- to walk across. Gangway gaps keep the covered gangway open and fill only its two sides.
+	-- to walk across. Gangways are closed too: each car is its own boarding room, entered only by
+	-- its door prompt (CarService), and the brake van's rear doorway is shut off its tail platform.
 	local GAP_BOTTOM, GAP_TOP = -6, 9.8
 	local function gapBarrier(x0: number, x1: number, z0: number, z1: number)
 		local barrier = block(
@@ -244,13 +248,10 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		barrier.CanQuery = false
 		barrier.CanTouch = false
 	end
-	for _, gap in { { -66, -63 }, { -44.5, -41.5 }, { -23, -20 }, { -1.5, 1.5 } } do
-		gapBarrier(gap[1], gap[2], 2.5, 6.5)
-		gapBarrier(gap[1], gap[2], -6.5, -2.5)
-	end
-	for _, gap in { { 20, 23 }, { 49, 52 } } do
+	for _, gap in { { -66, -63 }, { -44.5, -41.5 }, { -23, -20 }, { -1.5, 1.5 }, { 20, 23 }, { 49, 52 } } do
 		gapBarrier(gap[1], gap[2], -6.5, 6.5)
 	end
+	gapBarrier(-90.6, -90, -2.5, 2.5)
 
 	-- Walls ----------------------------------------------------------------------------------------
 	-- back wall with tall lit windows, the ticket office and the departure board
@@ -1443,6 +1444,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		outfitter = outfitter,
 		ledger = ledger,
 		displayTrain = display.model,
+		displayCabins = display.cabins,
 	}
 end
 
