@@ -30,6 +30,6 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 3. Next: check that the outlined text reads well over bright lobby floor tiles at small screen sizes.
 
 ## 2026-10-06: Lobby HUD tweaks
-1. Done: `UI/Lobby.luau` name reads `OPERATOR: <name>`; CREW RANK/XP line is Oswald Bold 20 (was 17); PROGRESS NOT SAVED is white Oswald Bold 17 (was red BuilderSans 13); LINE MASTERY now stacks under OUTFITTER with 8px gap. Studio play checked, console clean.
+1. Done: `UI/Lobby.luau` name reads `OPERATOR: <name>`; CREW RANK/XP line is Oswald Bold 20 (was 17); PROGRESS NOT SAVED is white Oswald Bold 17 (was red BuilderSans 13); LINE MASTERY now stacks under OUTFITTER with 8px gap; PROGRESS NOT SAVED sits left-aligned just above OUTFITTER. Studio play checked, console clean.
 2. Known issues: very long display names may overflow the 260px name label.
 3. Next: same as above (readability over bright tiles).

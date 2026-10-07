@@ -48,7 +48,7 @@ function Lobby.mount(gui: ScreenGui)
 	-- Profile card ---------------------------------------------------------------------------
 	local card = Ui.new("Frame", {
 		Name = "Profile",
-		Size = UDim2.fromOffset(300, 112),
+		Size = UDim2.fromOffset(300, 124),
 		Position = UDim2.fromOffset(14, 12),
 		BackgroundTransparency = 1,
 		Parent = container,
@@ -93,10 +93,8 @@ function Lobby.mount(gui: ScreenGui)
 		Font = Theme.Font.display,
 		TextSize = 17,
 		Color = Theme.Color.white,
-		Position = UDim2.new(1, -14, 0, 79),
-		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.fromOffset(4, 102),
 		Size = UDim2.fromOffset(180, 20),
-		XAlign = Enum.TextXAlignment.Right,
 	})
 	outlined(savingLabel).Parent = card
 
@@ -149,7 +147,7 @@ function Lobby.mount(gui: ScreenGui)
 	-- Shortcuts -------------------------------------------------------------------------------
 	local shortcuts = Ui.new("Frame", {
 		Size = UDim2.fromOffset(180, 88),
-		Position = UDim2.fromOffset(14, 132),
+		Position = UDim2.fromOffset(14, 140),
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
