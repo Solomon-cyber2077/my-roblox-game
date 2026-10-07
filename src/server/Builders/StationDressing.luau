@@ -13,6 +13,8 @@
 	               Timetable, Planter
 	  The yard     Haystack, Cart, Pump, Wheelbarrow, Puddle, Barrels, Bonfire, Graves,
 	               MineCart, Swings, Topiary, Well, PillarBox, SignalPost, Scarecrow
+	  The ground   Siding (one tile of track), Wreck, Rubble, BrokenRoad, Deck, Trench: what
+	               LayoutGen lays along a stop's routes and across its zone boundaries
 
 	Parts that touch or cross are given distinct planes, so no two visible faces ever share
 	one (lune run audit).
@@ -1056,6 +1058,200 @@ Builders.Scarecrow = function(ctx)
 	block(ctx, Vector3.new(0.5, 0.06, 0.05), f(ctx, 0, 5.5, -0.63), C.coal)
 	post(ctx, 0.08, 1.9, f(ctx, 0, 6.42, 0), C.coal, M.Fabric)
 	post(ctx, 0.75, 1.0, f(ctx, 0, 6.82, 0), C.coal, M.Fabric)
+end
+
+-- Routes and broken ground -------------------------------------------------------------------
+
+-- A tile of siding: two rails on sleepers, the rails joined end to end with the next tile's.
+Builders.Siding = function(ctx)
+	local length = ctx.width
+	for _, x in { -4, 0, 4 } do
+		if math.abs(x) < length / 2 - 0.6 then
+			block(
+				ctx,
+				Vector3.new(1.0, 0.24, 6.4),
+				f(ctx, x + ctx.rng:NextNumber(-0.15, 0.15), 0.1, 0)
+					* Kit.angles(0, ctx.rng:NextNumber(-3, 3), 0),
+				shade(ctx, C.woodDark, 0.08),
+				M.Wood
+			)
+		end
+	end
+	for _, z in { -2.4, 2.4 } do
+		block(ctx, Vector3.new(length, 0.36, 0.3), f(ctx, 0, 0.36, z), C.iron, M.CorrodedMetal)
+	end
+end
+
+-- A goods wagon thrown on its side: the body, its underframe and wheels turned to the sky.
+Builders.Wreck = function(ctx)
+	local rust = shade(ctx, rgb(104, 64, 44), 0.1)
+	local at = f(ctx, 0, 0, 0) * Kit.angles(0, ctx.rng:NextNumber(-5, 5), ctx.rng:NextNumber(-2, 2))
+	block(ctx, Vector3.new(9.0, 3.4, 3.2), at * CFrame.new(0, 1.6, -0.4), rust, M.CorrodedMetal, true)
+	for _, y in { 0.75, 2.45 } do
+		block(ctx, Vector3.new(9.4, 0.5, 0.5), at * CFrame.new(0, y, 1.38), C.iron, M.Metal, true)
+		for _, x in { -2.9, 2.9 } do
+			rod(ctx, 0.36, 1.6, at * CFrame.new(x, y, 1.78) * Kit.angles(0, 90, 0), C.iron, M.Metal)
+		end
+	end
+	-- a door torn off, lying in front
+	block(
+		ctx,
+		Vector3.new(3.4, 0.24, 2.2),
+		at
+			* CFrame.new(ctx.rng:NextNumber(-2.5, 2.5), 0.1, -3.0)
+			* Kit.angles(0, ctx.rng:NextNumber(-15, 15), 3),
+		shade(ctx, rust, 0.08),
+		M.CorrodedMetal
+	)
+end
+
+-- A heap of fallen masonry on a spill of earth, a beam sticking out of it: cover to crouch behind.
+Builders.Rubble = function(ctx)
+	post(ctx, 0.5, 8.4, f(ctx, 0, 0.05, 0), shade(ctx, rgb(78, 68, 58), 0.08), M.Ground)
+	for k = 1, 7 do
+		local core = k <= 2
+		local a = ctx.rng:NextNumber(0, math.pi * 2)
+		local r = if core then ctx.rng:NextNumber(0, 0.8) else ctx.rng:NextNumber(1.4, 2.8)
+		local size = Vector3.new(
+			ctx.rng:NextNumber(1.4, 2.6),
+			ctx.rng:NextNumber(0.8, 1.6),
+			ctx.rng:NextNumber(1.0, 2.0)
+		) * (if core then 1.4 else 1)
+		local stone = k % 3 == 0
+		block(
+			ctx,
+			size,
+			f(ctx, math.cos(a) * r, size.Y / 2 + (if core then 0.1 else 0.05), math.sin(a) * r)
+				* Kit.angles(
+					ctx.rng:NextNumber(-14, 14),
+					ctx.rng:NextNumber(0, 180),
+					ctx.rng:NextNumber(-14, 14)
+				),
+			if stone then shade(ctx, C.stone, 0.1) else shade(ctx, rgb(122, 84, 66), 0.1),
+			if stone then M.Slate else M.Brick,
+			true
+		)
+	end
+	block(
+		ctx,
+		Vector3.new(0.5, 0.5, 5.0),
+		f(ctx, ctx.rng:NextNumber(-1, 1), 1.0, 0) * Kit.angles(22, ctx.rng:NextNumber(0, 180), 0),
+		C.woodDark,
+		M.Wood
+	)
+end
+
+-- The road breaking up: tarmac plates cracked apart, one heaved up on edge, a kerbstone loose.
+Builders.BrokenRoad = function(ctx)
+	local tar = rgb(58, 56, 54)
+	local heaved = ctx.rng:NextInteger(1, 4)
+	for k = 1, 4 do
+		local sx = if k % 2 == 1 then -1 else 1
+		local sz = if k <= 2 then -1 else 1
+		local size = Vector3.new(ctx.rng:NextNumber(3.4, 4.2), 0.3, ctx.rng:NextNumber(3.4, 4.2))
+		local x = sx * (2.25 + ctx.rng:NextNumber(-0.2, 0.2))
+		local z = sz * (2.25 + ctx.rng:NextNumber(-0.2, 0.2))
+		if k == heaved then
+			block(
+				ctx,
+				size + Vector3.new(0, 0.1, 0),
+				f(ctx, x, 0.55, z)
+					* Kit.angles(
+						sz * ctx.rng:NextNumber(10, 16),
+						ctx.rng:NextNumber(-10, 10),
+						sx * ctx.rng:NextNumber(4, 8)
+					),
+				shade(ctx, tar, 0.06),
+				M.Asphalt,
+				true
+			)
+		else
+			block(
+				ctx,
+				size,
+				f(ctx, x, 0.06 + k * 0.03, z)
+					* Kit.angles(
+						ctx.rng:NextNumber(-2, 2),
+						ctx.rng:NextNumber(-8, 8),
+						ctx.rng:NextNumber(-2, 2)
+					),
+				shade(ctx, tar, 0.06),
+				M.Asphalt
+			)
+		end
+	end
+	block(
+		ctx,
+		Vector3.new(2.4, 0.7, 0.9),
+		f(ctx, ctx.rng:NextNumber(-2, 2), 0.3, ctx.rng:NextNumber(-2, 2))
+			* Kit.angles(ctx.rng:NextNumber(-10, 10), ctx.rng:NextNumber(0, 180), ctx.rng:NextNumber(-8, 8)),
+		C.stone,
+		M.Concrete,
+		true
+	)
+end
+
+-- A raised timber stage on posts, a ramp up the front and a rail along the back: high ground.
+Builders.Deck = function(ctx)
+	local wood = shade(ctx, C.weathered, 0.1)
+	local dark = Kit.shade(wood, 0.8)
+	local h = 2.6
+	block(ctx, Vector3.new(7.6, 0.4, 5.6), f(ctx, 0, h - 0.2, 1.2), wood, M.WoodPlanks, true)
+	for _, x in { -3.4, 3.4 } do
+		for _, z in { -1.2, 3.6 } do
+			block(ctx, Vector3.new(0.5, h - 0.1, 0.5), f(ctx, x, (h - 0.1) / 2, z), dark, M.Wood, true)
+		end
+	end
+	-- the ramp's tall end tucks under the front of the boards
+	Kit.wedge(
+		ctx.parent,
+		Vector3.new(3.0, h - 0.05, 3.6),
+		f(ctx, ctx.rng:NextNumber(-1.2, 1.2), (h - 0.05) / 2, -3.3),
+		wood,
+		{ material = M.WoodPlanks, collide = true }
+	)
+	for _, x in { -3.4, 0, 3.4 } do
+		block(ctx, Vector3.new(0.3, 2.4, 0.3), f(ctx, x, h + 1.0, 3.72), dark, M.Wood, true)
+	end
+	block(ctx, Vector3.new(7.2, 0.25, 0.25), f(ctx, 0, h + 2.2, 3.72), dark, M.Wood, true)
+	block(
+		ctx,
+		Vector3.new(2.0, 2.0, 2.0),
+		f(ctx, ctx.rng:NextNumber(-2.4, 2.4), h + 0.95, 2.0) * Kit.angles(0, ctx.rng:NextNumber(-20, 20), 0),
+		shade(ctx, C.wood, 0.1),
+		M.WoodPlanks,
+		true
+	)
+end
+
+-- A dug-in line: two banks of sandbags either side of duckboards on dark, trodden earth.
+Builders.Trench = function(ctx)
+	block(ctx, Vector3.new(8.4, 0.1, 3.0), f(ctx, 0, 0.03, 0), rgb(46, 40, 34), M.Mud)
+	block(ctx, Vector3.new(7.4, 0.12, 1.6), f(ctx, 0, 0.1, 0), C.woodDark, M.WoodPlanks)
+	for _, z in { -2.3, 2.3 } do
+		for k, x in { -3.0, -1.0, 1.0, 3.0 } do
+			block(
+				ctx,
+				Vector3.new(1.8, 0.8, 1.1),
+				f(ctx, x + ctx.rng:NextNumber(-0.06, 0.06), 0.38 + k * 0.015, z)
+					* Kit.angles(0, ctx.rng:NextNumber(-4, 4), 0),
+				shade(ctx, C.burlap, 0.1),
+				M.Fabric,
+				true
+			)
+		end
+		for k, x in { -1.0, 1.0 } do
+			block(
+				ctx,
+				Vector3.new(1.8, 0.7, 1.0),
+				f(ctx, x, 1.1 + k * 0.015, z + ctx.rng:NextNumber(-0.1, 0.1))
+					* Kit.angles(0, ctx.rng:NextNumber(-5, 5), 0),
+				shade(ctx, C.burlap, 0.1),
+				M.Fabric,
+				true
+			)
+		end
+	end
 end
 
 -- Builds `kind` if it is one of these; false otherwise.
