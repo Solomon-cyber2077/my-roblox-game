@@ -12,7 +12,26 @@
 	            both ends and the far edge, and the trees standing along them
 	dressing:   what the yard is littered with, the things that say what this place was
 	            (StationDressing builds them all)
+	layout:     how the stop is laid out (LayoutGen): the routes carved before anything is
+	            placed, the barriers that pinch each zone boundary into chokepoints, and the
+	            broken ground beside the routes. A stop without one is scattered at random.
 ]]
+
+-- Street: a lane from the platform to the far edge and a cross street, lined with lots.
+-- Plaza: an open square in the middle zone, a structure in its centre, lanes in and out.
+-- Yard: an open forecourt by the platform with buildings round it and a lane on to the back.
+-- Sidings: tracks running the length of the yard, joined by one lane, heaps between them.
+export type Layout = {
+	style: "Street" | "Plaza" | "Yard" | "Sidings",
+	lane: number, -- the main route's width in tiles
+	square: { number }?, -- Plaza and Yard: the open ground, in tiles
+	centre: string?, -- Plaza: the structure standing in the middle of the square
+	sidings: number?, -- Sidings: how many tracks
+	barriers: { string }, -- what closes off the zone boundaries, a few tiles at a time
+	fill: { number }, -- the share closed at the Near/Mid and the Mid/Far boundary
+	ground: { string }, -- Rubble, BrokenRoad (on the routes), Deck, Trench, Wreck
+	groundCount: number,
+}
 
 export type StructureRule = {
 	kind: string,
@@ -47,6 +66,7 @@ export type Archetype = {
 	edge: { fence: string, trees: { string }, treeChance: number },
 	dressing: { string },
 	yardTrees: number,
+	layout: Layout?,
 	terminus: boolean?,
 }
 
@@ -83,6 +103,14 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "FencePicket", trees = { "Oak", "Oak", "Poplar" }, treeChance = 0.8 },
 		dressing = { "Haystack", "Cart", "Pump", "Wheelbarrow", "Puddle", "Barrels", "Scarecrow" },
 		yardTrees = 3,
+		layout = {
+			style = "Street",
+			lane = 1,
+			barriers = { "FencePicket", "Wreck" },
+			fill = { 0.4, 0.6 },
+			ground = { "BrokenRoad", "Rubble", "Wreck" },
+			groundCount = 5,
+		},
 	},
 	CoalYard = {
 		id = "CoalYard",
@@ -118,6 +146,15 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "FenceRail", trees = { "DeadTree", "Poplar", "DeadTree" }, treeChance = 0.6 },
 		dressing = { "Barrels", "Wheelbarrow", "Puddle", "Bonfire", "Cart", "MineCart" },
 		yardTrees = 2,
+		layout = {
+			style = "Sidings",
+			lane = 1,
+			sidings = 2,
+			barriers = { "Wreck", "FenceRail" },
+			fill = { 0.4, 0.6 },
+			ground = { "Rubble", "BrokenRoad", "Wreck" },
+			groundCount = 5,
+		},
 	},
 	SignalWorks = {
 		id = "SignalWorks",
@@ -152,6 +189,15 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "FenceIron", trees = { "Poplar", "Birch" }, treeChance = 0.65 },
 		dressing = { "SignalPost", "Barrels", "Puddle", "Wheelbarrow", "Bonfire" },
 		yardTrees = 2,
+		layout = {
+			style = "Sidings",
+			lane = 1,
+			sidings = 2,
+			barriers = { "FenceIron", "Wreck" },
+			fill = { 0.35, 0.55 },
+			ground = { "Deck", "Rubble", "Wreck" },
+			groundCount = 5,
+		},
 	},
 	Market = {
 		id = "Market",
@@ -171,7 +217,7 @@ local Archetypes: { [string]: Archetype } = {
 			{ kind = "GeneralStore", zones = { "Mid" } },
 		},
 		structures = {
-			{ kind = "Stall", count = 9, zones = { "Near", "Mid", "Far" } },
+			{ kind = "Stall", count = 9, zones = { "Near", "Mid", "Mid", "Far" } },
 			{ kind = "Fountain", count = 1, zones = { "Mid" } },
 		},
 		lampSpacing = 30,
@@ -185,6 +231,16 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "WallStone", trees = { "DeadTree", "Oak" }, treeChance = 0.6 },
 		dressing = { "Barrels", "Cart", "Bonfire", "Puddle", "Pump", "PillarBox" },
 		yardTrees = 2,
+		layout = {
+			style = "Plaza",
+			lane = 2,
+			square = { 6, 4 },
+			centre = "Fountain",
+			barriers = { "WallStone", "Wreck" },
+			fill = { 0.4, 0.6 },
+			ground = { "BrokenRoad", "Rubble" },
+			groundCount = 5,
+		},
 	},
 	Viaduct = {
 		id = "Viaduct",
@@ -218,6 +274,14 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "WallStone", trees = { "Pine", "Birch", "Pine" }, treeChance = 0.55 },
 		dressing = { "Graves", "Puddle", "Bonfire", "Barrels" },
 		yardTrees = 1,
+		layout = {
+			style = "Street",
+			lane = 1,
+			barriers = { "WallStone" },
+			fill = { 0.4, 0.6 },
+			ground = { "Rubble", "Trench", "BrokenRoad" },
+			groundCount = 4,
+		},
 	},
 	Minehead = {
 		id = "Minehead",
@@ -253,6 +317,15 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "FenceRail", trees = { "Pine", "DeadTree", "Pine" }, treeChance = 0.75 },
 		dressing = { "MineCart", "Barrels", "Bonfire", "Puddle", "Wheelbarrow" },
 		yardTrees = 3,
+		layout = {
+			style = "Yard",
+			lane = 1,
+			square = { 6, 3 },
+			barriers = { "FenceRail", "Wreck" },
+			fill = { 0.4, 0.6 },
+			ground = { "Trench", "Rubble", "Deck" },
+			groundCount = 6,
+		},
 	},
 	Schoolhouse = {
 		id = "Schoolhouse",
@@ -286,6 +359,15 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "FencePicket", trees = { "Oak", "Oak", "Poplar" }, treeChance = 0.8 },
 		dressing = { "Swings", "Haystack", "Puddle", "Pump", "Scarecrow", "Graves" },
 		yardTrees = 3,
+		layout = {
+			style = "Yard",
+			lane = 1,
+			square = { 6, 3 },
+			barriers = { "Hedge", "FencePicket" },
+			fill = { 0.35, 0.55 },
+			ground = { "BrokenRoad", "Deck", "Rubble" },
+			groundCount = 4,
+		},
 	},
 	Infirmary = {
 		id = "Infirmary",
@@ -318,6 +400,15 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "FenceIron", trees = { "Poplar", "Pine" }, treeChance = 0.7 },
 		dressing = { "Puddle", "Barrels", "Pump", "Graves", "Well" },
 		yardTrees = 2,
+		layout = {
+			style = "Yard",
+			lane = 1,
+			square = { 5, 3 },
+			barriers = { "FenceIron", "Wreck" },
+			fill = { 0.35, 0.55 },
+			ground = { "Trench", "Rubble", "Wreck" },
+			groundCount = 5,
+		},
 	},
 	RailwayHotel = {
 		id = "RailwayHotel",
@@ -351,6 +442,16 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "Hedge", trees = { "Oak", "Poplar" }, treeChance = 0.7 },
 		dressing = { "Topiary", "Puddle", "Well", "Barrels", "Topiary" },
 		yardTrees = 2,
+		layout = {
+			style = "Plaza",
+			lane = 1,
+			square = { 5, 4 },
+			centre = "Fountain",
+			barriers = { "Hedge" },
+			fill = { 0.4, 0.6 },
+			ground = { "BrokenRoad", "Rubble" },
+			groundCount = 4,
+		},
 	},
 	PostTown = {
 		id = "PostTown",
@@ -384,6 +485,14 @@ local Archetypes: { [string]: Archetype } = {
 		edge = { fence = "WallStone", trees = { "Oak", "DeadTree" }, treeChance = 0.6 },
 		dressing = { "PillarBox", "Cart", "Puddle", "Barrels", "Pump" },
 		yardTrees = 2,
+		layout = {
+			style = "Street",
+			lane = 2,
+			barriers = { "WallStone", "Wreck" },
+			fill = { 0.4, 0.6 },
+			ground = { "BrokenRoad", "Rubble", "Wreck" },
+			groundCount = 5,
+		},
 	},
 	Terminus = {
 		id = "Terminus",
@@ -464,6 +573,8 @@ return table.freeze({
 	canopyColumns = canopyColumns,
 	EdgeInset = 0.8, -- the boundary stands this far in from the station edge
 	DressingCount = 6, -- things scattered round the yard
+	-- How much likelier the better containers are to stand in the far zone, behind the last barrier
+	FarLoot = table.freeze({ ToolChest = 2.5, Crate = 1.3 }),
 	Order = table.freeze({
 		"Halt",
 		"CoalYard",
