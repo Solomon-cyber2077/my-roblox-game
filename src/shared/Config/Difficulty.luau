@@ -27,6 +27,12 @@ return table.freeze({
 	SpawnRamp = 2.5, -- spawn rate multiplier reached at departure: 1 + SpawnRamp
 	FirstSpawnU = table.freeze({ 0.40, 0.15 }),
 	HollowCap = table.freeze({ Base = 1, PerDifficulty = 5, PerExtraCrew = 0.6, Max = 16 }),
+	-- Raises only the early minimum; the later HollowCap curve remains unchanged.
+	EarlyHollowCap = table.freeze({ Minimum = 3, UntilDifficulty = 0.5 }),
+	-- Sleeping Hollow target is ceil(actual building tiles / TilesPerSleeper), with clearance and retry budget.
+	Sleepers = table.freeze({ TilesPerSleeper = 6, Clearance = 2, AttemptsPerSleeper = 24 }),
+	-- Wanderer delay in seconds after doors open, interpolated from easiest to hardest stop.
+	WandererDelay = table.freeze({ 18, 10 }),
 	HollowWalk = table.freeze({ 11, 14 }),
 	HollowChase = table.freeze({ 22, 26 }), -- between the crew's jog (20) and sprint (31)
 	HollowDamage = table.freeze({ 20, 32 }),

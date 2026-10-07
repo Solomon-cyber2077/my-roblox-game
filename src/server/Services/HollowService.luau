@@ -35,6 +35,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Buildings = require(Shared.Config.Buildings)
 local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
@@ -42,6 +43,7 @@ local Grab = require(Shared.Logic.Grab)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local MathX = require(Shared.Util.MathX)
+local Rng = require(Shared.Util.Rng)
 local Safe = require(Shared.Util.Safe)
 local Types = require(Shared.Types)
 
@@ -49,6 +51,9 @@ local HollowBuilder = require(script.Parent.Parent.Builders.HollowBuilder)
 local Registry = require(script.Parent.Parent.Registry)
 local NetService = require(script.Parent.NetService)
 local StationService = require(script.Parent.StationService)
+
+-- Keep one active slot available until this station's delayed wanderer arrives.
+local wandererPending = false
 
 type KindDef = {
 	walk: number,
@@ -650,7 +655,11 @@ local function resolveStrike(hollow: Hollow)
 end
 
 local function wake(hollow: Hollow)
-	if hollow.state ~= "Dormant" then
+	if
+		hollow.state ~= "Dormant"
+		or params == nil
+		or HollowService.Count() >= params.hollowCap - (if wandererPending then 1 else 0)
+	then
 		return
 	end
 	hollow.sleeper = false
@@ -775,14 +784,15 @@ local function think(hollow: Hollow)
 	local bestRoot: BasePart? = nil
 	local bestDistance = math.huge
 	local bestVisible = false
+	local wanderer = hollow.model:GetAttribute("Wanderer") == true
 	for _, player in Registry.CrewService.AlivePlayers() do
 		if not Registry.CrewService.IsAboard(player) and holderOf(player) == nil then
 			local root = characterRoot(player)
 			if root then
 				local distance = (root.Position - position).Magnitude
-				if distance < H.SightRange and distance < bestDistance then
+				if (wanderer or distance < H.SightRange) and distance < bestDistance then
 					local visible = clearBetween(position, root.Position)
-					if visible or distance <= H.AwarenessRange then
+					if wanderer or visible or distance <= H.AwarenessRange then
 						best, bestRoot, bestDistance, bestVisible = player, root, distance, visible
 					end
 				end
@@ -997,15 +1007,86 @@ end
 
 function HollowService.Configure(hazards: Types.HazardParams)
 	params = hazards
+	wandererPending = hazards.hollowCap > 0
 end
 
--- Seats the station's sleepers in their buildings (LayoutGen plans them).
+-- Retain planned sleepers and fill larger buildings with distinct, clear interior spots.
 function HollowService.Prepare(plan: LayoutGen.Plan)
 	local p = params
 	if p == nil or p.hollowCap <= 0 then
 		return
 	end
-	for _, sleeper in plan.sleepers do
+	local sleepers = table.clone(plan.sleepers)
+	local info = StationService.Info()
+	local placement = Rng.new(Rng.derive(if info then info.layoutSeed else 0, "extraSleepers"))
+	local tuning = Difficulty.Sleepers
+	local clearance = tuning.Clearance
+	for _, building in plan.buildings do
+		local def = Buildings.Defs[building.plan.kind]
+		local target = math.ceil(def.size[1] * def.size[2] / tuning.TilesPerSleeper)
+		local count = 0
+		for _, sleeper in sleepers do
+			if sleeper.building == building.id then
+				count += 1
+			end
+		end
+		local rooms = building.plan.rooms
+		for attempt = 1, target * tuning.AttemptsPerSleeper do
+			if count >= target or #rooms == 0 then
+				break
+			end
+			local room = rooms[(attempt - 1) % #rooms + 1]
+			local rect = room.rect
+			if rect.x1 - rect.x0 <= clearance * 2 or rect.z1 - rect.z0 <= clearance * 2 then
+				continue
+			end
+			local x = placement:range(rect.x0 + clearance, rect.x1 - clearance)
+			local z = placement:range(rect.z0 + clearance, rect.z1 - clearance)
+			local clear = true
+			for _, item in building.plan.items do
+				local furniture = Buildings.Furniture[item.kind]
+				local turned = item.rot % 180 ~= 0
+				local halfX = (if turned then furniture.d else furniture.w) / 2
+				local halfZ = (if turned then furniture.w else furniture.d) / 2
+				if math.abs(x - item.x) < halfX + clearance and math.abs(z - item.z) < halfZ + clearance then
+					clear = false
+					break
+				end
+			end
+			for _, door in room.doors do
+				local dx, dz
+				if door.side == "N" or door.side == "S" then
+					dx, dz = door.at, if door.side == "N" then rect.z1 else rect.z0
+				else
+					dx, dz = if door.side == "E" then rect.x1 else rect.x0, door.at
+				end
+				if (x - dx) ^ 2 + (z - dz) ^ 2 < (clearance * 2) ^ 2 then
+					clear = false
+				end
+			end
+			local worldX, worldZ = building.x + x, building.z + z
+			for _, sleeper in sleepers do
+				if
+					math.abs(worldX - sleeper.x) < clearance * 2
+					and math.abs(worldZ - sleeper.z) < clearance * 2
+				then
+					clear = false
+					break
+				end
+			end
+			if clear then
+				local roomDef = Buildings.Rooms[room.kind]
+				local kind = (if roomDef then roomDef.sleeperKind else nil)
+					or (if placement:chance(0.25) then "Crawler" else "Stalker")
+				table.insert(
+					sleepers,
+					{ x = worldX, y = 0, z = worldZ, rot = 0, kind = kind, building = building.id }
+				)
+				count += 1
+			end
+		end
+	end
+	for _, sleeper in sleepers do
 		local height = HollowBuilder.rootHeight(sleeper.kind)
 		local position = StationService.ToWorld(sleeper.x, sleeper.y + height, sleeper.z)
 		local facing = StationService.ToWorld(
@@ -1031,10 +1112,14 @@ end
 
 -- Spawns one Hollow near station-local (x, z) if the cap allows and the ground holds.
 -- Some climb up over the far edge out of the dark instead. `kind` forces its kind (Studio).
-function HollowService.TrySpawn(x: number, z: number, kind: string?): boolean
+function HollowService.TrySpawn(x: number, z: number, kind: string?, wanderer: boolean?): boolean
 	local p = params
 	local plan = StationService.Plan()
-	if p == nil or plan == nil or HollowService.Count() >= p.hollowCap then
+	if
+		p == nil
+		or plan == nil
+		or HollowService.Count() >= p.hollowCap - (if wandererPending and not wanderer then 1 else 0)
+	then
 		return false
 	end
 	local fromEdge = rng:NextNumber() < 0.35
@@ -1050,7 +1135,7 @@ function HollowService.TrySpawn(x: number, z: number, kind: string?): boolean
 		x += rng:NextNumber(-6, 6)
 		slab = LayoutGen.slabAt(plan, x, z)
 	end
-	if slab == nil or slab.kind ~= "Floor" or z < safeEdge() + 10 then
+	if slab == nil or slab.kind ~= "Floor" or StationService.IsCollapsed(slab.id) or z < safeEdge() + 10 then
 		return false
 	end
 	local chosen = if kind and (Tuning.HollowKinds :: any)[kind] then kind else pickKind()
@@ -1058,7 +1143,12 @@ function HollowService.TrySpawn(x: number, z: number, kind: string?): boolean
 	local localZ = if fromEdge then plan.depth - 3 else slab.z
 	local position = StationService.ToWorld(slab.x, height, localZ)
 	local facing = StationService.ToWorld(slab.x, height, 0)
-	add(CFrame.lookAt(position, facing), chosen, "Emerge", if fromEdge then "Climb" else "Rise")
+	local hollow =
+		add(CFrame.lookAt(position, facing), chosen, "Emerge", if fromEdge then "Climb" else "Rise")
+	if wanderer then
+		hollow.model:SetAttribute("Wanderer", true)
+		wandererPending = false
+	end
 	return true
 end
 
@@ -1127,6 +1217,7 @@ function HollowService.Clear()
 	table.clear(hollows)
 	table.clear(graceUntil)
 	params = nil
+	wandererPending = false
 end
 
 return HollowService

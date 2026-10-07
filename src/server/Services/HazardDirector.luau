@@ -12,6 +12,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local LayoutGen = require(Shared.Logic.LayoutGen)
@@ -30,6 +31,8 @@ type Timeline = {
 	collapseIndex: number,
 	spawns: { number },
 	spawnIndex: number,
+	wandererAt: number,
+	wandererSpawned: boolean,
 	frozenAt: number?,
 	lastDamage: number,
 	rng: Random,
@@ -92,6 +95,15 @@ local function step()
 		state.collapseIndex += 1
 	end
 	if state.frozenAt == nil then
+		if not state.wandererSpawned and t >= state.wandererAt then
+			-- Retry failed placement/cap checks, but never create a second wanderer.
+			for _, lane in state.plan.spawnLanes do
+				if Registry.HollowService.TrySpawn(lane, state.plan.depth / 2, nil, true) then
+					state.wandererSpawned = true
+					break
+				end
+			end
+		end
 		while state.spawns[state.spawnIndex] and state.spawns[state.spawnIndex] <= t do
 			spawnAtFront(state, t)
 			state.spawnIndex += 1
@@ -114,6 +126,13 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	if info.terminus then
 		return
 	end
+	local early = Difficulty.EarlyHollowCap
+	if info.hazards.hollowCap > 0 and info.hazards.difficulty < early.UntilDifficulty then
+		local hazards = table.clone(info.hazards)
+		hazards.hollowCap = math.min(Difficulty.HollowCap.Max, math.max(hazards.hollowCap, early.Minimum))
+		info.hazards = hazards
+		Registry.StateService.Set({ "run", "station", "hazards" }, hazards)
+	end
 	local geo = { depth = plan.depth, safe = Tuning.World.SafeStrip }
 	local refs: { HazardSchedule.SlabRef } = {}
 	for _, slab in plan.slabs do
@@ -128,6 +147,9 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 		collapseIndex = 1,
 		spawns = HazardSchedule.spawnTimes(info.hazards, info.layoutSeed),
 		spawnIndex = 1,
+		wandererAt = Difficulty.WandererDelay[1]
+			+ (Difficulty.WandererDelay[2] - Difficulty.WandererDelay[1]) * info.hazards.difficulty,
+		wandererSpawned = false,
 		frozenAt = nil,
 		lastDamage = 0,
 		rng = Random.new(info.layoutSeed % 2147483647),
