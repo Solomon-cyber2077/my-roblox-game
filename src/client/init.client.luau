@@ -23,6 +23,7 @@ local ORDER = {
 	"UIController",
 	"GrabController",
 	"FxController",
+	"PianoNotes",
 }
 
 local controllers: { { name: string, module: any } } = {}
