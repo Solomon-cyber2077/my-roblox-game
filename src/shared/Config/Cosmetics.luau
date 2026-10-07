@@ -225,16 +225,16 @@ local Catalog: { CosmeticDef } = {
 	-- Liveries: the train's paint for the whole crew (see CosmeticService for who chooses).
 	{
 		id = "livery_heritage",
-		name = "Heritage Green",
+		name = "Heritage Mahogany",
 		category = "Livery",
 		rarity = "Standard",
-		description = "Lined green with brass trim, the way she left the works.",
+		description = "Varnished mahogany and brass, the way she left the works in 1872.",
 		default = true,
 		look = {
-			body = { 38, 74, 52 },
+			body = { 108, 50, 30 },
 			trim = { 201, 160, 82 },
-			roof = { 46, 44, 44 },
-			accent = { 132, 46, 52 },
+			roof = { 44, 40, 36 },
+			accent = { 36, 70, 48 },
 			lamp = { 255, 222, 160 },
 		},
 	},

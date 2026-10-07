@@ -47,6 +47,9 @@ local C = {
 	frame = Color3.fromRGB(34, 32, 32),
 	wheel = Color3.fromRGB(40, 36, 36),
 	driver = Color3.fromRGB(132, 34, 28), -- 1800s red driving wheels
+	russia = Color3.fromRGB(74, 88, 98), -- planished "Russia iron" boiler jacket
+	sash = Color3.fromRGB(58, 34, 22), -- dark varnished window sashes
+	clerestory = Color3.fromRGB(214, 168, 96), -- amber clerestory lights
 	glass = Color3.fromRGB(176, 196, 206),
 	interior = Color3.fromRGB(142, 108, 72),
 	brass = Color3.fromRGB(201, 160, 82),
@@ -118,10 +121,12 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		return origin * CFrame.new(x, y, z)
 	end
 
-	local body = Color3.fromRGB(38, 74, 52)
+	-- 1800s varnished mahogany with brass, a tarred roof and green doors (the default livery repaints these)
+	local body = Color3.fromRGB(108, 50, 30)
 	local trim = C.brass
-	local roof = Color3.fromRGB(46, 44, 44)
-	local accent = Color3.fromRGB(132, 46, 52)
+	local roof = Color3.fromRGB(44, 40, 36)
+	local accent = Color3.fromRGB(36, 70, 48)
+	local wood = { material = Enum.Material.WoodPlanks }
 
 	local doorBlockers: { BasePart } = {}
 	local breachAnchors: { BasePart } = {}
@@ -199,6 +204,51 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	end
 
 	--[[
+		An 1800s window bay: two tall round-topped sashes either side of a centre mullion,
+		with a sash bar under the top lights. Mullion and arch corners sit inside the wall's
+		thickness (clear of its faces and the glass); the bar sits on the outer face.
+	]]
+	local function sashes(cx: number, z: number, sign: number)
+		local band = WINDOW_TOP - WINDOW_BOTTOM
+		tag(
+			Kit.block(
+				model,
+				Vector3.new(0.4, band, 0.3),
+				at(cx, (WINDOW_TOP + WINDOW_BOTTOM) / 2, z),
+				body,
+				{ material = Enum.Material.WoodPlanks, collide = false }
+			),
+			"Body"
+		)
+		local leg = 0.7
+		for _, half in { -1, 1 } do
+			-- the two top corners of this sash, rounded off by a wedge whose right angle sits in the corner
+			for _, edge in { 0.2, 1.8 } do
+				local corner = cx + half * edge
+				local d = if edge > 1 then half else -half -- outward from the sash centre
+				local centre = Vector3.new(corner - d * leg / 2, WINDOW_TOP - leg / 2, z)
+				tag(
+					Kit.wedge(
+						model,
+						Vector3.new(0.3, leg, leg),
+						origin * CFrame.fromMatrix(centre, Vector3.new(0, 0, d), Vector3.new(0, -1, 0)),
+						body,
+						{ material = Enum.Material.WoodPlanks, collide = false, shadow = false }
+					),
+					"Body"
+				)
+			end
+		end
+		Kit.block(
+			model,
+			Vector3.new(3.6, 0.12, 0.06),
+			at(cx, WINDOW_TOP - 1.2, sign * (HALF + 0.03)),
+			C.sash,
+			{ material = Enum.Material.Wood, collide = false, shadow = false }
+		)
+	end
+
+	--[[
 		A side wall between the end walls (which own the corners), from x0 + endT0 to
 		x1 - endT1. Linings sit on its inner face in their own thickness band, frames
 		and curtains in front of them, so no two visible faces ever share a plane.
@@ -230,7 +280,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					Vector3.new(len, WINDOW_BOTTOM, WALL_T),
 					at(cx, WINDOW_BOTTOM / 2, z),
 					body,
-					{ material = Enum.Material.SmoothPlastic }
+					wood
 				),
 				"Body"
 			)
@@ -257,7 +307,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				model,
 				Vector3.new(xb - xa, WALL_H - WINDOW_TOP, WALL_T),
 				at((xa + xb) / 2, (WALL_H + WINDOW_TOP) / 2, z),
-				body
+				body,
+				wood
 			),
 			"Body"
 		)
@@ -297,6 +348,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 						shadow = false,
 					}
 				)
+				sashes(cx, z, sign)
 			end
 		end
 		local solid = table.clone(gaps)
@@ -311,7 +363,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 						model,
 						Vector3.new(len, WINDOW_TOP - WINDOW_BOTTOM, WALL_T),
 						at((span[1] + span[2]) / 2, (WINDOW_TOP + WINDOW_BOTTOM) / 2, z),
-						body
+						body,
+						wood
 					),
 					"Body"
 				)
@@ -336,7 +389,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					Vector3.new(doorWidth / 2, DOOR_H, 0.25),
 					at(dx + dir * doorWidth / 4, DOOR_H / 2, sign * (HALF + 0.24)),
 					accent,
-					{ collide = false }
+					{ collide = false, material = Enum.Material.WoodPlanks }
 				)
 				panel.Name = "DoorPanel"
 				panel:SetAttribute("DoorSlide", slide)
@@ -481,7 +534,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 						model,
 						Vector3.new(WALL_T, WALL_H, HALF - 2),
 						at(x, WALL_H / 2, side * (HALF + 2) / 2),
-						body
+						body,
+						wood
 					),
 					"Body"
 				)
@@ -491,12 +545,16 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					model,
 					Vector3.new(WALL_T, WALL_H - DOOR_H, 4),
 					at(x, (WALL_H + DOOR_H) / 2, 0),
-					body
+					body,
+					wood
 				),
 				"Body"
 			)
 		else
-			tag(Kit.block(model, Vector3.new(WALL_T, WALL_H, WIDTH), at(x, WALL_H / 2, 0), body), "Body")
+			tag(
+				Kit.block(model, Vector3.new(WALL_T, WALL_H, WIDTH), at(x, WALL_H / 2, 0), body, wood),
+				"Body"
+			)
 		end
 		if inward == nil then
 			return
@@ -583,6 +641,38 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				),
 				"Roof"
 			)
+		end
+		-- 1800s clerestory: a raised monitor down the middle with a strip of amber lights each side
+		local top = WALL_H + 0.8
+		local monitor = len - 4.6
+		tag(Kit.block(model, Vector3.new(monitor, 1.4, 4.4), at(cx, top + 0.65, 0), body, wood), "Body")
+		tag(
+			Kit.block(
+				model,
+				Vector3.new(monitor + 1.2, 0.3, 5.4),
+				at(cx, top + 1.45, 0),
+				roof,
+				{ material = Enum.Material.Metal }
+			),
+			"Roof"
+		)
+		for _, side in { -1, 1 } do
+			Kit.block(
+				model,
+				Vector3.new(monitor - 1.6, 0.6, 0.1),
+				at(cx, top + 0.7, side * 2.23),
+				C.clerestory,
+				{ material = Enum.Material.Glass, collide = false, shadow = false }
+			)
+			for x = cx - monitor / 2 + 2, cx + monitor / 2 - 2, 2.4 do
+				Kit.block(
+					model,
+					Vector3.new(0.2, 0.7, 0.16),
+					at(x, top + 0.7, side * 2.24),
+					C.sash,
+					{ material = Enum.Material.Wood, collide = false, shadow = false }
+				)
+			end
 		end
 	end
 
@@ -715,6 +805,20 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		)
 		bogie(x0 + 6.5)
 		bogie(x1 - 6.5)
+		-- queen-post truss rods under the floor, as on wooden cars of the 1800s
+		if len >= 34 then
+			for _, side in { -1, 1 } do
+				local zr = side * 3.6
+				local a, b = x0 + 11, x0 + 15
+				local c, d = x1 - 15, x1 - 11
+				strut(Vector3.new(a, -2.3, zr), Vector3.new(b, -3.5, zr), 0.16, C.iron)
+				strut(Vector3.new(b, -3.5, zr), Vector3.new(c, -3.5, zr), 0.16, C.iron)
+				strut(Vector3.new(c, -3.5, zr), Vector3.new(d, -2.3, zr), 0.16, C.iron)
+				for _, x in { b, c } do
+					strut(Vector3.new(x, -2.4, zr), Vector3.new(x, -3.6, zr), 0.24, C.iron)
+				end
+			end
+		end
 		sideWall(x0, x1, 1, doors, 5, lining, WALL_T, WALL_T)
 		sideWall(x0, x1, -1, {}, 5, lining, WALL_T, WALL_T)
 		endWall(x0 + WALL_T / 2, rearGangway, 1)
@@ -1016,6 +1120,19 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	for _, x in { tx0 + WALL_T / 2, tx1 - WALL_T / 2 } do
 		tag(Kit.block(model, Vector3.new(WALL_T, 7, WIDTH), at(x, 3.5, 0), body), "Body")
 	end
+	-- flared coal boards along the top, leaning out as on an 1800s tender
+	for _, side in { -1, 1 } do
+		tag(
+			Kit.block(
+				model,
+				Vector3.new(tx1 - tx0 - 4, 1.2, 0.2),
+				at(tcx, 7.5, side * (HALF + 0.05)) * Kit.angles(side * 20, 0, 0),
+				body,
+				wood
+			),
+			"Body"
+		)
+	end
 	Kit.block(
 		model,
 		Vector3.new(tx1 - tx0 - 1, 1, WIDTH - 1),
@@ -1072,6 +1189,18 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		),
 		"Roof"
 	)
+	-- 1800s cab: a raised, overhanging roof cap with a little ventilator
+	tag(
+		Kit.block(
+			model,
+			Vector3.new(cx1 - cx0 + 1.2, 0.4, 8),
+			at((cx0 + cx1) / 2, WALL_H + 0.95, 0),
+			roof,
+			{ material = Enum.Material.Metal }
+		),
+		"Roof"
+	)
+	tag(Kit.block(model, Vector3.new(3, 0.7, 2.4), at((cx0 + cx1) / 2, WALL_H + 1.4, 0), body, wood), "Body")
 	-- backhead: firebox, gauges, regulator
 	tag(Kit.block(model, Vector3.new(0.6, WALL_H, WIDTH), at(cx1 - 0.3, WALL_H / 2, 0), body), "Body")
 	-- the furnace and the gauges on this wall are furnished by TrainInterior
@@ -1101,21 +1230,35 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			C.brass,
 			{ material = Enum.Material.Metal, collide = false }
 		)
-		for _, x in { 67.5, 75, 82.5 } do
+		-- a 4-4-0: two big driving wheels, red spokes on an iron disc round a brass hub
+		for _, x in { 70.5, 79.5 } do
 			local driver = Kit.cylinder(
 				model,
 				0.7,
 				5.6,
 				at(x, -2.4, side * 5.3) * Kit.angles(0, 90, 0),
-				C.driver,
+				C.wheel,
 				{ material = Enum.Material.Metal }
 			)
 			driver:SetAttribute("WheelRadius", 2.8)
+			local hubPivot = at(x, -2.4, side * 5.6).Position
+			for i = 0, 3 do
+				-- each spoke in its own plane so the crossings never z-fight
+				local spoke = Kit.block(
+					model,
+					Vector3.new(5.2, 0.32, 0.08),
+					at(x, -2.4, side * (5.7 + i * 0.01)) * CFrame.Angles(0, 0, math.rad(i * 45)),
+					C.driver,
+					{ material = Enum.Material.Metal, collide = false, shadow = false }
+				)
+				spoke:SetAttribute("WheelRadius", 2.8)
+				spoke:SetAttribute("WheelPivot", hubPivot)
+			end
 			Kit.cylinder(
 				model,
-				0.75,
-				1.2,
-				at(x, -2.4, side * 5.35) * Kit.angles(0, 90, 0),
+				0.5,
+				1.3,
+				at(x, -2.4, side * 5.6) * Kit.angles(0, 90, 0),
 				C.brass,
 				{ material = Enum.Material.Metal, collide = false }
 			)
@@ -1124,16 +1267,23 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				model,
 				Vector3.new(1.6, 0.9, 0.2),
 				at(x, -2.4 - 1.6, side * 5.72),
-				body,
+				C.driver,
 				{ collide = false }
 			)
 			counterweight:SetAttribute("WheelRadius", 2.8)
 			counterweight:SetAttribute("WheelPivot", at(x, -2.4, side * 5.72).Position)
-			tag(counterweight, "Body")
+			-- brass-beaded splasher over the top of the wheel
+			Kit.block(
+				model,
+				Vector3.new(6.2, 0.25, 0.9),
+				at(x, 0.75, side * 5.3),
+				C.brass,
+				{ material = Enum.Material.Metal, collide = false }
+			)
 		end
 		local rod = Kit.block(
 			model,
-			Vector3.new(16, 0.45, 0.3),
+			Vector3.new(10.2, 0.45, 0.3),
 			at(75, -2.4 + 1.1, side * 5.95),
 			Color3.fromRGB(176, 180, 186),
 			{ material = Enum.Material.Metal, collide = false }
@@ -1152,10 +1302,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	bogie(90)
 
 	-- boiler, smokebox, domes, chimney
-	local boiler = tag(
-		Kit.cylinder(model, 24, 8, at(76, 6.2, 0), body, { material = Enum.Material.SmoothPlastic }),
-		"Body"
-	)
+	-- blue-grey Russia iron jacket under brass bands, as on an 1800s American engine
+	local boiler = Kit.cylinder(model, 24, 8, at(76, 6.2, 0), C.russia, { material = Enum.Material.Metal })
 	boiler.Name = "Boiler"
 	for _, x in { 68, 76, 84 } do
 		tag(
@@ -1215,8 +1363,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		"Bell"
 	tag(Kit.post(model, 2.2, 3, at(80, 10.8, 0), trim, { material = Enum.Material.Metal }), "Trim")
 	tag(Kit.ball(model, 3, at(80, 11.9, 0), trim, { material = Enum.Material.Metal }), "Trim")
-	tag(Kit.post(model, 1.6, 2.4, at(71, 10.5, 0), body), "Body")
-	tag(Kit.ball(model, 2.4, at(71, 11.3, 0), body), "Body")
+	tag(Kit.post(model, 1.6, 2.4, at(71, 10.5, 0), trim, { material = Enum.Material.Metal }), "Trim")
+	tag(Kit.ball(model, 2.4, at(71, 11.3, 0), trim, { material = Enum.Material.Metal }), "Trim")
 	Kit.post(
 		model,
 		1.4,
@@ -1237,15 +1385,25 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			{ material = Enum.Material.Metal, collide = false }
 		)
 	end
-	-- pilot (cowcatcher)
-	for i = -2, 2 do
-		Kit.wedge(
+	-- pilot (cowcatcher): a V of red wooden slats down to a bottom rail
+	local pilotRed = { material = Enum.Material.Wood, collide = false, shadow = false }
+	for i = -4, 4 do
+		local z = i * 1.25
+		local front = 99.4 - math.abs(z) * 0.4
+		Kit.block(
 			model,
-			Vector3.new(1.8, 2.6, 2.4),
-			at(97.2, -2.6, i * 2.3) * Kit.angles(0, 90, 0),
-			C.iron,
-			{ material = Enum.Material.Metal, collide = false }
+			Vector3.new(
+				0.25,
+				0.25,
+				(Vector3.new(front, -4.6, z * 1.04) - Vector3.new(96.2, -1.3, z)).Magnitude
+			),
+			origin * Kit.between(Vector3.new(96.2, -1.3, z), Vector3.new(front, -4.6, z * 1.04)),
+			C.driver,
+			pilotRed
 		)
+	end
+	for _, side in { -1, 1 } do
+		strut(Vector3.new(99.4, -4.6, 0), Vector3.new(99.4 - 5 * 0.4, -4.6, side * 5.2), 0.3, C.iron)
 	end
 	-- headlamp: a big 1800s oil-lamp box on a bracket, brass-trimmed under a peaked hood
 	tag(
