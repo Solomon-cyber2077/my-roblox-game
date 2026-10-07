@@ -244,7 +244,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		barrier.CanQuery = false
 		barrier.CanTouch = false
 	end
-	for _, gap in { { -66, -63 }, { -23, -20 } } do
+	for _, gap in { { -66, -63 }, { -44.5, -41.5 }, { -23, -20 }, { -1.5, 1.5 } } do
 		gapBarrier(gap[1], gap[2], 2.5, 6.5)
 		gapBarrier(gap[1], gap[2], -6.5, -2.5)
 	end
