@@ -72,7 +72,7 @@ local C = {
 }
 
 -- How a carriage is lined inside: curtains and a carpet in the passenger cars, bare in the workshop.
-type Lining = { curtains: boolean, carpet: boolean }
+type Lining = { curtains: boolean, carpet: boolean, bareSide: number? } -- bareSide: a wall left without a rack
 
 export type Built = {
 	model: Model,
@@ -807,10 +807,13 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	end
 
 	-- Brass luggage racks above the windows on both sides, on brackets from the wall.
-	local function racks(x0: number, x1: number)
+	local function racks(x0: number, x1: number, bareSide: number?)
 		local len = x1 - x0 - 2.4
 		local cx = (x0 + x1) / 2
 		for _, side in { -1, 1 } do
+			if side == bareSide then
+				continue
+			end
 			for _, depth in { 0.5, 1.45 } do
 				trimPart(
 					Vector3.new(len, 0.12, 0.12),
@@ -894,7 +897,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		endWall(x1 - WALL_T / 2, frontGangway, -1)
 		roofOver(x0, x1)
 		ceiling(x0, x1)
-		racks(x0, x1)
+		racks(x0, x1, lining.bareSide)
 		if lining.carpet then
 			trimPart(
 				Vector3.new(len - 2 * WALL_T - 2, 0.06, 2.6),
@@ -1056,7 +1059,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	gangway(-23, -20)
 
 	-- Workshop, two cars: the bench in the first, stores in the second -----------------
-	car(-20, -1.5, { -6.25 }, true, true, { curtains = false, carpet = false })
+	car(-20, -1.5, { -6.25 }, true, true, { curtains = false, carpet = false, bareSide = -1 })
 	gangway(-1.5, 1.5)
 	car(1.5, 20, { 6.25 }, false, true, { curtains = false, carpet = false })
 	local BX = -6.8 -- the workbench's middle

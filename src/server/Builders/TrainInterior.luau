@@ -565,7 +565,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	post(2.2, 0.35, at(-5.2, 1.1, -2.3), C.woodDark, M.Wood, true)
 	seat(Vector3.new(1.3, 0.25, 1.3), at(-5.2, 2.325, -2.3), C.leather, "Stool")
 	plate(
-		Vector3.new(-6.8, 8.25, -(LI - 0.09)),
+		Vector3.new(-6.8, 7.85, -(LI - 0.09)),
 		Vector3.new(0, 0, 1),
 		Vector3.new(8.6, 0.6, 0.1),
 		C.board,

@@ -1390,34 +1390,45 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		t.Parent = gui
 	end
 
-	-- Lamplight: platform standards along the edge and sconces on the back wall ---------------------------
-	for x = -88, 88, BAY do
-		local base = at(x, 0, EDGE_Z + 4)
-		Kit.block(
-			model,
-			Vector3.new(1.4, 1, 1.4),
-			base * CFrame.new(0, 0.5, 0),
-			C.iron,
-			{ material = Enum.Material.Metal }
-		)
-		Kit.post(model, 10, 0.4, base * CFrame.new(0, 6, 0), C.iron, { material = Enum.Material.Metal })
-		Kit.block(
-			model,
-			Vector3.new(1.3, 0.25, 1.3),
-			base * CFrame.new(0, 11.1, 0),
-			C.iron,
-			{ material = Enum.Material.Metal, collide = false }
-		)
-		local lantern = Kit.neon(model, Vector3.new(1, 1.4, 1), base * CFrame.new(0, 11.95, 0), C.warm)
-		lantern.Transparency = 0.15
-		Kit.block(
-			model,
-			Vector3.new(1.5, 0.3, 1.5),
-			base * CFrame.new(0, 12.8, 0),
-			C.iron,
-			{ material = Enum.Material.Metal, collide = false }
-		)
-		Kit.pointLight(lantern, C.warm, 0.75, 22, false)
+	-- Lamplight: lanterns hung from the platform-edge columns and sconces on the back wall ---------------
+	-- each column carries two, one either side on an iron arm that turns down at its tip, so the
+	-- platform below stays clear for the boarding doors
+	for x = -99, 99, BAY do
+		for _, side in { -1, 1 } do
+			local tip = at(x + side * 2.4, 0, -14)
+			Kit.block(
+				model,
+				Vector3.new(2.05, 0.25, 0.25),
+				at(x + side * 1.475, 13.6, -14),
+				C.iron,
+				{ material = Enum.Material.Metal, collide = false }
+			)
+			Kit.post(
+				model,
+				0.6,
+				0.25,
+				tip * CFrame.new(0, 13.25, 0),
+				C.iron,
+				{ material = Enum.Material.Metal, collide = false }
+			)
+			Kit.block(
+				model,
+				Vector3.new(1.3, 0.25, 1.3),
+				tip * CFrame.new(0, 11.1, 0),
+				C.iron,
+				{ material = Enum.Material.Metal, collide = false }
+			)
+			local lantern = Kit.neon(model, Vector3.new(1, 1.4, 1), tip * CFrame.new(0, 11.95, 0), C.warm)
+			lantern.Transparency = 0.15
+			Kit.block(
+				model,
+				Vector3.new(1.5, 0.3, 1.5),
+				tip * CFrame.new(0, 12.8, 0),
+				C.iron,
+				{ material = Enum.Material.Metal, collide = false }
+			)
+			Kit.pointLight(lantern, C.warm, 0.75, 22, false)
+		end
 	end
 	for _, x in { -78, -54, 54, 78 } do
 		decor(Vector3.new(0.6, 1.4, 0.5), at(x, 13, BACK_Z - 0.25), C.brass, Enum.Material.Metal)
