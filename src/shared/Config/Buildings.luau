@@ -12,8 +12,18 @@
 	Layouts
 	  Spine  rooms either side of a corridor that runs the building's length, a foyer at
 	         the front door and an exit at each end of the corridor
-	  Hall   one big room at the front with a strip of small rooms along the back
-	  Row    a single row of rooms opening into each other (small buildings)
+	  Hall   one big room at the front with a strip of small rooms along the back, the
+	         back room with a door of its own out of the rear
+	  Row    a single row of rooms opening into each other (small buildings), the end
+	         rooms with doors out of their sides
+
+	Back rooms (`back`) hold the better loot: Spine buildings put them in the row behind
+	the corridor, and each one keeps at least one container from BackLoot.
+
+	Upper floors (`upper`, the largest Spine buildings only) stand over the back row. A
+	stairwell at the west end of that row climbs to them on one ramp; the upper rooms
+	open into each other in a row, and the far one has a broken window low enough to
+	climb out of, so there is always a second way down.
 
 	Placement patterns (Logic/BuildingGen)
 	  wall    against a wall: far (opposite the door), near, sides, long or any
@@ -40,6 +50,13 @@ export type Room = {
 	sleeperKind: string?,
 	locked: number?, -- chance its door is locked (forced open with parts)
 	rug: { number }?,
+	back: boolean?, -- a back room: better loot, laid out behind the corridor
+}
+
+export type Upper = {
+	rooms: { string }, -- in order, west to east, after the stairwell
+	height: number, -- the upper storey's ceiling height
+	tiles: number, -- the floor area in tiles, for the stop's size (Logic/DifficultyModel)
 }
 
 export type Building = {
@@ -58,6 +75,7 @@ export type Building = {
 	front: string, -- the room behind the front door
 	rooms: { string }, -- the others, in order (repeated when there are more spaces)
 	corridor: { Placement }?,
+	upper: Upper?,
 }
 
 export type Furniture = { w: number, d: number, name: string }
@@ -113,6 +131,7 @@ local Rooms: { [string]: Room } = {
 		lamp = 0.3,
 		sleeper = 0.25,
 		rug = { 60, 70, 92 },
+		back = true,
 	},
 	Library = {
 		label = "Library",
@@ -175,6 +194,7 @@ local Rooms: { [string]: Room } = {
 		lamp = 0.2,
 		sleeper = 0.2,
 		locked = 0.7,
+		back = true,
 	},
 	Office = {
 		label = "Office",
@@ -195,6 +215,7 @@ local Rooms: { [string]: Room } = {
 		sleeper = 0.2,
 		locked = 0.35,
 		rug = { 70, 50, 40 },
+		back = true,
 	},
 	Kitchen = {
 		label = "Kitchen",
@@ -228,12 +249,14 @@ local Rooms: { [string]: Room } = {
 				gap = 1.5,
 				container = "CoalBin",
 			},
+			{ pattern = "corner", item = "Trunk", container = "ToolChest" },
 			{ pattern = "corner", item = "Barrels" },
 		},
 		lamp = 0.2,
 		sleeper = 0.5,
 		sleeperKind = "Brute",
 		locked = 0.6,
+		back = true,
 	},
 	Counter = {
 		label = "Post Office",
@@ -271,6 +294,7 @@ local Rooms: { [string]: Room } = {
 		lamp = 0.1,
 		sleeper = 0.15,
 		locked = 1,
+		back = true,
 	},
 	Nave = {
 		label = "Nave",
@@ -286,10 +310,11 @@ local Rooms: { [string]: Room } = {
 		label = "Vestry",
 		place = {
 			{ pattern = "wall", item = "Wardrobe", wall = "far", count = 1, container = "Locker" },
-			{ pattern = "corner", item = "Trunk", container = "Crate" },
+			{ pattern = "corner", item = "Trunk", container = "ToolChest" },
 		},
 		lamp = 0.2,
 		sleeper = 0.3,
+		back = true,
 	},
 	StoreHall = {
 		label = "Goods Shed",
@@ -356,6 +381,7 @@ local Rooms: { [string]: Room } = {
 		lamp = 0.4,
 		sleeper = 0.2,
 		locked = 0.4,
+		back = true,
 	},
 	Parcels = {
 		label = "Parcels Office",
@@ -404,11 +430,13 @@ local Rooms: { [string]: Room } = {
 				container = "Crate",
 				share = 0.6,
 			},
+			{ pattern = "corner", item = "Trunk", container = "ToolChest" },
 			{ pattern = "corner", item = "Barrels" },
 		},
 		lamp = 0.2,
 		sleeper = 0.3,
 		locked = 0.5,
+		back = true,
 	},
 	LampHall = {
 		label = "Lamp Room",
@@ -459,11 +487,41 @@ local Rooms: { [string]: Room } = {
 		label = "Back Store",
 		place = {
 			{ pattern = "wall", item = "Shelving", wall = "any", count = 2, gap = 1, container = "Crate" },
+			{ pattern = "corner", item = "Trunk", container = "ToolChest" },
 			{ pattern = "corner", item = "CoalHeap" },
 		},
 		lamp = 0.2,
 		sleeper = 0.3,
 		locked = 0.5,
+		back = true,
+	},
+	Stairwell = {
+		label = "Stairwell",
+		place = {
+			{ pattern = "wall", item = "Bench", wall = "sides", count = 1 },
+			{ pattern = "corner", item = "Trunk", container = "Crate" },
+		},
+		lamp = 0.5,
+		sleeper = 0,
+	},
+	Parlour = {
+		label = "Parlour",
+		place = {
+			{ pattern = "wall", item = "Stove", wall = "far", count = 1 },
+			{
+				pattern = "wall",
+				item = "Bookshelf",
+				wall = "sides",
+				count = 2,
+				gap = 1,
+				container = "Crate",
+				share = 0.5,
+			},
+			{ pattern = "center", item = "Table" },
+		},
+		lamp = 0.4,
+		sleeper = 0.2,
+		rug = { 100, 54, 44 },
 	},
 }
 
@@ -501,6 +559,7 @@ local Defs: { [string]: Building } = {
 		front = "Foyer",
 		rooms = { "Classroom", "BoilerRoom", "Classroom", "StaffRoom", "Library", "Classroom", "Cloakroom" },
 		corridor = Corridors.Lockers,
+		upper = { rooms = { "Library", "StaffRoom", "Classroom" }, height = 11, tiles = 8 },
 	},
 	Clinic = {
 		name = "St. Brannoc's Cottage Hospital",
@@ -518,6 +577,7 @@ local Defs: { [string]: Building } = {
 		front = "Foyer",
 		rooms = { "Ward", "Pharmacy", "Ward", "Office", "BoilerRoom", "Ward" },
 		corridor = Corridors.Benches,
+		upper = { rooms = { "Ward", "Pharmacy", "Ward" }, height = 10, tiles = 6 },
 	},
 	Hotel = {
 		name = "The Railway Hotel",
@@ -535,6 +595,7 @@ local Defs: { [string]: Building } = {
 		front = "Foyer",
 		rooms = { "Kitchen", "Bedroom", "Bedroom", "Cellar", "Bedroom", "Office" },
 		corridor = Corridors.Plain,
+		upper = { rooms = { "Bedroom", "Bedroom", "Office" }, height = 10, tiles = 6 },
 	},
 	PostOffice = {
 		name = "Sorting Office",
@@ -649,6 +710,22 @@ local Defs: { [string]: Building } = {
 		front = "LampHall",
 		rooms = { "Baths", "CoalStore" },
 	},
+	House = {
+		name = "Station Cottage",
+		size = { 3, 2 },
+		layout = "Row",
+		height = 11,
+		wall = { 168, 150, 128 },
+		trim = { 70, 52, 40 },
+		roof = { 74, 70, 72 },
+		floor = { 110, 82, 58 },
+		wallMaterial = "Brick",
+		floorMaterial = "WoodPlanks",
+		roofMaterial = "Slate",
+		roofStyle = "Pitched",
+		front = "Parlour",
+		rooms = { "Kitchen", "Bedroom" },
+	},
 	GeneralStore = {
 		name = "General Store",
 		size = { 3, 3 },
@@ -706,6 +783,8 @@ local Furniture: { [string]: Furniture } = {
 	Lathe = { w = 6, d = 2.6, name = "Lathe" },
 	LampRack = { w = 4, d = 1.2, name = "Lamp Rack" },
 	ShopShelf = { w = 4, d = 1.6, name = "Shop Shelves" },
+	Lantern = { w = 1.4, d = 1.4, name = "Lantern" },
+	Stairs = { w = 22, d = 4.6, name = "Stairs" }, -- the stairwell's ramp (BuildingBuilder draws it)
 }
 
 for _, room in Rooms do
@@ -736,6 +815,11 @@ local Buildings = {
 	WindowWidth = 4,
 	WindowEvery = 11, -- studs of exterior wall per window
 	DoorClearance = 6, -- studs kept clear in front of every door
+	StairwellWidth = 24, -- along the back row; the ramp runs its length against the back wall
+	EscapeSill = 1.4, -- the upper floor's way out: a broken window this low
+	EscapeTop = 8.6,
+	MoonLights = 2, -- at most this many dead rooms per building lit through a broken window
+	BackLoot = { ToolChest = true, Vault = true } :: { [string]: boolean }, -- what makes a back room worth the trip
 	PowerCost = 1, -- parts to restore a building's power
 	ForceCost = 1, -- parts to force a locked door
 	PowerHold = 2.5,

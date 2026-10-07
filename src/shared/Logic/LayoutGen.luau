@@ -81,6 +81,7 @@ export type Container = {
 	x: number,
 	z: number,
 	rot: number,
+	y: number?, -- floor height inside a building with an upper floor; nil on the ground
 }
 export type Loose = { id: number, item: string, slab: number, x: number, z: number }
 -- size: a prop that spans a length (a fence along its tile, the platform canopy) is told how long.
@@ -754,10 +755,14 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 					x = building.x + item.x,
 					z = building.z + item.z,
 					rot = item.rot,
+					y = if item.y and item.y > 0 then item.y else nil,
 				})
 			end
 		end
 		for _, spot in building.plan.sleepers do
+			if spot.y and spot.y > 0 then
+				continue -- nothing sleeps upstairs (yet)
+			end
 			table.insert(sleepers, {
 				x = building.x + spot.x,
 				y = 0,

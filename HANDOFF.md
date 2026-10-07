@@ -12,14 +12,18 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 
 - 2026-10-06: lobby back wall (departure board, ticket windows) was dark: front fills at z13 range 60 never reached z72. Added a back row of 3 FillLights (x -44/0/44, y26, z52, 0.85/45) in `Builders/LobbyBuilder`. Verified in Studio Play; `lune run check` passes.
 - 2026-10-06: Workshop car's wall-side luggage rack removed (`Lining.bareSide` in TrainBuilder) and its sign lowered to y7.85. Lobby platform lamp standards replaced by two lanterns per platform-edge column on down-turned arms (same 0.75/22 lights). Lobby verified in Studio Play; `lune run check` passes.
+- 2026-10-07: enterable buildings: back rooms (better loot, behind the corridor), rear/end exits on Hall and Row buildings, a lantern in every front room, moonlight at broken windows of dead rooms, and an upper floor (stairwell ramp, one-part slab, escape window) on School, Clinic and Hotel. New House type (not placed by any station yet). Hotel barrel z-fight fixed. Containers carry `y` upstairs (LayoutGen/StationBuilder pass-through); upstairs sleepers skipped. `lune run check` and `AUDIT_SEEDS=6 lune run audit` pass; not yet seen in Studio.
 
 ## Known bugs / regressions
 - Place saved successfully to `C:\Users\tameg\OneDrive\Documents\Roblox.rbxl`; Studio DataStores are unavailable, so player profile saving is disabled for this session.
 - Studio Play verified all eight adjusted lights and visible floor/rear-hall coverage; repository lune run check passes. Save the changed place in Studio.
+- DecorCrates z-fight on station seed 1234 (Infirmary) lives in `Builders/StationDressing` (outdoor), not fixed.
+- `BuildingService.IsLitAt` only covers the ground floor (`plan.height + 2`), so a powered building does not keep Hollows off its upper floor.
 
 ## Next logical step
 - Look at the workshop sign inside the train in Studio (it has not been checked on screen yet).
 - Save the place in Studio, then reconcile Studio edits with Rojo before syncing.
+- Walk the School, Clinic and Hotel upper floors in Studio (ramp, escape window, moonlight). Decide whether a station should place the House (`Config/Stations` landmarks).
 
 ## rbxmap setup — 2026-10-06
 - Completed: 119-script local index, agent instructions, remote wrappers, Codex/Claude registrations, real MCP call, and passing doctor/Rojo/Selene/StyLua checks. See .rbxmap/START_HERE.md. Game source and Git staged state unchanged; no commit or push.

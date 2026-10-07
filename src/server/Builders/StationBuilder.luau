@@ -354,7 +354,7 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 	local containers: { [number]: ContainerHandle } = {}
 	for _, def in plan.containers do
 		local piece = Kit.model(`Container_{def.id}`, model)
-		local frame = L(def.x, 0, def.z) * Kit.angles(0, def.rot, 0)
+		local frame = L(def.x, def.y or 0, def.z) * Kit.angles(0, def.rot, 0)
 		local containerRng = Random.new(def.id * 104729 + plan.seed % 99991)
 		local look = def.look
 		local promptPart = if look
