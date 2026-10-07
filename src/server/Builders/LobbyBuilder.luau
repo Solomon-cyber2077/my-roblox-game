@@ -19,6 +19,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Audio = require(ReplicatedStorage.Shared.Config.Audio)
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 local TrainBuilder = require(script.Parent.TrainBuilder)
 
@@ -1343,6 +1344,28 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			{ material = Enum.Material.Metal, collide = false }
 		)
 	end
+	-- Gnossienne No. 3 plays from inside the case; PianoNotes floats notes off the same spot
+	local voice = block(
+		Vector3.new(0.4, 0.4, 0.4),
+		pianoAt * CFrame.new(0, 3.6, -0.2),
+		C.cream,
+		nil,
+		{ collide = false, shadow = false, transparency = 1 }
+	)
+	voice.Name = "PianoVoice"
+	voice.CanQuery = false
+	voice:AddTag("PianoVoice")
+	local cue = Audio.LobbyPiano
+	local music = Instance.new("Sound")
+	music.Name = "Gnossienne"
+	music.SoundId = `rbxassetid://{cue.id}`
+	music.Volume = cue.volume
+	music.Looped = true
+	music.RollOffMode = Enum.RollOffMode.InverseTapered
+	music.RollOffMinDistance = 24 -- full volume round the benches
+	music.RollOffMaxDistance = 140 -- a murmur from the far end of the hall
+	music.Playing = true
+	music.Parent = voice
 
 	-- The crew's notice board on the back wall: notes left by the ones who came before ----------------
 	local nbx = -66
