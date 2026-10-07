@@ -967,7 +967,7 @@ Props.DecorCrates = function(ctx)
 		Kit.block(
 			ctx.parent,
 			Vector3.new(s, s, s),
-			f(ctx, (i - 2) * 2.4, s / 2 + (if i == 3 then 2 else 0), ctx.rng:NextNumber() - 0.5)
+			f(ctx, (i - 2) * 2.4, s / 2 + (if i == 3 then 2.02 else 0), ctx.rng:NextNumber() - 0.5)
 				* Kit.angles(0, ctx.rng:NextNumber() * 40, 0),
 			Color3.fromRGB(118, 88, 58),
 			{ material = Enum.Material.WoodPlanks }
