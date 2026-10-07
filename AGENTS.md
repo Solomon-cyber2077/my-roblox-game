@@ -4,7 +4,7 @@ Co-op Roblox game synced with Rojo. The design source of truth is the blueprint 
 Read this file before changing code.
 
 ## Project
-1-8 player co-op survival on a train: ten generated stops to loot, then the Terminus. Luau, Rojo, Lune tests.
+1-4 player co-op survival on a train: ten generated stops to loot, then the Terminus. Luau, Rojo, Lune tests.
 Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune run check`.
 
 ## File map

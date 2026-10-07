@@ -1,6 +1,6 @@
 # Last Train Out
 
-A co-op Roblox game for 1 to 8 players. The crew rides the last train across a dead country. At every stop
+A co-op Roblox game for 1 to 4 players. The crew rides the last train across a dead country. At every stop
 they have a few minutes to strip the station for coal and parts while fog, collapsing floors and Hollows close
 in from the far edge, and anyone not aboard when the train pulls out is left behind. Ten generated stops, then
 the Terminus.

@@ -8,7 +8,7 @@
 local Tuning = {
 	Run = {
 		StationCount = 10, -- regular stops before the Terminus
-		MaxCrew = 8,
+		MaxCrew = 4,
 		MinReadyShare = 0.5, -- share of lobby players that must be ready to start the countdown
 		CountdownSeconds = 10,
 		BoardingSeconds = 4,
