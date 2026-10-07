@@ -33,34 +33,47 @@ function Lobby.mount(gui: ScreenGui)
 		Parent = gui,
 	})
 
+	-- Bold text straight over the hall: a dark outline thickens it and keeps it readable.
+	local function outlined(label: TextLabel): TextLabel
+		Ui.new("UIStroke", {
+			Color = Theme.Color.black,
+			Thickness = 1.5,
+			Transparency = 0.2,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+			Parent = label,
+		})
+		return label
+	end
+
 	-- Profile card ---------------------------------------------------------------------------
-	local card = Ui.ticket({
+	local card = Ui.new("Frame", {
 		Name = "Profile",
 		Size = UDim2.fromOffset(300, 112),
 		Position = UDim2.fromOffset(14, 12),
+		BackgroundTransparency = 1,
 		Parent = container,
 	})
 	local nameLabel = Ui.text({
 		Text = Session.player.DisplayName,
 		Font = Theme.Font.display,
-		TextSize = 22,
-		Color = Theme.Color.ink,
-		Position = UDim2.fromOffset(26, 8),
+		TextSize = 24,
+		Color = Theme.Color.white,
+		Position = UDim2.fromOffset(4, 8),
 		Size = UDim2.new(1, -40, 0, 26),
 	})
-	nameLabel.Parent = card
+	outlined(nameLabel).Parent = card
 	local rankLabel = Ui.text({
 		Text = "",
-		Font = Theme.Font.displayMedium,
-		TextSize = 16,
-		Color = Theme.Color.inkSoft,
-		Position = UDim2.fromOffset(26, 36),
+		Font = Theme.Font.display,
+		TextSize = 17,
+		Color = Theme.Color.white,
+		Position = UDim2.fromOffset(4, 36),
 		Size = UDim2.new(1, -40, 0, 18),
 	})
-	rankLabel.Parent = card
+	outlined(rankLabel).Parent = card
 	local xpFrame, setXp = Ui.meter({
 		Size = UDim2.new(1, -44, 0, 6),
-		Position = UDim2.fromOffset(26, 60),
+		Position = UDim2.fromOffset(4, 60),
 		FillColor = Theme.Color.brass,
 	})
 	xpFrame.BackgroundColor3 = Theme.Color.paperShade
@@ -69,51 +82,53 @@ function Lobby.mount(gui: ScreenGui)
 	local brassLabel = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 20,
-		Color = Theme.Color.ink,
-		Position = UDim2.fromOffset(26, 74),
+		TextSize = 22,
+		Color = Theme.Color.brassLight,
+		Position = UDim2.fromOffset(4, 74),
 		Size = UDim2.new(0.6, 0, 0, 24),
 	})
-	brassLabel.Parent = card
+	outlined(brassLabel).Parent = card
 	local savingLabel = Ui.text({
 		Text = "",
 		Font = Theme.Font.bodyBold,
-		TextSize = 12,
+		TextSize = 13,
 		Color = Theme.Color.signal,
 		Position = UDim2.new(1, -14, 0, 80),
 		AnchorPoint = Vector2.new(1, 0),
 		Size = UDim2.fromOffset(160, 16),
 		XAlign = Enum.TextXAlignment.Right,
 	})
-	savingLabel.Parent = card
+	outlined(savingLabel).Parent = card
 
 	-- Departure panel -------------------------------------------------------------------------
-	local panel = Ui.panel({
+	local panel = Ui.new("Frame", {
 		Name = "Departure",
 		Size = UDim2.fromOffset(420, 120),
 		Position = UDim2.new(0.5, 0, 1, -24),
 		AnchorPoint = Vector2.new(0.5, 1),
+		BackgroundTransparency = 1,
 		Parent = container,
 	})
 	local status = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 20,
+		TextSize = 24,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(0, 10),
+		Position = UDim2.fromOffset(0, 8),
 		Size = UDim2.new(1, 0, 0, 24),
 		XAlign = Enum.TextXAlignment.Center,
 	})
-	status.Parent = panel
+	outlined(status).Parent = panel
 	local detail = Ui.text({
 		Text = "",
-		TextSize = 15,
-		Color = Theme.Color.textDim,
+		Font = Theme.Font.bodyBold,
+		TextSize = 16,
+		Color = Theme.Color.white,
 		Position = UDim2.fromOffset(0, 36),
 		Size = UDim2.new(1, 0, 0, 18),
 		XAlign = Enum.TextXAlignment.Center,
 	})
-	detail.Parent = panel
+	outlined(detail).Parent = panel
 	local readyButton = Ui.button("READY", "Primary", nil, {
 		Size = UDim2.fromOffset(220, 44),
 		Position = UDim2.new(0.5, 0, 1, -12),
@@ -133,14 +148,13 @@ function Lobby.mount(gui: ScreenGui)
 
 	-- Shortcuts -------------------------------------------------------------------------------
 	local shortcuts = Ui.new("Frame", {
-		Size = UDim2.fromOffset(200, 96),
-		Position = UDim2.new(1, -14, 0, 12),
-		AnchorPoint = Vector2.new(1, 0),
+		Size = UDim2.fromOffset(380, 40),
+		Position = UDim2.fromOffset(14, 132),
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
-	Ui.list(Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Right).Parent = shortcuts
-	Ui.button("OUTFITTER", "Paper", function()
+	Ui.list(Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Left).Parent = shortcuts
+	Ui.button("OUTFITTER", "Secondary", function()
 		Registry.UIController.Open("Outfitter")
 	end, { Size = UDim2.fromOffset(180, 40), LayoutOrder = 1 }).Parent =
 		shortcuts

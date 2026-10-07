@@ -23,3 +23,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 - Completed: 119-script local index, agent instructions, remote wrappers, Codex/Claude registrations, real MCP call, and passing doctor/Rojo/Selene/StyLua checks. See .rbxmap/START_HERE.md. Game source and Git staged state unchanged; no commit or push.
 - Limitations: Claude CLI absent; new agent-session loading and Studio appearance unverified. Remote scanner retains generic dynamic-name rows. README argument order is wrong: put --project before serve/doctor.
 - Next: restart Codex and test find_script; optionally install/start Claude Code. Reconcile existing Studio-only edits before Rojo syncing.
+
+## 2026-10-06: Lobby HUD restyle
+1. Done: `UI/Lobby.luau` profile card and departure panel have no background; their text is bolder with a dark outline (white text, brass for BRASS). OUTFITTER is now a dark Secondary button like LINE MASTERY, and both sit in a row under the profile card on the left. Checked in Studio play, console clean.
+2. Known issues: none. `Ui.ticket` is no longer used by the lobby.
+3. Next: check that the outlined text reads well over bright lobby floor tiles at small screen sizes.
