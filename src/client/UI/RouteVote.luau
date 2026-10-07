@@ -48,6 +48,35 @@ local function words(id: string): string
 	return string.upper((string.gsub(id, "(%l)(%u)", "%1 %2")))
 end
 
+local function routeHint(arch: Stations.Archetype): string
+	if arch.terminus then
+		return "The last stop"
+	end
+	local lootNames = { "coal", "parts", "relics", "tools" }
+	local lootBest = ""
+	local lootValue = 1
+	for _, kind in lootNames do
+		local value = arch.loot[kind == "relics" and "relic" or kind] or 0
+		if value > lootValue then
+			lootValue = value
+			lootBest = kind
+		end
+	end
+	local hazardNames = { fog = "heavy fog", collapse = "unstable ground", hollows = "Hollows nearby" }
+	local hazardBest = ""
+	local hazardValue = 1
+	for _, kind in { "fog", "collapse", "hollows" } do
+		local value = arch.hazard[kind] or 0
+		if value > hazardValue then
+			hazardValue = value
+			hazardBest = hazardNames[kind]
+		end
+	end
+	local loot = if lootBest ~= "" then `Lots of {lootBest}` else "Balanced haul"
+	local hazard = if hazardBest ~= "" then hazardBest else "standard hazards"
+	return `{loot}, {hazard}`
+end
+
 local function plural(word: string, count: number): string
 	if count == 1 then
 		return word
@@ -449,7 +478,7 @@ function RouteVote.mount(gui: ScreenGui)
 			local short = train ~= nil and cost > train.coal
 			local card = Ui.new("Frame", {
 				Name = "Option",
-				Size = UDim2.fromOffset(206, if short then 138 else 126),
+				Size = UDim2.fromOffset(206, if short then 178 else 150),
 				LayoutOrder = index,
 				BackgroundColor3 = CARD,
 				BorderSizePixel = 0,
@@ -495,7 +524,7 @@ function RouteVote.mount(gui: ScreenGui)
 			name.Parent = card
 
 			local dangerLabel = Ui.text({
-				Text = if arch.terminus then "THE END OF THE LINE" else "DANGER",
+				Text = if arch.terminus then "THE END OF THE LINE" else `DANGER {option.tier}`,
 				Font = BOLD,
 				TextSize = 11,
 				Color = Theme.Color.textDim,
@@ -568,13 +597,23 @@ function RouteVote.mount(gui: ScreenGui)
 				Size = UDim2.new(1, -28, 0, 16),
 			})
 			legLine.Parent = card
+			local hint = Ui.text({
+				Text = routeHint(arch),
+				Font = Theme.Font.type,
+				TextSize = 10,
+				Color = Theme.Color.textDim,
+				Position = UDim2.fromOffset(14, 88),
+				Size = UDim2.new(1, -28, 0, 24),
+			})
+			hint.TextWrapped = true
+			hint.Parent = card
 			if short then
 				local warn = Ui.text({
 					Text = "NOT ENOUGH COAL: THE HULL WILL SUFFER",
 					Font = BOLD,
 					TextSize = 9,
 					Color = Theme.Color.signal,
-					Position = UDim2.fromOffset(14, 86),
+					Position = UDim2.fromOffset(14, 132),
 					Size = UDim2.new(1, -28, 0, 12),
 				})
 				warn.Parent = card
