@@ -292,7 +292,7 @@ function Hud.mount(gui: ScreenGui)
 			Color = Theme.Color.white,
 			Size = UDim2.fromOffset(54, 22),
 			Position = UDim2.fromOffset(44, 0),
-			XAlign = Enum.TextXAlignment.Right,
+			XAlign = Enum.TextXAlignment.Left,
 		})
 		value.Parent = row
 		local meter, set = Ui.meter({
