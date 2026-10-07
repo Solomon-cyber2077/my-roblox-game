@@ -38,3 +38,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Done: `Builders/TrainBuilder` locomotive now has a flared balloon smokestack with a brass rim (top still named ChimneyTop), a large brass-trimmed oil-lamp headlamp box with a peaked hood, a brass bell between the domes, and red driving wheels (`C.driver`). `lune run check` passes (audit clean); Studio Play console clean.
 2. Known issues: not visually confirmed in Studio (train is built at runtime and the lobby is dark, so the screenshot showed nothing).
 3. Next: eyeball the locomotive in Play (lobby display train); consider a wooden 1800s cab with arched windows and a slatted cowcatcher.
+
+## 2026-10-06: full 1800s train restyle
+1. Done (`Builders/TrainBuilder`, `Config/Cosmetics`): wood-plank coach siding, twin round-topped sash windows with mullions and sash bars, clerestory roofs with amber lights, queen-post truss rods; 4-4-0 locomotive (two red-spoked drivers that spin, brass splashers), Russia-iron boiler with brass domes, wooden cab with roof cap and ventilator, red slatted V cowcatcher, flared tender boards. Default livery is now "Heritage Mahogany" (mahogany, brass, green doors). Check passes (Train 1626 parts, audit clean); seen in Studio Play lobby, console clean.
+2. Known issues: car size kept (seats, spawns, volumes, breach anchors depend on it). Other liveries still repaint the wood. Headless preview needs `npm install` in tools/preview.
+3. Next: ride a run and look at the loco up close (spokes, pilot, stack smoke) in daylight.
