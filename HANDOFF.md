@@ -59,7 +59,7 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 2. Known issues: the 2+ player countdown, black screen and departure are unit-tested only, not playtested. Teleport works only in the published game. Prompt chips do not appear in MCP screenshots (the hold still triggers).
 3. Next: Studio Test > Clients and Servers with 2-4 players to confirm the countdown, exit lock, black screen and the Studio launch. Then publish and test a real teleport.
 
-## 2026-10-06: train cars stripped to signs, tables and chairs
-1. Done: `Builders/TrainInterior` keeps only door signs, nameboards and wall boards, tables and seats (saloon bays, guard's armchairs, side table, desk and stool, workshop stool). Removed: table lamps and table items, luggage, paintings, stove, rug, cat, bunk, flags, coat, lantern, lathe, cabinet, anvil/hoist, spare wheel. `Builders/TrainBuilder`: removed the route table in car 3 (second saloon) and its label, the workbench vise and tool board, and the stores crates; dropped the unused `routeTable` field. Locomotive cab (footplate) untouched. Check passes; Studio Play console clean.
-2. Known issues: cars lost the table lamps' and stove's point lights, so interiors may be darker. Not visually inspected inside the cars.
-3. Next: walk the cars in Play; add ceiling lights if they are too dark.
+## 2026-10-06: train car clutter removed
+1. Done: `Builders/TrainInterior` no longer builds the saloon table items (cups, books, candles), rack luggage and hat box, the stove's kettle, the guard's teapot and cups, the workshop drawer cabinet, anvil and chain hoist, or the spare wheel. All light sources (table lamps, stove, lantern, desk and bench lamps), paintings, signs, tables and chairs stay. `Builders/TrainBuilder`: car 3's route table (and its brass label, and the unused `routeTable` field) removed. Check passes; Studio Play console clean.
+2. Known issues: not visually inspected inside the cars.
+3. Next: walk the cars in Play to confirm the look.
