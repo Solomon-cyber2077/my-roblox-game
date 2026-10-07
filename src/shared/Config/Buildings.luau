@@ -832,6 +832,7 @@ local Buildings = {
 	WindowWidth = 4,
 	WindowEvery = 11, -- studs of exterior wall per window
 	DoorClearance = 6, -- studs kept clear in front of every door
+	Aisle = 6, -- studs kept clear between rows of furniture on facing walls
 	StairwellWidth = 24, -- along the back row; the ramp runs its length against the back wall
 	EscapeSill = 1.4, -- the upper floor's way out: a broken window this low
 	EscapeTop = 8.6,
