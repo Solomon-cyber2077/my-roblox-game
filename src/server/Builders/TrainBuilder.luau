@@ -34,7 +34,9 @@ local WALL_T = 0.5
 local WALL_H = 9
 local WINDOW_BOTTOM = 3.4
 local WINDOW_TOP = 7.0
-local DOOR_H = 7
+local DOOR_H = 7 -- gangway doors (and the cab's)
+local SIDE_DOOR_W = 5.6 -- the carriages' sliding double doors
+local SIDE_DOOR_H = 7.5
 local WALL_IN = HALF - WALL_T -- inner face of the side walls
 local LINE_T = 0.12 -- lining thickness
 local LINE_IN = WALL_IN - LINE_T -- inner face of the side linings
@@ -261,7 +263,9 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		doorWidth: number,
 		lining: Lining?,
 		endT0: number,
-		endT1: number
+		endT1: number,
+		doorHeight: number,
+		packed: boolean
 	)
 		local z = sign * (HALF - WALL_T / 2)
 		local outer = sign * (HALF + 0.04)
@@ -270,6 +274,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		for _, dx in doors do
 			table.insert(gaps, { dx - doorWidth / 2, dx + doorWidth / 2 })
 		end
+		-- doors taller than the window band cut into the upper panel up to their head
+		local headTop = if #doors > 0 then math.max(WINDOW_TOP, doorHeight) else WINDOW_TOP
 		-- lower panels and their brass bands
 		for _, span in subtract(xa, xb, gaps) do
 			local len = span[2] - span[1]
@@ -301,34 +307,71 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				)
 			end
 		end
-		-- upper panel runs over the doors
+		-- upper panel runs over the doors (beside them up to their head when they stand taller)
 		tag(
 			Kit.block(
 				model,
-				Vector3.new(xb - xa, WALL_H - WINDOW_TOP, WALL_T),
-				at((xa + xb) / 2, (WALL_H + WINDOW_TOP) / 2, z),
+				Vector3.new(xb - xa, WALL_H - headTop, WALL_T),
+				at((xa + xb) / 2, (WALL_H + headTop) / 2, z),
 				body,
 				wood
 			),
 			"Body"
 		)
-		tag(
-			Kit.block(
-				model,
-				Vector3.new(x1 - x0, 0.28, 0.08),
-				at((x0 + x1) / 2, WINDOW_TOP, outer),
-				trim,
-				{ material = Enum.Material.Metal, collide = false }
-			),
-			"Trim"
-		)
+		if headTop > WINDOW_TOP then
+			for _, span in subtract(xa, xb, gaps) do
+				tag(
+					Kit.block(
+						model,
+						Vector3.new(span[2] - span[1], headTop - WINDOW_TOP, WALL_T),
+						at((span[1] + span[2]) / 2, (headTop + WINDOW_TOP) / 2, z),
+						body,
+						wood
+					),
+					"Body"
+				)
+			end
+		end
+		for _, span in subtract(x0, x1, if headTop > WINDOW_TOP then gaps else {}) do
+			tag(
+				Kit.block(
+					model,
+					Vector3.new(span[2] - span[1], 0.28, 0.08),
+					at((span[1] + span[2]) / 2, WINDOW_TOP, outer),
+					trim,
+					{ material = Enum.Material.Metal, collide = false }
+				),
+				"Trim"
+			)
+		end
 		-- window band: glass panes with piers between
 		local windows: { Span } = {}
 		local pitch = 5.2
-		local count = math.floor((x1 - x0 - 3) / pitch)
-		local start = (x0 + x1) / 2 - (count - 1) * pitch / 2
-		for i = 0, count - 1 do
-			local cx = start + i * pitch
+		local centres: { number } = {}
+		if packed then
+			-- as many windows as fit in each run of wall between the ends and the doors, centred in it
+			local clear: { Span } = {}
+			for _, gap in gaps do
+				table.insert(clear, { gap[1] - 1.15, gap[2] + 1.15 })
+			end
+			for _, span in subtract(x0 + 1.2, x1 - 1.2, clear) do
+				local len = span[2] - span[1]
+				if len >= 3.6 then
+					local n = math.floor((len - 3.6) / pitch) + 1
+					local first = (span[1] + span[2]) / 2 - (n - 1) * pitch / 2
+					for i = 0, n - 1 do
+						table.insert(centres, first + i * pitch)
+					end
+				end
+			end
+		else
+			local count = math.floor((x1 - x0 - 3) / pitch)
+			local start = (x0 + x1) / 2 - (count - 1) * pitch / 2
+			for i = 0, count - 1 do
+				table.insert(centres, start + i * pitch)
+			end
+		end
+		for _, cx in centres do
 			local blocked = false
 			for _, gap in gaps do
 				if cx + 2.95 > gap[1] and cx - 2.95 < gap[2] then
@@ -374,8 +417,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		for _, dx in doors do
 			local blocker = Kit.block(
 				model,
-				Vector3.new(doorWidth, DOOR_H, 0.6),
-				at(dx, DOOR_H / 2, z),
+				Vector3.new(doorWidth, doorHeight, 0.6),
+				at(dx, doorHeight / 2, z),
 				Color3.new(),
 				{ transparency = 1, shadow = false }
 			)
@@ -386,8 +429,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				local slide = dir * (doorWidth / 2 + 0.05)
 				local panel = Kit.block(
 					model,
-					Vector3.new(doorWidth / 2, DOOR_H, 0.25),
-					at(dx + dir * doorWidth / 4, DOOR_H / 2, sign * (HALF + 0.24)),
+					Vector3.new(doorWidth / 2, doorHeight, 0.25),
+					at(dx + dir * doorWidth / 4, doorHeight / 2, sign * (HALF + 0.24)),
 					accent,
 					{ collide = false, material = Enum.Material.WoodPlanks }
 				)
@@ -438,13 +481,26 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				trimPart(Vector3.new(len, 0.24, 0.18), at(cx, 0.12, inward(0.18)), C.rail, Enum.Material.Wood)
 			end
 		end
-		-- cream upper wall over the windows and doors, and on the piers between windows
+		-- cream upper wall over the windows and doors (beside a tall door's head), and on the piers between windows
+		local liningTop = if headTop > WINDOW_TOP then doorHeight + 0.22 else WINDOW_TOP
 		trimPart(
-			Vector3.new(xb - xa, CEIL_BOTTOM - WINDOW_TOP, LINE_T),
-			at((xa + xb) / 2, (CEIL_BOTTOM + WINDOW_TOP) / 2, zLining),
+			Vector3.new(xb - xa, CEIL_BOTTOM - liningTop, LINE_T),
+			at((xa + xb) / 2, (CEIL_BOTTOM + liningTop) / 2, zLining),
 			C.cream,
 			Enum.Material.SmoothPlastic
 		)
+		if liningTop > WINDOW_TOP then
+			for _, span in subtract(xa, xb, liningGaps) do
+				if span[2] - span[1] > 0.05 then
+					trimPart(
+						Vector3.new(span[2] - span[1], liningTop - WINDOW_TOP, LINE_T),
+						at((span[1] + span[2]) / 2, (liningTop + WINDOW_TOP) / 2, zLining),
+						C.cream,
+						Enum.Material.SmoothPlastic
+					)
+				end
+			end
+		end
 		local liningSolid = table.clone(liningGaps)
 		for _, w in windows do
 			table.insert(liningSolid, w)
@@ -506,15 +562,15 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		for _, dx in doors do
 			for _, side in { -1, 1 } do
 				trimPart(
-					Vector3.new(FRAME_W, DOOR_H, 0.42),
-					at(dx + side * (doorWidth / 2 + FRAME_W / 2), DOOR_H / 2, sign * (WALL_IN - 0.21)),
+					Vector3.new(FRAME_W, doorHeight, 0.42),
+					at(dx + side * (doorWidth / 2 + FRAME_W / 2), doorHeight / 2, sign * (WALL_IN - 0.21)),
 					C.brass,
 					Enum.Material.Metal
 				)
 			end
 			trimPart(
 				Vector3.new(doorWidth + 2 * FRAME_W, 0.24, 0.42),
-				at(dx, DOOR_H + 0.1, sign * (WALL_IN - 0.21)),
+				at(dx, doorHeight + 0.1, sign * (WALL_IN - 0.21)),
 				C.brass,
 				Enum.Material.Metal
 			)
@@ -803,8 +859,10 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			C.frame,
 			{ material = Enum.Material.Metal }
 		)
-		bogie(x0 + 6.5)
-		bogie(x1 - 6.5)
+		-- bogies nearer the ends of a short car, so the two stay clear of each other
+		local inset = if len >= 24 then 6.5 else 4.5
+		bogie(x0 + inset)
+		bogie(x1 - inset)
 		-- queen-post truss rods under the floor, as on wooden cars of the 1800s
 		if len >= 34 then
 			for _, side in { -1, 1 } do
@@ -819,8 +877,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				end
 			end
 		end
-		sideWall(x0, x1, 1, doors, 5, lining, WALL_T, WALL_T)
-		sideWall(x0, x1, -1, {}, 5, lining, WALL_T, WALL_T)
+		sideWall(x0, x1, 1, doors, SIDE_DOOR_W, lining, WALL_T, WALL_T, SIDE_DOOR_H, true)
+		sideWall(x0, x1, -1, {}, SIDE_DOOR_W, lining, WALL_T, WALL_T, SIDE_DOOR_H, true)
 		endWall(x0 + WALL_T / 2, rearGangway, 1)
 		endWall(x1 - WALL_T / 2, frontGangway, -1)
 		roofOver(x0, x1)
@@ -978,12 +1036,15 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	breachAnchor("BV2", -72, 5.2, -5.6)
 	gangway(-66, -63)
 
-	-- Crew car -------------------------------------------------------------------------
-	car(-63, -23, { -43 }, true, true, { curtains = true, carpet = true })
+	-- Crew saloon, two cars: doors either side of the gangway between them ---------------
+	car(-63, -44.5, { -49.75 }, true, true, { curtains = true, carpet = true })
+	gangway(-44.5, -41.5)
+	car(-41.5, -23, { -36.25 }, true, true, { curtains = true, carpet = true })
+	-- the route table against the platform wall of the second car
 	local tableTop = Kit.block(
 		model,
 		Vector3.new(6, 0.3, 4),
-		at(-43, 3.0, -3.4),
+		at(-28.4, 3.0, 3.4),
 		C.interior,
 		{ material = Enum.Material.Wood }
 	)
@@ -992,7 +1053,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			Kit.block(
 				model,
 				Vector3.new(0.3, 3, 0.3),
-				at(-43 + dx, 1.5, -3.4 + dz),
+				at(-28.4 + dx, 1.5, 3.4 + dz),
 				C.iron,
 				{ material = Enum.Material.Metal }
 			)
@@ -1001,7 +1062,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	local routeTable = Kit.block(
 		model,
 		Vector3.new(5.6, 0.06, 3.6),
-		at(-43, 3.18, -3.4),
+		at(-28.4, 3.18, 3.4),
 		Color3.fromRGB(214, 200, 168),
 		{ material = Enum.Material.Fabric, collide = false }
 	)
@@ -1011,10 +1072,13 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	breachAnchor("CR2", -31, 5.2, -5.6)
 	gangway(-23, -20)
 
-	-- Workshop car -----------------------------------------------------------------------
-	car(-20, 20, { 0 }, false, true, { curtains = false, carpet = false })
-	Kit.block(model, Vector3.new(9, 0.4, 3), at(0, 3.0, -4.6), C.interior, { material = Enum.Material.Wood })
-	for _, dx in { -4, 4 } do
+	-- Workshop, two cars: the bench in the first, stores in the second -----------------
+	car(-20, -1.5, { -6.25 }, true, true, { curtains = false, carpet = false })
+	gangway(-1.5, 1.5)
+	car(1.5, 20, { 6.25 }, false, true, { curtains = false, carpet = false })
+	local BX = -6.8 -- the workbench's middle
+	Kit.block(model, Vector3.new(9, 0.4, 3), at(BX, 3.0, -4.6), C.interior, { material = Enum.Material.Wood })
+	for _, dx in { BX - 4, BX + 4 } do
 		Kit.block(
 			model,
 			Vector3.new(0.4, 3, 2.6),
@@ -1026,14 +1090,14 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	Kit.block(
 		model,
 		Vector3.new(1.2, 0.8, 0.8),
-		at(-2.8, 3.6, -4.4),
+		at(BX - 2.8, 3.6, -4.4),
 		C.iron,
 		{ material = Enum.Material.Metal }
 	)
 	Kit.block(
 		model,
 		Vector3.new(9, 4, 0.2),
-		at(0, 5.6, -5.72),
+		at(BX, 5.6, -5.72),
 		Color3.fromRGB(92, 70, 48),
 		{ material = Enum.Material.WoodPlanks, collide = false }
 	)
@@ -1041,7 +1105,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		Kit.block(
 			model,
 			Vector3.new(0.25, 1.4 + (i % 3) * 0.4, 0.15),
-			at(dx, 5.6, -5.57),
+			at(BX + dx, 5.6, -5.57),
 			C.iron,
 			{ material = Enum.Material.Metal, collide = false }
 		)
@@ -1049,7 +1113,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	local workbench = Kit.block(
 		model,
 		Vector3.new(8, 4, 3),
-		at(0, 2.5, -4.2),
+		at(BX, 2.5, -4.2),
 		Color3.new(),
 		{ transparency = 1, collide = false, shadow = false }
 	)
@@ -1176,8 +1240,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		C.floor,
 		{ material = Enum.Material.WoodPlanks }
 	)
-	sideWall(cx0, cx1, 1, { 58 }, 4, nil, WALL_T, 0.6)
-	sideWall(cx0, cx1, -1, {}, 4, nil, WALL_T, 0.6)
+	sideWall(cx0, cx1, 1, { 58 }, 4, nil, WALL_T, 0.6, DOOR_H, false)
+	sideWall(cx0, cx1, -1, {}, 4, nil, WALL_T, 0.6, DOOR_H, false)
 	endWall(cx0 + WALL_T / 2, false)
 	tag(
 		Kit.block(
@@ -1455,8 +1519,11 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	buffers(52, -1)
 
 	-- Inside: seats, lamps, the furnace, the stove and every sign (TrainInterior) ---------------
-	local furnished =
-		TrainInterior.furnish(model, origin, { lineIn = LINE_IN, ceiling = CEIL_BOTTOM, doorTop = DOOR_H })
+	local furnished = TrainInterior.furnish(
+		model,
+		origin,
+		{ lineIn = LINE_IN, ceiling = CEIL_BOTTOM, doorTop = DOOR_H, sideDoorTop = SIDE_DOOR_H }
+	)
 
 	model.PrimaryPart = boiler
 	Kit.setCollisionGroup(model, "Train")

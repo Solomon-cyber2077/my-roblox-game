@@ -48,3 +48,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Done: `Builders/LobbyBuilder` adds invisible `GapBarrier` parts in the four gaps between the display train's cars (ballast to roofline, tops flush with the roofs; gangway gaps fill only the open sides so the gangway stays walkable). `lune run check` passes; Studio play console clean.
 2. Known issues: collision not walk-tested by hand. The live run train's gaps are untouched.
 3. Next: the older request: per-car outward-swinging doors, solo ready, and car party rooms (up to 4) that auto-ready.
+
+## 2026-10-06: Saloon and workshop split into four cars
+1. Done: `Builders/TrainBuilder` splits the crew saloon (-63..-44.5, -41.5..-23) and workshop (-20..-1.5, 1.5..20) with covered gangways. Every carriage's double doors are now 5.6 wide and 7.5 tall (were 5x7); passenger walls pack windows between the ends and doors. Short cars put their bogies nearer the ends. `Builders/TrainInterior` moves the bays, route table (2nd saloon car, platform side), workbench/lathe (1st workshop car), cabinet (STORES car) and adds signs, pictures and car boards (LAST TRAIN OUT, CREW SALOON, WORKSHOP, STORES). `LobbyBuilder` adds gap barriers for the new gaps. Check passes and the Studio display train looks right; the console is clean.
+2. Known issues: the saloon has 5 bays (10 seats), down from 8 bays, because of the extra door.
+3. Next: ride a run and check boarding through the new doors and the route table and workbench prompts.

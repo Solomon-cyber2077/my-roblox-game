@@ -31,6 +31,7 @@ export type Dims = {
 	lineIn: number, -- inner face of the side linings (|z|)
 	ceiling: number, -- underside of the ceiling lining
 	doorTop: number,
+	sideDoorTop: number, -- head of the carriages' sliding doors
 }
 
 export type Furnished = {
@@ -159,6 +160,8 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	local seats: { Seat } = {}
 	local LI = dims.lineIn
 	local CEIL = dims.ceiling
+	-- enamel signs over the sliding doors sit clear of their brass heads
+	local SIDE_SIGN_Y = dims.sideDoorTop + 0.62
 
 	local function at(x: number, y: number, z: number): CFrame
 		return origin * CFrame.new(x, y, z)
@@ -348,20 +351,24 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		end
 	end
 
-	-- four bays a side, the door and the route table between them
-	local bayIndex = 0
-	for _, x0 in { -62.0, -54.0, -40.0, -32.0 } do
-		for _, side in { 1, -1 } do
-			bayIndex += 1
-			bay(x0, side, bayIndex)
-		end
+	-- two bays on the far side of each saloon car; on the platform side a bay, the doors and the route table
+	for i, spot in
+		{
+			{ x = -62.0, side = 1 },
+			{ x = -62.0, side = -1 },
+			{ x = -54.0, side = -1 },
+			{ x = -40.0, side = -1 },
+			{ x = -32.0, side = -1 },
+		}
+	do
+		bay(spot.x, spot.side, i)
 	end
 	-- luggage on the racks
 	for i, spot in
 		{
 			{ x = -60, side = 1 },
 			{ x = -51.5, side = -1 },
-			{ x = -45.5, side = 1 },
+			{ x = -47.5, side = 1 },
 			{ x = -37, side = -1 },
 			{ x = -29.5, side = 1 },
 			{ x = -26.2, side = -1 },
@@ -382,14 +389,22 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	picture(-62.38, -4.0, 1, 2)
 	picture(-23.62, 4.0, -1, 3)
 	picture(-23.62, -4.0, -1, 4)
+	picture(-45.12, 4.0, -1, 3)
+	picture(-45.12, -4.0, -1, 4)
+	picture(-41.88, 4.0, 1, 1)
+	picture(-41.88, -4.0, 1, 2)
 	doorSign(Vector3.new(-62.29, 7.66, 0), Vector3.new(1, 0, 0), "GUARD'S VAN")
+	doorSign(Vector3.new(-45.21, 7.66, 0), Vector3.new(-1, 0, 0), "SALOON")
+	doorSign(Vector3.new(-41.79, 7.66, 0), Vector3.new(1, 0, 0), "SALOON")
 	doorSign(Vector3.new(-23.71, 7.66, 0), Vector3.new(-1, 0, 0), "WORKSHOP")
-	doorSign(Vector3.new(-43, 7.66, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
-	nameboard(-49.6, "CREW SALOON")
+	doorSign(Vector3.new(-49.75, SIDE_SIGN_Y, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
+	doorSign(Vector3.new(-36.25, SIDE_SIGN_Y, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
+	nameboard(-55.6, "CREW SALOON")
+	nameboard(-30.0, "CREW SALOON")
 	-- the route table's brass label
 	plate(
-		Vector3.new(-43, 3.05, -1.4),
-		Vector3.new(0, 0, 1),
+		Vector3.new(-28.4, 3.05, 1.4),
+		Vector3.new(0, 0, -1),
 		Vector3.new(2.4, 0.3, 0.06),
 		C.brass,
 		M.Metal,
@@ -564,29 +579,29 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	disc(0.12, 0.62, at(-71.4, CEIL - 2.48, -2.4), C.brass, M.Metal)
 	doorSign(Vector3.new(-66.71, 7.66, 0), Vector3.new(-1, 0, 0), "CREW SALOON")
 	doorSign(Vector3.new(-89.29, 7.66, 0), Vector3.new(1, 0, 0), "SIGNAL MAST")
-	doorSign(Vector3.new(-78, 7.66, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
+	doorSign(Vector3.new(-78, SIDE_SIGN_Y, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
 	nameboard(-78.6, "GUARD'S VAN", 6.95)
 
 	-- Workshop -------------------------------------------------------------------------------------
 
 	-- a lamp over the bench
-	post(1.6, 0.06, at(0.8, CEIL - 0.8, -4.0), C.iron, M.Metal)
-	post(0.45, 1.3, at(0.8, CEIL - 1.82, -4.0), rgb(46, 82, 62), M.Metal)
+	post(1.6, 0.06, at(-6.0, CEIL - 0.8, -4.0), C.iron, M.Metal)
+	post(0.45, 1.3, at(-6.0, CEIL - 1.82, -4.0), rgb(46, 82, 62), M.Metal)
 	local benchLamp =
-		Kit.neon(model, Vector3.one * 0.32, at(0.8, CEIL - 2.08, -4.0), C.warm, Enum.PartType.Ball)
+		Kit.neon(model, Vector3.one * 0.32, at(-6.0, CEIL - 2.08, -4.0), C.warm, Enum.PartType.Ball)
 	benchLamp.Name = "BenchLamp"
 	Kit.pointLight(benchLamp, rgb(255, 232, 196), 0.8, 13, false)
 	-- the lathe
-	for _, x in { -11.4, -6.6 } do
+	for _, x in { -16.9, -12.1 } do
 		solid(Vector3.new(1.2, 2.6, 1.4), at(x, 1.3, -4.7), C.ironLight, M.Metal)
 	end
-	solid(Vector3.new(6.0, 0.5, 1.2), at(-9.0, 2.85, -4.7), C.iron, M.Metal)
-	solid(Vector3.new(1.6, 1.6, 1.3), at(-11.0, 3.9, -4.7), rgb(52, 80, 72), M.Metal)
+	solid(Vector3.new(6.0, 0.5, 1.2), at(-14.5, 2.85, -4.7), C.iron, M.Metal)
+	solid(Vector3.new(1.6, 1.6, 1.3), at(-16.5, 3.9, -4.7), rgb(52, 80, 72), M.Metal)
 	Kit.cylinder(
 		model,
 		0.5,
 		1.0,
-		at(-9.95, 3.9, -4.7),
+		at(-15.45, 3.9, -4.7),
 		C.ironLight,
 		{ material = M.Metal, collide = false, shadow = false }
 	)
@@ -594,32 +609,32 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		model,
 		3.0,
 		0.32,
-		at(-8.2, 3.9, -4.7),
+		at(-13.7, 3.9, -4.7),
 		C.brass,
 		{ material = M.Metal, collide = false, shadow = false }
 	)
-	solid(Vector3.new(0.9, 1.1, 1.0), at(-6.4, 3.65, -4.7), rgb(52, 80, 72), M.Metal)
-	decor(Vector3.new(1.0, 0.5, 1.1), at(-8.6, 3.35, -4.45), C.iron, M.Metal)
+	solid(Vector3.new(0.9, 1.1, 1.0), at(-11.9, 3.65, -4.7), rgb(52, 80, 72), M.Metal)
+	decor(Vector3.new(1.0, 0.5, 1.1), at(-14.1, 3.35, -4.45), C.iron, M.Metal)
 	Kit.cylinder(
 		model,
 		0.14,
 		0.8,
-		at(-8.6, 3.05, -3.85) * Kit.angles(0, 90, 0),
+		at(-14.1, 3.05, -3.85) * Kit.angles(0, 90, 0),
 		C.ironLight,
 		{ material = M.Metal, collide = false, shadow = false }
 	)
 	-- a cabinet of small drawers against the platform wall
-	solid(Vector3.new(4.0, 3.4, 1.1), at(-13.0, 1.7, LI - 0.6), C.wood, M.Wood)
+	solid(Vector3.new(4.0, 3.4, 1.1), at(12.5, 1.7, LI - 0.6), C.wood, M.Wood)
 	for row = 0, 3 do
 		for col = 0, 3 do
-			local dx, dy = -13.0 - 1.5 + col, 0.55 + row * 0.8
+			local dx, dy = 12.5 - 1.5 + col, 0.55 + row * 0.8
 			decor(Vector3.new(0.86, 0.62, 0.05), at(dx, dy, LI - 1.175), C.woodDark, M.Wood)
 			ball(0.1, at(dx, dy, LI - 1.22), C.brass, M.Metal)
 		end
 	end
 	-- a stool at the bench
-	post(2.2, 0.35, at(1.6, 1.1, -2.3), C.woodDark, M.Wood, true)
-	seat(Vector3.new(1.3, 0.25, 1.3), at(1.6, 2.325, -2.3), C.leather, "Stool")
+	post(2.2, 0.35, at(-5.2, 1.1, -2.3), C.woodDark, M.Wood, true)
+	seat(Vector3.new(1.3, 0.25, 1.3), at(-5.2, 2.325, -2.3), C.leather, "Stool")
 	-- the anvil on its stump, under a chain hoist
 	post(1.6, 1.4, at(6.6, 0.8, -2.8), C.wood, M.Wood, true)
 	solid(Vector3.new(1.0, 0.4, 0.62), at(6.6, 1.8, -2.8), C.iron, M.Metal)
@@ -643,7 +658,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		{ material = M.Metal, collide = false, shadow = false }
 	)
 	plate(
-		Vector3.new(0, 8.25, -(LI - 0.09)),
+		Vector3.new(-6.8, 8.25, -(LI - 0.09)),
 		Vector3.new(0, 0, 1),
 		Vector3.new(8.6, 0.6, 0.1),
 		C.board,
@@ -654,8 +669,12 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		0.5
 	)
 	doorSign(Vector3.new(-19.29, 7.66, 0), Vector3.new(1, 0, 0), "CREW SALOON")
-	doorSign(Vector3.new(0, 7.66, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
-	nameboard(-6.6, "WORKSHOP")
+	doorSign(Vector3.new(-2.21, 7.66, 0), Vector3.new(-1, 0, 0), "STORES")
+	doorSign(Vector3.new(2.21, 7.66, 0), Vector3.new(1, 0, 0), "WORKSHOP")
+	doorSign(Vector3.new(-6.25, SIDE_SIGN_Y, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
+	doorSign(Vector3.new(6.25, SIDE_SIGN_Y, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
+	nameboard(-15.0, "WORKSHOP")
+	nameboard(13.0, "STORES")
 	-- a map of the line on the blind front wall
 	picture(19.38, 3.0, -1, 2)
 	plate(
@@ -894,8 +913,10 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		end
 	end
 	carBoard(-78, 11, "GUARD'S VAN")
-	carBoard(-43, 22, "LAST TRAIN OUT  ·  CREW SALOON")
-	carBoard(0, 15, "WORKSHOP")
+	carBoard(-53.75, 14, "LAST TRAIN OUT")
+	carBoard(-32.25, 14, "CREW SALOON")
+	carBoard(-10.75, 12, "WORKSHOP")
+	carBoard(10.75, 12, "STORES")
 	for _, side in { -1, 1 } do
 		-- the tender's lettering, gilt straight on the paint
 		local lettering = decor(Vector3.new(16, 1.8, 0.05), at(36, 3.5, side * 6.53), C.gilt, M.SmoothPlastic)
