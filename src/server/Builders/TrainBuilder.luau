@@ -84,7 +84,6 @@ export type Built = {
 	workbench: BasePart,
 	mast: BasePart,
 	mastLamp: BasePart,
-	routeTable: BasePart,
 	seats: { Seat },
 	cabins: { Cabin },
 }
@@ -1052,34 +1051,6 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	car(-63, -44.5, { -49.75 }, true, true, { curtains = true, carpet = true })
 	gangway(-44.5, -41.5)
 	car(-41.5, -23, { -36.25 }, true, true, { curtains = true, carpet = true })
-	-- the route table against the platform wall of the second car
-	local tableTop = Kit.block(
-		model,
-		Vector3.new(6, 0.3, 4),
-		at(-28.4, 3.0, 3.4),
-		C.interior,
-		{ material = Enum.Material.Wood }
-	)
-	for _, dx in { -2.6, 2.6 } do
-		for _, dz in { -1.6, 1.6 } do
-			Kit.block(
-				model,
-				Vector3.new(0.3, 3, 0.3),
-				at(-28.4 + dx, 1.5, 3.4 + dz),
-				C.iron,
-				{ material = Enum.Material.Metal }
-			)
-		end
-	end
-	local routeTable = Kit.block(
-		model,
-		Vector3.new(5.6, 0.06, 3.6),
-		at(-28.4, 3.18, 3.4),
-		Color3.fromRGB(214, 200, 168),
-		{ material = Enum.Material.Fabric, collide = false }
-	)
-	routeTable.Name = "RouteTable"
-	tableTop.Name = "RouteTableTop"
 	breachAnchor("CR1", -55, 5.2, -5.6)
 	breachAnchor("CR2", -31, 5.2, -5.6)
 	gangway(-23, -20)
@@ -1099,29 +1070,6 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			{ material = Enum.Material.Metal }
 		)
 	end
-	Kit.block(
-		model,
-		Vector3.new(1.2, 0.8, 0.8),
-		at(BX - 2.8, 3.6, -4.4),
-		C.iron,
-		{ material = Enum.Material.Metal }
-	)
-	Kit.block(
-		model,
-		Vector3.new(9, 4, 0.2),
-		at(BX, 5.6, -5.72),
-		Color3.fromRGB(92, 70, 48),
-		{ material = Enum.Material.WoodPlanks, collide = false }
-	)
-	for i, dx in { -3.4, -2, -0.6, 0.8, 2.2, 3.6 } do
-		Kit.block(
-			model,
-			Vector3.new(0.25, 1.4 + (i % 3) * 0.4, 0.15),
-			at(BX + dx, 5.6, -5.57),
-			C.iron,
-			{ material = Enum.Material.Metal, collide = false }
-		)
-	end
 	local workbench = Kit.block(
 		model,
 		Vector3.new(8, 4, 3),
@@ -1130,15 +1078,6 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		{ transparency = 1, collide = false, shadow = false }
 	)
 	workbench.Name = "Workbench"
-	for _, x in { 13.5, 16.5 } do
-		Kit.block(
-			model,
-			Vector3.new(2.6, 2.4, 2.6),
-			at(x, 1.2, -4.4),
-			Color3.fromRGB(124, 92, 60),
-			{ material = Enum.Material.WoodPlanks }
-		)
-	end
 	breachAnchor("WS1", -12, 5.2, -5.6)
 	breachAnchor("WS2", 12, 5.2, -5.6)
 	buffers(20, 1)
@@ -1562,7 +1501,6 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		workbench = workbench,
 		mast = mast,
 		mastLamp = mastLamp,
-		routeTable = routeTable,
 		seats = furnished.seats,
 		cabins = cabins,
 	}
