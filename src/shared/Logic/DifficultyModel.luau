@@ -4,7 +4,7 @@
 
 	D for stop n of N with danger tier t:
 		R(n) = Start + Span * ((n - 1) / (N - 1)) ^ Exponent
-		D    = clamp(R(n) + TierOffset[t], 0, 1)
+		D    = clamp(R(n) + TierOffset[t] + RunTier.offset(runTier), 0, 1)
 
 	Each hazard parameter is a linear blend of its { atD0, atD1 } pair from
 	Config/Difficulty, then scaled by the archetype's hazard biases and by the
@@ -20,6 +20,7 @@ local Stations = require(Shared.Config.Stations)
 local MathX = require(Shared.Util.MathX)
 local Types = require(Shared.Types)
 local BuildingGen = require(script.Parent.BuildingGen)
+local RunTier = require(script.Parent.RunTier)
 
 type Archetype = Stations.Archetype
 
@@ -35,8 +36,9 @@ function DifficultyModel.base(stop: number, stopCount: number): number
 	return curve.Start + curve.Span * t ^ curve.Exponent
 end
 
-function DifficultyModel.forStop(stop: number, stopCount: number, tier: number): number
-	local offset = Difficulty.TierOffset[MathX.clamp(tier, 1, 3)]
+-- `tier` is the stop's route danger (1..3); `runTier` is the run's opt-in tier (default 1).
+function DifficultyModel.forStop(stop: number, stopCount: number, tier: number, runTier: number?): number
+	local offset = Difficulty.TierOffset[MathX.clamp(tier, 1, 3)] + RunTier.offset(runTier or 1)
 	return MathX.saturate(DifficultyModel.base(stop, stopCount) + offset)
 end
 

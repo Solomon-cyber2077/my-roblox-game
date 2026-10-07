@@ -112,10 +112,14 @@ export type CrewTally = {
 	reachedTerminus: boolean,
 }
 
+-- lobby.tier: the opt-in run tier the host has picked, the crew's cap and the host's user id.
+export type LobbyTier = { selected: number, max: number, host: string? }
+
 export type Profile = {
 	version: number,
 	brass: number,
 	xp: number,
+	unlockedTier: number, -- highest opt-in run tier unlocked (Logic/RunTier)
 	owned: { [string]: boolean },
 	equipped: { [string]: string },
 	milestones: { [string]: boolean },

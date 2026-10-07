@@ -1,5 +1,5 @@
 --!strict
--- End-of-run receipt: outcome, payout lines in ledger type, XP, rank-ups and milestones.
+-- End-of-run receipt: outcome, run tier, payout lines in ledger type, XP, rank-ups and milestones.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -70,6 +70,7 @@ function Summary.show(data: { [string]: any })
 	line(title.text, Theme.Font.display, 34, title.color)
 	line(title.line, Theme.Font.body, 16, Theme.Color.inkSoft)
 	line(`Stations cleared: {data.stations or 0}`, Theme.Font.displayMedium, 18, Theme.Color.ink)
+	line(`Run tier: {data.tier or 1}`, Theme.Font.displayMedium, 18, Theme.Color.ink)
 	rule()
 	for _, entry in data.lines or {} do
 		local label = tostring(entry.label)
@@ -86,6 +87,9 @@ function Summary.show(data: { [string]: any })
 	line(`XP EARNED   {Format.thousands(data.xp or 0)}`, Theme.Font.displayMedium, 18, Theme.Color.inkSoft)
 	if data.rankAfter and data.rankBefore and data.rankAfter > data.rankBefore then
 		line(`PROMOTED TO CREW RANK {data.rankAfter}`, Theme.Font.display, 20, Theme.Color.go)
+	end
+	if data.unlockedTier then
+		line(`RUN TIER {data.unlockedTier} UNLOCKED`, Theme.Font.display, 20, Theme.Color.go)
 	end
 	for _, name in data.milestones or {} do
 		line(`LINE MASTERY: {string.upper(name)}`, Theme.Font.display, 18, Theme.Color.signal)

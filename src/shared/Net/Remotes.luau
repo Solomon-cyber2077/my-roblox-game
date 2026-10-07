@@ -10,7 +10,10 @@
 	  slot      integer 1..12
 	  option    integer 1..3
 	  id        string of 1..48 letters, digits or underscores
+	  tier      integer 1..Difficulty.RunTier.Max
 ]]
+
+local Difficulty = require(script.Parent.Parent.Config.Difficulty)
 
 export type ArgKind = string -- "boolean" | "slot" | "option" | "id"
 
@@ -25,6 +28,7 @@ local Remotes: { [string]: RemoteDef } = {
 	-- Client to server intents
 	ClientReady = { direction = "ToServer", args = {}, rate = 1, burst = 2 },
 	SetReady = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
+	SetRunTier = { direction = "ToServer", args = { "tier" }, rate = 4, burst = 4 }, -- host only
 	CastVote = { direction = "ToServer", args = { "option" }, rate = 4, burst = 4 },
 	UseItem = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
 	DropItem = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
@@ -55,6 +59,9 @@ local Checks: { [ArgKind]: (any) -> boolean } = {
 	end,
 	option = function(value)
 		return isInteger(value, 1, 3)
+	end,
+	tier = function(value)
+		return isInteger(value, 1, Difficulty.RunTier.Max)
 	end,
 	id = function(value)
 		return type(value) == "string"
