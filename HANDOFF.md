@@ -11,12 +11,14 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 - Studio `ServerScriptService.Server.Builders.LobbyBuilder`: adjusted lobby fill lights, lowering them from y30 to18 and moving z13 to32; brightness/range changed from .4/38 to 1.1/60. Corner fills lowered y26 to16 with .35/32 changed to .8/44. Studio-only patch preserves unsynced additions.
 
 - 2026-10-06: lobby back wall (departure board, ticket windows) was dark: front fills at z13 range 60 never reached z72. Added a back row of 3 FillLights (x -44/0/44, y26, z52, 0.85/45) in `Builders/LobbyBuilder`. Verified in Studio Play; `lune run check` passes.
+- 2026-10-06: Workshop car's wall-side luggage rack removed (`Lining.bareSide` in TrainBuilder) and its sign lowered to y7.85. Lobby platform lamp standards replaced by two lanterns per platform-edge column on down-turned arms (same 0.75/22 lights). Lobby verified in Studio Play; `lune run check` passes.
 
 ## Known bugs / regressions
 - Place saved successfully to `C:\Users\tameg\OneDrive\Documents\Roblox.rbxl`; Studio DataStores are unavailable, so player profile saving is disabled for this session.
 - Studio Play verified all eight adjusted lights and visible floor/rear-hall coverage; repository lune run check passes. Save the changed place in Studio.
 
 ## Next logical step
+- Look at the workshop sign inside the train in Studio (it has not been checked on screen yet).
 - Save the place in Studio, then reconcile Studio edits with Rojo before syncing.
 
 ## rbxmap setup — 2026-10-06
