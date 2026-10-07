@@ -985,7 +985,7 @@ function BuildingGen.tiles(landmarks: { Stations.LandmarkRule }?): number
 	local total = 0
 	for _, landmark in landmarks do
 		local def = B.Defs[landmark.kind]
-		if def then
+		if def and not landmark.decor then
 			total += def.size[1] * def.size[2] + (if def.upper then def.upper.tiles else 0)
 		end
 	end

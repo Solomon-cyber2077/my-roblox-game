@@ -2,7 +2,7 @@
 --[[
 	Enterable buildings at the stops: a school, a cottage hospital, a railway hotel,
 	a sorting office and the smaller places every station has (booking office,
-	boiler house, workshop, lamp room, chapel, goods shed, shop).
+	boiler house, workshop, lamp room, chapel, goods shed, engine shed, shop).
 
 	A building is a programme of rooms that Logic/BuildingGen lays out inside its
 	footprint and furnishes. Containers are furniture you would expect in that room
@@ -725,6 +725,22 @@ local Defs: { [string]: Building } = {
 		roofStyle = "Pitched",
 		front = "Parlour",
 		rooms = { "Kitchen", "Bedroom" },
+	},
+	EngineShed = {
+		name = "Engine Shed",
+		size = { 5, 3 },
+		layout = "Hall",
+		height = 15,
+		wall = { 84, 64, 54 }, -- soot-blackened brick
+		trim = { 40, 38, 38 },
+		roof = { 64, 60, 58 },
+		floor = { 70, 66, 62 },
+		wallMaterial = "Brick",
+		floorMaterial = "Concrete",
+		roofMaterial = "CorrodedMetal",
+		roofStyle = "Pitched",
+		front = "WorkHall",
+		rooms = { "CoalStore", "Store" },
 	},
 	GeneralStore = {
 		name = "General Store",
