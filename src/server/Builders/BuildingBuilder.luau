@@ -4,7 +4,9 @@
 	doors and windows, the ceiling and roof, the front door under a painted name board,
 	windows glazed, broken or boarded, ceiling lamps (most of them dead), the fuse box,
 	locked doors and every piece of furniture that is not a container (StationBuilder
-	builds those, so the search prompts hang from them).
+	builds those, so the search prompts hang from them). A building with an upper floor
+	gets its slab, the stairwell ramp, a lean-to roof over the front and a pitched roof
+	over the upper storey; moonlight comes in through some of the broken windows.
 
 	The frame is the building's origin on the floor; local -Z faces the platform.
 	Returns a handle BuildingService uses at run time: the lamps, the glass that lights
@@ -39,6 +41,7 @@ local DEAD = rgb(70, 66, 60)
 local PLASTER = rgb(190, 180, 160)
 local CEILING = rgb(150, 142, 128)
 local GLASS = rgb(140, 160, 170)
+local MOON = rgb(150, 172, 215)
 
 local function material(name: string): Enum.Material
 	local ok, value = pcall(function()
@@ -92,24 +95,65 @@ function BuildingBuilder.build(
 	end
 
 	-- ceiling, roof and chimneys -------------------------------------------------------------
-	block(Vector3.new(2 * ox + 1, 1, 2 * oz + 1), at(0, H + 0.5, 0), CEILING, M.Plaster)
 	local roofColor = Kit.rgb(def.roof)
 	local roofMaterial = material(def.roofMaterial)
-	local top = H + 1
+	local upper = plan.upper
+	-- the pitched roof spans [z0, z1] from its eaves at `top`
+	local top, z0, z1 = H + 1, -oz, oz
+	if upper then
+		-- the ground floor's ceiling over the front, the upper floor's slab over the back
+		local edge = upper.south + Buildings.Wall / 2
+		block(
+			Vector3.new(2 * ox + 1, 1, edge + oz + 0.5),
+			at(0, H + 0.5, (edge - oz - 0.5) / 2),
+			CEILING,
+			M.Plaster
+		)
+		local slab = upper.slab
+		local floor = block(
+			Vector3.new(slab.x1 - slab.x0, 1, slab.z1 - slab.z0),
+			at((slab.x0 + slab.x1) / 2, H + 0.5, (slab.z0 + slab.z1) / 2),
+			Kit.rgb(def.floor),
+			material(def.floorMaterial)
+		)
+		floor.Name = "UpperFloor"
+		local back = upper.south - Buildings.Wall / 2
+		block(
+			Vector3.new(2 * ox + 1, 1, oz + 0.5 - back + 0.5),
+			at(0, upper.top + 0.5, (oz + 0.5 + back - 0.5) / 2),
+			CEILING,
+			M.Plaster
+		)
+		-- a lean-to over the front, up against the upper storey
+		local leanDepth = back + oz + 1.2
+		local leanRise = math.min(6, leanDepth * 0.3)
+		Kit.wedge(
+			parent,
+			Vector3.new(2 * ox + 2, leanRise, leanDepth),
+			at(0, H + 1 + leanRise / 2, (back - oz - 1.2) / 2),
+			roofColor,
+			{ material = roofMaterial }
+		)
+		top, z0, z1 = upper.top + 1, back, oz
+	else
+		block(Vector3.new(2 * ox + 1, 1, 2 * oz + 1), at(0, H + 0.5, 0), CEILING, M.Plaster)
+	end
 	if def.roofStyle == "Pitched" then
-		local rise = math.min(12, oz * 0.45)
-		local depth = oz + 1.2
+		local half = (z1 - z0) / 2
+		local ridge = (z0 + z1) / 2
+		local rise = math.min(12, half * 0.45)
+		local depth = half + 1.2
 		Kit.wedge(
 			parent,
 			Vector3.new(2 * ox + 2, rise, depth),
-			at(0, top + rise / 2, -depth / 2),
+			at(0, top + rise / 2, ridge - depth / 2),
 			roofColor,
 			{ material = roofMaterial }
 		)
 		Kit.wedge(
 			parent,
 			Vector3.new(2 * ox + 2, rise, depth),
-			at(0, top + rise / 2, depth / 2) * Kit.angles(0, 180, 0),
+			at(0, top + rise / 2, ridge + depth / 2) * Kit.angles(0, 180, 0),
 			roofColor,
 			{ material = roofMaterial }
 		)
@@ -117,7 +161,7 @@ function BuildingBuilder.build(
 			if rng:NextNumber() < 0.8 then
 				block(
 					Vector3.new(2.4, rise + 3, 2.4),
-					at(x, top + (rise + 3) / 2, oz * 0.3),
+					at(x, top + (rise + 3) / 2, ridge + half * 0.3),
 					Kit.shade(wallColor, 0.85),
 					wallMaterial
 				)
@@ -125,7 +169,7 @@ function BuildingBuilder.build(
 					parent,
 					1.4,
 					1,
-					at(x, top + rise + 3.7, oz * 0.3),
+					at(x, top + rise + 3.7, ridge + half * 0.3),
 					rgb(150, 80, 60),
 					{ material = M.Brick }
 				)
@@ -171,7 +215,7 @@ function BuildingBuilder.build(
 	local locks: { Lock } = {}
 	for _, door in plan.doors do
 		local along = if door.axis == "X" then CFrame.identity else Kit.angles(0, 90, 0)
-		local base = at(door.x, 0, door.z) * along -- local X runs along the wall, Z through it
+		local base = at(door.x, door.y, door.z) * along -- local X runs along the wall, Z through it
 		local w = door.width
 		if door.exterior then
 			-- a frame proud of the outside face, and the leaves hung open against the wall
@@ -250,9 +294,8 @@ function BuildingBuilder.build(
 
 	-- windows ----------------------------------------------------------------------------------
 	local glass: { BasePart } = {}
-	local sill = Buildings.WindowSill
-	local head = Buildings.WindowTop
 	for _, window in plan.windows do
+		local sill, head = window.y0, window.y1
 		local along = if window.axis == "X" then CFrame.identity else Kit.angles(0, 90, 0)
 		local base = at(window.x, 0, window.z) * along
 		local out = window.outward * (Buildings.Wall / 2 + 0.12)
@@ -318,11 +361,24 @@ function BuildingBuilder.build(
 	-- lamps --------------------------------------------------------------------------------------
 	local lamps: { Lamp } = {}
 	for _, lamp in plan.lamps do
+		if lamp.kind == "Moon" then
+			-- no fixture: only the night coming in through the broken pane
+			local glow =
+				block(Vector3.new(0.2, 0.2, 0.2), at(lamp.x, lamp.y, lamp.z), MOON, M.SmoothPlastic, false)
+			glow.Transparency = 1
+			glow.CastShadow = false
+			glow.Name = "Moonlight"
+			Kit.pointLight(glow, MOON, 0.45, 18, false)
+			continue
+		elseif lamp.kind ~= "Ceiling" then
+			continue -- the lantern is furniture
+		end
+		local ceiling = lamp.y
 		Kit.post(
 			parent,
 			1.6,
 			0.12,
-			at(lamp.x, H - 0.8, lamp.z),
+			at(lamp.x, ceiling - 0.8, lamp.z),
 			rgb(30, 30, 30),
 			{ material = M.Metal, collide = false }
 		)
@@ -330,15 +386,16 @@ function BuildingBuilder.build(
 			parent,
 			0.5,
 			1.6,
-			at(lamp.x, H - 1.85, lamp.z),
+			at(lamp.x, ceiling - 1.85, lamp.z),
 			rgb(48, 70, 58),
 			{ material = M.Metal, collide = false }
 		)
-		local bulb = Kit.ball(parent, 0.6, at(lamp.x, H - 2.25, lamp.z), if lamp.works then LAMP else DEAD, {
-			material = if lamp.works then M.Neon else M.SmoothPlastic,
-			collide = false,
-			shadow = false,
-		})
+		local bulb =
+			Kit.ball(parent, 0.6, at(lamp.x, ceiling - 2.25, lamp.z), if lamp.works then LAMP else DEAD, {
+				material = if lamp.works then M.Neon else M.SmoothPlastic,
+				collide = false,
+				shadow = false,
+			})
 		bulb.Name = "Bulb"
 		local light = Kit.pointLight(bulb, LAMP, 0.8, 22, false)
 		light.Enabled = lamp.works
@@ -379,8 +436,25 @@ function BuildingBuilder.build(
 		false
 	)
 
+	-- the stairwell's ramp: one solid wedge, nothing to get caught under ------------------------
+	for _, stair in plan.stairs do
+		Kit.wedge(
+			parent,
+			Vector3.new(stair.z1 - stair.z0, stair.rise, stair.x1 - stair.x0),
+			at((stair.x0 + stair.x1) / 2, stair.rise / 2, (stair.z0 + stair.z1) / 2) * Kit.angles(0, 90, 0),
+			Kit.rgb(def.floor),
+			{ material = material(def.floorMaterial) }
+		)
+	end
+
 	-- rugs and the furniture that is only there to be looked at -------------------------------
-	for _, room in plan.rooms do
+	local rooms = table.clone(plan.rooms)
+	if upper then
+		for _, room in upper.rooms do
+			table.insert(rooms, room)
+		end
+	end
+	for _, room in rooms do
 		local roomDef = Buildings.Rooms[room.kind]
 		if roomDef and roomDef.rug then
 			local r = room.rect
@@ -388,7 +462,7 @@ function BuildingBuilder.build(
 			if w > 3 and d > 3 then
 				block(
 					Vector3.new(w, 0.06, d),
-					at((r.x0 + r.x1) / 2, 0.03, (r.z0 + r.z1) / 2),
+					at((r.x0 + r.x1) / 2, room.y + 0.03, (r.z0 + r.z1) / 2),
 					Kit.rgb(roomDef.rug),
 					M.Fabric,
 					false
@@ -397,10 +471,10 @@ function BuildingBuilder.build(
 		end
 	end
 	for _, item in plan.items do
-		if item.container == nil then
+		if item.container == nil and item.kind ~= "Stairs" then
 			FurnitureKit.build(item.kind, {
 				parent = parent,
-				frame = at(item.x, 0, item.z) * Kit.angles(0, item.rot, 0),
+				frame = at(item.x, item.y, item.z) * Kit.angles(0, item.rot, 0),
 				rng = rng,
 				accent = accent,
 			})

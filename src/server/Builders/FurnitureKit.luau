@@ -501,7 +501,8 @@ end
 Builders.Barrels = function(ctx)
 	local main =
 		Kit.post(ctx.parent, 3.2, 2.4, at(ctx, -0.8, 1.6, -0.6), rgb(100, 70, 46), { material = M.Wood })
-	Kit.post(ctx.parent, 3.2, 2.4, at(ctx, 1.1, 1.6, 0.4), rgb(92, 66, 44), { material = M.Wood })
+	-- a shorter barrel beside it, so the two lids are not in one plane
+	Kit.post(ctx.parent, 2.9, 2.4, at(ctx, 1.1, 1.45, 0.4), rgb(92, 66, 44), { material = M.Wood })
 	Kit.post(
 		ctx.parent,
 		2.6,
@@ -678,6 +679,19 @@ Builders.LampRack = function(ctx)
 end
 
 -- Builds a piece and returns its main part (where a search prompt would hang).
+-- A storm lantern left burning on an upturned crate by the way in.
+Builders.Lantern = function(ctx)
+	local crate = box(ctx, Vector3.new(1.3, 1.6, 1.3), at(ctx, 0, 0.8, 0), C.woodLight, M.WoodPlanks)
+	Kit.post(ctx.parent, 0.15, 0.7, at(ctx, 0, 1.675, 0), C.iron, { material = M.Metal, collide = false })
+	local glass = box(ctx, Vector3.new(0.5, 0.7, 0.5), at(ctx, 0, 2.1, 0), rgb(255, 200, 130), M.Neon, false)
+	glass.CastShadow = false
+	Kit.post(ctx.parent, 0.15, 0.6, at(ctx, 0, 2.525, 0), C.iron, { material = M.Metal, collide = false })
+	box(ctx, Vector3.new(0.06, 0.4, 0.5), at(ctx, 0, 2.8, 0), C.iron, M.Metal, false)
+	local light = Kit.pointLight(glass, rgb(255, 196, 130), 0.9, 16, false)
+	light:SetAttribute("Base", 0.9)
+	return crate
+end
+
 function FurnitureKit.build(kind: string, ctx: Ctx): BasePart
 	local builder = Builders[kind]
 	assert(builder, `no furniture builder for {kind}`)

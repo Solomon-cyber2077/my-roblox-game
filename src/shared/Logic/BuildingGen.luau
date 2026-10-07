@@ -11,6 +11,12 @@
 	Walls come out already split around their doors and windows, as pieces that meet
 	end to end and never overlap, so no two faces fight. Furniture keeps clear of every
 	doorway (DoorClearance) and of each other.
+
+	A building with an upper floor (Config/Buildings `upper`) gives its back row's west
+	end to a stairwell: one ramp against the back wall up to a floor slab over the rest of
+	the row, where the upper rooms open into each other. The far one has the escape
+	window. Upper rooms are in `upper.rooms`, not `rooms`, and everything in them carries
+	its floor height in `y`.
 ]]
 
 local Shared = script.Parent.Parent
@@ -27,6 +33,8 @@ export type Room = {
 	doorSide: string, -- N, S, E or W: the wall its main door is in
 	locked: boolean,
 	doors: { DoorRef },
+	y: number, -- floor height
+	top: number, -- ceiling height
 }
 export type WallPiece = {
 	axis: string, -- X: runs along x at z = fixed; Z: runs along z at x = fixed
@@ -47,12 +55,42 @@ export type Door = {
 	front: boolean,
 	locked: boolean,
 	room: number,
+	into: number?, -- the room on the other side; nil for a way out
 	outward: number, -- +1 or -1 along the wall's normal, toward the outside or the corridor
+	y: number,
 }
-export type Window = { x: number, z: number, axis: string, width: number, outward: number, glass: string }
-export type Item = { kind: string, x: number, z: number, rot: number, room: number, container: string? }
-export type Lamp = { x: number, z: number, room: number, works: boolean }
-export type Spot = { x: number, z: number, rot: number, kind: string, room: number }
+export type Window = {
+	x: number,
+	z: number,
+	axis: string,
+	width: number,
+	outward: number,
+	glass: string,
+	room: number,
+	y0: number, -- sill
+	y1: number, -- head
+}
+export type Item = {
+	kind: string,
+	x: number,
+	z: number,
+	rot: number,
+	room: number,
+	container: string?,
+	y: number,
+}
+-- Ceiling lamps follow the fuse box; a Lantern always burns; Moon is the night through a broken window.
+export type Lamp = { x: number, z: number, room: number, works: boolean, y: number, kind: string }
+export type Spot = { x: number, z: number, rot: number, kind: string, room: number, y: number }
+export type Stair = { x0: number, x1: number, z0: number, z1: number, rise: number } -- climbs toward +x
+export type Upper = {
+	y: number, -- floor level
+	top: number, -- ceiling
+	rooms: { Room },
+	slab: Rect, -- the floor, one part
+	south: number, -- z of the upper storey's front wall (the lower roof meets it)
+	escape: { x: number, z: number },
+}
 export type Plan = {
 	kind: string,
 	width: number,
@@ -69,6 +107,8 @@ export type Plan = {
 	sleepers: { Spot },
 	fuse: { x: number, z: number, rot: number },
 	exits: { { x: number, z: number } },
+	stairs: { Stair },
+	upper: Upper?,
 }
 
 type Opening = { at: number, width: number, y0: number, y1: number }
@@ -77,6 +117,8 @@ type Line = {
 	fixed: number,
 	a: number,
 	b: number,
+	y0: number,
+	y1: number,
 	thick: number,
 	exterior: boolean,
 	openings: { Opening },
@@ -118,14 +160,33 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 	local doors: { Door } = {}
 	local windows: { Window } = {}
 	local exits: { { x: number, z: number } } = {}
+	local stairs: { Stair } = {}
+	local upperInfo: Upper? = nil
 
-	local function line(axis: string, fixed: number, a: number, b: number, thick: number, exterior: boolean)
-		table.insert(
-			lines,
-			{ axis = axis, fixed = fixed, a = a, b = b, thick = thick, exterior = exterior, openings = {} }
-		)
+	local function line(
+		axis: string,
+		fixed: number,
+		a: number,
+		b: number,
+		thick: number,
+		exterior: boolean,
+		y0: number?,
+		y1: number?
+	)
+		table.insert(lines, {
+			axis = axis,
+			fixed = fixed,
+			a = a,
+			b = b,
+			y0 = y0 or 0,
+			y1 = y1 or H,
+			thick = thick,
+			exterior = exterior,
+			openings = {},
+		})
 	end
 
+	-- Opens a hole in the wall line it falls on, unless it would run into another opening.
 	local function cut(axis: string, fixed: number, at: number, w: number, y0: number, y1: number): Line?
 		for _, l in lines do
 			if
@@ -133,7 +194,14 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 				and math.abs(l.fixed - fixed) < 0.01
 				and at - w / 2 >= l.a - 0.01
 				and at + w / 2 <= l.b + 0.01
+				and y0 >= l.y0 - 0.01
+				and y1 <= l.y1 + 0.01
 			then
+				for _, o in l.openings do
+					if math.abs(o.at - at) < (o.width + w) / 2 + 0.6 then
+						return nil
+					end
+				end
 				table.insert(l.openings, { at = at, width = w, y0 = y0, y1 = y1 })
 				return l
 			end
@@ -141,9 +209,17 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 		return nil
 	end
 
-	local function room(roomKind: string, rect: Rect, doorSide: string): Room
-		local r: Room =
-			{ id = #rooms + 1, kind = roomKind, rect = rect, doorSide = doorSide, locked = false, doors = {} }
+	local function room(roomKind: string, rect: Rect, doorSide: string, y: number?, top: number?): Room
+		local r: Room = {
+			id = #rooms + 1,
+			kind = roomKind,
+			rect = rect,
+			doorSide = doorSide,
+			locked = false,
+			doors = {},
+			y = y or 0,
+			top = top or H,
+		}
 		table.insert(rooms, r)
 		return r
 	end
@@ -163,7 +239,7 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 		else
 			fixed, outward = r.x0 - (if b then P / 2 else T / 2), -1
 		end
-		if cut(axis, fixed, at, w, 0, B.DoorHeight) == nil then
+		if cut(axis, fixed, at, w, a.y, a.y + B.DoorHeight) == nil then
 			return nil
 		end
 		local x = if axis == "X" then at else fixed
@@ -177,7 +253,9 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 			front = front == true,
 			locked = false,
 			room = a.id,
+			into = if b then b.id else nil,
 			outward = outward,
+			y = a.y,
 		}
 		table.insert(doors, d)
 		table.insert(a.doors, { side = side, at = at, width = w })
@@ -257,7 +335,12 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 			table.insert(front, s)
 		end
 		partitions(front, -iz, w1 - P / 2)
-		local back = split(-ix, ix, 14, 24)
+		local upper = def.upper
+		local sw = B.StairwellWidth
+		local back = if upper then split(-ix + sw + P, ix, 14, 24) else split(-ix, ix, 14, 24)
+		if upper then
+			table.insert(back, 1, { -ix, -ix + sw })
+		end
 		partitions(back, w2 + P / 2, iz)
 
 		local slots: { { seg: { number }, row: string } } = {}
@@ -270,25 +353,108 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 				table.insert(slots, { seg = seg, row = "front" })
 			end
 		end
-		for _, seg in back do
-			table.insert(slots, { seg = seg, row = "back" })
+		for i, seg in back do
+			if not (upper and i == 1) then
+				table.insert(slots, { seg = seg, row = "back" })
+			end
 		end
 		rng:shuffle(slots)
+		-- back rooms take the row behind the corridor first, the rest fill in around them
+		local backKinds: { string } = {}
+		local plainKinds: { string } = {}
+		for _ = 1, #slots do
+			local k = nextKind()
+			table.insert(if B.Rooms[k].back then backKinds else plainKinds, k)
+		end
+		local kindOf: { [any]: string } = {}
+		for _, row in { "back", "front" } do
+			local first = if row == "back" then backKinds else plainKinds
+			local second = if row == "back" then plainKinds else backKinds
+			for _, slot in slots do
+				if slot.row == row then
+					kindOf[slot] = table.remove(if #first > 0 then first else second, 1) :: string
+				end
+			end
+		end
 		for _, slot in slots do
 			local seg = slot.seg
 			local mid = (seg[1] + seg[2]) / 2
 			local r: Room
 			if slot.row == "front" then
-				r = room(nextKind(), { x0 = seg[1], z0 = -iz, x1 = seg[2], z1 = w1 - P / 2 }, "N")
+				r = room(kindOf[slot], { x0 = seg[1], z0 = -iz, x1 = seg[2], z1 = w1 - P / 2 }, "N")
 				door(r, "N", mid, B.DoorWidth, corridor)
 			else
-				r = room(nextKind(), { x0 = seg[1], z0 = w2 + P / 2, x1 = seg[2], z1 = iz }, "S")
+				r = room(kindOf[slot], { x0 = seg[1], z0 = w2 + P / 2, x1 = seg[2], z1 = iz }, "S")
 				door(r, "S", mid, B.DoorWidth, corridor)
 			end
 		end
 		-- the corridor runs out at both ends
 		door(corridor, "W", (cz0 + cz1) / 2, B.DoorWidth, nil)
 		door(corridor, "E", (cz0 + cz1) / 2, B.DoorWidth, nil)
+
+		if upper then
+			-- the stairwell: open to the roof, its ramp along the back wall up to the slab
+			local sx = -ix + sw
+			local Y = H + 1
+			local top = Y + upper.height
+			local stairwell = room("Stairwell", { x0 = -ix, z0 = w2 + P / 2, x1 = sx, z1 = iz }, "S", 0, top)
+			door(stairwell, "S", -ix + sw / 2, B.DoorWidth, corridor)
+			local ramp = B.Furniture.Stairs
+			table.insert(stairs, { x0 = sx - ramp.w, x1 = sx, z0 = iz - ramp.d, z1 = iz, rise = H + 1 })
+
+			-- the upper storey: its walls stand on the ground floor's, from the ceiling up
+			local south = w2
+			line("X", oz - T / 2, -ox, ox, T, true, H, top)
+			line("X", south, -ox, ox, T, true, Y, top)
+			line("Z", -ox + T / 2, south + T / 2, iz, T, true, H, top)
+			line("Z", ox - T / 2, south + T / 2, iz, T, true, H, top)
+			line("Z", sx + P / 2, south + T / 2, iz, P, false, Y, top)
+			local z0 = south + T / 2
+			local segments = split(sx + P, ix, 12, 20)
+			for i = 1, #segments - 1 do
+				line("Z", segments[i][2] + P / 2, z0, iz, P, false, Y, top)
+			end
+			local prev = stairwell
+			local last: Room = stairwell
+			for i, seg in segments do
+				local r = room(
+					upper.rooms[(i - 1) % #upper.rooms + 1],
+					{ x0 = seg[1], z0 = z0, x1 = seg[2], z1 = iz },
+					"W",
+					Y,
+					top
+				)
+				if i == 1 then
+					-- off the top of the ramp
+					door(r, "W", iz - ramp.d / 2 - 0.1, ramp.d - 0.2, prev)
+				else
+					door(r, "W", (z0 + iz) / 2, B.DoorWidth, prev)
+				end
+				prev, last = r, r
+			end
+			-- the second way down: a broken window low in the far room's end wall
+			local ez = (last.rect.z0 + last.rect.z1) / 2
+			cut("Z", ox - T / 2, ez, B.WindowWidth + 1, Y + B.EscapeSill, Y + B.EscapeTop)
+			table.insert(windows, {
+				x = ox - T / 2,
+				z = ez,
+				axis = "Z",
+				width = B.WindowWidth + 1,
+				outward = 1,
+				glass = "Broken",
+				room = last.id,
+				y0 = Y + B.EscapeSill,
+				y1 = Y + B.EscapeTop,
+			})
+			upperInfo = {
+				y = Y,
+				top = top,
+				rooms = {},
+				slab = { x0 = sx, z0 = z0, x1 = ix, z1 = iz },
+				south = south,
+				escape = { x = ox - T / 2, z = ez },
+			}
+		end
 	elseif def.layout == "Hall" then
 		local strip = math.min(12, 2 * iz * 0.32)
 		local wz = iz - strip - P / 2
@@ -300,10 +466,17 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 		door(frontRoom, "E", hz, B.DoorWidth, nil)
 		local segments = split(-ix, ix, 10, 16)
 		partitions(segments, wz + P / 2, iz)
+		local backRooms: { Room } = {}
 		for _, seg in segments do
 			local r = room(nextKind(), { x0 = seg[1], z0 = wz + P / 2, x1 = seg[2], z1 = iz }, "S")
 			door(r, "S", (seg[1] + seg[2]) / 2, B.DoorWidth, frontRoom)
+			table.insert(backRooms, r)
 		end
+		-- a back room at an end of the strip has its own way out through the end wall
+		local first, last = backRooms[1], backRooms[#backRooms]
+		local rear = if B.Rooms[last.kind].back and not B.Rooms[first.kind].back then last else first
+		local side = if rear == first then "W" else "E"
+		door(rear, side, (rear.rect.z0 + rear.rect.z1) / 2, B.DoorWidth, nil)
 	else
 		-- Row: the front room in the middle, the others either side, all opening into each other
 		local fw = 2 * ix * 0.42
@@ -319,12 +492,16 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 		door(frontRoom, "N", 0, B.DoorWidth, nil)
 		door(leftRoom, "E", 0, B.DoorWidth, frontRoom)
 		door(rightRoom, "W", 0, B.DoorWidth, frontRoom)
+		-- and out of the back at each end, clear of the end walls' furniture
+		local inset = B.DoorWidth / 2 + 0.5
+		door(leftRoom, "N", leftRoom.rect.x0 + inset, B.DoorWidth, nil)
+		door(rightRoom, "N", rightRoom.rect.x1 - inset, B.DoorWidth, nil)
 	end
 
 	-- locks: a room's own door, never the way in or a corridor's exit
 	for _, r in rooms do
 		local roomDef = B.Rooms[r.kind]
-		if roomDef and roomDef.locked and r ~= frontRoom and rng:chance(roomDef.locked) then
+		if roomDef and roomDef.locked and r ~= frontRoom and r.y == 0 and rng:chance(roomDef.locked) then
 			for _, d in doors do
 				if d.room == r.id and not d.exterior then
 					d.locked = true
@@ -339,6 +516,7 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 	for _, r in rooms do
 		if r.kind ~= "Corridor" then
 			local rect = r.rect
+			local sill, head = r.y + B.WindowSill, r.y + B.WindowTop
 			local sides: { { side: string, axis: string, fixed: number, a: number, b: number, outward: number } } =
 				{}
 			if rect.z0 <= -iz + 0.01 then
@@ -366,6 +544,9 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 				)
 			end
 			for _, s in sides do
+				if r.kind == "Stairwell" and s.side == "N" then
+					continue -- the ramp runs along it
+				end
 				local length = s.b - s.a
 				local count = math.floor(length / B.WindowEvery)
 				for i = 1, count do
@@ -379,7 +560,7 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 							blocked = true
 						end
 					end
-					if not blocked and cut(s.axis, s.fixed, at, B.WindowWidth, B.WindowSill, B.WindowTop) then
+					if not blocked and cut(s.axis, s.fixed, at, B.WindowWidth, sill, head) then
 						local roll = rng:next()
 						table.insert(windows, {
 							x = if s.axis == "X" then at else s.fixed,
@@ -388,6 +569,9 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 							width = B.WindowWidth,
 							outward = s.outward,
 							glass = if roll < 0.35 then "Boarded" elseif roll < 0.6 then "Broken" else "Glass",
+							room = r.id,
+							y0 = sill,
+							y1 = head,
 						})
 					end
 				end
@@ -418,12 +602,12 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 		local at = l.a
 		for _, o in l.openings do
 			local a, b = o.at - o.width / 2, o.at + o.width / 2
-			piece(at, a, 0, H)
-			piece(a, b, 0, o.y0)
-			piece(a, b, o.y1, H)
+			piece(at, a, l.y0, l.y1)
+			piece(a, b, l.y0, o.y0)
+			piece(a, b, o.y1, l.y1)
 			at = b
 		end
-		piece(at, l.b, 0, H)
+		piece(at, l.b, l.y0, l.y1)
 	end
 
 	-- furniture, containers, lamps and sleepers -----------------------------------------
@@ -431,6 +615,7 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 	local lamps: { Lamp } = {}
 	local sleepers: { Spot } = {}
 	local fuse = { x = 0, z = 0, rot = 180 }
+	local moons = 0
 
 	for _, r in rooms do
 		local rect = r.rect
@@ -472,9 +657,23 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 			table.insert(occupied, box)
 			table.insert(
 				items,
-				{ kind = itemKind, x = x, z = z, rot = rot, room = r.id, container = container }
+				{ kind = itemKind, x = x, z = z, rot = rot, room = r.id, container = container, y = r.y }
 			)
 			return true
+		end
+		local first = #items + 1
+
+		if r.kind == "Stairwell" then
+			local s = stairs[1]
+			table.insert(occupied, { x0 = s.x0, z0 = s.z0, x1 = s.x1, z1 = s.z1 })
+			table.insert(items, {
+				kind = "Stairs",
+				x = (s.x0 + s.x1) / 2,
+				z = (s.z0 + s.z1) / 2,
+				rot = 0,
+				room = r.id,
+				y = 0,
+			})
 		end
 
 		if r == frontRoom then
@@ -610,8 +809,44 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 			end
 		end
 
-		-- the lamp, and maybe something asleep in the dark
 		local roomDef = B.Rooms[r.kind]
+		-- a back room is worth the trip: at least one of its containers holds the better loot
+		if roomDef and roomDef.back then
+			local best, last = false, nil
+			for i = first, #items do
+				local c = items[i].container
+				if c then
+					best = best or B.BackLoot[c] == true
+					last = i
+				end
+			end
+			if not best and last then
+				items[last].container = "ToolChest"
+			end
+		end
+		-- a lantern somebody left burning by the way in (or, with no room for it, a lamp that works)
+		local lantern = false
+		if r == frontRoom then
+			local f = B.Furniture.Lantern
+			local corners = {
+				{ x = rect.x0 + f.w / 2 + 0.4, z = rect.z0 + f.d / 2 + 0.4 },
+				{ x = rect.x1 - f.w / 2 - 0.4, z = rect.z0 + f.d / 2 + 0.4 },
+				{ x = rect.x0 + f.w / 2 + 0.4, z = rect.z1 - f.d / 2 - 0.4 },
+				{ x = rect.x1 - f.w / 2 - 0.4, z = rect.z1 - f.d / 2 - 0.4 },
+			}
+			for _, corner in corners do
+				if put("Lantern", corner.x, corner.z, 0, nil) then
+					table.insert(
+						lamps,
+						{ x = corner.x, z = corner.z, room = r.id, works = true, y = r.y, kind = "Lantern" }
+					)
+					lantern = true
+					break
+				end
+			end
+		end
+
+		-- the lamp, and maybe something asleep in the dark
 		if r.kind == "Corridor" then
 			local length = rect.x1 - rect.x0
 			local n = math.max(1, math.floor(length / 16))
@@ -621,15 +856,38 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 					z = (rect.z0 + rect.z1) / 2,
 					room = r.id,
 					works = rng:chance(0.35),
+					y = r.top,
+					kind = "Ceiling",
 				})
 			end
 		else
+			local works = rng:chance(roomDef.lamp) or (r == frontRoom and not lantern)
 			table.insert(lamps, {
 				x = (rect.x0 + rect.x1) / 2,
 				z = (rect.z0 + rect.z1) / 2,
 				room = r.id,
-				works = rng:chance(roomDef.lamp),
+				works = works,
+				y = r.top,
+				kind = "Ceiling",
 			})
+			-- dead, but the night comes in through a broken window
+			if not works and moons < B.MoonLights then
+				for _, w in windows do
+					if w.room == r.id and w.glass == "Broken" then
+						local inward = -w.outward * 2.5
+						table.insert(lamps, {
+							x = if w.axis == "X" then w.x else w.x + inward,
+							z = if w.axis == "X" then w.z + inward else w.z,
+							room = r.id,
+							works = true,
+							y = w.y1 - 0.5,
+							kind = "Moon",
+						})
+						moons += 1
+						break
+					end
+				end
+			end
 		end
 		if roomDef and rng:chance(roomDef.sleeper) then
 			for _ = 1, 12 do
@@ -651,10 +909,22 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 					local rot = math.deg(math.atan2(-dx, -dz))
 					local sleeperKind = roomDef.sleeperKind
 						or (if rng:chance(0.25) then "Crawler" else "Stalker")
-					table.insert(sleepers, { x = x, z = z, rot = rot, kind = sleeperKind, room = r.id })
+					table.insert(
+						sleepers,
+						{ x = x, z = z, rot = rot, kind = sleeperKind, room = r.id, y = r.y }
+					)
 					break
 				end
 			end
+		end
+	end
+
+	local ground: { Room } = {}
+	for _, r in rooms do
+		if r.y == 0 then
+			table.insert(ground, r)
+		elseif upperInfo then
+			table.insert(upperInfo.rooms, r)
 		end
 	end
 
@@ -665,7 +935,7 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 		outerX = ox,
 		outerZ = oz,
 		height = H,
-		rooms = rooms,
+		rooms = ground,
 		walls = walls,
 		doors = doors,
 		windows = windows,
@@ -674,7 +944,26 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 		sleepers = sleepers,
 		fuse = fuse,
 		exits = exits,
+		stairs = stairs,
+		upper = upperInfo,
 	}
+end
+
+-- A room by id, on either floor.
+function BuildingGen.room(plan: Plan, id: number): Room?
+	for _, r in plan.rooms do
+		if r.id == id then
+			return r
+		end
+	end
+	if plan.upper then
+		for _, r in plan.upper.rooms do
+			if r.id == id then
+				return r
+			end
+		end
+	end
+	return nil
 end
 
 -- The room containing a building-local point, if any.
@@ -697,7 +986,7 @@ function BuildingGen.tiles(landmarks: { Stations.LandmarkRule }?): number
 	for _, landmark in landmarks do
 		local def = B.Defs[landmark.kind]
 		if def then
-			total += def.size[1] * def.size[2]
+			total += def.size[1] * def.size[2] + (if def.upper then def.upper.tiles else 0)
 		end
 	end
 	return total
