@@ -17,8 +17,7 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 ## Known bugs / regressions
 - Place saved successfully to `C:\Users\tameg\OneDrive\Documents\Roblox.rbxl`; Studio DataStores are unavailable, so player profile saving is disabled for this session.
 - Studio Play verified all eight adjusted lights and visible floor/rear-hall coverage; repository lune run check passes. Save the changed place in Studio.
-- DecorCrates z-fight on station seed 1234 (Infirmary) lives in `Builders/StationDressing` (outdoor), not fixed.
-- `BuildingService.IsLitAt` only covers the ground floor (`plan.height + 2`), so a powered building does not keep Hollows off its upper floor.
+- Upper-floor Hollows have no teleport recovery if they get stuck.
 
 ## Next logical step
 - Look at the workshop sign inside the train in Studio (it has not been checked on screen yet).
@@ -89,3 +88,12 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Done: tiers 1-5 (`Config/Difficulty.RunTier`, `Logic/RunTier`). Host = longest-present hall player; picks with < > in the lobby, capped by the lowest `profile.unlockedTier` in the hall (and re-capped by the actual crew at Boarding). Each tier above 1 adds 0.06 to every stop's D and +20% Brass ("Tier N bonus" line, before charter/daily). A Victory at tier N unlocks N+1. Tier shown in the lobby and the run receipt ("RUN TIER N UNLOCKED"). New remote `SetRunTier`, state `lobby.tier` and `run.tier`. `lune run check` passes (new `tests/RunTier.spec.luau`); not played in Studio.
 2. Known issues: saving only verifiable in a live server. The in-world departure board text does not show the tier.
 3. Next: in a published server, win a tier-1 run and rejoin to confirm tier 2 stays unlocked.
+
+## 2026-10-07: landmarks, upstairs fixes, crate z-fight, stairwell width
+1. Done:
+   - b270c15: landmarks: Halt hamlet, Minehead pit row, Coaling Yard engine shed, and a decor flag on landmark rules.
+   - ccb4303: `BuildingService.IsLitAt` now counts upper floors. Its 2.02 lift on the stacked DecorCrate did not remove the z-fight.
+   - 54789c0: leftover loot pickups spawn on the container's own floor (upstairs too).
+   - This task: `StructureKit` `Props.DecorCrates` draws the second ground crate 0.03 shorter (bottom still at y 0; same rng calls, sizes, positions and count). The z-fights at Infirmary seed 1234 and Halt seed 7 are gone, and no other station or seed changed. `Config/Buildings` `Furniture.Stairs.d` went from 4.6 to 6.2 (School, Clinic and Hotel are the only users), so the doorway at the top of the ramp is 6.0 wide and Hollows can path up. The ramp still clears the stairwell door by 14 studs. Tiles, Hollow cap, stay time and part counts are unchanged on seeds 424242, 7, 1234 and 98765. `lune run check` and `AUDIT_SEEDS=6 lune run audit` pass. Not playtested in Studio.
+2. Known issues: upper-floor Hollows have no teleport recovery if stuck.
+3. Next: in Studio, watch a Hollow climb the School, Clinic and Hotel ramps.

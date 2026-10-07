@@ -964,10 +964,12 @@ end
 Props.DecorCrates = function(ctx)
 	for i = 1, 2 + (if ctx.rng:NextNumber() > 0.5 then 1 else 0) do
 		local s = 1.8 + ctx.rng:NextNumber() * 1.2
+		-- the second ground crate stands a touch short, so two equal crates never share a top
+		local h = if i == 2 then s - 0.03 else s
 		Kit.block(
 			ctx.parent,
-			Vector3.new(s, s, s),
-			f(ctx, (i - 2) * 2.4, s / 2 + (if i == 3 then 2.02 else 0), ctx.rng:NextNumber() - 0.5)
+			Vector3.new(s, h, s),
+			f(ctx, (i - 2) * 2.4, h / 2 + (if i == 3 then 2.02 else 0), ctx.rng:NextNumber() - 0.5)
 				* Kit.angles(0, ctx.rng:NextNumber() * 40, 0),
 			Color3.fromRGB(118, 88, 58),
 			{ material = Enum.Material.WoodPlanks }
