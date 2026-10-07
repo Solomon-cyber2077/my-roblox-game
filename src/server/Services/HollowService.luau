@@ -101,6 +101,9 @@ type Hollow = {
 	wanderUntil: number,
 	lastPosition: Vector3,
 	stuckSince: number,
+	stallAt: Vector3, -- where the stall window began
+	stallSince: number,
+	forcePathUntil: number, -- os.clock() until which it paths even with the target in sight
 	lungeUntil: number,
 	lastLunge: number,
 	path: { Vector3 }?,
@@ -135,6 +138,9 @@ local AGENT = {
 	AgentCanClimb = false,
 	WaypointSpacing = 6,
 }
+-- tried when AGENT finds no way: tight spots a body still fits, such as a ramp foot by a wall
+local NARROW_AGENT = table.clone(AGENT)
+NARROW_AGENT.AgentRadius = H.NarrowRadius
 -- the victim's upper body, from its root: the part of them a hold must find room for
 local BODY_OFFSET = CFrame.new(0, 0.5, 0)
 local BODY_SIZE = Vector3.new(1.8, 2.8, 0.8)
@@ -233,6 +239,12 @@ local function moveToward(hollow: Hollow, goal: Vector3, direct: boolean)
 			local ok = pcall(function()
 				path:ComputeAsync(start, goal)
 			end)
+			if not ok or path.Status ~= Enum.PathStatus.Success then
+				path = PathfindingService:CreatePath(NARROW_AGENT)
+				ok = pcall(function()
+					path:ComputeAsync(start, goal)
+				end)
+			end
 			hollow.pathing = false
 			if ok and path.Status == Enum.PathStatus.Success then
 				local points: { Vector3 } = {}
@@ -840,7 +852,11 @@ local function think(hollow: Hollow)
 			hollow.model:SetAttribute("LungeAt", serverNow())
 		end
 		hollow.humanoid.WalkSpeed = if lunging then chase * H.LungeBoost else chase
-		moveToward(hollow, approach(hollow, best, bestRoot.Position, bestDistance), bestVisible)
+		-- straight only on its own floor: prey seen up a stairwell is reached by the ramp
+		local direct = bestVisible
+			and math.abs(bestRoot.Position.Y - position.Y) < H.SameFloor
+			and clock >= hollow.forcePathUntil
+		moveToward(hollow, approach(hollow, best, bestRoot.Position, bestDistance), direct)
 		if
 			bestDistance <= H.StrikeRange * hollow.def.reach
 			and math.abs(bestRoot.Position.Y - position.Y) < 8
@@ -882,6 +898,21 @@ local function think(hollow: Hollow)
 		hollow.stuckSince = clock
 	end
 	hollow.lastPosition = position
+
+	-- milling in one spot while hunting (pressed against a ramp's side): drop the path and
+	-- follow a fresh one for a while, even with the target in sight
+	if hollow.state == "Hunt" and (position - hollow.stallAt).Magnitude < H.StallRadius then
+		if clock - hollow.stallSince > H.StallSeconds then
+			hollow.path = nil
+			hollow.pathAt = 0
+			hollow.forcePathUntil = clock + H.StallRepath
+			hollow.stallAt = position
+			hollow.stallSince = clock
+		end
+	else
+		hollow.stallAt = position
+		hollow.stallSince = clock
+	end
 end
 
 local function pickKind(): string
@@ -941,6 +972,9 @@ local function add(at: CFrame, kind: string, state: string, emerge: string?): Ho
 		wanderUntil = 0,
 		lastPosition = at.Position,
 		stuckSince = os.clock(),
+		stallAt = at.Position,
+		stallSince = os.clock(),
+		forcePathUntil = 0,
 		lungeUntil = 0,
 		lastLunge = 0,
 		path = nil,
