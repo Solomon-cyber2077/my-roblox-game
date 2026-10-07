@@ -228,6 +228,29 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	for _, blocker in display.doorBlockers do
 		blocker.CanCollide = true
 	end
+	-- invisible barriers fill the open gaps between the display train's cars, from the ballast up
+	-- to the roofline, so nobody walks or drops between them; their tops are flush with the roofs
+	-- to walk across. Gangway gaps keep the covered gangway open and fill only its two sides.
+	local GAP_BOTTOM, GAP_TOP = -6, 9.8
+	local function gapBarrier(x0: number, x1: number, z0: number, z1: number)
+		local barrier = block(
+			Vector3.new(x1 - x0, GAP_TOP - GAP_BOTTOM, z1 - z0),
+			at((x0 + x1) / 2, (GAP_TOP + GAP_BOTTOM) / 2, TRACK_Z + (z0 + z1) / 2),
+			Color3.new(),
+			nil,
+			{ transparency = 1, shadow = false }
+		)
+		barrier.Name = "GapBarrier"
+		barrier.CanQuery = false
+		barrier.CanTouch = false
+	end
+	for _, gap in { { -66, -63 }, { -23, -20 } } do
+		gapBarrier(gap[1], gap[2], 2.5, 6.5)
+		gapBarrier(gap[1], gap[2], -6.5, -2.5)
+	end
+	for _, gap in { { 20, 23 }, { 49, 52 } } do
+		gapBarrier(gap[1], gap[2], -6.5, 6.5)
+	end
 
 	-- Walls ----------------------------------------------------------------------------------------
 	-- back wall with tall lit windows, the ticket office and the departure board

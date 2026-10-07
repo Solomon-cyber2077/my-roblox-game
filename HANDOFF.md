@@ -43,3 +43,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Done (`Builders/TrainBuilder`, `Config/Cosmetics`): wood-plank coach siding, twin round-topped sash windows with mullions and sash bars, clerestory roofs with amber lights, queen-post truss rods; 4-4-0 locomotive (two red-spoked drivers that spin, brass splashers), Russia-iron boiler with brass domes, wooden cab with roof cap and ventilator, red slatted V cowcatcher, flared tender boards. Default livery is now "Heritage Mahogany" (mahogany, brass, green doors). Check passes (Train 1626 parts, audit clean); seen in Studio Play lobby, console clean.
 2. Known issues: car size kept (seats, spawns, volumes, breach anchors depend on it). Other liveries still repaint the wood. Headless preview needs `npm install` in tools/preview.
 3. Next: ride a run and look at the loco up close (spokes, pilot, stack smoke) in daylight.
+
+## 2026-10-06: Display train gap barriers
+1. Done: `Builders/LobbyBuilder` adds invisible `GapBarrier` parts in the four gaps between the display train's cars (ballast to roofline, tops flush with the roofs; gangway gaps fill only the open sides so the gangway stays walkable). `lune run check` passes; Studio play console clean.
+2. Known issues: collision not walk-tested by hand. The live run train's gaps are untouched.
+3. Next: the older request: per-car outward-swinging doors, solo ready, and car party rooms (up to 4) that auto-ready.
