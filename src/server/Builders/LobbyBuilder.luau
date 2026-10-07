@@ -1362,8 +1362,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	music.Volume = cue.volume
 	music.Looped = true
 	music.RollOffMode = Enum.RollOffMode.InverseTapered
-	music.RollOffMinDistance = 24 -- full volume round the benches
-	music.RollOffMaxDistance = 140 -- a murmur from the far end of the hall
+	-- the same volume everywhere in the hall: the farthest corner is ~161 studs from the piano
+	music.RollOffMinDistance = 170
+	music.RollOffMaxDistance = 180
 	music.Playing = true
 	music.Parent = voice
 
