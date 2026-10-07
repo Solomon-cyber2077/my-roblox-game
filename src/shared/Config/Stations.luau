@@ -42,6 +42,7 @@ export type StructureRule = {
 export type LandmarkRule = {
 	kind: string,
 	zones: { string },
+	decor: boolean?, -- set dressing (default false): searched, but not counted in the stop's size (dwell, Hollow cap)
 }
 
 export type Archetype = {
@@ -91,6 +92,9 @@ local Archetypes: { [string]: Archetype } = {
 		},
 		landmarks = {
 			{ kind = "BookingHall", zones = { "Near", "Mid" } },
+			-- the hamlet: the stationmaster's and the porter's cottages up the lane
+			{ kind = "House", zones = { "Mid", "Far" }, decor = true },
+			{ kind = "House", zones = { "Far" }, decor = true },
 		},
 		lampSpacing = 36,
 		ground = "Cobblestone",
@@ -101,7 +105,7 @@ local Archetypes: { [string]: Archetype } = {
 			light = { 255, 196, 128 },
 		},
 		edge = { fence = "FencePicket", trees = { "Oak", "Oak", "Poplar" }, treeChance = 0.8 },
-		dressing = { "Haystack", "Cart", "Pump", "Wheelbarrow", "Puddle", "Barrels", "Scarecrow" },
+		dressing = { "Haystack", "Cart", "Pump", "Wheelbarrow", "Puddle", "Barrels", "Scarecrow", "Well" },
 		yardTrees = 3,
 		layout = {
 			style = "Street",
@@ -134,17 +138,18 @@ local Archetypes: { [string]: Archetype } = {
 		},
 		landmarks = {
 			{ kind = "BoilerHouse", zones = { "Mid", "Far" } },
+			{ kind = "EngineShed", zones = { "Far", "Mid" }, decor = true },
 		},
 		lampSpacing = 42,
 		ground = "Slate",
 		palette = {
-			ground = { 92, 86, 80 },
+			ground = { 74, 70, 68 }, -- ash over slate
 			accent = { 120, 84, 52 },
 			trim = { 34, 33, 33 },
 			light = { 255, 170, 96 },
 		},
 		edge = { fence = "FenceRail", trees = { "DeadTree", "Poplar", "DeadTree" }, treeChance = 0.6 },
-		dressing = { "Barrels", "Wheelbarrow", "Puddle", "Bonfire", "Cart", "MineCart" },
+		dressing = { "Barrels", "Wheelbarrow", "Puddle", "Bonfire", "Cart", "MineCart", "Bonfire" },
 		yardTrees = 2,
 		layout = {
 			style = "Sidings",
@@ -305,17 +310,20 @@ local Archetypes: { [string]: Archetype } = {
 		},
 		landmarks = {
 			{ kind = "LampRoom", zones = { "Near", "Mid" } },
+			-- the pit row: miners' cottages
+			{ kind = "House", zones = { "Near", "Far" }, decor = true },
+			{ kind = "House", zones = { "Far" }, decor = true },
 		},
 		lampSpacing = 36,
 		ground = "Ground",
 		palette = {
-			ground = { 112, 96, 78 },
+			ground = { 98, 82, 64 }, -- wet pit mud
 			accent = { 140, 98, 58 },
 			trim = { 46, 40, 34 },
 			light = { 255, 176, 100 },
 		},
 		edge = { fence = "FenceRail", trees = { "Pine", "DeadTree", "Pine" }, treeChance = 0.75 },
-		dressing = { "MineCart", "Barrels", "Bonfire", "Puddle", "Wheelbarrow" },
+		dressing = { "MineCart", "Barrels", "Bonfire", "Puddle", "Wheelbarrow", "Puddle", "Puddle" },
 		yardTrees = 3,
 		layout = {
 			style = "Yard",
