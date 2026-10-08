@@ -24,6 +24,21 @@ export type RouteOption = {
 	tier: number,
 	distanceKm: number,
 	hint: string,
+	mystery: boolean?, -- the sealed stand-in (Logic/Mystery.redact): archetype "Mystery", tier 0, no hint
+}
+
+-- run.destination, from lock-in to the end of the stop. A sealed mystery carries only the distance
+-- and coal (Logic/Mystery.sealed); the full shape replaces it at Arrival with sealed = false.
+export type Destination = {
+	archetype: string,
+	name: string,
+	tier: number,
+	distanceKm: number,
+	difficulty: number,
+	coalCost: number,
+	terminus: boolean,
+	mystery: boolean?,
+	sealed: boolean?,
 }
 
 export type HazardParams = {

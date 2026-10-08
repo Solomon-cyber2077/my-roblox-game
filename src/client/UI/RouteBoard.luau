@@ -4,7 +4,9 @@
 	Near it, the junction's tickets leave the screen and hang on the board: RouteVote hands
 	over the same Ticket handles, so a ticket is only ever in one place. Far from it, in
 	the train camera, in another car or with more lines than the board has slots, they stay
-	on screen, and voting never needs the walk.
+	on screen, and voting never needs the walk. A two-way ballot hangs in TicketSlot1-2 under
+	Lantern1-2; a three-way one in the narrower WideSlot1-3, its middle line under Lantern3.
+	A sealed mystery's lantern flickers in a neutral lamp colour, never a danger colour.
 
 	The room answers the vote, on this client only, from the replicated ballot: each
 	ticket's lantern burns in its line's danger colour as bright as its share of the votes
@@ -29,7 +31,11 @@ local Ui = require(script.Parent.Ui)
 
 local RouteBoard = {}
 
-local SLOTS = 2 -- ticket slots on the board (TrainInterior)
+local SLOTS = 2 -- two-way ticket slots on the board (TrainInterior)
+local WIDE = 3 -- three-way slots
+local LANTERNS = 3
+-- which option each lantern lights, by ballot size: Lantern3 hangs in the middle
+local LANTERN_OPTION: { [number]: { number? } } = { [1] = { 1 }, [2] = { 1, 2 }, [3] = { 1, 3, 2 } }
 local ENGAGE = 10 -- studs from the board: the tickets move onto it
 local RELEASE = 12 -- and back to the screen (a gap, so they never flicker)
 local ROOM_DEPTH = 16 -- the saloon car runs this far from the board along -X
@@ -46,6 +52,8 @@ local FLARE_SECONDS = 1.2
 local GAUGE_SWEEP = 120 -- needle degrees either side of straight up
 local DARK_GLASS = Color3.fromRGB(46, 36, 30)
 local WARM = Color3.fromRGB(255, 206, 150)
+local LAMP = Color3.fromRGB(226, 220, 196) -- a sealed mystery's lantern
+local FLICKER = 9 -- noise speed of its flicker
 local DANGER = { -- by danger tier: amber, burnt orange, signal red
 	Color3.fromRGB(240, 186, 90),
 	Color3.fromRGB(236, 118, 52),
@@ -73,6 +81,7 @@ type Lantern = { glass: BasePart, light: PointLight, brightness: number }
 type Parts = {
 	board: BasePart,
 	slots: { BasePart },
+	wide: { BasePart },
 	lanterns: { Lantern },
 	clock: BasePart,
 	gauge: BasePart,
@@ -182,24 +191,39 @@ local function find(): Parts?
 		return nil
 	end
 	local slots: { BasePart } = {}
+	local wide: { BasePart } = {}
 	local lanterns: { Lantern } = {}
 	for i = 1, SLOTS do
-		local slot, glass = get(`TicketSlot{i}`), get(`Lantern{i}`)
-		local light = glass and glass:FindFirstChildOfClass("PointLight")
-		if slot == nil or glass == nil or light == nil then
+		local slot = get(`TicketSlot{i}`)
+		if slot == nil then
 			return nil
 		end
 		slots[i] = slot
+	end
+	for i = 1, WIDE do
+		local slot = get(`WideSlot{i}`)
+		if slot == nil then
+			return nil
+		end
+		wide[i] = slot
+	end
+	for i = 1, LANTERNS do
+		local glass = get(`Lantern{i}`)
+		local light = glass and glass:FindFirstChildOfClass("PointLight")
+		if glass == nil or light == nil then
+			return nil
+		end
 		lanterns[i] = { glass = glass, light = light, brightness = IDLE.brightness }
 	end
-	return { board = board, slots = slots, lanterns = lanterns, clock = clock, gauge = gauge }
+	return { board = board, slots = slots, wide = wide, lanterns = lanterns, clock = clock, gauge = gauge }
 end
 
 function RouteBoard.new(onEngagedChanged: () -> ()): Board
 	local gui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local parts: Parts? = nil
-	local hosts: { SurfaceGui } = {}
-	local prompts: { ProximityPrompt } = {}
+	-- by ballot size: two-way slots for 1-2 lines, the wide slots for 3
+	local hosts: { [number]: { SurfaceGui } } = { [2] = {}, [3] = {} }
+	local prompts: { [number]: { ProximityPrompt } } = { [2] = {}, [3] = {} }
 	local clockHands: { hour: Frame, minute: Frame, depart: Frame }? = nil
 	local needle: Frame? = nil
 	local needleAngle = -GAUGE_SWEEP
@@ -214,41 +238,46 @@ function RouteBoard.new(onEngagedChanged: () -> ()): Board
 	local syncPrompts: () -> ()
 
 	local function dress(found: Parts)
-		for _, s in hosts do
-			s:Destroy()
+		for _, size in { SLOTS, WIDE } do
+			for _, host in hosts[size] do
+				host:Destroy()
+			end
+			for _, p in prompts[size] do
+				p:Destroy()
+			end
+			table.clear(hosts[size])
+			table.clear(prompts[size])
 		end
-		for _, p in prompts do
-			p:Destroy()
-		end
-		table.clear(hosts)
-		table.clear(prompts)
-		for i, slot in found.slots do
-			-- the ticket fills the slot exactly: its 224 x 310 px over the slot's width
-			hosts[i] = surface(`RouteBoardTicket{i}`, slot, 224 / slot.Size.X, gui)
-			local prompt = Instance.new("ProximityPrompt")
-			prompt.Name = "RouteBoardVote"
-			prompt.ActionText = "Take this line"
-			prompt.ObjectText = ""
-			prompt.HoldDuration = 0
-			prompt.MaxActivationDistance = PROMPT_RANGE
-			prompt.RequiresLineOfSight = false
-			prompt.Exclusivity = Enum.ProximityPromptExclusivity.OnePerButton
-			prompt.Enabled = false
-			prompt.Triggered:Connect(function()
-				if ballot then
-					ballot.vote(i)
-				end
-			end)
-			prompt.PromptShown:Connect(function()
-				promptFocus = i
-			end)
-			prompt.PromptHidden:Connect(function()
-				if promptFocus == i then
-					promptFocus = nil
-				end
-			end)
-			prompt.Parent = slot
-			prompts[i] = prompt
+		for _, entry in { { size = 2, slots = found.slots }, { size = 3, slots = found.wide } } do
+			for i, slot in entry.slots do
+				-- the ticket fills the slot exactly: its 224 x 310 px over the slot's width
+				hosts[entry.size][i] =
+					surface(`RouteBoardTicket{entry.size}_{i}`, slot, 224 / slot.Size.X, gui)
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.Name = "RouteBoardVote"
+				prompt.ActionText = "Take this line"
+				prompt.ObjectText = ""
+				prompt.HoldDuration = 0
+				prompt.MaxActivationDistance = PROMPT_RANGE
+				prompt.RequiresLineOfSight = false
+				prompt.Exclusivity = Enum.ProximityPromptExclusivity.OnePerButton
+				prompt.Enabled = false
+				prompt.Triggered:Connect(function()
+					if ballot then
+						ballot.vote(i)
+					end
+				end)
+				prompt.PromptShown:Connect(function()
+					promptFocus = i
+				end)
+				prompt.PromptHidden:Connect(function()
+					if promptFocus == i then
+						promptFocus = nil
+					end
+				end)
+				prompt.Parent = slot
+				prompts[entry.size][i] = prompt
+			end
 		end
 		local clockGui = surface("RouteBoardClock", found.clock, 128 / found.clock.Size.X, gui)
 		local clockFace = dial(clockGui, 12, 360, "L.T.O.")
@@ -319,7 +348,7 @@ function RouteBoard.new(onEngagedChanged: () -> ()): Board
 
 	local function wanted(): boolean
 		local b = ballot
-		if not (b and b.active and #b.tickets > 0 and #b.options <= SLOTS and present()) then
+		if not (b and b.active and #b.tickets > 0 and #b.options <= WIDE and present()) then
 			return false
 		end
 		if not Session.isAlive() then
@@ -351,7 +380,9 @@ function RouteBoard.new(onEngagedChanged: () -> ()): Board
 		local share = if b and up then shares(b) else {}
 		local target = focus()
 		local flare = math.max(0, 1 - (os.clock() - flareAt) / FLARE_SECONDS) * FLARE
-		for i, lantern in parts.lanterns do
+		local map = LANTERN_OPTION[if b and up then #b.options else 0] or {}
+		for li, lantern in parts.lanterns do
+			local i = map[li] or 0
 			local option = if b and up then b.options[i] else nil
 			local out = b ~= nil and b.chosen ~= nil and b.chosen ~= i and option ~= nil
 			local goal, range, color = IDLE.brightness, IDLE.range, WARM
@@ -360,7 +391,10 @@ function RouteBoard.new(onEngagedChanged: () -> ()): Board
 				local tier = math.clamp(math.floor(option.tier or 1), 1, #DANGER)
 				goal = LIT.base + LIT.share * s
 				range = LIT.range + LIT.rangeShare * s
-				color = WARM:Lerp(DANGER[tier], 0.35 + 0.65 * s)
+				color = if option.mystery then LAMP else WARM:Lerp(DANGER[tier], 0.35 + 0.65 * s)
+				if option.mystery then
+					goal *= 0.6 + 0.4 * math.noise(os.clock() * FLICKER, li)
+				end
 				if target == i and b and b.chosen == nil then
 					goal += NUDGE
 				end
@@ -417,16 +451,20 @@ function RouteBoard.new(onEngagedChanged: () -> ()): Board
 	-- A Vote prompt on each ticket while it hangs on the board and the ballot is open.
 	function syncPrompts()
 		local b = ballot
-		for i, prompt in prompts do
-			local option = if b then b.options[i] else nil
-			prompt.Enabled = engaged
-				and b ~= nil
-				and b.active
-				and b.chosen == nil
-				and option ~= nil
-				and #b.options > 1
-			prompt.ActionText = if b and b.mine == i then "Your vote" else "Take this line"
-			prompt.ObjectText = if option then `No. {i}` else ""
+		local size = if b and #b.options >= WIDE then WIDE else SLOTS
+		for _, set in { SLOTS, WIDE } do
+			for i, prompt in prompts[set] do
+				local option = if b then b.options[i] else nil
+				prompt.Enabled = engaged
+					and set == size
+					and b ~= nil
+					and b.active
+					and b.chosen == nil
+					and option ~= nil
+					and #b.options > 1
+				prompt.ActionText = if b and b.mine == i then "Your vote" else "Take this line"
+				prompt.ObjectText = if option then `No. {i}` else ""
+			end
 		end
 	end
 
@@ -481,7 +519,8 @@ function RouteBoard.new(onEngagedChanged: () -> ()): Board
 	end
 
 	function board.host(index: number): SurfaceGui?
-		return hosts[index]
+		local b = ballot
+		return hosts[if b and #b.options >= WIDE then WIDE else SLOTS][index]
 	end
 
 	return board

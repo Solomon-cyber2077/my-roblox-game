@@ -6,13 +6,15 @@
 	  seal      danger tier -> the number in the wax seal and 1-3 chalk tally strokes
 	  coal      a leg's coal cost -> lumps grouped in fives (capped) and the "x12" label
 	  track     a distance -> how far along the inked line it runs, shortest to longest offered
-	  view      a route option (any field may be missing) -> everything one ticket prints
+	  view      a route option (any field may be missing) -> everything one ticket prints; a sealed
+	            mystery (option.mystery) prints "????", no type, no seal: only its distance and coal
 	  pile      the votes -> whose stamps sit on one ticket, oldest first, at most MaxStamps
 	  dial      the vote timer -> the hand's sweep and, in the last ten seconds, the numeral
 	  tieNote   the votes -> what Logic/Vote will do with a tie, said plainly (never invented)
 ]]
 
 local Shared = script.Parent.Parent
+local MysteryConfig = require(Shared.Config.Mystery)
 local Stations = require(Shared.Config.Stations)
 local Types = require(Shared.Types)
 local Vote = require(script.Parent.Vote)
@@ -42,6 +44,7 @@ export type View = {
 	coal: Coal?,
 	after: number?,
 	short: boolean,
+	mystery: boolean,
 }
 
 local function trim(n: number): string
@@ -135,24 +138,30 @@ end
 -- Everything one ticket prints. Any input may be nil (a half-replicated route, a removed
 -- archetype); the ticket then prints what it has and leaves the rest blank.
 function TicketModel.view(option: Types.RouteOption?, serial: number?, cost: number?, coalHeld: number?): View
-	local arch = if option then Stations.List[option.archetype] else nil
+	local mystery = option ~= nil and option.mystery == true
+	local arch = if option and not mystery then Stations.List[option.archetype] else nil
 	local terminus = arch ~= nil and arch.terminus == true
-	local tier = if option then option.tier else 0
+	local tier = if option and not mystery then option.tier else 0
 	return {
 		serial = string.format("No. %02d", serial or 0),
-		name = if arch then string.upper(arch.name) else "UNKNOWN LINE",
-		kind = if option then TicketModel.words(option.archetype) else "",
-		description = if arch then arch.hint elseif option then option.hint or "" else "",
-		hint = TicketModel.hint(arch),
+		name = if mystery then MysteryConfig.Name elseif arch then string.upper(arch.name) else "UNKNOWN LINE",
+		kind = if mystery then "SEALED LINE" elseif option then TicketModel.words(option.archetype) else "",
+		description = if mystery
+			then "The clerk will not say. Destination unknown until the doors open."
+			elseif arch then arch.hint
+			elseif option then option.hint or ""
+			else "",
+		hint = if mystery then "No questions answered" else TicketModel.hint(arch),
 		tier = tier,
 		terminus = terminus,
-		seal = if option then TicketModel.seal(tier, terminus) else nil,
+		seal = if option and not mystery then TicketModel.seal(tier, terminus) else nil,
 		distanceKm = if option then option.distanceKm else 0,
 		coal = TicketModel.coal(cost),
 		after = if cost ~= nil and coalHeld ~= nil
 			then math.floor((coalHeld - cost) * 10 + 0.5) / 10
 			else nil,
 		short = cost ~= nil and coalHeld ~= nil and cost > coalHeld,
+		mystery = mystery,
 	}
 end
 

@@ -739,10 +739,16 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		piece(Vector3.new(0.14, 4.0, 3.3), at(XB - 0.08, 5.5, ZB), C.woodDark, M.Wood, "Board")
 		piece(Vector3.new(0.3, 0.16, 3.46), at(XB - 0.16, 7.58, ZB), C.polish, M.Wood, "BoardCap")
 		piece(Vector3.new(0.1, 0.1, 3.1), at(XB - 0.2, 6.45, ZB), C.brass, M.Metal, "BoardRail")
+		-- two slots for a two-way ballot and three narrower ones for a three-way (UI/RouteBoard picks)
 		for i, dz in { -0.8, 0.8 } do
+			face(`TicketSlot{i}`, Vector3.new(1.3, 1.8, 0.02), XB - 0.18, 5.45, ZB + dz)
+		end
+		for i, dz in { -1.08, 0, 1.08 } do
+			face(`WideSlot{i}`, Vector3.new(1.0, 1.384, 0.02), XB - 0.18, 5.45, ZB + dz)
+		end
+		-- a lantern over each two-way slot, and Lantern3 between them for a three-way's middle line
+		for i, dz in { -0.8, 0.8, 0 } do
 			local z = ZB + dz
-			face(`TicketSlot{i}`, Vector3.new(1.3, 1.8, 0.02), XB - 0.18, 5.45, z)
-			-- its lantern, on an arm off the board over the rail
 			piece(Vector3.new(0.3, 0.05, 0.05), at(XB - 0.3, 7.22, z), C.iron, M.Metal, "LanternArm")
 			piece(Vector3.new(0.36, 0.08, 0.36), at(XB - 0.45, 7.14, z), C.iron, M.Metal, "LanternCap")
 			piece(Vector3.new(0.32, 0.06, 0.32), at(XB - 0.45, 6.71, z), C.iron, M.Metal, "LanternBase")

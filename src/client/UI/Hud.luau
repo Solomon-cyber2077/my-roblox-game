@@ -882,7 +882,7 @@ function Hud.mount(gui: ScreenGui)
 			title = if destination then `NEXT: {string.upper(destination.name)}` else "EN ROUTE"
 			status = if destination then `{destination.distanceKm} KM` else ""
 			if destination and not destination.terminus then
-				danger = `DANGER {tierStamps(destination.tier)}`
+				danger = if destination.sealed then "DANGER ???" else `DANGER {tierStamps(destination.tier)}`
 			end
 		elseif phase == "Arrival" then
 			title, status = if station then string.upper(station.name) else "", "ARRIVING"
