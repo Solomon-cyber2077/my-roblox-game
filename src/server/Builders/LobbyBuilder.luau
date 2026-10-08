@@ -4,7 +4,7 @@
 
 	  * an arched roof on iron trusses: slate over the eaves, dirty glazing over
 	    the middle on purlins and glazing bars, glazed gables at both ends
-	  * the platform (a two-tone tiled floor with a compass rosette) and, across
+	  * the platform (stone flags, a quarry-tile walk and a rosette) and, across
 	    the edge, the display train on its own road between the platform and a
 	    tall-windowed far wall; the road runs out through dark portals
 	  * the departure board (ready status), the Outfitter kiosk (shop), the
@@ -21,6 +21,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Audio = require(ReplicatedStorage.Shared.Config.Audio)
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local PosterArt = require(script.Parent.PosterArt)
 local TrainBuilder = require(script.Parent.TrainBuilder)
 
 export type Built = {
@@ -38,11 +39,15 @@ export type Cabin = TrainBuilder.Cabin
 local LobbyBuilder = {}
 
 local C = {
-	marble = Color3.fromRGB(214, 204, 186),
-	marbleDark = Color3.fromRGB(150, 128, 104),
-	brick = Color3.fromRGB(122, 74, 58),
-	brickDark = Color3.fromRGB(92, 56, 46),
-	stone = Color3.fromRGB(176, 166, 148),
+	marble = Color3.fromRGB(176, 182, 184), -- grey-veined counter tops
+	paving = Color3.fromRGB(96, 102, 108), -- the platform's blue-grey stone flags
+	slateDark = Color3.fromRGB(38, 40, 44), -- borders, joints and the rosette's rings
+	quarry = Color3.fromRGB(84, 38, 34), -- oxblood quarry tiles along the walk
+	glazed = Color3.fromRGB(34, 76, 62), -- the green glazed-tile dado
+	bullnose = Color3.fromRGB(92, 32, 30), -- the dado's capping tiles
+	brick = Color3.fromRGB(104, 60, 48), -- sooty London stock
+	brickDark = Color3.fromRGB(80, 46, 38),
+	stone = Color3.fromRGB(156, 154, 148),
 	iron = Color3.fromRGB(38, 44, 42),
 	ironLight = Color3.fromRGB(58, 66, 62),
 	slate = Color3.fromRGB(56, 58, 64),
@@ -50,11 +55,12 @@ local C = {
 	night = Color3.fromRGB(46, 58, 80),
 	warm = Color3.fromRGB(255, 206, 140),
 	dusk = Color3.fromRGB(214, 168, 118), -- lit glass: warm, but too dim to glare
-	fill = Color3.fromRGB(255, 226, 190),
+	fill = Color3.fromRGB(255, 236, 218), -- lamplight, but not orange: surfaces keep their colour
 	board = Color3.fromRGB(22, 26, 34),
 	brass = Color3.fromRGB(201, 160, 82),
 	canvas = Color3.fromRGB(132, 46, 52),
-	cream = Color3.fromRGB(236, 226, 200),
+	porcelain = Color3.fromRGB(220, 228, 232), -- cups, plates, piano keys, the clock face: a cold white
+	gilt = Color3.fromRGB(214, 172, 92), -- gold-leaf lettering
 	wood = Color3.fromRGB(110, 80, 54),
 	slats = Color3.fromRGB(128, 92, 58),
 	ballast = Color3.fromRGB(70, 66, 62),
@@ -138,27 +144,68 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 	end
 
-	-- Platform floor: two-tone tiles and a compass rosette ---------------------------------
-	local tileX, tileZ = (2 * HALF_X - 2) / 20, (BACK_Z - EDGE_Z) / 8
-	for i = 0, 19 do
-		for j = 0, 7 do
-			local x = -HALF_X + 1 + (i + 0.5) * tileX
-			local z = EDGE_Z + (j + 0.5) * tileZ
-			local dark = (i + j) % 2 == 0
+	-- Platform floor: stone flags laid in bays between granite joints under the columns, a slate
+	-- border along the walls and an oxblood quarry-tile walk down the hall with the rosette in it
+	local WALK0, WALK1 = 20, 28
+	local floorX0, floorX1 = -HALF_X + 1, HALF_X - 1
+	local BORDER = 3
+	block(
+		Vector3.new(floorX1 - floorX0, 1, BORDER),
+		at(0, -0.5, BACK_Z - BORDER / 2),
+		C.slateDark,
+		Enum.Material.Slate
+	)
+	for _, side in { -1, 1 } do
+		block(
+			Vector3.new(BORDER, 1, BACK_Z - BORDER - EDGE_Z),
+			at(side * (HALF_X - 1 - BORDER / 2), -0.5, (EDGE_Z + BACK_Z - BORDER) / 2),
+			C.slateDark,
+			Enum.Material.Slate
+		)
+	end
+	local fx0, fx1 = floorX0 + BORDER, floorX1 - BORDER
+	block(
+		Vector3.new(fx1 - fx0, 1, WALK1 - WALK0),
+		at(0, -0.5, (WALK0 + WALK1) / 2),
+		C.quarry,
+		Enum.Material.CeramicTiles
+	)
+	for _, z in { WALK0 + 0.25, WALK1 - 0.25 } do
+		decor(Vector3.new(fx1 - fx0, 0.04, 0.3), at(0, 0.02, z), C.brass, Enum.Material.Metal)
+	end
+	local JOINT = 0.8
+	local joints: { number } = {}
+	for x = -99, 99, BAY do
+		table.insert(joints, x)
+	end
+	for _, zone in { { EDGE_Z, WALK0 }, { WALK1, BACK_Z - BORDER } } do
+		local za, zb = zone[1], zone[2]
+		local from = fx0
+		for k = 1, #joints + 1 do
+			local to = if k <= #joints then joints[k] - JOINT / 2 else fx1
 			block(
-				Vector3.new(tileX, 1, tileZ),
-				at(x, -0.5, z),
-				Kit.jitter(if dark then C.marbleDark else C.marble, 0.03, ((i * 7 + j * 13) % 10) / 10),
-				Enum.Material.Marble
+				Vector3.new(to - from, 1, zb - za),
+				at((from + to) / 2, -0.5, (za + zb) / 2),
+				Kit.jitter(C.paving, 0.05, ((k * 7) % 10) / 10),
+				Enum.Material.Slate
 			)
+			if k <= #joints then
+				block(
+					Vector3.new(JOINT, 1, zb - za),
+					at(joints[k], -0.5, (za + zb) / 2),
+					C.slateDark,
+					Enum.Material.Slate
+				)
+				from = joints[k] + JOINT / 2
+			end
 		end
 	end
 	local rosette = Vector3.new(0, 0, 24)
 	local rings = {
-		{ diameter = 30, color = C.marbleDark },
-		{ diameter = 26, color = C.cream },
-		{ diameter = 20, color = C.brass },
-		{ diameter = 18, color = C.marbleDark },
+		{ diameter = 30, color = C.slateDark, material = Enum.Material.Slate },
+		{ diameter = 26, color = C.glazed, material = Enum.Material.Slate },
+		{ diameter = 20, color = C.brass, material = Enum.Material.Metal },
+		{ diameter = 18, color = C.slateDark, material = Enum.Material.Slate },
 	}
 	for ring, spec in rings do
 		local disc = Kit.cylinder(
@@ -168,7 +215,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			at(rosette.X, 0.02 * ring, rosette.Z) * Kit.angles(0, 0, 90),
 			spec.color,
 			{
-				material = if spec.color == C.brass then Enum.Material.Metal else Enum.Material.Marble,
+				material = spec.material,
 				collide = false,
 				shadow = false,
 			}
@@ -180,7 +227,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		decor(
 			Vector3.new(length, 0.2 + 0.02 * k, 1.1),
 			at(rosette.X, 0.1 + 0.01 * k, rosette.Z) * Kit.angles(0, k * 45, 0) * Kit.angles(0, 0, 0),
-			if k % 2 == 0 then C.brass else C.cream,
+			if k % 2 == 0 then C.brass else C.glazed,
 			Enum.Material.Metal
 		)
 	end
@@ -263,6 +310,36 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		Enum.Material.Brick
 	)
 	block(Vector3.new(2 * HALF_X, 1.2, 0.6), at(0, 0.6, BACK_Z - 0.3), C.stone, Enum.Material.Concrete)
+	-- a dado of green glazed tiles above the plinth, capped by a row of oxblood bullnose, on the back
+	-- wall and along both end walls of the platform (a hair off the brick, so nothing set against
+	-- the wall shares its plane)
+	local DADO_LOW, DADO_TOP = 1.2, 5.2
+	decor(
+		Vector3.new(2 * HALF_X, DADO_TOP - DADO_LOW, 0.15),
+		at(0, (DADO_LOW + DADO_TOP) / 2, BACK_Z - 0.095),
+		C.glazed,
+		Enum.Material.CeramicTiles
+	)
+	decor(
+		Vector3.new(2 * HALF_X, 0.4, 0.3),
+		at(0, DADO_TOP + 0.2, BACK_Z - 0.17),
+		C.bullnose,
+		Enum.Material.Glass
+	)
+	for _, side in { -1, 1 } do
+		decor(
+			Vector3.new(0.15, DADO_TOP - DADO_LOW, BACK_Z - 0.17 - EDGE_Z),
+			at(side * (HALF_X - 0.095), (DADO_LOW + DADO_TOP) / 2, (EDGE_Z + BACK_Z - 0.17) / 2),
+			C.glazed,
+			Enum.Material.CeramicTiles
+		)
+		decor(
+			Vector3.new(0.3, 0.4, BACK_Z - 0.32 - EDGE_Z),
+			at(side * (HALF_X - 0.17), DADO_TOP + 0.2, (EDGE_Z + BACK_Z - 0.32) / 2),
+			C.bullnose,
+			Enum.Material.Glass
+		)
+	end
 	for _, x in { -90, -66, 66, 90 } do
 		decor(Vector3.new(11, 15, 0.3), at(x, 18, BACK_Z - 0.15), C.iron, Enum.Material.Metal)
 		decor(Vector3.new(10, 14, 0.3), at(x, 18, BACK_Z - 0.4), C.dusk, Enum.Material.Neon).Transparency =
@@ -620,8 +697,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	)
 	local plate =
 		block(Vector3.new(15, 2.4, 0.4), at(0, 27.2, BACK_Z - 1.0), C.board, nil, { collide = false })
-	label(plate, Enum.NormalId.Front, "DEPARTURES", Color3.fromRGB(240, 232, 210))
-	-- clock: brass rim, ivory face, iron hands at ten to midnight
+	label(plate, Enum.NormalId.Front, "DEPARTURES", C.porcelain)
+	-- clock: brass rim, white enamel face, iron hands at ten to midnight
 	local clockAt = at(0, 31.6, BACK_Z - 0.6) * Kit.angles(0, 90, 0)
 	Kit.cylinder(model, 0.6, 5.4, clockAt, C.brass, { material = Enum.Material.Metal, collide = false })
 	Kit.cylinder(
@@ -629,7 +706,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		0.7,
 		4.8,
 		clockAt * CFrame.new(-0.04, 0, 0),
-		C.cream,
+		C.porcelain,
 		{ material = Enum.Material.SmoothPlastic, collide = false }
 	)
 	-- the face points into the hall along the frame's +X
@@ -662,7 +739,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			0.55
 		decor(Vector3.new(14, 0.5, 1.2), at(x, 4.1, BACK_Z - 1.8), C.brass, Enum.Material.Metal)
 		local sign = decor(Vector3.new(12, 1.8, 0.3), at(x, 10.2, BACK_Z - 1.55), C.board)
-		label(sign, Enum.NormalId.Front, "TICKETS", Color3.fromRGB(240, 210, 150))
+		label(sign, Enum.NormalId.Front, "TICKETS", C.gilt)
 	end
 
 	-- Outfitter kiosk -------------------------------------------------------------------------------------
@@ -677,12 +754,12 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		decor(
 			Vector3.new(2, 0.3 + (i % 2) * 0.04, 8),
 			at(kx - 6 + i * 2, 11.2 + (i % 2) * 0.02, kz + 2) * Kit.angles(-12, 0, 0),
-			if i % 2 == 0 then C.canvas else Color3.fromRGB(226, 214, 186),
+			if i % 2 == 0 then C.canvas else C.glazed,
 			Enum.Material.Fabric
 		)
 	end
 	local outfitterSign = decor(Vector3.new(12, 2.4, 0.4), at(kx, 13.2, kz - 1.8), C.board)
-	label(outfitterSign, Enum.NormalId.Front, "OUTFITTER", Color3.fromRGB(240, 210, 150))
+	label(outfitterSign, Enum.NormalId.Front, "OUTFITTER", C.gilt)
 	local outfitter = block(
 		Vector3.new(12, 6, 4),
 		at(kx, 3, kz - 2.5),
@@ -732,7 +809,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		gui.LightInfluence = 0.85
 		gui.Parent = ledgerFace
 		local gold = Color3.fromRGB(232, 196, 118)
-		local cream = Color3.fromRGB(236, 226, 200)
+		local pale = C.porcelain
 		local function text(content: string, font: Font, color: Color3, pos: UDim2, size: UDim2)
 			local t = Instance.new("TextLabel")
 			t.BackgroundTransparency = 1
@@ -759,7 +836,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				Enum.FontWeight.Regular,
 				Enum.FontStyle.Italic
 			),
-			cream,
+			pale,
 			UDim2.fromScale(0.15, 0.22),
 			UDim2.fromScale(0.7, 0.07)
 		)
@@ -782,7 +859,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			seg.Position = UDim2.fromOffset(mid.X, mid.Y)
 			seg.Size = UDim2.fromOffset((b - a).Magnitude + 4, 8)
 			seg.Rotation = math.deg(math.atan2(b.Y - a.Y, b.X - a.X))
-			seg.BackgroundColor3 = cream
+			seg.BackgroundColor3 = pale
 			seg.BorderSizePixel = 0
 			seg.Parent = gui
 		end
@@ -798,14 +875,14 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			corner.CornerRadius = UDim.new(1, 0)
 			corner.Parent = dot
 			local ring = Instance.new("UIStroke")
-			ring.Color = cream
+			ring.Color = pale
 			ring.Thickness = 5
 			ring.Parent = dot
 			local below = i % 2 == 0
 			text(
 				string.upper(stops[i]),
 				Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Medium),
-				if last then gold else cream,
+				if last then gold else pale,
 				UDim2.fromOffset(p.X - 70, p.Y + (if below then 26 else -62)),
 				UDim2.fromOffset(140, 34)
 			)
@@ -813,7 +890,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		text(
 			"Ask the Ledger at the desk below",
 			Font.new("rbxasset://fonts/families/SpecialElite.json"),
-			Color3.fromRGB(196, 186, 160),
+			Color3.fromRGB(150, 164, 170),
 			UDim2.fromScale(0.25, 0.9),
 			UDim2.fromScale(0.5, 0.06)
 		)
@@ -909,131 +986,47 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		end
 	end
 
-	-- Posters on the end walls: travel bills, notices and one lost-brother appeal -----------------------
-	type Poster = {
-		title: string,
-		body: string,
-		titleFont: string,
-		bodyFont: string,
-		paper: Color3,
-		ink: Color3,
-		band: Color3?,
-		disc: Color3?,
-	}
-	local posters: { Poster } = {
-		{
-			title = "SEE THE COAST AT DAWN",
-			body = "Ten stops, one sunrise.\nReturn tickets regrettably unavailable.",
-			titleFont = "Oswald",
-			bodyFont = "Merriweather",
-			paper = Color3.fromRGB(32, 78, 92),
-			ink = Color3.fromRGB(246, 226, 176),
-			band = Color3.fromRGB(236, 150, 72),
-			disc = Color3.fromRGB(255, 212, 120),
-		},
-		{
-			title = "Mind the Fog",
-			body = "It is not weather.\nIt has never been weather.",
-			titleFont = "GrenzeGotisch",
-			bodyFont = "Merriweather",
-			paper = Color3.fromRGB(196, 184, 160),
-			ink = Color3.fromRGB(52, 30, 30),
-			band = Color3.fromRGB(110, 112, 110),
-		},
-		{
-			title = "COAL IS COURAGE",
-			body = "Every sack you carry is a mile\nsomeone else gets to live.",
-			titleFont = "Oswald",
-			bodyFont = "Merriweather",
-			paper = Color3.fromRGB(150, 44, 40),
-			ink = Color3.fromRGB(250, 232, 196),
-			disc = Color3.fromRGB(28, 26, 26),
-		},
-		{
-			title = "PASSENGERS ARE REMINDED",
-			body = "Count your friends at every stop.\nIf the number goes up,\ndo not get back on.",
-			titleFont = "SpecialElite",
-			bodyFont = "SpecialElite",
-			paper = Color3.fromRGB(226, 218, 196),
-			ink = Color3.fromRGB(40, 36, 34),
-		},
-		{
-			title = "Lost: one brother",
-			body = "Tom. Got off at Ashgrove for a lark.\nIf you see him, tell him I kept\nthe lamp lit. - Ellie",
-			titleFont = "Kalam",
-			bodyFont = "Kalam",
-			paper = Color3.fromRGB(238, 230, 206),
-			ink = Color3.fromRGB(44, 52, 92),
-		},
-		{
-			title = "THE MOON IS NOT\nYOUR FRIEND",
-			body = "Keep to the lamplight.\nWave at nothing that waves back.",
-			titleFont = "Oswald",
-			bodyFont = "Merriweather",
-			paper = Color3.fromRGB(24, 26, 44),
-			ink = Color3.fromRGB(232, 222, 236),
-			disc = Color3.fromRGB(196, 56, 46),
-		},
-	}
+	-- Posters on the end walls, above the dado: a travel bill, a bye-law, a propaganda bill, a typed
+	-- regulation, a lost-brother appeal and a night warning (PosterArt draws each one). Framed
+	-- prints sit in iron frames; the appeal is a notebook page pinned straight to the tiles' cap.
 	local slots = { { -1, -4 }, { -1, 12 }, { -1, 40 }, { 1, -4 }, { 1, 12 }, { 1, 40 } }
-	for i, poster in posters do
+	for i, kind in PosterArt.Kinds do
 		local side, z = slots[i][1], slots[i][2]
 		local x = side * (HALF_X - 0.3)
-		local framePart = decor(Vector3.new(0.3, 9.4, 7.4), at(x, 8, z), C.iron, Enum.Material.Metal)
-		framePart.Name = "PosterFrame"
-		local paper =
-			decor(Vector3.new(0.2, 9, 7), at(x - side * 0.2, 8, z), poster.paper, Enum.Material.SmoothPlastic)
+		local posterFace = if side > 0 then Enum.NormalId.Left else Enum.NormalId.Right
+		local paper
+		if kind == "brother" then
+			paper = decor(
+				Vector3.new(0.06, 6.6, 5.1),
+				at(side * (HALF_X - 0.05), 9.6, z),
+				PosterArt.paper(kind),
+				Enum.Material.SmoothPlastic
+			)
+			Kit.ball(
+				model,
+				0.32,
+				at(side * (HALF_X - 0.16), 12.5, z),
+				C.canvas,
+				{ material = Enum.Material.SmoothPlastic, collide = false, shadow = false }
+			)
+		else
+			local framePart = decor(Vector3.new(0.3, 9.4, 7.4), at(x, 10.6, z), C.iron, Enum.Material.Metal)
+			framePart.Name = "PosterFrame"
+			paper = decor(
+				Vector3.new(0.2, 9, 7),
+				at(x - side * 0.2, 10.6, z),
+				PosterArt.paper(kind),
+				Enum.Material.SmoothPlastic
+			)
+		end
+		paper.Name = "Poster"
 		local gui = Instance.new("SurfaceGui")
-		gui.Face = if side > 0 then Enum.NormalId.Left else Enum.NormalId.Right
-		gui.CanvasSize = Vector2.new(560, 720)
-		-- printed paper: lit by the hall like everything else, so it never glows
-		gui.LightInfluence = 1
+		gui.Face = posterFace
+		-- printed paper: lit by the hall, but not all the way, so the lamps' amber does not turn
+		-- every white to cream (and it still never glows)
+		gui.LightInfluence = 0.7
 		gui.Parent = paper
-		if poster.band then
-			local band = Instance.new("Frame")
-			band.BorderSizePixel = 0
-			band.BackgroundColor3 = poster.band
-			band.Position = UDim2.fromScale(0, 0.52)
-			band.Size = UDim2.fromScale(1, 0.2)
-			band.Parent = gui
-			local fade = Instance.new("UIGradient")
-			fade.Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 0.9),
-				NumberSequenceKeypoint.new(0.5, 0.1),
-				NumberSequenceKeypoint.new(1, 0.6),
-			})
-			fade.Rotation = 90
-			fade.Parent = band
-		end
-		if poster.disc then
-			local disc = Instance.new("Frame")
-			disc.AnchorPoint = Vector2.new(0.5, 0.5)
-			disc.BackgroundColor3 = poster.disc
-			disc.Position = UDim2.fromScale(0.5, 0.52)
-			disc.Size = UDim2.fromOffset(190, 190)
-			disc.Parent = gui
-			local round = Instance.new("UICorner")
-			round.CornerRadius = UDim.new(1, 0)
-			round.Parent = disc
-		end
-		local title = Instance.new("TextLabel")
-		title.BackgroundTransparency = 1
-		title.Position = UDim2.fromScale(0.07, 0.05)
-		title.Size = UDim2.fromScale(0.86, 0.3)
-		title.FontFace = Font.new(`rbxasset://fonts/families/{poster.titleFont}.json`, Enum.FontWeight.Bold)
-		title.Text = poster.title
-		title.TextColor3 = poster.ink
-		title.TextScaled = true
-		title.Parent = gui
-		local body = Instance.new("TextLabel")
-		body.BackgroundTransparency = 1
-		body.Position = UDim2.fromScale(0.08, 0.72)
-		body.Size = UDim2.fromScale(0.84, 0.22)
-		body.FontFace = Font.new(`rbxasset://fonts/families/{poster.bodyFont}.json`)
-		body.Text = poster.body
-		body.TextColor3 = poster.ink
-		body.TextScaled = true
-		body.Parent = gui
+		PosterArt.draw(gui, kind)
 	end
 
 	-- The waiting corner at the west end: a stove, armchairs on a rug, books and a palm ----------------
@@ -1120,15 +1113,15 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		0.9,
 		1.3,
 		at(wx - 3, 4.45, wz + 0.4),
-		Color3.fromRGB(226, 196, 140),
-		{ material = Enum.Material.Fabric, collide = false }
+		Color3.fromRGB(34, 92, 70),
+		{ material = Enum.Material.Glass, collide = false }
 	)
 	Kit.pointLight(shade, C.warm, 0.55, 16, false)
 	Kit.ball(
 		model,
 		0.7,
 		at(wx - 3, 2.95, wz - 0.5),
-		C.cream,
+		C.porcelain,
 		{ material = Enum.Material.SmoothPlastic, collide = false }
 	)
 	-- a bookcase against the end wall and a palm by the stove
@@ -1202,7 +1195,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			0.6,
 			0.6,
 			at(tx + 5.4, 4.2, tz - 1 + k * 1.1),
-			C.cream,
+			C.porcelain,
 			{ material = Enum.Material.SmoothPlastic, collide = false }
 		)
 	end
@@ -1212,7 +1205,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			0.2,
 			1.8,
 			at(tx + 6, 4.0, tz + dz),
-			C.cream,
+			C.porcelain,
 			{ material = Enum.Material.Marble, collide = false }
 		)
 		Kit.ball(
@@ -1249,7 +1242,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		t.FontFace = Font.new("rbxasset://fonts/families/Kalam.json", Enum.FontWeight.Bold)
 		t.Text =
 			"TEA ROOM\nTea ............ 1d\nHot soup ........ 2d\nA kind word ..... free\nCourage .. ask Mrs. Pell"
-		t.TextColor3 = Color3.fromRGB(236, 232, 214)
+		t.TextColor3 = Color3.fromRGB(226, 232, 234)
 		t.TextScaled = true
 		t.Parent = gui
 	end
@@ -1313,7 +1306,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	decor(
 		Vector3.new(5.2, 0.12, 0.8),
 		pianoAt * CFrame.new(0, 2.88, -1.35),
-		C.cream,
+		C.porcelain,
 		Enum.Material.SmoothPlastic
 	)
 	decor(
@@ -1348,7 +1341,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local voice = block(
 		Vector3.new(0.4, 0.4, 0.4),
 		pianoAt * CFrame.new(0, 3.6, -0.2),
-		C.cream,
+		C.porcelain,
 		nil,
 		{ collide = false, shadow = false, transparency = 1 }
 	)
@@ -1368,7 +1361,15 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	music.Playing = true
 	music.Parent = voice
 
-	-- The crew's notice board on the back wall: notes left by the ones who came before ----------------
+	-- The crew's notice board on the back wall: notes left by the ones who came before, on whatever
+	-- paper was to hand (the line's grey-green card, blue-ruled pad, pink carbon, brown wrapping) --
+	local NOTE_PAPERS = {
+		Color3.fromRGB(166, 192, 182),
+		Color3.fromRGB(184, 204, 222),
+		Color3.fromRGB(206, 170, 182),
+		Color3.fromRGB(140, 108, 78),
+		Color3.fromRGB(190, 206, 218),
+	}
 	local nbx = -66
 	block(
 		Vector3.new(9, 6, 0.4),
@@ -1394,8 +1395,15 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Vector3.new(2.6, 2.4, 0.06),
 			at(nbx - 2.9 + col * 2.9, 5.2 + row * 2.7, BACK_Z - 0.45 - i * 0.02)
 				* Kit.angles(0, 0, (((i * 37) % 11) - 5) * 1.5),
-			if i % 2 == 0 then C.cream else Color3.fromRGB(226, 214, 170),
+			NOTE_PAPERS[(i - 1) % #NOTE_PAPERS + 1],
 			Enum.Material.SmoothPlastic
+		)
+		Kit.ball(
+			model,
+			0.22,
+			paper.CFrame * CFrame.new(0, 0.95, -0.08),
+			C.canvas,
+			{ material = Enum.Material.SmoothPlastic, collide = false, shadow = false }
 		)
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = Enum.NormalId.Front
@@ -1408,7 +1416,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		t.Position = UDim2.fromScale(0.06, 0.06)
 		t.FontFace = Font.new(`rbxasset://fonts/families/{note[2]}.json`)
 		t.Text = note[1]
-		t.TextColor3 = Color3.fromRGB(40, 38, 60)
+		t.TextColor3 = if i == 4 then Color3.fromRGB(22, 20, 22) else Color3.fromRGB(34, 40, 70)
 		t.TextScaled = true
 		t.TextWrapped = true
 		t.Parent = gui

@@ -42,7 +42,9 @@ local C = {
 	glassWarm = Color3.fromRGB(222, 160, 98), -- lit from inside, too dim to glare
 	glass = Color3.fromRGB(150, 170, 180),
 	canvasA = Color3.fromRGB(150, 44, 48),
-	canvasB = Color3.fromRGB(226, 214, 186),
+	canvasB = Color3.fromRGB(40, 70, 66), -- awnings: red and the line's teal
+	enamel = Color3.fromRGB(204, 222, 234), -- clock faces and sign lettering: a cold white that survives warm light
+	company = Color3.fromRGB(24, 58, 54), -- the line's teal-green enamel
 	water = Color3.fromRGB(40, 48, 52),
 }
 
@@ -155,7 +157,7 @@ Builders.StationHouse = function(ctx)
 		0.4,
 		3.2,
 		f(ctx, 0, h - 1.2, -d / 2 - 0.3) * Kit.angles(0, 90, 0),
-		Color3.fromRGB(236, 226, 200),
+		C.enamel,
 		{ collide = false }
 	)
 	Kit.cylinder(ctx.parent, 0.3, 3.6, clock.CFrame * CFrame.new(-0.07, 0, 0), C.iron, { collide = false })
@@ -683,7 +685,7 @@ Builders.Concourse = function(ctx)
 		0.4,
 		5.4,
 		f(ctx, 0, h + 11, d / 2 - 8.25) * Kit.angles(0, 90, 0),
-		Color3.fromRGB(240, 232, 210),
+		C.enamel,
 		{ collide = false }
 	)
 	Kit.cylinder(
@@ -920,43 +922,58 @@ Props.Bench = function(ctx)
 	end
 end
 
+-- The running-in board: the stop's name in white on the line's teal enamel, a white keyline
+-- inset from the edge, in a cast-iron frame on two posts with ball finials.
 Props.Sign = function(ctx)
 	for _, x in { -6, 6 } do
 		Kit.post(ctx.parent, 8, 0.4, f(ctx, x, 4, 0), C.iron, { material = Enum.Material.Metal })
+		Kit.ball(
+			ctx.parent,
+			0.62,
+			f(ctx, x, 8.2, 0),
+			C.iron,
+			{ material = Enum.Material.Metal, collide = false }
+		)
 	end
 	local board = Kit.block(
 		ctx.parent,
 		Vector3.new(14, 2.6, 0.4),
 		f(ctx, 0, 6.6, 0),
-		Color3.fromRGB(28, 36, 52),
-		{ material = Enum.Material.SmoothPlastic, collide = false }
+		C.company,
+		{ material = Enum.Material.SmoothPlastic, reflectance = 0.05, collide = false }
 	)
-	Kit.block(
-		ctx.parent,
-		Vector3.new(14.4, 3, 0.3),
-		f(ctx, 0, 6.6, 0),
-		Color3.fromRGB(236, 226, 200),
-		{ collide = false }
-	)
+	Kit.block(ctx.parent, Vector3.new(14.4, 3, 0.3), f(ctx, 0, 6.6, 0), C.iron, {
+		material = Enum.Material.Metal,
+		collide = false,
+	})
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = face
 		gui.CanvasSize = Vector2.new(700, 130)
 		gui.LightInfluence = 0.2
 		gui.Parent = board
+		local keyline = Instance.new("Frame")
+		keyline.BackgroundTransparency = 1
+		keyline.Position = UDim2.fromOffset(9, 9)
+		keyline.Size = UDim2.new(1, -18, 1, -18)
+		keyline.Parent = gui
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = C.enamel
+		stroke.Thickness = 3
+		stroke.Parent = keyline
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
 		label.Size = UDim2.fromScale(1, 1)
 		label.FontFace = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold)
 		label.Text = string.upper(ctx.label or "")
-		label.TextColor3 = Color3.fromRGB(240, 232, 210)
+		label.TextColor3 = C.enamel
 		label.TextScaled = true
 		label.Parent = gui
 		local pad = Instance.new("UIPadding")
-		pad.PaddingTop = UDim.new(0.14, 0)
-		pad.PaddingBottom = UDim.new(0.14, 0)
-		pad.PaddingLeft = UDim.new(0.04, 0)
-		pad.PaddingRight = UDim.new(0.04, 0)
+		pad.PaddingTop = UDim.new(0.2, 0)
+		pad.PaddingBottom = UDim.new(0.16, 0)
+		pad.PaddingLeft = UDim.new(0.05, 0)
+		pad.PaddingRight = UDim.new(0.05, 0)
 		pad.Parent = label
 	end
 end

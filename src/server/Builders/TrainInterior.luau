@@ -32,6 +32,7 @@ export type Dims = {
 	ceiling: number, -- underside of the ceiling lining
 	doorTop: number,
 	sideDoorTop: number, -- head of the carriages' sliding doors
+	ceilingAt: (x: number, z: number) -> number, -- what a hanging fitting hangs from: the ceiling or, under its opening, the clerestory roof
 }
 
 export type Furnished = {
@@ -47,20 +48,23 @@ local C = {
 	woodDark = rgb(74, 46, 30),
 	wood = rgb(110, 76, 50),
 	polish = rgb(96, 58, 36),
-	velvet = rgb(122, 38, 40),
+	velvet = rgb(86, 24, 30), -- oxblood moquette
 	velvetGreen = rgb(54, 86, 66),
-	lace = rgb(236, 230, 214),
-	brass = rgb(201, 160, 82),
+	linen = rgb(36, 74, 70), -- teal antimacassars, the company's monogram embroidered in gilt
+	brass = rgb(184, 144, 76),
 	iron = rgb(44, 44, 48),
 	ironLight = rgb(70, 70, 74),
-	shade = rgb(226, 196, 140),
+	shade = rgb(34, 92, 70), -- green glass, as on a banker's lamp
 	warm = rgb(255, 206, 150),
 	fire = rgb(255, 120, 40),
 	ember = rgb(255, 170, 70),
 	coal = rgb(28, 27, 26),
-	enamel = rgb(30, 66, 48),
-	cream = rgb(238, 230, 206),
-	gilt = rgb(218, 180, 100),
+	enamel = rgb(24, 58, 54),
+	enamelWhite = rgb(208, 224, 234), -- enamel lettering and dial faces: a cold white, never cream
+	card = rgb(182, 198, 192), -- the company's grey-green card stock (tickets, ledgers)
+	pillow = rgb(176, 186, 192),
+	ticking = rgb(126, 140, 152),
+	gilt = rgb(206, 168, 92),
 	board = rgb(30, 28, 28),
 	leather = rgb(96, 58, 40),
 	copper = rgb(176, 102, 62),
@@ -592,16 +596,16 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 			C.enamel,
 			M.SmoothPlastic,
 			text,
-			C.cream,
+			C.enamelWhite,
 			SIGN_FONT,
 			0.3
 		)
 		face.Name = "DoorSign"
-		-- a cream border, a hair proud of the enamel
+		-- a white border, a hair proud of the enamel
 		local frame = decor(
 			Vector3.new(3.56, 0.74, 0.1),
 			origin * CFrame.lookAt(center - normal * 0.08, center - normal * 0.08 + normal),
-			C.cream,
+			C.enamelWhite,
 			M.SmoothPlastic
 		)
 		frame.Name = "DoorSignRim"
@@ -615,7 +619,8 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 			letter(board, face, text, C.gilt, BOARD_FONT, Vector2.new(380, 72), 0.5)
 		end
 		for _, z in { -1.5, 1.5 } do
-			decor(Vector3.new(0.06, CEIL - y - 0.36, 0.06), at(x, (CEIL + y + 0.36) / 2, z), C.brass, M.Metal)
+			local top = dims.ceilingAt(x, z)
+			decor(Vector3.new(0.06, top - y - 0.36, 0.06), at(x, (top + y + 0.36) / 2, z), C.brass, M.Metal)
 		end
 	end
 	local function picture(x: number, z: number, inward: number, style: number)
@@ -625,7 +630,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		local slip = decor(Vector3.new(0.07, 1.68, 2.28), at(x + inward * 0.12, 5.55, z), C.gilt, M.Metal)
 		slip.Name = "PictureSlip"
 		local canvas =
-			decor(Vector3.new(0.05, 1.56, 2.16), at(x + inward * 0.155, 5.55, z), C.cream, M.SmoothPlastic)
+			decor(Vector3.new(0.05, 1.56, 2.16), at(x + inward * 0.155, 5.55, z), C.card, M.SmoothPlastic)
 		canvas.Name = "Painting"
 		local title = paint(canvas, if inward > 0 then Enum.NormalId.Right else Enum.NormalId.Left, style)
 		-- its title on a brass plaque screwed to the lining under the frame
@@ -657,7 +662,17 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		local back = at(x - facing * 1.15, 2.7, zc) * Kit.angles(0, 0, facing * 8)
 		solid(Vector3.new(0.5, 2.9, BENCH_W), back, C.velvet, M.Fabric)
 		decor(Vector3.new(0.55, 0.15, BENCH_W + 0.08), back * CFrame.new(0, 1.5, 0), C.woodDark, M.Wood)
-		decor(Vector3.new(0.06, 0.78, 1.25), back * CFrame.new(facing * 0.28, 0.9, 0), C.lace, M.Fabric)
+		local cloth =
+			decor(Vector3.new(0.06, 0.78, 1.25), back * CFrame.new(facing * 0.28, 0.9, 0), C.linen, M.Fabric)
+		letter(
+			cloth,
+			if facing > 0 then Enum.NormalId.Right else Enum.NormalId.Left,
+			"L·T·O",
+			C.gilt,
+			BOARD_FONT,
+			Vector2.new(125, 78),
+			1
+		)
 		-- the armrest at the aisle end, on a turned leg
 		local az = side * (BENCH_Z - BENCH_W / 2 + 0.15)
 		solid(Vector3.new(1.8, 0.22, 0.28), at(x, 2.25, az), C.woodDark, M.Wood)
@@ -673,10 +688,10 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		post(2.7, 0.3, at(tx, 1.35, side * 3.4), C.brass, M.Metal, true)
 		disc(0.08, 1.0, at(tx, 0.04, side * 3.4), C.brass, M.Metal)
 		decor(Vector3.new(0.6, 0.06, 0.6), at(tx, 2.77, side * 3.4), C.brass, M.Metal)
-		-- its lamp: a brass column under a silk shade
+		-- its lamp: a brass column under a green glass shade
 		disc(0.08, 0.6, at(tx, 3.0, side * 5.0), C.brass, M.Metal)
 		post(0.8, 0.1, at(tx, 3.44, side * 5.0), C.brass, M.Metal)
-		post(0.5, 0.95, at(tx, 4.05, side * 5.0), C.shade, M.Fabric)
+		post(0.5, 0.95, at(tx, 4.05, side * 5.0), C.shade, M.Glass)
 		local bulb = Kit.neon(model, Vector3.one * 0.3, at(tx, 3.85, side * 5.0), C.warm, Enum.PartType.Ball)
 		Kit.pointLight(bulb, C.warm, 0.6, 11, false)
 	end
@@ -731,7 +746,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 				board,
 				size,
 				origin * CFrame.lookAt(center, center - Vector3.xAxis),
-				C.cream,
+				C.board,
 				{ transparency = 1, collide = false, shadow = false }
 			)
 			part.Name = name
@@ -814,7 +829,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		seat(Vector3.new(2.0, 0.45, 2.0) * S, o(0, 1.825, -0.05), Kit.shade(C.velvetGreen, 1.12), "Armchair")
 		local back = o(0, 3.0, 1.0) * Kit.angles(8, 0, 0)
 		solid(Vector3.new(2.6, 2.6, 0.6) * S, back, C.velvetGreen, M.Fabric)
-		decor(Vector3.new(1.4, 0.8, 0.06) * S, back * CFrame.new(0, 0.85 * S, -0.33 * S), C.lace, M.Fabric)
+		decor(Vector3.new(1.4, 0.8, 0.06) * S, back * CFrame.new(0, 0.85 * S, -0.33 * S), C.linen, M.Fabric)
 		for _, side in { -1, 1 } do
 			solid(Vector3.new(0.5, 1.4, 1.0) * S, o(side * 1.02, 3.55, 0.55), C.velvetGreen, M.Fabric)
 			solid(
@@ -872,17 +887,17 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	)
 	-- the bunk along the far wall at the back, and the guard's desk across from it
 	solid(Vector3.new(8.0, 1.1, 2.26), at(-85.2, 0.55, -4.53), C.woodDark, M.Wood)
-	solid(Vector3.new(7.8, 0.5, 2.1), at(-85.2, 1.35, -4.53), rgb(214, 204, 186), M.Fabric)
+	solid(Vector3.new(7.8, 0.5, 2.1), at(-85.2, 1.35, -4.53), C.ticking, M.Fabric)
 	decor(Vector3.new(5.2, 0.14, 2.16), at(-84.0, 1.67, -4.53), rgb(126, 46, 44), M.Fabric)
-	decor(Vector3.new(1.3, 0.4, 1.6), at(-88.25, 1.8, -4.5), C.cream, M.Fabric)
+	decor(Vector3.new(1.3, 0.4, 1.6), at(-88.25, 1.8, -4.5), C.pillow, M.Fabric)
 	for _, x in { -84.4, -82.4 } do
-		seat(Vector3.new(1.9, 0.3, 1.2), at(x, 1.75, -3.95) * Kit.angles(0, 180, 0), C.cream, "Bunk", true)
+		seat(Vector3.new(1.9, 0.3, 1.2), at(x, 1.75, -3.95) * Kit.angles(0, 180, 0), C.pillow, "Bunk", true)
 	end
 	solid(Vector3.new(4.0, 0.16, 1.76), at(-87.2, 3.0, 4.78), C.polish, M.Wood)
 	solid(Vector3.new(1.6, 2.92, 1.6), at(-88.3, 1.46, 4.8), C.woodDark, M.Wood)
 	post(2.92, 0.22, at(-85.5, 1.46, 4.8), C.woodDark, M.Wood, true)
-	decor(Vector3.new(0.75, 0.1, 1.0), at(-87.75, 3.13, 4.7) * Kit.angles(0, 0, 6), C.cream, M.SmoothPlastic)
-	decor(Vector3.new(0.75, 0.1, 1.0), at(-87.0, 3.13, 4.7) * Kit.angles(0, 0, -6), C.cream, M.SmoothPlastic)
+	decor(Vector3.new(0.75, 0.1, 1.0), at(-87.75, 3.13, 4.7) * Kit.angles(0, 0, 6), C.card, M.SmoothPlastic)
+	decor(Vector3.new(0.75, 0.1, 1.0), at(-87.0, 3.13, 4.7) * Kit.angles(0, 0, -6), C.card, M.SmoothPlastic)
 	disc(0.08, 0.5, at(-86.0, 3.12, 5.2), C.brass, M.Metal)
 	post(0.6, 0.08, at(-86.0, 3.46, 5.2), C.brass, M.Metal)
 	local banker = Kit.neon(model, Vector3.new(0.9, 0.24, 0.5), at(-86.0, 3.86, 5.05), rgb(70, 150, 96))
@@ -1088,7 +1103,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 			0.05,
 			size - 0.2,
 			at(bx - 0.475, y, z),
-			C.cream,
+			C.enamelWhite,
 			{ collide = false, shadow = false }
 		)
 		decor(

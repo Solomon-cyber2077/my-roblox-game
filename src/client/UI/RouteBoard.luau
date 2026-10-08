@@ -52,7 +52,7 @@ local FLARE_SECONDS = 1.2
 local GAUGE_SWEEP = 120 -- needle degrees either side of straight up
 local DARK_GLASS = Color3.fromRGB(46, 36, 30)
 local WARM = Color3.fromRGB(255, 206, 150)
-local LAMP = Color3.fromRGB(226, 220, 196) -- a sealed mystery's lantern
+local LAMP = Color3.fromRGB(196, 222, 226) -- a sealed mystery's lantern
 local FLICKER = 9 -- noise speed of its flicker
 local DANGER = { -- by danger tier: amber, burnt orange, signal red
 	Color3.fromRGB(240, 186, 90),
@@ -128,7 +128,7 @@ local function hand(parent: Instance, length: number, width: number, color: Colo
 	return p
 end
 
--- A cream dial face with `ticks` marks spread over `arc` degrees, centred on twelve.
+-- A card dial face with `ticks` marks spread over `arc` degrees, centred on twelve.
 local function dial(gui: SurfaceGui, ticks: number, arc: number, caption: string): Frame
 	local face = Ui.new("Frame", {
 		Size = UDim2.fromScale(1, 1),

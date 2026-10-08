@@ -3,7 +3,7 @@
 	Musical notes drifting up off the lobby piano while Gnossienne No. 3 plays.
 	Each note is a BillboardGui of one glyph on the piano's hidden PianoVoice part
 	(Builders/LobbyBuilder, tagged "PianoVoice"): it rises, sways, and fades out
-	in gold, cream or amber. All local, nothing uploaded, nothing replicated.
+	in gold, frost or amber. All local, nothing uploaded, nothing replicated.
 ]]
 
 local CollectionService = game:GetService("CollectionService")
@@ -17,7 +17,7 @@ local TAG = "PianoVoice"
 local GLYPHS = { "♪", "♫", "♩", "♬" }
 local COLORS = {
 	Color3.fromRGB(232, 190, 92), -- gold
-	Color3.fromRGB(240, 228, 196), -- cream
+	Color3.fromRGB(200, 222, 230), -- frost
 	Color3.fromRGB(226, 146, 62), -- amber
 }
 local INTERVAL = { 0.6, 1.3 } -- seconds between notes
