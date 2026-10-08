@@ -59,6 +59,13 @@ local NIGHT_RANGE = { 80, 170 } -- studs: spatial cues fall silent past 220, and
 local NIGHT_DRONE = 0.45 -- share of the drone that hums under the wheels at the darkest hour
 local DREAD_NEAR, DREAD_FAR = 10, 75 -- heartbeat: full at this distance from a Hollow, silent past that one
 local HUSH_FLOOR = 0.08 -- what is left of every sound at the depth of the Hush
+-- Aboard at a stop or on the line, the carriage walls stand between you and the night: the
+-- outside beds drop and lose their top end, and the depot hall's room tone (the lobby's own
+-- sound) comes back quietly, so the train sounds like the same shelter as the hall.
+local OUTSIDE: { [string]: boolean } = { Wind = true, StationEerie = true, Drone = true, Howl = true }
+local SHELTER_DIP = 0.45 -- share of the outside beds the walls take away
+local SHELTER_HIGH, SHELTER_MID = -16, -5 -- dB the walls take off the outside beds' highs and mids
+local SHELTER_ROOM = 0.5 -- share of the hall's room tone heard aboard
 
 local LOBBY =
 	Vector3.new(Tuning.World.LobbyOrigin[1], Tuning.World.LobbyOrigin[2], Tuning.World.LobbyOrigin[3])
@@ -216,14 +223,24 @@ function AudioController.Start()
 	end)
 	local ambientReverb = Enum.ReverbType.NoReverb
 
+	local walls: { [string]: EqualizerSoundEffect } = {}
 	for _, name in { "TrainRun", "Wind", "StationEerie", "DepotHall", "Drone", "Howl" } do
 		local sound = makeSound(name, SoundService)
 		if sound then
 			sound.Volume = 0
 			sound:Play()
 			beds[name] = sound
+			if OUTSIDE[name] then
+				local muffle = Instance.new("EqualizerSoundEffect")
+				muffle.Name = "Walls"
+				muffle.LowGain, muffle.MidGain, muffle.HighGain = 0, 0, 0
+				muffle.Priority = 5
+				muffle.Parent = sound
+				walls[name] = muffle
+			end
 		end
 	end
+	local shelter = 0 -- 0..1: how much the carriage walls are between you and the outside
 
 	local ambience = 0 -- 0..1: how much the stop's soundscape is playing
 	local night = 0 -- 0..1: how much of the night layer is playing on the line
@@ -281,6 +298,9 @@ function AudioController.Start()
 		local atmosphere = Registry.AtmosphereController
 		local dark = if atmosphere then atmosphere.Dark() else 0
 		local riding = not inLobby and not atStop and Session.isRunActive()
+		local aboard = not inLobby and Session.isRunActive() and Session.status() == "Aboard"
+		-- (half-lives) stepping out, the night is on you at once; boarding, the quiet settles in
+		shelter = MathX.lerp(shelter, if aboard then 1 else 0, MathX.damp(if aboard then 0.8 else 0.35, dt))
 		night = MathX.lerp(night, if riding then dark else 0, MathX.damp(1.5, dt))
 
 		-- the sky's omens
@@ -314,18 +334,23 @@ function AudioController.Start()
 		local duck = if os.clock() < duckUntil then 1 - Tuning.Departure.DuckShare else 1
 		group.Volume = (1 - (1 - HUSH_FLOOR) * hush) * duck
 
-		local targets = {
+		local targets: { [string]: number } = {
 			TrainRun = if inLobby then 0 else Audio.TrainRun.volume * pace * (1 + 0.35 * tunnel),
 			Wind = if inLobby
 				then 0
 				else Audio.Wind.volume * (0.35 + 0.65 * pace) * (1 + 1.4 * bridge) * (1 - 0.6 * tunnel),
 			StationEerie = if inLobby then 0 else Audio.StationEerie.volume * (0.3 + tension),
-			DepotHall = if inLobby then Audio.DepotHall.volume else 0,
+			DepotHall = Audio.DepotHall.volume * (if inLobby then 1 else SHELTER_ROOM * shelter),
 			-- the stop's drone, the night humming under the wheels, an omen swelling it
 			Drone = Audio.Drone.volume
 				* (math.max(ambience * (0.6 + 0.4 * tension), NIGHT_DRONE * night) + 0.6 * swell),
 			Howl = Audio.Howl.volume * (ambience * (0.4 + 0.6 * tension) + 0.5 * swell),
 		}
+		for name, muffle in walls do
+			muffle.MidGain = SHELTER_MID * shelter
+			muffle.HighGain = SHELTER_HIGH * shelter
+			targets[name] = (targets[name] or 0) * (1 - SHELTER_DIP * shelter)
+		end
 		for name, sound in beds do
 			sound.Volume = MathX.lerp(sound.Volume, targets[name] or 0, MathX.damp(0.4, dt))
 			if name == "TrainRun" then

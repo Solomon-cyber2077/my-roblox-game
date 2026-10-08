@@ -97,12 +97,19 @@ function RouteVote.mount(gui: ScreenGui)
 
 	local container = Ui.new("Frame", {
 		Name = "RouteVote",
-		Size = UDim2.fromOffset(720, 310),
+		Size = UDim2.fromOffset(720, 346),
 		Position = UDim2.new(0.5, 0, 0, 10), -- along the top, clear of the crew on screen
 		AnchorPoint = Vector2.new(0.5, 0),
 		BackgroundTransparency = 1,
 		Visible = false,
 		Parent = gui,
+	})
+	-- the tickets sit in a row of their own, so the tie note under them stays out of the layout
+	local ticketRow = Ui.new("Frame", {
+		Name = "Row",
+		Size = UDim2.new(1, 0, 0, 310),
+		BackgroundTransparency = 1,
+		Parent = container,
 	})
 	local layout = Ui.list(
 		Enum.FillDirection.Horizontal,
@@ -110,7 +117,7 @@ function RouteVote.mount(gui: ScreenGui)
 		Enum.HorizontalAlignment.Center,
 		Enum.VerticalAlignment.Top
 	)
-	layout.Parent = container
+	layout.Parent = ticketRow
 
 	-- The dossier ---------------------------------------------------------------------------------
 	local backdrop = Ui.new("TextButton", {
@@ -430,16 +437,23 @@ function RouteVote.mount(gui: ScreenGui)
 	-- The tickets ---------------------------------------------------------------------------------
 	-- Built once per ballot (and again if the bunker changes the coal figures); votes, the flap
 	-- and the dial update them in place so a stamp only slams down when it is new.
+	-- a line of typescript on a strip of soot-iron, so it reads over any scenery
 	local tieNote = Ui.text({
 		Name = "TieNote",
 		Text = "",
 		Font = Theme.Font.type,
-		TextSize = 12,
+		TextSize = 14,
 		Color = Theme.Color.paper,
-		Size = UDim2.new(1, 0, 0, 18),
-		Position = UDim2.new(0, 0, 1, 6),
+		Size = UDim2.fromOffset(0, 26),
+		Position = UDim2.new(0.5, 0, 0, 318),
 		XAlign = Enum.TextXAlignment.Center,
 	})
+	tieNote.AnchorPoint = Vector2.new(0.5, 0)
+	tieNote.AutomaticSize = Enum.AutomaticSize.X
+	tieNote.BackgroundColor3 = Theme.Color.steel
+	tieNote.BackgroundTransparency = 0.15
+	Ui.padding(0, 12, 0, 12).Parent = tieNote
+	Ui.stroke(Theme.Color.steelLine, 1, 0.3).Parent = tieNote
 	tieNote.Parent = container
 	local tickets: { Ticket.Handle } = {}
 	local builtKey: string? = nil
@@ -538,7 +552,7 @@ function RouteVote.mount(gui: ScreenGui)
 		if not visible then
 			board.update({ active = false, tickets = {}, options = {}, votes = {}, vote = castVote })
 			for _, handle in tickets do
-				handle.slot.Parent = container
+				handle.slot.Parent = ticketRow
 			end
 			if openIndex then
 				closeDossier()
@@ -586,7 +600,7 @@ function RouteVote.mount(gui: ScreenGui)
 						render()
 					end,
 				})
-				handle.slot.Parent = container
+				handle.slot.Parent = ticketRow
 				tickets[index] = handle
 			end
 		end
@@ -603,7 +617,7 @@ function RouteVote.mount(gui: ScreenGui)
 		})
 		local onBoard = board.engaged()
 		for index, handle in tickets do
-			local host: Instance = if onBoard then board.host(index) or container else container
+			local host: Instance = if onBoard then board.host(index) or ticketRow else ticketRow
 			if handle.slot.Parent ~= host then
 				handle.slot.Parent = host
 			end
@@ -619,6 +633,7 @@ function RouteVote.mount(gui: ScreenGui)
 		end
 		updateStamps(votes)
 		tieNote.Text = if chosen then "" else TicketModel.tieNote(votes, options) or ""
+		tieNote.Visible = tieNote.Text ~= ""
 
 		-- Lock-in: the winner is punched, the rest go slack
 		if chosen ~= nil and punchedKey ~= builtKey and tickets[chosen] then

@@ -23,6 +23,7 @@ Theme.Color = table.freeze({
 	signal = Color3.fromRGB(206, 58, 44),
 	signalDark = Color3.fromRGB(120, 30, 24),
 	go = Color3.fromRGB(122, 196, 138),
+	goInk = Color3.fromRGB(34, 98, 58), -- success printed on card stock (go is too pale to read there)
 	caution = Color3.fromRGB(240, 172, 64),
 	sky = Color3.fromRGB(120, 196, 220),
 	white = Color3.fromRGB(230, 236, 238),

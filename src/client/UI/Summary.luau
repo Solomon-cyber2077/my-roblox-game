@@ -12,15 +12,26 @@ local Ui = require(script.Parent.Ui)
 local Summary = {}
 
 local modal: Modal.Modal
+local WIDTH, MIN_HEIGHT, MAX_HEIGHT = 520, 360, 580
+local CONTENT_WIDTH = WIDTH - 32 - 44 -- the modal body's inset, then the receipt's margins
+local CHROME = 64 + 12 + 20 + 8 -- header and body insets, the receipt's margins, a little air
 
 local TITLES: { [string]: { text: string, color: Color3, line: string } } = {
-	Victory = { text = "END OF THE LINE", color = Theme.Color.go, line = "The train reached the Terminus." },
+	Victory = {
+		text = "END OF THE LINE",
+		color = Theme.Color.goInk,
+		line = "The train reached the Terminus.",
+	},
 	Wiped = { text = "NO ONE MADE IT", color = Theme.Color.signal, line = "The whole crew was lost." },
-	Derailed = { text = "BROKEN DOWN", color = Theme.Color.caution, line = "The train failed on the line." },
+	Derailed = {
+		text = "BROKEN DOWN",
+		color = Theme.Color.signalDark,
+		line = "The train failed on the line.",
+	},
 }
 
 function Summary.mount(gui: ScreenGui)
-	modal = Modal.new(gui, "Run receipt", Vector2.new(520, 580))
+	modal = Modal.new(gui, "Run receipt", Vector2.new(WIDTH, MAX_HEIGHT))
 end
 
 function Summary.show(data: { [string]: any })
@@ -37,7 +48,8 @@ function Summary.show(data: { [string]: any })
 		ZIndex = 33,
 		Parent = receipt,
 	})
-	Ui.list(Enum.FillDirection.Vertical, 6).Parent = content
+	local layout = Ui.list(Enum.FillDirection.Vertical, 6)
+	layout.Parent = content
 
 	local order = 0
 	local function rule()
@@ -86,13 +98,13 @@ function Summary.show(data: { [string]: any })
 	line(`BRASS EARNED   {Format.thousands(data.brass or 0)}`, Theme.Font.display, 26, Theme.Color.ink)
 	line(`XP EARNED   {Format.thousands(data.xp or 0)}`, Theme.Font.displayMedium, 18, Theme.Color.inkSoft)
 	if data.rankAfter and data.rankBefore and data.rankAfter > data.rankBefore then
-		line(`PROMOTED TO CREW RANK {data.rankAfter}`, Theme.Font.display, 20, Theme.Color.go)
+		line(`PROMOTED TO CREW RANK {data.rankAfter}`, Theme.Font.display, 20, Theme.Color.goInk)
 	end
 	if data.unlockedTier then
-		line(`RUN TIER {data.unlockedTier} UNLOCKED`, Theme.Font.display, 20, Theme.Color.go)
+		line(`RUN TIER {data.unlockedTier} UNLOCKED`, Theme.Font.display, 20, Theme.Color.goInk)
 	end
 	for _, name in data.milestones or {} do
-		line(`LINE MASTERY: {string.upper(name)}`, Theme.Font.display, 18, Theme.Color.signal)
+		line(`LINE MASTERY: {string.upper(name)}`, Theme.Font.display, 18, Theme.Color.goInk)
 	end
 	if data.saved == false then
 		line(
@@ -102,7 +114,18 @@ function Summary.show(data: { [string]: any })
 			Theme.Color.signal
 		)
 	end
+	-- the receipt is as long as what is printed on it
+	local function fit()
+		local scale = content.AbsoluteSize.X / CONTENT_WIDTH
+		if scale <= 0 then
+			return
+		end
+		local height = math.ceil(layout.AbsoluteContentSize.Y / scale) + CHROME
+		modal.frame.Size = UDim2.fromOffset(WIDTH, math.clamp(height, MIN_HEIGHT, MAX_HEIGHT))
+	end
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fit)
 	modal:open()
+	fit()
 end
 
 return Summary

@@ -79,6 +79,8 @@ function Outfitter.mount(gui: ScreenGui)
 		ZIndex = 32,
 		Parent = modal.body,
 	})
+	-- room for the selected card's 2px outline, which a scrolling frame would clip
+	Ui.padding(3, 6, 3, 3).Parent = grid
 	Ui.new("UIGridLayout", {
 		CellSize = UDim2.fromOffset(150, 118),
 		CellPadding = UDim2.fromOffset(10, 10),
@@ -174,7 +176,8 @@ function Outfitter.mount(gui: ScreenGui)
 		local model: Model? = nil
 		if def.category == "Lantern" then
 			model = CosmeticModels.lantern(look, CFrame.new(0, 0.9, 0))
-			cam.CFrame = CFrame.lookAt(Vector3.new(0, 0.2, 4.2), Vector3.new(0, 0.2, 0))
+			-- far enough back that the cap and bail stay in frame on the small cards
+			cam.CFrame = CFrame.lookAt(Vector3.new(0, 0.55, 5.2), Vector3.new(0, 0.55, 0))
 		elseif def.category == "Headwear" then
 			-- a milliner's dummy: a plain grey head form for the hat to sit on
 			local holder = Kit.model("Head")
@@ -420,7 +423,8 @@ function Outfitter.mount(gui: ScreenGui)
 			title.Parent = label
 			local tagText, tagColor
 			if equipped then
-				tagText, tagColor = "EQUIPPED", Theme.Color.go
+				-- on the selected card's teal label, plain ink reads better than green
+				tagText, tagColor = "EQUIPPED", if selected then Theme.Color.ink else Theme.Color.goInk
 			elseif owned then
 				tagText, tagColor = "OWNED", Theme.Color.inkSoft
 			elseif def.brass then
@@ -429,7 +433,7 @@ function Outfitter.mount(gui: ScreenGui)
 				tagColor = Theme.Color.ink
 				if table.find(specials, def.id) then
 					tagText = `TODAY {Format.thousands(price)}`
-					tagColor = Theme.Color.signal
+					tagColor = Theme.Color.signalDark -- the bright signal red is too pale on card stock
 				end
 			elseif def.robux or def.gamePass then
 				tagText, tagColor = "ROBUX", Theme.Color.ink

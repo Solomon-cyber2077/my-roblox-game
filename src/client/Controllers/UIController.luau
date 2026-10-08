@@ -6,6 +6,7 @@
 
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local UI = script.Parent.Parent.UI
@@ -40,11 +41,22 @@ local function setCore(name: string, value: any)
 	end
 end
 
+-- A phone held sideways: too short for the desktop layout's 768 rows, so the HUD is drawn larger
+-- than a plain fit would (text and touch targets stay usable), modals shrink themselves to fit
+-- (Modal), and the notification feed moves off the thumbstick (Overlay reads the Compact attribute).
+local COMPACT_HEIGHT = 500
+local COMPACT_ROWS = 540
+
 local function fitScale(scale: UIScale)
 	local camera = Workspace.CurrentCamera
 	local function update()
 		local size = camera.ViewportSize
-		scale.Scale = math.clamp(math.min(size.X / 1366, size.Y / 768), 0.6, 1.15)
+		local compact = UserInputService.TouchEnabled and size.Y < COMPACT_HEIGHT
+		local fit = if compact
+			then math.min(size.X / 1000, size.Y / COMPACT_ROWS)
+			else math.min(size.X / 1366, size.Y / 768)
+		scale.Scale = math.clamp(fit, 0.6, 1.15)
+		gui:SetAttribute("Compact", compact)
 	end
 	camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
 	update()

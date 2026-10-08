@@ -169,10 +169,18 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 				backdrop.Visible = true
 			end
 			frame.Visible = true
-			scale.Scale = 0.94
+			-- never larger than the screen: on a phone the window shrinks to fit the safe area
+			local fit = 1
+			local screen = frame.Parent :: GuiBase2d?
+			local screenScale = screen and screen:FindFirstChildOfClass("UIScale")
+			if screen and screenScale and screenScale.Scale > 0 then
+				local room = screen.AbsoluteSize / screenScale.Scale - Vector2.new(16, 16)
+				fit = math.min(1, room.X / frame.Size.X.Offset, room.Y / frame.Size.Y.Offset)
+			end
+			scale.Scale = 0.94 * fit
 			Ui.tween(
 				scale,
-				{ Scale = 1 },
+				{ Scale = fit },
 				TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			)
 			bindClose()

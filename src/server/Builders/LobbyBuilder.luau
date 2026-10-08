@@ -40,28 +40,28 @@ local LobbyBuilder = {}
 
 local C = {
 	marble = Color3.fromRGB(176, 182, 184), -- grey-veined counter tops
-	paving = Color3.fromRGB(86, 94, 104), -- the platform's blue-grey stone flags (cool, so the lamps cannot turn them buff)
+	paving = Color3.fromRGB(94, 101, 110), -- the platform's blue-grey stone flags (cool, so the lamps cannot turn them buff)
 	slateDark = Color3.fromRGB(38, 40, 44), -- borders, joints and the rosette's rings
 	quarry = Color3.fromRGB(84, 38, 34), -- oxblood quarry tiles along the walk
 	glazed = Color3.fromRGB(34, 76, 62), -- the green glazed-tile dado
 	bullnose = Color3.fromRGB(92, 32, 30), -- the dado's capping tiles
 	brick = Color3.fromRGB(104, 60, 48), -- sooty London stock
 	brickDark = Color3.fromRGB(80, 46, 38),
-	stone = Color3.fromRGB(156, 154, 148),
+	stone = Color3.fromRGB(138, 144, 148), -- coping and plinths: a cool grey the lamps cannot turn sandy
 	iron = Color3.fromRGB(38, 44, 42),
 	ironLight = Color3.fromRGB(58, 66, 62),
 	slate = Color3.fromRGB(56, 58, 64),
 	glass = Color3.fromRGB(150, 170, 168),
 	night = Color3.fromRGB(46, 58, 80),
 	warm = Color3.fromRGB(255, 206, 140),
-	flame = Color3.fromRGB(236, 142, 64), -- lamp glass: neon blooms toward white, so it starts deep amber
+	flame = Color3.fromRGB(206, 118, 54), -- lamp glass: neon blooms toward yellow-white, so it starts deep amber
 	dusk = Color3.fromRGB(200, 128, 66), -- lit glass: amber, too dim to glare (paler reads as cream)
 	fill = Color3.fromRGB(255, 236, 218), -- lamplight, but not orange: surfaces keep their colour
 	board = Color3.fromRGB(22, 26, 34),
-	brass = Color3.fromRGB(201, 160, 82),
+	brass = Color3.fromRGB(172, 138, 80), -- aged, not polished: the lamps warm it enough
 	canvas = Color3.fromRGB(132, 46, 52),
 	porcelain = Color3.fromRGB(220, 228, 232), -- cups, plates, piano keys, the clock face: a cold white
-	gilt = Color3.fromRGB(214, 172, 92), -- gold-leaf lettering
+	gilt = Color3.fromRGB(204, 168, 104), -- gold-leaf lettering
 	wood = Color3.fromRGB(110, 80, 54),
 	slats = Color3.fromRGB(128, 92, 58),
 	ballast = Color3.fromRGB(70, 66, 62),
@@ -246,9 +246,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 	end
 
-	-- Platform edge: coping, the yellow line and the brick face down to the road
+	-- Platform edge: coping, the whitewashed line (a cool white, so the lamps leave it white) and the brick face
 	block(Vector3.new(2 * HALF_X, 0.3, 1.4), at(0, 0.15, EDGE_Z + 0.7), C.stone, Enum.Material.Concrete)
-	decor(Vector3.new(2 * HALF_X, 0.06, 0.7), at(0, 0.03, EDGE_Z + 2.4), Color3.fromRGB(226, 182, 58))
+	decor(Vector3.new(2 * HALF_X, 0.06, 0.7), at(0, 0.03, EDGE_Z + 2.4), Color3.fromRGB(192, 202, 208))
 	block(Vector3.new(2 * HALF_X, 7.25, 0.6), at(0, -7.25 / 2, EDGE_Z - 0.3), C.brick, Enum.Material.Brick)
 
 	-- The display road -----------------------------------------------------------------------------
@@ -569,7 +569,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 		local lamp =
 			Kit.neon(model, Vector3.new(1.4, 1.4, 1.4), at(x, 18.4, pendantZ), C.warm, Enum.PartType.Ball)
-		Kit.pointLight(lamp, C.warm, 0.7, 38, (x + 99) % 44 == 0)
+		Kit.pointLight(lamp, C.warm, 0.9, 38, (x + 99) % 44 == 0)
 	end
 	-- purlins along the hall at every rib joint, carrying the roof
 	for i = 2, SEGMENTS do

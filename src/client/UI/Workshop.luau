@@ -71,7 +71,7 @@ function Workshop.mount(gui: ScreenGui)
 			local level = Ledger.level(train, def.id)
 			local cost = Ledger.upgradeCost(train, def.id)
 			local row = Ui.new("Frame", {
-				Size = UDim2.new(1, -8, 0, 70),
+				Size = UDim2.new(1, -8, 0, 76),
 				BackgroundColor3 = Theme.Color.steelLight,
 				BackgroundTransparency = 0.2,
 				LayoutOrder = i,
@@ -85,7 +85,7 @@ function Workshop.mount(gui: ScreenGui)
 				TextSize = 19,
 				Color = Theme.Color.white,
 				Position = UDim2.fromOffset(14, 8),
-				Size = UDim2.new(1, -170, 0, 22),
+				Size = UDim2.new(1, -176, 0, 22),
 			})
 			name.ZIndex = 33
 			name.Parent = row
@@ -94,30 +94,48 @@ function Workshop.mount(gui: ScreenGui)
 				TextSize = 14,
 				Color = Theme.Color.textDim,
 				Position = UDim2.fromOffset(14, 32),
-				Size = UDim2.new(1, -170, 0, 32),
+				Size = UDim2.new(1, -176, 0, 36),
 				Wrapped = true,
 				YAlign = Enum.TextYAlignment.Top,
 			})
 			desc.ZIndex = 33
 			desc.Parent = row
-			for pip = 1, #def.costs do
-				Ui.new("Frame", {
-					Size = UDim2.fromOffset(14, 6),
-					Position = UDim2.new(1, -150 + (pip - 1) * 18, 0, 14),
-					BackgroundColor3 = if pip <= level then Theme.Color.brass else Theme.Color.steelLine,
+			-- the fitting's level: a brass pip per level fitted, then what the next one needs
+			local levels = #def.costs
+			local levelLabel = Ui.text({
+				Text = `LV {level}/{levels}`,
+				Font = Theme.Font.displayMedium,
+				TextSize = 13,
+				Color = if level >= levels then Theme.Color.brassLight else Theme.Color.textDim,
+				Position = UDim2.new(1, -152, 0, 6),
+				Size = UDim2.fromOffset(44, 16),
+			})
+			levelLabel.ZIndex = 33
+			levelLabel.Parent = row
+			for pip = 1, levels do
+				local lit = pip <= level
+				local box = Ui.new("Frame", {
+					Size = UDim2.fromOffset(16, 8),
+					Position = UDim2.new(1, -104 + (pip - 1) * 20, 0, 10),
+					BackgroundColor3 = if lit then Theme.Color.brass else Theme.Color.steel,
 					BorderSizePixel = 0,
 					ZIndex = 33,
 					Parent = row,
 				})
+				Ui.stroke(if lit then Theme.Color.brassLight else Theme.Color.steelLine, 1, 0.2).Parent = box
 			end
-			local label = if cost then `FIT · {cost}` else "FITTED"
+			local affordable = cost ~= nil and train.parts >= cost
+			local label = if cost == nil
+				then "FULLY FITTED"
+				elseif affordable then `FIT · {cost} PARTS`
+				else `NEED {cost - train.parts} MORE`
 			local button = Ui.button(label, if cost then "Primary" else "Secondary", function()
 				Net.Fire("BuyUpgrade", def.id)
 			end, {
-				Size = UDim2.fromOffset(120, 34),
-				Position = UDim2.new(1, -12, 0.5, 6),
+				Size = UDim2.fromOffset(140, 36),
+				Position = UDim2.new(1, -12, 0.5, 8),
 				AnchorPoint = Vector2.new(1, 0.5),
-				TextSize = 16,
+				TextSize = 15,
 			})
 			button.ZIndex = 34
 			button.Parent = row
@@ -140,24 +158,25 @@ function Workshop.mount(gui: ScreenGui)
 			Font = Theme.Font.displayMedium,
 			TextSize = 16,
 			Position = UDim2.fromOffset(14, 0),
-			Size = UDim2.new(1, -150, 1, 0),
+			Size = UDim2.new(1, -160, 1, 0),
+			Wrapped = true,
 		})
 		patchText.ZIndex = 33
 		patchText.Parent = patch
-		local patchButton = Ui.button("PATCH", "Danger", function()
+		local sound = train.integrity >= train.integrityMax
+		local short = Tuning.Train.HullPatchCost - train.parts
+		local patchLabel = if sound then "HULL SOUND" elseif short > 0 then `NEED {short} MORE` else "PATCH"
+		local patchButton = Ui.button(patchLabel, "Danger", function()
 			Net.Fire("HullPatch")
 		end, {
-			Size = UDim2.fromOffset(110, 34),
+			Size = UDim2.fromOffset(130, 36),
 			Position = UDim2.new(1, -12, 0.5, 0),
 			AnchorPoint = Vector2.new(1, 0.5),
 			TextSize = 16,
 		})
 		patchButton.ZIndex = 34
 		patchButton.Parent = patch
-		Ui.setButtonEnabled(
-			patchButton,
-			train.parts >= Tuning.Train.HullPatchCost and train.integrity < train.integrityMax
-		)
+		Ui.setButtonEnabled(patchButton, short <= 0 and not sound)
 	end
 
 	modal.onOpen = render
