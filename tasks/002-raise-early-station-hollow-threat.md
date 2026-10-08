@@ -47,3 +47,4 @@ Raise early-stop active Hollow caps by approximately 1–2 without changing the 
 ## Builder notes
 
 - Planning only: Claude Code is unavailable in the current Codex session. No gameplay edits have been made.
+- 2026-10-07 22:11: 2026-10-07: Code is in (8aea907 caps/sleepers/wanderer, 1d8de8e Dwell 148/94 at user's request). tests/Difficulty.spec dwell range updated to 94-148; lune run check passes 167/167. Studio Play boots to a docked stop, console clean. Not yet observed: wanderer pursuit of a distant player, sleeper counts small vs large stations, cap table report.
