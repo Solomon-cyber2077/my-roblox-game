@@ -1,4 +1,9 @@
 # HANDOFF
+
+## Brief 011 implemented — visual acceptance pending (2026-10-08)
+- Interior lights use RGB(255,190,120); ceiling globes use RGB(255,214,150). Brightness/ranges unchanged; exterior lamps and global lighting untouched. User authorized Codex implementation.
+- Validation: lune run check passed. Studio restarted; server running, only existing DataStore API-access error. Captures showed lobby/exterior, not carriage interior; Rojo application and visual warmth unverified.
+- Next: confirm Rojo connection, restart Play, board each car and compare with platform-post lamps. Brief stays in-progress pending visual acceptance.
 Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 
 ## 2026-10-08: Brief 011 prepared

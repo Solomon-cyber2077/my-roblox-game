@@ -68,6 +68,7 @@ local C = {
 	brass = Color3.fromRGB(184, 144, 76), -- aged, not polished
 	iron = Color3.fromRGB(58, 58, 62),
 	warm = Color3.fromRGB(255, 206, 150),
+	interiorWarm = Color3.fromRGB(255, 190, 120),
 	fire = Color3.fromRGB(255, 120, 40),
 	bellows = Color3.fromRGB(30, 28, 28),
 	coal = Color3.fromRGB(28, 27, 26),
@@ -84,6 +85,7 @@ local C = {
 	teak = Color3.fromRGB(78, 52, 32), -- Mansell wheel centres
 	spring = Color3.fromRGB(30, 30, 32),
 	globe = Color3.fromRGB(255, 226, 176),
+	interiorGlobe = Color3.fromRGB(255, 214, 150),
 }
 
 -- How a carriage is lined inside: curtains in the passenger cars, the runner from the workshop back.
@@ -976,11 +978,11 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				model,
 				Vector3.new(1.1, 1.1, 1.1),
 				at(x, CEIL_BOTTOM - 1.2, 0),
-				C.globe,
+				C.interiorGlobe,
 				Enum.PartType.Ball
 			)
 			globe.Transparency = 0.1
-			Kit.pointLight(globe, C.warm, 1.15, 18, true)
+			Kit.pointLight(globe, C.interiorWarm, 1.15, 18, true)
 		end
 	end
 

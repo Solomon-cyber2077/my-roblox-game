@@ -56,6 +56,7 @@ local C = {
 	ironLight = rgb(70, 70, 74),
 	shade = rgb(34, 92, 70), -- green glass, as on a banker's lamp
 	warm = rgb(255, 206, 150),
+	interiorWarm = rgb(255, 190, 120),
 	fire = rgb(255, 120, 40),
 	ember = rgb(255, 170, 70),
 	coal = rgb(28, 27, 26),
@@ -692,8 +693,9 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		disc(0.08, 0.6, at(tx, 3.0, side * 5.0), C.brass, M.Metal)
 		post(0.8, 0.1, at(tx, 3.44, side * 5.0), C.brass, M.Metal)
 		post(0.5, 0.95, at(tx, 4.05, side * 5.0), C.shade, M.Glass)
-		local bulb = Kit.neon(model, Vector3.one * 0.3, at(tx, 3.85, side * 5.0), C.warm, Enum.PartType.Ball)
-		Kit.pointLight(bulb, C.warm, 0.6, 11, false)
+		local bulb =
+			Kit.neon(model, Vector3.one * 0.3, at(tx, 3.85, side * 5.0), C.interiorWarm, Enum.PartType.Ball)
+		Kit.pointLight(bulb, C.interiorWarm, 0.6, 11, false)
 	end
 
 	-- two bays on the far side of each saloon car; on the platform side a bay and the doors
@@ -902,7 +904,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	post(0.6, 0.08, at(-86.0, 3.46, 5.2), C.brass, M.Metal)
 	local banker = Kit.neon(model, Vector3.new(0.9, 0.24, 0.5), at(-86.0, 3.86, 5.05), rgb(70, 150, 96))
 	banker.Name = "DeskLamp"
-	Kit.pointLight(banker, C.warm, 0.55, 9, false)
+	Kit.pointLight(banker, C.interiorWarm, 0.55, 9, false)
 	post(2.05, 0.3, at(-87.0, 1.025, 2.6), C.woodDark, M.Wood, true)
 	seat(Vector3.new(1.3, 0.25, 1.3), at(-87.0, 2.175, 2.6) * Kit.angles(0, 180, 0), C.leather, "Stool")
 	-- the flags in their holder by the back door, the guard's coat on its peg
@@ -928,7 +930,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	local flame =
 		Kit.neon(model, Vector3.one * 0.2, at(-71.4, CEIL - 2.05, -2.4), C.ember, Enum.PartType.Ball)
 	flame.Name = "LanternFlame"
-	Kit.pointLight(flame, C.warm, 0.7, 14, false)
+	Kit.pointLight(flame, C.interiorWarm, 0.7, 14, false)
 	disc(0.12, 0.62, at(-71.4, CEIL - 2.48, -2.4), C.brass, M.Metal)
 	doorSign(Vector3.new(-66.71, 7.66, 0), Vector3.new(-1, 0, 0), "CREW SALOON")
 	doorSign(Vector3.new(-89.29, 7.66, 0), Vector3.new(1, 0, 0), "SIGNAL MAST")
@@ -941,9 +943,9 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	post(1.6, 0.06, at(-6.0, CEIL - 0.8, -4.0), C.iron, M.Metal)
 	post(0.45, 1.3, at(-6.0, CEIL - 1.82, -4.0), rgb(46, 82, 62), M.Metal)
 	local benchLamp =
-		Kit.neon(model, Vector3.one * 0.32, at(-6.0, CEIL - 2.08, -4.0), C.warm, Enum.PartType.Ball)
+		Kit.neon(model, Vector3.one * 0.32, at(-6.0, CEIL - 2.08, -4.0), C.interiorWarm, Enum.PartType.Ball)
 	benchLamp.Name = "BenchLamp"
-	Kit.pointLight(benchLamp, rgb(255, 232, 196), 0.8, 13, false)
+	Kit.pointLight(benchLamp, C.interiorWarm, 0.8, 13, false)
 	-- the lathe
 	for _, x in { -16.9, -12.1 } do
 		solid(Vector3.new(1.2, 2.6, 1.4), at(x, 1.3, -4.7), C.ironLight, M.Metal)

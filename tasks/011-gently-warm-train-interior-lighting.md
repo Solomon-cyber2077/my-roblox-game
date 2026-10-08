@@ -1,6 +1,6 @@
 # 011: Gently warm train interior lighting
 <!-- rbxmap:meta {"id":"011","created":"2026-10-08","query":"","hashes":{"src/server/Builders/TrainBuilder.luau":"b3e55cd7f989eb84","src/server/Builders/TrainInterior.luau":"199bde7a307ddb8e"}} -->
-Status: todo
+Status: in-progress
 
 ## Goal
 Make the train interior feel gently warmer, like the amber hanging lamps on the posts near the train, while keeping the change subtle and localized. The cars should read as comfortably warm inside without changing the exterior, global sky/atmosphere, lobby lighting, geometry, gameplay, or light brightness/range unless inspection shows a color-only adjustment cannot achieve the request.
@@ -38,3 +38,4 @@ Make the train interior feel gently warmer, like the amber hanging lamps on the 
 ## Builder notes
 - Before editing, use `find_script` with plain words to locate the exterior post lamp, then read only its returned range (maximum 150 lines). Recheck all cited ranges before patching.
 - After editing, run checks, then `start_stop_play`, `get_console_output`, and `screen_capture`. Mark done only after these checks and the visual comparison pass; otherwise leave in-progress with the precise blocker.
+- 2026-10-08 16:45: 2026-10-08: User explicitly authorized Codex implementation. Added interior-only light tint RGB(255,190,120), ceiling globe RGB(255,214,150), warmed saloon/desk/guard lantern/workshop emitted light. Brightness, ranges and other lights unchanged. lune run check PASSED. Studio stop/start and console checked: server starts, existing StudioAccessToApisNotAllowed DataStore error only. Screenshots show lobby/exterior; requested interior camera capture did not show carriage. Rojo application and interior visual acceptance remain unverified. Manual: confirm Rojo connection, restart Play, board each car and compare amber warmth to the hanging platform-post lamps. Remains in-progress for visual acceptance.
