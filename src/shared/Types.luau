@@ -120,6 +120,9 @@ export type RunStats = {
 -- How one stop ended for the run: departed with the crew aboard, or the run ended there.
 export type StopOutcome = "Cleared" | "Victory" | "Wiped" | "Derailed"
 
+-- What the crew brought aboard and lost over one stop (since the previous stop resolved).
+export type StopHaul = { coal: number, parts: number, relics: number, downs: number }
+
 -- run.log[i], one per resolved stop in stop order (Logic/RunLog). A sealed ticket that never arrived
 -- keeps its sealed name and tier 0; `revealed` is set only once its station was unsealed at Arrival.
 export type LogEntry = {
@@ -136,6 +139,7 @@ export type LogEntry = {
 	mystery: boolean?,
 	revealed: boolean?,
 	closeCalls: { string }?, -- display names: not aboard at T-0, aboard when the stop resolved
+	haul: StopHaul?, -- loot banked and crew downed during this stop
 	outcome: StopOutcome,
 }
 

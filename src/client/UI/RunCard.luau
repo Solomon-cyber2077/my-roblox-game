@@ -159,17 +159,22 @@ local function show()
 	end
 
 	local totals = RunLog.totals(log)
-	text({
+	local foot = text({
 		Text = `{totals.km} KM   ·   COAL BURNED x{math.floor(totals.coal * 10 + 0.5) / 10}   ·   {plural(
 			totals.stops,
 			"STOP"
-		)}   ·   {plural(totals.closeCalls, "CLOSE CALL")}`,
+		)}   ·   {plural(totals.closeCalls, "CLOSE CALL")}   ·   {totals.loot} LOOT   ·   {plural(
+			totals.downs,
+			"DOWN"
+		)}`,
 		Font = Theme.Font.type,
 		TextSize = 20,
 		Color = Theme.Color.ink,
 		Position = UDim2.fromOffset(PAD, 420),
 		Size = UDim2.new(1, -2 * PAD, 0, 28),
 	})
+	foot.TextScaled = true -- a long run shrinks to the card's width
+	Ui.new("UITextSizeConstraint", { MaxTextSize = 20, Parent = foot })
 	local final = Stamp.word({
 		key = `final{outcome}`,
 		text = RunLog.final(outcome, RunLog.endStop(log, State.Get({ "run", "nextStop" }))),
