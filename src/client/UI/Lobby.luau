@@ -35,108 +35,242 @@ function Lobby.mount(gui: ScreenGui)
 		Parent = gui,
 	})
 
-	-- Bold text straight over the hall: a dark outline thickens it and keeps it readable.
-	local function outlined(label: TextLabel): TextLabel
-		Ui.new("UIStroke", {
-			Color = Theme.Color.black,
-			Thickness = 1.5,
-			Transparency = 0.2,
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-			Parent = label,
+	-- A small caps caption in the dim tone (headers, field names).
+	local function caption(text: string, props: { [string]: any }): TextLabel
+		local l = Ui.text({
+			Text = text,
+			Font = Theme.Font.displayMedium,
+			TextSize = props.TextSize or 13,
+			Color = props.Color or Theme.Color.textDim,
+			Position = props.Position,
+			Size = props.Size,
+			XAlign = props.XAlign,
 		})
-		return label
+		l.Parent = props.Parent
+		return l
 	end
 
-	-- Profile card ---------------------------------------------------------------------------
-	local card = Ui.new("Frame", {
+	-- Profile card: the operator's crew pass --------------------------------------------------
+	local card = Ui.panel({
 		Name = "Profile",
-		Size = UDim2.fromOffset(300, 124),
+		Size = UDim2.fromOffset(300, 138),
 		Position = UDim2.fromOffset(14, 12),
-		BackgroundTransparency = 1,
+		BackgroundTransparency = 0.08,
 		Parent = container,
 	})
-	local nameLabel = Ui.text({
-		Text = `OPERATOR: {Session.player.DisplayName}`,
-		Font = Theme.Font.display,
-		TextSize = 24,
-		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(4, 8),
-		Size = UDim2.new(1, -40, 0, 26),
+	local band = Ui.new("Frame", {
+		Name = "Band",
+		Size = UDim2.new(1, 0, 0, 22),
+		BackgroundColor3 = Theme.Color.brass,
+		BorderSizePixel = 0,
+		Parent = card,
 	})
-	outlined(nameLabel).Parent = card
+	Ui.corner(2).Parent = band
+	caption("CREW PASS  ·  LAST TRAIN OUT", {
+		Color = Theme.Color.ink,
+		Position = UDim2.fromOffset(10, 1),
+		Size = UDim2.new(1, -20, 1, 0),
+		Parent = band,
+	})
+	caption(`No. {string.format("%05d", Session.player.UserId % 100000)}`, {
+		Color = Theme.Color.ink,
+		Position = UDim2.fromOffset(10, 1),
+		Size = UDim2.new(1, -20, 1, 0),
+		XAlign = Enum.TextXAlignment.Right,
+		Parent = band,
+	})
+	local nameLabel = Ui.text({
+		Text = Session.player.DisplayName,
+		Font = Theme.Font.display,
+		TextSize = 26,
+		Color = Theme.Color.white,
+		Position = UDim2.fromOffset(12, 28),
+		Size = UDim2.new(1, -24, 0, 28),
+	})
+	nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+	nameLabel.Parent = card
+	-- the rank number on a square badge, the XP to the next rank beside it
+	local badge = Ui.new("TextLabel", {
+		Name = "RankBadge",
+		Size = UDim2.fromOffset(30, 30),
+		Position = UDim2.fromOffset(12, 60),
+		BackgroundColor3 = Theme.Color.steelLight,
+		BorderSizePixel = 0,
+		FontFace = Theme.Font.display,
+		TextSize = 20,
+		TextColor3 = Theme.Color.brassLight,
+		Text = "1",
+		Parent = card,
+	})
+	Ui.corner(2).Parent = badge
+	Ui.stroke(Theme.Color.brass, 1, 0).Parent = badge
+	caption(
+		"CREW RANK",
+		{ Position = UDim2.fromOffset(50, 58), Size = UDim2.fromOffset(120, 16), Parent = card }
+	)
 	local rankLabel = Ui.text({
 		Text = "",
-		Font = Theme.Font.display,
-		TextSize = 20,
+		Font = Theme.Font.displayMedium,
+		TextSize = 15,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(4, 36),
-		Size = UDim2.new(1, -40, 0, 22),
+		Position = UDim2.fromOffset(50, 58),
+		Size = UDim2.new(1, -62, 0, 16),
+		XAlign = Enum.TextXAlignment.Right,
 	})
-	outlined(rankLabel).Parent = card
-	local xpFrame, setXp = Ui.meter({
-		Size = UDim2.new(1, -44, 0, 6),
-		Position = UDim2.fromOffset(4, 62),
-		FillColor = Theme.Color.brass,
+	rankLabel.Parent = card
+	-- progress as a row of ticket punches: lit holes are earned
+	local HOLES = 20
+	local holes = Ui.new("Frame", {
+		Name = "Punches",
+		Size = UDim2.new(1, -62, 0, 8),
+		Position = UDim2.fromOffset(50, 80),
+		BackgroundTransparency = 1,
+		Parent = card,
 	})
-	xpFrame.BackgroundColor3 = Theme.Color.paperShade
-	xpFrame.BackgroundTransparency = 0
-	xpFrame.Parent = card
+	Ui.list(Enum.FillDirection.Horizontal, 3, Enum.HorizontalAlignment.Left).Parent = holes
+	local holeFrames: { Frame } = {}
+	for i = 1, HOLES do
+		holeFrames[i] = Ui.new("Frame", {
+			Size = UDim2.new(1 / HOLES, -3, 1, 0),
+			BackgroundColor3 = Theme.Color.steelLight,
+			BorderSizePixel = 0,
+			LayoutOrder = i,
+			Parent = holes,
+		})
+	end
+	local function setXp(fraction: number)
+		local lit = math.floor(math.clamp(fraction, 0, 1) * HOLES + 0.5)
+		for i, hole in holeFrames do
+			hole.BackgroundColor3 = if i <= lit then Theme.Color.brass else Theme.Color.steelLight
+		end
+	end
+	Ui.new("Frame", {
+		Name = "Rule",
+		Size = UDim2.new(1, -24, 0, 1),
+		Position = UDim2.fromOffset(12, 100),
+		BackgroundColor3 = Theme.Color.steelLine,
+		BorderSizePixel = 0,
+		Parent = card,
+	})
 	local brassLabel = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 22,
+		TextSize = 20,
 		Color = Theme.Color.brassLight,
-		Position = UDim2.fromOffset(4, 76),
+		Position = UDim2.fromOffset(12, 106),
 		Size = UDim2.new(0.6, 0, 0, 24),
 	})
-	outlined(brassLabel).Parent = card
+	brassLabel.Parent = card
 	local savingLabel = Ui.text({
 		Text = "",
-		Font = Theme.Font.display,
-		TextSize = 17,
-		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(4, 102),
-		Size = UDim2.fromOffset(180, 20),
+		Font = Theme.Font.displayMedium,
+		TextSize = 13,
+		Color = Theme.Color.signal,
+		Position = UDim2.new(0.4, 0, 0, 108),
+		Size = UDim2.new(0.6, -12, 0, 20),
+		XAlign = Enum.TextXAlignment.Right,
 	})
-	outlined(savingLabel).Parent = card
+	savingLabel.Parent = card
 
-	-- Departure panel -------------------------------------------------------------------------
-	local panel = Ui.new("Frame", {
+	-- Departure panel: the platform indicator --------------------------------------------------
+	local panel = Ui.panel({
 		Name = "Departure",
-		Size = UDim2.fromOffset(420, 120),
-		Position = UDim2.new(0.5, 0, 1, -24),
+		Size = UDim2.fromOffset(440, 168),
+		Position = UDim2.new(0.5, 0, 1, -20),
 		AnchorPoint = Vector2.new(0.5, 1),
-		BackgroundTransparency = 1,
+		BackgroundTransparency = 0.06,
 		Parent = container,
+	})
+	local headStrip = Ui.new("Frame", {
+		Name = "Head",
+		Size = UDim2.new(1, 0, 0, 24),
+		BackgroundColor3 = Theme.Color.steelLight,
+		BorderSizePixel = 0,
+		Parent = panel,
+	})
+	Ui.corner(2).Parent = headStrip
+	local platformPlate = Ui.new("TextLabel", {
+		Size = UDim2.fromOffset(24, 24),
+		BackgroundColor3 = Theme.Color.brass,
+		BorderSizePixel = 0,
+		FontFace = Theme.Font.sign,
+		TextSize = 16,
+		TextColor3 = Theme.Color.ink,
+		Text = "1",
+		Parent = headStrip,
+	})
+	Ui.corner(2).Parent = platformPlate
+	caption("PLATFORM 1  ·  DEPOT HALL", {
+		Color = Theme.Color.white,
+		Position = UDim2.fromOffset(34, 0),
+		Size = UDim2.new(1, -44, 1, 0),
+		Parent = headStrip,
+	})
+	caption("ALL STOPS TO THE TERMINUS", {
+		Position = UDim2.fromOffset(34, 0),
+		Size = UDim2.new(1, -44, 1, 0),
+		XAlign = Enum.TextXAlignment.Right,
+		Parent = headStrip,
 	})
 	local status = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 24,
+		TextSize = 26,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(0, 8),
-		Size = UDim2.new(1, 0, 0, 24),
+		Position = UDim2.fromOffset(0, 32),
+		Size = UDim2.new(1, 0, 0, 28),
 		XAlign = Enum.TextXAlignment.Center,
 	})
-	outlined(status).Parent = panel
+	status.Parent = panel
 	local detail = Ui.text({
 		Text = "",
-		Font = Theme.Font.bodyBold,
-		TextSize = 16,
-		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(0, 36),
-		Size = UDim2.new(1, 0, 0, 18),
+		Font = Theme.Font.body,
+		TextSize = 15,
+		Color = Theme.Color.textDim,
+		Position = UDim2.fromOffset(16, 62),
+		Size = UDim2.new(1, -32, 0, 18),
 		XAlign = Enum.TextXAlignment.Center,
 	})
-	outlined(detail).Parent = panel
+	detail.Parent = panel
+	-- one signal lamp per crewmate the departure needs: lit when they are ready
+	local lampRow = Ui.new("Frame", {
+		Name = "Lamps",
+		Size = UDim2.new(1, 0, 0, 14),
+		Position = UDim2.fromOffset(0, 86),
+		BackgroundTransparency = 1,
+		Parent = panel,
+	})
+	Ui.list(Enum.FillDirection.Horizontal, 10, Enum.HorizontalAlignment.Center).Parent = lampRow
+	local lamps: { Frame } = {}
+	for i = 1, 4 do
+		local lamp = Ui.new("Frame", {
+			Size = UDim2.fromOffset(14, 14),
+			BackgroundColor3 = Theme.Color.steelLight,
+			BorderSizePixel = 0,
+			LayoutOrder = i,
+			Parent = lampRow,
+		})
+		Ui.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = lamp })
+		Ui.stroke(Theme.Color.steelLine, 1, 0).Parent = lamp
+		lamps[i] = lamp
+	end
+	local function setLamps(ready: number, needed: number)
+		for i, lamp in lamps do
+			lamp.Visible = i <= math.max(needed, ready)
+			lamp.BackgroundColor3 = if i <= ready then Theme.Color.go else Theme.Color.steelLight
+		end
+	end
 	local readyButton = Ui.button("READY", "Primary", nil, {
-		Size = UDim2.fromOffset(220, 44),
+		Size = UDim2.new(1, -32, 0, 46),
 		Position = UDim2.new(0.5, 0, 1, -12),
 		AnchorPoint = Vector2.new(0.5, 1),
 		TextSize = 22,
 	})
 	readyButton.Parent = panel
 	readyButton.Activated:Connect(function()
+		if readyButton:GetAttribute("Disabled") then
+			return
+		end
 		local phase = Session.phase()
 		if RunRules.isRunPhase(phase :: any) then
 			Net.Fire("JoinInProgress")
@@ -146,25 +280,25 @@ function Lobby.mount(gui: ScreenGui)
 		end
 	end)
 
-	-- Run tier: everyone sees it, only the host can change it ---------------------------------
-	local tierRow = Ui.new("Frame", {
+	-- Run tier: a tab on top of the panel; everyone sees it, only the host can change it -------
+	local tierRow = Ui.panel({
 		Name = "RunTier",
-		Size = UDim2.fromOffset(420, 36),
-		Position = UDim2.new(0.5, 0, 1, -150),
+		Size = UDim2.fromOffset(300, 34),
+		Position = UDim2.new(0.5, 0, 1, -194),
 		AnchorPoint = Vector2.new(0.5, 1),
-		BackgroundTransparency = 1,
+		BackgroundTransparency = 0.06,
 		Parent = container,
 	})
 	local tierLabel = Ui.text({
 		Text = "",
-		Font = Theme.Font.display,
-		TextSize = 20,
+		Font = Theme.Font.displayMedium,
+		TextSize = 15,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(48, 0),
-		Size = UDim2.new(1, -96, 1, 0),
+		Position = UDim2.fromOffset(40, 0),
+		Size = UDim2.new(1, -80, 1, 0),
 		XAlign = Enum.TextXAlignment.Center,
 	})
-	outlined(tierLabel).Parent = tierRow
+	tierLabel.Parent = tierRow
 	local function pickTier(step: number)
 		local tier = State.Get({ "lobby", "tier" }) or {}
 		local nextTier = math.clamp((tier.selected or 1) + step, 1, tier.max or 1)
@@ -172,30 +306,30 @@ function Lobby.mount(gui: ScreenGui)
 			Net.Fire("SetRunTier", nextTier)
 		end
 	end
-	local tierDown = Ui.button("<", "Secondary", function()
+	local tierDown = Ui.button("◀", "Secondary", function()
 		pickTier(-1)
-	end, { Size = UDim2.fromOffset(40, 36), TextSize = 20 })
+	end, { Size = UDim2.fromOffset(34, 34), TextSize = 14 })
 	tierDown.Parent = tierRow
-	local tierUp = Ui.button(">", "Secondary", function()
+	local tierUp = Ui.button("▶", "Secondary", function()
 		pickTier(1)
-	end, { Size = UDim2.fromOffset(40, 36), Position = UDim2.new(1, -40, 0, 0), TextSize = 20 })
+	end, { Size = UDim2.fromOffset(34, 34), Position = UDim2.new(1, -34, 0, 0), TextSize = 14 })
 	tierUp.Parent = tierRow
 
-	-- Shortcuts -------------------------------------------------------------------------------
+	-- Shortcuts: two plates under the pass -----------------------------------------------------
 	local shortcuts = Ui.new("Frame", {
-		Size = UDim2.fromOffset(180, 88),
-		Position = UDim2.fromOffset(14, 140),
+		Size = UDim2.fromOffset(300, 40),
+		Position = UDim2.fromOffset(14, 158),
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
-	Ui.list(Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Left).Parent = shortcuts
+	Ui.list(Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Left).Parent = shortcuts
 	Ui.button("OUTFITTER", "Secondary", function()
 		Registry.UIController.Open("Outfitter")
-	end, { Size = UDim2.fromOffset(180, 40), LayoutOrder = 1 }).Parent =
+	end, { Size = UDim2.new(0.5, -4, 1, 0), LayoutOrder = 1, TextSize = 17 }).Parent =
 		shortcuts
 	Ui.button("LINE MASTERY", "Secondary", function()
 		Registry.UIController.Open("Ledger")
-	end, { Size = UDim2.fromOffset(180, 40), LayoutOrder = 2 }).Parent =
+	end, { Size = UDim2.new(0.5, -4, 1, 0), LayoutOrder = 2, TextSize = 17 }).Parent =
 		shortcuts
 
 	-- In-world departure board ----------------------------------------------------------------
@@ -230,7 +364,7 @@ function Lobby.mount(gui: ScreenGui)
 			Text = "",
 			Font = Theme.Font.sign,
 			TextSize = 40,
-			Color = Theme.Color.paper,
+			Color = Theme.Color.white,
 			Position = UDim2.fromOffset(40, 110),
 			Size = UDim2.new(1, -80, 1, -130),
 			YAlign = Enum.TextYAlignment.Top,
@@ -269,12 +403,11 @@ function Lobby.mount(gui: ScreenGui)
 			return
 		end
 		local rank, into, span = Rank.progress(profile.xp or 0)
-		rankLabel.Text = if span > 0
-			then `CREW RANK {rank}  ·  {into}/{span} XP`
-			else `CREW RANK {rank}  ·  MAX`
+		badge.Text = tostring(rank)
+		rankLabel.Text = if span > 0 then `{into} / {span} XP` else "MAX RANK"
 		setXp(if span > 0 then into / span else 1)
 		brassLabel.Text = `{Format.thousands(profile.brass or 0)} BRASS`
-		savingLabel.Text = if profile.saving == "Offline" then "PROGRESS NOT SAVED" else ""
+		savingLabel.Text = if profile.saving == "Offline" then "NOT SAVING" else ""
 	end
 	State.Observe("private", { "profile" }, renderProfile)
 
@@ -294,8 +427,8 @@ function Lobby.mount(gui: ScreenGui)
 		local isHost = tier.host == Session.userKey
 		tierRow.Visible = panel.Visible and not RunRules.isRunPhase(phase :: any) and phase ~= "RunEnd"
 		tierLabel.Text = if isHost
-			then `RUN TIER {selected}  ·  CREW CAN PLAY UP TO {maxTier}`
-			else `RUN TIER {selected}  ·  HOST PICKS (UP TO {maxTier})`
+			then `RUN TIER {selected}  ·  UP TO {maxTier}`
+			else `RUN TIER {selected}  ·  HOST PICKS`
 		tierDown.Visible = isHost
 		tierUp.Visible = isHost
 		Ui.setButtonEnabled(tierDown, selected > 1)
@@ -311,6 +444,7 @@ function Lobby.mount(gui: ScreenGui)
 				else "Too far down the line. Next departure after this run."
 			readyButton.Text = "JOIN AT NEXT STOP"
 			Ui.setButtonEnabled(readyButton, joinable)
+			setLamps(0, 0)
 			rows = `EN ROUTE  ·  STOP {stop} OF {Tuning.Run.StationCount}\nNEXT DEPARTURE AFTER THIS RUN`
 		elseif phase == "Countdown" then
 			local remaining = math.max((run.phaseEndsAt or now) - now, 0)
@@ -318,12 +452,14 @@ function Lobby.mount(gui: ScreenGui)
 			detail.Text = `{readyCount} ready  ·  everyone in the hall boards`
 			readyButton.Text = if mine then "READY ✓" else "READY"
 			Ui.setButtonEnabled(readyButton, true)
+			setLamps(readyCount, readyCount)
 			rows = `BOARDING NOW  ·  DEPARTS {Format.clock(remaining)}\n{readyCount} CREW READY`
 		else
 			status.Text = "WAITING FOR CREW"
 			detail.Text = `{readyCount}/{needed} ready to depart`
 			readyButton.Text = if mine then "READY ✓" else "READY"
 			Ui.setButtonEnabled(readyButton, true)
+			setLamps(readyCount, needed)
 			rows = `STATUS  ·  WAITING FOR CREW\n{readyCount} OF {needed} READY`
 		end
 		if boardHead and boardRows and boardGui then

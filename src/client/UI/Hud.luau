@@ -321,7 +321,7 @@ function Hud.mount(gui: ScreenGui)
 		ECLIPSE = Color3.fromRGB(200, 82, 60),
 		["BLOOD MOON"] = Theme.Color.signal,
 		["MOON WANING"] = Color3.fromRGB(196, 110, 92),
-		["PALE MOON"] = Color3.fromRGB(214, 206, 196),
+		["PALE MOON"] = Color3.fromRGB(192, 208, 220),
 		DAWN = Theme.Color.brassLight,
 	}
 	local function clockText(hour: number): string

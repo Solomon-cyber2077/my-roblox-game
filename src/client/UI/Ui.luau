@@ -156,7 +156,7 @@ function Ui.panel(props: { [any]: any }): Frame
 	return frame
 end
 
--- Cream ticket stock with a perforated edge along one side.
+-- Grey-green card stock with a perforated edge along one side.
 function Ui.ticket(props: { [any]: any }): Frame
 	local frame = Ui.new("Frame", props)
 	frame.BackgroundColor3 = props.BackgroundColor3 or Theme.Color.paper
@@ -193,6 +193,40 @@ local STYLES: { [string]: { bg: Color3, text: Color3, stroke: Color3 } } = {
 	Paper = { bg = Theme.Color.paper, text = Theme.Color.ink, stroke = Theme.Color.paperShade },
 }
 
+local KEEL = 4 -- the plate's dark underside, in px; it collapses to 1 while pressed
+local function keelColor(face: Color3): Color3
+	return Color3.new(face.R * 0.5, face.G * 0.5, face.B * 0.5)
+end
+
+-- Four brass corner brackets just outside a button: what gamepad selection looks like.
+local function brackets(): Frame
+	local frame = Ui.new("Frame", {
+		Name = "Brackets",
+		Size = UDim2.new(1, 10, 1, 10),
+		Position = UDim2.fromOffset(-5, -5),
+		BackgroundTransparency = 1,
+	})
+	for _, corner in { Vector2.new(0, 0), Vector2.new(1, 0), Vector2.new(0, 1), Vector2.new(1, 1) } do
+		for _, long in { true, false } do
+			Ui.new("Frame", {
+				AnchorPoint = corner,
+				Position = UDim2.fromScale(corner.X, corner.Y),
+				Size = if long then UDim2.fromOffset(12, 3) else UDim2.fromOffset(3, 12),
+				BackgroundColor3 = Theme.Color.brassLight,
+				BorderSizePixel = 0,
+				Parent = frame,
+			})
+		end
+	end
+	return frame
+end
+
+--[[
+	An enamel plate: flat face, hairline rim and a dark keel along the bottom edge.
+	Hover lifts a faint sheen, pressing collapses the keel and darkens the face,
+	gamepad selection shows corner brackets, and a disabled plate goes dull and flat.
+	Callers may still recolour BackgroundColor3; the keel follows it.
+]]
 function Ui.button(
 	text: string,
 	style: ButtonStyle?,
@@ -215,36 +249,107 @@ function Ui.button(
 		TextColor3 = s.text,
 		BorderSizePixel = 0,
 		Selectable = true,
+		SelectionImageObject = brackets(),
 	})
 	Ui.corner(2).Parent = button
-	local stroke = Ui.stroke(s.stroke, 1, 0.2)
+	Ui.new("UIPadding", { PaddingBottom = UDim.new(0, KEEL - 1), Parent = button })
+	local stroke = Ui.stroke(s.stroke, 1, 0.35)
 	stroke.Parent = button
-	local scale = Ui.new("UIScale", { Parent = button })
+	local keel = Ui.new("Frame", {
+		Name = "Keel",
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 0, 1, KEEL - 1),
+		Size = UDim2.new(1, 0, 0, KEEL),
+		BackgroundColor3 = keelColor(s.bg),
+		BorderSizePixel = 0,
+		Parent = button,
+	})
+	local shade = Ui.new("Frame", {
+		Name = "Shade",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Parent = button,
+	})
+	Ui.corner(2).Parent = shade
+	button:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
+		keel.BackgroundColor3 = keelColor(button.BackgroundColor3)
+	end)
+	local hovering = false
+	local function look(state: "Rest" | "Hover" | "Down")
+		if button:GetAttribute("Disabled") then
+			return
+		end
+		local quick = TweenInfo.new(0.07)
+		if state == "Down" then
+			shade.BackgroundColor3 = Color3.new(0, 0, 0)
+			Ui.tween(shade, { BackgroundTransparency = 0.72 }, quick)
+			Ui.tween(keel, { Size = UDim2.new(1, 0, 0, 1) }, quick)
+		else
+			shade.BackgroundColor3 = Color3.new(1, 1, 1)
+			Ui.tween(shade, { BackgroundTransparency = if state == "Hover" then 0.86 else 1 })
+			Ui.tween(keel, { Size = UDim2.new(1, 0, 0, KEEL) })
+		end
+		Ui.tween(stroke, { Transparency = if state == "Rest" then 0.35 else 0 })
+	end
 	button.MouseEnter:Connect(function()
-		Ui.tween(scale, { Scale = 1.04 })
-		Ui.tween(stroke, { Transparency = 0 })
+		hovering = true
+		look("Hover")
 	end)
 	button.MouseLeave:Connect(function()
-		Ui.tween(scale, { Scale = 1 })
-		Ui.tween(stroke, { Transparency = 0.2 })
+		hovering = false
+		look("Rest")
+	end)
+	button.SelectionGained:Connect(function()
+		look("Hover")
+	end)
+	button.SelectionLost:Connect(function()
+		look("Rest")
 	end)
 	button.MouseButton1Down:Connect(function()
-		Ui.tween(scale, { Scale = 0.96 }, TweenInfo.new(0.06))
+		look("Down")
 	end)
 	button.MouseButton1Up:Connect(function()
-		Ui.tween(scale, { Scale = 1.04 }, TweenInfo.new(0.1))
+		look(if hovering then "Hover" else "Rest")
 	end)
 	if onClick then
-		button.Activated:Connect(onClick)
+		button.Activated:Connect(function()
+			if not button:GetAttribute("Disabled") then
+				onClick()
+			end
+		end)
 	end
 	return button
 end
 
+-- Recolours a plate to another style (the keel follows).
+function Ui.setButtonStyle(button: TextButton, style: ButtonStyle)
+	local s = STYLES[style]
+	button.BackgroundColor3 = s.bg
+	button.TextColor3 = s.text
+	local stroke = button:FindFirstChildOfClass("UIStroke")
+	if stroke then
+		stroke.Color = s.stroke
+	end
+end
+
+-- A disabled plate: dull, flat (no keel), no hover, and it ignores clicks.
 function Ui.setButtonEnabled(button: TextButton, enabled: boolean)
 	button.Active = enabled
 	button.AutoButtonColor = false
-	button.BackgroundTransparency = if enabled then 0 else 0.55
-	button.TextTransparency = if enabled then 0 else 0.45
+	button:SetAttribute("Disabled", not enabled)
+	button.BackgroundTransparency = 0
+	button.TextTransparency = if enabled then 0 else 0.5
+	local shade = button:FindFirstChild("Shade") :: Frame?
+	if shade then
+		shade.BackgroundColor3 = Theme.Color.steel
+		shade.BackgroundTransparency = if enabled then 1 else 0.38
+	end
+	local keel = button:FindFirstChild("Keel") :: Frame?
+	if keel then
+		keel.Visible = enabled
+	end
 end
 
 -- Horizontal meter: returns the frame and a setter(fraction, color?).

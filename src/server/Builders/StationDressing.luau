@@ -50,14 +50,17 @@ local C = {
 	wood = rgb(104, 78, 54),
 	woodDark = rgb(70, 50, 36),
 	weathered = rgb(126, 112, 96),
-	paint = rgb(196, 190, 174),
+	paint = rgb(184, 190, 192), -- weathered white paint (fences, posts), cold not cream
 	stone = rgb(132, 126, 116),
 	straw = rgb(190, 160, 92),
 	burlap = rgb(150, 124, 86),
 	water = rgb(30, 36, 42),
 	coal = rgb(30, 29, 28),
 	red = rgb(168, 34, 30),
-	cream = rgb(232, 224, 200),
+	enamel = rgb(204, 222, 234), -- enamel signs and lettering: a cold white that survives warm lamplight
+	company = rgb(24, 58, 54), -- the line's teal-green enamel
+	card = rgb(166, 192, 182), -- the line's grey-green card
+	pad = rgb(186, 206, 224), -- blue-ruled notepaper
 	brass = rgb(190, 150, 80),
 	galvanised = rgb(150, 156, 160),
 	slate = rgb(56, 58, 64),
@@ -563,7 +566,7 @@ Builders.Canopy = function(ctx)
 	)
 	-- the valance: a row of pointed boards painted on an invisible board along the front edge
 	local valance =
-		block(ctx, Vector3.new(span + 2, 1.6, 0.06), f(ctx, 0, frontY - 1.4, frontZ - 0.3), C.cream)
+		block(ctx, Vector3.new(span + 2, 1.6, 0.06), f(ctx, 0, frontY - 1.4, frontZ - 0.3), C.enamel)
 	valance.Transparency = 1
 	valance.Name = "Valance"
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
@@ -630,7 +633,7 @@ Builders.Canopy = function(ctx)
 	rod(ctx, 0.5, 2.6, drum, C.iron, M.Metal)
 	rod(ctx, 0.4, 2.76, drum, C.brass, M.Metal)
 	for _, side in { -1, 1 } do
-		rod(ctx, 0.04, 2.2, drum * CFrame.new(side * 0.27, 0, 0), C.cream, M.SmoothPlastic)
+		rod(ctx, 0.04, 2.2, drum * CFrame.new(side * 0.27, 0, 0), C.enamel, M.SmoothPlastic)
 		local face = drum * CFrame.new(side * 0.3, 0, 0)
 		block(
 			ctx,
@@ -662,7 +665,7 @@ Builders.PlatformEnd = function(ctx)
 	for _, dz in { -1.4, 1.4 } do
 		post(ctx, 5.2, 0.22, f(ctx, -1.3, 2.6, 5 + dz), C.iron, M.Metal, true)
 	end
-	local board = block(ctx, Vector3.new(0.14, 1.9, 3.6), f(ctx, -1.48, 4.4, 5), C.cream, M.SmoothPlastic)
+	local board = block(ctx, Vector3.new(0.14, 1.9, 3.6), f(ctx, -1.48, 4.4, 5), C.enamel, M.SmoothPlastic)
 	letter(
 		board,
 		Enum.NormalId.Left,
@@ -717,7 +720,7 @@ Builders.FireBuckets = function(ctx)
 		bar,
 		Enum.NormalId.Front,
 		"FIRE",
-		C.cream,
+		C.enamel,
 		Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold),
 		Vector2.new(400, 50)
 	)
@@ -727,54 +730,112 @@ Builders.FireBuckets = function(ctx)
 	end
 end
 
--- The timetable board: every service on it cancelled, and a poster pinned over the corner.
+-- The timetable bill: the line's grey-green card under a teal header, ruled in three columns,
+-- every service on it cancelled and the whole sheet stamped SUSPENDED; Ellie's appeal for Tom
+-- (the same one that hangs in the Depot Hall) is pinned over its corner.
 Builders.Timetable = function(ctx)
 	for _, x in { -1.9, 1.9 } do
 		post(ctx, 5.6, 0.26, f(ctx, x, 2.8, 0.1), C.woodDark, M.Wood, true)
 	end
 	block(ctx, Vector3.new(4.4, 3.2, 0.2), f(ctx, 0, 4.2, 0.1), C.woodDark, M.Wood)
-	local sheet = block(ctx, Vector3.new(4.0, 2.8, 0.06), f(ctx, 0, 4.2, -0.03), C.cream)
+	block(ctx, Vector3.new(4.6, 0.16, 0.42), f(ctx, 0, 5.88, 0.06), C.woodDark, M.Wood)
+	local sheet = block(ctx, Vector3.new(4.0, 2.8, 0.06), f(ctx, 0, 4.2, -0.03), C.card)
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = Enum.NormalId.Front
 	gui.CanvasSize = Vector2.new(400, 280)
-	gui.LightInfluence = 1
+	gui.LightInfluence = 0.8
 	gui.Parent = sheet
-	local lines = {
-		"LAST TRAIN OUT  ·  NIGHT SERVICE",
-		"DEPARTS          FOR            ",
-		"18.20  Coaling Yard     CANCELLED",
-		"19.05  Ashgrove         CANCELLED",
-		"20.40  Brannoc          CANCELLED",
-		"22.15  Gallowmere       CANCELLED",
-		"02.00  ------------     DO NOT WAIT",
-		"06.30  The Terminus     ON TIME",
-	}
-	for i, text in lines do
+	local ink = rgb(30, 36, 40)
+	local function frame(color: Color3, x: number, y: number, w: number, h: number): Frame
+		local fr = Instance.new("Frame")
+		fr.BorderSizePixel = 0
+		fr.BackgroundColor3 = color
+		fr.Position = UDim2.fromOffset(x, y)
+		fr.Size = UDim2.fromOffset(w, h)
+		fr.Parent = gui
+		return fr
+	end
+	local function text(
+		t: string,
+		color: Color3,
+		x: number,
+		y: number,
+		w: number,
+		h: number,
+		face: Font,
+		align: Enum.TextXAlignment?
+	)
 		local label = Instance.new("TextLabel")
 		label.BackgroundTransparency = 1
-		label.Position = UDim2.new(0.05, 0, 0, 14 + (i - 1) * 32)
-		label.Size = UDim2.new(0.9, 0, 0, 26)
-		label.FontFace = Font.new("rbxasset://fonts/families/SpecialElite.json")
-		label.Text = text
-		label.TextColor3 = if i == 1 then rgb(120, 26, 24) else rgb(40, 36, 34)
+		label.Position = UDim2.fromOffset(x, y)
+		label.Size = UDim2.fromOffset(w, h)
+		label.FontFace = face
+		label.Text = t
+		label.TextColor3 = color
 		label.TextScaled = true
-		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.TextXAlignment = align or Enum.TextXAlignment.Left
 		label.Parent = gui
+		return label
 	end
-	local poster = block(
-		ctx,
-		Vector3.new(1.3, 1.7, 0.04),
-		f(ctx, 1.45, 4.8, -0.08) * Kit.angles(0, 0, -7),
-		rgb(214, 200, 168)
-	)
+	local typed = Font.new("rbxasset://fonts/families/SpecialElite.json")
+	local heavy = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold)
+	frame(C.company, 0, 0, 400, 44)
+	text("LAST TRAIN OUT", C.enamel, 14, 6, 220, 32, heavy)
+	text("NIGHT SERVICE", rgb(206, 168, 92), 236, 12, 150, 22, heavy, Enum.TextXAlignment.Right)
+	text("DEP.", ink, 14, 52, 60, 16, heavy)
+	text("FOR", ink, 90, 52, 150, 16, heavy)
+	text("REMARKS", ink, 250, 52, 136, 16, heavy, Enum.TextXAlignment.Right)
+	frame(ink, 12, 72, 376, 2)
+	local rows = {
+		{ "18.20", "Coaling Yard", "CANCELLED" },
+		{ "19.05", "Ashgrove", "CANCELLED" },
+		{ "20.40", "Brannoc", "CANCELLED" },
+		{ "22.15", "Gallowmere", "CANCELLED" },
+		{ "02.00", "------------", "DO NOT WAIT" },
+		{ "06.30", "The Terminus", "ON TIME" },
+	}
+	for i, row in rows do
+		local y = 80 + (i - 1) * 31
+		text(row[1], ink, 14, y, 64, 22, typed)
+		text(row[2], ink, 90, y, 150, 22, typed)
+		text(
+			row[3],
+			if i == #rows then rgb(36, 96, 66) else rgb(150, 30, 28),
+			250,
+			y,
+			136,
+			22,
+			typed,
+			Enum.TextXAlignment.Right
+		)
+		frame(rgb(120, 140, 134), 12, y + 27, 376, 1)
+	end
+	frame(ink, 80, 76, 1, 190)
+	frame(ink, 244, 76, 1, 190)
+	local stamp = frame(rgb(176, 36, 34), 60, 112, 230, 58)
+	stamp.BackgroundTransparency = 1
+	stamp.Rotation = -14
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = rgb(176, 36, 34)
+	stroke.Thickness = 4
+	stroke.Transparency = 0.2
+	stroke.Parent = stamp
+	local word = text("SUSPENDED", rgb(176, 36, 34), 0, 0, 230, 58, heavy, Enum.TextXAlignment.Center)
+	word.Parent = stamp
+	word.Position = UDim2.fromOffset(8, 6)
+	word.Size = UDim2.fromOffset(214, 46)
+	word.TextTransparency = 0.2
+	local poster =
+		block(ctx, Vector3.new(1.3, 1.7, 0.04), f(ctx, 1.45, 4.8, -0.08) * Kit.angles(0, 0, -7), C.pad)
 	letter(
 		poster,
 		Enum.NormalId.Front,
 		"HAVE YOU SEEN TOM?",
-		rgb(44, 52, 92),
+		rgb(40, 52, 98),
 		Font.new("rbxasset://fonts/families/Kalam.json", Enum.FontWeight.Bold),
 		Vector2.new(130, 170)
 	)
+	ball(ctx, 0.16, f(ctx, 1.4, 5.55, -0.14), C.red, M.SmoothPlastic)
 end
 
 -- A stone trough of flowers long dead.
@@ -1014,17 +1075,17 @@ Builders.PillarBox = function(ctx)
 	post(ctx, 0.4, 2.0, f(ctx, 0, 4.2, 0), C.red, M.Metal)
 	ball(ctx, 1.9, f(ctx, 0, 4.42, 0), C.red, M.Metal)
 	block(ctx, Vector3.new(0.9, 0.12, 0.2), f(ctx, 0, 3.4, -0.82), C.coal)
-	block(ctx, Vector3.new(0.6, 0.6, 0.06), f(ctx, 0, 2.6, -0.86), C.cream)
+	block(ctx, Vector3.new(0.6, 0.6, 0.06), f(ctx, 0, 2.6, -0.86), C.enamel)
 end
 
 -- A semaphore signal, its arm stuck at danger.
 Builders.SignalPost = function(ctx)
 	block(ctx, Vector3.new(1.4, 0.8, 1.4), f(ctx, 0, 0.4, 0), C.stone, M.Concrete, true)
-	post(ctx, 17, 0.6, f(ctx, 0, 9.3, 0), C.cream, M.Wood, true)
+	post(ctx, 17, 0.6, f(ctx, 0, 9.3, 0), C.enamel, M.Wood, true)
 	ball(ctx, 0.8, f(ctx, 0, 18.1, 0), C.iron, M.Metal)
 	local arm = block(ctx, Vector3.new(3.8, 0.7, 0.15), f(ctx, 2.1, 15.5, -0.4), C.red, M.Wood)
 	arm.Name = "SignalArm"
-	block(ctx, Vector3.new(0.4, 0.72, 0.2), f(ctx, 3.3, 15.5, -0.4), C.cream, M.Wood)
+	block(ctx, Vector3.new(0.4, 0.72, 0.2), f(ctx, 3.3, 15.5, -0.4), C.enamel, M.Wood)
 	block(ctx, Vector3.new(0.9, 1.4, 0.14), f(ctx, 0.2, 15.2, -0.5), C.iron, M.Metal)
 	Kit.neon(ctx.parent, Vector3.new(0.4, 0.4, 0.06), f(ctx, 0.2, 15.5, -0.58), rgb(200, 40, 34))
 	-- the ladder up the post

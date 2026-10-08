@@ -14,10 +14,14 @@
 	Parts that take the livery carry a Livery attribute (Body, Trim, Roof, Accent, Lamp).
 	Parts the client animates carry WheelRadius, CrankRadius or DoorSlide attributes.
 
-	Inside, the carriages are lined with parts that never take the livery: a dark
-	wood wainscot below the windows, cream upper walls, brass window and door
-	frames, curtains, luggage racks, a ribbed cream ceiling and brass lamp
-	fixtures whose lights cast shadows.
+	Inside, the carriages are lined with parts that never take the livery: a mahogany
+	wainscot with a raised field under every window, deep green lincrusta upper walls,
+	mahogany window and door frames, curtains and brass luggage racks. The ceiling is
+	open down the middle into the clerestory, so its amber lights show from inside,
+	with gasoliers hanging from the clerestory roof on long rods whose lights cast shadows.
+
+	Outside, the varnished body is panelled by gilt beading, and the carriages ride on
+	bogies with Mansell wheels (teak centres in iron tyres) on leaf springs.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -41,9 +45,14 @@ local WALL_IN = HALF - WALL_T -- inner face of the side walls
 local LINE_T = 0.12 -- lining thickness
 local LINE_IN = WALL_IN - LINE_T -- inner face of the side linings
 local CEIL_BOTTOM = WALL_H - 0.12 -- underside of the ceiling lining
-local FRAME_W = 0.22 -- brass door frame width
+local FRAME_W = 0.22 -- door frame (architrave) width
 local RAIL_EDGE = LINE_IN - 0.3 -- end-wall chair rails stop where the side walls' rails begin
 local RUNNER_W = 2.8 -- the aisle's carpet runner
+local OPEN = 1.9 -- half-width of the ceiling's opening into the clerestory
+local MONITOR_T = 0.3 -- the clerestory's wall thickness
+local CLERESTORY_LOW = 10.2 -- the clerestory lights' sill and head
+local CLERESTORY_HIGH = 10.8
+local MONITOR_TOP = 11.1 -- top of the clerestory's walls (underside of its capping)
 
 local C = {
 	floor = Color3.fromRGB(104, 78, 54),
@@ -52,10 +61,11 @@ local C = {
 	driver = Color3.fromRGB(132, 34, 28), -- 1800s red driving wheels
 	russia = Color3.fromRGB(74, 88, 98), -- planished "Russia iron" boiler jacket
 	sash = Color3.fromRGB(58, 34, 22), -- dark varnished window sashes
+	frameWood = Color3.fromRGB(64, 38, 24), -- window and door architraves inside
 	clerestory = Color3.fromRGB(214, 168, 96), -- amber clerestory lights
 	glass = Color3.fromRGB(176, 196, 206),
 	interior = Color3.fromRGB(142, 108, 72),
-	brass = Color3.fromRGB(201, 160, 82),
+	brass = Color3.fromRGB(184, 144, 76), -- aged, not polished
 	iron = Color3.fromRGB(58, 58, 62),
 	warm = Color3.fromRGB(255, 206, 150),
 	fire = Color3.fromRGB(255, 120, 40),
@@ -64,12 +74,15 @@ local C = {
 	seat = Color3.fromRGB(120, 40, 36),
 	wainscot = Color3.fromRGB(74, 46, 30),
 	rail = Color3.fromRGB(96, 64, 40),
-	cream = Color3.fromRGB(226, 214, 188),
-	ceiling = Color3.fromRGB(234, 224, 200),
+	lincrusta = Color3.fromRGB(46, 70, 62), -- embossed wall covering above the wainscot
+	ceiling = Color3.fromRGB(78, 90, 84), -- lamp-smoked green-grey
+	field = Color3.fromRGB(92, 56, 34), -- the wainscot's raised panels, a shade lighter
 	rib = Color3.fromRGB(88, 60, 38),
-	curtain = Color3.fromRGB(118, 36, 34),
-	carpet = Color3.fromRGB(140, 22, 30),
-	carpetEdge = Color3.fromRGB(196, 150, 72),
+	curtain = Color3.fromRGB(104, 30, 32),
+	carpet = Color3.fromRGB(92, 24, 30),
+	carpetEdge = Color3.fromRGB(150, 116, 58),
+	teak = Color3.fromRGB(78, 52, 32), -- Mansell wheel centres
+	spring = Color3.fromRGB(30, 30, 32),
 	globe = Color3.fromRGB(255, 226, 176),
 }
 
@@ -128,19 +141,35 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		return origin * CFrame.new(x, y, z)
 	end
 
-	-- 1800s varnished mahogany with brass, a tarred roof and green doors (the default livery repaints these)
-	local body = Color3.fromRGB(108, 50, 30)
+	-- varnished mahogany lined in gilt, a tarred roof and black-green doors (the default livery repaints these)
+	local body = Color3.fromRGB(92, 40, 26)
 	local trim = C.brass
-	local roof = Color3.fromRGB(44, 40, 36)
-	local accent = Color3.fromRGB(36, 70, 48)
-	local wood = { material = Enum.Material.WoodPlanks }
+	local roof = Color3.fromRGB(34, 33, 34)
+	local accent = Color3.fromRGB(26, 44, 38)
+	-- painted and varnished: smooth with a faint sheen (wood grain at this scale reads as noise)
+	local varnish = { material = Enum.Material.SmoothPlastic, reflectance = 0.04 }
 
 	local doorBlockers: { BasePart } = {}
 	local breachAnchors: { BasePart } = {}
 	local cabins: { Cabin } = {}
 
+	--[[
+		A carriage bogie: a bolster across the middle, a side frame outside the wheels each
+		side, an axle box on every journal hung from a leaf spring, and Mansell wheels (teak
+		centres in an iron tyre). Only the tyre spins (WheelRadius); centre and boss are round.
+	]]
 	local function bogie(x: number)
-		Kit.block(model, Vector3.new(8, 1.2, 10), at(x, -3, 0), C.frame, { material = Enum.Material.Metal })
+		local metal = { material = Enum.Material.Metal, collide = false }
+		Kit.block(
+			model,
+			Vector3.new(2.4, 1.2, 9.6),
+			at(x, -3, 0),
+			C.frame,
+			{ material = Enum.Material.Metal }
+		)
+		for _, side in { -1, 1 } do
+			Kit.block(model, Vector3.new(7.2, 0.6, 0.3), at(x, -3.3, side * 6.15), C.frame, metal)
+		end
 		for _, ax in { -2.1, 2.1 } do
 			for _, side in { -1, 1 } do
 				local wheel = Kit.cylinder(
@@ -152,13 +181,25 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					{ material = Enum.Material.Metal }
 				)
 				wheel:SetAttribute("WheelRadius", 1.6)
-				Kit.block(
+				Kit.cylinder(
 					model,
-					Vector3.new(1, 0.9, 0.5),
-					at(x + ax, -3.2, side * 5.75),
-					C.iron,
-					{ material = Enum.Material.Metal, collide = false }
+					0.7,
+					2.5,
+					at(x + ax, -3.6, side * 5.3) * Kit.angles(0, 90, 0),
+					C.teak,
+					{ material = Enum.Material.Wood, collide = false, shadow = false }
 				)
+				Kit.cylinder(
+					model,
+					0.84,
+					0.7,
+					at(x + ax, -3.6, side * 5.3) * Kit.angles(0, 90, 0),
+					C.iron,
+					metal
+				)
+				Kit.block(model, Vector3.new(1, 0.9, 0.5), at(x + ax, -3.2, side * 5.75), C.iron, metal)
+				-- the leaf spring over the axle box, its ends hung from the side frame
+				Kit.block(model, Vector3.new(1.9, 0.3, 0.36), at(x + ax, -2.6, side * 5.75), C.spring, metal)
 			end
 		end
 	end
@@ -224,7 +265,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				Vector3.new(0.4, band, 0.3),
 				at(cx, (WINDOW_TOP + WINDOW_BOTTOM) / 2, z),
 				body,
-				{ material = Enum.Material.WoodPlanks, collide = false }
+				{ material = Enum.Material.Wood, collide = false }
 			),
 			"Body"
 		)
@@ -241,7 +282,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 						Vector3.new(0.3, leg, leg),
 						origin * CFrame.fromMatrix(centre, Vector3.new(0, 0, d), Vector3.new(0, -1, 0)),
 						body,
-						{ material = Enum.Material.WoodPlanks, collide = false, shadow = false }
+						{ material = Enum.Material.Wood, collide = false, shadow = false }
 					),
 					"Body"
 				)
@@ -292,7 +333,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					Vector3.new(len, WINDOW_BOTTOM, WALL_T),
 					at(cx, WINDOW_BOTTOM / 2, z),
 					body,
-					wood
+					varnish
 				),
 				"Body"
 			)
@@ -320,7 +361,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				Vector3.new(xb - xa, WALL_H - headTop, WALL_T),
 				at((xa + xb) / 2, (WALL_H + headTop) / 2, z),
 				body,
-				wood
+				varnish
 			),
 			"Body"
 		)
@@ -332,7 +373,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 						Vector3.new(span[2] - span[1], headTop - WINDOW_TOP, WALL_T),
 						at((span[1] + span[2]) / 2, (headTop + WINDOW_TOP) / 2, z),
 						body,
-						wood
+						varnish
 					),
 					"Body"
 				)
@@ -400,6 +441,33 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				sashes(cx, z, sign)
 			end
 		end
+		-- gilt beading divides the lower body into a panel under each window
+		local beads: { [number]: boolean } = {}
+		for _, w in windows do
+			for _, bx in { w[1] - 0.8, w[2] + 0.8 } do
+				local key = math.floor(bx * 10 + 0.5)
+				local clearOfDoors = true
+				for _, gap in gaps do
+					if bx > gap[1] - 0.3 and bx < gap[2] + 0.3 then
+						clearOfDoors = false
+					end
+				end
+				-- neighbours 5.2 apart share a pier: one bead at its middle
+				if clearOfDoors and not beads[key] and not beads[key - 1] and not beads[key + 1] then
+					beads[key] = true
+					tag(
+						Kit.block(
+							model,
+							Vector3.new(0.14, WINDOW_BOTTOM - 0.9 - 0.28, 0.06),
+							at(bx, (WINDOW_BOTTOM + 0.9) / 2, sign * (HALF + 0.03)),
+							trim,
+							{ material = Enum.Material.Metal, collide = false, shadow = false }
+						),
+						"Trim"
+					)
+				end
+			end
+		end
 		local solid = table.clone(gaps)
 		for _, w in windows do
 			table.insert(solid, w)
@@ -413,7 +481,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 						Vector3.new(len, WINDOW_TOP - WINDOW_BOTTOM, WALL_T),
 						at((span[1] + span[2]) / 2, (WINDOW_TOP + WINDOW_BOTTOM) / 2, z),
 						body,
-						wood
+						varnish
 					),
 					"Body"
 				)
@@ -487,13 +555,13 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				trimPart(Vector3.new(len, 0.24, 0.18), at(cx, 0.12, inward(0.18)), C.rail, Enum.Material.Wood)
 			end
 		end
-		-- cream upper wall over the windows and doors (beside a tall door's head), and on the piers between windows
+		-- lincrusta upper wall over the windows and doors (beside a tall door's head), and on the piers between windows
 		local liningTop = if headTop > WINDOW_TOP then doorHeight + 0.22 else WINDOW_TOP
 		trimPart(
 			Vector3.new(xb - xa, CEIL_BOTTOM - liningTop, LINE_T),
 			at((xa + xb) / 2, (CEIL_BOTTOM + liningTop) / 2, zLining),
-			C.cream,
-			Enum.Material.SmoothPlastic
+			C.lincrusta,
+			Enum.Material.Fabric
 		)
 		if liningTop > WINDOW_TOP then
 			for _, span in subtract(xa, xb, liningGaps) do
@@ -501,8 +569,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					trimPart(
 						Vector3.new(span[2] - span[1], liningTop - WINDOW_TOP, LINE_T),
 						at((span[1] + span[2]) / 2, (liningTop + WINDOW_TOP) / 2, zLining),
-						C.cream,
-						Enum.Material.SmoothPlastic
+						C.lincrusta,
+						Enum.Material.Fabric
 					)
 				end
 			end
@@ -517,12 +585,21 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				trimPart(
 					Vector3.new(len, WINDOW_TOP - WINDOW_BOTTOM, LINE_T),
 					at((span[1] + span[2]) / 2, (WINDOW_TOP + WINDOW_BOTTOM) / 2, zLining),
-					C.cream,
-					Enum.Material.SmoothPlastic
+					C.lincrusta,
+					Enum.Material.Fabric
 				)
 			end
 		end
-		-- brass window frames, and curtains tied back on either side under a valance
+		-- a raised field on the wainscot under each window, between skirting and chair rail
+		for _, w in windows do
+			trimPart(
+				Vector3.new(3.2, 2.3, 0.06),
+				at((w[1] + w[2]) / 2, 1.72, inward(0.06)),
+				C.field,
+				Enum.Material.Wood
+			)
+		end
+		-- mahogany window frames, and curtains tied back on either side under a valance
 		local band = WINDOW_TOP - WINDOW_BOTTOM
 		local mid = (WINDOW_TOP + WINDOW_BOTTOM) / 2
 		for _, w in windows do
@@ -530,21 +607,21 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			trimPart(
 				Vector3.new(4.0, 0.22, 0.4),
 				at(cx, WINDOW_BOTTOM + 0.11, inward(0.4)),
-				C.brass,
-				Enum.Material.Metal
+				C.frameWood,
+				Enum.Material.Wood
 			)
 			trimPart(
 				Vector3.new(4.0, 0.22, 0.25),
 				at(cx, WINDOW_TOP - 0.11, inward(0.25)),
-				C.brass,
-				Enum.Material.Metal
+				C.frameWood,
+				Enum.Material.Wood
 			)
 			for _, dx in { -1.85, 1.85 } do
 				trimPart(
 					Vector3.new(0.2, band - 0.44, 0.25),
 					at(cx + dx, mid, inward(0.25)),
-					C.brass,
-					Enum.Material.Metal
+					C.frameWood,
+					Enum.Material.Wood
 				)
 			end
 			if lining.curtains then
@@ -564,21 +641,21 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				)
 			end
 		end
-		-- brass door frames: posts and a head that close off the lining around each door
+		-- mahogany door frames: posts and a head that close off the lining around each door
 		for _, dx in doors do
 			for _, side in { -1, 1 } do
 				trimPart(
 					Vector3.new(FRAME_W, doorHeight, 0.42),
 					at(dx + side * (doorWidth / 2 + FRAME_W / 2), doorHeight / 2, sign * (WALL_IN - 0.21)),
-					C.brass,
-					Enum.Material.Metal
+					C.frameWood,
+					Enum.Material.Wood
 				)
 			end
 			trimPart(
 				Vector3.new(doorWidth + 2 * FRAME_W, 0.24, 0.42),
 				at(dx, doorHeight + 0.1, sign * (WALL_IN - 0.21)),
-				C.brass,
-				Enum.Material.Metal
+				C.frameWood,
+				Enum.Material.Wood
 			)
 		end
 	end
@@ -597,7 +674,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 						Vector3.new(WALL_T, WALL_H, HALF - 2),
 						at(x, WALL_H / 2, side * (HALF + 2) / 2),
 						body,
-						wood
+						varnish
 					),
 					"Body"
 				)
@@ -608,13 +685,13 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					Vector3.new(WALL_T, WALL_H - DOOR_H, 4),
 					at(x, (WALL_H + DOOR_H) / 2, 0),
 					body,
-					wood
+					varnish
 				),
 				"Body"
 			)
 		else
 			tag(
-				Kit.block(model, Vector3.new(WALL_T, WALL_H, WIDTH), at(x, WALL_H / 2, 0), body, wood),
+				Kit.block(model, Vector3.new(WALL_T, WALL_H, WIDTH), at(x, WALL_H / 2, 0), body, varnish),
 				"Body"
 			)
 		end
@@ -641,8 +718,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			trimPart(
 				Vector3.new(LINE_T, CEIL_BOTTOM - WINDOW_BOTTOM, width),
 				at(face, (CEIL_BOTTOM + WINDOW_BOTTOM) / 2, cz),
-				C.cream,
-				Enum.Material.SmoothPlastic
+				C.lincrusta,
+				Enum.Material.Fabric
 			)
 			-- chair rail, stopping where the side walls' own rails take over
 			local r0, r1 = math.max(span[1], -RAIL_EDGE), math.min(span[2], RAIL_EDGE)
@@ -659,39 +736,72 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			trimPart(
 				Vector3.new(LINE_T, CEIL_BOTTOM - DOOR_H - 0.22, 4 + 2 * FRAME_W),
 				at(face, (CEIL_BOTTOM + DOOR_H + 0.22) / 2, 0),
-				C.cream,
-				Enum.Material.SmoothPlastic
+				C.lincrusta,
+				Enum.Material.Fabric
 			)
 			for _, side in { -1, 1 } do
 				trimPart(
 					Vector3.new(0.42, DOOR_H, FRAME_W),
 					at(x + inward * (WALL_T / 2 + 0.21), DOOR_H / 2, side * (2 + FRAME_W / 2)),
-					C.brass,
-					Enum.Material.Metal
+					C.frameWood,
+					Enum.Material.Wood
 				)
 			end
 			trimPart(
 				Vector3.new(0.42, 0.22, 4 + 2 * FRAME_W),
 				at(x + inward * (WALL_T / 2 + 0.21), DOOR_H + 0.11, 0),
-				C.brass,
-				Enum.Material.Metal
+				C.frameWood,
+				Enum.Material.Wood
 			)
 		end
 	end
 
+	local openings: { Span } = {} -- every ceiling opening's x span (all |z| < OPEN)
+
+	-- Where a car's clerestory stands over its roof: the monitor's outer ends, and the opening
+	-- under it (inside the monitor's end walls) that the ceiling leaves open.
+	local function monitorSpan(x0: number, x1: number): (number, number, number, number)
+		local cx = (x0 + x1) / 2
+		local half = (x1 - x0 + 0.6 - 4.6) / 2
+		return cx - half, cx + half, cx - half + MONITOR_T, cx + half - MONITOR_T
+	end
+
+	--[[
+		The roof: a tarred deck either side of the clerestory, and the clerestory itself, a
+		hollow monitor down the middle with a strip of amber lights each side between glazing
+		bars, its end walls and a capping. The deck stops at the monitor's inner face, so the
+		inside of the car looks up into it.
+	]]
 	local function roofOver(x0: number, x1: number)
 		local len = x1 - x0 + 0.6
 		local cx = (x0 + x1) / 2
-		tag(
-			Kit.block(
-				model,
-				Vector3.new(len, 0.5, 7),
-				at(cx, WALL_H + 0.55, 0),
-				roof,
-				{ material = Enum.Material.Metal }
-			),
-			"Roof"
-		)
+		local ma, mb = monitorSpan(x0, x1)
+		local metal = { material = Enum.Material.Metal }
+		for _, side in { -1, 1 } do
+			tag(
+				Kit.block(
+					model,
+					Vector3.new(len, 0.5, 3.5 - OPEN),
+					at(cx, WALL_H + 0.55, side * (3.5 + OPEN) / 2),
+					roof,
+					metal
+				),
+				"Roof"
+			)
+		end
+		-- the deck under the monitor's ends, between the side decks
+		for _, span in { { cx - len / 2, ma + MONITOR_T }, { mb - MONITOR_T, cx + len / 2 } } do
+			tag(
+				Kit.block(
+					model,
+					Vector3.new(span[2] - span[1], 0.5, 2 * OPEN),
+					at((span[1] + span[2]) / 2, WALL_H + 0.55, 0),
+					roof,
+					metal
+				),
+				"Roof"
+			)
+		end
 		for _, side in { -1, 1 } do
 			tag(
 				Kit.block(
@@ -699,64 +809,133 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					Vector3.new(len, 0.5, 3.8),
 					at(cx, WALL_H + 0.2, side * 4.9) * Kit.angles(side * -12, 0, 0),
 					roof,
-					{ material = Enum.Material.Metal }
+					metal
 				),
 				"Roof"
 			)
 		end
-		-- 1800s clerestory: a raised monitor down the middle with a strip of amber lights each side
-		local top = WALL_H + 0.8
-		local monitor = len - 4.6
-		tag(Kit.block(model, Vector3.new(monitor, 1.4, 4.4), at(cx, top + 0.65, 0), body, wood), "Body")
-		tag(
-			Kit.block(
-				model,
-				Vector3.new(monitor + 1.2, 0.3, 5.4),
-				at(cx, top + 1.45, 0),
-				roof,
-				{ material = Enum.Material.Metal }
-			),
-			"Roof"
-		)
+		-- the monitor: side walls below and above the lights, glazing bars between, end walls, capping
+		local base = WALL_H + 0.8
+		local monitor = mb - ma
+		local wallZ = OPEN + MONITOR_T / 2
 		for _, side in { -1, 1 } do
+			for _, band in { { base, CLERESTORY_LOW }, { CLERESTORY_HIGH, MONITOR_TOP } } do
+				tag(
+					Kit.block(
+						model,
+						Vector3.new(monitor - 2 * MONITOR_T, band[2] - band[1], MONITOR_T),
+						at(cx, (band[1] + band[2]) / 2, side * wallZ),
+						body,
+						varnish
+					),
+					"Body"
+				)
+			end
+			local lights = CLERESTORY_HIGH - CLERESTORY_LOW
 			Kit.block(
 				model,
-				Vector3.new(monitor - 1.6, 0.6, 0.1),
-				at(cx, top + 0.7, side * 2.23),
+				Vector3.new(monitor - 2 * MONITOR_T, lights, 0.1),
+				at(cx, (CLERESTORY_LOW + CLERESTORY_HIGH) / 2, side * wallZ),
 				C.clerestory,
 				{ material = Enum.Material.Glass, collide = false, shadow = false }
 			)
-			for x = cx - monitor / 2 + 2, cx + monitor / 2 - 2, 2.4 do
+			for x = ma + MONITOR_T + 0.1, mb - MONITOR_T - 0.1, 2.4 do
 				Kit.block(
 					model,
-					Vector3.new(0.2, 0.7, 0.16),
-					at(x, top + 0.7, side * 2.24),
+					Vector3.new(0.2, lights, MONITOR_T),
+					at(x, (CLERESTORY_LOW + CLERESTORY_HIGH) / 2, side * wallZ),
 					C.sash,
 					{ material = Enum.Material.Wood, collide = false, shadow = false }
 				)
 			end
 		end
+		for _, x in { ma + MONITOR_T / 2, mb - MONITOR_T / 2 } do
+			tag(
+				Kit.block(
+					model,
+					Vector3.new(MONITOR_T, MONITOR_TOP - base, 2 * (OPEN + MONITOR_T)),
+					at(x, (MONITOR_TOP + base) / 2, 0),
+					body,
+					varnish
+				),
+				"Body"
+			)
+		end
+		tag(
+			Kit.block(model, Vector3.new(monitor + 1.2, 0.3, 5.4), at(cx, MONITOR_TOP + 0.15, 0), roof, metal),
+			"Roof"
+		)
 	end
 
-	-- A cream ceiling on wooden ribs and a cornice, with brass lamp fixtures whose lights cast shadows.
+	--[[
+		The ceiling: plaster on wooden carlines and a cornice each side, open down the middle
+		into the clerestory, whose inside is plastered too and edged with a cove at the
+		opening. Gasoliers hang on long rods from the clerestory roof; their lights cast shadows.
+	]]
 	local function ceiling(x0: number, x1: number)
 		local xa, xb = x0 + WALL_T, x1 - WALL_T
 		local len = xb - xa
 		local cx = (xa + xb) / 2
-		trimPart(
-			Vector3.new(len, 0.12, 2 * WALL_IN),
-			at(cx, CEIL_BOTTOM + 0.06, 0),
-			C.ceiling,
-			Enum.Material.SmoothPlastic
-		)
+		local _, _, oa, ob = monitorSpan(x0, x1)
+		table.insert(openings, { oa, ob })
+		local open = ob - oa
+		local plaster = Enum.Material.Plaster
 		for _, side in { -1, 1 } do
+			trimPart(
+				Vector3.new(len, 0.12, WALL_IN - OPEN),
+				at(cx, CEIL_BOTTOM + 0.06, side * (WALL_IN + OPEN) / 2),
+				C.ceiling,
+				plaster
+			)
 			trimPart(
 				Vector3.new(len, 0.32, 0.32),
 				at(cx, CEIL_BOTTOM - 0.16, side * (LINE_IN - 0.16)),
 				C.rib,
 				Enum.Material.Wood
 			)
+			-- the clerestory's plastered sides below and above its lights, and the cove at the opening
+			trimPart(
+				Vector3.new(open, CLERESTORY_LOW - CEIL_BOTTOM, 0.1),
+				at(cx, (CLERESTORY_LOW + CEIL_BOTTOM) / 2, side * (OPEN - 0.05)),
+				C.ceiling,
+				plaster
+			)
+			trimPart(
+				Vector3.new(open, MONITOR_TOP - CLERESTORY_HIGH, 0.1),
+				at(cx, (MONITOR_TOP + CLERESTORY_HIGH) / 2, side * (OPEN - 0.05)),
+				C.ceiling,
+				plaster
+			)
+			trimPart(
+				Vector3.new(open, 0.18, 0.2),
+				at(cx, CEIL_BOTTOM - 0.09, side * (OPEN + 0.1)),
+				C.rib,
+				Enum.Material.Wood
+			)
 		end
+		-- plaster across the middle beyond the opening, the clerestory's end linings and its roof
+		for _, span in { { xa, oa }, { ob, xb } } do
+			trimPart(
+				Vector3.new(span[2] - span[1], 0.12, 2 * OPEN),
+				at((span[1] + span[2]) / 2, CEIL_BOTTOM + 0.06, 0),
+				C.ceiling,
+				plaster
+			)
+		end
+		for _, x in { oa + 0.05, ob - 0.05 } do
+			trimPart(
+				Vector3.new(0.1, MONITOR_TOP - 0.1 - CEIL_BOTTOM, 2 * OPEN - 0.2),
+				at(x, (MONITOR_TOP - 0.1 + CEIL_BOTTOM) / 2, 0),
+				C.ceiling,
+				plaster
+			)
+		end
+		trimPart(
+			Vector3.new(open - 0.2, 0.1, 2 * OPEN - 0.2),
+			at(cx, MONITOR_TOP - 0.05, 0),
+			C.ceiling,
+			plaster
+		)
 		local count = math.max(1, math.floor((x1 - x0) / 12))
 		local lamps: { number } = {}
 		for i = 1, count do
@@ -779,23 +958,20 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			end
 		end
 		local brass = { material = Enum.Material.Metal, collide = false, shadow = false }
+		local roofIn = MONITOR_TOP - 0.1 -- underside of the clerestory roof lining
 		for _, x in lamps do
+			-- a rose on the clerestory roof, a long rod, a gallery and the globe
+			Kit.cylinder(model, 0.12, 0.9, at(x, roofIn - 0.06, 0) * Kit.angles(0, 0, 90), C.brass, brass)
+			local rodTop, rodBottom = roofIn - 0.12, CEIL_BOTTOM - 0.62
 			Kit.cylinder(
 				model,
-				0.14,
-				1.6,
-				at(x, CEIL_BOTTOM - 0.07, 0) * Kit.angles(0, 0, 90),
+				rodTop - rodBottom,
+				0.12,
+				at(x, (rodTop + rodBottom) / 2, 0) * Kit.angles(0, 0, 90),
 				C.brass,
 				brass
 			)
-			Kit.cylinder(
-				model,
-				0.6,
-				0.18,
-				at(x, CEIL_BOTTOM - 0.44, 0) * Kit.angles(0, 0, 90),
-				C.brass,
-				brass
-			)
+			Kit.cylinder(model, 0.2, 0.8, at(x, CEIL_BOTTOM - 0.72, 0) * Kit.angles(0, 0, 90), C.brass, brass)
 			local globe = Kit.neon(
 				model,
 				Vector3.new(1.1, 1.1, 1.1),
@@ -1187,7 +1363,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				Vector3.new(tx1 - tx0 - 4, 1.2, 0.2),
 				at(tcx, 7.5, side * (HALF + 0.05)) * Kit.angles(side * 20, 0, 0),
 				body,
-				wood
+				varnish
 			),
 			"Body"
 		)
@@ -1259,7 +1435,10 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		),
 		"Roof"
 	)
-	tag(Kit.block(model, Vector3.new(3, 0.7, 2.4), at((cx0 + cx1) / 2, WALL_H + 1.4, 0), body, wood), "Body")
+	tag(
+		Kit.block(model, Vector3.new(3, 0.7, 2.4), at((cx0 + cx1) / 2, WALL_H + 1.4, 0), body, varnish),
+		"Body"
+	)
 	-- backhead: firebox, gauges, regulator
 	tag(Kit.block(model, Vector3.new(0.6, WALL_H, WIDTH), at(cx1 - 0.3, WALL_H / 2, 0), body), "Body")
 	-- the furnace and the gauges on this wall are furnished by TrainInterior
@@ -1514,11 +1693,22 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	buffers(52, -1)
 
 	-- Inside: seats, lamps, the furnace, the stove and every sign (TrainInterior) ---------------
-	local furnished = TrainInterior.furnish(
-		model,
-		origin,
-		{ lineIn = LINE_IN, ceiling = CEIL_BOTTOM, doorTop = DOOR_H, sideDoorTop = SIDE_DOOR_H }
-	)
+	local furnished = TrainInterior.furnish(model, origin, {
+		lineIn = LINE_IN,
+		ceiling = CEIL_BOTTOM,
+		doorTop = DOOR_H,
+		sideDoorTop = SIDE_DOOR_H,
+		ceilingAt = function(x: number, z: number): number
+			if math.abs(z) < OPEN then
+				for _, span in openings do
+					if x > span[1] and x < span[2] then
+						return MONITOR_TOP - 0.1
+					end
+				end
+			end
+			return CEIL_BOTTOM
+		end,
+	})
 
 	model.PrimaryPart = boiler
 	Kit.setCollisionGroup(model, "Train")

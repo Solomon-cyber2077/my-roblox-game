@@ -284,7 +284,7 @@ table.insert(targets, {
 
 table.insert(targets, {
 	name = "Train",
-	budget = { parts = 1800, lights = 34, shadows = 10, emitters = 4 },
+	budget = { parts = 2000, lights = 34, shadows = 10, emitters = 4 },
 	build = function()
 		return { { instance = TrainBuilder.build(CFrame.new(), nil).model } }
 	end,

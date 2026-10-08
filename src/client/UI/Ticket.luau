@@ -3,7 +3,7 @@
 	A paper railway ticket, drawn from a TicketModel.View. Host-agnostic: the junction ballot
 	uses the full ticket, the station board and summary can use the read-only stub.
 
-	  Ticket.full(view, opts)  cream stock with an uneven edge, a perforated stub holding the
+	  Ticket.full(view, opts)  card stock with an uneven edge, a perforated stub holding the
 	                           serial, a punched string hole and the countdown dial; the station
 	                           type, name (one line, shrinks to fit) and two wrapped lines of
 	                           description; a wax danger seal with chalk tallies on its own
@@ -40,8 +40,8 @@ local WAX = Color3.fromRGB(146, 26, 30)
 local WAX_DARK = Color3.fromRGB(92, 14, 18)
 local HOLE = Color3.fromRGB(18, 16, 16)
 local SOOT = Color3.fromRGB(58, 52, 48)
-local LAMP = Color3.fromRGB(226, 220, 196) -- a mystery's lantern: neutral, not a danger colour
-local LAMP_DIM = Color3.fromRGB(120, 116, 104)
+local LAMP = Color3.fromRGB(196, 222, 226) -- a mystery's lantern: a cold neutral, not a danger colour
+local LAMP_DIM = Color3.fromRGB(96, 112, 116)
 
 local W, H = 224, 310
 local PAD = 14
@@ -123,7 +123,7 @@ local function shrink(l: TextLabel, max: number, min: number)
 	Ui.new("UITextSizeConstraint", { MaxTextSize = max, MinTextSize = min, Parent = l })
 end
 
--- Cream stock: gradient, hairline, and a ragged edge top and bottom seeded by the route.
+-- Card stock: gradient, hairline, and a ragged edge top and bottom seeded by the route.
 local function stock(parent: Instance, size: UDim2, routeId: string, z: number): Frame
 	local paper = Ui.new("Frame", {
 		Name = "Paper",
@@ -139,8 +139,8 @@ local function stock(parent: Instance, size: UDim2, routeId: string, z: number):
 		Rotation = 80,
 		Color = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.6, Color3.fromRGB(250, 246, 236)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(232, 222, 200)),
+			ColorSequenceKeypoint.new(0.6, Color3.fromRGB(240, 246, 246)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(214, 226, 228)),
 		}),
 		Parent = paper,
 	})
@@ -152,9 +152,7 @@ local function stock(parent: Instance, size: UDim2, routeId: string, z: number):
 				Name = "Edge",
 				Size = UDim2.new(1 / nibs, -2, 0, depth),
 				Position = UDim2.new((i - 1) / nibs, 1, if top then 0 else 1, if top then -depth else 0),
-				BackgroundColor3 = if top
-					then Color3.fromRGB(250, 246, 236)
-					else Color3.fromRGB(232, 222, 200),
+				BackgroundColor3 = if top then PAPER else PAPER:Lerp(PAPER_SHADE, 0.4),
 				BorderSizePixel = 0,
 				ZIndex = z,
 				Parent = paper,

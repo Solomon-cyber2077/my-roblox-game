@@ -42,7 +42,7 @@ export type Built = {
 local StationBuilder = {}
 
 local ROCK = Color3.fromRGB(58, 50, 44)
-local COPING = Color3.fromRGB(196, 188, 172)
+local COPING = Color3.fromRGB(168, 170, 168)
 local TACTILE = Color3.fromRGB(226, 182, 58)
 local SLEEPER = Color3.fromRGB(74, 56, 40)
 local RAIL = Color3.fromRGB(120, 116, 112)

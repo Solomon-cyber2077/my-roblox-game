@@ -433,8 +433,8 @@ local BLOOM = { intensity = 0.55, threshold = 1.3, size = 24 }
 local LOBBY = {
 	brightness = 0.3, -- the low sun through the glazing
 	exposure = -0.6,
-	ambient = rgb(60, 53, 49),
-	outdoor = rgb(64, 56, 52),
+	ambient = rgb(54, 55, 58), -- same light as before, less amber, so whites and greys stay true
+	outdoor = rgb(58, 58, 62),
 	bloom = 0.25,
 	bloomThreshold = 1.8,
 	bloomSize = 16,
