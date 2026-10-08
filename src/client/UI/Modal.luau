@@ -3,6 +3,10 @@
 	Centered modal window with a dimmed backdrop. One modal is open at a time;
 	opening another closes the current one. Gamepad B, the backdrop or CLOSE
 	closes it (Escape is reserved for the Roblox menu).
+
+	It looks like a piece of the train's fittings: a soot-iron plate with a brass
+	plate riveted at each corner, an iron header ruled off in brass, the company's
+	name in small caps over the window's title.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -44,8 +48,8 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 			Name = "Backdrop",
 			Size = UDim2.new(1, 0, 1, 80),
 			Position = UDim2.fromOffset(0, -60),
-			BackgroundColor3 = Theme.Color.black,
-			BackgroundTransparency = 0.45,
+			BackgroundColor3 = Theme.Color.steel,
+			BackgroundTransparency = 0.3,
 			Text = "",
 			AutoButtonColor = false,
 			Visible = false,
@@ -72,22 +76,61 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 	local header = Ui.new("Frame", {
 		Name = "Header",
 		Size = UDim2.new(1, 0, 0, 52),
-		BackgroundColor3 = Theme.Color.paper,
+		BackgroundColor3 = Theme.Color.steelLight,
 		BorderSizePixel = 0,
 		ZIndex = 32,
 		Parent = frame,
 	})
 	Ui.corner().Parent = header
+	Ui.new("Frame", {
+		Name = "Rule",
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.fromScale(0, 1),
+		Size = UDim2.new(1, 0, 0, 3),
+		BackgroundColor3 = Theme.Color.brass,
+		BorderSizePixel = 0,
+		ZIndex = 33,
+		Parent = header,
+	})
+	local caption = Ui.text({
+		Text = "LAST TRAIN OUT",
+		Font = Theme.Font.displayMedium,
+		TextSize = 12,
+		Color = Theme.Color.textDim,
+		Position = UDim2.fromOffset(18, 5),
+		Size = UDim2.new(1, -140, 0, 14),
+	})
+	caption.ZIndex = 33
+	caption.Parent = header
 	local title = Ui.text({
 		Text = string.upper(titleText),
 		Font = Theme.Font.display,
-		TextSize = 26,
-		Color = Theme.Color.ink,
-		Position = UDim2.fromOffset(18, 0),
-		Size = UDim2.new(1, -140, 1, 0),
+		TextSize = 25,
+		Color = Theme.Color.white,
+		Position = UDim2.fromOffset(18, 17),
+		Size = UDim2.new(1, -140, 0, 30),
 	})
 	title.ZIndex = 33
 	title.Parent = header
+	-- a small brass plate riveted at each corner of the window
+	for _, corner in { Vector2.new(0, 0), Vector2.new(1, 0), Vector2.new(0, 1), Vector2.new(1, 1) } do
+		local plate = Ui.new("Frame", {
+			Name = "Rivet",
+			AnchorPoint = corner,
+			Position = UDim2.new(
+				corner.X,
+				if corner.X > 0 then -5 else 5,
+				corner.Y,
+				if corner.Y > 0 then -5 else 5
+			),
+			Size = UDim2.fromOffset(6, 6),
+			BackgroundColor3 = Theme.Color.brass,
+			BorderSizePixel = 0,
+			ZIndex = 35,
+			Parent = frame,
+		})
+		Ui.corner(3).Parent = plate
+	end
 	local body = Ui.new("Frame", {
 		Name = "Body",
 		Size = UDim2.new(1, -32, 1, -76),
@@ -102,8 +145,8 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 	local closeButton = Ui.button("CLOSE", "Secondary", function()
 		modal:close()
 	end, {
-		Size = UDim2.fromOffset(96, 34),
-		Position = UDim2.new(1, -10, 0.5, 0),
+		Size = UDim2.fromOffset(104, 34),
+		Position = UDim2.new(1, -14, 0.5, -1),
 		AnchorPoint = Vector2.new(1, 0.5),
 		TextSize = 16,
 	})
