@@ -1,4 +1,5 @@
 local Config = require(Shared.Config.Mystery)
+local Journey = require(Shared.Logic.Journey)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Mystery = require(Shared.Logic.Mystery)
 local RouteGen = require(Shared.Logic.RouteGen)
@@ -164,6 +165,10 @@ describe("Mystery redaction", function()
 			expect(sealed.difficulty).toBe(0)
 			expect(sealed.sealed).toBe(true)
 			expect(Stations.List[sealed.archetype]).toBe(nil)
+			-- the land on the way may show; the station may not
+			local withLand = Mystery.sealed(real.distanceKm, 7, real.archetype)
+			expect(leaks(withLand, real)).toBe(nil)
+			expect(withLand.biome).toBe(Journey.biomeFor(real.archetype))
 		end
 	end)
 	it("prints a sealed ticket with no seal", function()

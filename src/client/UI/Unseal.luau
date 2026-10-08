@@ -2,9 +2,10 @@
 --[[
 	The mystery ticket's reveal. While run.destination is sealed (Logic/Mystery.sealed) nothing
 	shows here; when the server writes the full destination at Arrival (sealed = false), a ticket
-	drops in at the top of the screen: the soot over its "????" wipes away left to right, then the
+	slides in from the right: the soot over its "????" wipes away left to right, then the
 	station's name and danger are stamped in. It plays once per stop, and only for a client that
-	saw the seal (a crewmate joining mid-stop just sees the station).
+	reaches the stop (Arrival or Dwell), so a crewmate who joined mid-trip or mid-stop sees it too. The card
+	slides in at the right edge, clear of the HUD along the top, and is gone in about 3 seconds.
 ]]
 
 local Registry = require(script.Parent.Parent.Registry)
@@ -17,11 +18,13 @@ local HEAD = Font.new("rbxasset://fonts/families/Arvo.json", Enum.FontWeight.Bol
 local SOOT = Color3.fromRGB(58, 52, 48)
 local INK_RED = Color3.fromRGB(146, 26, 30)
 local W, H = 300, 116
-local HOLD_SECONDS = 0.5 -- the sealed ticket sits a moment before the wipe
-local WIPE_SECONDS = 0.9
+local HOLD_SECONDS = 0.3 -- the sealed ticket sits a moment before the wipe
+local WIPE_SECONDS = 0.6
 local STAMP_SECONDS = 0.16
 local STAMP_FROM = 2.4
-local SHOW_SECONDS = 3.2
+local SHOW_SECONDS = 1.6
+local EDGE = 16 -- gap to the screen's right edge
+local TOP = 0.3 -- the card's top, as a share of the screen height
 
 local function stamped(
 	parent: Instance,
@@ -45,8 +48,8 @@ local function play(gui: ScreenGui, destination: any)
 	local holder = Ui.new("Frame", {
 		Name = "Unseal",
 		Size = UDim2.fromOffset(W, H),
-		Position = UDim2.new(0.5, 0, 0, -H),
-		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(1, W + EDGE, TOP, 0),
+		AnchorPoint = Vector2.new(1, 0),
 		Rotation = -1.5,
 		BackgroundColor3 = Theme.Color.paper,
 		BorderSizePixel = 0,
@@ -97,7 +100,7 @@ local function play(gui: ScreenGui, destination: any)
 	marks.ZIndex = 5
 	marks.Parent = smear
 
-	Ui.tween(holder, { Position = UDim2.new(0.5, 0, 0, 120) }, TweenInfo.new(0.35, Enum.EasingStyle.Back))
+	Ui.tween(holder, { Position = UDim2.new(1, -EDGE, TOP, 0) }, TweenInfo.new(0.35, Enum.EasingStyle.Back))
 	task.delay(HOLD_SECONDS, function()
 		local wipe = TweenInfo.new(WIPE_SECONDS, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
 		Ui.tween(cover, { Size = UDim2.new(0, 0, 1, -34) }, wipe)
@@ -113,7 +116,7 @@ local function play(gui: ScreenGui, destination: any)
 				Ui.tween(danger, { TextTransparency = 0 }, slam)
 			end)
 			task.delay(SHOW_SECONDS, function()
-				Ui.tween(holder, { Position = UDim2.new(0.5, 0, 0, -H - 20) }, TweenInfo.new(0.4))
+				Ui.tween(holder, { Position = UDim2.new(1, W + EDGE, TOP, 0) }, TweenInfo.new(0.4))
 				task.delay(0.45, function()
 					holder:Destroy()
 				end)
@@ -124,21 +127,21 @@ end
 
 function Unseal.mount(gui: ScreenGui)
 	local State = Registry.StateController
-	local sealedKey: string? = nil
 	local playedKey: string? = nil
-	State.Observe("public", { "run", "destination" }, function()
+	local function check()
 		local destination = State.Get({ "run", "destination" })
-		if destination == nil or destination.mystery ~= true then
+		if destination == nil or destination.mystery ~= true or destination.sealed then
 			return
 		end
+		local phase = State.Get({ "run", "phase" })
 		local key = `{State.Get({ "run", "runId" })}:{State.Get({ "run", "nextStop" })}`
-		if destination.sealed then
-			sealedKey = key
-		elseif sealedKey == key and playedKey ~= key then
+		if (phase == "Arrival" or phase == "Dwell") and playedKey ~= key then
 			playedKey = key
 			play(gui, destination)
 		end
-	end)
+	end
+	State.Observe("public", { "run", "destination" }, check)
+	State.Observe("public", { "run", "phase" }, check)
 end
 
 return Unseal
