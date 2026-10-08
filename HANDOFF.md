@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-08: Lobby road edging
+- Completed: split the two brass road borders at the black rosette boundary, accounting for strip width to remove coplanar overlap. User authorized direct Codex implementation.
+- Validation: lune run check passed; restarted Studio Play and captured lobby with no yellow edging crossing the black ring. Console only reports existing disabled DataStore API access.
+- Known: no new regression observed; moving-camera visual acceptance remains manual.
+- Next: walk around the rosette and check the endpoints from low angles.
+
 ## Brief 011 implemented — visual acceptance pending (2026-10-08)
 - Interior lights use RGB(255,190,120); ceiling globes use RGB(255,214,150). Brightness/ranges unchanged; exterior lamps and global lighting untouched. User authorized Codex implementation.
 - Validation: lune run check passed. Studio restarted; server running, only existing DataStore API-access error. Captures showed lobby/exterior, not carriage interior; Rojo application and visual warmth unverified.
