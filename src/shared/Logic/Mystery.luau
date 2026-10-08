@@ -10,7 +10,8 @@
 	  redact    the public ticket: the archetype stand-in, no tier, no hint, the real distance
 	  place     where the sealed ticket goes in the ballot: appended, or over the longest line
 	            when the ballot is already full
-	  sealed    the public destination while sealed: distance and coal only
+	  sealed    the public destination while sealed: distance, coal and the land on the way (its
+	            biome, which the scenery shows anyway; it never names the station)
 ]]
 
 local Shared = script.Parent.Parent
@@ -18,6 +19,7 @@ local Config = require(Shared.Config.Mystery)
 local Stations = require(Shared.Config.Stations)
 local Types = require(Shared.Types)
 local Rng = require(Shared.Util.Rng)
+local Journey = require(script.Parent.Journey)
 local RouteGen = require(script.Parent.RouteGen)
 
 type RouteOption = Types.RouteOption
@@ -113,7 +115,7 @@ function Mystery.place(options: { RouteOption }): number
 	return index
 end
 
-function Mystery.sealed(distanceKm: number, coalCost: number): Types.Destination
+function Mystery.sealed(distanceKm: number, coalCost: number, archetype: string?): Types.Destination
 	return {
 		archetype = Config.Archetype,
 		name = Config.Name,
@@ -124,6 +126,7 @@ function Mystery.sealed(distanceKm: number, coalCost: number): Types.Destination
 		terminus = false,
 		mystery = true,
 		sealed = true,
+		biome = if archetype then Journey.biomeFor(archetype) else nil,
 	}
 end
 

@@ -39,6 +39,7 @@ export type Destination = {
 	terminus: boolean,
 	mystery: boolean?,
 	sealed: boolean?,
+	biome: string?, -- a sealed destination's land (Logic/Journey biome id), so the scenery need not switch at Arrival
 }
 
 export type HazardParams = {

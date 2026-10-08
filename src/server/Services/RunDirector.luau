@@ -216,7 +216,7 @@ Enter.Cruise = function()
 	)
 	local coalCost = Ledger.legCoalCost(train, option.distanceKm)
 	local destination: Types.Destination = if state.sealed
-		then Mystery.sealed(option.distanceKm, coalCost)
+		then Mystery.sealed(option.distanceKm, coalCost, option.archetype)
 		else {
 			archetype = option.archetype,
 			name = arch.name,

@@ -200,7 +200,8 @@ local function seal(parent: Instance, s: TicketModel.Seal, x: number, y: number,
 	end
 end
 
--- Soot rubbed over a mystery's name and description: overlapping smears seeded by the route.
+-- Soot rubbed over a mystery's name: a few thin smears seeded by the route, kept to the name's line
+-- so the description below stays readable.
 local function smudge(parent: Instance, routeId: string, y: number, height: number, z: number): Frame
 	local cover = Ui.new("Frame", {
 		Name = "Smudge",
@@ -210,15 +211,16 @@ local function smudge(parent: Instance, routeId: string, y: number, height: numb
 		ZIndex = z,
 		Parent = parent,
 	})
-	for i = 1, 6 do
+	for i = 1, 3 do
 		local h = TicketModel.hash(`{routeId}:smudge:{i}`)
 		local smear = Ui.new("Frame", {
 			Name = "Smear",
-			Size = UDim2.new(0.5 + h * 0.45, 0, 0, 12 + math.floor(h * 14)),
-			Position = UDim2.fromScale(0.05 + (1 - h) * 0.35, (i - 1) / 6),
-			Rotation = -8 + h * 16,
+			Size = UDim2.new(0.45 + h * 0.4, 0, 0, 8 + math.floor(h * 6)),
+			Position = UDim2.fromScale(0.05 + (1 - h) * 0.3, 0.25 * i),
+			AnchorPoint = Vector2.new(0, 0.5),
+			Rotation = -1.5 + h * 3,
 			BackgroundColor3 = SOOT,
-			BackgroundTransparency = 0.35 + h * 0.25,
+			BackgroundTransparency = 0.3 + h * 0.2,
 			BorderSizePixel = 0,
 			ZIndex = z,
 			Parent = cover,
@@ -411,7 +413,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	y += 18
 
 	if view.mystery then
-		smudge(paper, opts.routeId, STUB + 6, y - STUB - 8, 5)
+		smudge(paper, opts.routeId, name.Position.Y.Offset, name.Size.Y.Offset, 5)
 	end
 
 	-- DANGER on its own line, then the seal

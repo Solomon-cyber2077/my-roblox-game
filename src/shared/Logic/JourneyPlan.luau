@@ -55,7 +55,7 @@ export type RunState = {
 	nextStop: number?,
 	phaseStartedAt: number?,
 	phaseEndsAt: number?,
-	destination: { archetype: string }?,
+	destination: { archetype: string, biome: string? }?,
 	station: { archetype: string, startedAt: number?, dwell: number? }?,
 }
 
@@ -127,16 +127,41 @@ local function beginLeg(plan: Plan, leg: number, odometer: number, stops: number
 	plan.sinkholes = sinkholes
 end
 
+-- The destination's biome takes over from BlendAt of the leg, beyond what is built. Once per leg.
+local function transition(
+	plan: Plan,
+	center: number,
+	biome: Journey.Biome,
+	odometer: number,
+	changes: { Change }
+)
+	if plan.transitionLeg == plan.leg then
+		return
+	end
+	plan.transitionLeg = plan.leg
+	local at = Journey.blendStart(plan.legStart, center, odometer + J.BuiltAhead + 100)
+	table.insert(plan.transitions, { at = at, length = J.BlendLength, biome = biome })
+	table.sort(plan.transitions, function(a, b)
+		return a.at < b.at
+	end)
+	table.insert(changes, { x0 = at, x1 = odometer + 20000, minAhead = J.BuiltAhead })
+end
+
 -- Cuts (or re-cuts) the sinkhole for the station the train is heading to.
 local function setUpcoming(
 	plan: Plan,
 	center: number,
 	archetype: string,
 	odometer: number,
-	changes: { Change }
+	changes: { Change },
+	biome: Journey.Biome?
 )
 	local arch = Stations.List[archetype]
+	-- a sealed mystery has no station to cut yet, only the land it lies in
 	if arch == nil then
+		if biome then
+			transition(plan, center, biome, odometer, changes)
+		end
 		return
 	end
 	local old = plan.upcoming
@@ -164,19 +189,7 @@ local function setUpcoming(
 	end
 	plan.pieces = kept
 
-	-- the destination's biome takes over from BlendAt of the leg, beyond what is built
-	if plan.transitionLeg ~= plan.leg then
-		plan.transitionLeg = plan.leg
-		local at = Journey.blendStart(plan.legStart, center, odometer + J.BuiltAhead + 100)
-		table.insert(
-			plan.transitions,
-			{ at = at, length = J.BlendLength, biome = Journey.biomeFor(archetype) }
-		)
-		table.sort(plan.transitions, function(a, b)
-			return a.at < b.at
-		end)
-		table.insert(changes, { x0 = at, x1 = odometer + 20000, minAhead = J.BuiltAhead })
-	end
+	transition(plan, center, biome or Journey.biomeFor(archetype), odometer, changes)
 end
 
 local function startRun(plan: Plan, run: RunState, phase: string, odometer: number)
@@ -184,7 +197,7 @@ local function startRun(plan: Plan, run: RunState, phase: string, odometer: numb
 	local destination = run.destination
 	local base = if phase == "Boarding" or destination == nil
 		then Journey.FirstBiome
-		else Journey.biomeFor(destination.archetype)
+		else destination.biome or Journey.biomeFor(destination.archetype)
 	plan.seed = run.seed or JourneyPlan.DefaultSeed
 	plan.base = base
 	plan.transitions = {}
@@ -231,7 +244,7 @@ function JourneyPlan.step(plan: Plan, input: Input): Result
 		local predicted = Journey.dockFromCruise(input.odometer, run.phaseEndsAt - input.now, input.speed)
 		local upcoming = plan.upcoming
 		if upcoming == nil or math.abs(predicted - upcoming.center) > J.DockTolerance then
-			setUpcoming(plan, predicted, destination.archetype, input.odometer, changes)
+			setUpcoming(plan, predicted, destination.archetype, input.odometer, changes, destination.biome)
 		end
 	end
 	local station = run.station

@@ -237,6 +237,37 @@ describe("JourneyPlan joins and speed", function()
 		expect(plan.base).toBe("Mountain")
 	end)
 
+	it("heads into a sealed mystery's real land and keeps it at Arrival", function()
+		local plan = JourneyPlan.new()
+		local run: { [string]: any } = {
+			runId = "sealed",
+			seed = 7,
+			stopCount = STOPS,
+			nextStop = 3,
+			phaseEndsAt = 60,
+			destination = { archetype = "Mystery", biome = "Highland" },
+		}
+		local function step(phase: string, odometer: number, stationX: number?)
+			JourneyPlan.step(plan, {
+				phase = phase,
+				active = true,
+				run = run,
+				odometer = odometer,
+				speed = 40,
+				now = 0,
+				stationX = stationX,
+			})
+		end
+		step("Cruise", 1000)
+		step("Cruise", 1040)
+		expect(#plan.transitions).toBe(1)
+		expect(plan.transitions[1].biome).toBe("Highland")
+		run.station = { archetype = "Infirmary" }
+		step("Arrival", 3000, 400)
+		expect(plan.upcoming and plan.upcoming.archetype).toBe("Infirmary")
+		expect(#plan.transitions).toBe(1)
+	end)
+
 	it("follows a moving station exactly and spins up otherwise", function()
 		expect(JourneyPlan.speed(50, "Arrival", DT, -42, 3)).toBe(42)
 		expect(JourneyPlan.speed(50, "Arrival", DT, nil, 0)).toBeCloseTo(-Motion.arrivalVelocity(0), 1e-6)
