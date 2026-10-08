@@ -171,8 +171,28 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		C.quarry,
 		Enum.Material.CeramicTiles
 	)
+	local rosette = Vector3.new(0, 0, 24)
+	local rings = {
+		{ diameter = 30, color = C.slateDark, material = Enum.Material.Slate },
+		{ diameter = 26, color = C.glazed, material = Enum.Material.Slate },
+		{ diameter = 20, color = C.brass, material = Enum.Material.Metal },
+		{ diameter = 18, color = C.slateDark, material = Enum.Material.Slate },
+	}
 	for _, z in { WALK0 + 0.25, WALK1 - 0.25 } do
-		decor(Vector3.new(fx1 - fx0, 0.04, 0.3), at(0, 0.02, z), C.brass, Enum.Material.Metal)
+		local halfWidth = 0.15
+		local nearestZ = math.max(math.abs(z - rosette.Z) - halfWidth, 0)
+		local cutoff = math.sqrt((rings[1].diameter / 2) ^ 2 - nearestZ ^ 2)
+		for _, bounds in { { fx0, rosette.X - cutoff }, { rosette.X + cutoff, fx1 } } do
+			local x0, x1 = bounds[1], bounds[2]
+			if x1 > x0 then
+				decor(
+					Vector3.new(x1 - x0, 0.04, 0.3),
+					at((x0 + x1) / 2, 0.02, z),
+					C.brass,
+					Enum.Material.Metal
+				)
+			end
+		end
 	end
 	local JOINT = 0.8
 	local joints: { number } = {}
@@ -201,13 +221,6 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			end
 		end
 	end
-	local rosette = Vector3.new(0, 0, 24)
-	local rings = {
-		{ diameter = 30, color = C.slateDark, material = Enum.Material.Slate },
-		{ diameter = 26, color = C.glazed, material = Enum.Material.Slate },
-		{ diameter = 20, color = C.brass, material = Enum.Material.Metal },
-		{ diameter = 18, color = C.slateDark, material = Enum.Material.Slate },
-	}
 	for ring, spec in rings do
 		local disc = Kit.cylinder(
 			model,
