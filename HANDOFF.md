@@ -1,6 +1,11 @@
 # HANDOFF
 Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 
+## 2026-10-08: Brief 011 prepared
+1. Done: prepared `tasks/011-gently-warm-train-interior-lighting.md` for a subtle, localized warmer train interior, with verified TrainBuilder/TrainInterior references and required exterior post-lamp inspection. Game code unchanged; warmth remains unverified.
+2. Known: exact exterior post-lamp source and Studio visual comparison still need verification.
+3. Next: Claude implement task 011 on disk, run checks, restart Play after Rojo sync, inspect interior versus nearby post lamps, and report console/screenshot results.
+
 ## Brief M / task 006 — implemented, acceptance pending (2026-10-07)
 - Client-only `Visual/HollowCosmetics` decorates Stalker/Crawler with seeded primitive accessories, grime/stains, skull cracks, crawler hair, coat tear accents, badge/buttons/ticket, eyes, drip, breath and chest smoke. Reuses crawler Dust/Breath and Stalker Drip; locally disables/restores old FootMist. All added parts are welded, massless and non-colliding/non-queryable/non-touchable. No custom assets/placeholders.
 - `Controllers/HollowAnimator` owns the single update loop and fresh additive neck/jaw offsets (nearby, stationary Prowl only). Existing aggression State drives eye brightness. Lights/continuous effects stop beyond 120 studs; no new attributes/state. `Tuning.HollowCosmetics` holds cosmetic settings. `Logic/GrimeLevel` plus its three pure tests covers stop progression (1=0, 5=.4, 10=.9, Terminus=1) and deterministic +/-10% variation. Actual limb lengths/extra joints skipped to preserve rig geometry; missing joints receive no motion.
@@ -159,3 +164,5 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Done: palette (Theme): grey-green Edmondson card replaces cream ticket stock, cooler whites, fog-teal accent for selection; no cream left in UI, signs, posters, notes, liveries or cosmetics. `Ui.button` is an enamel plate (keel, hover sheen, pressed collapse, gamepad corner brackets, dull disabled; `Ui.setButtonStyle`). Lobby UI: crew pass card + platform indicator with ready lamps. Modal shell: iron header, brass rule, corner rivets. Outfitter cards show item thumbnails (milliner's dummy for hats). Train: varnished panelled body with gilt beading, open clerestory ceiling with long-rod gasoliers, green lincrusta, raised wainscot fields, mahogany frames, teal/LTO antimacassars, banker's-green lamps, Mansell-wheel bogies on leaf springs (Train audit budget 1800 -> 2000). Depot Hall: slate flags in bays, oxblood quarry walk, green glazed dado, amber lamp glass, cooler fill/ambient (same luminance); six posters redrawn in new `Builders/PosterArt`. Stations: teal enamel running-in boards, typeset timetable bill. `lune run check` passes; Studio Play checked lobby, saloon, exterior, HUD, Outfitter, Line Mastery and two stations; console clean (DataStore 403 only).
 2. Known: warm lamp/night grading still warms pale colours, so world whites are deliberately blue-leaning; check by eye. Not seen this session: Workshop modal, route vote, summary/run card, tablet/phone sizes (only the UIScale math was checked). No uploaded assets (kept the no-upload rule; Blender not used).
 3. Next: look at the Workshop, route vote and run card with the new plates; check the lobby on a phone-size viewport; tune `C.paving` if the hall feels too dark.
+
+- Brief 011 planning validation: lune run check passed (2026-10-08); no lighting implementation or Studio visual acceptance yet.
