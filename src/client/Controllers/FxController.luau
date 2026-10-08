@@ -300,18 +300,23 @@ local function onPhase(phase: string?)
 		Overlay.alert("LAST CALL", Theme.Color.signal, 3)
 		audio("Whistle")
 	elseif phase == "Departure" then
-		local status = Session.status()
-		if status == "Afield" or status == "Straggler" then
-			Overlay.alert("THE TRAIN IS LEAVING. RUN!", Theme.Color.signal, 3)
-		else
-			Overlay.alert("DOORS CLOSING", Theme.Color.caution, 2)
-		end
+		-- T-0: the whistle; the station leaves when the Last Call grace ends (onDeparted)
 		audio("Departure")
-		Registry.CameraController.Shake(0.35)
 	elseif phase == "Terminus" then
 		Overlay.alert("TERMINUS. YOU MADE IT.", Theme.Color.go, 4)
 		audio("Victory")
 	end
+end
+
+-- The station actually leaves (Controllers/DepartureClock, at the end of the Last Call grace).
+local function onDeparted()
+	local status = Session.status()
+	if status == "Afield" or status == "Straggler" then
+		Overlay.alert("THE TRAIN IS LEAVING. RUN!", Theme.Color.signal, 3)
+	else
+		Overlay.alert("DOORS CLOSING", Theme.Color.caution, 2)
+	end
+	Registry.CameraController.Shake(0.35)
 end
 
 function FxController.Init()
@@ -324,6 +329,7 @@ function FxController.Start()
 	Net.On("Fx", onFx)
 	Net.On("Notify", onNotify)
 	Registry.StateController.Observe("public", { "run", "phase" }, onPhase)
+	Registry.DepartureClock.Departed:Connect(onDeparted)
 end
 
 return FxController

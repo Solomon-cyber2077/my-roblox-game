@@ -902,6 +902,11 @@ function Hud.mount(gui: ScreenGui)
 		elseif phase == "Departure" then
 			title = if station then string.upper(station.name) else ""
 			status, statusColor, timerColor = "DEPARTING", Theme.Color.signal, Theme.Color.signal
+			if Registry.DepartureClock.InGrace() then
+				-- the Last Call grace: the station is still docked, the watch counts it down
+				status = "LAST CALL"
+				timerValue = Registry.DepartureClock.Remaining() or timerValue
+			end
 		elseif phase == "Terminus" then
 			title, status = "TERMINUS", "END OF THE LINE"
 		end

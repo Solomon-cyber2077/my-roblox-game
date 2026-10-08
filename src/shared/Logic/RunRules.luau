@@ -75,6 +75,31 @@ function RunRules.requiredReady(lobbyCount: number): number
 	return math.max(1, math.ceil(lobbyCount * Tuning.Run.MinReadyShare))
 end
 
+--[[
+	Departure opens with the Last Call grace: the whistle has blown at T-0 (run.station.departAt) but
+	the station stays docked until run.station.lastCallEndsAt; then it moves and the chase window runs.
+]]
+function RunRules.graceSeconds(): number
+	local grace = Tuning.LastCallGrace
+	return if grace.Enabled then grace.Seconds else 0
+end
+
+-- Inside Departure: true once the grace is over (or there is none) and the station is moving.
+function RunRules.hasDeparted(lastCallEndsAt: number?, now: number): boolean
+	return lastCallEndsAt == nil or now >= lastCallEndsAt
+end
+
+-- The crew who were not aboard at T-0 (`missing`) but are aboard when the stop resolves.
+function RunRules.closeCalls<K>(missing: { [K]: boolean }, aboard: { [K]: boolean }): { K }
+	local out: { K } = {}
+	for key in missing do
+		if aboard[key] then
+			table.insert(out, key)
+		end
+	end
+	return out
+end
+
 function RunRules.duration(phase: Phase, ctx: Context): number?
 	local run = Tuning.Run
 	if phase == "Countdown" then
@@ -92,7 +117,7 @@ function RunRules.duration(phase: Phase, ctx: Context): number?
 	elseif phase == "LastCall" then
 		return run.LastCallSeconds
 	elseif phase == "Departure" then
-		return ctx.chaseSeconds
+		return RunRules.graceSeconds() + ctx.chaseSeconds
 	elseif phase == "Terminus" then
 		return run.TerminusSeconds
 	elseif phase == "RunEnd" then

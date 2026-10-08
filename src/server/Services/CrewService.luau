@@ -46,6 +46,7 @@ local CrewService = {}
 
 local members: { [Player]: Member } = {}
 local pendingJoin: { [Player]: boolean } = {}
+local missingAtLastCall: { [Player]: boolean } = {} -- not aboard when the whistle blew (T-0)
 local spawnGeneration: { [Player]: number } = {}
 
 local REGEN_SHARE = 0.01 -- of max health per second, as the default Health script gave
@@ -452,8 +453,27 @@ function CrewService.Eliminate(player: Player, cause: Cause)
 	end)
 end
 
+-- T-0, the Last Call whistle: remembers who is not aboard yet, for close calls.
+function CrewService.MarkLastCall()
+	table.clear(missingAtLastCall)
+	for player, member in members do
+		if isAliveStatus(member.status) and member.status ~= "Aboard" then
+			missingAtLastCall[player] = true
+		end
+	end
+end
+
 -- Called when the chase window closes: anyone not aboard stays behind.
 function CrewService.ResolveDeparture()
+	local aboard: { [Player]: boolean } = {}
+	for player, member in members do
+		aboard[player] = member.status == "Aboard"
+	end
+	for _, player in RunRules.closeCalls(missingAtLastCall, aboard) do
+		members[player].tally.closeCalls += 1
+		print(`[Crew] {player.Name} close call at stop {Registry.RunDirector.NextStop()}`)
+	end
+	table.clear(missingAtLastCall)
 	for player, member in members do
 		if isAliveStatus(member.status) then
 			if member.status == "Aboard" then

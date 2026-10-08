@@ -39,6 +39,16 @@ local Tuning = {
 		FogDensity = 0.08, -- extra Atmosphere density at full warning
 	},
 
+	-- The Last Call grace after T-0 (Logic/RunRules): the whistle blows and the station stays docked this
+	-- long before it actually departs (run.station.lastCallEndsAt). Off: it departs at T-0 as before.
+	LastCallGrace = {
+		Enabled = true,
+		Seconds = 3,
+		PulseRate = 2.5, -- pulses per second of the lanterns at the train's platform doors
+		LanternBrightness = 1.6,
+		LanternRange = 12,
+	},
+
 	-- Boarding cars on the Depot Hall's display train: a full car, or a car whose countdown runs out,
 	-- leaves for its own server.
 	Cars = {

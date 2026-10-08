@@ -1,7 +1,9 @@
 local Catalog = require(Shared.Logic.Catalog)
 local Cosmetics = require(Shared.Config.Cosmetics)
+local DepartureSchedule = require(Shared.Logic.DepartureSchedule)
 local Economy = require(Shared.Logic.Economy)
 local Milestones = require(Shared.Logic.Milestones)
+local Motion = require(Shared.Logic.Motion)
 local Rank = require(Shared.Logic.Rank)
 local RouteGen = require(Shared.Logic.RouteGen)
 local RunRules = require(Shared.Logic.RunRules)
@@ -50,6 +52,57 @@ describe("RunRules", function()
 	it("splits the dwell so Last Call is always 15 seconds", function()
 		local c = ctx({ dwellSeconds = 80 })
 		expect(RunRules.duration("Dwell", c) + RunRules.duration("LastCall", c)).toBe(80)
+	end)
+
+	it("opens Departure with the Last Call grace, then the chase window", function()
+		local c = ctx({ chaseSeconds = 6 })
+		local grace = RunRules.graceSeconds()
+		expect(grace).toBe(if Tuning.LastCallGrace.Enabled then Tuning.LastCallGrace.Seconds else 0)
+		expect(RunRules.next("LastCall", c)).toBe("Departure")
+		expect(RunRules.duration("Departure", c)).toBe(grace + 6)
+		expect(RunRules.next("Departure", c)).toBe("Junction")
+		-- T-0 at 100: docked through the grace, moving from its end
+		local endsAt = 100 + grace
+		expect(RunRules.hasDeparted(endsAt, 100)).toBe(grace == 0)
+		expect(RunRules.hasDeparted(endsAt, endsAt - 0.01)).toBe(grace == 0)
+		expect(RunRules.hasDeparted(endsAt, endsAt)).toBe(true)
+		expect(RunRules.hasDeparted(nil, 100)).toBe(true)
+	end)
+
+	it("keeps the station still through the grace and gives the chase its full drift", function()
+		local accel, chase = 3, 6
+		local grace = RunRules.graceSeconds()
+		local t0 = 100
+		local departsAt = t0 + grace
+		local phaseEnds = t0 + RunRules.duration("Departure", ctx({ chaseSeconds = chase }))
+		-- StationService starts the profile at the actual departure
+		for now = t0, departsAt, 0.25 do
+			expect(Motion.departureOffset(now - departsAt, accel)).toBe(0)
+			expect(Motion.departureVelocity(now - departsAt, accel)).toBe(0)
+		end
+		expect(-Motion.departureOffset(phaseEnds - departsAt, accel)).toBeCloseTo(
+			Motion.chaseDrift(chase, accel),
+			1e-9
+		)
+	end)
+
+	it("counts a close call for crew missing at T-0 and aboard at the end, and only them", function()
+		local missing = { a = true, b = true }
+		-- a boarded during the grace, b was left behind, c was aboard all along
+		local calls = RunRules.closeCalls(missing, { a = true, b = false, c = true })
+		expect(#calls).toBe(1)
+		expect(calls[1]).toBe("a")
+		expect(#RunRules.closeCalls({}, { a = true })).toBe(0)
+	end)
+
+	it("treats a late joiner during the grace like everyone else", function()
+		-- d joined after the T-0 snapshot: aboard at the end is not a close call
+		expect(#RunRules.closeCalls({ a = true }, { a = false, d = true })).toBe(0)
+		-- their client first sees the stop at T-0 and still gets the depart cue (the LAST CALL slate)
+		local tracker = DepartureSchedule.tracker()
+		local reached = DepartureSchedule.step(tracker, 1, 80, 0)
+		expect(reached and reached.kind).toBe("depart")
+		expect(DepartureSchedule.step(tracker, 1, 80, 0)).toBe(nil)
 	end)
 
 	it("guards: wipe, derail and empty server", function()
