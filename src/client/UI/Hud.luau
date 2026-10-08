@@ -137,7 +137,9 @@ function Hud.mount(gui: ScreenGui)
 		Position = UDim2.fromOffset(22, 52),
 		Size = UDim2.fromOffset(110, 16),
 	})
-	tagMoon.TextTruncate = Enum.TextTruncate.AtEnd
+	-- shrinks to fit rather than cutting "MOONRISE · AMBER ..." short; widens when no danger is shown
+	tagMoon.TextScaled = true
+	Ui.new("UITextSizeConstraint", { MaxTextSize = 11, MinTextSize = 7, Parent = tagMoon })
 	tagMoon.Parent = watchTag
 	local tagDanger = Ui.text({
 		Text = "",
@@ -916,6 +918,7 @@ function Hud.mount(gui: ScreenGui)
 		tagTimer.Text = Format.clock(timerValue)
 		tagTimer.TextColor3 = timerColor
 		tagDanger.Text = danger
+		tagMoon.Size = if danger == "" then UDim2.new(1, -50, 0, 16) else UDim2.fromOffset(110, 16)
 		local hurry = phase == "LastCall" or phase == "Departure"
 		watchScale.Scale = if hurry then 1 + 0.03 * math.sin(now * 10) else 1
 		if hurry or (phase == "Dwell" and timerValue < 30) then
