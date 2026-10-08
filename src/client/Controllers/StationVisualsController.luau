@@ -177,7 +177,9 @@ function StationVisualsController.Start()
 		local open = phase == "Dwell" or phase == "LastCall" or phase == "Departure"
 		if info and root and not info.terminus and open then
 			local run = Registry.StateController.Get({ "run" }) or {}
-			local t = (if phase == "Departure" then run.phaseStartedAt or now else now) - info.startedAt
+			-- the fog stops where the station actually left (the end of the Last Call grace)
+			local frozenAt = info.lastCallEndsAt or run.phaseStartedAt or now
+			local t = (if phase == "Departure" then math.min(now, frozenAt) else now) - info.startedAt
 			local geo = { depth = info.depth, safe = Tuning.World.SafeStrip }
 			local frame = root.CFrame * ROOT_OFFSET:Inverse()
 			local camera = Workspace.CurrentCamera

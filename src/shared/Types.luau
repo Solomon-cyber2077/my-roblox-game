@@ -64,6 +64,7 @@ export type StationInfo = {
 	depth: number,
 	startedAt: number,
 	departAt: number,
+	lastCallEndsAt: number?, -- set at T-0: the station stays docked until then (Tuning.LastCallGrace)
 	layoutSeed: number,
 	hazards: HazardParams,
 	terminus: boolean,
@@ -109,6 +110,7 @@ export type CrewTally = {
 	relicsBanked: number,
 	rescues: number,
 	clutchBoards: number,
+	closeCalls: number, -- not aboard at T-0, aboard when the stop resolved
 	reachedTerminus: boolean,
 }
 

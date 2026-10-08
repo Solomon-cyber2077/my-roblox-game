@@ -52,6 +52,7 @@ type RunState = {
 	info: Types.StationInfo?,
 	plan: LayoutGen.Plan?,
 	outcome: Types.Outcome?,
+	departed: boolean, -- false only during the Last Call grace, while the station is still docked
 }
 
 local state: RunState = {
@@ -70,6 +71,7 @@ local state: RunState = {
 	info = nil,
 	plan = nil,
 	outcome = nil,
+	departed = true,
 }
 
 local rng = Random.new()
@@ -246,14 +248,32 @@ Enter.LastCall = function()
 	NetService.FireAll("Notify", "LastCall", "Last call! The train leaves in 15 seconds.")
 end
 
-Enter.Departure = function()
+-- The actual departure: the end of the Last Call grace (at once when there is none).
+local function depart()
+	state.departed = true
 	local params = state.params :: Types.HazardParams
 	Registry.HazardDirector.Freeze()
 	Registry.HollowService.LetGo()
 	Registry.StationService.BeginDeparture(params.departureAccel)
 end
 
+-- T-0: the whistle blows. The station stays docked through the grace, then departs (tick).
+Enter.Departure = function()
+	Registry.CrewService.MarkLastCall()
+	local info = state.info
+	local grace = RunRules.graceSeconds()
+	if info and grace > 0 then
+		state.departed = false
+		info.lastCallEndsAt = now() + grace
+		Registry.StationService.SetInfo(info)
+		StateService.Set({ "run", "station" }, info)
+	else
+		depart()
+	end
+end
+
 Exit.Departure = function(nextPhase)
+	state.departed = true
 	if nextPhase == "Junction" then
 		Registry.CrewService.ResolveDeparture()
 		state.stationsCleared += 1
@@ -326,6 +346,12 @@ local function tick()
 		transition(guardPhase, outcome)
 		return
 	end
+	if state.phase == "Departure" and not state.departed then
+		local info = state.info
+		if RunRules.hasDeparted(info and info.lastCallEndsAt, now()) then
+			Safe.call("RunDirector.depart", depart)
+		end
+	end
 	if state.endsAt and now() >= state.endsAt then
 		transition(RunRules.next(state.phase, ctx), nil)
 	end
@@ -354,6 +380,9 @@ function RunDirector.DevWarp(seconds: number)
 	if info then
 		info.startedAt -= seconds
 		info.departAt -= seconds
+		if info.lastCallEndsAt then
+			info.lastCallEndsAt -= seconds
+		end
 		Registry.StationService.SetInfo(info)
 		StateService.Set({ "run", "station" }, info)
 	end

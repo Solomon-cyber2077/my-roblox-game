@@ -82,6 +82,7 @@ function Economy.emptyTally(): Types.CrewTally
 		relicsBanked = 0,
 		rescues = 0,
 		clutchBoards = 0,
+		closeCalls = 0,
 		reachedTerminus = false,
 	}
 end

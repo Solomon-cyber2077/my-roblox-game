@@ -14,6 +14,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local MathX = require(ReplicatedStorage.Shared.Util.MathX)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 
 local Registry = require(script.Parent.Parent.Registry)
 local ChalkSlate = require(script.Parent.Parent.UI.ChalkSlate)
@@ -38,6 +39,7 @@ type Rig = {
 	breaches: { [BasePart]: ParticleEmitter },
 	doorOpen: number,
 	live: boolean,
+	doorLamps: { PointLight }?, -- at the platform-side doors, made at the first Last Call grace
 }
 
 local TrainVisualsController = {}
@@ -99,6 +101,7 @@ local function rigFor(model: Model, live: boolean): Rig
 		breaches = {},
 		doorOpen = 0,
 		live = live,
+		doorLamps = nil,
 	}
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
@@ -148,6 +151,41 @@ local function rigFor(model: Model, live: boolean): Rig
 		end
 	end
 	return rig
+end
+
+local LAMP = Color3.fromRGB(255, 196, 120)
+
+-- The Last Call grace: a lantern glow pulses at every platform-side door (DepartureClock.InGrace).
+local function updateDoorLamps(rig: Rig, t: number)
+	local grace = Registry.DepartureClock ~= nil and Registry.DepartureClock.InGrace()
+	local lamps = rig.doorLamps
+	if lamps == nil then
+		if not grace then
+			return
+		end
+		-- found now, not in rigFor: with streaming the doors may not have been there yet
+		local made: { PointLight } = {}
+		for _, doorway in rig.model:GetDescendants() do
+			if not (doorway:IsA("BasePart") and doorway.Name == "DoorBlocker" and doorway.Position.Z > 0) then
+				continue
+			end
+			local light = Instance.new("PointLight")
+			light.Name = "LastCallLamp"
+			light.Color = LAMP
+			light.Range = Tuning.LastCallGrace.LanternRange
+			light.Shadows = false
+			light.Enabled = false
+			light.Parent = doorway
+			table.insert(made, light)
+		end
+		rig.doorLamps = made
+		lamps = made
+	end
+	local pulse = 0.5 + 0.5 * math.sin(t * Tuning.LastCallGrace.PulseRate * 2 * math.pi)
+	for _, light in lamps :: { PointLight } do
+		light.Enabled = grace
+		light.Brightness = Tuning.LastCallGrace.LanternBrightness * pulse
+	end
 end
 
 local function updateBreaches(rig: Rig)
@@ -291,6 +329,9 @@ function TrainVisualsController.Start()
 				rig.smoke.Color = if starving then STARVING_SMOKE else SMOKE
 			end
 			local t = os.clock()
+			if rig.live then
+				updateDoorLamps(rig, t)
+			end
 			rig.flare = math.max(rig.flare - dt * 0.6, 0)
 			if rig.firebox then
 				rig.firebox.Brightness = if starving
