@@ -86,6 +86,11 @@ describe("RunRules", function()
 		)
 	end)
 
+	it("docks every station on the +Z side, where the Last Call door lamps look", function()
+		-- TrainVisualsController lights only DoorBlockers with Z > 0
+		expect(Tuning.World.PlatformEdgeZ > 0).toBe(true)
+	end)
+
 	it("counts a close call for crew missing at T-0 and aboard at the end, and only them", function()
 		local missing = { a = true, b = true }
 		-- a boarded during the grace, b was left behind, c was aboard all along

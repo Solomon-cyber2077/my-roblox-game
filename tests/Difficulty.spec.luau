@@ -99,10 +99,10 @@ describe("DifficultyModel", function()
 		expect(upgraded.breachRate).toBeCloseTo(base.breachRate * 0.75 ^ 2)
 	end)
 
-	it("matches the published dwell range of 60 to 95 seconds before archetype scaling", function()
+	it("matches the published dwell range of 94 to 148 seconds before archetype scaling", function()
 		local neutral = table.clone(Stations.List.CoalYard)
 		neutral.landmarks = nil
-		expect(DifficultyModel.params(0, neutral, 1, nil).dwell).toBe(95)
-		expect(DifficultyModel.params(1, neutral, 1, nil).dwell).toBe(60)
+		expect(DifficultyModel.params(0, neutral, 1, nil).dwell).toBe(148)
+		expect(DifficultyModel.params(1, neutral, 1, nil).dwell).toBe(94)
 	end)
 end)
