@@ -1,6 +1,6 @@
 # 002: Raise early station Hollow threat
 <!-- rbxmap:meta {"id":"002","created":"2026-10-06","query":"","hashes":{"src/shared/Config/Difficulty.luau":"50e1132ef3ab1590","src/server/Services/HollowService.luau":"a23354ab70fc759a","src/server/Services/HazardDirector.luau":"8a7198c33bf4bd58"}} -->
-Status: in-progress
+Status: done
 
 ## Goal
 Raise early-stop active Hollow caps by approximately 1–2 without changing the later-stop caps, maximum 16, or the shape of the existing spawn-rate ramp. Scale sleepers by building count and size, and add exactly one delayed wanderer per ordinary station that seeks the nearest eligible player.

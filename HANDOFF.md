@@ -134,3 +134,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Done: `tests/Difficulty.spec` dwell range now 94-148 s (task 002's Dwell change, kept). New `Run.spec` guard: stations dock on +Z (`PlatformEdgeZ > 0`), which the Last Call door lamps rely on. `lune run check` passes (167/167). Studio Play boots to a docked stop, console clean.
 2. Known issues: Last Call door lamps not yet seen on screen; station sliding away mid-jump during the chase not playtested.
 3. Next: task 002 Studio checks (distant player chased by the wanderer, sleeper counts small vs large stops), then mark 002 done.
+
+## 2026-10-07: task 002 Studio acceptance (done)
+1. Done: Studio playtest. Wanderer spawned (Prowl) at stop 3 Market, ran ~120 studs to a lone player on the far platform and took them ("Taken at stop 3"); it correctly ignores players still aboard. Sleepers live: Halt 3, SignalWorks 2, Market 2, matching a headless LayoutGen sweep (one-building stops 2, Halt 3, CoalYard/Schoolhouse 5, PostTown 6). Sleepers scale with building tiles, not platform depth. Last Call door lamps: 6 LastCallLamp PointLights turn on at T-0 and off 3.1 s later when the station pulls away. Task 002 marked done.
+2. Known: a scripted jump from the platform 0.4 s after pull-away ended in the gap ("LeftBehind at stop 1"); the platform had already shifted ~5 studs, so the door was out of reach. Needs a manual human try before calling the gap jump broken. `Dev warp` moves only the hazard clock, not `departAt`, so Last Call has to be waited out in real time.
+3. Next: try the gap jump by hand in Studio (stand at a +Z door, jump as the lamps go out); if it can't be made, widen the grace window or the door catch.
