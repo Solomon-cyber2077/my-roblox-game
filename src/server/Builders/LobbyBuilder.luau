@@ -596,19 +596,6 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		fill.Name = "FillLight"
 		Kit.pointLight(fill, C.fill, 0.85, 60, false)
 	end
-	-- a back row reaches the departure board and back wall, out of range of the row above
-	for _, x in { -44, 0, 44 } do
-		local fill = block(
-			Vector3.one,
-			at(x, 26, BACK_Z - 20),
-			C.fill,
-			nil,
-			{ transparency = 1, collide = false, shadow = false }
-		)
-		fill.Name = "FillLight"
-		Kit.pointLight(fill, C.fill, 0.85, 45, false)
-	end
-
 	-- Roof: slate over the eaves, dirty glass over the middle on glazing bars --------------------------
 	for i = 1, SEGMENTS do
 		local a, b = points[i], points[i + 1]
@@ -1476,12 +1463,47 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Kit.pointLight(lantern, C.warm, 0.75, 22, false)
 		end
 	end
-	for _, x in { -78, -54, 54, 78 } do
-		decor(Vector3.new(0.6, 1.4, 0.5), at(x, 13, BACK_Z - 0.25), C.brass, Enum.Material.Metal)
-		decor(Vector3.new(0.3, 0.3, 1.2), at(x, 13.4, BACK_Z - 0.9), C.brass, Enum.Material.Metal)
-		local globe =
-			Kit.neon(model, Vector3.new(1, 1, 1), at(x, 13.4, BACK_Z - 1.9), C.flame, Enum.PartType.Ball)
-		Kit.pointLight(globe, C.warm, 0.55, 18, false)
+	local rearLamp = {
+		height = 14,
+		backplateDepth = 0.25,
+		armDepth = 2.2,
+		shadeDepth = 3.1,
+		color = Color3.fromRGB(255, 214, 165),
+		lightBrightness = 1.5,
+		lightRange = 48,
+	}
+	-- Eight lamps at 24-stud spacing, with the central departure board kept clear.
+	for _, x in { -102, -78, -54, -30, 30, 54, 78, 102 } do
+		Kit.block(
+			model,
+			Vector3.new(2.4, 3.2, rearLamp.backplateDepth),
+			at(x, rearLamp.height, BACK_Z - 0.15),
+			C.iron,
+			{ material = Enum.Material.Metal, collide = false, shadow = false }
+		)
+		Kit.block(
+			model,
+			Vector3.new(0.35, 0.35, rearLamp.armDepth),
+			at(x, rearLamp.height - 0.1, BACK_Z - 1.25),
+			C.brass,
+			{ material = Enum.Material.Metal, collide = false, shadow = false }
+		)
+		Kit.cylinder(
+			model,
+			0.45,
+			3.6,
+			at(x, rearLamp.height - 0.1, BACK_Z - rearLamp.shadeDepth) * Kit.angles(0, 0, 90),
+			C.brass,
+			{ material = Enum.Material.Metal, collide = false, shadow = false }
+		)
+		local diffuser = Kit.neon(
+			model,
+			Vector3.new(0.5, 2.8, 2.8),
+			at(x, rearLamp.height - 0.65, BACK_Z - rearLamp.shadeDepth) * Kit.angles(0, 0, 90),
+			rearLamp.color,
+			Enum.PartType.Cylinder
+		)
+		Kit.pointLight(diffuser, C.warm, rearLamp.lightBrightness, rearLamp.lightRange, false)
 	end
 
 	local spawnPoints: { CFrame } = {}

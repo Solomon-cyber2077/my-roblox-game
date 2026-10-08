@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-08: Rear lobby lamps implemented
+- Completed: replaced four small wall bulbs with eight shaded warm-cream lamps, evenly spaced on either side of the departure board. Their overlapping light replaces the three hidden rear fill lights; 48-light budget retained. User authorized direct implementation.
+- Verified: lune run check passed; restarted Studio Play and inspected screenshots from center and both ends. Rear floor, posters and seating are brighter; lamps clear windows and signs. Console only reports existing disabled DataStore API access.
+- Known: no new regression observed. Next: user review of warmth in the rear lounge.
+
 ## 2026-10-08: Brief 012 prepared
 1. Done: prepared `tasks/012-replace-small-rear-lobby-bulbs-with-even.md` with verified LobbyBuilder ranges and concrete lamp placement, warmth, overlap, and Studio verification requirements. No game code changed.
 2. Known: task 012 remains todo; implementation and visual acceptance have not been run.

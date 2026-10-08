@@ -1,6 +1,6 @@
 # 012: Replace small rear lobby bulbs with evenly spaced warm lamps
 <!-- rbxmap:meta {"id":"012","created":"2026-10-08","query":"","hashes":{"src/server/Builders/LobbyBuilder.luau":"3100f73eef13a453"}} -->
-Status: todo
+Status: done
 
 ## Goal
 Replace the four tiny rear-wall globe sconces in LobbyBuilder (around lines 1479-1485) with evenly spaced, substantial period brass/iron shaded lamps spanning the full rear width, including both ends and the central seating/ticket/board area. Use soft warm cream light with overlapping ranges so rear seating, floor, posters and wall read clearly without saturated orange or changing the lobby's overall lighting character.
@@ -19,10 +19,10 @@ Replace the four tiny rear-wall globe sconces in LobbyBuilder (around lines 1479
 - Edit only the files listed above. Studio-only content is not visible to agents.
 
 ## Acceptance checks
-- [ ] Four tiny rear wall bulbs are removed/replaced by evenly spaced substantial shaded warm lamps across the full back wall, including both ends.
-- [ ] Lamp placement avoids the board, windows and posters; central seating/ticket/board area remains unobstructed.
-- [ ] Rear seating, floor and posters are visibly illuminated by overlapping soft warm cream pools without saturated orange.
-- [ ] `lune run check` passes (including Rojo, StyLua, selene, strict checks, tests and audit).
+- [x] Four tiny rear wall bulbs are removed/replaced by evenly spaced substantial shaded warm lamps across the full back wall, including both ends.
+- [x] Lamp placement avoids the board, windows and posters; central seating/ticket/board area remains unobstructed.
+- [x] Rear seating, floor and posters are visibly illuminated by overlapping soft warm cream pools without saturated orange.
+- [x] `lune run check` passes (including Rojo, StyLua, selene, strict checks, tests and audit).
 
 ## Manual test steps in Studio
 1. Start `rojo serve`, connect the Rojo plugin, press Play.
@@ -31,3 +31,4 @@ Replace the four tiny rear-wall globe sconces in LobbyBuilder (around lines 1479
 
 ## Builder notes
 Read this task first, recheck stale LobbyBuilder ranges 307-372, 547-612, and 1432-1497, then set status to in-progress. Make on-disk edits only through Rojo, preserve dirty changes, and set status to done only after all checks and Studio verification pass. Rear fill lamps around lines 599-609 may be redistributed locally if needed; leave ceiling/column/table lamps and global lighting intact. Commit only this task after checks pass; never push. This brief is prepared; implementation has not been run.
+- 2026-10-08 17:15: Implemented on disk with user authorization. Eight shaded lamps at y14, x±30/54/78/102, RGB(255,214,165), brightness1.5/range48. Removed three hidden rear fills to keep48lights. Final lune run check passes; restarted Play and inspected center/left/right captures: lamps visible, rear floor/seating/posters illuminated, board/windows clear. Console only existing DataStore API-disabled error.
