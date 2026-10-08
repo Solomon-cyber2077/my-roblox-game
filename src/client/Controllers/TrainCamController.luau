@@ -263,8 +263,8 @@ function TrainCamController.Start()
 	})
 	chip = Ui.button("TRAIN CAMERA  [C]", "Secondary", toggle, {
 		Name = "TrainCamChip",
-		Size = UDim2.fromOffset(176, 30),
-		Position = UDim2.new(1, -16, 1, -210), -- above the pocket watch
+		Size = UDim2.fromOffset(176, 44),
+		Position = UDim2.new(1, -16, 1, -236), -- clear above the pocket watch's bow
 		AnchorPoint = Vector2.new(1, 1),
 		TextSize = 14,
 	})

@@ -1,24 +1,29 @@
 --!strict
 --[[
-	Junction ballot: one black ticket per line on offer, showing the station, its danger in
-	boxes, the coal the leg will burn against what the bunker holds and the live tally.
-	Clicking a ticket's button casts (or moves) your vote; its arrow lays the station's
+	Junction ballot: one paper ticket per line on offer (UI/Ticket, figures from
+	Logic/TicketModel) across the top of the screen, clear of the crew: the station, its
+	danger seal, the track, the coal and a stamp for every crew vote (UI/Stamp). A dial on
+	each sweeps the vote timer; at lock-in the winner is punched and the rest go slack.
+	Clicking a ticket's button casts (or moves) your vote; its flap lays the station's
 	dossier on the table in the middle of the screen: the leg, the haul, the dangers, what
 	stands in the yard and the clerk's note. Gamepad B, the backdrop or CLOSE puts it away.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage.Shared
 local Stations = require(Shared.Config.Stations)
 local Ledger = require(Shared.Logic.Ledger)
-local Vote = require(Shared.Logic.Vote)
+local TicketModel = require(Shared.Logic.TicketModel)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
+local Stamp = require(script.Parent.Stamp)
 local Theme = require(script.Parent.Theme)
+local Ticket = require(script.Parent.Ticket)
 local Ui = require(script.Parent.Ui)
 
 local RouteVote = {}
@@ -26,14 +31,10 @@ local RouteVote = {}
 local HEAVY = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy)
 local BOLD = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.ExtraBold)
 
-local CARD = Color3.fromRGB(8, 8, 10)
 local BOX_EMPTY = Color3.fromRGB(32, 32, 36)
 local BOX_RIM = Color3.fromRGB(74, 74, 82)
-local TIER_COLOR = {
-	Color3.fromRGB(96, 255, 150),
-	Color3.fromRGB(255, 176, 54),
-	Color3.fromRGB(255, 72, 56),
-}
+local LAND_DEBOUNCE = 0.3 -- a voter's stamp slams down at most this often
+local LINGER_SECONDS = 1.6 -- the ballot stays up this long after lock-in for the punch
 local BLUE_INK = Color3.fromRGB(38, 58, 120)
 
 local LAYOUT_TEXT = {
@@ -46,35 +47,6 @@ local LAYOUT_TEXT = {
 -- "ToolChest" -> "TOOL CHEST"
 local function words(id: string): string
 	return string.upper((string.gsub(id, "(%l)(%u)", "%1 %2")))
-end
-
-local function routeHint(arch: Stations.Archetype): string
-	if arch.terminus then
-		return "The last stop"
-	end
-	local lootNames = { "coal", "parts", "relics", "tools" }
-	local lootBest = ""
-	local lootValue = 1
-	for _, kind in lootNames do
-		local value = arch.loot[kind == "relics" and "relic" or kind] or 0
-		if value > lootValue then
-			lootValue = value
-			lootBest = kind
-		end
-	end
-	local hazardNames = { fog = "heavy fog", collapse = "unstable ground", hollows = "Hollows nearby" }
-	local hazardBest = ""
-	local hazardValue = 1
-	for _, kind in { "fog", "collapse", "hollows" } do
-		local value = arch.hazard[kind] or 0
-		if value > hazardValue then
-			hazardValue = value
-			hazardBest = hazardNames[kind]
-		end
-	end
-	local loot = if lootBest ~= "" then `Lots of {lootBest}` else "Balanced haul"
-	local hazard = if hazardBest ~= "" then hazardBest else "standard hazards"
-	return `{loot}, {hazard}`
 end
 
 local function plural(word: string, count: number): string
@@ -124,9 +96,9 @@ function RouteVote.mount(gui: ScreenGui)
 
 	local container = Ui.new("Frame", {
 		Name = "RouteVote",
-		Size = UDim2.fromOffset(760, 190),
-		Position = UDim2.new(0.5, 0, 1, -118),
-		AnchorPoint = Vector2.new(0.5, 1),
+		Size = UDim2.fromOffset(720, 310),
+		Position = UDim2.new(0.5, 0, 0, 10), -- along the top, clear of the crew on screen
+		AnchorPoint = Vector2.new(0.5, 0),
 		BackgroundTransparency = 1,
 		Visible = false,
 		Parent = gui,
@@ -135,7 +107,7 @@ function RouteVote.mount(gui: ScreenGui)
 		Enum.FillDirection.Horizontal,
 		14,
 		Enum.HorizontalAlignment.Center,
-		Enum.VerticalAlignment.Bottom
+		Enum.VerticalAlignment.Top
 	)
 	layout.Parent = container
 
@@ -445,216 +417,197 @@ function RouteVote.mount(gui: ScreenGui)
 	end
 
 	-- The tickets ---------------------------------------------------------------------------------
-	function render()
-		for _, child in container:GetChildren() do
-			if child:IsA("GuiObject") then
-				child:Destroy()
+	-- Built once per ballot (and again if the bunker changes the coal figures); votes, the flap
+	-- and the dial update them in place so a stamp only slams down when it is new.
+	local tieNote = Ui.text({
+		Name = "TieNote",
+		Text = "",
+		Font = Theme.Font.type,
+		TextSize = 12,
+		Color = Theme.Color.paper,
+		Size = UDim2.new(1, 0, 0, 18),
+		Position = UDim2.new(0, 0, 1, 6),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	tieNote.Parent = container
+	local tickets: { Ticket.Handle } = {}
+	local builtKey: string? = nil
+	type Placed = { index: number, mark: Frame, landedAt: number }
+	local placed: { [string]: Placed } = {}
+	local punchedKey: string? = nil
+	local lingerUntil = 0
+
+	local function clearTickets()
+		for _, handle in tickets do
+			handle.slot:Destroy()
+		end
+		table.clear(tickets)
+		table.clear(placed)
+		builtKey = nil
+		punchedKey = nil
+	end
+
+	local function ballotKey(route: any, coal: number?): string
+		local parts = { tostring(State.Get({ "run", "nextStop" })), tostring(coal) }
+		for _, option in route.options or {} do
+			table.insert(parts, `{option.archetype}:{option.distanceKm}:{option.tier}`)
+		end
+		return table.concat(parts, "|")
+	end
+
+	-- Moves, lands and lifts stamps to match the votes; only a new or moved stamp animates,
+	-- and never twice inside LAND_DEBOUNCE for the same voter.
+	local function updateStamps(votes: { [string]: number })
+		local crew = Session.crew() or {}
+		local keep: { [string]: boolean } = {}
+		for index, handle in tickets do
+			local pile = TicketModel.pile(votes, index, Session.userKey)
+			local slots = #pile
+			for order, key in pile do
+				keep[key] = true
+				local mine = key == Session.userKey
+				local spread = handle.stamps.Size.X.Offset
+				local x = if slots == 1
+					then spread / 2
+					else 22 + (order - 1) * ((spread - 44) / math.max(slots - 1, 1))
+				local position = UDim2.fromOffset(x, 25 + (TicketModel.hash(key) - 0.5) * 8)
+				local entry: Placed? = placed[key]
+				if entry and entry.index ~= index then
+					entry.mark:Destroy()
+					entry = nil
+				end
+				if entry == nil then
+					local member = crew[key]
+					local mark = Stamp.new({
+						key = key,
+						name = if member then member.name else nil,
+						mine = mine,
+						Position = position,
+						ZIndex = 6 + order * 3,
+					})
+					mark.Parent = handle.stamps
+					local now = os.clock()
+					local last = placed[key]
+					if last == nil or now - last.landedAt > LAND_DEBOUNCE then
+						Stamp.land(mark)
+						if Registry.AudioController then
+							Registry.AudioController.Play("TicketStamp")
+						end
+					end
+					placed[key] = { index = index, mark = mark, landedAt = now }
+				else
+					entry.mark.Position = position
+				end
 			end
 		end
+		for key, entry in placed do
+			if not keep[key] then
+				entry.mark:Destroy()
+				placed[key] = nil
+			end
+		end
+	end
+
+	function render()
 		if dossier then
 			dossier:Destroy()
 			dossier = nil
 		end
 		local phase = Session.phase()
 		local route = State.Get({ "run", "route" })
-		local visible = phase == "Junction" and route ~= nil and Session.isAlive()
+		local chosen = if route then route.chosen else nil
+		if chosen ~= nil and builtKey ~= nil and punchedKey ~= builtKey and lingerUntil < os.clock() then
+			-- the vote just closed (the phase leaves Junction with it): hold up for the punch
+			lingerUntil = os.clock() + LINGER_SECONDS
+			task.delay(LINGER_SECONDS + 0.05, render)
+		end
+		local lingering = chosen ~= nil and builtKey ~= nil and os.clock() < lingerUntil
+		local visible = route ~= nil and Session.isAlive() and (phase == "Junction" or lingering)
 		container.Visible = visible
 		if not visible then
 			if openIndex then
 				closeDossier()
 			end
+			if route == nil or phase ~= "Junction" then
+				clearTickets()
+			end
 			return
 		end
 		local options = route.options or {}
 		local votes = route.votes or {}
-		local counts = Vote.counts(votes, #options)
 		local mine = votes[Session.userKey]
 		local train = State.Get({ "train" })
-
-		for index, option in options do
-			local arch = Stations.List[option.archetype]
-			local selected = mine == index
-			local cost = Ledger.legCoalCost(train or Ledger.newTrain(), option.distanceKm)
-			local short = train ~= nil and cost > train.coal
-			local card = Ui.new("Frame", {
-				Name = "Option",
-				Size = UDim2.fromOffset(206, if short then 178 else 150),
-				LayoutOrder = index,
-				BackgroundColor3 = CARD,
-				BorderSizePixel = 0,
-				Parent = container,
-			})
-			Ui.corner(4).Parent = card
-			Ui.stroke(
-				if selected then Theme.Color.brass else Theme.Color.white,
-				if selected then 2 else 1,
-				if selected then 0 else 0.84
-			).Parent =
-				card
-			-- a tab of the danger's colour along the top edge
-			Ui.new("Frame", {
-				Name = "Tab",
-				Size = UDim2.new(1, -28, 0, 3),
-				Position = UDim2.fromOffset(14, 0),
-				BackgroundColor3 = if arch.terminus
-					then Theme.Color.brass
-					else TIER_COLOR[option.tier] or Theme.Color.white,
-				BorderSizePixel = 0,
-				Parent = card,
-			})
-			local lineTag = Ui.text({
-				Text = `LINE {string.char(64 + index)}`,
-				Font = Theme.Font.display,
-				TextSize = 11,
-				Color = Theme.Color.textDim,
-				Position = UDim2.fromOffset(14, 9),
-				Size = UDim2.fromOffset(80, 14),
-			})
-			lineTag.Parent = card
-			local name = Ui.text({
-				Text = string.upper(arch.name),
-				Font = HEAVY,
-				TextSize = 17,
-				Color = Theme.Color.white,
-				Position = UDim2.fromOffset(14, 23),
-				Size = UDim2.new(1, -28, 0, 20),
-			})
-			name.TextScaled = true
-			Ui.new("UITextSizeConstraint", { MaxTextSize = 17, Parent = name })
-			name.Parent = card
-
-			local dangerLabel = Ui.text({
-				Text = if arch.terminus then "THE END OF THE LINE" else `DANGER {option.tier}`,
-				Font = BOLD,
-				TextSize = 11,
-				Color = Theme.Color.textDim,
-				Position = UDim2.fromOffset(14, 49),
-				Size = UDim2.fromOffset(140, 14),
-			})
-			dangerLabel.Parent = card
-			if not arch.terminus then
-				local row = boxes(option.tier, 3, TIER_COLOR[option.tier] or Theme.Color.white, 16, 8, 3)
-				row.Position = UDim2.fromOffset(66, 52)
-				row.Parent = card
+		local key = ballotKey(route, if train then train.coal else nil)
+		if key ~= builtKey and chosen == nil then
+			clearTickets()
+			builtKey = key
+			local shortest, longest = math.huge, 0
+			for _, option in options do
+				shortest = math.min(shortest, option.distanceKm)
+				longest = math.max(longest, option.distanceKm)
 			end
-
-			-- the arrow that lays this station's dossier out
-			local isOpen = openIndex == index
-			local arrow = Ui.new("TextButton", {
-				Name = "Dossier",
-				Size = UDim2.fromOffset(26, 22),
-				Position = UDim2.new(1, -14, 0, 46),
-				AnchorPoint = Vector2.new(1, 0),
-				BackgroundColor3 = if isOpen then Theme.Color.white else CARD,
-				AutoButtonColor = false,
-				Text = "",
-				Selectable = true,
-				Parent = card,
-			})
-			Ui.corner(3).Parent = arrow
-			local arrowRim = Ui.stroke(Theme.Color.white, 1, 0.6)
-			arrowRim.Parent = arrow
-			local chevron = Ui.new("Frame", {
-				Size = UDim2.fromOffset(12, 8),
-				Position = UDim2.fromScale(0.5, 0.5),
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Rotation = if isOpen then 180 else 0,
-				BackgroundTransparency = 1,
-				Parent = arrow,
-			})
-			for _, arm in { { 3.5, 45 }, { 8.5, -45 } } do
-				Ui.new("Frame", {
-					Size = UDim2.fromOffset(7, 2),
-					Position = UDim2.fromOffset(arm[1], 4),
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					Rotation = arm[2],
-					BackgroundColor3 = if isOpen then CARD else Theme.Color.white,
-					BorderSizePixel = 0,
-					Parent = chevron,
+			local stop = State.Get({ "run", "nextStop" }) or 1
+			for index, option in options do
+				local cost = Ledger.legCoalCost(train or Ledger.newTrain(), option.distanceKm)
+				local view = TicketModel.view(
+					option,
+					(stop - 1) * #options + index,
+					cost,
+					if train then train.coal else nil
+				)
+				local handle = Ticket.full(view, {
+					routeId = `{State.Get({ "run", "seed" })}:{stop}:{index}:{option.archetype}`,
+					track = TicketModel.track(option.distanceKm, shortest, longest),
+					LayoutOrder = index,
+					onVote = function()
+						if #options > 1 then
+							Net.Fire("CastVote", index)
+						end
+					end,
+					onFlap = function()
+						if openIndex == index then
+							closeDossier()
+						else
+							openDossier(index)
+						end
+						render()
+					end,
 				})
-			end
-			arrow.MouseEnter:Connect(function()
-				Ui.tween(arrowRim, { Transparency = 0 })
-			end)
-			arrow.MouseLeave:Connect(function()
-				Ui.tween(arrowRim, { Transparency = 0.6 })
-			end)
-			arrow.Activated:Connect(function()
-				if openIndex == index then
-					closeDossier()
-				else
-					openDossier(index)
-				end
-				render()
-			end)
-
-			local legLine = Ui.text({
-				Text = `{option.distanceKm} KM  ·  BURNS {cost} COAL`,
-				Font = BOLD,
-				TextSize = 12,
-				Color = if short then Theme.Color.signal else Theme.Color.white,
-				Position = UDim2.fromOffset(14, 70),
-				Size = UDim2.new(1, -28, 0, 16),
-			})
-			legLine.Parent = card
-			local hint = Ui.text({
-				Text = routeHint(arch),
-				Font = Theme.Font.type,
-				TextSize = 10,
-				Color = Theme.Color.textDim,
-				Position = UDim2.fromOffset(14, 88),
-				Size = UDim2.new(1, -28, 0, 24),
-			})
-			hint.TextWrapped = true
-			hint.Parent = card
-			if short then
-				local warn = Ui.text({
-					Text = "NOT ENOUGH COAL: THE HULL WILL SUFFER",
-					Font = BOLD,
-					TextSize = 9,
-					Color = Theme.Color.signal,
-					Position = UDim2.fromOffset(14, 132),
-					Size = UDim2.new(1, -28, 0, 12),
-				})
-				warn.Parent = card
-			end
-
-			local button = Ui.button(
-				if selected then "YOUR VOTE" elseif #options == 1 then "FINAL LEG" else "TAKE THIS LINE",
-				if selected then "Primary" else "Paper",
-				function()
-					if #options > 1 then
-						Net.Fire("CastVote", index)
-					end
-				end,
-				{ Size = UDim2.new(1, -28, 0, 28), Position = UDim2.new(0, 14, 1, -38), TextSize = 13 }
-			)
-			button.FontFace = HEAVY
-			if not selected then
-				button.BackgroundColor3 = Theme.Color.white
-			end
-			button.Parent = card
-
-			local tally = Ui.new("TextLabel", {
-				Size = UDim2.fromOffset(24, 24),
-				Position = UDim2.new(1, 8, 0, -8),
-				AnchorPoint = Vector2.new(1, 0),
-				BackgroundColor3 = Theme.Color.signal,
-				Text = tostring(counts[index] or 0),
-				FontFace = HEAVY,
-				TextSize = 13,
-				TextColor3 = Theme.Color.white,
-				Visible = #options > 1,
-				Parent = card,
-			})
-			Ui.corner(3).Parent = tally
-			Ui.stroke(CARD, 2, 0).Parent = tally
-
-			if isOpen then
-				dossier = buildDossier(index, option, cost, short, train)
+				handle.slot.Parent = container
+				tickets[index] = handle
 			end
 		end
-		if openIndex and openIndex > #options then
+		for index, handle in tickets do
+			local selected = mine == index
+			handle.setSelected(
+				selected,
+				if selected then "YOUR VOTE" elseif #options == 1 then "FINAL LEG" else "TAKE THIS LINE"
+			)
+			handle.setFlap(openIndex == index)
+		end
+		updateStamps(votes)
+		tieNote.Text = if chosen then "" else TicketModel.tieNote(votes, options) or ""
+
+		-- Lock-in: the winner is punched, the rest go slack
+		if chosen ~= nil and punchedKey ~= builtKey and tickets[chosen] then
+			punchedKey = builtKey
+			for index, handle in tickets do
+				if index == chosen then
+					handle.punch()
+				else
+					handle.slacken()
+				end
+			end
+			if Registry.AudioController then
+				Registry.AudioController.Play("TicketPunch")
+			end
+		end
+
+		if openIndex and options[openIndex] then
+			local option = options[openIndex]
+			local cost = Ledger.legCoalCost(train or Ledger.newTrain(), option.distanceKm)
+			dossier = buildDossier(openIndex, option, cost, train ~= nil and cost > train.coal, train)
+		elseif openIndex then
 			closeDossier()
 		end
 	end
@@ -663,6 +616,21 @@ function RouteVote.mount(gui: ScreenGui)
 	State.Observe("public", { "run", "phase" }, render)
 	State.Observe("public", { "crew", Session.userKey }, render)
 	State.Observe("public", { "train", "coal" }, render)
+
+	-- The dials sweep from the vote's start to its end (run.phaseStartedAt -> phaseEndsAt)
+	RunService.RenderStepped:Connect(function()
+		if not container.Visible or #tickets == 0 or Session.phase() ~= "Junction" then
+			return
+		end
+		local sweep, numeral = TicketModel.dial(
+			Session.now(),
+			State.Get({ "run", "phaseStartedAt" }),
+			State.Get({ "run", "phaseEndsAt" })
+		)
+		for _, handle in tickets do
+			handle.setDial(sweep, numeral)
+		end
+	end)
 end
 
 return RouteVote

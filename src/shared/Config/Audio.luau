@@ -48,6 +48,8 @@ local Cues: { [string]: Cue } = {
 	Purchase = { id = 9113728042, volume = 0.6 },
 	Clutch = { id = 9125573009, volume = 0.6, maxSeconds = 2 },
 	Click = { id = 15675059323, volume = 0.4 },
+	TicketStamp = { id = 15675059323, volume = 0.35, maxSeconds = 0.4, pitch = 0.6 }, -- the click, heavier
+	TicketPunch = { id = 15675059323, volume = 0.6, maxSeconds = 0.5, pitch = 0.8 },
 
 	-- Departure warnings (Controllers/DepartureClock), from the recordings above
 	WarnTick = { id = 15675059323, volume = 0.1, maxSeconds = 0.4, pitch = 1.7, group = "Warnings" },
