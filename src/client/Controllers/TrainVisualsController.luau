@@ -202,6 +202,25 @@ local function track(model: Model, live: boolean)
 	end
 end
 
+-- The live train's chimney top, where cues from the locomotive come from (DepartureClock).
+function TrainVisualsController.Chimney(): BasePart?
+	for _, rig in rigs do
+		if rig.live and rig.smoke then
+			return rig.smoke.Parent :: BasePart
+		end
+	end
+	return nil
+end
+
+-- A puff of smoke from the live train's chimney.
+function TrainVisualsController.Puff(count: number)
+	for _, rig in rigs do
+		if rig.live and rig.smoke then
+			rig.smoke:Emit(count)
+		end
+	end
+end
+
 function TrainVisualsController.Init() end
 
 function TrainVisualsController.Start()

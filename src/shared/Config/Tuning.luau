@@ -26,6 +26,19 @@ local Tuning = {
 		WideJunctions = { [4] = true, [8] = true }, -- legs that offer three options
 	},
 
+	-- Departure warnings at a stop (Logic/DepartureSchedule, Controllers/DepartureClock).
+	-- Seconds are counted down to run.station.departAt.
+	Departure = {
+		WarningSeconds = 30, -- the watch starts ticking, the bell and a low whistle
+		EscalatedSeconds = 10, -- the tick doubles, the long whistle
+		HalfwayMinSeconds = 60, -- shorter stops get no halfway reminder
+		ReminderGapSeconds = 15, -- a start or halfway reminder this close to another is dropped
+		CatchUpSeconds = 2, -- a milestone this recently passed still fires when a stop is first seen
+		DuckShare = 0.2, -- the rest of the mix dips this much under the bell and whistles
+		DuckSeconds = 0.3,
+		FogDensity = 0.08, -- extra Atmosphere density at full warning
+	},
+
 	-- Boarding cars on the Depot Hall's display train: a full car, or a car whose countdown runs out,
 	-- leaves for its own server.
 	Cars = {

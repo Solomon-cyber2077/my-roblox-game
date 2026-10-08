@@ -39,6 +39,14 @@ local edges: { Frame } = {}
 local shade: { Frame } = {}
 local shadeShown = 0
 local alertToken = 0
+local slate: CanvasGroup
+local slateLabel: TextLabel
+local slateToken = 0
+local SLATE_COLOR = Color3.fromRGB(40, 44, 42) -- the same slate and frame as UI/ChalkSlate
+local SLATE_WOOD = Color3.fromRGB(96, 62, 38)
+local SLATE_CHALK = Color3.fromRGB(232, 230, 220)
+local SLATE_SHOWN = UDim2.new(0.5, 0, 0, 8)
+local SLATE_HIDDEN = UDim2.new(0.5, 0, 0, -12)
 local feedOrder = 0
 
 -- The dread vignette reaches further in than the pulse edges, and sits under them.
@@ -93,6 +101,34 @@ function Overlay.mount(gui: ScreenGui)
 	alertLabel.TextStrokeColor3 = Theme.Color.black
 	alertLabel.Parent = gui
 	alertScale = Ui.new("UIScale", { Parent = alertLabel })
+
+	slate = Ui.new("CanvasGroup", {
+		Name = "Slate",
+		Size = UDim2.fromOffset(280, 36),
+		Position = SLATE_HIDDEN,
+		AnchorPoint = Vector2.new(0.5, 0),
+		BackgroundColor3 = SLATE_COLOR,
+		BorderSizePixel = 0,
+		GroupTransparency = 1,
+		Visible = false,
+		Parent = gui,
+	})
+	Ui.corner(3).Parent = slate
+	Ui.stroke(SLATE_WOOD, 3, 0).Parent = slate
+	slateLabel = Ui.text({
+		Name = "Chalk",
+		Text = "",
+		Font = Theme.Font.chalk,
+		TextSize = 22,
+		Color = SLATE_CHALK,
+		Size = UDim2.new(1, -16, 1, 0),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	slateLabel.TextScaled = true
+	Ui.new("UITextSizeConstraint", { MaxTextSize = 22, MinTextSize = 12, Parent = slateLabel })
+	slateLabel.Parent = slate
 
 	popups = Ui.new("Frame", {
 		Name = "Popups",
@@ -260,6 +296,28 @@ function Overlay.alert(text: string, color: Color3?, seconds: number?)
 	task.delay(seconds or 2.4, function()
 		if token == alertToken then
 			Ui.tween(alertLabel, { TextTransparency = 1, TextStrokeTransparency = 1 }, TweenInfo.new(0.5))
+		end
+	end)
+end
+
+-- A chalk slate slides down at the top, holds and fades. Never stacks: a newer one replaces it.
+function Overlay.slate(text: string)
+	slateToken += 1
+	local token = slateToken
+	slateLabel.Text = text
+	slate.Visible = true
+	slate.Position = SLATE_HIDDEN
+	slate.GroupTransparency = 1
+	local slide = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	Ui.tween(slate, { Position = SLATE_SHOWN, GroupTransparency = 0 }, slide)
+	task.delay(0.25 + 3, function()
+		if token ~= slateToken then
+			return
+		end
+		Ui.tween(slate, { GroupTransparency = 1 }, TweenInfo.new(0.4))
+		task.wait(0.4)
+		if token == slateToken then
+			slate.Visible = false
 		end
 	end)
 end

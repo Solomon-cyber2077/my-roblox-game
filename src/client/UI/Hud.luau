@@ -197,7 +197,8 @@ function Hud.mount(gui: ScreenGui)
 		Parent = watchFade.group,
 	})
 	Ui.corner(WATCH // 2).Parent = case
-	Ui.stroke(BRASS_DARK, 2, 0).Parent = case
+	local caseStroke = Ui.stroke(BRASS_DARK, 2, 0)
+	caseStroke.Parent = case
 	local watchScale = Ui.new("UIScale", { Parent = case })
 	-- the bow and crown it hangs from
 	local bow = Ui.new("Frame", {
@@ -290,6 +291,25 @@ function Hud.mount(gui: ScreenGui)
 	bar(minuteHand, 2, 46, Theme.Color.ink, (WATCH - 34) / 2 - 46)
 	local cap = circle("Cap", 8, BRASS_DARK, face)
 	cap.ZIndex = 4
+	-- the departure hand: from T-30 it points at the seconds left on the ring, a twitch a tick
+	local tickHand = spindle(face, 0, 3)
+	bar(tickHand, 2, (WATCH - 34) / 2 - 10, Theme.Color.signal, 10)
+	tickHand.Visible = false
+	-- the last ten seconds, in the moon's aperture
+	local tickCount = Ui.text({
+		Name = "TickCount",
+		Text = "",
+		Font = Theme.Font.display,
+		TextSize = 18,
+		Color = Theme.Color.signal,
+		Size = UDim2.fromOffset(34, 20),
+		Position = UDim2.new(0.5, 0, 0.5, -24),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	tickCount.ZIndex = 5
+	tickCount.Visible = false
+	tickCount.Parent = face
 
 	local PHASE_COLORS: { [string]: Color3 } = {
 		SUNSET = Theme.Color.caution,
@@ -866,7 +886,7 @@ function Hud.mount(gui: ScreenGui)
 			title, status = if station then string.upper(station.name) else "", "ARRIVING"
 		elseif phase == "Dwell" or phase == "LastCall" then
 			title = if station then `{string.upper(station.name)} · {stopText}` else stopText
-			timerValue = if station then math.max(station.departAt - now, 0) else timerValue
+			timerValue = Registry.DepartureClock.Remaining() or timerValue
 			status = if phase == "LastCall" then "LAST CALL" else "DOORS OPEN"
 			if phase == "LastCall" then
 				statusColor = Theme.Color.signal
@@ -905,6 +925,28 @@ function Hud.mount(gui: ScreenGui)
 			wake(gaugeFade, 0.5)
 		end
 		updateWatch(now, left, lastCall, Session.status() == "Aboard")
+
+		-- Departure warning (Controllers/DepartureClock): ticking from T-30, shaking from T-10
+		local warn = Registry.DepartureClock.Level()
+		local ticking = warn == "warning" or warn == "escalated"
+		local remaining = Registry.DepartureClock.Remaining() or 0
+		tickHand.Visible = ticking
+		if ticking then
+			wake(watchFade, 0.5)
+			local second = math.ceil(remaining)
+			local twitch = math.max(0, 1 - (second - remaining) * 8) -- a small kick just after each tick
+			tickHand.Rotation = (second % 60) * 6 + 2 * twitch
+		end
+		local glow = if ticking then 0.5 + 0.5 * math.sin(now * 2) else 0
+		caseStroke.Color = BRASS_DARK:Lerp(Theme.Color.caution, glow)
+		caseStroke.Thickness = 2 + glow
+		local escalated = warn == "escalated"
+		tickCount.Visible = escalated
+		aperture.Visible = not escalated
+		tickCount.Text = if escalated then tostring(math.ceil(remaining)) else ""
+		case.Position = if escalated
+			then UDim2.new(1, math.random(-1, 1), 1, math.random(-1, 1))
+			else UDim2.fromScale(1, 1)
 
 		-- Leg coal cost marker
 		local train = State.Get({ "train" })

@@ -377,6 +377,7 @@ end
 -- Applying -----------------------------------------------------------------------------------------
 
 local starsShown = -STAR_STEP
+local warningFog = 0 -- extra density while the departure warning is up (SetWarning)
 local windShown = Vector3.zero
 
 local function apply(state: Sky.State)
@@ -386,7 +387,7 @@ local function apply(state: Sky.State)
 	Lighting.Ambient = state.ambient
 	Lighting.OutdoorAmbient = state.outdoor
 	Lighting.ColorShift_Top = state.shift
-	atmosphere.Density = state.density
+	atmosphere.Density = state.density + warningFog
 	atmosphere.Haze = state.haze
 	atmosphere.Glare = state.glare
 	atmosphere.Color = state.air
@@ -594,6 +595,12 @@ function AtmosphereController.Start()
 	RunService.RenderStepped:Connect(function(dt)
 		Safe.call("Atmosphere", frame, dt)
 	end)
+end
+
+-- The departure warning's share of extra fog, 0..1, eased by DepartureClock. An offset on
+-- top of the composed look, so the sky's own values are never overwritten.
+function AtmosphereController.SetWarning(level: number)
+	warningFog = Tuning.Departure.FogDensity * math.clamp(level, 0, 1)
 end
 
 function AtmosphereController.FlareFlash()

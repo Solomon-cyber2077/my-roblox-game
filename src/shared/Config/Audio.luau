@@ -8,6 +8,8 @@
 	maxSeconds stop a long recording early
 	spatial    true plays at a world position (3D falloff)
 	loop       for beds and machinery
+	group      a SoundGroup of its own (beside the main one, so ducking the mix leaves it alone)
+	rollOff    studs a spatial cue carries before it falls silent (default 220)
 ]]
 
 export type Cue = {
@@ -17,6 +19,8 @@ export type Cue = {
 	spatial: boolean?,
 	loop: boolean?,
 	pitch: number?,
+	group: string?,
+	rollOff: number?,
 }
 
 local Cues: { [string]: Cue } = {
@@ -44,6 +48,29 @@ local Cues: { [string]: Cue } = {
 	Purchase = { id = 9113728042, volume = 0.6 },
 	Clutch = { id = 9125573009, volume = 0.6, maxSeconds = 2 },
 	Click = { id = 15675059323, volume = 0.4 },
+
+	-- Departure warnings (Controllers/DepartureClock), from the recordings above
+	WarnTick = { id = 15675059323, volume = 0.1, maxSeconds = 0.4, pitch = 1.7, group = "Warnings" },
+	WarnBell = { id = 9113804436, volume = 0.35, maxSeconds = 4, pitch = 1.15, group = "Warnings" },
+	-- whistles from the locomotive's chimney, heard across the whole stop
+	WarnWhistle = {
+		id = 9119628070,
+		volume = 0.8,
+		maxSeconds = 3,
+		pitch = 0.8,
+		spatial = true,
+		group = "Warnings",
+		rollOff = 900,
+	},
+	WarnWhistleLong = {
+		id = 9119628070,
+		volume = 1,
+		maxSeconds = 6,
+		pitch = 0.9,
+		spatial = true,
+		group = "Warnings",
+		rollOff = 1600,
+	},
 
 	-- Beds
 	TrainRun = { id = 9120247081, volume = 0.55, loop = true },
