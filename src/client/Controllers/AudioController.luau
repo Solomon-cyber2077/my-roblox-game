@@ -44,6 +44,8 @@ local Session = require(script.Parent.Parent.Session)
 local AudioController = {}
 
 local group: SoundGroup
+local groups: { [string]: SoundGroup } = {}
+local duckUntil = 0
 local anchorPart: Part
 local beds: { [string]: Sound } = {}
 local loops: { [string]: Sound } = {}
@@ -143,10 +145,22 @@ local function makeSound(cueName: string, parent: Instance): Sound?
 	sound.Looped = cue.loop == true
 	sound.PlaybackSpeed = cue.pitch or 1
 	sound.SoundGroup = group
+	if cue.group then
+		local own: SoundGroup? = groups[cue.group]
+		if not own then
+			local made = Instance.new("SoundGroup")
+			made.Name = cue.group
+			made.Volume = 1
+			made.Parent = SoundService
+			groups[cue.group] = made
+			own = made
+		end
+		sound.SoundGroup = own
+	end
 	if cue.spatial then
 		sound.RollOffMode = Enum.RollOffMode.InverseTapered
 		sound.RollOffMinDistance = 12
-		sound.RollOffMaxDistance = 220
+		sound.RollOffMaxDistance = cue.rollOff or 220
 	end
 	local shape = SHAPES[cueName]
 	if shape then
@@ -297,7 +311,8 @@ function AudioController.Start()
 				swell = MathX.smoothstep(0, 0.3, p) * (1 - MathX.smoothstep(0.7, 1, p))
 			end
 		end
-		group.Volume = 1 - (1 - HUSH_FLOOR) * hush
+		local duck = if os.clock() < duckUntil then 1 - Tuning.Departure.DuckShare else 1
+		group.Volume = (1 - (1 - HUSH_FLOOR) * hush) * duck
 
 		local targets = {
 			TrainRun = if inLobby then 0 else Audio.TrainRun.volume * pace * (1 + 0.35 * tunnel),
@@ -415,6 +430,11 @@ function AudioController.Play(cueName: string, position: Vector3?, gain: number?
 			holder:Destroy()
 		end
 	end)
+end
+
+-- Dips the main mix (not cues with a group of their own) for a moment, under a bell or a whistle.
+function AudioController.Duck(seconds: number)
+	duckUntil = math.max(duckUntil, os.clock() + seconds)
 end
 
 -- Starts a keyed loop attached to a part (machinery, leaks). Stop it with StopLoop.
