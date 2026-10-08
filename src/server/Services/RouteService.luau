@@ -1,5 +1,6 @@
 --!strict
 -- Junction votes: opens the ballot, records one vote per living crew member, tallies with Logic/Vote.
+-- A mystery ticket's real station is held here, server-only, and never enters state (Logic/Mystery).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -14,6 +15,7 @@ local StateService = require(script.Parent.StateService)
 local RouteService = {}
 
 local options: { Types.RouteOption } = {}
+local hidden: { [number]: Types.RouteOption } = {}
 local votes: { [string]: number } = {}
 local rng = Random.new()
 
@@ -31,20 +33,24 @@ function RouteService.Start()
 	end)
 end
 
-function RouteService.Open(nextOptions: { Types.RouteOption })
+-- `sealed` maps a ballot index holding a mystery stand-in to the real station behind it.
+function RouteService.Open(nextOptions: { Types.RouteOption }, sealed: { [number]: Types.RouteOption }?)
 	options = nextOptions
+	hidden = sealed or {}
 	votes = {}
 	StateService.Set({ "run", "route" }, { options = options, votes = {}, chosen = nil })
 end
 
-function RouteService.Close(): (number, Types.RouteOption)
+-- The winner's index, its public option and the station it really leads to.
+function RouteService.Close(): (number, Types.RouteOption, Types.RouteOption)
 	local index = Vote.tally(votes, options, rng:NextNumber())
 	StateService.Set({ "run", "route", "chosen" }, index)
-	return index, options[index]
+	return index, options[index], hidden[index] or options[index]
 end
 
 function RouteService.Clear()
 	options = {}
+	hidden = {}
 	votes = {}
 	StateService.Set({ "run", "route" }, nil)
 end

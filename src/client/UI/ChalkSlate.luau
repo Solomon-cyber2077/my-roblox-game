@@ -118,6 +118,7 @@ local function write(all: { Lines })
 		title = `Next: {destination.name}`
 		detail = if destination.terminus
 			then "the Terminus. hold on"
+			elseif destination.sealed then `{destination.distanceKm} km   danger unknown`
 			else `{destination.distanceKm} km   danger {marks(destination.tier)}`
 	elseif station then
 		title = station.name

@@ -19,6 +19,7 @@
 	  sky <hour> | sky     pin every client's sky to an hour (26 is two in the morning), or free it
 	  omen <kind>          every client sees an omen now: Hush, TallOnes, Blink, Bleed or Eye
 	  strike               a lightning strike now
+	  mystery              the next ballot has a mystery ticket (at a junction, the ballot reopens with one)
 
 	The sky commands set attributes on ReplicatedStorage that AtmosphereController reads in
 	Studio only (DevSkyHour, DevOmen, DevStrike).
@@ -164,6 +165,10 @@ end
 
 Commands.strike = function()
 	ReplicatedStorage:SetAttribute("DevStrike", workspace:GetServerTimeNow() + 0.2)
+end
+
+Commands.mystery = function()
+	Registry.RunDirector.DevForceMystery()
 end
 
 function DevService.IsGod(player: Player): boolean

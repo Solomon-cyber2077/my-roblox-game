@@ -635,7 +635,8 @@ function RouteVote.mount(gui: ScreenGui)
 			end
 		end
 
-		if openIndex and options[openIndex] then
+		-- a sealed mystery has no dossier (Ticket hides its flap)
+		if openIndex and options[openIndex] and not options[openIndex].mystery then
 			local option = options[openIndex]
 			local cost = Ledger.legCoalCost(train or Ledger.newTrain(), option.distanceKm)
 			dossier = buildDossier(openIndex, option, cost, train ~= nil and cost > train.coal, train)

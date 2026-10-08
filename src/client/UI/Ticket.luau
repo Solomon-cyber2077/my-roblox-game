@@ -11,6 +11,10 @@
 	                           the fold-out flap and a layer for stamps. Returns a handle.
 	  Ticket.stub(view, opts)  the same ticket torn short: serial, type, name, seal, km, coal.
 
+	A sealed mystery (view.mystery) prints "????" under a smudge of soot, and where the wax seal
+	would be a small lantern flickers in a neutral lamp colour, never a danger colour. It has
+	no flap: there is no dossier to unfold.
+
 	It leans by its route id (TicketModel.tilt) so it sits the same way every redraw. Every
 	button is at least 44 px and shows a brass ring under gamepad focus.
 ]]
@@ -35,6 +39,9 @@ local INK_SOFT = Theme.Color.inkSoft
 local WAX = Color3.fromRGB(146, 26, 30)
 local WAX_DARK = Color3.fromRGB(92, 14, 18)
 local HOLE = Color3.fromRGB(18, 16, 16)
+local SOOT = Color3.fromRGB(58, 52, 48)
+local LAMP = Color3.fromRGB(226, 220, 196) -- a mystery's lantern: neutral, not a danger colour
+local LAMP_DIM = Color3.fromRGB(120, 116, 104)
 
 local W, H = 224, 310
 local PAD = 14
@@ -191,6 +198,54 @@ local function seal(parent: Instance, s: TicketModel.Seal, x: number, y: number,
 			Parent = parent,
 		})
 	end
+end
+
+-- Soot rubbed over a mystery's name and description: overlapping smears seeded by the route.
+local function smudge(parent: Instance, routeId: string, y: number, height: number, z: number): Frame
+	local cover = Ui.new("Frame", {
+		Name = "Smudge",
+		Size = UDim2.new(1, -PAD, 0, height),
+		Position = UDim2.fromOffset(PAD // 2, y),
+		BackgroundTransparency = 1,
+		ZIndex = z,
+		Parent = parent,
+	})
+	for i = 1, 6 do
+		local h = TicketModel.hash(`{routeId}:smudge:{i}`)
+		local smear = Ui.new("Frame", {
+			Name = "Smear",
+			Size = UDim2.new(0.5 + h * 0.45, 0, 0, 12 + math.floor(h * 14)),
+			Position = UDim2.fromScale(0.05 + (1 - h) * 0.35, (i - 1) / 6),
+			Rotation = -8 + h * 16,
+			BackgroundColor3 = SOOT,
+			BackgroundTransparency = 0.35 + h * 0.25,
+			BorderSizePixel = 0,
+			ZIndex = z,
+			Parent = cover,
+		})
+		Ui.corner(8).Parent = smear
+	end
+	return cover
+end
+
+-- A mystery's lantern in place of the seal: a neutral glow that flickers.
+local function lantern(parent: Instance, x: number, y: number, size: number, z: number)
+	local halo = circle("LanternHalo", size + 10, LAMP, parent, z)
+	halo.Position = UDim2.fromOffset(x + size / 2, y + size / 2)
+	halo.BackgroundTransparency = 0.75
+	local glass = circle("Lantern", size - 8, LAMP, parent, z + 1)
+	glass.Position = halo.Position
+	Ui.stroke(INK, 2, 0.1).Parent = glass
+	local q = label(glass, "?", HEAD, math.floor(size * 0.5), INK, z + 2)
+	q.Size = UDim2.fromScale(1, 1)
+	q.TextXAlignment = Enum.TextXAlignment.Center
+	local flicker = TweenInfo.new(0.23, Enum.EasingStyle.Bounce, Enum.EasingDirection.InOut, -1, true)
+	Ui.tween(glass, { BackgroundColor3 = LAMP_DIM }, flicker)
+	Ui.tween(
+		halo,
+		{ BackgroundTransparency = 0.95 },
+		TweenInfo.new(0.37, Enum.EasingStyle.Bounce, Enum.EasingDirection.InOut, -1, true)
+	)
 end
 
 -- A row of coal lumps in groups of five, then the "x12" label.
@@ -355,14 +410,26 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	shrink(hint, 10, 7)
 	y += 18
 
+	if view.mystery then
+		smudge(paper, opts.routeId, STUB + 6, y - STUB - 8, 5)
+	end
+
 	-- DANGER on its own line, then the seal
-	local dangerTitle =
-		label(paper, if view.terminus then "THE END OF THE LINE" else "DANGER", HEAD, 11, INK_SOFT, 4)
+	local dangerTitle = label(
+		paper,
+		if view.terminus then "THE END OF THE LINE" elseif view.mystery then "DANGER  UNKNOWN" else "DANGER",
+		HEAD,
+		11,
+		INK_SOFT,
+		4
+	)
 	dangerTitle.Position = UDim2.fromOffset(PAD, y)
 	dangerTitle.Size = UDim2.fromOffset(150, 14)
 	y += 16
 	if view.seal then
 		seal(paper, view.seal, PAD, y, 32, 4)
+	elseif view.mystery then
+		lantern(paper, PAD, y, 32, 4)
 	end
 	-- the stamps pile up to the right of the seal
 	local stamps = Ui.new("Frame", {
@@ -500,6 +567,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	if opts.onFlap then
 		flap.Activated:Connect(opts.onFlap)
 	end
+	flap.Visible = not view.mystery
 
 	local punched: Frame? = nil
 	local handle: Handle = {

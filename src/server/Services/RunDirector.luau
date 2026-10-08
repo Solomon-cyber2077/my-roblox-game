@@ -18,6 +18,7 @@ local Tuning = require(Shared.Config.Tuning)
 local DifficultyModel = require(Shared.Logic.DifficultyModel)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Ledger = require(Shared.Logic.Ledger)
+local Mystery = require(Shared.Logic.Mystery)
 local RouteGen = require(Shared.Logic.RouteGen)
 local RunRules = require(Shared.Logic.RunRules)
 local Format = require(Shared.Util.Format)
@@ -53,6 +54,9 @@ type RunState = {
 	plan: LayoutGen.Plan?,
 	outcome: Types.Outcome?,
 	departed: boolean, -- false only during the Last Call grace, while the station is still docked
+	mystery: Mystery.History, -- junctions since the last mystery ticket
+	sealed: boolean, -- this leg's destination is a mystery not yet revealed
+	forceMystery: boolean, -- Dev `mystery`: the next ballot has one
 }
 
 local state: RunState = {
@@ -72,6 +76,9 @@ local state: RunState = {
 	plan = nil,
 	outcome = nil,
 	departed = true,
+	mystery = Mystery.newHistory(),
+	sealed = false,
+	forceMystery = false,
 }
 
 local rng = Random.new()
@@ -141,6 +148,8 @@ Enter.Boarding = function()
 	state.stationsCleared = 0
 	state.lastArchetype = nil
 	state.outcome = nil
+	state.mystery = Mystery.newHistory()
+	state.sealed = false
 	StateService.Set({ "stats" }, { coalDelivered = 0, partsDelivered = 0, relics = 0, stationsCleared = 0 })
 	local crew = Registry.LobbyService.TakeCrew()
 	state.runTier = Registry.LobbyService.TierFor(crew)
@@ -152,9 +161,29 @@ Enter.Boarding = function()
 	Registry.LobbyService.ResetReady()
 end
 
+-- The ballot, with a sealed mystery ticket when Logic/Mystery says so. Its real station comes from a
+-- seed only the server holds and is handed to RouteService alone; state sees the stand-in.
+local function openBallot()
+	local leg, stops = state.nextStop, Tuning.Run.StationCount
+	local options = RouteGen.options(state.seed, leg, stops, state.lastArchetype)
+	local roll = Rng.new(Rng.derive(state.seed, "mystery", leg)):next()
+	local offered = state.forceMystery and leg <= stops or Mystery.offers(state.mystery, leg, stops, roll)
+	local sealed: { [number]: Types.RouteOption } = {}
+	local real = if offered
+		then Mystery.pick(rng:NextInteger(1, 2147483646), leg, stops, state.lastArchetype, options)
+		else nil
+	if real then
+		local index = Mystery.place(options)
+		options[index] = Mystery.redact(real)
+		sealed[index] = real
+	end
+	state.forceMystery = false
+	state.mystery = Mystery.record(state.mystery, real ~= nil)
+	Registry.RouteService.Open(options, sealed)
+end
+
 Enter.Junction = function()
-	local options = RouteGen.options(state.seed, state.nextStop, Tuning.Run.StationCount, state.lastArchetype)
-	Registry.RouteService.Open(options)
+	openBallot()
 	local d = DifficultyModel.forStop(
 		math.min(state.nextStop, Tuning.Run.StationCount),
 		Tuning.Run.StationCount,
@@ -165,7 +194,7 @@ Enter.Junction = function()
 end
 
 Enter.Cruise = function()
-	local _, option = Registry.RouteService.Close()
+	local _, ticket, option = Registry.RouteService.Close()
 	local arch = Stations.List[option.archetype]
 	local d = if arch.terminus
 		then 0
@@ -174,21 +203,30 @@ Enter.Cruise = function()
 	state.chosen = option
 	state.lastArchetype = option.archetype
 	state.params = DifficultyModel.params(d, arch, Registry.CrewService.AliveCount(), train.upgrades)
+	state.sealed = Mystery.isSealed(ticket)
+	if state.sealed then
+		local params = state.params :: Types.HazardParams
+		params.lootMul = Mystery.lootMul(params.lootMul)
+	end
 	state.cruiseSeconds = DifficultyModel.cruiseSeconds(option.distanceKm)
 	Registry.TrainService.BeginLeg(
 		option.distanceKm,
 		state.cruiseSeconds,
 		(state.params :: Types.HazardParams).breachRate
 	)
-	StateService.Set({ "run", "destination" }, {
-		archetype = option.archetype,
-		name = arch.name,
-		tier = option.tier,
-		distanceKm = option.distanceKm,
-		difficulty = d,
-		coalCost = Ledger.legCoalCost(train, option.distanceKm),
-		terminus = arch.terminus == true,
-	})
+	local coalCost = Ledger.legCoalCost(train, option.distanceKm)
+	local destination: Types.Destination = if state.sealed
+		then Mystery.sealed(option.distanceKm, coalCost)
+		else {
+			archetype = option.archetype,
+			name = arch.name,
+			tier = option.tier,
+			distanceKm = option.distanceKm,
+			difficulty = d,
+			coalCost = coalCost,
+			terminus = arch.terminus == true,
+		}
+	StateService.Set({ "run", "destination" }, destination)
 end
 
 Enter.Arrival = function()
@@ -218,6 +256,22 @@ Enter.Arrival = function()
 	state.plan = plan
 	Registry.StationService.Spawn(plan, info)
 	StateService.Set({ "run", "station" }, info)
+	if state.sealed then
+		-- the reveal: the full destination replaces the sealed one (UI/Unseal plays it)
+		state.sealed = false
+		local destination: Types.Destination = {
+			archetype = option.archetype,
+			name = arch.name,
+			tier = option.tier,
+			distanceKm = option.distanceKm,
+			difficulty = params.difficulty,
+			coalCost = (StateService.Get({ "run", "destination", "coalCost" }) :: number?) or 0,
+			terminus = false,
+			mystery = true,
+			sealed = false,
+		}
+		StateService.Set({ "run", "destination" }, destination)
+	end
 end
 
 Enter.Dwell = function()
@@ -389,6 +443,14 @@ function RunDirector.DevWarp(seconds: number)
 	if state.endsAt then
 		state.endsAt -= seconds
 		StateService.Set({ "run", "phaseEndsAt" }, state.endsAt)
+	end
+end
+
+-- Studio only (DevService `mystery`): the next ballot carries a mystery ticket; at a junction, now.
+function RunDirector.DevForceMystery()
+	state.forceMystery = true
+	if state.phase == "Junction" then
+		openBallot()
 	end
 end
 
