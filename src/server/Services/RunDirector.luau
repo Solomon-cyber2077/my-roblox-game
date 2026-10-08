@@ -20,6 +20,7 @@ local LayoutGen = require(Shared.Logic.LayoutGen)
 local Ledger = require(Shared.Logic.Ledger)
 local Mystery = require(Shared.Logic.Mystery)
 local RouteGen = require(Shared.Logic.RouteGen)
+local RunLog = require(Shared.Logic.RunLog)
 local RunRules = require(Shared.Logic.RunRules)
 local Format = require(Shared.Util.Format)
 local Rng = require(Shared.Util.Rng)
@@ -57,6 +58,7 @@ type RunState = {
 	mystery: Mystery.History, -- junctions since the last mystery ticket
 	sealed: boolean, -- this leg's destination is a mystery not yet revealed
 	forceMystery: boolean, -- Dev `mystery`: the next ballot has one
+	pending: Types.LogEntry?, -- this stop's run.log entry, appended when the stop resolves
 }
 
 local state: RunState = {
@@ -79,6 +81,7 @@ local state: RunState = {
 	mystery = Mystery.newHistory(),
 	sealed = false,
 	forceMystery = false,
+	pending = nil,
 }
 
 local rng = Random.new()
@@ -112,6 +115,17 @@ local function context(): RunRules.Context
 		dwellSeconds = if state.params then state.params.dwell else 60,
 		chaseSeconds = if state.params then state.params.chaseWindow else 6,
 	}
+end
+
+-- The stop has resolved: its entry joins run.log (Logic/RunLog).
+local function logStop(outcome: Types.StopOutcome, closeCalls: { string }?)
+	local pending = state.pending
+	if pending == nil then
+		return
+	end
+	state.pending = nil
+	local log = StateService.Get({ "run", "log" }) :: { Types.LogEntry }?
+	StateService.Set({ "run", "log" }, RunLog.append(log, RunLog.resolve(pending, outcome, closeCalls)))
 end
 
 local function cleanupRun()
@@ -150,6 +164,8 @@ Enter.Boarding = function()
 	state.outcome = nil
 	state.mystery = Mystery.newHistory()
 	state.sealed = false
+	state.pending = nil
+	StateService.Set({ "run", "log" }, {})
 	StateService.Set({ "stats" }, { coalDelivered = 0, partsDelivered = 0, relics = 0, stationsCleared = 0 })
 	local crew = Registry.LobbyService.TakeCrew()
 	state.runTier = Registry.LobbyService.TierFor(crew)
@@ -194,7 +210,7 @@ Enter.Junction = function()
 end
 
 Enter.Cruise = function()
-	local _, ticket, option = Registry.RouteService.Close()
+	local index, ticket, option = Registry.RouteService.Close()
 	local arch = Stations.List[option.archetype]
 	local d = if arch.terminus
 		then 0
@@ -227,6 +243,18 @@ Enter.Cruise = function()
 			terminus = arch.terminus == true,
 		}
 	StateService.Set({ "run", "destination" }, destination)
+	local ballot =
+		StateService.Get({ "run", "route" }) :: { options: { Types.RouteOption }, votes: { [string]: number }? }?
+	state.pending = RunLog.entry({
+		stop = state.nextStop,
+		ticket = ticket,
+		name = arch.name,
+		difficulty = d,
+		coalBurned = coalCost,
+		votes = ballot and ballot.votes,
+		optionCount = if ballot then #ballot.options else index,
+		chosen = index,
+	})
 end
 
 Enter.Arrival = function()
@@ -271,6 +299,10 @@ Enter.Arrival = function()
 			sealed = false,
 		}
 		StateService.Set({ "run", "destination" }, destination)
+		if state.pending then
+			state.pending =
+				RunLog.reveal(state.pending, option.archetype, arch.name, option.tier, params.difficulty)
+		end
 	end
 end
 
@@ -329,7 +361,9 @@ end
 Exit.Departure = function(nextPhase)
 	state.departed = true
 	if nextPhase == "Junction" then
-		Registry.CrewService.ResolveDeparture()
+		local closeCalls = Registry.CrewService.ResolveDeparture()
+		-- the last of the crew left behind: the run ends at this stop, not the next
+		logStop(if Registry.CrewService.AliveCount() > 0 then "Cleared" else "Wiped", closeCalls)
 		state.stationsCleared += 1
 		state.nextStop += 1
 		StateService.Update({ "stats" }, function(stats)
@@ -355,6 +389,7 @@ Enter.RunEnd = function(previous, outcome)
 	Registry.HazardDirector.Stop()
 	Registry.HollowService.Clear()
 	local finalOutcome = state.outcome :: Types.Outcome
+	logStop(finalOutcome :: any, nil) -- Outcome is a subset of StopOutcome
 	Registry.ProgressionService.PayRun(
 		finalOutcome,
 		Registry.CrewService.Tallies(),

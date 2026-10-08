@@ -134,6 +134,50 @@ function Stamp.new(props: Props): Frame
 	return mark
 end
 
+export type WordProps = {
+	key: string,
+	text: string,
+	color: Color3?,
+	size: number?,
+	Position: UDim2?,
+	ZIndex: number?,
+}
+
+-- A rubber-stamped word in a ruled box ("CLOSE CALL", "TERMINUS"), at its own seeded angle.
+function Stamp.word(props: WordProps): Frame
+	local color = props.color or INK
+	local size = props.size or 13
+	local z = props.ZIndex or 6
+	local mark = Ui.new("Frame", {
+		Name = `Word_{props.key}`,
+		Size = UDim2.fromOffset(0, size + 10),
+		AutomaticSize = Enum.AutomaticSize.X,
+		Position = props.Position or UDim2.new(),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Rotation = (TicketModel.hash(props.key) * 2 - 1) * MAX_TILT,
+		BackgroundColor3 = color,
+		BackgroundTransparency = 0.82,
+		BorderSizePixel = 0,
+		ZIndex = z,
+	})
+	Ui.stroke(color, 2, 0.1).Parent = mark
+	Ui.padding(0, 8, 0, 8).Parent = mark
+	local letters = Ui.text({
+		Name = "Word",
+		Text = props.text,
+		Font = Font.new("rbxasset://fonts/families/Arvo.json", Enum.FontWeight.Bold),
+		TextSize = size,
+		Color = color,
+		Size = UDim2.fromScale(0, 1),
+		AutoX = true,
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	letters.ZIndex = z + 1
+	letters.Parent = mark
+	Ui.new("UIScale", { Name = "Land", Parent = mark })
+	return mark
+end
+
 -- Slams the stamp down: big and faint to its size and full ink.
 function Stamp.land(mark: Frame)
 	local scale = mark:FindFirstChild("Land") :: UIScale?
