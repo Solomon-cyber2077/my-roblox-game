@@ -696,7 +696,6 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	-- paintings of the line either side of each gangway door
 	picture(-62.38, 4.0, 1, 1)
 	picture(-62.38, -4.0, 1, 2)
-	picture(-23.62, 4.0, -1, 3)
 	picture(-23.62, -4.0, -1, 4)
 	picture(-45.12, 4.0, -1, 3)
 	picture(-45.12, -4.0, -1, 4)
@@ -710,6 +709,61 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	doorSign(Vector3.new(-36.25, SIDE_SIGN_Y, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
 	nameboard(-55.6, "CREW SALOON")
 	nameboard(-30.0, "CREW SALOON")
+
+	-- The route board, on the end wall by the Workshop door (its platform half, where a painting
+	-- hung): the junction's tickets hang under a brass rail with a lantern over each, the coal
+	-- gauge and the station clock along its foot. UI/RouteBoard dresses it on the client: the
+	-- tickets and dials are SurfaceGuis on the clear faces, the lanterns' light follows the vote.
+	do
+		local XB, ZB = -23.62, 4.05 -- the lining's face, and the board's middle across the car
+		local board = Instance.new("Model")
+		board.Name = "RouteBoard"
+		board.Parent = model
+		local function piece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, name: string)
+			local part =
+				Kit.block(board, size, cf, color, { material = material, collide = false, shadow = false })
+			part.Name = name
+		end
+		-- a clear part whose Front looks into the car (-X), to carry a SurfaceGui
+		local function face(name: string, size: Vector3, x: number, y: number, z: number)
+			local center = Vector3.new(x, y, z)
+			local part = Kit.block(
+				board,
+				size,
+				origin * CFrame.lookAt(center, center - Vector3.xAxis),
+				C.cream,
+				{ transparency = 1, collide = false, shadow = false }
+			)
+			part.Name = name
+		end
+		piece(Vector3.new(0.14, 4.0, 3.3), at(XB - 0.08, 5.5, ZB), C.woodDark, M.Wood, "Board")
+		piece(Vector3.new(0.3, 0.16, 3.46), at(XB - 0.16, 7.58, ZB), C.polish, M.Wood, "BoardCap")
+		piece(Vector3.new(0.1, 0.1, 3.1), at(XB - 0.2, 6.45, ZB), C.brass, M.Metal, "BoardRail")
+		for i, dz in { -0.8, 0.8 } do
+			local z = ZB + dz
+			face(`TicketSlot{i}`, Vector3.new(1.3, 1.8, 0.02), XB - 0.18, 5.45, z)
+			-- its lantern, on an arm off the board over the rail
+			piece(Vector3.new(0.3, 0.05, 0.05), at(XB - 0.3, 7.22, z), C.iron, M.Metal, "LanternArm")
+			piece(Vector3.new(0.36, 0.08, 0.36), at(XB - 0.45, 7.14, z), C.iron, M.Metal, "LanternCap")
+			piece(Vector3.new(0.32, 0.06, 0.32), at(XB - 0.45, 6.71, z), C.iron, M.Metal, "LanternBase")
+			local glass = Kit.neon(board, Vector3.new(0.26, 0.36, 0.26), at(XB - 0.45, 6.92, z), C.warm)
+			glass.Name = `Lantern{i}`
+			Kit.pointLight(glass, C.warm, 0.4, 12, false)
+		end
+		-- the coal gauge and the clock: brass rims round clear dial faces
+		for _, dial in { { name = "CoalGauge", dz = -0.8 }, { name = "Clock", dz = 0.8 } } do
+			local rim = Kit.cylinder(
+				board,
+				0.08,
+				0.76,
+				at(XB - 0.19, 4.02, ZB + dial.dz),
+				C.brass,
+				{ material = M.Metal, collide = false, shadow = false }
+			)
+			rim.Name = `{dial.name}Rim`
+			face(dial.name, Vector3.new(0.64, 0.64, 0.02), XB - 0.26, 4.02, ZB + dial.dz)
+		end
+	end
 
 	-- Guard's van ------------------------------------------------------------------------------------
 

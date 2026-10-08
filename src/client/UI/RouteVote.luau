@@ -20,6 +20,7 @@ local TicketModel = require(Shared.Logic.TicketModel)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
+local RouteBoard = require(script.Parent.RouteBoard)
 local Session = require(script.Parent.Parent.Session)
 local Stamp = require(script.Parent.Stamp)
 local Theme = require(script.Parent.Theme)
@@ -127,6 +128,16 @@ function RouteVote.mount(gui: ScreenGui)
 	local dossier: Frame? = nil
 	local openIndex: number? = nil
 	local render: () -> ()
+	-- Near the saloon's route board the tickets hang on it instead of the screen (UI/RouteBoard)
+	local board = RouteBoard.new(function()
+		render()
+	end)
+	local function castVote(index: number)
+		local route = State.Get({ "run", "route" })
+		if route and #(route.options or {}) > 1 then
+			Net.Fire("CastVote", index)
+		end
+	end
 
 	local function closeDossier()
 		if dossier then
@@ -525,6 +536,10 @@ function RouteVote.mount(gui: ScreenGui)
 		local visible = route ~= nil and Session.isAlive() and (phase == "Junction" or lingering)
 		container.Visible = visible
 		if not visible then
+			board.update({ active = false, tickets = {}, options = {}, votes = {}, vote = castVote })
+			for _, handle in tickets do
+				handle.slot.Parent = container
+			end
 			if openIndex then
 				closeDossier()
 			end
@@ -560,9 +575,7 @@ function RouteVote.mount(gui: ScreenGui)
 					track = TicketModel.track(option.distanceKm, shortest, longest),
 					LayoutOrder = index,
 					onVote = function()
-						if #options > 1 then
-							Net.Fire("CastVote", index)
-						end
+						castVote(index)
 					end,
 					onFlap = function()
 						if openIndex == index then
@@ -577,6 +590,25 @@ function RouteVote.mount(gui: ScreenGui)
 				tickets[index] = handle
 			end
 		end
+		-- one copy of each ticket: on the board when near it, else on the screen
+		board.update({
+			active = true,
+			tickets = tickets,
+			options = options,
+			votes = votes,
+			chosen = chosen,
+			mine = mine,
+			train = train,
+			vote = castVote,
+		})
+		local onBoard = board.engaged()
+		for index, handle in tickets do
+			local host: Instance = if onBoard then board.host(index) or container else container
+			if handle.slot.Parent ~= host then
+				handle.slot.Parent = host
+			end
+		end
+		container.Visible = not onBoard
 		for index, handle in tickets do
 			local selected = mine == index
 			handle.setSelected(
@@ -619,7 +651,7 @@ function RouteVote.mount(gui: ScreenGui)
 
 	-- The dials sweep from the vote's start to its end (run.phaseStartedAt -> phaseEndsAt)
 	RunService.RenderStepped:Connect(function()
-		if not container.Visible or #tickets == 0 or Session.phase() ~= "Junction" then
+		if not (container.Visible or board.engaged()) or #tickets == 0 or Session.phase() ~= "Junction" then
 			return
 		end
 		local sweep, numeral = TicketModel.dial(
