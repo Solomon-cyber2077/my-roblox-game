@@ -18,6 +18,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Inventory = require(Shared.Logic.Inventory)
 local Format = require(Shared.Util.Format)
 local MathX = require(Shared.Util.MathX)
+local Safe = require(Shared.Util.Safe)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
@@ -33,6 +34,9 @@ local Hud = {}
 local CELL = 58
 local GAP = 6
 local WATCH = 168 -- the pocket watch's case, in pixels
+local TOUCH_GAP = 10 -- px between the watch and the touch buttons below it
+local COMPACT_WATCH = 0.8 -- the watch's size on a phone, so the lifted watch stays under the crew roster
+local TOUCH_GUIS = { "TouchGui", "ContextActionGui" } -- the jump button, and RUN and other action buttons
 local PIPS = 60 -- the countdown ring round its dial
 local BRASS_DARK = Color3.fromRGB(112, 84, 38)
 -- Fading: how long a piece stays up after it changes, how fast it fades, and how far.
@@ -91,6 +95,66 @@ function Hud.mount(gui: ScreenGui)
 		Position = UDim2.new(1, -14, 1, -14),
 		AnchorPoint = Vector2.new(1, 1),
 	})
+	-- On a touch screen the jump and action buttons (RUN) own the bottom-right corner: the watch
+	-- rides up clear of the highest of them, measured live so phones and tablets both fit, and
+	-- on a phone it is drawn a little smaller so it still sits under the crew roster.
+	local playerGui = gui.Parent :: Instance
+	local clusterScale = Ui.new("UIScale", { Parent = watchFade.group })
+	local function touchTop(): number?
+		local top: number? = nil
+		local half = container.AbsolutePosition.X + container.AbsoluteSize.X / 2
+		for _, name in TOUCH_GUIS do
+			local layer = playerGui:FindFirstChild(name)
+			if layer and layer:IsA("ScreenGui") and layer.Enabled then
+				for _, button in layer:GetDescendants() do
+					if
+						button:IsA("GuiButton")
+						and button.Visible
+						and button.AbsoluteSize.X > 0
+						and button.AbsolutePosition.X > half
+					then
+						top = math.min(top or math.huge, button.AbsolutePosition.Y)
+					end
+				end
+			end
+		end
+		return top
+	end
+	local function placeWatch()
+		local compact = gui:GetAttribute("Compact") == true
+		clusterScale.Scale = if compact then COMPACT_WATCH else 1
+		local lift = 0
+		local top = touchTop()
+		local scale = gui:FindFirstChildOfClass("UIScale")
+		if top and scale and scale.Scale > 0 then
+			local bottom = container.AbsolutePosition.Y + container.AbsoluteSize.Y
+			lift = math.max(0, bottom - (top - TOUCH_GAP)) / scale.Scale
+		end
+		watchFade.group.Position = UDim2.new(1, -14, 1, -14 - lift)
+	end
+	placeWatch()
+	-- the touch controls arrive after the character and move when the screen turns
+	for _, name in TOUCH_GUIS do
+		local layer = playerGui:FindFirstChild(name)
+		if layer then
+			layer.DescendantAdded:Connect(placeWatch)
+		end
+	end
+	playerGui.ChildAdded:Connect(function(child)
+		if table.find(TOUCH_GUIS, child.Name) then
+			child.DescendantAdded:Connect(placeWatch)
+			task.delay(1, placeWatch)
+		end
+	end)
+	container:GetPropertyChangedSignal("AbsoluteSize"):Connect(placeWatch)
+	gui:GetAttributeChangedSignal("Compact"):Connect(placeWatch)
+	task.spawn(function()
+		-- buttons that show or move without being re-added (CAS re-lays them out on spawn)
+		while true do
+			task.wait(2)
+			Safe.call("HudWatch", placeWatch)
+		end
+	end)
 	local watchTag = Ui.ticket({
 		Name = "Tag",
 		Size = UDim2.fromOffset(218, 74),

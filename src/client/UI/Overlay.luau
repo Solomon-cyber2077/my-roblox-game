@@ -11,6 +11,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
@@ -82,8 +83,24 @@ function Overlay.mount(gui: ScreenGui)
 		BackgroundTransparency = 1,
 		Parent = gui,
 	})
-	Ui.list(Enum.FillDirection.Vertical, 4, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Bottom).Parent =
-		feed
+	local feedList =
+		Ui.list(Enum.FillDirection.Vertical, 4, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Bottom)
+	feedList.Parent = feed
+	-- on a touch screen the bottom-left corner belongs to the thumbstick (and the top right to the crew
+	-- roster): the feed reads down from the top centre instead
+	local function placeFeed()
+		local compact = gui:GetAttribute("Compact") == true or UserInputService.TouchEnabled
+		feed.AnchorPoint = if compact then Vector2.new(0.5, 0) else Vector2.new(0, 1)
+		feed.Position = if compact then UDim2.new(0.5, 0, 0, 8) else UDim2.new(0, 16, 1, -24)
+		feedList.HorizontalAlignment = if compact
+			then Enum.HorizontalAlignment.Center
+			else Enum.HorizontalAlignment.Left
+		feedList.VerticalAlignment = if compact
+			then Enum.VerticalAlignment.Top
+			else Enum.VerticalAlignment.Bottom
+	end
+	placeFeed()
+	gui:GetAttributeChangedSignal("Compact"):Connect(placeFeed)
 
 	alertLabel = Ui.text({
 		Name = "Alert",

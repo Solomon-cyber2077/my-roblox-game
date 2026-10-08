@@ -65,7 +65,7 @@ local C = {
 	clerestory = Color3.fromRGB(214, 168, 96), -- amber clerestory lights
 	glass = Color3.fromRGB(176, 196, 206),
 	interior = Color3.fromRGB(142, 108, 72),
-	brass = Color3.fromRGB(184, 144, 76), -- aged, not polished
+	brass = Color3.fromRGB(150, 120, 74), -- aged, not polished
 	iron = Color3.fromRGB(58, 58, 62),
 	warm = Color3.fromRGB(255, 206, 150),
 	interiorWarm = Color3.fromRGB(255, 190, 120),
@@ -83,7 +83,6 @@ local C = {
 	carpet = Color3.fromRGB(92, 24, 30),
 	carpetEdge = Color3.fromRGB(150, 116, 58),
 	teak = Color3.fromRGB(78, 52, 32), -- Mansell wheel centres
-	spring = Color3.fromRGB(30, 30, 32),
 	globe = Color3.fromRGB(255, 226, 176),
 	interiorGlobe = Color3.fromRGB(255, 214, 150),
 }
@@ -143,11 +142,11 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		return origin * CFrame.new(x, y, z)
 	end
 
-	-- varnished mahogany lined in gilt, a tarred roof and black-green doors (the default livery repaints these)
-	local body = Color3.fromRGB(92, 40, 26)
+	-- varnished mahogany lined in gilt, a tarred roof and deep green doors (the default livery repaints these)
+	local body = Color3.fromRGB(60, 33, 28)
 	local trim = C.brass
 	local roof = Color3.fromRGB(34, 33, 34)
-	local accent = Color3.fromRGB(26, 44, 38)
+	local accent = Color3.fromRGB(38, 70, 58) -- deep green doors, light enough to find from the platform
 	-- painted and varnished: smooth with a faint sheen (wood grain at this scale reads as noise)
 	local varnish = { material = Enum.Material.SmoothPlastic, reflectance = 0.04 }
 
@@ -156,21 +155,17 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	local cabins: { Cabin } = {}
 
 	--[[
-		A carriage bogie: a bolster across the middle, a side frame outside the wheels each
-		side, an axle box on every journal hung from a leaf spring, and Mansell wheels (teak
-		centres in an iron tyre). Only the tyre spins (WheelRadius); centre and boss are round.
+		A carriage bogie: a bolster across the middle, a deep side frame outside the wheels
+		each side (it hides the journals) and Mansell wheels (teak centres in an iron tyre).
+		Only the tyre spins (WheelRadius); the centre is round. The bogie sits below the
+		platform edge, so it is kept to its silhouette: no axle boxes, hub bosses or springs,
+		no shadows and no collision.
 	]]
 	local function bogie(x: number)
-		local metal = { material = Enum.Material.Metal, collide = false }
-		Kit.block(
-			model,
-			Vector3.new(2.4, 1.2, 9.6),
-			at(x, -3, 0),
-			C.frame,
-			{ material = Enum.Material.Metal }
-		)
+		local metal = { material = Enum.Material.Metal, collide = false, shadow = false }
+		Kit.block(model, Vector3.new(2.4, 1.2, 9.6), at(x, -3, 0), C.frame, metal)
 		for _, side in { -1, 1 } do
-			Kit.block(model, Vector3.new(7.2, 0.6, 0.3), at(x, -3.3, side * 6.15), C.frame, metal)
+			Kit.block(model, Vector3.new(7.2, 0.9, 0.3), at(x, -3.3, side * 6.15), C.frame, metal)
 		end
 		for _, ax in { -2.1, 2.1 } do
 			for _, side in { -1, 1 } do
@@ -180,7 +175,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					3.2,
 					at(x + ax, -3.6, side * 5.3) * Kit.angles(0, 90, 0),
 					C.wheel,
-					{ material = Enum.Material.Metal }
+					metal
 				)
 				wheel:SetAttribute("WheelRadius", 1.6)
 				Kit.cylinder(
@@ -191,17 +186,6 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					C.teak,
 					{ material = Enum.Material.Wood, collide = false, shadow = false }
 				)
-				Kit.cylinder(
-					model,
-					0.84,
-					0.7,
-					at(x + ax, -3.6, side * 5.3) * Kit.angles(0, 90, 0),
-					C.iron,
-					metal
-				)
-				Kit.block(model, Vector3.new(1, 0.9, 0.5), at(x + ax, -3.2, side * 5.75), C.iron, metal)
-				-- the leaf spring over the axle box, its ends hung from the side frame
-				Kit.block(model, Vector3.new(1.9, 0.3, 0.36), at(x + ax, -2.6, side * 5.75), C.spring, metal)
 			end
 		end
 	end
@@ -256,11 +240,15 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 
 	--[[
 		An 1800s window bay: two tall round-topped sashes either side of a centre mullion,
-		with a sash bar under the top lights. Mullion and arch corners sit inside the wall's
-		thickness (clear of its faces and the glass); the bar sits on the outer face.
+		with a sash bar under the top lights. The rounded corners are spandrels: a square
+		turned 45 degrees on each top corner, its upper half buried in the wall above (and
+		the outer ones' far halves in the piers), so three parts round off all four corners.
+		They sit inside the wall's thickness, clear of its faces and the glass; the bar sits
+		on the outer face.
 	]]
 	local function sashes(cx: number, z: number, sign: number)
 		local band = WINDOW_TOP - WINDOW_BOTTOM
+		local wood = { material = Enum.Material.Wood, collide = false, shadow = false }
 		tag(
 			Kit.block(
 				model,
@@ -271,31 +259,26 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			),
 			"Body"
 		)
-		local leg = 0.7
-		for _, half in { -1, 1 } do
-			-- the two top corners of this sash, rounded off by a wedge whose right angle sits in the corner
-			for _, edge in { 0.2, 1.8 } do
-				local corner = cx + half * edge
-				local d = if edge > 1 then half else -half -- outward from the sash centre
-				local centre = Vector3.new(corner - d * leg / 2, WINDOW_TOP - leg / 2, z)
-				tag(
-					Kit.wedge(
-						model,
-						Vector3.new(0.3, leg, leg),
-						origin * CFrame.fromMatrix(centre, Vector3.new(0, 0, d), Vector3.new(0, -1, 0)),
-						body,
-						{ material = Enum.Material.Wood, collide = false, shadow = false }
-					),
-					"Body"
-				)
-			end
+		-- the inner pair meets over the mullion (0.4 wide + two 0.7 legs); the outer ones meet the piers
+		for _, spec in { { cx, 0.9 }, { cx - 1.8, 0.7 }, { cx + 1.8, 0.7 } } do
+			local half = spec[2]
+			tag(
+				Kit.block(
+					model,
+					Vector3.new(half * math.sqrt(2), half * math.sqrt(2), 0.26), -- a hair inside the mullion's faces
+					at(spec[1], WINDOW_TOP, z) * Kit.angles(0, 0, 45),
+					body,
+					wood
+				),
+				"Body"
+			)
 		end
 		Kit.block(
 			model,
 			Vector3.new(3.6, 0.12, 0.06),
 			at(cx, WINDOW_TOP - 1.2, sign * (HALF + 0.03)),
 			C.sash,
-			{ material = Enum.Material.Wood, collide = false, shadow = false }
+			wood
 		)
 	end
 
@@ -612,12 +595,15 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				C.frameWood,
 				Enum.Material.Wood
 			)
-			trimPart(
-				Vector3.new(4.0, 0.22, 0.25),
-				at(cx, WINDOW_TOP - 0.11, inward(0.25)),
-				C.frameWood,
-				Enum.Material.Wood
-			)
+			-- the head (in curtained cars the valance comes down over it instead)
+			if not lining.curtains then
+				trimPart(
+					Vector3.new(4.0, 0.22, 0.25),
+					at(cx, WINDOW_TOP - 0.11, inward(0.25)),
+					C.frameWood,
+					Enum.Material.Wood
+				)
+			end
 			for _, dx in { -1.85, 1.85 } do
 				trimPart(
 					Vector3.new(0.2, band - 0.44, 0.25),
@@ -636,8 +622,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 					)
 				end
 				trimPart(
-					Vector3.new(5.2, 0.5, 0.3),
-					at(cx, WINDOW_TOP + 0.25, inward(0.3)),
+					Vector3.new(5.2, 0.72, 0.3),
+					at(cx, WINDOW_TOP + 0.14, inward(0.3)),
 					C.curtain,
 					Enum.Material.Fabric
 				)
@@ -841,7 +827,11 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				C.clerestory,
 				{ material = Enum.Material.Glass, collide = false, shadow = false }
 			)
-			for x = ma + MONITOR_T + 0.1, mb - MONITOR_T - 0.1, 2.4 do
+			-- glazing bars about 4.8 apart, evenly spread between the end walls
+			local b0, b1 = ma + MONITOR_T + 0.1, mb - MONITOR_T - 0.1
+			local gaps = math.max(1, math.floor((b1 - b0) / 4.8 + 0.5))
+			for i = 0, gaps do
+				local x = b0 + (b1 - b0) * i / gaps
 				Kit.block(
 					model,
 					Vector3.new(0.2, lights, MONITOR_T),

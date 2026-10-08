@@ -51,7 +51,7 @@ local C = {
 	velvet = rgb(86, 24, 30), -- oxblood moquette
 	velvetGreen = rgb(54, 86, 66),
 	linen = rgb(36, 74, 70), -- teal antimacassars, the company's monogram embroidered in gilt
-	brass = rgb(184, 144, 76),
+	brass = rgb(164, 130, 74), -- aged, matching the carriage trim
 	iron = rgb(44, 44, 48),
 	ironLight = rgb(70, 70, 74),
 	shade = rgb(34, 92, 70), -- green glass, as on a banker's lamp
@@ -75,6 +75,9 @@ local C = {
 	ginger = rgb(198, 122, 62),
 	gingerDark = rgb(146, 82, 40),
 	navy = rgb(36, 42, 64),
+	teapot = rgb(84, 50, 34), -- a brown betty
+	porcelain = rgb(206, 220, 228), -- cold white, as on the enamel
+	darn = rgb(100, 32, 36), -- a near match for the moquette, a shade off
 }
 
 local SIGN_FONT = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold)
@@ -710,6 +713,24 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	do
 		bay(spot.x, spot.side)
 	end
+	-- Signs that someone keeps the saloon: tea laid out on a table, a blanket folded on a seat
+	-- and a darn in a seat back, mended rather than replaced. Decor only (no collision).
+	local teaX, teaZ, teaTop = -58.35, -3.85, 2.96 -- the far table of the first bay, its aisle half
+	decor(Vector3.new(0.95, 0.04, 0.62), at(teaX, teaTop + 0.02, teaZ), C.brass, M.Metal)
+	ball(0.44, at(teaX - 0.18, teaTop + 0.26, teaZ), C.teapot, M.SmoothPlastic)
+	for _, dx in { 0.2, 0.36 } do
+		disc(0.14, 0.2, at(teaX + dx, teaTop + 0.11, teaZ + (if dx > 0.3 then 0.14 else -0.14)), C.porcelain)
+	end
+	-- the blanket, folded at the window end of a seat in the second car
+	decor(Vector3.new(0.9, 0.16, 0.62), at(-38.45, 1.78, -5.0), C.linen, M.Fabric)
+	decor(Vector3.new(0.92, 0.2, 0.08), at(-38.45, 1.79, -4.82), C.velvet, M.Fabric)
+	-- the darn: a square of near-matching moquette on the seat back that faces the aisle
+	decor(
+		Vector3.new(0.04, 0.5, 0.56),
+		at(-52.45 - 1.15, 2.7, -BENCH_Z) * Kit.angles(0, 0, 8) * CFrame.new(0.28, -0.25, 0.3),
+		C.darn,
+		M.Fabric
+	)
 	-- paintings of the line either side of each gangway door
 	picture(-62.38, 4.0, 1, 1)
 	picture(-62.38, -4.0, 1, 2)

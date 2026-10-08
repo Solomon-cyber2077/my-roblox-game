@@ -639,8 +639,10 @@ function Sky.compose(i: Inputs): State
 		state.ambient = LOBBY.ambient
 		state.outdoor = LOBBY.outdoor
 		state.density, state.haze = 0.18, 0.8
-		state.tint = rgb(255, 238, 222)
-		state.saturation = 0.04
+		-- no warm cast over the whole frame: the lamps bring the warmth, so whites stay white
+		-- and the mahogany reads as wood rather than paint
+		state.tint = rgb(255, 251, 248)
+		state.saturation = -0.06
 		state.lift = -0.02
 		state.contrast = 0.04
 		state.bloom, state.bloomThreshold, state.bloomSize =

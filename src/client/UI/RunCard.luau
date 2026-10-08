@@ -24,8 +24,11 @@ local RunCard = {}
 
 local W, H = 1056, 594
 local PAD = 32
-local PER_ROW = 6
-local STUB_SCALE = 0.72
+local STUB_W = 200 -- Ticket.stub's own width (TicketBook lays the stubs out at a scale)
+local GAP = 10 -- TicketBook's gap between stubs
+local MAX_SCALE = 1.15 -- a short run's stubs are drawn large enough to read
+local ROW_GAP = 8
+local FOOT_LOWEST = 440 -- the totals line never sinks into the final stamp
 local STEP = 0.11 -- seconds between stubs in the cascade
 local Z = 60
 local WIN = Color3.fromRGB(40, 110, 62)
@@ -135,15 +138,31 @@ local function show()
 		XAlign = Enum.TextXAlignment.Right,
 	})
 	sub.Name = "Outcome"
+	local rule = Ui.new("Frame", {
+		Name = "Rule",
+		Size = UDim2.new(1, -2 * PAD, 0, 2),
+		Position = UDim2.fromOffset(PAD, 64),
+		BackgroundColor3 = Theme.Color.brass,
+		BorderSizePixel = 0,
+		ZIndex = Z + 2,
+		Parent = card,
+	})
+	rule.BackgroundTransparency = 0.2
 	crewRow()
 
+	-- the stubs as large as the run allows: up to four on a row, five or six for a long run,
+	-- each row centred on the card
 	local plays: { (number) -> number } = {}
-	local rows = math.max(math.ceil(#log / PER_ROW), 1)
+	local perRow = if #log <= 4 then math.max(#log, 1) elseif #log <= 10 then 5 else 6
+	local scale = math.min(MAX_SCALE, ((W - 2 * PAD) / perRow - GAP) / STUB_W)
+	local rows = math.max(math.ceil(#log / perRow), 1)
+	local rowH = 0
 	for r = 1, rows do
-		local slice = table.move(log, (r - 1) * PER_ROW + 1, math.min(r * PER_ROW, #log), 1, {})
-		local row, play =
-			TicketBook.track(slice, { scale = STUB_SCALE, ink = Theme.Color.ink, ZIndex = Z + 2 })
-		row.Position = UDim2.fromOffset(PAD, 162 + (r - 1) * 116)
+		local slice = table.move(log, (r - 1) * perRow + 1, math.min(r * perRow, #log), 1, {})
+		local row, play = TicketBook.track(slice, { scale = scale, ink = Theme.Color.ink, ZIndex = Z + 2 })
+		rowH = row.Size.Y.Offset
+		row.Position =
+			UDim2.fromOffset(math.floor((W - row.Size.X.Offset) / 2), 162 + (r - 1) * (rowH + ROW_GAP))
 		row.Parent = card
 		table.insert(plays, play)
 	end
@@ -170,8 +189,9 @@ local function show()
 		Font = Theme.Font.type,
 		TextSize = 20,
 		Color = Theme.Color.ink,
-		Position = UDim2.fromOffset(PAD, 420),
+		Position = UDim2.fromOffset(PAD, math.min(162 + rows * (rowH + ROW_GAP) + 18, FOOT_LOWEST)),
 		Size = UDim2.new(1, -2 * PAD, 0, 28),
+		XAlign = Enum.TextXAlignment.Center,
 	})
 	foot.TextScaled = true -- a long run shrinks to the card's width
 	Ui.new("UITextSizeConstraint", { MaxTextSize = 20, Parent = foot })
@@ -207,7 +227,7 @@ local function show()
 		task.delay(at, function()
 			play(STEP)
 		end)
-		at += math.min(PER_ROW, #log) * STEP
+		at += math.min(perRow, #log) * STEP
 	end
 	task.delay(at + 0.35, function()
 		final.Visible = true
@@ -263,12 +283,12 @@ function RunCard.mount(gui: ScreenGui)
 	closeButton.Parent = card
 	hint = Ui.text({
 		Name = "Hint",
-		Text = "H hides this button",
+		Text = "H: hide the button for a screenshot",
 		Font = Theme.Font.body,
 		TextSize = 13,
 		Color = Theme.Color.inkSoft,
 		Position = UDim2.new(0, PAD + 124, 1, -PAD - 30),
-		Size = UDim2.fromOffset(200, 22),
+		Size = UDim2.fromOffset(280, 22),
 	})
 	hint.ZIndex = Z + 4
 	hint.Parent = card

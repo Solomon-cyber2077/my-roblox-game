@@ -340,11 +340,13 @@ function Ui.setButtonEnabled(button: TextButton, enabled: boolean)
 	button.AutoButtonColor = false
 	button:SetAttribute("Disabled", not enabled)
 	button.BackgroundTransparency = 0
-	button.TextTransparency = if enabled then 0 else 0.5
+	-- dull, but still legible: a disabled plate says why (NEED 2 MORE, EQUIPPED). The shade
+	-- draws over the label, so it does the dulling and the label itself stays nearly opaque.
+	button.TextTransparency = if enabled then 0 else 0.1
 	local shade = button:FindFirstChild("Shade") :: Frame?
 	if shade then
 		shade.BackgroundColor3 = Theme.Color.steel
-		shade.BackgroundTransparency = if enabled then 1 else 0.38
+		shade.BackgroundTransparency = if enabled then 1 else 0.5
 	end
 	local keel = button:FindFirstChild("Keel") :: Frame?
 	if keel then

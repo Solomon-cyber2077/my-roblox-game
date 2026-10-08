@@ -25,7 +25,7 @@ local Ui = require(script.Parent.Ui)
 
 local CarBoardingUi = {}
 
-local GLOW = Color3.fromRGB(70, 255, 120)
+local GLOW = Color3.fromRGB(96, 214, 150) -- signal-lamp green, not neon
 local STRIP = 0.35 -- glow strip width
 local CORNER = 1.4 -- corner square size
 
