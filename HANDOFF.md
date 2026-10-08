@@ -1,6 +1,15 @@
 # HANDOFF
 Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 
+## Brief M / task 006 — implemented, acceptance pending (2026-10-07)
+- Client-only `Visual/HollowCosmetics` decorates Stalker/Crawler with seeded primitive accessories, grime/stains, skull cracks, crawler hair, coat tear accents, badge/buttons/ticket, eyes, drip, breath and chest smoke. Reuses crawler Dust/Breath and Stalker Drip; locally disables/restores old FootMist. All added parts are welded, massless and non-colliding/non-queryable/non-touchable. No custom assets/placeholders.
+- `Controllers/HollowAnimator` owns the single update loop and fresh additive neck/jaw offsets (nearby, stationary Prowl only). Existing aggression State drives eye brightness. Lights/continuous effects stop beyond 120 studs; no new attributes/state. `Tuning.HollowCosmetics` holds cosmetic settings. `Logic/GrimeLevel` plus its three pure tests covers stop progression (1=0, 5=.4, 10=.9, Terminus=1) and deterministic +/-10% variation. Actual limb lengths/extra joints skipped to preserve rig geometry; missing joints receive no motion.
+- Protected files verified byte-identical by SHA256 before/after: Difficulty.luau, task 002 brief, HollowService.luau, HazardDirector.luau. This task edited no server files, AI, collision geometry or existing animation poses. Other sessions' server changes are not part of M.
+- Separate pre-existing blocker: before changes `lune run check` had 158 passes/1 failure; after implementation 161 passes/1 failure. Exact same failure: `DifficultyModel: matches the published dwell range of 60 to 95 seconds before archetype scaling`, `tests/Difficulty.spec.luau:105: expected 95, got 148`. Do not fix task 002 or commit M without a passing check or explicit user exception.
+- Verification: initial post-change format/lint/types passed; independent `lune run audit` clean (existing builder/pose audits do not exercise the new decorator). Final focused Luau analysis passed. Latest combined check stops at another session's TrainInterior formatting; no changes made to that file. Task 007 / Brief C became active during this session; stopped cosmetic development when detected, per M's no-A–F-concurrency rule.
+- Studio started/stopped and console/screenshot checked: lobby only, DataStore API access errors. No running Rojo process was found, so loading of these new disk files and actual monster visuals are NOT verified. No saved temporary files created. No commit/push.
+- Next: resume M alone after C finishes. Connect Rojo with Studio-only work preserved, restart Play, compare Stalker/Crawler at stops 1 and 10/Terminus; inspect accessories/hair/rib stains, aggression eyes, stationary micro-motion versus moving/grabbing, >120-stud effect cutoff, missing player root and despawn cleanup. Read console and take 0.5-scale screenshots. Then rerun full check, resolve the separate blocker through its owner, and commit only when authorized. Task 006 remains in-progress until visual acceptance.
+
 ## Features completed
 - Full run loop: lobby, route vote, ten stops, Terminus, summary
 - Hollows with grabs/struggle/pry; enterable buildings; station hazards
