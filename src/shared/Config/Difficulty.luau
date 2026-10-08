@@ -23,7 +23,7 @@ return table.freeze({
 		LobbyRefreshSeconds = 1,
 	}),
 
-	Dwell = table.freeze({ 95, 60 }), -- seconds the doors stay open, before archetype scaling
+	Dwell = table.freeze({ 148, 94 }), -- seconds the doors stay open, before archetype scaling
 
 	FogStartU = table.freeze({ 0.45, 0.15 }), -- share of the dwell before the fog front moves
 	FogEndFraction = table.freeze({ 0.45, 0.10 }), -- clear depth left past the safe strip at departure
@@ -56,7 +56,7 @@ return table.freeze({
 		Brute = table.freeze({ 0.04, 0.2 }),
 	}),
 	-- bigger stops take longer and hold more Hollows: per tile of enterable building
-	SizeDwellPerTile = 0.035, -- dwell multiplier added per building tile
+	SizeDwellPerTile = 0.02, -- dwell multiplier added per building tile
 	SizeCapPerTile = 0.025, -- Hollow cap multiplier added per building tile
 
 	DepartureAccel = table.freeze({ 4, 6 }), -- studs per second squared
