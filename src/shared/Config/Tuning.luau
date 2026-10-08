@@ -326,6 +326,39 @@ local Tuning = {
 		footprint (they keep apart by it). A strike that lands becomes a grab
 		(Config/Grabs): grip scales how hard it is to break free, crush the damage.
 	]]
+	-- Client-only dressing; never feeds Hollow pace, damage or rig dimensions.
+	HollowCosmetics = {
+		Distance = 120,
+		DustSpeed = 6,
+		IdleSpeed = 0.5,
+		StepTime = 0.16,
+		NeckAngle = 0.035,
+		JawAngle = 0.045,
+		MaxParts = 40,
+		LightRange = 5,
+		EyeDim = 0.12,
+		EyeAlert = 0.8,
+		DripClean = 0.15,
+		DripDirty = 1.1,
+		BreathRate = 1.3,
+		DustRate = 4,
+		SmokeRate = 0.5,
+		Lifetime = 1.2,
+		Texture = "rbxasset://textures/particles/smoke_main.dds",
+		Colors = {
+			Bone = { 205, 201, 178 },
+			Grime = { 67, 51, 35 },
+			Blood = { 72, 20, 19 },
+			Hair = { 28, 25, 24 },
+			Coat = { 44, 58, 50 },
+			Crack = { 38, 34, 29 },
+			Brass = { 115, 91, 47 },
+			Iron = { 70, 65, 58 },
+			Paper = { 159, 145, 109 },
+			Eye = { 188, 191, 137 },
+			Mist = { 176, 180, 186 },
+		},
+	},
 	HollowKinds = {
 		Stalker = { walk = 1, chase = 1, reach = 1, windup = 1, radius = 1.6, grip = 1, crush = 1 },
 		Crawler = {

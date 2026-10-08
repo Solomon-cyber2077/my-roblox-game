@@ -28,9 +28,13 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
+local Safe = require(Shared.Util.Safe)
+local GrimeLevel = require(Shared.Logic.GrimeLevel)
 
 local Registry = require(script.Parent.Parent.Registry)
 local HollowPoses = require(script.Parent.Parent.Animation.HollowPoses)
+local HollowCosmetics = require(script.Parent.Parent.Visual.HollowCosmetics)
+local cosmetics: { [Model]: HollowCosmetics.Handle } = {}
 
 type Pose = HollowPoses.Pose
 
@@ -258,7 +262,7 @@ end
 
 -- Frame ------------------------------------------------------------------------------------------
 
-local function animate(rig: Rig, dt: number, now: number, clock: number)
+local function animate(rig: Rig, dt: number, now: number, clock: number, position: Vector3?, grime: number)
 	local model = rig.model
 	local state = (model:GetAttribute("State") :: string?) or "Prowl"
 	local stateAt = (model:GetAttribute("StateAt") :: number?) or now
@@ -278,6 +282,12 @@ local function animate(rig: Rig, dt: number, now: number, clock: number)
 
 	local velocity = rig.root.AssemblyLinearVelocity
 	local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+	local dressing = cosmetics[model]
+	local neckOffset, jawOffset = I, I
+	if dressing then
+		HollowCosmetics.update(dressing, position, grime, state, speed)
+		neckOffset, jawOffset = HollowCosmetics.offsets(dressing, clock, state, speed, stunned)
+	end
 	local before = rig.phase
 	rig.phase += dt * HollowPoses.cadence(rig.kind, speed)
 	-- a footfall every half turn: the Brute shakes the ground
@@ -290,7 +300,7 @@ local function animate(rig: Rig, dt: number, now: number, clock: number)
 			audio("HollowScrabble", rig.root.Position, 0.25, 1.9)
 		end
 	end
-	if rig.kind == "Crawler" then
+	if rig.kind == "Crawler" and not dressing then
 		local dust = rig.root:FindFirstChild("Dust") :: ParticleEmitter?
 		if dust then
 			dust.Rate = if speed > 6 then 14 else 0
@@ -313,12 +323,12 @@ local function animate(rig: Rig, dt: number, now: number, clock: number)
 	end
 
 	-- random head twitches: snap, hold, release
-	if clock >= rig.twitchNext then
+	if not dressing and clock >= rig.twitchNext then
 		rig.twitch = A((math.random() - 0.5) * 0.9, (math.random() - 0.5) * 1.4, (math.random() - 0.5) * 1.2)
 		rig.twitchUntil = clock + 0.15 + math.random() * 0.45
 		rig.twitchNext = clock + (if state == "Dormant" then 3 else 1.2) + math.random() * 3
 	end
-	local twitching = clock < rig.twitchUntil and state ~= "Emerge" and state ~= "Grab"
+	local twitching = not dressing and clock < rig.twitchUntil and state ~= "Emerge" and state ~= "Grab"
 
 	local kindDef = (Tuning.HollowKinds :: any)[rig.kind]
 	local target = HollowPoses.pose(rig.skeleton, {
@@ -366,6 +376,7 @@ local function animate(rig: Rig, dt: number, now: number, clock: number)
 		local value = if twitching and name == "Neck" then goal else current:Lerp(goal, alpha)
 		rig.pose[name] = value
 		motor.Transform = value
+			* (if name == "Neck" then neckOffset elseif name == "Jaw" then jawOffset else I)
 	end
 end
 
@@ -410,9 +421,27 @@ local function register(model: Instance)
 	}
 	makeTrails(rig)
 	rigs[model] = rig
-	model.AncestryChanged:Connect(function()
+	if rig.kind == "Stalker" or rig.kind == "Crawler" then
+		cosmetics[model] = HollowCosmetics.attach(model, root)
+	end
+	local ancestry: RBXScriptConnection? = nil
+	ancestry = model.AncestryChanged:Connect(function()
 		if model.Parent == nil then
+			local dressing = cosmetics[model]
+			if dressing then
+				HollowCosmetics.destroy(dressing)
+				cosmetics[model] = nil
+				for _, name in { "Neck", "Jaw" } do
+					local motor = rig.motors[name]
+					if motor and motor.Parent then
+						motor.Transform = rig.pose[name] or I
+					end
+				end
+			end
 			rigs[model] = nil
+			if ancestry then
+				ancestry:Disconnect()
+			end
 		end
 	end)
 end
@@ -440,8 +469,19 @@ function HollowAnimator.Start()
 	RunService.Stepped:Connect(function(_, dt: number)
 		local now = Workspace:GetServerTimeNow()
 		local clock = os.clock()
+		local character = Players.LocalPlayer.Character
+		local playerRoot = if character then character:FindFirstChild("HumanoidRootPart") else nil
+		local position = if playerRoot and playerRoot:IsA("BasePart") then playerRoot.Position else nil
+		local run = Registry.StateController.Get({ "run" })
+		local grime = if run
+			then GrimeLevel.forStop(
+				run.nextStop or 1,
+				run.stopCount or Tuning.Run.StationCount,
+				run.station ~= nil and run.station.terminus == true
+			)
+			else 0
 		for _, rig in rigs do
-			animate(rig, dt, now, clock)
+			Safe.call("HollowAnimator", animate, rig, dt, now, clock, position, grime)
 		end
 	end)
 end
