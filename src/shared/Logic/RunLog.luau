@@ -6,11 +6,13 @@
 
 	  entry      the closed ballot + the leg's ticket -> a pending entry (a sealed ticket stays sealed)
 	  reveal     the station behind a sealed ticket, once it is unsealed
-	  resolve    a pending entry + how the stop ended + who made a close call -> the logged entry
+	  resolve    a pending entry + how the stop ended + close calls + the stop's haul -> the logged entry
+	  haul       run counters at the stop's start and end -> what this stop banked and lost
+	  haulText   an entry -> "x12 COAL · 3 PARTS · 1 DOWN" under its stub ("" when nothing happened)
 	  append     a log + an entry -> a new log in stop order (one entry per stop)
 	  option     an entry -> the RouteOption a ticket stub prints
 	  stamps     an entry -> its stamps (CLOSE CALL, GAMBLED with the outcome, UNANIMOUS)
-	  totals     a log -> km, coal burned, stops, close calls
+	  totals     a log -> km, coal burned, stops, close calls, loot banked, downs
 	  endStop    a log + run.nextStop -> the stop the run ended at
 	  final      the run's outcome and the stop it ended at -> the card's last stamp
 ]]
@@ -36,7 +38,15 @@ export type Ballot = {
 }
 
 export type Stamp = { kind: "CloseCall" | "Gambled" | "Unanimous", text: string }
-export type Totals = { km: number, coal: number, stops: number, closeCalls: number }
+export type Totals = {
+	km: number,
+	coal: number,
+	stops: number,
+	closeCalls: number,
+	loot: number, -- coal, parts and relics banked
+	downs: number,
+}
+export type Haul = Types.StopHaul
 
 -- Unanimous: at least two ballots, every one of them for the winner.
 function RunLog.unanimous(split: { number }, chosen: number): boolean
@@ -64,6 +74,7 @@ function RunLog.entry(ballot: Ballot): Entry
 		mystery = if sealed then true else nil,
 		revealed = nil,
 		closeCalls = nil,
+		haul = nil,
 		outcome = "Cleared",
 	}
 end
@@ -75,11 +86,43 @@ function RunLog.reveal(entry: Entry, archetype: string, name: string, tier: numb
 	return out
 end
 
-function RunLog.resolve(entry: Entry, outcome: Types.StopOutcome, closeCalls: { string }?): Entry
+function RunLog.resolve(entry: Entry, outcome: Types.StopOutcome, closeCalls: { string }?, haul: Haul?): Entry
 	local out = table.clone(entry)
 	out.outcome = outcome
 	out.closeCalls = if closeCalls and #closeCalls > 0 then table.clone(closeCalls) else nil
+	out.haul = if haul then table.clone(haul) else nil
 	return out
+end
+
+-- The difference between two snapshots of the run's counters, never negative.
+function RunLog.haul(before: Haul, now: Haul): Haul
+	return {
+		coal = math.max(now.coal - before.coal, 0),
+		parts = math.max(now.parts - before.parts, 0),
+		relics = math.max(now.relics - before.relics, 0),
+		downs = math.max(now.downs - before.downs, 0),
+	}
+end
+
+local function count(parts: { string }, n: number, word: string)
+	if n > 0 then
+		table.insert(parts, `{n} {word}{if n == 1 then "" else "S"}`)
+	end
+end
+
+function RunLog.haulText(entry: Entry): string
+	local h = entry.haul
+	if h == nil then
+		return ""
+	end
+	local parts: { string } = {}
+	if h.coal > 0 then
+		table.insert(parts, `x{h.coal} COAL`)
+	end
+	count(parts, h.parts, "PART")
+	count(parts, h.relics, "RELIC")
+	count(parts, h.downs, "DOWN")
+	return table.concat(parts, " · ")
 end
 
 function RunLog.append(log: { Entry }?, entry: Entry): { Entry }
@@ -127,13 +170,17 @@ function RunLog.stamps(entry: Entry): { Stamp }
 end
 
 function RunLog.totals(log: { Entry }?): Totals
-	local t: Totals = { km = 0, coal = 0, stops = 0, closeCalls = 0 }
+	local t: Totals = { km = 0, coal = 0, stops = 0, closeCalls = 0, loot = 0, downs = 0 }
 	local list: { Entry } = log or {}
 	for _, e in list do
 		t.km += e.distanceKm
 		t.coal += e.coalBurned
 		t.stops += 1
 		t.closeCalls += if e.closeCalls then #e.closeCalls else 0
+		if e.haul then
+			t.loot += e.haul.coal + e.haul.parts + e.haul.relics
+			t.downs += e.haul.downs
+		end
 	end
 	return t
 end

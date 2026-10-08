@@ -100,6 +100,22 @@ function TicketBook.track(entries: { any }, opts: TrackOpts): (Frame, (step: num
 		stub.ZIndex = z + 1
 		stub.Parent = cell
 		Ui.new("UIScale", { Scale = s, Parent = stub })
+		local haul = RunLog.haulText(entry)
+		if haul ~= "" then
+			local line = Ui.text({
+				Text = haul,
+				Font = Theme.Font.type,
+				TextSize = math.max(math.floor(13 * s + 0.5), 10),
+				Color = opts.ink,
+				Position = UDim2.fromOffset(GAP / 2, HANG + math.ceil(STUB_H * s) + 1),
+				Size = UDim2.fromOffset(math.ceil(STUB_W * s), 14),
+			})
+			line.Name = "Haul"
+			line.TextScaled = true -- a long haul shrinks to the stub's width
+			Ui.new("UITextSizeConstraint", { MaxTextSize = line.TextSize, Parent = line })
+			line.ZIndex = z + 1
+			line.Parent = cell
+		end
 		local pop = Ui.new("UIScale", { Parent = cell })
 		local stamps: { Frame } = {}
 		for k, mark in RunLog.stamps(entry) do
@@ -181,7 +197,7 @@ local function render()
 		Text = `{totals.km} KM  ·  COAL BURNED x{math.floor(totals.coal * 10 + 0.5) / 10}  ·  {totals.stops} STOP{if totals.stops
 				== 1
 			then ""
-			else "S"}`,
+			else "S"}  ·  {totals.loot} LOOT  ·  {totals.downs} DOWN{if totals.downs == 1 then "" else "S"}`,
 		Font = Theme.Font.type,
 		TextSize = 16,
 		Color = Theme.Color.paper,

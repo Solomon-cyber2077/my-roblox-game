@@ -59,6 +59,7 @@ type RunState = {
 	sealed: boolean, -- this leg's destination is a mystery not yet revealed
 	forceMystery: boolean, -- Dev `mystery`: the next ballot has one
 	pending: Types.LogEntry?, -- this stop's run.log entry, appended when the stop resolves
+	mark: Types.StopHaul, -- the run's loot and downs when the previous stop resolved
 }
 
 local state: RunState = {
@@ -82,6 +83,7 @@ local state: RunState = {
 	sealed = false,
 	forceMystery = false,
 	pending = nil,
+	mark = { coal = 0, parts = 0, relics = 0, downs = 0 },
 }
 
 local rng = Random.new()
@@ -117,15 +119,29 @@ local function context(): RunRules.Context
 	}
 end
 
+-- The run's loot banked and crew downed so far; a stop's haul is the change since the last stop.
+local function counters(): Types.StopHaul
+	local stats = StateService.Get({ "stats" }) :: Types.RunStats?
+	return {
+		coal = if stats then stats.coalDelivered else 0,
+		parts = if stats then stats.partsDelivered else 0,
+		relics = if stats then stats.relics else 0,
+		downs = Registry.CrewService.Downs(),
+	}
+end
+
 -- The stop has resolved: its entry joins run.log (Logic/RunLog).
 local function logStop(outcome: Types.StopOutcome, closeCalls: { string }?)
+	local current = counters()
+	local haul = RunLog.haul(state.mark, current)
+	state.mark = current
 	local pending = state.pending
 	if pending == nil then
 		return
 	end
 	state.pending = nil
 	local log = StateService.Get({ "run", "log" }) :: { Types.LogEntry }?
-	StateService.Set({ "run", "log" }, RunLog.append(log, RunLog.resolve(pending, outcome, closeCalls)))
+	StateService.Set({ "run", "log" }, RunLog.append(log, RunLog.resolve(pending, outcome, closeCalls, haul)))
 end
 
 local function cleanupRun()
@@ -165,6 +181,7 @@ Enter.Boarding = function()
 	state.mystery = Mystery.newHistory()
 	state.sealed = false
 	state.pending = nil
+	state.mark = { coal = 0, parts = 0, relics = 0, downs = 0 }
 	StateService.Set({ "run", "log" }, {})
 	StateService.Set({ "stats" }, { coalDelivered = 0, partsDelivered = 0, relics = 0, stationsCleared = 0 })
 	local crew = Registry.LobbyService.TakeCrew()
@@ -362,9 +379,13 @@ Exit.Departure = function(nextPhase)
 	state.departed = true
 	if nextPhase == "Junction" then
 		local closeCalls = Registry.CrewService.ResolveDeparture()
-		-- the last of the crew left behind: the run ends at this stop, not the next
-		logStop(if Registry.CrewService.AliveCount() > 0 then "Cleared" else "Wiped", closeCalls)
-		state.stationsCleared += 1
+		-- the last of the crew left behind: the run ends at this stop, not the next, and it does
+		-- not count as cleared
+		local cleared = Registry.CrewService.AliveCount() > 0
+		logStop(if cleared then "Cleared" else "Wiped", closeCalls)
+		if cleared then
+			state.stationsCleared += 1
+		end
 		state.nextStop += 1
 		StateService.Update({ "stats" }, function(stats)
 			local s = stats or { coalDelivered = 0, partsDelivered = 0, relics = 0, stationsCleared = 0 }

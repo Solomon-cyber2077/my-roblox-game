@@ -46,6 +46,7 @@ local CrewService = {}
 
 local members: { [Player]: Member } = {}
 local pendingJoin: { [Player]: boolean } = {}
+local downs = 0 -- eliminations this run, for the run log's per-stop haul
 local missingAtLastCall: { [Player]: boolean } = {} -- not aboard when the whistle blew (T-0)
 local spawnGeneration: { [Player]: number } = {}
 
@@ -389,6 +390,7 @@ function CrewService.RecordDeposit(player: Player, receipt: Ledger.Receipt)
 end
 
 function CrewService.BeginRun(players: { Player })
+	downs = 0
 	table.clear(members)
 	table.clear(pendingJoin)
 	for i, player in players do
@@ -432,6 +434,7 @@ function CrewService.Eliminate(player: Player, cause: Cause)
 	end
 	member.status = "Eliminated"
 	member.cause = cause
+	downs += 1
 	member.load = 0
 	publish(member)
 	print(`[Crew] {player.Name} eliminated: {cause} at stop {Registry.RunDirector.NextStop()}`)
@@ -490,6 +493,10 @@ function CrewService.ResolveDeparture(): { string }
 		member.clutchCounted = false
 	end
 	return names
+end
+
+function CrewService.Downs(): number
+	return downs
 end
 
 function CrewService.RescuableCount(): number

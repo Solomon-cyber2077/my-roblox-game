@@ -165,6 +165,29 @@ describe("RunLog", function()
 		expect(RunLog.totals(nil).stops).toBe(0)
 	end)
 
+	it("logs each stop's loot and downs as the change since the last stop", function()
+		local start = { coal = 4, parts = 1, relics = 0, downs = 1 }
+		local finish = { coal = 16, parts = 4, relics = 1, downs = 3 }
+		local haul = RunLog.haul(start, finish)
+		expect(haul).toEqual({ coal = 12, parts = 3, relics = 1, downs = 2 })
+		expect(RunLog.haul(finish, start).coal).toBe(0) -- never negative
+		local e = RunLog.resolve(RunLog.entry(ballot({ stop = 1 })), "Cleared", nil, haul)
+		expect(RunLog.haulText(e)).toBe("x12 COAL · 3 PARTS · 1 RELIC · 2 DOWNS")
+		local quiet =
+			RunLog.resolve(RunLog.entry(ballot({ stop = 2 })), "Cleared", nil, RunLog.haul(finish, finish))
+		expect(RunLog.haulText(quiet)).toBe("")
+		local one = RunLog.haul(start, { coal = 4, parts = 2, relics = 0, downs = 2 })
+		expect(RunLog.haulText(RunLog.resolve(RunLog.entry(ballot()), "Wiped", nil, one))).toBe(
+			"1 PART · 1 DOWN"
+		)
+		expect(RunLog.haulText(RunLog.entry(ballot()))).toBe("")
+		local log = RunLog.append(RunLog.append(nil, e), quiet)
+		expect(wireSafe(log)).toBe(true)
+		local t = RunLog.totals(log)
+		expect(t.loot).toBe(16)
+		expect(t.downs).toBe(2)
+	end)
+
 	it("names the final stamp", function()
 		expect(RunLog.final("Victory", 11)).toBe("TERMINUS")
 		expect(RunLog.final("Derailed", 6)).toBe("DERAILED AT STOP 6")
