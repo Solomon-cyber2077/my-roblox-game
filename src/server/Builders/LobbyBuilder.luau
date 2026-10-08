@@ -40,7 +40,7 @@ local LobbyBuilder = {}
 
 local C = {
 	marble = Color3.fromRGB(176, 182, 184), -- grey-veined counter tops
-	paving = Color3.fromRGB(96, 102, 108), -- the platform's blue-grey stone flags
+	paving = Color3.fromRGB(86, 94, 104), -- the platform's blue-grey stone flags (cool, so the lamps cannot turn them buff)
 	slateDark = Color3.fromRGB(38, 40, 44), -- borders, joints and the rosette's rings
 	quarry = Color3.fromRGB(84, 38, 34), -- oxblood quarry tiles along the walk
 	glazed = Color3.fromRGB(34, 76, 62), -- the green glazed-tile dado
@@ -54,7 +54,8 @@ local C = {
 	glass = Color3.fromRGB(150, 170, 168),
 	night = Color3.fromRGB(46, 58, 80),
 	warm = Color3.fromRGB(255, 206, 140),
-	dusk = Color3.fromRGB(214, 168, 118), -- lit glass: warm, but too dim to glare
+	flame = Color3.fromRGB(236, 142, 64), -- lamp glass: neon blooms toward white, so it starts deep amber
+	dusk = Color3.fromRGB(200, 128, 66), -- lit glass: amber, too dim to glare (paler reads as cream)
 	fill = Color3.fromRGB(255, 236, 218), -- lamplight, but not orange: surfaces keep their colour
 	board = Color3.fromRGB(22, 26, 34),
 	brass = Color3.fromRGB(201, 160, 82),
@@ -1450,7 +1451,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				C.iron,
 				{ material = Enum.Material.Metal, collide = false }
 			)
-			local lantern = Kit.neon(model, Vector3.new(1, 1.4, 1), tip * CFrame.new(0, 11.95, 0), C.warm)
+			local lantern = Kit.neon(model, Vector3.new(1, 1.4, 1), tip * CFrame.new(0, 11.95, 0), C.flame)
 			lantern.Transparency = 0.15
 			Kit.block(
 				model,
@@ -1466,7 +1467,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		decor(Vector3.new(0.6, 1.4, 0.5), at(x, 13, BACK_Z - 0.25), C.brass, Enum.Material.Metal)
 		decor(Vector3.new(0.3, 0.3, 1.2), at(x, 13.4, BACK_Z - 0.9), C.brass, Enum.Material.Metal)
 		local globe =
-			Kit.neon(model, Vector3.new(1, 1, 1), at(x, 13.4, BACK_Z - 1.9), C.warm, Enum.PartType.Ball)
+			Kit.neon(model, Vector3.new(1, 1, 1), at(x, 13.4, BACK_Z - 1.9), C.flame, Enum.PartType.Ball)
 		Kit.pointLight(globe, C.warm, 0.55, 18, false)
 	end
 

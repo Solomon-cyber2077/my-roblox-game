@@ -1547,8 +1547,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		tag(
 			Kit.cylinder(
 				model,
-				0.35,
-				8.25,
+				0.2,
+				8.2,
 				at(x, 6.2, 0),
 				trim,
 				{ material = Enum.Material.Metal, collide = false }
