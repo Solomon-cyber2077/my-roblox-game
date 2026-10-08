@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-08: Brief 012 prepared
+1. Done: prepared `tasks/012-replace-small-rear-lobby-bulbs-with-even.md` with verified LobbyBuilder ranges and concrete lamp placement, warmth, overlap, and Studio verification requirements. No game code changed.
+2. Known: task 012 remains todo; implementation and visual acceptance have not been run.
+3. Next: Claude implement the rear lobby lamp replacement on disk, run `lune run check`, restart Play after Rojo sync, inspect rear center and both ends, and report console/screenshot results.
+
 ## 2026-10-08: Lobby road edging
 - Completed: split the two brass road borders at the black rosette boundary, accounting for strip width to remove coplanar overlap. User authorized direct Codex implementation.
 - Validation: lune run check passed; restarted Studio Play and captured lobby with no yellow edging crossing the black ring. Console only reports existing disabled DataStore API access.
