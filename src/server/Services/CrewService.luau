@@ -463,14 +463,17 @@ function CrewService.MarkLastCall()
 	end
 end
 
--- Called when the chase window closes: anyone not aboard stays behind.
-function CrewService.ResolveDeparture()
+-- Called when the chase window closes: anyone not aboard stays behind. Returns the display names
+-- of this stop's close calls, for the run log.
+function CrewService.ResolveDeparture(): { string }
 	local aboard: { [Player]: boolean } = {}
 	for player, member in members do
 		aboard[player] = member.status == "Aboard"
 	end
+	local names: { string } = {}
 	for _, player in RunRules.closeCalls(missingAtLastCall, aboard) do
 		members[player].tally.closeCalls += 1
+		table.insert(names, player.DisplayName)
 		print(`[Crew] {player.Name} close call at stop {Registry.RunDirector.NextStop()}`)
 	end
 	table.clear(missingAtLastCall)
@@ -486,6 +489,7 @@ function CrewService.ResolveDeparture()
 		end
 		member.clutchCounted = false
 	end
+	return names
 end
 
 function CrewService.RescuableCount(): number

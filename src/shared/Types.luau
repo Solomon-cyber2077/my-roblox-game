@@ -117,6 +117,28 @@ export type RunStats = {
 	stationsCleared: number,
 }
 
+-- How one stop ended for the run: departed with the crew aboard, or the run ended there.
+export type StopOutcome = "Cleared" | "Victory" | "Wiped" | "Derailed"
+
+-- run.log[i], one per resolved stop in stop order (Logic/RunLog). A sealed ticket that never arrived
+-- keeps its sealed name and tier 0; `revealed` is set only once its station was unsealed at Arrival.
+export type LogEntry = {
+	stop: number,
+	name: string,
+	archetype: string,
+	tier: number,
+	difficulty: number,
+	distanceKm: number,
+	coalBurned: number,
+	votes: { number }, -- ballots cast per option, in ballot order
+	chosen: number,
+	unanimous: boolean,
+	mystery: boolean?,
+	revealed: boolean?,
+	closeCalls: { string }?, -- display names: not aboard at T-0, aboard when the stop resolved
+	outcome: StopOutcome,
+}
+
 -- Per-player tally that feeds the end-of-run payout.
 export type CrewTally = {
 	stationsDeparted: number,
