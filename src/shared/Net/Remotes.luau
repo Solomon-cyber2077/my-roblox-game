@@ -44,6 +44,7 @@ local Remotes: { [string]: RemoteDef } = {
 	Patch = { direction = "ToClient", args = {}, rate = 0, burst = 0 },
 	Fx = { direction = "ToClient", args = {}, rate = 0, burst = 0 },
 	Notify = { direction = "ToClient", args = {}, rate = 0, burst = 0 },
+	Dialogue = { direction = "ToClient", args = {}, rate = 0, burst = 0 }, -- an NPC speaks (NpcService)
 }
 
 local function isInteger(value: any, lo: number, hi: number): boolean

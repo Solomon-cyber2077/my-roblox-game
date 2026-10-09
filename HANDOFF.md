@@ -1,5 +1,40 @@
 # HANDOFF
 
+## 2026-10-08: Train residents, pass 1 (Mabel end to end) — awaiting user test
+1. Completed: data-driven NPC system plus Mabel Orrin (ticket clerk) with 15 lines, a 3-errand chain, saving, dialogue UI and tracker.
+   - Data: `Config/Npcs` (roster; Dutch, Varga, Pip, Conductor reserved with `enabled = false`), `Config/NpcQuests`, `Config/NpcDialogue/Mabel`. Logic: `Logic/NpcQuest` (co-op rules), `Logic/NpcDialogue` (line picking), `Logic/NpcSave` (schema v2 + migrate), `Logic/Retry`.
+   - Server: `Services/NpcService`, `Builders/NpcFigure`. Client: `UI/Dialogue` (train modal), `UI/QuestTracker` (right edge, in-run only).
+   - Targeted edits: DataService (schema 2, `NpcSave.migrate` in reconcile, save wrapped in `Retry.run`, 3 tries, 1s/2s backoff), ProgressionService ("Crew errands" summary line), TrainService (`Origin()`), DevService (`npcreset`), Items (UnclaimedValise, TicketStub as kept Tools), Cosmetics (`hat_clerk`, unlock path `npc`), Catalog, Types, Remotes (`Dialogue`), Tuning (`Data.SaveRetries`, `Npc`), init ORDER.
+   - Co-op: each player's story saved separately in `profile.npcs`. A run carries one errand per NPC from the crew's lowest stage; it is shared (anyone carries or delivers), and finishing it credits every crew member still alive. Players at that stage advance; others get "Lent a hand" (10 Brass) and keep their stage. Unfinished at run end = failed, stage unchanged, NPC remarks on it once.
+   - Rewards: 25/30/40 Brass, paid at run end; finishing the chain grants `hat_clerk`.
+   - Verified: `lune run check` passes (223 tests, 0 failures, audit clean). Studio Play: Mabel built in the saloon; greeting in lobby; tracker at run start; offer accepts; valise hidden beside a station container at stop 1; carrying it updates the tracker; delivery says the done line and notifies the crew; run summary showed "Crew errands +25"; a lost run gave the failed line in the lobby; next run offered stage 2 (with recall); `npcreset Mabel` restored the greeting. Console: no errors.
+2. Known / not verified:
+   - DataStore saving across sessions is untested live: this place has Studio API access off, so profiles are in memory ("NOT SAVING"). Save/migrate/retry are covered by Lune specs with a mock store.
+   - Real pickup by keypress at a stop was not completed in the test (the character was taken by a Hollow); the item was given with `give` instead. Pickup reuses LootService's existing prompt.
+   - Errand Brass is held until run end; a player who disconnects first keeps the story stage but loses that Brass. A save that fails all 3 tries on leave is lost, as before (it stays dirty for autosave while in-server).
+   - Story choices: Mabel has none. For Dutch and Varga, choices are personal: saved per player, and lines filter on them with `when.choice`. Planned for the shared objects (the fuel, Varga's secret): each NPC speaks to each player according to that player's own choice. When the crew's choices differ, the NPC adds a line acknowledging the split. Nothing in the world changes based on another player's choice. To build in pass 2.
+3. Next: user tests Mabel in Studio; after approval build Dutch (Footplate) and Varga (Guard's van sick bay) with their choices.
+
+### Studio test steps
+- Play; on the client `game.ReplicatedStorage.Remotes.Dev:FireServer("god")`, then `Remotes.SetReady:FireServer(true)`.
+- Walk into the saloon to Mabel (Workshop end, left of the gangway) and press E: offer; tracker shows the errand.
+- `Dev:FireServer("skip")` twice to dock at stop 1; the valise lies beside a Mid/Far container. Or `Dev:FireServer("give UnclaimedValise")`. Talk to Mabel to deliver.
+- End the run (die, or win) to see "Crew errands" on the summary. `Dev:FireServer("npcreset Mabel")` or `("npcreset all")` wipes your story with her.
+- npcreset gate: the Dev remote only exists when `RunService:IsStudio()` (DevService.Init), and `NpcService.DevReset` checks `IsStudio()` again and refuses otherwise.
+
+### Mystery clues (planted so far; the ending is undecided)
+| Clue | NPC | Unlocked |
+|---|---|---|
+| She punches tickets for passengers who are not aboard; keeps a list nobody asked for | Mabel | greeting / stage 1 |
+| "Forty-one tickets for seats nobody sat in"; the punch is never wrong, so "it's the seats" | Mabel | lore, stage 2+ after small talk |
+| A ticket stub sewn into the valise lining, with a name already on her list, which she never told anyone about | Mabel | stage 2 offer |
+| The found stubs match her list exactly; the final manifest is "everyone who ought to be aboard" | Mabel | stage 3 offer |
+| She must be holding the manifest when it reaches the Terminus, and does not know why | Mabel | stage 3 offer |
+| The open entry is "longer than I've been aboard, and I've been aboard forever" | Mabel | errand done |
+| Failed entries are copied into the next book "a little smaller each time" | Mabel | errand failed |
+| No ticket in her files was ever punched for the journey back from the Terminus | Mabel | near the Terminus |
+| Things never go missing on this line; they "wait where nobody thinks to look" | Mabel | errand in progress |
+
 ## 2026-10-08: Rear lobby lamps implemented
 - Completed: replaced four small wall bulbs with eight shaded warm-cream lamps, evenly spaced on either side of the departure board. Their overlapping light replaces the three hidden rear fill lights; 48-light budget retained. User authorized direct implementation.
 - Verified: lune run check passed; restarted Studio Play and inspected screenshots from center and both ends. Rear floor, posters and seating are brighter; lamps clear windows and signs. Console only reports existing disabled DataStore API access.

@@ -20,6 +20,7 @@
 	  omen <kind>          every client sees an omen now: Hush, TallOnes, Blink, Bleed or Eye
 	  strike               a lightning strike now
 	  mystery              the next ballot has a mystery ticket (at a junction, the ballot reopens with one)
+	  npcreset [npc|all]   wipe your saved story with one resident (Mabel) or all of them
 
 	The sky commands set attributes on ReplicatedStorage that AtmosphereController reads in
 	Studio only (DevSkyHour, DevOmen, DevStrike).
@@ -169,6 +170,12 @@ end
 
 Commands.mystery = function()
 	Registry.RunDirector.DevForceMystery()
+end
+
+Commands.npcreset = function(player, args)
+	local npcId = if args[1] == nil or args[1] == "all" then nil else args[1]
+	local ok = Registry.NpcService.DevReset(player, npcId)
+	print(`[Dev] npcreset {npcId or "all"}: {if ok then "done" else "refused"}`)
 end
 
 function DevService.IsGod(player: Player): boolean

@@ -315,6 +315,52 @@ local Items: { [string]: ItemDef } = {
 			},
 		},
 	},
+	-- Crew errands (Config/NpcQuests): kept through deposits like tools, handed over by talking.
+	UnclaimedValise = {
+		id = "UnclaimedValise",
+		name = "Unclaimed Valise",
+		kind = "Tool",
+		slots = 1,
+		heavy = false,
+		value = 0,
+		description = "Brown leather, the initials rubbed off. Mabel wants it back.",
+		model = {
+			{ shape = "Block", size = { 1.5, 1.0, 0.6 }, color = { 104, 66, 40 }, material = "Leather" },
+			{
+				shape = "Block",
+				size = { 0.6, 0.12, 0.2 },
+				color = { 176, 141, 87 },
+				material = "Metal",
+				offset = { 0, 0.6, 0 },
+			},
+			{
+				shape = "Block",
+				size = { 1.56, 0.1, 0.66 },
+				color = { 70, 44, 28 },
+				material = "Leather",
+				offset = { 0, 0.15, 0 },
+			},
+		},
+	},
+	TicketStub = {
+		id = "TicketStub",
+		name = "Punched Ticket Stub",
+		kind = "Tool",
+		slots = 1,
+		heavy = false,
+		value = 0,
+		description = "A name in faded ink, punched once. Mabel will know it.",
+		model = {
+			{ shape = "Block", size = { 1.1, 0.06, 0.6 }, color = { 214, 204, 170 }, material = "Fabric" },
+			{
+				shape = "Block",
+				size = { 0.3, 0.08, 0.64 },
+				color = { 150, 60, 50 },
+				material = "Fabric",
+				offset = { -0.36, 0.02, 0 },
+			},
+		},
+	},
 	Flashbulb = {
 		id = "Flashbulb",
 		name = "Flashbulb",

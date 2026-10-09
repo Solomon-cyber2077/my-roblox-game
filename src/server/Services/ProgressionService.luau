@@ -21,6 +21,7 @@ local Types = require(Shared.Types)
 
 local DataService = require(script.Parent.DataService)
 local NetService = require(script.Parent.NetService)
+local Registry = require(script.Parent.Parent.Registry)
 
 local ProgressionService = {}
 
@@ -59,6 +60,11 @@ function ProgressionService.PayRun(
 				tier = tier,
 			})
 			local brass = payout.brass
+			local errands = Registry.NpcService.TakeErrands(player)
+			if errands > 0 then
+				table.insert(payout.lines, { label = "Crew errands", amount = errands })
+				brass += errands
+			end
 			if charter then
 				local used = if profile.daily.charterBrassDay == day then profile.daily.charterBrass else 0
 				local capped = math.max(0, math.min(brass, e.CharterDailyBrassCap - used))

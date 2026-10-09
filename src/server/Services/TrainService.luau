@@ -189,7 +189,7 @@ local function seatPrompts()
 end
 
 function TrainService.Init()
-	built = TrainBuilder.build(CFrame.new(0, Tuning.World.FloorY, 0), Workspace)
+	built = TrainBuilder.build(TrainService.Origin(), Workspace)
 	built.model:SetAttribute("DoorsOpen", false)
 	seatPrompts()
 	makePrompt(built.workbench, "Workshop", "Workbench", "Upgrades", 0)
@@ -215,6 +215,11 @@ function TrainService.Start()
 			tick(dt)
 		end
 	end)
+end
+
+-- Train space (TrainBuilder): x along the track, y = 0 the floor, +Z the platform side.
+function TrainService.Origin(): CFrame
+	return CFrame.new(0, Tuning.World.FloorY, 0)
 end
 
 function TrainService.Model(): Model
