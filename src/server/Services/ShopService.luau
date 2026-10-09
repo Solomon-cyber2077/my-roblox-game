@@ -11,6 +11,7 @@
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
@@ -114,6 +115,9 @@ function ShopService.Start()
 		if profile == nil then
 			return
 		end
+		if Catalog.devUnlocked(player.UserId, RunService:IsStudio()) then
+			return
+		end
 		local day = Catalog.dayNumber(os.time())
 		local check, price =
 			Catalog.canBuyWithBrass(profile.owned, profile.brass, DataService.Rank(player), itemId, day)
@@ -137,12 +141,20 @@ function ShopService.Start()
 	NetService.Handle("ShopEquip", function(player, itemId: string)
 		local profile = DataService.GetProfile(player)
 		local def = Cosmetics.ById[itemId]
-		if profile == nil or def == nil or not Catalog.isOwned(profile.owned, itemId) then
+		local isDev = Catalog.devUnlocked(player.UserId, RunService:IsStudio())
+		if profile == nil or def == nil or Cosmetics.Defaults[def.category] == nil then
 			return
 		end
-		DataService.Update(player, function(p)
-			p.equipped[def.category] = itemId
-		end)
+		if not Catalog.canUse(profile.owned, itemId, player.UserId, RunService:IsStudio()) then
+			return
+		end
+		if isDev then
+			player:SetAttribute("DevCosmetic_" .. def.category, itemId)
+		else
+			DataService.Update(player, function(p)
+				p.equipped[def.category] = itemId
+			end)
+		end
 		if def.category == "Livery" then
 			Registry.CosmeticService.RefreshLivery()
 		else
