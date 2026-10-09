@@ -171,6 +171,26 @@ export type Profile = {
 	daily: { lastBonusDay: number, charterBrassDay: number, charterBrass: number },
 	receipts: { [string]: number },
 	settings: { [string]: any },
+	npcs: { [string]: NpcProgress }, -- Logic/NpcSave
+}
+
+-- profile.npcs[npcId]: one resident's story for one player (Logic/NpcSave).
+export type NpcProgress = {
+	stage: number,
+	done: { [string]: boolean },
+	choices: { [string]: string },
+	seen: { [string]: boolean },
+	failed: string?,
+}
+
+-- private quests[i]: one crew errand on the tracker (NpcService).
+export type QuestEntry = {
+	npc: string,
+	name: string,
+	title: string,
+	text: string,
+	status: string,
+	helper: boolean, -- the player is past this errand: it pays "Lent a hand" and keeps their stage
 }
 
 return {}

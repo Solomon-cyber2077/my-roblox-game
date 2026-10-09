@@ -88,6 +88,8 @@ function Catalog.unlockText(def: CosmeticDef): string
 		return "Line Mastery reward"
 	elseif def.charterStamps then
 		return `{def.charterStamps} Charter Stamps`
+	elseif def.npc then
+		return "Crew errands reward"
 	elseif def.gamePass then
 		return "Game pass"
 	elseif def.robux then

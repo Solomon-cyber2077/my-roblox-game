@@ -10,6 +10,7 @@
 	  robux       a developer product; productId is bound after publishing
 	  gamePass    a game pass; id is bound after publishing
 	  charter     earned with Charter Stamps from private-server runs
+	  npc         granted for finishing that resident's errand chain (Config/Npcs)
 ]]
 
 export type Category = "Lantern" | "Headwear" | "Trail" | "Livery"
@@ -28,6 +29,7 @@ export type CosmeticDef = {
 	robux: { productId: number?, price: number }?,
 	gamePass: { id: number?, price: number }?,
 	charterStamps: number?,
+	npc: string?,
 	look: { [string]: any },
 }
 
@@ -143,6 +145,15 @@ local Catalog: { CosmeticDef } = {
 		description = "Earned by firing a flare that brought someone home.",
 		milestone = "NoOneLeftBehind",
 		look = { style = "Conductor", primary = { 140, 34, 30 }, secondary = { 220, 228, 232 } },
+	},
+	{
+		id = "hat_clerk",
+		name = "Clerk's Punch Cap",
+		category = "Headwear",
+		rarity = "Rare",
+		description = "Mabel's spare cap, her brass ticket punch pinned to the band.",
+		npc = "Mabel",
+		look = { style = "Conductor", primary = { 40, 50, 78 }, secondary = { 214, 178, 96 } },
 	},
 	{
 		id = "hat_goggles",

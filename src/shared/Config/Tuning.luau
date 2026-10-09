@@ -425,7 +425,19 @@ local Tuning = {
 		AutosaveSeconds = 120,
 		LockTimeoutSeconds = 300,
 		LoadRetries = 5,
+		SaveRetries = 3, -- attempts per save; a save that still fails stays dirty for the next autosave
+		SaveRetryDelay = 1, -- seconds before the second attempt, doubling after
 		ReceiptHistory = 50,
+	},
+
+	-- The train's residents (Config/Npcs) and their errands (Config/NpcQuests).
+	Npc = {
+		PromptDistance = 8,
+		TalkCooldown = 1.2, -- seconds between one player's talks with one NPC
+		HelperBrass = 10, -- "Lent a hand": finishing an errand you are already past
+		LowCoalFraction = 0.25, -- coal below this share of the bunker: LowSupplies
+		ItemOffset = 3, -- studs from the container the errand item is left beside
+		ScanSeconds = 1, -- how often the crew's backpacks are checked for errand items
 	},
 }
 

@@ -13,10 +13,12 @@ local UI = script.Parent.Parent.UI
 local Hud = require(UI.Hud)
 local Ledger = require(UI.Ledger)
 local CarBoarding = require(UI.CarBoarding)
+local Dialogue = require(UI.Dialogue)
 local Lobby = require(UI.Lobby)
 local Outfitter = require(UI.Outfitter)
 local Overlay = require(UI.Overlay)
 local Prompts = require(UI.Prompts)
+local QuestTracker = require(UI.QuestTracker)
 local RouteVote = require(UI.RouteVote)
 local RunCard = require(UI.RunCard)
 local Spectate = require(UI.Spectate)
@@ -97,6 +99,8 @@ function UIController.Start()
 	TicketBook.mount(gui)
 	RunCard.mount(gui)
 	Prompts.mount(gui)
+	QuestTracker.mount(gui)
+	Dialogue.mount(gui)
 end
 
 function UIController.Gui(): ScreenGui

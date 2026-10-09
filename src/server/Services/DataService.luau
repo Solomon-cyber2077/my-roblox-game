@@ -20,7 +20,9 @@ local Cosmetics = require(Shared.Config.Cosmetics)
 local Difficulty = require(Shared.Config.Difficulty)
 local Progression = require(Shared.Config.Progression)
 local Tuning = require(Shared.Config.Tuning)
+local NpcSave = require(Shared.Logic.NpcSave)
 local Rank = require(Shared.Logic.Rank)
+local Retry = require(Shared.Logic.Retry)
 local Signal = require(Shared.Util.Signal)
 local Types = require(Shared.Types)
 
@@ -29,7 +31,7 @@ local StateService = require(script.Parent.StateService)
 type Profile = Types.Profile
 type Session = { profile: Profile, online: boolean, dirty: boolean, released: boolean }
 
-local SCHEMA_VERSION = 1
+local SCHEMA_VERSION = NpcSave.VERSION -- 2: profile.npcs (Logic/NpcSave)
 
 local DataService = {
 	ProfileLoaded = Signal.new() :: Signal.Signal<Player, Profile>,
@@ -57,6 +59,7 @@ local function defaultProfile(): Profile
 		daily = { lastBonusDay = 0, charterBrassDay = 0, charterBrass = 0 },
 		receipts = {},
 		settings = {},
+		npcs = NpcSave.defaults(),
 	}
 end
 
@@ -78,6 +81,7 @@ local function reconcile(data: any): Profile
 			end
 		end
 	end
+	NpcSave.migrate(data)
 	data.version = SCHEMA_VERSION
 	return data :: Profile
 end
@@ -148,8 +152,8 @@ local function save(player: Player, release: boolean): boolean
 		return false
 	end
 	local profile = session.profile
-	local ok, err = pcall(function()
-		(store :: DataStore):UpdateAsync(keyFor(player), function(old: any)
+	local ok, err = Retry.run(function()
+		return (store :: DataStore):UpdateAsync(keyFor(player), function(old: any)
 			local data = if type(old) == "table" then old else {}
 			if data.lock and data.lock.job ~= game.JobId then
 				return nil -- another server owns this profile now; never overwrite it
@@ -158,8 +162,9 @@ local function save(player: Player, release: boolean): boolean
 			data.lock = if release then nil else { job = game.JobId, time = os.time() }
 			return data
 		end)
-	end)
+	end, Tuning.Data.SaveRetries, Tuning.Data.SaveRetryDelay, task.wait)
 	if not ok then
+		-- the session stays dirty, so the next autosave tries again
 		warn(`[DataService] save failed for {player.Name}: {err}`)
 		return false
 	end
