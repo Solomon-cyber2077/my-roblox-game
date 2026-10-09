@@ -5,10 +5,10 @@
 
 	  Ticket.full(view, opts)  card stock with an uneven edge, a perforated stub holding the
 	                           serial, a punched string hole and the countdown dial; the station
-	                           type, name (one line, shrinks to fit) and two wrapped lines of
-	                           description; a wax danger seal with chalk tallies on its own
-	                           DANGER line; the inked track and the coal lumps; the vote button,
-	                           the fold-out flap and a layer for stamps. Returns a handle.
+	                           type and name (one line, shrinks to fit); a wax danger seal with
+	                           chalk tallies on its own DANGER line; the vote button, the flap
+	                           (unfolded, the leg's km and coal on one line, and a warning when
+	                           the bunker is short) and a layer for stamps. Returns a handle.
 	  Ticket.stub(view, opts)  the same ticket torn short: serial, type, name, seal, km, coal.
 
 	A sealed mystery (view.mystery) prints "????" under a smudge of soot, and where the wax seal
@@ -43,7 +43,8 @@ local SOOT = Color3.fromRGB(58, 52, 48)
 local LAMP = Color3.fromRGB(150, 36, 30) -- a mystery's lantern: lit by the blood moon, guttering
 local LAMP_DIM = Color3.fromRGB(64, 12, 12)
 
-local W, H = 224, 310
+local W, H = 224, 214 -- folded; open, the ticket drops DETAIL px more for the leg's line or two
+local DETAIL = 34
 local PAD = 14
 local STUB = 38 -- height of the stub above the perforation
 local HIT = 44 -- smallest hit target
@@ -54,7 +55,6 @@ local SLACK_DROP = 12
 
 export type Opts = {
 	routeId: string,
-	track: number?, -- 0..1 share of the inked line (TicketModel.track)
 	buttonText: string?,
 	selected: boolean?,
 	onVote: (() -> ())?,
@@ -274,44 +274,13 @@ local function lantern(parent: Instance, x: number, y: number, size: number, z: 
 	)
 end
 
--- A row of coal lumps in groups of five, then the "x12" label.
-local function coalRow(
-	parent: Instance,
-	coal: TicketModel.Coal,
-	x: number,
-	y: number,
-	color: Color3,
-	z: number
-): number
-	local cx = x
-	for _, count in coal.groups do
-		for _ = 1, count do
-			Ui.new("Frame", {
-				Name = "Lump",
-				Size = UDim2.fromOffset(6, 6),
-				Position = UDim2.fromOffset(cx, y + 5),
-				Rotation = 45,
-				BackgroundColor3 = color,
-				BorderSizePixel = 0,
-				ZIndex = z,
-				Parent = parent,
-			})
-			cx += 8
-		end
-		cx += 5
-	end
-	local text = if coal.more then `+ {coal.label}` else coal.label
-	local l = label(parent, text, HEAD, 12, color, z)
-	l.Position = UDim2.fromOffset(cx + 2, y)
-	l.Size = UDim2.fromOffset(56, 16)
-	return cx + 60
-end
-
 function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	local tilt = TicketModel.tilt(opts.routeId)
 	local slot = Ui.new("Frame", {
 		Name = "Ticket",
 		Size = UDim2.fromOffset(W, H),
+		Position = UDim2.fromScale(0.5, 0.5), -- centred on the route board's taller slots
+		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		LayoutOrder = opts.LayoutOrder or 0,
 	})
@@ -347,9 +316,37 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	local serial = label(paper, view.serial, HEAD, 15, INK, 4)
 	serial.Position = UDim2.fromOffset(PAD + 14, 8)
 	serial.Size = UDim2.fromOffset(100, 22)
+	-- the countdown dial: a little brass-cased watch like the conductor's, its red hand sweeping
+	-- the vote; the seconds show in its face for the last ten
 	local dial = circle("Dial", DIAL, PAPER, paper, 4)
-	dial.Position = UDim2.new(1, -PAD - DIAL / 2, 0, STUB / 2)
-	Ui.stroke(INK, 2, 0).Parent = dial
+	dial.Position = UDim2.new(1, -PAD - DIAL / 2, 0, STUB / 2 + 1)
+	local bezel = Ui.stroke(Theme.Color.brass, 2, 0)
+	bezel.Parent = dial
+	Ui.new("UIGradient", {
+		Rotation = 45,
+		Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(120, 110, 100)),
+		Parent = bezel,
+	})
+	Ui.new("UIGradient", { -- the aged face
+		Rotation = 70,
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(214, 206, 190)),
+			ColorSequenceKeypoint.new(0.45, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(196, 184, 166)),
+		}),
+		Parent = dial,
+	})
+	local crown = Ui.new("Frame", {
+		Name = "Crown",
+		Size = UDim2.fromOffset(6, 3),
+		Position = UDim2.new(0.5, 0, 0, -4),
+		AnchorPoint = Vector2.new(0.5, 1),
+		BackgroundColor3 = Theme.Color.brass,
+		BorderSizePixel = 0,
+		ZIndex = 4,
+		Parent = dial,
+	})
+	Ui.corner(1).Parent = crown
 	for i = 0, 11 do
 		local mark = Ui.new("Frame", {
 			Size = UDim2.fromScale(1, 1),
@@ -358,11 +355,13 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 			ZIndex = 5,
 			Parent = dial,
 		})
+		local major = i % 3 == 0
 		Ui.new("Frame", {
-			Size = UDim2.fromOffset(if i % 3 == 0 then 2 else 1, 4),
-			Position = UDim2.new(0.5, 0, 0, 2),
+			Size = UDim2.fromOffset(if major then 2 else 1, if major then 4 else 2),
+			Position = UDim2.new(0.5, 0, 0, 1),
 			AnchorPoint = Vector2.new(0.5, 0),
-			BackgroundColor3 = INK_SOFT,
+			BackgroundColor3 = if major then INK else INK_SOFT,
+			BackgroundTransparency = if major then 0 else 0.3,
 			BorderSizePixel = 0,
 			ZIndex = 5,
 			Parent = mark,
@@ -375,15 +374,19 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 		ZIndex = 6,
 		Parent = dial,
 	})
-	Ui.new("Frame", {
-		Size = UDim2.new(0, 2, 0.5, -3),
-		Position = UDim2.new(0.5, 0, 0, 3),
-		AnchorPoint = Vector2.new(0.5, 0),
-		BackgroundColor3 = Theme.Color.signal,
-		BorderSizePixel = 0,
-		ZIndex = 6,
-		Parent = spindle,
-	})
+	-- tapered: a fine tip, a broader root, and a short tail past the cap
+	for _, piece in { { 1, 4, 6 }, { 2, 10, 6 }, { 1, DIAL / 2, 5 } } do
+		Ui.new("Frame", {
+			Size = UDim2.fromOffset(piece[1], piece[3]),
+			Position = UDim2.new(0.5, 0, 0, piece[2]),
+			AnchorPoint = Vector2.new(0.5, 0),
+			BackgroundColor3 = Theme.Color.signal,
+			BorderSizePixel = 0,
+			ZIndex = 6,
+			Parent = spindle,
+		})
+	end
+	circle("Cap", 4, Theme.Color.brass, dial, 7).Position = UDim2.fromScale(0.5, 0.5)
 	local numeral = label(dial, "", HEAD, 14, Theme.Color.signal, 7)
 	numeral.Size = UDim2.fromScale(1, 1)
 	numeral.TextXAlignment = Enum.TextXAlignment.Center
@@ -423,19 +426,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	name.Size = UDim2.new(1, -PAD * 2, 0, 22)
 	shrink(name, 18, 9)
 	y += 24
-	local description = label(paper, view.description, BODY, 12, INK, 4)
-	description.Position = UDim2.fromOffset(PAD, y)
-	description.Size = UDim2.new(1, -PAD * 2, 0, 30)
-	description.TextWrapped = true
-	description.TextYAlignment = Enum.TextYAlignment.Top
-	shrink(description, 12, 7)
-	y += 32
-	local hint = label(paper, view.hint, BODY, 10, INK_SOFT, 4)
-	hint.Position = UDim2.fromOffset(PAD, y)
-	hint.Size = UDim2.new(1, -PAD * 2, 0, 14)
-	shrink(hint, 10, 7)
-	y += 18
-
+	y += 2
 	if view.mystery then
 		smudge(paper, opts.routeId, name.Position.Y.Offset, name.Size.Y.Offset, 5)
 	end
@@ -468,60 +459,24 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	})
 	y += 50
 
-	-- The inked track, sleepers across it, scaled shortest to longest offered
-	local trackWidth = math.floor((W - PAD * 2 - 58) * math.clamp(opts.track or 1, 0, 1))
-	local track = Ui.new("Frame", {
-		Name = "Track",
-		Size = UDim2.fromOffset(trackWidth, 10),
-		Position = UDim2.fromOffset(PAD, y + 3),
-		BackgroundTransparency = 1,
-		ZIndex = 4,
-		Parent = paper,
-	})
-	for _, rail in { 2, 7 } do
-		Ui.new("Frame", {
-			Size = UDim2.new(1, 0, 0, 1),
-			Position = UDim2.fromOffset(0, rail),
-			BackgroundColor3 = INK,
-			BorderSizePixel = 0,
-			ZIndex = 4,
-			Parent = track,
-		})
-	end
-	for sx = 2, trackWidth - 2, 7 do
-		Ui.new("Frame", {
-			Size = UDim2.fromOffset(2, 10),
-			Position = UDim2.fromOffset(sx, 0),
-			BackgroundColor3 = INK_SOFT,
-			BorderSizePixel = 0,
-			ZIndex = 4,
-			Parent = track,
-		})
-	end
-	local km = label(paper, `{view.distanceKm} KM`, HEAD, 12, INK, 4)
-	km.Position = UDim2.fromOffset(PAD + trackWidth + 6, y)
-	km.Size = UDim2.fromOffset(56, 16)
-	y += 20
-
-	-- Coal: lumps in fives, the cost, and what the bunker holds after
-	local coalColor = if view.short then Theme.Color.signal else INK
-	if view.coal then
-		coalRow(paper, view.coal, PAD, y, coalColor, 4)
-	end
-	y += 17
-	if view.after ~= nil then
-		local after = label(
-			paper,
-			if view.short then "NOT ENOUGH COAL: THE HULL WILL SUFFER" else `after this line: {view.after}`,
-			BODY,
-			10,
-			if view.short then Theme.Color.signal else INK_SOFT,
-			4
-		)
-		after.Position = UDim2.fromOffset(PAD, y)
-		after.Size = UDim2.new(1, -PAD * 2, 0, 13)
-		shrink(after, 10, 7)
-	end
+	-- Unfolded, one or two short lines: the leg's length and coal, and a warning when the
+	-- bunker cannot pay for it
+	local detail = label(
+		paper,
+		if view.coal then `{view.distanceKm} KM  ·  {view.coal.lumps} COAL` else `{view.distanceKm} KM`,
+		HEAD,
+		14,
+		INK,
+		4
+	)
+	detail.Position = UDim2.fromOffset(PAD, y)
+	detail.Size = UDim2.new(1, -PAD * 2, 0, 16)
+	detail.Visible = false
+	local warning = label(paper, "NOT ENOUGH COAL: THE HULL SUFFERS", HEAD, 10, Theme.Color.signal, 4)
+	warning.Position = UDim2.fromOffset(PAD, y + 16)
+	warning.Size = UDim2.new(1, -PAD * 2, 0, 13)
+	shrink(warning, 10, 7)
+	warning.Visible = false
 
 	-- The vote button and the fold-out flap that lays out the dossier
 	local button = Ui.button(opts.buttonText or "TAKE THIS LINE", "Secondary", opts.onVote, {
@@ -608,7 +563,11 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 			Ui.setButtonStyle(button, if selected then "Primary" else "Secondary")
 		end,
 		setFlap = function(open: boolean)
+			open = open and not view.mystery
 			chevron.Rotation = if open then 180 else 0
+			slot.Size = UDim2.fromOffset(W, if open then H + DETAIL else H)
+			detail.Visible = open
+			warning.Visible = open and view.short
 			flap.BackgroundColor3 = if open then Theme.Color.signalDark else Theme.Color.leather
 		end,
 		setDial = function(sweep: number, n: number?)
