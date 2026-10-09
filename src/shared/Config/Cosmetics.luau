@@ -60,7 +60,7 @@ local Catalog: { CosmeticDef } = {
 			body = { 40, 46, 42 },
 			glass = { 150, 255, 170 },
 			light = { 120, 235, 150 },
-			style = "Classic",
+			style = "Signal",
 		},
 	},
 	{
@@ -99,7 +99,7 @@ local Catalog: { CosmeticDef } = {
 			glass = { 160, 255, 240 },
 			light = { 110, 230, 220 },
 			light2 = { 190, 120, 255 },
-			style = "Filigree",
+			style = "Prism",
 		},
 	},
 	{
@@ -113,7 +113,7 @@ local Catalog: { CosmeticDef } = {
 			body = { 176, 184, 190 }, -- nickel silver
 			glass = { 236, 246, 250 },
 			light = { 255, 244, 214 },
-			style = "Filigree",
+			style = "Crown",
 			sparkle = true,
 		},
 	},
@@ -144,7 +144,12 @@ local Catalog: { CosmeticDef } = {
 		rarity = "Rare",
 		description = "Earned by firing a flare that brought someone home.",
 		milestone = "NoOneLeftBehind",
-		look = { style = "Conductor", primary = { 140, 34, 30 }, secondary = { 220, 228, 232 } },
+		look = {
+			style = "Conductor",
+			primary = { 140, 34, 30 },
+			secondary = { 220, 228, 232 },
+			detail = "Rescue",
+		},
 	},
 	{
 		id = "hat_clerk",
@@ -153,7 +158,12 @@ local Catalog: { CosmeticDef } = {
 		rarity = "Rare",
 		description = "Mabel's spare cap, her brass ticket punch pinned to the band.",
 		npc = "Mabel",
-		look = { style = "Conductor", primary = { 40, 50, 78 }, secondary = { 214, 178, 96 } },
+		look = {
+			style = "Conductor",
+			detail = "Punch",
+			primary = { 40, 50, 78 },
+			secondary = { 214, 178, 96 },
+		},
 	},
 	{
 		id = "hat_goggles",
@@ -329,6 +339,7 @@ local Catalog: { CosmeticDef } = {
 local ById: { [string]: CosmeticDef } = {}
 local Defaults: { [string]: string } = {}
 for _, def in Catalog do
+	def.look.rarity = def.rarity
 	assert(ById[def.id] == nil, `duplicate cosmetic id {def.id}`)
 	ById[def.id] = def
 	if def.default then

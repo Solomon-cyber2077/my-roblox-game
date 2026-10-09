@@ -1746,6 +1746,18 @@ function TrainBuilder.applyLivery(model: Model, look: { [string]: any })
 			local role = part:GetAttribute("Livery")
 			if type(role) == "string" and colors[role] then
 				part.Color = colors[role]
+				if role == "Trim" or role == "Accent" then
+					if part:GetAttribute("OriginalLiveryMaterial") == nil then
+						part:SetAttribute("OriginalLiveryMaterial", part.Material.Name)
+						part:SetAttribute("OriginalLiveryReflectance", part.Reflectance)
+					end
+					part.Material = if look.rarity == "Legendary"
+						then Enum.Material.Metal
+						else (Enum.Material :: any)[part:GetAttribute("OriginalLiveryMaterial") :: string]
+					part.Reflectance = if look.rarity == "Legendary"
+						then 0.18
+						else part:GetAttribute("OriginalLiveryReflectance") :: number
+				end
 			end
 		end
 	end
