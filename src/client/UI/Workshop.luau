@@ -19,9 +19,40 @@ local Workshop = {}
 
 local modal: Modal.Modal
 
+-- a plate the crew cannot afford yet: tarnished brass, plainly out of reach
+local SPENT_BRASS = Color3.fromRGB(74, 58, 40)
+local SPENT_TEXT = Color3.fromRGB(150, 128, 98)
+
+local function setPlate(button: TextButton, enabled: boolean)
+	Ui.setButtonEnabled(button, enabled)
+	if not enabled then
+		button.BackgroundColor3 = SPENT_BRASS
+		button.TextColor3 = SPENT_TEXT
+		local shade = button:FindFirstChild("Shade") :: Frame?
+		if shade then
+			shade.BackgroundTransparency = 1
+		end
+	end
+end
+
 function Workshop.mount(gui: ScreenGui)
 	local State = Registry.StateController
 	modal = Modal.new(gui, "Workshop", Vector2.new(560, 520))
+	-- tooled leather in a brass rim, like the crew pass
+	modal.frame.Image = Theme.Image.cardLeather.id
+	modal.frame.SliceCenter = Theme.Image.cardLeather.slice
+	modal.frame.SliceScale = 0.4
+	modal.frame.BackgroundTransparency = 1
+	Ui.new("ImageLabel", {
+		Name = "Falloff",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Image = Theme.Image.vignette,
+		ImageColor3 = Theme.Color.black,
+		ImageTransparency = 0.35,
+		ZIndex = 31,
+		Parent = modal.frame,
+	})
 
 	local partsLabel = Ui.text({
 		Text = "",
@@ -72,18 +103,19 @@ function Workshop.mount(gui: ScreenGui)
 			local cost = Ledger.upgradeCost(train, def.id)
 			local row = Ui.new("Frame", {
 				Size = UDim2.new(1, -8, 0, 76),
-				BackgroundColor3 = Theme.Color.lacquer, -- bottle-green lacquered bench drawers
-				BackgroundTransparency = 0.2,
+				BackgroundColor3 = Theme.Color.leather, -- oxblood bench drawers, ruled in old brass
+				BackgroundTransparency = 0.1,
 				LayoutOrder = i,
 				ZIndex = 32,
 				Parent = list,
 			})
-			Ui.corner().Parent = row
+			Ui.corner(2).Parent = row
+			Ui.stroke(Theme.Color.tarnish, 1, 0.45).Parent = row
 			local name = Ui.text({
 				Text = string.upper(def.name),
 				Font = Theme.Font.display,
 				TextSize = 19,
-				Color = Theme.Color.white,
+				Color = Theme.Color.bone,
 				Position = UDim2.fromOffset(14, 8),
 				Size = UDim2.new(1, -176, 0, 22),
 			})
@@ -92,7 +124,7 @@ function Workshop.mount(gui: ScreenGui)
 			local desc = Ui.text({
 				Text = def.description,
 				TextSize = 14,
-				Color = Theme.Color.textDim,
+				Color = Theme.Color.boneDim,
 				Position = UDim2.fromOffset(14, 32),
 				Size = UDim2.new(1, -176, 0, 36),
 				Wrapped = true,
@@ -106,7 +138,7 @@ function Workshop.mount(gui: ScreenGui)
 				Text = `LV {level}/{levels}`,
 				Font = Theme.Font.displayMedium,
 				TextSize = 13,
-				Color = if level >= levels then Theme.Color.brassLight else Theme.Color.textDim,
+				Color = if level >= levels then Theme.Color.brassLight else Theme.Color.boneDim,
 				Position = UDim2.new(1, -152, 0, 6),
 				Size = UDim2.fromOffset(44, 16),
 			})
@@ -117,12 +149,12 @@ function Workshop.mount(gui: ScreenGui)
 				local box = Ui.new("Frame", {
 					Size = UDim2.fromOffset(16, 8),
 					Position = UDim2.new(1, -104 + (pip - 1) * 20, 0, 10),
-					BackgroundColor3 = if lit then Theme.Color.brass else Theme.Color.steel,
+					BackgroundColor3 = if lit then Theme.Color.brass else Theme.Color.inkDeep,
 					BorderSizePixel = 0,
 					ZIndex = 33,
 					Parent = row,
 				})
-				Ui.stroke(if lit then Theme.Color.brassLight else Theme.Color.steelLine, 1, 0.2).Parent = box
+				Ui.stroke(if lit then Theme.Color.brassLight else Theme.Color.tarnish, 1, 0.2).Parent = box
 			end
 			local affordable = cost ~= nil and train.parts >= cost
 			local label = if cost == nil
@@ -139,24 +171,26 @@ function Workshop.mount(gui: ScreenGui)
 			})
 			button.ZIndex = 34
 			button.Parent = row
-			Ui.setButtonEnabled(button, cost ~= nil and train.parts >= cost)
+			setPlate(button, affordable)
 		end
 
 		local patch = Ui.new("Frame", {
 			Size = UDim2.new(1, -8, 0, 60),
-			BackgroundColor3 = Theme.Color.signalDark,
-			BackgroundTransparency = 0.3,
+			BackgroundColor3 = Theme.Color.leather,
+			BackgroundTransparency = 0.1,
 			LayoutOrder = 100,
 			ZIndex = 32,
 			Parent = list,
 		})
-		Ui.corner().Parent = patch
+		Ui.corner(2).Parent = patch
+		Ui.stroke(Theme.Color.signal, 1, 0.5).Parent = patch
 		local patchText = Ui.text({
 			Text = `HULL PATCH  ·  +{Tuning.Train.HullPatchAmount} hull for {Tuning.Train.HullPatchCost} parts  ·  hull {math.floor(
 				train.integrity
 			)}%`,
 			Font = Theme.Font.displayMedium,
 			TextSize = 16,
+			Color = Theme.Color.bone,
 			Position = UDim2.fromOffset(14, 0),
 			Size = UDim2.new(1, -160, 1, 0),
 			Wrapped = true,
@@ -176,7 +210,7 @@ function Workshop.mount(gui: ScreenGui)
 		})
 		patchButton.ZIndex = 34
 		patchButton.Parent = patch
-		Ui.setButtonEnabled(patchButton, short <= 0 and not sound)
+		setPlate(patchButton, short <= 0 and not sound)
 	end
 
 	modal.onOpen = render
