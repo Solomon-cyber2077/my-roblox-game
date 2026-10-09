@@ -45,26 +45,39 @@ local function build(
 	})
 	local chip = Ui.new("TextButton", {
 		Size = UDim2.fromScale(1, 1),
-		BackgroundColor3 = if danger then Theme.Color.signal else Theme.Color.paper,
+		BackgroundColor3 = if danger then Theme.Color.signalDark else Theme.Color.steel,
+		BackgroundTransparency = 0.06,
 		AutoButtonColor = false,
 		Text = "",
 		Parent = billboard,
 	})
-	Ui.corner(6).Parent = chip
-	Ui.stroke(if danger then Theme.Color.signalDark else Theme.Color.brass, 1.5, 0.1).Parent = chip
+	Ui.corner(3).Parent = chip
+	-- an iron plate in a blackened-brass rim, like every other panel
+	Ui.new("ImageLabel", {
+		Name = "Plate",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Image = Theme.Image.panel.id,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Theme.Image.panel.slice,
+		SliceScale = 0.2,
+		ZIndex = 0,
+		Parent = chip,
+	})
 	local key = Ui.new("TextLabel", {
 		Size = UDim2.fromOffset(44, 44),
 		Position = UDim2.new(0, 10, 0.5, 0),
 		AnchorPoint = Vector2.new(0, 0.5),
-		BackgroundColor3 = Theme.Color.ink,
+		BackgroundColor3 = Theme.Color.brass, -- an enamel keycap
 		Text = glyph(prompt, inputType),
 		FontFace = Theme.Font.display,
 		TextSize = if inputType == Enum.ProximityPromptInputType.Touch then 14 else 22,
-		TextColor3 = Theme.Color.paper,
+		TextColor3 = Theme.Color.ink,
 		Parent = chip,
 	})
-	Ui.corner(6).Parent = key
-	local textColor = if danger then Theme.Color.white else Theme.Color.ink
+	Ui.corner(3).Parent = key
+	Ui.stroke(Theme.Color.brassLight, 1, 0.2).Parent = key
+	local textColor = if danger then Theme.Color.white else Theme.Color.brassLight
 	local action = Ui.text({
 		Text = string.upper(prompt.ActionText),
 		Font = Theme.Font.display,
@@ -78,7 +91,7 @@ local function build(
 		Text = prompt.ObjectText,
 		Font = Theme.Font.body,
 		TextSize = 14,
-		Color = if danger then Theme.Color.white else Theme.Color.inkSoft,
+		Color = if danger then Theme.Color.white else Theme.Color.textDim,
 		Position = UDim2.fromOffset(64, 32),
 		Size = UDim2.new(1, -74, 0, 18),
 	})
@@ -87,7 +100,7 @@ local function build(
 		Name = "Progress",
 		Size = UDim2.fromOffset(0, 4),
 		Position = UDim2.new(0, 0, 1, -4),
-		BackgroundColor3 = if danger then Theme.Color.white else Theme.Color.signal,
+		BackgroundColor3 = if danger then Theme.Color.amber else Theme.Color.ember,
 		BorderSizePixel = 0,
 		Parent = chip,
 	})

@@ -48,8 +48,8 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 			Name = "Backdrop",
 			Size = UDim2.new(1, 0, 1, 80),
 			Position = UDim2.fromOffset(0, -60),
-			BackgroundColor3 = Theme.Color.steel,
-			BackgroundTransparency = 0.3,
+			BackgroundColor3 = Color3.new(0.05, 0.015, 0.015), -- the carriage after dark, moon-red at the edges
+			BackgroundTransparency = 0.25,
 			Text = "",
 			AutoButtonColor = false,
 			Visible = false,
@@ -69,24 +69,30 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 0.04,
+		SliceScale = Theme.Slice.panelLarge,
 		Visible = false,
 		ZIndex = 31,
 		Parent = gui,
 	})
 	local header = Ui.new("Frame", {
 		Name = "Header",
-		Size = UDim2.new(1, 0, 0, 52),
-		BackgroundColor3 = Theme.Color.steelLight,
+		Size = UDim2.new(1, -16, 0, 46),
+		Position = UDim2.fromOffset(8, 8),
+		BackgroundColor3 = Theme.Color.leather, -- an oxblood leather title board inside the rim
 		BorderSizePixel = 0,
 		ZIndex = 32,
 		Parent = frame,
 	})
-	Ui.corner().Parent = header
+	Ui.new("UIGradient", {
+		Rotation = 90,
+		Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(150, 130, 124)),
+		Parent = header,
+	})
 	Ui.new("Frame", {
 		Name = "Rule",
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.fromScale(0, 1),
-		Size = UDim2.new(1, 0, 0, 3),
+		Size = UDim2.new(1, 0, 0, 2),
 		BackgroundColor3 = Theme.Color.brass,
 		BorderSizePixel = 0,
 		ZIndex = 33,
@@ -96,8 +102,8 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		Text = "LAST TRAIN OUT",
 		Font = Theme.Font.displayMedium,
 		TextSize = 12,
-		Color = Theme.Color.textDim,
-		Position = UDim2.fromOffset(18, 5),
+		Color = Theme.Color.brass,
+		Position = UDim2.fromOffset(12, 3),
 		Size = UDim2.new(1, -140, 0, 14),
 	})
 	caption.ZIndex = 33
@@ -107,14 +113,14 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		Font = Theme.Font.display,
 		TextSize = 25,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(18, 17),
+		Position = UDim2.fromOffset(12, 14),
 		Size = UDim2.new(1, -140, 0, 30),
 	})
 	title.ZIndex = 33
 	title.Parent = header
-	-- a small brass plate riveted at each corner of the window
+	-- a brass rivet at each corner of the title board
 	for _, corner in { Vector2.new(0, 0), Vector2.new(1, 0), Vector2.new(0, 1), Vector2.new(1, 1) } do
-		local plate = Ui.new("Frame", {
+		Ui.new("ImageLabel", {
 			Name = "Rivet",
 			AnchorPoint = corner,
 			Position = UDim2.new(
@@ -123,13 +129,12 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 				corner.Y,
 				if corner.Y > 0 then -5 else 5
 			),
-			Size = UDim2.fromOffset(6, 6),
-			BackgroundColor3 = Theme.Color.brass,
-			BorderSizePixel = 0,
+			Size = UDim2.fromOffset(9, 9),
+			BackgroundTransparency = 1,
+			Image = Theme.Image.rivet,
 			ZIndex = 35,
-			Parent = frame,
+			Parent = header,
 		})
-		Ui.corner(3).Parent = plate
 	end
 	local body = Ui.new("Frame", {
 		Name = "Body",
