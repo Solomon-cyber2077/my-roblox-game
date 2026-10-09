@@ -348,6 +348,8 @@ for _, def in Catalog do
 end
 
 return table.freeze({
+	-- One switch: virtual ownership for the developer and Studio; never persisted.
+	DevUnlock = table.freeze({ Enabled = true, UserId = 11744048795 }),
 	List = table.freeze(Catalog),
 	ById = table.freeze(ById),
 	Defaults = table.freeze(Defaults),

@@ -45,6 +45,25 @@ local function today(): number
 	return Catalog.dayNumber(os.time())
 end
 
+local function canUse(owned: { [string]: boolean }, id: string): boolean
+	return Catalog.canUse(owned, id, Players.LocalPlayer.UserId, RunService:IsStudio())
+end
+
+local function effectiveProfile(profile: any): any
+	if not Catalog.devUnlocked(Players.LocalPlayer.UserId, RunService:IsStudio()) then
+		return profile
+	end
+	local result = table.clone(profile)
+	result.equipped = table.clone(profile.equipped or {})
+	for _, category in Cosmetics.Categories do
+		local id = Players.LocalPlayer:GetAttribute("DevCosmetic_" .. category)
+		if type(id) == "string" then
+			result.equipped[category] = id
+		end
+	end
+	return result
+end
+
 function Outfitter.mount(gui: ScreenGui)
 	local State = Registry.StateController
 	modal = Modal.new(gui, "Outfitter", Vector2.new(860, 560))
@@ -214,7 +233,7 @@ function Outfitter.mount(gui: ScreenGui)
 	): (string, string, (() -> ())?)
 		local owned = profile.owned or {}
 		local equipped = profile.equipped or {}
-		if Catalog.isOwned(owned, def.id) then
+		if canUse(owned, def.id) then
 			if equipped[def.category] == def.id then
 				return "EQUIPPED", "Secondary", nil
 			end
@@ -264,7 +283,7 @@ function Outfitter.mount(gui: ScreenGui)
 	local actionConnection: RBXScriptConnection? = nil
 
 	local function renderPreview()
-		local profile = State.GetPrivate({ "profile" }) or {}
+		local profile = effectiveProfile(State.GetPrivate({ "profile" }) or {})
 		local def = Cosmetics.ById[selectedId or ""]
 		if def == nil then
 			return
@@ -274,7 +293,7 @@ function Outfitter.mount(gui: ScreenGui)
 		previewRarity.Text = string.upper(def.rarity)
 		previewRarity.TextColor3 = Theme.Rarity[def.rarity]
 		previewDesc.Text = def.description
-		previewUnlock.Text = if Catalog.isOwned(profile.owned or {}, def.id)
+		previewUnlock.Text = if canUse(profile.owned or {}, def.id)
 			then "In your locker"
 			else Catalog.unlockText(def)
 		local text, style, onClick = actionFor(def, profile)
@@ -297,7 +316,7 @@ function Outfitter.mount(gui: ScreenGui)
 				child:Destroy()
 			end
 		end
-		local profile = State.GetPrivate({ "profile" }) or {}
+		local profile = effectiveProfile(State.GetPrivate({ "profile" }) or {})
 		balance.Text = `{Format.thousands(profile.brass or 0)} BRASS`
 		local specials = Catalog.dailySpecials(today())
 		local items = {}
@@ -321,7 +340,7 @@ function Outfitter.mount(gui: ScreenGui)
 			selectedId = if items[1] then items[1].id else nil
 		end
 		for i, def in items do
-			local owned = Catalog.isOwned(profile.owned or {}, def.id)
+			local owned = canUse(profile.owned or {}, def.id)
 			local equipped = (profile.equipped or {})[def.category] == def.id
 			local selected = def.id == selectedId
 			local cardButton = Ui.new("TextButton", {
@@ -484,6 +503,12 @@ function Outfitter.mount(gui: ScreenGui)
 	end
 	State.Observe("private", { "profile" }, function()
 		if modal:isOpen() then
+			renderGrid()
+		end
+	end)
+
+	Players.LocalPlayer.AttributeChanged:Connect(function(name: string)
+		if string.sub(name, 1, 12) == "DevCosmetic_" and modal:isOpen() then
 			renderGrid()
 		end
 	end)
