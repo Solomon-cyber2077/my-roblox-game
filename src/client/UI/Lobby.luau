@@ -40,8 +40,8 @@ function Lobby.mount(gui: ScreenGui)
 		local l = Ui.text({
 			Text = text,
 			Font = Theme.Font.displayMedium,
-			TextSize = props.TextSize or 13,
-			Color = props.Color or Theme.Color.textDim,
+			TextSize = props.TextSize or 15,
+			Color = props.Color or Theme.Color.boneDim,
 			Position = props.Position,
 			Size = props.Size,
 			XAlign = props.XAlign,
@@ -50,54 +50,150 @@ function Lobby.mount(gui: ScreenGui)
 		return l
 	end
 
+	-- A soft lamp halo (or a shadow, tinted black) laid behind or over a piece.
+	local function halo(props: { [string]: any }): ImageLabel
+		props.BackgroundTransparency = 1
+		props.Image = Theme.Image.glow.id
+		props.ScaleType = Enum.ScaleType.Slice
+		props.SliceCenter = Theme.Image.glow.slice
+		return Ui.new("ImageLabel", props) :: ImageLabel
+	end
+	-- An engraved brass plate: dark letters cut into it, the lamp catching their lower lip.
+	-- Returns the plate, the cut letters and their highlight (set both texts together).
+	local function engravedPlate(
+		props: { [string]: any },
+		textSize: number
+	): (ImageLabel, TextLabel, TextLabel)
+		props.BackgroundTransparency = 1
+		props.Image = Theme.Image.plateEngraved.id
+		props.ScaleType = Enum.ScaleType.Slice
+		props.SliceCenter = Theme.Image.plateEngraved.slice
+		props.SliceScale = props.SliceScale or 0.3
+		local plate = Ui.new("ImageLabel", props) :: ImageLabel
+		local function letters(offset: number, color: Color3, transparency: number): TextLabel
+			local l = Ui.text({
+				Font = Theme.Font.display,
+				TextSize = textSize,
+				Color = color,
+				Transparency = transparency,
+				XAlign = Enum.TextXAlignment.Center,
+				Size = UDim2.new(1, -40, 1, 0),
+				Position = UDim2.fromOffset(20, offset),
+			})
+			l.Parent = plate
+			return l
+		end
+		local light = letters(1, Theme.Color.brassLight, 0.3)
+		return plate, letters(0, Theme.Color.inkDeep, 0), light
+	end
+	-- A plate in a bevelled brass rim, with an amber halo behind it on hover and selection.
+	local function brassRim(button: TextButton, holder: GuiObject)
+		Ui.new("ImageLabel", {
+			Name = "Rim",
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, 0, 1, 3),
+			Image = Theme.Image.rimBrass.id,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Theme.Image.rimBrass.slice,
+			SliceScale = 0.18,
+			Parent = button,
+		})
+		local glow = halo({
+			Name = "Glow",
+			Size = button.Size + UDim2.fromOffset(30, 30),
+			Position = button.Position - UDim2.fromOffset(15, 13),
+			AnchorPoint = button.AnchorPoint,
+			ImageColor3 = Theme.Color.amber,
+			ImageTransparency = 1,
+			ZIndex = button.ZIndex - 1,
+			Parent = holder,
+		})
+		local function lit(on: boolean): () -> ()
+			return function()
+				Ui.tween(glow, { ImageTransparency = if on then 0.55 else 1 })
+			end
+		end
+		button.MouseEnter:Connect(lit(true))
+		button.MouseLeave:Connect(lit(false))
+		button.SelectionGained:Connect(lit(true))
+		button.SelectionLost:Connect(lit(false))
+	end
+
 	-- Profile card: the operator's crew pass --------------------------------------------------
 	local card = Ui.panel({
 		Name = "Profile",
-		Size = UDim2.fromOffset(300, 138),
+		Size = UDim2.fromOffset(330, 164),
 		Position = UDim2.fromOffset(14, 12),
-		BackgroundTransparency = 0.08,
 		Parent = container,
 	})
-	local band = Ui.new("Frame", {
-		Name = "Band",
-		Size = UDim2.new(1, 0, 0, 22),
-		BackgroundColor3 = Theme.Color.brass,
-		BorderSizePixel = 0,
+	-- tooled leather in a brass rim, warmest where the hall's lamps reach it (top left)
+	card.Image = Theme.Image.cardLeather.id
+	card.SliceCenter = Theme.Image.cardLeather.slice
+	card.SliceScale = 0.4
+	card.BackgroundTransparency = 1
+	Ui.new("ImageLabel", {
+		Name = "Falloff",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Image = Theme.Image.vignette,
+		ImageColor3 = Theme.Color.black,
+		ImageTransparency = 0.35,
 		Parent = card,
 	})
-	Ui.corner(2).Parent = band
+	halo({
+		Name = "Lamp",
+		Size = UDim2.fromOffset(300, 200),
+		Position = UDim2.fromOffset(-80, -70),
+		ImageColor3 = Theme.Color.amber,
+		ImageTransparency = 0.84,
+		Parent = card,
+	})
+	local band = engravedPlate({
+		Name = "Band",
+		Size = UDim2.new(1, -16, 0, 30),
+		Position = UDim2.fromOffset(8, 8),
+	}, 14)
+	band.Parent = card
+	Ui.new("ImageLabel", {
+		Name = "Crest",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(34, 34),
+		Position = UDim2.fromOffset(16, -2),
+		Image = Theme.Image.crest,
+		Parent = band,
+	})
 	caption("CREW PASS  ·  LAST TRAIN OUT", {
-		Color = Theme.Color.ink,
-		Position = UDim2.fromOffset(10, 1),
-		Size = UDim2.new(1, -20, 1, 0),
+		Color = Theme.Color.inkDeep,
+		Position = UDim2.fromOffset(52, 0),
+		Size = UDim2.new(1, -72, 1, 0),
 		Parent = band,
 	})
 	caption(`No. {string.format("%05d", Session.player.UserId % 100000)}`, {
-		Color = Theme.Color.ink,
-		Position = UDim2.fromOffset(10, 1),
-		Size = UDim2.new(1, -20, 1, 0),
+		Color = Theme.Color.inkDeep,
+		Position = UDim2.fromOffset(10, 0),
+		Size = UDim2.new(1, -30, 1, 0),
 		XAlign = Enum.TextXAlignment.Right,
 		Parent = band,
 	})
 	local nameLabel = Ui.text({
 		Text = Session.player.DisplayName,
 		Font = Theme.Font.display,
-		TextSize = 26,
-		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(12, 28),
-		Size = UDim2.new(1, -24, 0, 28),
+		TextSize = 31,
+		Color = Theme.Color.bone,
+		Position = UDim2.fromOffset(16, 42),
+		Size = UDim2.new(1, -32, 0, 34),
 	})
 	nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	nameLabel.Parent = card
 	-- the rank number on a square badge, the XP to the next rank beside it
 	local badge = Ui.new("TextLabel", {
 		Name = "RankBadge",
-		Size = UDim2.fromOffset(30, 30),
-		Position = UDim2.fromOffset(12, 60),
-		BackgroundColor3 = Theme.Color.steelLight,
+		Size = UDim2.fromOffset(36, 36),
+		Position = UDim2.fromOffset(16, 80),
+		BackgroundColor3 = Theme.Color.leather,
 		BorderSizePixel = 0,
 		FontFace = Theme.Font.display,
-		TextSize = 20,
+		TextSize = 23,
 		TextColor3 = Theme.Color.brassLight,
 		Text = "1",
 		Parent = card,
@@ -106,15 +202,15 @@ function Lobby.mount(gui: ScreenGui)
 	Ui.stroke(Theme.Color.brass, 1, 0).Parent = badge
 	caption(
 		"CREW RANK",
-		{ Position = UDim2.fromOffset(50, 58), Size = UDim2.fromOffset(120, 16), Parent = card }
+		{ Position = UDim2.fromOffset(62, 78), Size = UDim2.fromOffset(130, 19), Parent = card }
 	)
 	local rankLabel = Ui.text({
 		Text = "",
 		Font = Theme.Font.displayMedium,
-		TextSize = 15,
-		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(50, 58),
-		Size = UDim2.new(1, -62, 0, 16),
+		TextSize = 17,
+		Color = Theme.Color.bone,
+		Position = UDim2.fromOffset(62, 78),
+		Size = UDim2.new(1, -78, 0, 19),
 		XAlign = Enum.TextXAlignment.Right,
 	})
 	rankLabel.Parent = card
@@ -122,8 +218,8 @@ function Lobby.mount(gui: ScreenGui)
 	local HOLES = 20
 	local holes = Ui.new("Frame", {
 		Name = "Punches",
-		Size = UDim2.new(1, -62, 0, 8),
-		Position = UDim2.fromOffset(50, 80),
+		Size = UDim2.new(1, -78, 0, 10),
+		Position = UDim2.fromOffset(62, 103),
 		BackgroundTransparency = 1,
 		Parent = card,
 	})
@@ -132,7 +228,7 @@ function Lobby.mount(gui: ScreenGui)
 	for i = 1, HOLES do
 		holeFrames[i] = Ui.new("Frame", {
 			Size = UDim2.new(1 / HOLES, -3, 1, 0),
-			BackgroundColor3 = Theme.Color.steelLight,
+			BackgroundColor3 = Theme.Color.inkDeep,
 			BorderSizePixel = 0,
 			LayoutOrder = i,
 			Parent = holes,
@@ -141,33 +237,33 @@ function Lobby.mount(gui: ScreenGui)
 	local function setXp(fraction: number)
 		local lit = math.floor(math.clamp(fraction, 0, 1) * HOLES + 0.5)
 		for i, hole in holeFrames do
-			hole.BackgroundColor3 = if i <= lit then Theme.Color.brass else Theme.Color.steelLight
+			hole.BackgroundColor3 = if i <= lit then Theme.Color.brass else Theme.Color.inkDeep
 		end
 	end
 	Ui.new("Frame", {
 		Name = "Rule",
-		Size = UDim2.new(1, -24, 0, 1),
-		Position = UDim2.fromOffset(12, 100),
-		BackgroundColor3 = Theme.Color.steelLine,
+		Size = UDim2.new(1, -32, 0, 1),
+		Position = UDim2.fromOffset(16, 124),
+		BackgroundColor3 = Theme.Color.tarnish,
 		BorderSizePixel = 0,
 		Parent = card,
 	})
 	local brassLabel = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 20,
+		TextSize = 23,
 		Color = Theme.Color.brassLight,
-		Position = UDim2.fromOffset(12, 106),
-		Size = UDim2.new(0.6, 0, 0, 24),
+		Position = UDim2.fromOffset(16, 130),
+		Size = UDim2.new(0.6, 0, 0, 26),
 	})
 	brassLabel.Parent = card
 	local savingLabel = Ui.text({
 		Text = "",
-		Font = Theme.Font.displayMedium,
-		TextSize = 13,
-		Color = Theme.Color.signal,
-		Position = UDim2.new(0.4, 0, 0, 108),
-		Size = UDim2.new(0.6, -12, 0, 20),
+		Font = Theme.Font.display,
+		TextSize = 16,
+		Color = Theme.Color.dangerText,
+		Position = UDim2.new(0.4, 0, 0, 132),
+		Size = UDim2.new(0.6, -16, 0, 22),
 		XAlign = Enum.TextXAlignment.Right,
 	})
 	savingLabel.Parent = card
@@ -225,8 +321,8 @@ function Lobby.mount(gui: ScreenGui)
 	local detail = Ui.text({
 		Text = "",
 		Font = Theme.Font.body,
-		TextSize = 15,
-		Color = Theme.Color.textDim,
+		TextSize = 16,
+		Color = Theme.Color.boneDim,
 		Position = UDim2.fromOffset(16, 62),
 		Size = UDim2.new(1, -32, 0, 18),
 		XAlign = Enum.TextXAlignment.Center,
@@ -235,29 +331,26 @@ function Lobby.mount(gui: ScreenGui)
 	-- one signal lamp per crewmate the departure needs: lit when they are ready
 	local lampRow = Ui.new("Frame", {
 		Name = "Lamps",
-		Size = UDim2.new(1, 0, 0, 14),
-		Position = UDim2.fromOffset(0, 86),
+		Size = UDim2.new(1, 0, 0, 22),
+		Position = UDim2.fromOffset(0, 82),
 		BackgroundTransparency = 1,
 		Parent = panel,
 	})
 	Ui.list(Enum.FillDirection.Horizontal, 10, Enum.HorizontalAlignment.Center).Parent = lampRow
-	local lamps: { Frame } = {}
+	local lamps: { ImageLabel } = {}
 	for i = 1, 4 do
-		local lamp = Ui.new("Frame", {
-			Size = UDim2.fromOffset(14, 14),
-			BackgroundColor3 = Theme.Color.steelLight,
-			BorderSizePixel = 0,
+		lamps[i] = Ui.new("ImageLabel", {
+			Size = UDim2.fromOffset(22, 22),
+			BackgroundTransparency = 1,
+			Image = Theme.Image.lampDark,
 			LayoutOrder = i,
 			Parent = lampRow,
-		})
-		Ui.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = lamp })
-		Ui.stroke(Theme.Color.steelLine, 1, 0).Parent = lamp
-		lamps[i] = lamp
+		}) :: ImageLabel
 	end
 	local function setLamps(ready: number, needed: number)
 		for i, lamp in lamps do
 			lamp.Visible = i <= math.max(needed, ready)
-			lamp.BackgroundColor3 = if i <= ready then Theme.Color.go else Theme.Color.steelLight
+			lamp.Image = if i <= ready then Theme.Image.lampLit else Theme.Image.lampDark
 		end
 	end
 	local readyButton = Ui.button("READY", "Primary", nil, {
@@ -266,7 +359,9 @@ function Lobby.mount(gui: ScreenGui)
 		AnchorPoint = Vector2.new(0.5, 1),
 		TextSize = 22,
 	})
+	readyButton.ZIndex = 2
 	readyButton.Parent = panel
+	brassRim(readyButton, panel)
 	readyButton.Activated:Connect(function()
 		if readyButton:GetAttribute("Disabled") then
 			return
@@ -281,24 +376,21 @@ function Lobby.mount(gui: ScreenGui)
 	end)
 
 	-- Run tier: a tab on top of the panel; everyone sees it, only the host can change it -------
-	local tierRow = Ui.panel({
+	local tierRow = Ui.new("Frame", {
 		Name = "RunTier",
-		Size = UDim2.fromOffset(300, 34),
+		Size = UDim2.fromOffset(340, 46),
 		Position = UDim2.new(0.5, 0, 1, -194),
 		AnchorPoint = Vector2.new(0.5, 1),
-		BackgroundTransparency = 0.06,
+		BackgroundTransparency = 1,
 		Parent = container,
 	})
-	local tierLabel = Ui.text({
-		Text = "",
-		Font = Theme.Font.displayMedium,
-		TextSize = 15,
-		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(40, 0),
-		Size = UDim2.new(1, -80, 1, 0),
-		XAlign = Enum.TextXAlignment.Center,
-	})
-	tierLabel.Parent = tierRow
+	local tierPlate, tierLabel, tierLight = engravedPlate({
+		Name = "Plate",
+		Size = UDim2.new(1, -56, 0, 38),
+		Position = UDim2.fromOffset(28, 4),
+		SliceScale = 0.36,
+	}, 18)
+	tierPlate.Parent = tierRow
 	local function pickTier(step: number)
 		local tier = State.Get({ "lobby", "tier" }) or {}
 		local nextTier = math.clamp((tier.selected or 1) + step, 1, tier.max or 1)
@@ -306,31 +398,66 @@ function Lobby.mount(gui: ScreenGui)
 			Net.Fire("SetRunTier", nextTier)
 		end
 	end
-	local tierDown = Ui.button("◀", "Secondary", function()
-		pickTier(-1)
-	end, { Size = UDim2.fromOffset(34, 34), TextSize = 14 })
-	tierDown.Parent = tierRow
-	local tierUp = Ui.button("▶", "Secondary", function()
-		pickTier(1)
-	end, { Size = UDim2.fromOffset(34, 34), Position = UDim2.new(1, -34, 0, 0), TextSize = 14 })
-	tierUp.Parent = tierRow
+	-- brass knobs at either end of the plate; pressing one sinks it
+	local function knob(image: string, x: number, step: number): ImageButton
+		local button = Ui.new("ImageButton", {
+			Size = UDim2.fromOffset(46, 46),
+			Position = UDim2.fromScale(x, 0.5),
+			AnchorPoint = Vector2.new(x, 0.5),
+			BackgroundTransparency = 1,
+			Image = image,
+			AutoButtonColor = false,
+			Selectable = true,
+			ZIndex = 2,
+			Parent = tierRow,
+		}) :: ImageButton
+		button.MouseEnter:Connect(function()
+			button.ImageColor3 = Color3.fromRGB(255, 236, 200)
+		end)
+		button.MouseLeave:Connect(function()
+			button.ImageColor3 = Color3.new(1, 1, 1)
+		end)
+		button.MouseButton1Down:Connect(function()
+			button.Size = UDim2.fromOffset(42, 42)
+		end)
+		button.MouseButton1Up:Connect(function()
+			button.Size = UDim2.fromOffset(46, 46)
+		end)
+		button.Activated:Connect(function()
+			if not button:GetAttribute("Disabled") then
+				pickTier(step)
+			end
+		end)
+		return button
+	end
+	local function setKnob(button: ImageButton, enabled: boolean)
+		button.Active = enabled
+		button:SetAttribute("Disabled", not enabled)
+		button.ImageTransparency = if enabled then 0 else 0.55
+	end
+	local tierDown = knob(Theme.Image.knobLeft, 0, -1)
+	local tierUp = knob(Theme.Image.knobRight, 1, 1)
 
 	-- Shortcuts: two plates under the pass -----------------------------------------------------
 	local shortcuts = Ui.new("Frame", {
-		Size = UDim2.fromOffset(300, 40),
-		Position = UDim2.fromOffset(14, 158),
+		Size = UDim2.fromOffset(330, 44),
+		Position = UDim2.fromOffset(14, 186),
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
-	Ui.list(Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Left).Parent = shortcuts
-	Ui.button("OUTFITTER", "Secondary", function()
-		Registry.UIController.Open("Outfitter")
-	end, { Size = UDim2.new(0.5, -4, 1, 0), LayoutOrder = 1, TextSize = 17 }).Parent =
-		shortcuts
-	Ui.button("LINE MASTERY", "Secondary", function()
-		Registry.UIController.Open("Ledger")
-	end, { Size = UDim2.new(0.5, -4, 1, 0), LayoutOrder = 2, TextSize = 17 }).Parent =
-		shortcuts
+	for i, shortcut in { { "OUTFITTER", "Outfitter" }, { "LINE MASTERY", "Ledger" } } do
+		local button = Ui.button(shortcut[1], "Secondary", function()
+			Registry.UIController.Open(shortcut[2])
+		end, {
+			Size = UDim2.new(0.5, -5, 1, 0),
+			Position = UDim2.new((i - 1) * 0.5, if i == 1 then 0 else 5, 0, 0),
+			TextSize = 19,
+		})
+		button.TextColor3 = Theme.Color.bone
+		button.ZIndex = 2
+		button.Parent = shortcuts
+		brassRim(button, shortcuts)
+	end
 
 	-- In-world departure board ----------------------------------------------------------------
 	local boardGui: SurfaceGui? = nil
@@ -429,10 +556,11 @@ function Lobby.mount(gui: ScreenGui)
 		tierLabel.Text = if isHost
 			then `RUN TIER {selected}  ·  UP TO {maxTier}`
 			else `RUN TIER {selected}  ·  HOST PICKS`
+		tierLight.Text = tierLabel.Text
 		tierDown.Visible = isHost
 		tierUp.Visible = isHost
-		Ui.setButtonEnabled(tierDown, selected > 1)
-		Ui.setButtonEnabled(tierUp, selected < maxTier)
+		setKnob(tierDown, selected > 1)
+		setKnob(tierUp, selected < maxTier)
 
 		local head, rows = "PLATFORM 1  ·  LAST TRAIN OUT", ""
 		if RunRules.isRunPhase(phase :: any) or phase == "RunEnd" then

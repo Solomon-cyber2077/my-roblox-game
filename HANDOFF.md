@@ -1,5 +1,14 @@
 # HANDOFF
 
+## 2026-10-08: UI v2 Step 1: ticket-office dialogue (hero) + lobby fix-up, awaiting review
+1. Completed:
+   - `UI/Dialogue`: speaking through a booking-office window. Mahogany 9-slice surround with a gilt bead, the resident's Blender portrait (`Theme.Portrait`, Mabel under a hanging lamp behind a brass grille, eyeshade and spectacles), engraved brass name plate, the line typed in bone on a leather blotter with a faint ember halo, the company's COUNTED stamp in moon red, and a punched ticket tab as CLOSE (hover glow, pressed state, gamepad focus via new `Modal.focus`). Sizes to the text (GetTextBoundsAsync); the portrait grows to the column height; lamp glows flicker while open.
+   - `UI/Lobby`: crew pass on tooled leather in a brass rim with lamp falloff, an engraved gilt plate and a crest; text about 15-20% larger; NOT SAVING bright red. OUTFITTER/LINE MASTERY/READY get brass rims and an amber hover halo. The tier selector is an engraved plate with brass knobs. Ready lamps are amber glass and light up when ready.
+   - Art: `tools/uiart/render_booth.py` (Blender) and `tools/uiart/make_booth.py` (stamp, ticket tab, grain). 14 PNGs in `assets/ui`, uploaded; ids are in `Theme.Image`; credits are in `docs/ASSET_CREDITS.md`. `docs/ui-hero/before-after.png`.
+   - Verified: `lune run check` passes (223 tests, audit clean). Studio Play: dialogue fired via the Dialogue remote; window, lobby card, tier plate, and the lamp lit after SetReady. Console: only the known DataStore notice.
+2. Known: the knobs show at 55% when disabled (tier 1 of 1), by design. Other residents have no portrait yet; the window drops the picture column for them. Not tested on phone or with a real gamepad.
+3. Next: user reviews the hero. After approval, start Step 2: build a shared theme module and components, then restyle in the brief's order.
+
 ## 2026-10-08: UI art overhaul "Blood Moon Mail" (pass 1)
 1. Completed: darker material design system plus baked textures, applied to the shared components and the main surfaces. Full list and screenshots: `docs/ui-overhaul/REPORT.md`.
    - `UI/Theme`: new palette (leather, lacquer, mahogany, ember, amber, moon red), aged amber card, Merriweather body, Fondamento hand, `Theme.Image` (uploaded ids), `Theme.Slice`.
