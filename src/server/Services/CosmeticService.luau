@@ -8,9 +8,11 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
+local Catalog = require(Shared.Logic.Catalog)
 local CosmeticModels = require(Shared.Visual.CosmeticModels)
 
 local DataService = require(script.Parent.DataService)
@@ -21,6 +23,20 @@ local CosmeticService = {}
 local function equipped(player: Player, category: string): Cosmetics.CosmeticDef
 	local profile = DataService.GetProfile(player)
 	local id = if profile then profile.equipped[category] else nil
+	local isStudio = RunService:IsStudio()
+	local owned = if profile then profile.owned else {}
+	if Catalog.devUnlocked(player.UserId, isStudio) then
+		local override = player:GetAttribute("DevCosmetic_" .. category)
+		local overrideDef = if type(override) == "string" then Cosmetics.ById[override] else nil
+		if
+			type(override) == "string"
+			and overrideDef
+			and overrideDef.category == category
+			and Catalog.canUse(owned, override, player.UserId, isStudio)
+		then
+			id = override
+		end
+	end
 	return Cosmetics.ById[id or ""] or Cosmetics.ById[Cosmetics.Defaults[category]]
 end
 
@@ -74,6 +90,21 @@ function CosmeticService.Apply(player: Player)
 
 	local head = character:FindFirstChild("Head") :: BasePart?
 	local hat = equipped(player, "Headwear")
+	local coversHair = hat.look.style ~= "None" and hat.look.style ~= "Goggles"
+	for _, accessory in character:GetChildren() do
+		if accessory:IsA("Accessory") and accessory.AccessoryType == Enum.AccessoryType.Hair then
+			for _, part in accessory:GetDescendants() do
+				if part:IsA("BasePart") then
+					local original = part:GetAttribute("CosmeticHairTransparency")
+					if typeof(original) ~= "number" then
+						original = part.Transparency
+						part:SetAttribute("CosmeticHairTransparency", original)
+					end
+					part.Transparency = if coversHair then 1 else original :: number
+				end
+			end
+		end
+	end
 	if head and hat.look.style ~= "None" then
 		for _, accessory in character:GetChildren() do
 			if accessory:IsA("Accessory") and accessory.AccessoryType == Enum.AccessoryType.Hat then

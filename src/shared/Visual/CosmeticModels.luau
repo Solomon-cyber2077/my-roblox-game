@@ -8,6 +8,7 @@
 ]]
 
 local Kit = require(script.Parent.Kit)
+local Details = require(script.Parent.CosmeticDetails)
 
 local CosmeticModels = {}
 
@@ -67,19 +68,7 @@ function CosmeticModels.lantern(look: { [string]: any }, frame: CFrame): Model
 		body,
 		{ material = Enum.Material.Metal }
 	)
-	if style == "Filigree" then
-		for i = 0, 3 do
-			local angle = math.rad(i * 90 + 45)
-			local offset = Vector3.new(math.cos(angle), 0, math.sin(angle)) * (width / 2 + 0.03)
-			Kit.block(
-				model,
-				Vector3.new(0.08, height * 0.66, 0.08),
-				frame * CFrame.new(offset + Vector3.new(0, -0.45 - height * 0.36, 0)),
-				body,
-				{ material = Enum.Material.Metal }
-			)
-		end
-	end
+
 	local light = Kit.pointLight(lens, Kit.rgb(look.light), 1.6, 16, false)
 	light.Name = "Glow"
 	if look.light2 then
@@ -99,6 +88,7 @@ function CosmeticModels.lantern(look: { [string]: any }, frame: CFrame): Model
 		sparkles.Color = ColorSequence.new(glass)
 		sparkles.Parent = lens
 	end
+	Details.lantern(model, look, frame)
 	model.PrimaryPart = handle
 	return finish(model)
 end
@@ -117,8 +107,8 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 	if style == "Conductor" then
 		anchor = Kit.cylinder(
 			model,
-			0.55,
-			1.45,
+			0.62,
+			1.58,
 			frame * CFrame.new(0, 0.05, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Fabric }
@@ -126,7 +116,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 		Kit.cylinder(
 			model,
 			0.18,
-			1.7,
+			1.9,
 			frame * CFrame.new(0, 0.38, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Fabric }
@@ -172,12 +162,14 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 			)
 		end
 	elseif style == "LampCap" then
-		anchor =
-			Kit.ball(model, 1.5, frame * CFrame.new(0, -0.1, 0), primary, { material = Enum.Material.Metal })
+		local shell =
+			Kit.ball(model, 1.95, frame * CFrame.new(0, 0.18, 0), primary, { material = Enum.Material.Metal })
+		shell.Size = Vector3.new(2.2, 0.9, 1.65)
+		anchor = shell
 		Kit.cylinder(
 			model,
 			0.12,
-			1.75,
+			2.05,
 			frame * CFrame.new(0, -0.3, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Metal }
@@ -186,7 +178,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 			model,
 			0.25,
 			0.45,
-			frame * CFrame.new(0, 0.05, -0.72) * Kit.angles(0, 90, 0),
+			frame * CFrame.new(0, 0.05, -0.95) * Kit.angles(0, 90, 0),
 			secondary,
 			{ material = Enum.Material.Neon }
 		)
@@ -196,7 +188,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 		anchor = Kit.cylinder(
 			model,
 			1.35,
-			1.25,
+			1.45,
 			frame * CFrame.new(0, 0.55, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Fabric }
@@ -204,7 +196,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 		Kit.cylinder(
 			model,
 			0.12,
-			1.95,
+			2.05,
 			frame * CFrame.new(0, -0.08, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Fabric }
@@ -212,13 +204,14 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 		Kit.cylinder(
 			model,
 			0.22,
-			1.27,
+			1.47,
 			frame * CFrame.new(0, 0.12, 0) * Kit.angles(0, 0, 90),
 			secondary,
 			{ material = Enum.Material.Fabric }
 		)
 	end
 
+	Details.headwear(model, look, frame)
 	model.PrimaryPart = anchor
 	return finish(model)
 end
