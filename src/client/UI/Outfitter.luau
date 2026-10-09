@@ -33,7 +33,6 @@ local Ui = require(script.Parent.Ui)
 
 local Outfitter = {}
 
-local DUMMY = Color3.fromRGB(112, 120, 128) -- the milliner's head form under every hat
 local AMBIENT = Color3.fromRGB(112, 116, 122) -- the viewports' light: neutral, so colours read true
 local LIGHT = Color3.fromRGB(240, 244, 248)
 
@@ -159,14 +158,20 @@ function Outfitter.mount(gui: ScreenGui)
 	action.Parent = preview
 
 	local spin = 0
-	local previewModel: Model? = nil
+	local rotatingModels: { [Model]: CFrame } = {}
 	local camera = Instance.new("Camera")
 	camera.FieldOfView = 30
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
 
 	-- Puts `def` in a viewport: its model framed by `cam`, or (trails, liveries) colour swatches.
-	local function dress(view: ViewportFrame, cam: Camera, def: Cosmetics.CosmeticDef, z: number): Model?
+	local function dress(
+		view: ViewportFrame,
+		cam: Camera,
+		def: Cosmetics.CosmeticDef,
+		z: number,
+		animate: boolean?
+	): Model?
 		for _, child in view:GetChildren() do
 			if child:IsA("Frame") or child:IsA("Model") then
 				child:Destroy()
@@ -179,15 +184,8 @@ function Outfitter.mount(gui: ScreenGui)
 			-- far enough back that the cap and bail stay in frame on the small cards
 			cam.CFrame = CFrame.lookAt(Vector3.new(0, 0.55, 5.2), Vector3.new(0, 0.55, 0))
 		elseif def.category == "Headwear" then
-			-- a milliner's dummy: a plain grey head form for the hat to sit on
-			local holder = Kit.model("Head")
-			Kit.block(holder, Vector3.new(1.2, 1.2, 1.2), CFrame.new(0, -0.6, 0), DUMMY, { collide = false })
-			local hat = CosmeticModels.headwear(look, CFrame.new())
-			if hat then
-				hat.Parent = holder
-			end
-			model = holder
-			cam.CFrame = CFrame.lookAt(Vector3.new(2.6, 1.2, -3.4), Vector3.new(0, 0, 0))
+			model = CosmeticModels.headwear(look, CFrame.new())
+			cam.CFrame = CFrame.lookAt(Vector3.new(3, 1.85, -4), Vector3.new(0, 0.65, 0))
 		else
 			-- Trails and liveries show as colour swatches.
 			local colors: { Color3 } = {}
@@ -215,12 +213,15 @@ function Outfitter.mount(gui: ScreenGui)
 		end
 		if model then
 			model.Parent = view
+			if animate and def.category == "Headwear" then
+				rotatingModels[model] = model:GetPivot()
+			end
 		end
 		return model
 	end
 
 	local function setPreview(def: Cosmetics.CosmeticDef)
-		previewModel = dress(viewport, camera, def, 34)
+		dress(viewport, camera, def, 34, true)
 	end
 
 	local function actionFor(
@@ -305,6 +306,7 @@ function Outfitter.mount(gui: ScreenGui)
 	end
 
 	local function renderGrid()
+		rotatingModels = {}
 		for _, child in grid:GetChildren() do
 			if child:IsA("GuiObject") then
 				child:Destroy()
@@ -367,7 +369,7 @@ function Outfitter.mount(gui: ScreenGui)
 			thumbCam.FieldOfView = 34
 			thumbCam.Parent = thumb
 			thumb.CurrentCamera = thumbCam
-			dress(thumb, thumbCam, def, 35)
+			dress(thumb, thumbCam, def, 35, true)
 			local label = Ui.new("Frame", {
 				Size = UDim2.new(1, 0, 0, 56),
 				Position = UDim2.new(0, 0, 1, -56),
@@ -502,9 +504,15 @@ function Outfitter.mount(gui: ScreenGui)
 	end)
 
 	RunService.RenderStepped:Connect(function(dt: number)
-		if modal:isOpen() and previewModel and previewModel.PrimaryPart then
+		if modal:isOpen() then
 			spin += dt * 0.8
-			previewModel:PivotTo(CFrame.new(previewModel:GetPivot().Position) * CFrame.Angles(0, spin, 0))
+			for model, pivot in rotatingModels do
+				if model.Parent and model.PrimaryPart then
+					model:PivotTo(CFrame.new(pivot.Position) * CFrame.Angles(0, spin, 0) * pivot.Rotation)
+				else
+					rotatingModels[model] = nil
+				end
+			end
 		end
 	end)
 end
