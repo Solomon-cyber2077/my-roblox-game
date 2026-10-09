@@ -23,7 +23,8 @@ local Catalog = require(Shared.Logic.Catalog)
 local Rank = require(Shared.Logic.Rank)
 local Format = require(Shared.Util.Format)
 local CosmeticModels = require(Shared.Visual.CosmeticModels)
-local Kit = require(Shared.Visual.Kit)
+local CosmeticPreview = require(Shared.Visual.CosmeticPreview)
+local CosmeticMotion = require(Shared.Visual.CosmeticMotion)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
@@ -159,17 +160,18 @@ function Outfitter.mount(gui: ScreenGui)
 
 	local spin = 0
 	local rotatingModels: { [Model]: CFrame } = {}
+	local motions: { [Model]: (number) -> () } = {}
 	local camera = Instance.new("Camera")
 	camera.FieldOfView = 30
 	camera.Parent = viewport
 	viewport.CurrentCamera = camera
 
-	-- Puts `def` in a viewport: its model framed by `cam`, or (trails, liveries) colour swatches.
+	-- Shared wearable models and lightweight animated effect/carriage previews.
 	local function dress(
 		view: ViewportFrame,
 		cam: Camera,
 		def: Cosmetics.CosmeticDef,
-		z: number,
+		_z: number,
 		animate: boolean?
 	): Model?
 		for _, child in view:GetChildren() do
@@ -187,33 +189,15 @@ function Outfitter.mount(gui: ScreenGui)
 			model = CosmeticModels.headwear(look, CFrame.new())
 			cam.CFrame = CFrame.lookAt(Vector3.new(3, 1.85, -4), Vector3.new(0, 0.65, 0))
 		else
-			-- Trails and liveries show as colour swatches.
-			local colors: { Color3 } = {}
-			if def.category == "Trail" then
-				if look.color then
-					table.insert(colors, Kit.rgb(look.color))
-					table.insert(colors, Kit.rgb(look.color2))
-				end
-			else
-				for _, key in { "body", "trim", "roof", "accent" } do
-					table.insert(colors, Kit.rgb(look[key]))
-				end
-			end
-			for i, color in colors do
-				local swatch = Ui.new("Frame", {
-					Size = UDim2.new(1 / math.max(#colors, 1), -6, 1, -16),
-					Position = UDim2.new((i - 1) / math.max(#colors, 1), 3, 0, 8),
-					BackgroundColor3 = color,
-					BorderSizePixel = 0,
-					ZIndex = z,
-					Parent = view,
-				})
-				Ui.corner().Parent = swatch
-			end
+			model = CosmeticPreview.build(def)
+			cam.CFrame = if def.category == "Livery"
+				then CFrame.lookAt(Vector3.new(4, 2, 7), Vector3.new(0, 0.1, 0))
+				else CFrame.lookAt(Vector3.new(0, 0.4, 6), Vector3.zero)
 		end
 		if model then
 			model.Parent = view
-			if animate and def.category == "Headwear" then
+			motions[model] = CosmeticMotion.bind(model)
+			if animate and def.category ~= "Trail" then
 				rotatingModels[model] = model:GetPivot()
 			end
 		end
@@ -307,6 +291,7 @@ function Outfitter.mount(gui: ScreenGui)
 
 	local function renderGrid()
 		rotatingModels = {}
+		motions = {}
 		for _, child in grid:GetChildren() do
 			if child:IsA("GuiObject") then
 				child:Destroy()
@@ -506,6 +491,14 @@ function Outfitter.mount(gui: ScreenGui)
 	RunService.RenderStepped:Connect(function(dt: number)
 		if modal:isOpen() then
 			spin += dt * 0.8
+			for model, update in motions do
+				if model.Parent then
+					update(spin / 0.8)
+					CosmeticPreview.step(model, spin / 0.8)
+				else
+					motions[model] = nil
+				end
+			end
 			for model, pivot in rotatingModels do
 				if model.Parent and model.PrimaryPart then
 					model:PivotTo(CFrame.new(pivot.Position) * CFrame.Angles(0, spin, 0) * pivot.Rotation)
