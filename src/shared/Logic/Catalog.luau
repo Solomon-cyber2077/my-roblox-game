@@ -20,6 +20,15 @@ function Catalog.isOwned(owned: OwnedSet, id: string): boolean
 	return def ~= nil and (def.default == true or owned[id] == true)
 end
 
+function Catalog.devUnlocked(userId: number, isStudio: boolean): boolean
+	local unlock = Cosmetics.DevUnlock
+	return unlock.Enabled and (isStudio or userId == unlock.UserId)
+end
+
+function Catalog.canUse(owned: OwnedSet, id: string, userId: number, isStudio: boolean): boolean
+	return Cosmetics.ById[id] ~= nil and (Catalog.isOwned(owned, id) or Catalog.devUnlocked(userId, isStudio))
+end
+
 function Catalog.dayNumber(unixSeconds: number): number
 	return unixSeconds // 86400
 end
