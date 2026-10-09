@@ -39,14 +39,18 @@ local DOT_COLOR: { [string]: Color3 } = {
 	Derailed = Theme.Color.signal,
 }
 
-export type TrackOpts = { scale: number, ink: Color3, ZIndex: number, LayoutOrder: number? }
+-- `bare` (the run card): stubs without figures, no haul line, only the gamble's stamp, and the
+-- line drawn as rails on sleepers
+export type TrackOpts = { scale: number, ink: Color3, ZIndex: number, LayoutOrder: number?, bare: boolean? }
 
 -- One row of the track: a stub per entry, left to right. Returns the row and `play(step)`, which hides
 -- everything and brings each stub in `step` seconds apart, then lands its stamps; it returns the
 -- seconds the cascade takes.
 function TicketBook.track(entries: { any }, opts: TrackOpts): (Frame, (step: number) -> number)
 	local s, z = opts.scale, opts.ZIndex
-	local cellW, cellH = math.ceil(STUB_W * s) + GAP, math.ceil(STUB_H * s) + HANG + 16
+	local bare = opts.bare == true
+	local stubH = if bare then Ticket.STUB_BARE_H else STUB_H
+	local cellW, cellH = math.ceil(STUB_W * s) + GAP, math.ceil(stubH * s) + HANG + (if bare then 6 else 16)
 	local row = Ui.new("Frame", {
 		Name = "Track",
 		Size = UDim2.fromOffset(cellW * #entries, cellH),
@@ -54,15 +58,40 @@ function TicketBook.track(entries: { any }, opts: TrackOpts): (Frame, (step: num
 		LayoutOrder = opts.LayoutOrder or 0,
 		ZIndex = z,
 	})
-	Ui.new("Frame", {
+	local rail = Ui.new("Frame", {
 		Name = "Line",
 		Size = UDim2.new(1, 0, 0, 3),
 		Position = UDim2.fromOffset(0, LINE_Y - 1),
 		BackgroundColor3 = opts.ink,
+		BackgroundTransparency = if bare then 1 else 0,
 		BorderSizePixel = 0,
 		ZIndex = z,
 		Parent = row,
 	})
+	if bare then
+		-- two rails on sleepers, inked like a timetable's route map
+		for _, y in { -2, 3 } do
+			Ui.new("Frame", {
+				Size = UDim2.new(1, 0, 0, 1),
+				Position = UDim2.fromOffset(0, y),
+				BackgroundColor3 = opts.ink,
+				BorderSizePixel = 0,
+				ZIndex = z,
+				Parent = rail,
+			})
+		end
+		for x = 3, cellW * #entries - 3, 9 do
+			Ui.new("Frame", {
+				Size = UDim2.fromOffset(2, 9),
+				Position = UDim2.fromOffset(x, -3),
+				BackgroundColor3 = opts.ink,
+				BackgroundTransparency = 0.45,
+				BorderSizePixel = 0,
+				ZIndex = z,
+				Parent = rail,
+			})
+		end
+	end
 	local cells: { { stub: Frame, pop: UIScale, stamps: { Frame } } } = {}
 	for i, entry in entries do
 		local cell = Ui.new("Frame", {
@@ -95,12 +124,12 @@ function TicketBook.track(entries: { any }, opts: TrackOpts): (Frame, (step: num
 			Parent = cell,
 		})
 		local view = TicketModel.view(RunLog.option(entry), entry.stop, entry.coalBurned)
-		local stub = Ticket.stub(view, { routeId = `log{entry.stop}{entry.archetype}` })
+		local stub = Ticket.stub(view, { routeId = `log{entry.stop}{entry.archetype}`, bare = bare })
 		stub.Position = UDim2.fromOffset(GAP / 2, HANG)
 		stub.ZIndex = z + 1
 		stub.Parent = cell
 		Ui.new("UIScale", { Scale = s, Parent = stub })
-		local haul = RunLog.haulText(entry)
+		local haul = if bare then "" else RunLog.haulText(entry)
 		if haul ~= "" then
 			local line = Ui.text({
 				Text = haul,
@@ -118,7 +147,16 @@ function TicketBook.track(entries: { any }, opts: TrackOpts): (Frame, (step: num
 		end
 		local pop = Ui.new("UIScale", { Parent = cell })
 		local stamps: { Frame } = {}
-		for k, mark in RunLog.stamps(entry) do
+		local marks = RunLog.stamps(entry)
+		if bare then
+			marks = table.clone(marks)
+			for k = #marks, 1, -1 do
+				if marks[k].kind ~= "Gambled" then
+					table.remove(marks, k)
+				end
+			end
+		end
+		for k, mark in marks do
 			local stamp = Stamp.word({
 				key = `{entry.stop}{mark.kind}`,
 				text = mark.text,
@@ -126,7 +164,7 @@ function TicketBook.track(entries: { any }, opts: TrackOpts): (Frame, (step: num
 				size = math.max(math.floor(13 * s + 0.5), 9),
 				Position = UDim2.fromOffset(
 					GAP / 2 + STUB_W * s * (0.58 + 0.08 * (k - 1)),
-					HANG + STUB_H * s * (0.3 + 0.36 * (k - 1))
+					HANG + stubH * s * (0.3 + 0.36 * (k - 1))
 				),
 				ZIndex = z + 8,
 			})

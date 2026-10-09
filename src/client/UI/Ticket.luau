@@ -611,9 +611,14 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	return handle
 end
 
--- The compact read-only stub: no buttons, no dial.
-function Ticket.stub(view: TicketModel.View, opts: { routeId: string, LayoutOrder: number? }): Frame
-	local sw, sh = 200, 72
+-- The compact read-only stub: no buttons, no dial. `bare` leaves off the km and coal line and
+-- tears the stub shorter (Ticket.STUB_BARE_H): number, type, name and seal only.
+Ticket.STUB_BARE_H = 52
+function Ticket.stub(
+	view: TicketModel.View,
+	opts: { routeId: string, LayoutOrder: number?, bare: boolean? }
+): Frame
+	local sw, sh = 200, if opts.bare then Ticket.STUB_BARE_H else 72
 	local slot = Ui.new("Frame", {
 		Name = "TicketStub",
 		Size = UDim2.fromOffset(sw, sh),
@@ -635,14 +640,16 @@ function Ticket.stub(view: TicketModel.View, opts: { routeId: string, LayoutOrde
 	name.Position = UDim2.fromOffset(20, 22)
 	name.Size = UDim2.new(1, if view.seal then -64 else -28, 0, 20)
 	shrink(name, 15, 8)
-	local foot = `{view.distanceKm} KM`
-	if view.coal then
-		foot ..= `  ·  COAL {view.coal.label}`
+	if not opts.bare then
+		local foot = `{view.distanceKm} KM`
+		if view.coal then
+			foot ..= `  ·  COAL {view.coal.label}`
+		end
+		local legs = label(paper, foot, BODY, 10, INK, 4)
+		legs.Position = UDim2.fromOffset(20, 46)
+		legs.Size = UDim2.new(1, -64, 0, 14)
+		shrink(legs, 10, 7)
 	end
-	local legs = label(paper, foot, BODY, 10, INK, 4)
-	legs.Position = UDim2.fromOffset(20, 46)
-	legs.Size = UDim2.new(1, -64, 0, 14)
-	shrink(legs, 10, 7)
 	if view.seal then
 		local disc = circle("Seal", 28, WAX, paper, 4)
 		disc.Position = UDim2.new(1, -24, 0.5, 0)
