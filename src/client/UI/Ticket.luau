@@ -163,8 +163,8 @@ local function stock(parent: Instance, size: UDim2, routeId: string, z: number):
 		BackgroundTransparency = 1,
 		Image = Theme.Image.paperGrain,
 		ScaleType = Enum.ScaleType.Tile,
-		TileSize = UDim2.fromOffset(150, 150),
-		ImageTransparency = 0.3,
+		TileSize = UDim2.fromOffset(256, 256),
+		ImageTransparency = 0.62,
 		ZIndex = z,
 		Parent = paper,
 	})
@@ -192,7 +192,7 @@ local function seal(parent: Instance, s: TicketModel.Seal, x: number, y: number,
 	-- no two seals on the board sit alike
 	Ui.new("ImageLabel", {
 		Name = "Wax",
-		Size = UDim2.fromOffset(math.floor(size * 1.45), math.floor(size * 1.45)),
+		Size = UDim2.fromOffset(math.floor(size * 1.7), math.floor(size * 1.7)),
 		Position = UDim2.fromOffset(x + size / 2, y + size / 2),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Rotation = math.floor(TicketModel.hash(`{s.number}:{s.strokes}:wax`) * 360),

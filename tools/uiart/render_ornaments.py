@@ -159,7 +159,8 @@ render("rivet.png", 32, cam, 2.0)
 
 # 4. Wax seal, 256px: ragged poured disc, raised rim, a six-spoke wheel pressed into it.
 scene, cam = reset()
-wax = material("Wax", (0.16, 0.008, 0.01), roughness=0.2, coat=1.0, bump=0.04)
+bpy.data.objects.remove(bpy.data.objects["Fill"])  # a flat overhead fill turns the coat pink
+wax = material("Wax", (0.16, 0.008, 0.01), roughness=0.3, coat=0.5, bump=0.04)
 bpy.ops.mesh.primitive_cylinder_add(vertices=96, radius=0.9, depth=0.18)
 seal = bpy.context.object
 seal.data.materials.append(wax)

@@ -97,14 +97,14 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 		Size = UDim2.fromOffset(150, 44),
 		Position = UDim2.new(0.5, -82, 0, 74),
 		AnchorPoint = Vector2.new(0.5, 0),
-		BackgroundColor3 = Theme.Color.paper,
+		BackgroundColor3 = Theme.Color.brass, -- an enamel keycap, as on the prompts
 		AutoButtonColor = false,
 		Text = "",
 		ZIndex = 22,
 		Parent = plate,
 	})
-	Ui.corner(7).Parent = keycap
-	Ui.stroke(Theme.Color.paperShade, 2, 0).Parent = keycap
+	Ui.corner(5).Parent = keycap
+	Ui.stroke(Theme.Color.brassLight, 2, 0.1).Parent = keycap
 	keyScale = Ui.new("UIScale", { Parent = keycap })
 	keyLabel = Ui.text({
 		Text = "SPACE",
