@@ -103,7 +103,7 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		Font = Theme.Font.displayMedium,
 		TextSize = 12,
 		Color = Theme.Color.brass,
-		Position = UDim2.fromOffset(12, 3),
+		Position = UDim2.fromOffset(20, 3),
 		Size = UDim2.new(1, -140, 0, 14),
 	})
 	caption.ZIndex = 33
@@ -113,7 +113,7 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		Font = Theme.Font.display,
 		TextSize = 25,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(12, 14),
+		Position = UDim2.fromOffset(20, 14),
 		Size = UDim2.new(1, -140, 0, 30),
 	})
 	title.ZIndex = 33
@@ -151,7 +151,7 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		modal:close()
 	end, {
 		Size = UDim2.fromOffset(104, 34),
-		Position = UDim2.new(1, -14, 0.5, -1),
+		Position = UDim2.new(1, -20, 0.5, -1),
 		AnchorPoint = Vector2.new(1, 0.5),
 		TextSize = 16,
 	})

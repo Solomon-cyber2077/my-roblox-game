@@ -42,7 +42,7 @@ local BRASS_DARK = Color3.fromRGB(112, 84, 38)
 -- Fading: how long a piece stays up after it changes, how fast it fades, and how far.
 local WAKE_SECONDS = 5
 local FADE_RATE = 2.5
-local WATCH_IDLE = 0.4
+local WATCH_IDLE = 0.2 -- settled, but the stop ticket must stay legible over bright scenery
 local BACKPACK_IDLE = 0.5
 local HIDDEN = 1
 

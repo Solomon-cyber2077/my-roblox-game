@@ -21,7 +21,7 @@ Theme.Color = table.freeze({
 	lacquer = Color3.fromRGB(18, 44, 40), -- bottle green
 	mahogany = Color3.fromRGB(58, 26, 16),
 	-- aged card
-	paper = Color3.fromRGB(160, 138, 100), -- smoked amber-buff card
+	paper = Color3.fromRGB(170, 140, 96), -- smoked amber-buff card
 	paperShade = Color3.fromRGB(112, 92, 64),
 	ink = Color3.fromRGB(22, 15, 12),
 	inkSoft = Color3.fromRGB(56, 40, 30),
@@ -77,7 +77,7 @@ Theme.Image = table.freeze({
 	vignette = "rbxassetid://94310403534832", -- radial, stretched
 	punch = "rbxassetid://113622556584864",
 	rivet = "rbxassetid://72430109178072",
-	wax = "rbxassetid://123747789464767",
+	wax = "rbxassetid://80794293604608",
 	bezel = "rbxassetid://122710553651185",
 })
 

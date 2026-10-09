@@ -72,7 +72,7 @@ function Workshop.mount(gui: ScreenGui)
 			local cost = Ledger.upgradeCost(train, def.id)
 			local row = Ui.new("Frame", {
 				Size = UDim2.new(1, -8, 0, 76),
-				BackgroundColor3 = Theme.Color.steelLight,
+				BackgroundColor3 = Theme.Color.lacquer, -- bottle-green lacquered bench drawers
 				BackgroundTransparency = 0.2,
 				LayoutOrder = i,
 				ZIndex = 32,

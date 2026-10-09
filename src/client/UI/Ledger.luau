@@ -35,13 +35,18 @@ function Ledger.mount(gui: ScreenGui)
 	local State = Registry.StateController
 	modal = Modal.new(gui, "Line Mastery", Vector2.new(820, 540))
 
-	local stats = Ui.new("Frame", {
+	-- the lifetime figures, entered on an aged ledger card
+	local statsCard = Ui.ticket({
 		Size = UDim2.fromScale(0.36, 1),
-		BackgroundColor3 = Theme.Color.paper,
 		ZIndex = 32,
 		Parent = modal.body,
 	})
-	Ui.corner().Parent = stats
+	local stats = Ui.new("Frame", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ZIndex = 33,
+		Parent = statsCard,
+	})
 	Ui.padding(14, 16).Parent = stats
 	Ui.list(Enum.FillDirection.Vertical, 6).Parent = stats
 

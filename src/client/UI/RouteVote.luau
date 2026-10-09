@@ -32,8 +32,8 @@ local RouteVote = {}
 local HEAVY = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy)
 local BOLD = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.ExtraBold)
 
-local BOX_EMPTY = Color3.fromRGB(32, 32, 36)
-local BOX_RIM = Color3.fromRGB(74, 74, 82)
+local BOX_EMPTY = Color3.fromRGB(34, 26, 24) -- an unlit cell: soot iron, warm in the lamp
+local BOX_RIM = Color3.fromRGB(96, 74, 50) -- blackened brass
 local LAND_DEBOUNCE = 0.3 -- a voter's stamp slams down at most this often
 local LINGER_SECONDS = 1.6 -- the ballot stays up this long after lock-in for the punch
 local BLUE_INK = Color3.fromRGB(38, 58, 120)
@@ -124,8 +124,8 @@ function RouteVote.mount(gui: ScreenGui)
 		Name = "DossierBackdrop",
 		Size = UDim2.new(1, 0, 1, 80),
 		Position = UDim2.fromOffset(0, -60),
-		BackgroundColor3 = Theme.Color.black,
-		BackgroundTransparency = 0.5,
+		BackgroundColor3 = Color3.new(0.05, 0.015, 0.015),
+		BackgroundTransparency = 0.35,
 		Text = "",
 		AutoButtonColor = false,
 		Visible = false,
@@ -192,7 +192,30 @@ function RouteVote.mount(gui: ScreenGui)
 			Parent = holder,
 		})
 		Ui.corner(2).Parent = paper
-		Ui.stroke(Theme.Color.paperShade, 1, 0).Parent = paper
+		Ui.stroke(Theme.Color.ink, 1, 0.5).Parent = paper
+		-- smoke, foxing and a scorched rim, then fibre grain (as on the tickets)
+		Ui.new("ImageLabel", {
+			Name = "Wear",
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			Image = Theme.Image.card.id,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Theme.Image.card.slice,
+			SliceScale = Theme.Slice.card,
+			ZIndex = 2,
+			Parent = paper,
+		})
+		Ui.new("ImageLabel", {
+			Name = "Grain",
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			Image = Theme.Image.paperGrain,
+			ScaleType = Enum.ScaleType.Tile,
+			TileSize = UDim2.fromOffset(256, 256),
+			ImageTransparency = 0.62,
+			ZIndex = 2,
+			Parent = paper,
+		})
 		-- the age the sheet has gathered towards its foot
 		local age = Ui.new("Frame", {
 			Size = UDim2.fromScale(1, 1),
@@ -443,17 +466,17 @@ function RouteVote.mount(gui: ScreenGui)
 		Text = "",
 		Font = Theme.Font.type,
 		TextSize = 14,
-		Color = Theme.Color.paper,
+		Color = Theme.Color.brassLight,
 		Size = UDim2.fromOffset(0, 26),
 		Position = UDim2.new(0.5, 0, 0, 318),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	tieNote.AnchorPoint = Vector2.new(0.5, 0)
 	tieNote.AutomaticSize = Enum.AutomaticSize.X
-	tieNote.BackgroundColor3 = Theme.Color.steel
-	tieNote.BackgroundTransparency = 0.15
+	tieNote.BackgroundColor3 = Theme.Color.leather -- a telegraph strip pasted on oxblood
+	tieNote.BackgroundTransparency = 0.08
 	Ui.padding(0, 12, 0, 12).Parent = tieNote
-	Ui.stroke(Theme.Color.steelLine, 1, 0.3).Parent = tieNote
+	Ui.stroke(Theme.Color.brass, 1, 0.25).Parent = tieNote
 	tieNote.Parent = container
 	local tickets: { Ticket.Handle } = {}
 	local builtKey: string? = nil

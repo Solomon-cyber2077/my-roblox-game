@@ -176,8 +176,8 @@ function Ui.ticket(props: { [any]: any }): ImageLabel
 		Size = UDim2.fromScale(1, 1),
 		Image = Theme.Image.paperGrain,
 		ScaleType = Enum.ScaleType.Tile,
-		TileSize = UDim2.fromOffset(160, 160),
-		ImageTransparency = 0.35,
+		TileSize = UDim2.fromOffset(256, 256),
+		ImageTransparency = 0.62,
 		ZIndex = frame.ZIndex,
 		Parent = frame,
 	})

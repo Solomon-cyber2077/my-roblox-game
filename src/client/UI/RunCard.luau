@@ -118,6 +118,20 @@ local function show()
 	local log = State.Get({ "run", "log" }) or {}
 	local outcome = State.Get({ "run", "outcome" })
 	local tier = State.Get({ "run", "tier" }) or 1
+	-- read by the light the run ended in: the blood moon creeping in, or the Terminus lamps
+	local won = outcome == "Victory"
+	card.BackgroundColor3 =
+		Theme.Color.paper:Lerp(if won then Theme.Color.amber else Theme.Color.signalDark, 0.2)
+	Ui.new("ImageLabel", {
+		Name = "Moonlight",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Image = Theme.Image.vignette,
+		ImageColor3 = if won then Theme.Color.mahogany else Theme.Color.signalDark,
+		ImageTransparency = if won then 0.5 else 0.15,
+		ZIndex = Z + 1,
+		Parent = card,
+	})
 
 	text({
 		Text = "RUN CARD",
