@@ -74,6 +74,21 @@ function CosmeticService.Apply(player: Player)
 
 	local head = character:FindFirstChild("Head") :: BasePart?
 	local hat = equipped(player, "Headwear")
+	local coversHair = hat.look.style ~= "None" and hat.look.style ~= "Goggles"
+	for _, accessory in character:GetChildren() do
+		if accessory:IsA("Accessory") and accessory.AccessoryType == Enum.AccessoryType.Hair then
+			for _, part in accessory:GetDescendants() do
+				if part:IsA("BasePart") then
+					local original = part:GetAttribute("CosmeticHairTransparency")
+					if typeof(original) ~= "number" then
+						original = part.Transparency
+						part:SetAttribute("CosmeticHairTransparency", original)
+					end
+					part.Transparency = if coversHair then 1 else original :: number
+				end
+			end
+		end
+	end
 	if head and hat.look.style ~= "None" then
 		for _, accessory in character:GetChildren() do
 			if accessory:IsA("Accessory") and accessory.AccessoryType == Enum.AccessoryType.Hat then

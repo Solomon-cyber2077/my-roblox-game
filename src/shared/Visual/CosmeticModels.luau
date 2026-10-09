@@ -117,8 +117,8 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 	if style == "Conductor" then
 		anchor = Kit.cylinder(
 			model,
-			0.55,
-			1.45,
+			0.62,
+			1.58,
 			frame * CFrame.new(0, 0.05, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Fabric }
@@ -126,7 +126,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 		Kit.cylinder(
 			model,
 			0.18,
-			1.7,
+			1.9,
 			frame * CFrame.new(0, 0.38, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Fabric }
@@ -172,12 +172,14 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 			)
 		end
 	elseif style == "LampCap" then
-		anchor =
-			Kit.ball(model, 1.5, frame * CFrame.new(0, -0.1, 0), primary, { material = Enum.Material.Metal })
+		local shell =
+			Kit.ball(model, 1.95, frame * CFrame.new(0, 0.18, 0), primary, { material = Enum.Material.Metal })
+		shell.Size = Vector3.new(2.2, 0.9, 1.65)
+		anchor = shell
 		Kit.cylinder(
 			model,
 			0.12,
-			1.75,
+			2.05,
 			frame * CFrame.new(0, -0.3, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Metal }
@@ -186,7 +188,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 			model,
 			0.25,
 			0.45,
-			frame * CFrame.new(0, 0.05, -0.72) * Kit.angles(0, 90, 0),
+			frame * CFrame.new(0, 0.05, -0.95) * Kit.angles(0, 90, 0),
 			secondary,
 			{ material = Enum.Material.Neon }
 		)
@@ -196,7 +198,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 		anchor = Kit.cylinder(
 			model,
 			1.35,
-			1.25,
+			1.45,
 			frame * CFrame.new(0, 0.55, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Fabric }
@@ -204,7 +206,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 		Kit.cylinder(
 			model,
 			0.12,
-			1.95,
+			2.05,
 			frame * CFrame.new(0, -0.08, 0) * Kit.angles(0, 0, 90),
 			primary,
 			{ material = Enum.Material.Fabric }
@@ -212,7 +214,7 @@ function CosmeticModels.headwear(look: { [string]: any }, frame: CFrame): Model?
 		Kit.cylinder(
 			model,
 			0.22,
-			1.27,
+			1.47,
 			frame * CFrame.new(0, 0.12, 0) * Kit.angles(0, 0, 90),
 			secondary,
 			{ material = Enum.Material.Fabric }
