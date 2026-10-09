@@ -39,7 +39,7 @@ local OUTCOME_TEXT: { [string]: string } = {
 }
 
 local root: TextButton
-local card: Frame
+local card: ImageLabel
 local closeButton: TextButton
 local hint: TextLabel
 local shownFor: string? = nil
