@@ -24,6 +24,8 @@ local Ui = require(script.Parent.Ui)
 
 local Lobby = {}
 
+local PANEL_W, PANEL_H = 360, 124 -- the departure panel; the tier plate sits on it at its width
+
 function Lobby.mount(gui: ScreenGui)
 	local State = Registry.StateController
 
@@ -271,7 +273,7 @@ function Lobby.mount(gui: ScreenGui)
 	-- Departure panel: the platform indicator --------------------------------------------------
 	local panel = Ui.panel({
 		Name = "Departure",
-		Size = UDim2.fromOffset(440, 168),
+		Size = UDim2.fromOffset(PANEL_W, PANEL_H),
 		Position = UDim2.new(0.5, 0, 1, -20),
 		AnchorPoint = Vector2.new(0.5, 1),
 		BackgroundTransparency = 0.06,
@@ -279,18 +281,18 @@ function Lobby.mount(gui: ScreenGui)
 	})
 	local headStrip = Ui.new("Frame", {
 		Name = "Head",
-		Size = UDim2.new(1, 0, 0, 24),
+		Size = UDim2.new(1, 0, 0, 20),
 		BackgroundColor3 = Theme.Color.steelLight,
 		BorderSizePixel = 0,
 		Parent = panel,
 	})
 	Ui.corner(2).Parent = headStrip
 	local platformPlate = Ui.new("TextLabel", {
-		Size = UDim2.fromOffset(24, 24),
+		Size = UDim2.fromOffset(20, 20),
 		BackgroundColor3 = Theme.Color.brass,
 		BorderSizePixel = 0,
 		FontFace = Theme.Font.sign,
-		TextSize = 16,
+		TextSize = 14,
 		TextColor3 = Theme.Color.ink,
 		Text = "1",
 		Parent = headStrip,
@@ -298,49 +300,51 @@ function Lobby.mount(gui: ScreenGui)
 	Ui.corner(2).Parent = platformPlate
 	caption("PLATFORM 1  ·  DEPOT HALL", {
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(34, 0),
-		Size = UDim2.new(1, -44, 1, 0),
+		TextSize = 13,
+		Position = UDim2.fromOffset(28, 0),
+		Size = UDim2.new(1, -36, 1, 0),
 		Parent = headStrip,
 	})
-	caption("ALL STOPS TO THE TERMINUS", {
-		Position = UDim2.fromOffset(34, 0),
-		Size = UDim2.new(1, -44, 1, 0),
+	caption("TO THE TERMINUS", {
+		TextSize = 13,
+		Position = UDim2.fromOffset(28, 0),
+		Size = UDim2.new(1, -36, 1, 0),
 		XAlign = Enum.TextXAlignment.Right,
 		Parent = headStrip,
 	})
 	local status = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 26,
+		TextSize = 20,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(0, 32),
-		Size = UDim2.new(1, 0, 0, 28),
+		Position = UDim2.fromOffset(0, 24),
+		Size = UDim2.new(1, 0, 0, 22),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	status.Parent = panel
 	local detail = Ui.text({
 		Text = "",
 		Font = Theme.Font.body,
-		TextSize = 16,
+		TextSize = 14,
 		Color = Theme.Color.boneDim,
-		Position = UDim2.fromOffset(16, 62),
-		Size = UDim2.new(1, -32, 0, 18),
+		Position = UDim2.fromOffset(12, 46),
+		Size = UDim2.new(1, -24, 0, 16),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	detail.Parent = panel
 	-- one signal lamp per crewmate the departure needs: lit when they are ready
 	local lampRow = Ui.new("Frame", {
 		Name = "Lamps",
-		Size = UDim2.new(1, 0, 0, 22),
-		Position = UDim2.fromOffset(0, 82),
+		Size = UDim2.new(1, 0, 0, 16),
+		Position = UDim2.fromOffset(0, 64),
 		BackgroundTransparency = 1,
 		Parent = panel,
 	})
-	Ui.list(Enum.FillDirection.Horizontal, 10, Enum.HorizontalAlignment.Center).Parent = lampRow
+	Ui.list(Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Center).Parent = lampRow
 	local lamps: { ImageLabel } = {}
 	for i = 1, 4 do
 		lamps[i] = Ui.new("ImageLabel", {
-			Size = UDim2.fromOffset(22, 22),
+			Size = UDim2.fromOffset(16, 16),
 			BackgroundTransparency = 1,
 			Image = Theme.Image.lampDark,
 			LayoutOrder = i,
@@ -354,14 +358,23 @@ function Lobby.mount(gui: ScreenGui)
 		end
 	end
 	local readyButton = Ui.button("READY", "Primary", nil, {
-		Size = UDim2.new(1, -32, 0, 46),
-		Position = UDim2.new(0.5, 0, 1, -12),
+		Size = UDim2.new(1, -24, 0, 34),
+		Position = UDim2.new(0.5, 0, 1, -10),
 		AnchorPoint = Vector2.new(0.5, 1),
-		TextSize = 22,
+		TextSize = 20,
 	})
 	readyButton.ZIndex = 2
 	readyButton.Parent = panel
-	brassRim(readyButton, panel)
+	-- a flat brass plate: one tone, no lit gradient, rim or keel
+	for _, child in readyButton:GetChildren() do
+		if child:IsA("UIGradient") or child:IsA("UIStroke") then
+			(child :: any).Enabled = false
+		elseif child.Name == "Keel" then
+			(child :: Frame).BackgroundTransparency = 1
+		elseif child:IsA("UIPadding") then
+			child.PaddingBottom = UDim.new(0, 0)
+		end
+	end
 	readyButton.Activated:Connect(function()
 		if readyButton:GetAttribute("Disabled") then
 			return
@@ -375,68 +388,46 @@ function Lobby.mount(gui: ScreenGui)
 		end
 	end)
 
-	-- Run tier: a tab on top of the panel; everyone sees it, only the host can change it -------
+	-- Run tier: a plate on top of the panel, as wide as it; everyone sees it, only the host can
+	-- change it (pressing the plate steps to the next tier, wrapping back to the first)
 	local tierRow = Ui.new("Frame", {
 		Name = "RunTier",
-		Size = UDim2.fromOffset(340, 46),
-		Position = UDim2.new(0.5, 0, 1, -194),
+		Size = UDim2.fromOffset(PANEL_W, 32),
+		Position = UDim2.new(0.5, 0, 1, -(20 + PANEL_H + 6)),
 		AnchorPoint = Vector2.new(0.5, 1),
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
 	local tierPlate, tierLabel, tierLight = engravedPlate({
 		Name = "Plate",
-		Size = UDim2.new(1, -56, 0, 38),
-		Position = UDim2.fromOffset(28, 4),
-		SliceScale = 0.36,
-	}, 18)
+		Size = UDim2.fromScale(1, 1),
+		SliceScale = 0.3,
+	}, 16)
 	tierPlate.Parent = tierRow
-	local function pickTier(step: number)
+	local tierPick = Ui.new("TextButton", {
+		Name = "Pick",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Selectable = true,
+		ZIndex = 2,
+		Parent = tierRow,
+	}) :: TextButton
+	tierPick.MouseEnter:Connect(function()
+		tierPlate.ImageColor3 = Color3.fromRGB(255, 236, 200)
+	end)
+	tierPick.MouseLeave:Connect(function()
+		tierPlate.ImageColor3 = Color3.new(1, 1, 1)
+	end)
+	tierPick.Activated:Connect(function()
 		local tier = State.Get({ "lobby", "tier" }) or {}
-		local nextTier = math.clamp((tier.selected or 1) + step, 1, tier.max or 1)
-		if nextTier ~= tier.selected then
-			Net.Fire("SetRunTier", nextTier)
+		local maxTier = tier.max or 1
+		if tier.host ~= Session.userKey or maxTier <= 1 then
+			return
 		end
-	end
-	-- brass knobs at either end of the plate; pressing one sinks it
-	local function knob(image: string, x: number, step: number): ImageButton
-		local button = Ui.new("ImageButton", {
-			Size = UDim2.fromOffset(46, 46),
-			Position = UDim2.fromScale(x, 0.5),
-			AnchorPoint = Vector2.new(x, 0.5),
-			BackgroundTransparency = 1,
-			Image = image,
-			AutoButtonColor = false,
-			Selectable = true,
-			ZIndex = 2,
-			Parent = tierRow,
-		}) :: ImageButton
-		button.MouseEnter:Connect(function()
-			button.ImageColor3 = Color3.fromRGB(255, 236, 200)
-		end)
-		button.MouseLeave:Connect(function()
-			button.ImageColor3 = Color3.new(1, 1, 1)
-		end)
-		button.MouseButton1Down:Connect(function()
-			button.Size = UDim2.fromOffset(42, 42)
-		end)
-		button.MouseButton1Up:Connect(function()
-			button.Size = UDim2.fromOffset(46, 46)
-		end)
-		button.Activated:Connect(function()
-			if not button:GetAttribute("Disabled") then
-				pickTier(step)
-			end
-		end)
-		return button
-	end
-	local function setKnob(button: ImageButton, enabled: boolean)
-		button.Active = enabled
-		button:SetAttribute("Disabled", not enabled)
-		button.ImageTransparency = if enabled then 0 else 0.55
-	end
-	local tierDown = knob(Theme.Image.knobLeft, 0, -1)
-	local tierUp = knob(Theme.Image.knobRight, 1, 1)
+		Net.Fire("SetRunTier", (tier.selected or 1) % maxTier + 1)
+	end)
 
 	-- Shortcuts: two plates under the pass -----------------------------------------------------
 	local shortcuts = Ui.new("Frame", {
@@ -557,10 +548,7 @@ function Lobby.mount(gui: ScreenGui)
 			then `RUN TIER {selected}  ·  UP TO {maxTier}`
 			else `RUN TIER {selected}  ·  HOST PICKS`
 		tierLight.Text = tierLabel.Text
-		tierDown.Visible = isHost
-		tierUp.Visible = isHost
-		setKnob(tierDown, selected > 1)
-		setKnob(tierUp, selected < maxTier)
+		tierPick.Active = isHost and maxTier > 1
 
 		local head, rows = "PLATFORM 1  ·  LAST TRAIN OUT", ""
 		if RunRules.isRunPhase(phase :: any) or phase == "RunEnd" then
