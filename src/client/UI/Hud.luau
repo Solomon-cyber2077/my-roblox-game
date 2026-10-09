@@ -252,6 +252,19 @@ function Hud.mount(gui: ScreenGui)
 		})
 	end
 
+	-- lamp-lit metal: bright toward the upper left, falling off to the lower right
+	local function sheen(parent: Instance, low: number)
+		Ui.new("UIGradient", {
+			Rotation = 45,
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+				ColorSequenceKeypoint.new(0.45, Color3.new(0.86, 0.86, 0.86)),
+				ColorSequenceKeypoint.new(1, Color3.new(low, low, low)),
+			}),
+			Parent = parent,
+		})
+	end
+
 	local case = Ui.new("Frame", {
 		Name = "Case",
 		Size = UDim2.fromOffset(WATCH, WATCH),
@@ -268,7 +281,7 @@ function Hud.mount(gui: ScreenGui)
 	-- the rendered knurled bezel stands in for the flat brass disc; the dial covers its inner half
 	case.BackgroundTransparency = 1
 	caseStroke.Transparency = 1
-	Ui.new("ImageLabel", {
+	local bezel = Ui.new("ImageLabel", {
 		Name = "Bezel",
 		Size = UDim2.fromScale(1.2, 1.2),
 		Position = UDim2.fromScale(0.5, 0.5),
@@ -278,6 +291,7 @@ function Hud.mount(gui: ScreenGui)
 		ZIndex = 0,
 		Parent = case,
 	})
+	sheen(bezel, 0.72)
 	local watchScale = Ui.new("UIScale", { Parent = case })
 	-- the bow and crown it hangs from
 	local bow = Ui.new("Frame", {
@@ -289,18 +303,43 @@ function Hud.mount(gui: ScreenGui)
 		Parent = case,
 	})
 	Ui.corner(8).Parent = bow
-	Ui.stroke(Theme.Color.brass, 3, 0).Parent = bow
+	local bowStroke = Ui.stroke(Theme.Color.brass, 3, 0)
+	bowStroke.Parent = bow
+	sheen(bowStroke, 0.55)
+	-- the crown: a short stem and a ribbed knob
 	Ui.new("Frame", {
-		Name = "Crown",
-		Size = UDim2.fromOffset(10, 6),
-		Position = UDim2.new(0.5, 0, 0, -5),
+		Name = "Stem",
+		Size = UDim2.fromOffset(6, 6),
+		Position = UDim2.new(0.5, 0, 0, -2),
 		AnchorPoint = Vector2.new(0.5, 0),
 		BackgroundColor3 = BRASS_DARK,
 		BorderSizePixel = 0,
 		Parent = case,
 	})
+	local crown = Ui.new("Frame", {
+		Name = "Crown",
+		Size = UDim2.fromOffset(14, 7),
+		Position = UDim2.new(0.5, 0, 0, -7),
+		AnchorPoint = Vector2.new(0.5, 0),
+		BackgroundColor3 = Theme.Color.brass,
+		BorderSizePixel = 0,
+		Parent = case,
+	})
+	Ui.corner(2).Parent = crown
+	sheen(crown, 0.5)
+	for r = 1, 3 do
+		Ui.new("Frame", {
+			Size = UDim2.new(0, 1, 1, -2),
+			Position = UDim2.new(r / 4, 0, 0, 1),
+			BackgroundColor3 = BRASS_DARK,
+			BackgroundTransparency = 0.3,
+			BorderSizePixel = 0,
+			Parent = crown,
+		})
+	end
 
 	local ring = circle("Ring", WATCH - 12, Theme.Color.steel, case)
+	sheen(ring, 0.6)
 	local pips: { Frame } = {}
 	for i = 0, PIPS - 1 do
 		local major = i % 5 == 0
@@ -308,8 +347,8 @@ function Hud.mount(gui: ScreenGui)
 			pips,
 			bar(
 				spindle(ring, i * 360 / PIPS),
-				if major then 3 else 2,
-				if major then 8 else 6,
+				if major then 2 else 1,
+				if major then 8 else 5,
 				Theme.Color.steelLine,
 				2
 			)
@@ -318,8 +357,22 @@ function Hud.mount(gui: ScreenGui)
 
 	local face = circle("Face", WATCH - 34, Theme.Color.paper, case)
 	Ui.stroke(Theme.Color.inkSoft, 1, 0.4).Parent = face
-	for h = 0, 11 do
-		bar(spindle(face, h * 30), 2, if h % 3 == 0 then 7 else 4, Theme.Color.ink, 3)
+	-- an aged dial: the enamel yellowed and smoked toward its rim
+	Ui.new("UIGradient", {
+		Rotation = 70,
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(214, 206, 190)),
+			ColorSequenceKeypoint.new(0.45, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(196, 184, 166)),
+		}),
+		Parent = face,
+	})
+	for m = 0, 59 do
+		if m % 5 == 0 then
+			bar(spindle(face, m * 6), 2, if m % 15 == 0 then 7 else 5, Theme.Color.ink, 3)
+		else
+			bar(spindle(face, m * 6), 1, 3, Theme.Color.inkSoft, 3).BackgroundTransparency = 0.35
+		end
 	end
 	local radius = (WATCH - 34) / 2 - 18
 	for h, numeral in { [0] = "XII", [3] = "III", [6] = "VI", [9] = "IX" } do
@@ -364,10 +417,19 @@ function Hud.mount(gui: ScreenGui)
 	bar(needle, 2, 12, Theme.Color.signal, 4)
 	bar(needle, 2, 9, Theme.Color.ink, 16)
 
-	local hourHand = spindle(face, 0, 3)
-	bar(hourHand, 4, 30, Theme.Color.ink, (WATCH - 34) / 2 - 30)
-	local minuteHand = spindle(face, 0, 3)
-	bar(minuteHand, 2, 46, Theme.Color.ink, (WATCH - 34) / 2 - 46)
+	-- tapered hands, each with a short tail and a round counterweight past the cap
+	local centre = (WATCH - 34) / 2
+	local function hand(length: number, width: number, tail: number): Frame
+		local spin = spindle(face, 0, 3)
+		local base = math.floor(length * 0.4)
+		bar(spin, math.max(width - 2, 1), length - base, Theme.Color.ink, centre - length)
+		bar(spin, width, base, Theme.Color.ink, centre - base)
+		bar(spin, math.max(width - 1, 1), tail, Theme.Color.ink, centre)
+		circle("Weight", width + 2, Theme.Color.ink, spin, tail)
+		return spin
+	end
+	local hourHand = hand(30, 4, 8)
+	local minuteHand = hand(46, 3, 10)
 	local cap = circle("Cap", 8, BRASS_DARK, face)
 	cap.ZIndex = 4
 	-- the departure hand: from T-30 it points at the seconds left on the ring, a twitch a tick
@@ -389,6 +451,20 @@ function Hud.mount(gui: ScreenGui)
 	tickCount.ZIndex = 5
 	tickCount.Visible = false
 	tickCount.Parent = face
+
+	-- the crystal: a soft lamp highlight over the upper left of the glass
+	local glass = circle("Glass", WATCH - 34, Theme.Color.white, case)
+	glass.ZIndex = 6
+	Ui.new("UIGradient", {
+		Rotation = 45,
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.6),
+			NumberSequenceKeypoint.new(0.3, 0.84),
+			NumberSequenceKeypoint.new(0.42, 1),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+		Parent = glass,
+	})
 
 	local PHASE_COLORS: { [string]: Color3 } = {
 		SUNSET = Theme.Color.caution,
