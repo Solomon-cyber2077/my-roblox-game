@@ -37,6 +37,12 @@ Theme.Color = table.freeze({
 	caution = Color3.fromRGB(232, 158, 60),
 	sky = Color3.fromRGB(120, 186, 196),
 	white = Color3.fromRGB(232, 220, 196), -- bone: text on dark, never a fill
+	bone = Color3.fromRGB(232, 211, 168), -- lamplit text on the ticket-office pieces
+	boneDim = Color3.fromRGB(190, 168, 128), -- secondary text there; still reads on leather
+	inkDeep = Color3.fromRGB(26, 18, 16), -- engraving cut into brass
+	wood = Color3.fromRGB(36, 14, 9), -- mahogany in shadow, under the grain
+	tarnish = Color3.fromRGB(138, 106, 48), -- old brass: rules and inlays on leather
+	dangerText = Color3.fromRGB(232, 92, 70), -- moon red bright enough to read on leather
 	textDim = Color3.fromRGB(168, 152, 128),
 	black = Color3.fromRGB(0, 0, 0),
 	coal = Color3.fromRGB(70, 66, 64),
@@ -79,6 +85,25 @@ Theme.Image = table.freeze({
 	rivet = "rbxassetid://72430109178072",
 	wax = "rbxassetid://80794293604608",
 	bezel = "rbxassetid://122710553651185",
+	-- the ticket office (tools/uiart/render_booth.py, make_booth.py): baked colour, do not tint
+	mahogany = nine("rbxassetid://118245359984072", 64, 192), -- mitred rails, gilt bead, open middle
+	blotter = nine("rbxassetid://75690376169876", 48, 208), -- recessed leather, tooled gilt line
+	cardLeather = nine("rbxassetid://135455300865903", 48, 208), -- the same in a brass rim
+	rimBrass = nine("rbxassetid://95264278747353", 24, 104), -- plain bevelled rim, open middle
+	plateEngraved = table.freeze({ id = "rbxassetid://100427668928434", slice = Rect.new(96, 40, 416, 72) }),
+	ticketTab = table.freeze({ id = "rbxassetid://90728791318087", slice = Rect.new(56, 20, 200, 60) }),
+	woodGrain = "rbxassetid://89663280929748", -- tile 256, dark on alpha
+	stamp = "rbxassetid://85718881222615", -- the company's COUNTED stamp (white, tint it)
+	crest = "rbxassetid://106683508671975", -- winged wheel
+	lampLit = "rbxassetid://83762380348173",
+	lampDark = "rbxassetid://106873137646986",
+	knobLeft = "rbxassetid://75210740058253",
+	knobRight = "rbxassetid://77927799742001",
+})
+
+-- Each resident speaks through their own window (keyed by Config/Npcs id); none means no picture.
+Theme.Portrait = table.freeze({
+	Mabel = "rbxassetid://84986737099780", -- the booking office, under her lamp
 })
 
 -- Rim thickness of the panel and card nine-slices on screen (fraction of the 64px source border).

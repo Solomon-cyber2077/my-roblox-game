@@ -25,6 +25,7 @@ export type Modal = {
 	isOpen: (self: Modal) -> boolean,
 	onOpen: (() -> ())?,
 	onClose: (() -> ())?,
+	focus: GuiObject?, -- what gamepad selection lands on when it opens (CLOSE by default)
 }
 
 local Modal = {}
@@ -165,6 +166,7 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		title = title,
 		onOpen = nil,
 		onClose = nil,
+		focus = nil,
 		open = function(self: Modal)
 			if current and current ~= self then
 				current:close()
@@ -192,7 +194,7 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 			if self.onOpen then
 				self.onOpen()
 			end
-			GuiService.SelectedObject = closeButton
+			GuiService.SelectedObject = self.focus or closeButton
 		end,
 		close = function(self: Modal)
 			if not frame.Visible then
