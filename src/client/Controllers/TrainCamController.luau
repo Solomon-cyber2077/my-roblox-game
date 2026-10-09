@@ -65,7 +65,7 @@ local current: CFrame? = nil
 local currentFov = 62
 local dragging = false
 local chip: TextButton
-local bar: Frame
+local bar: ImageLabel
 local barLabel: TextLabel
 local nextButton: TextButton
 local backButton: TextButton

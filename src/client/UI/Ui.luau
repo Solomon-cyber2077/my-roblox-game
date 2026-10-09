@@ -145,37 +145,60 @@ function Ui.text(props: TextProps): TextLabel
 	})
 end
 
--- Dark steel panel with a brass hairline.
-function Ui.panel(props: { [any]: any }): Frame
-	local frame = Ui.new("Frame", props)
+-- Soot-iron plate in a blackened-brass rim: the baked panel nine-slice over BackgroundColor3,
+-- so callers recolour the material (leather, lacquer) and keep the shading and the rim.
+function Ui.panel(props: { [any]: any }): ImageLabel
+	local frame = Ui.new("ImageLabel", props)
 	frame.BackgroundColor3 = props.BackgroundColor3 or Theme.Color.steel
-	frame.BackgroundTransparency = props.BackgroundTransparency or 0.12
+	frame.BackgroundTransparency = props.BackgroundTransparency or 0.04
 	frame.BorderSizePixel = 0
+	frame.Image = Theme.Image.panel.id
+	frame.ScaleType = Enum.ScaleType.Slice
+	frame.SliceCenter = Theme.Image.panel.slice
+	frame.SliceScale = props.SliceScale or Theme.Slice.panel
 	Ui.corner().Parent = frame
-	Ui.stroke(Theme.Color.brass, 1, 0.55).Parent = frame
 	return frame
 end
 
--- Grey-green card stock with a perforated edge along one side.
-function Ui.ticket(props: { [any]: any }): Frame
-	local frame = Ui.new("Frame", props)
+-- Aged card stock, burnt at the edges, with a perforated edge along one side.
+function Ui.ticket(props: { [any]: any }): ImageLabel
+	local frame = Ui.new("ImageLabel", props)
 	frame.BackgroundColor3 = props.BackgroundColor3 or Theme.Color.paper
 	frame.BorderSizePixel = 0
+	frame.Image = Theme.Image.card.id
+	frame.ScaleType = Enum.ScaleType.Slice
+	frame.SliceCenter = Theme.Image.card.slice
+	frame.SliceScale = props.SliceScale or Theme.Slice.card
 	Ui.corner(2).Parent = frame
+	Ui.new("ImageLabel", {
+		Name = "Grain",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Image = Theme.Image.paperGrain,
+		ScaleType = Enum.ScaleType.Tile,
+		TileSize = UDim2.fromOffset(160, 160),
+		ImageTransparency = 0.35,
+		ZIndex = frame.ZIndex,
+		Parent = frame,
+	})
 	local perforation = Ui.new("Frame", {
 		Name = "Perforation",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(0, 4, 1, -12),
-		Position = UDim2.fromOffset(10, 6),
+		Size = UDim2.new(0, 6, 1, -12),
+		Position = UDim2.fromOffset(9, 6),
 		ZIndex = (frame.ZIndex or 1) + 1,
 	})
-	Ui.list(Enum.FillDirection.Vertical, 5, Enum.HorizontalAlignment.Center).Parent = perforation
+	Ui.list(Enum.FillDirection.Vertical, 4, Enum.HorizontalAlignment.Center).Parent = perforation
 	for i = 1, 24 do
-		Ui.new("Frame", {
-			Size = UDim2.fromOffset(3, 3),
-			BackgroundColor3 = Theme.Color.paperShade,
-			BorderSizePixel = 0,
+		-- punched through: the soot behind the card shows in each hole
+		Ui.new("ImageLabel", {
+			Size = UDim2.fromOffset(5, 5),
+			BackgroundTransparency = 1,
+			Image = Theme.Image.punch,
+			ImageColor3 = Theme.Color.steel,
+			ImageTransparency = 0.15,
 			LayoutOrder = i,
+			ZIndex = perforation.ZIndex,
 			Parent = perforation,
 		})
 	end
@@ -189,7 +212,7 @@ export type ButtonStyle = "Primary" | "Secondary" | "Danger" | "Paper"
 local STYLES: { [string]: { bg: Color3, text: Color3, stroke: Color3 } } = {
 	Primary = { bg = Theme.Color.brass, text = Theme.Color.ink, stroke = Theme.Color.brassLight },
 	Secondary = { bg = Theme.Color.steelLight, text = Theme.Color.white, stroke = Theme.Color.steelLine },
-	Danger = { bg = Theme.Color.signal, text = Theme.Color.white, stroke = Theme.Color.signalDark },
+	Danger = { bg = Theme.Color.signalDark, text = Theme.Color.white, stroke = Theme.Color.signal },
 	Paper = { bg = Theme.Color.paper, text = Theme.Color.ink, stroke = Theme.Color.paperShade },
 }
 
@@ -253,6 +276,17 @@ function Ui.button(
 	})
 	Ui.corner(2).Parent = button
 	Ui.new("UIPadding", { PaddingBottom = UDim.new(0, KEEL - 1), Parent = button })
+	-- fired enamel: lit from the lamp above, darker toward the keel, a bright lip along the top
+	Ui.new("UIGradient", {
+		Rotation = 90,
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.08, Color3.fromRGB(236, 232, 226)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(205, 198, 190)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 140, 130)),
+		}),
+		Parent = button,
+	})
 	local stroke = Ui.stroke(s.stroke, 1, 0.35)
 	stroke.Parent = button
 	local keel = Ui.new("Frame", {
@@ -361,9 +395,10 @@ function Ui.meter(props: { [any]: any }): (Frame, (number, Color3?, boolean?) ->
 	options.FillColor = nil
 	local frame = Ui.new("Frame", options)
 	frame.BackgroundColor3 = Theme.Color.black
-	frame.BackgroundTransparency = 0.45
+	frame.BackgroundTransparency = 0.25
 	frame.BorderSizePixel = 0
 	Ui.corner(3).Parent = frame
+	Ui.stroke(Theme.Color.steelLine, 1, 0.2).Parent = frame -- the gauge's engraved channel
 	local fill = Ui.new("Frame", {
 		Name = "Fill",
 		Size = UDim2.fromScale(1, 1),
@@ -372,6 +407,16 @@ function Ui.meter(props: { [any]: any }): (Frame, (number, Color3?, boolean?) ->
 		Parent = frame,
 	})
 	Ui.corner(3).Parent = fill
+	-- a glass tube: bright along the top, sunk at the bottom
+	Ui.new("UIGradient", {
+		Rotation = 90,
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.35, Color3.fromRGB(220, 214, 206)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(110, 100, 92)),
+		}),
+		Parent = fill,
+	})
 	local function set(fraction: number, color: Color3?, instant: boolean?)
 		local size = UDim2.fromScale(math.clamp(fraction, 0, 1), 1)
 		if instant then

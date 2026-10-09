@@ -27,7 +27,7 @@ local card: Frame
 local cardTitle: TextLabel
 local cardLine: TextLabel
 local cardHope: TextLabel
-local bar: Frame
+local bar: ImageLabel
 local barLabel: TextLabel
 local targetIndex = 1
 

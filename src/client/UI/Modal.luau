@@ -16,7 +16,7 @@ local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
 export type Modal = {
-	frame: Frame,
+	frame: ImageLabel,
 	body: Frame,
 	header: Frame,
 	title: TextLabel,
