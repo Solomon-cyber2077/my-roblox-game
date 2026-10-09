@@ -26,6 +26,7 @@ local PORTRAIT = Vector2.new(184, 215)
 local GAP = 14
 local PLATE_H = 46
 local TAB = Vector2.new(140, 44)
+local TAB_CARD = Color3.fromRGB(164, 130, 88) -- tea-stained card, smoked
 local TEXT_SIZE = 20
 local TEXT_PAD = Vector2.new(22, 18)
 
@@ -192,7 +193,7 @@ function Dialogue.mount(gui: ScreenGui)
 		ZIndex = 37,
 	})
 
-	-- leave: a punched ticket tab; it lifts in the lamp on hover and presses down when clicked
+	-- leave: a plain ticket stub; it lifts in the lamp on hover and presses down when clicked
 	local tabGlow = layer({
 		Name = "TabGlow",
 		Size = UDim2.fromOffset(TAB.X + 40, TAB.Y + 40),
@@ -208,25 +209,28 @@ function Dialogue.mount(gui: ScreenGui)
 	local tab = Ui.new("ImageButton", {
 		Name = "Leave",
 		Size = UDim2.fromOffset(TAB.X, TAB.Y),
-		BackgroundTransparency = 1,
-		Image = Theme.Image.ticketTab.id,
+		BackgroundColor3 = TAB_CARD,
+		BackgroundTransparency = 0,
+		BorderSizePixel = 0,
+		Image = Theme.Image.card.id,
 		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Theme.Image.ticketTab.slice,
-		SliceScale = 0.55,
+		SliceCenter = Theme.Image.card.slice,
+		SliceScale = 0.25,
 		AutoButtonColor = false,
 		Selectable = true,
 		ZIndex = 35,
 		Parent = frame,
 	}) :: ImageButton
 	tab.SelectionImageObject = Ui.new("Frame", { BackgroundTransparency = 1 }) :: Frame -- the glow shows it
+	Ui.corner(2).Parent = tab
 	local tabText = Ui.text({
 		Text = "CLOSE",
 		Font = Theme.Font.display,
 		TextSize = 19,
 		Color = Theme.Color.inkDeep,
 		XAlign = Enum.TextXAlignment.Center,
-		Size = UDim2.new(1, -28, 1, 0),
-		Position = UDim2.fromOffset(6, 0),
+		Size = UDim2.new(1, -16, 1, 0),
+		Position = UDim2.fromOffset(8, 0),
 	})
 	tabText.ZIndex = 36
 	tabText.Parent = tab
@@ -234,7 +238,8 @@ function Dialogue.mount(gui: ScreenGui)
 	local function look()
 		Ui.tween(tabGlow, { ImageTransparency = if down then 0.75 elseif hot then 0.45 else 1 })
 		tab.ImageColor3 = if down then Color3.fromRGB(190, 175, 160) else Color3.new(1, 1, 1)
-		tabText.Position = UDim2.fromOffset(6, if down then 2 else 0)
+		tab.BackgroundColor3 = if down then TAB_CARD:Lerp(Color3.new(), 0.25) else TAB_CARD
+		tabText.Position = UDim2.fromOffset(8, if down then 2 else 0)
 	end
 	local function hover(on: boolean): () -> ()
 		return function()
