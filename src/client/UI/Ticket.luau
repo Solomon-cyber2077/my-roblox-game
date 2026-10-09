@@ -40,8 +40,8 @@ local WAX = Color3.fromRGB(146, 26, 30)
 local WAX_DARK = Color3.fromRGB(92, 14, 18)
 local HOLE = Color3.fromRGB(18, 16, 16)
 local SOOT = Color3.fromRGB(58, 52, 48)
-local LAMP = Color3.fromRGB(196, 222, 226) -- a mystery's lantern: a cold neutral, not a danger colour
-local LAMP_DIM = Color3.fromRGB(96, 112, 116)
+local LAMP = Color3.fromRGB(150, 36, 30) -- a mystery's lantern: lit by the blood moon, guttering
+local LAMP_DIM = Color3.fromRGB(64, 12, 12)
 
 local W, H = 224, 310
 local PAD = 14
@@ -134,14 +134,38 @@ local function stock(parent: Instance, size: UDim2, routeId: string, z: number):
 		Parent = parent,
 	})
 	Ui.corner(2).Parent = paper
-	Ui.stroke(INK_SOFT, 1, 0.65).Parent = paper
+	Ui.stroke(INK, 1, 0.5).Parent = paper
+	-- lamp-lit from above: the foot of the card falls into the carriage's shadow
 	Ui.new("UIGradient", {
 		Rotation = 80,
 		Color = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-			ColorSequenceKeypoint.new(0.6, Color3.fromRGB(240, 246, 246)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(214, 226, 228)),
+			ColorSequenceKeypoint.new(0.6, Color3.fromRGB(226, 218, 206)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(176, 160, 142)),
 		}),
+		Parent = paper,
+	})
+	-- smoke, foxing and a scorched rim, then fibre grain over the whole face
+	Ui.new("ImageLabel", {
+		Name = "Age",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Image = Theme.Image.card.id,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Theme.Image.card.slice,
+		SliceScale = Theme.Slice.card,
+		ZIndex = z,
+		Parent = paper,
+	})
+	Ui.new("ImageLabel", {
+		Name = "Grain",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Image = Theme.Image.paperGrain,
+		ScaleType = Enum.ScaleType.Tile,
+		TileSize = UDim2.fromOffset(150, 150),
+		ImageTransparency = 0.3,
+		ZIndex = z,
 		Parent = paper,
 	})
 	local nibs = 14
@@ -164,24 +188,26 @@ end
 
 -- The wax seal holding the danger number, its chalk tallies beside it.
 local function seal(parent: Instance, s: TicketModel.Seal, x: number, y: number, size: number, z: number)
-	local blob = Ui.new("Frame", {
+	-- poured wax (a Blender render: sheen, ragged rim, the company wheel pressed in), turned so
+	-- no two seals on the board sit alike
+	Ui.new("ImageLabel", {
 		Name = "Wax",
-		Size = UDim2.fromOffset(size + 4, size + 4),
+		Size = UDim2.fromOffset(math.floor(size * 1.45), math.floor(size * 1.45)),
 		Position = UDim2.fromOffset(x + size / 2, y + size / 2),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Rotation = 22,
-		BackgroundColor3 = WAX_DARK,
-		BorderSizePixel = 0,
+		Rotation = math.floor(TicketModel.hash(`{s.number}:{s.strokes}:wax`) * 360),
+		BackgroundTransparency = 1,
+		Image = Theme.Image.wax,
 		ZIndex = z,
 		Parent = parent,
 	})
-	Ui.corner(size // 3).Parent = blob
 	local disc = circle("Seal", size, WAX, parent, z + 1)
 	disc.Position = UDim2.fromOffset(x + size / 2, y + size / 2)
-	Ui.stroke(WAX_DARK, 2, 0.2).Parent = disc
-	local n = label(disc, tostring(s.number), HEAD, math.floor(size * 0.55), PAPER, z + 2)
+	disc.BackgroundTransparency = 1 -- the render is the seal; the disc only carries the number
+	local n = label(disc, tostring(s.number), HEAD, math.floor(size * 0.55), Theme.Color.white, z + 2)
 	n.Size = UDim2.fromScale(1, 1)
 	n.TextXAlignment = Enum.TextXAlignment.Center
+	Ui.stroke(WAX_DARK, 1.5, 0).Parent = n -- pressed into the wax, not printed on it
 	for i = 1, s.strokes do
 		Ui.new("Frame", {
 			Name = "Tally",
@@ -236,7 +262,7 @@ local function lantern(parent: Instance, x: number, y: number, size: number, z: 
 	local glass = circle("Lantern", size - 8, LAMP, parent, z + 1)
 	glass.Position = halo.Position
 	Ui.stroke(INK, 2, 0.1).Parent = glass
-	local q = label(glass, "?", HEAD, math.floor(size * 0.5), INK, z + 2)
+	local q = label(glass, "?", HEAD, math.floor(size * 0.5), Theme.Color.white, z + 2)
 	q.Size = UDim2.fromScale(1, 1)
 	q.TextXAlignment = Enum.TextXAlignment.Center
 	local flicker = TweenInfo.new(0.23, Enum.EasingStyle.Bounce, Enum.EasingDirection.InOut, -1, true)
@@ -311,7 +337,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	})
 	Ui.corner(2).Parent = shadow
 	local paper = stock(body, UDim2.fromScale(1, 1), opts.routeId, 2)
-	local selectedRim = Ui.stroke(Theme.Color.brass, 3, 1)
+	local selectedRim = Ui.stroke(Theme.Color.ember, 3, 1) -- your pick glows like a lamp wick
 	selectedRim.Name = "Selected"
 	selectedRim.Parent = paper
 
@@ -498,7 +524,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	end
 
 	-- The vote button and the fold-out flap that lays out the dossier
-	local button = Ui.button(opts.buttonText or "TAKE THIS LINE", "Paper", opts.onVote, {
+	local button = Ui.button(opts.buttonText or "TAKE THIS LINE", "Secondary", opts.onVote, {
 		Name = "Vote",
 		Size = UDim2.new(1, -PAD * 2 - HIT - 6, 0, HIT),
 		Position = UDim2.new(0, PAD, 1, -HIT - 10),
@@ -513,7 +539,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 		Size = UDim2.fromOffset(HIT, HIT),
 		Position = UDim2.new(1, -PAD, 1, -HIT - 10),
 		AnchorPoint = Vector2.new(1, 0),
-		BackgroundColor3 = PAPER_SHADE,
+		BackgroundColor3 = Theme.Color.leather,
 		AutoButtonColor = false,
 		Text = "",
 		Selectable = true,
@@ -522,7 +548,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	})
 	flap.SelectionImageObject = focusRing()
 	Ui.corner(2).Parent = flap
-	local flapRim = Ui.stroke(INK_SOFT, 1, 0.5)
+	local flapRim = Ui.stroke(Theme.Color.brass, 1, 0.5)
 	flapRim.Parent = flap
 	-- the dog-ear folded down in its corner
 	local fold = Ui.new("Frame", {
@@ -552,7 +578,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 			Position = UDim2.fromOffset(arm[1], 4),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Rotation = arm[2],
-			BackgroundColor3 = INK,
+			BackgroundColor3 = Theme.Color.brassLight,
 			BorderSizePixel = 0,
 			ZIndex = 7,
 			Parent = chevron,
@@ -579,11 +605,11 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 		setSelected = function(selected: boolean, text: string)
 			selectedRim.Transparency = if selected then 0 else 1
 			button.Text = text
-			button.BackgroundColor3 = if selected then Theme.Color.brass else PAPER
+			Ui.setButtonStyle(button, if selected then "Primary" else "Secondary")
 		end,
 		setFlap = function(open: boolean)
 			chevron.Rotation = if open then 180 else 0
-			flap.BackgroundColor3 = if open then PAPER else PAPER_SHADE
+			flap.BackgroundColor3 = if open then Theme.Color.signalDark else Theme.Color.leather
 		end,
 		setDial = function(sweep: number, n: number?)
 			spindle.Rotation = sweep * 360

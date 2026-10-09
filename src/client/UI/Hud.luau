@@ -265,6 +265,19 @@ function Hud.mount(gui: ScreenGui)
 	Ui.corner(WATCH // 2).Parent = case
 	local caseStroke = Ui.stroke(BRASS_DARK, 2, 0)
 	caseStroke.Parent = case
+	-- the rendered knurled bezel stands in for the flat brass disc; the dial covers its inner half
+	case.BackgroundTransparency = 1
+	caseStroke.Transparency = 1
+	Ui.new("ImageLabel", {
+		Name = "Bezel",
+		Size = UDim2.fromScale(1.2, 1.2),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		BackgroundTransparency = 1,
+		Image = Theme.Image.bezel,
+		ZIndex = 0,
+		Parent = case,
+	})
 	local watchScale = Ui.new("UIScale", { Parent = case })
 	-- the bow and crown it hangs from
 	local bow = Ui.new("Frame", {
@@ -697,16 +710,21 @@ function Hud.mount(gui: ScreenGui)
 		local capacity = state.capacity or Tuning.Crew.BackpackSlots
 		backpack.Size = UDim2.fromOffset(capacity * CELL + (capacity - 1) * GAP, CELL)
 		for i = 1, capacity do
-			local cell = Ui.new("Frame", {
+			-- an empty slot: a sunken soot well in a blackened-brass bezel
+			local cell = Ui.new("ImageLabel", {
 				Name = "Cell",
 				Size = UDim2.fromOffset(CELL, CELL),
 				Position = UDim2.fromOffset((i - 1) * (CELL + GAP), 0),
 				BackgroundColor3 = Theme.Color.steel,
-				BackgroundTransparency = 0.35,
+				BackgroundTransparency = 0.2,
+				Image = Theme.Image.panel.id,
+				ScaleType = Enum.ScaleType.Slice,
+				SliceCenter = Theme.Image.panel.slice,
+				SliceScale = 0.16,
+				ImageTransparency = 0.1,
 				Parent = backpack,
 			})
 			Ui.corner(2).Parent = cell
-			Ui.stroke(Theme.Color.steelLine, 1, 0.3).Parent = cell
 		end
 		local cursor = 0
 		local heavy = 0
@@ -1010,8 +1028,10 @@ function Hud.mount(gui: ScreenGui)
 			tickHand.Rotation = (second % 60) * 6 + 2 * twitch
 		end
 		local glow = if ticking then 0.5 + 0.5 * math.sin(now * 2) else 0
-		caseStroke.Color = BRASS_DARK:Lerp(Theme.Color.caution, glow)
-		caseStroke.Thickness = 2 + glow
+		-- the last seconds: the rim burns ember, then moon red once the count is out loud
+		caseStroke.Color = Theme.Color.ember:Lerp(Theme.Color.signal, if warn == "escalated" then 1 else 0)
+		caseStroke.Thickness = 2 + 2 * glow
+		caseStroke.Transparency = 1 - glow
 		local escalated = warn == "escalated"
 		tickCount.Visible = escalated
 		aperture.Visible = not escalated
