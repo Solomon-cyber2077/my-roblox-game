@@ -41,6 +41,19 @@ PIECES = {
     "TrimN": ("Trim", "{car}_N", False),
     "FittingsP": (None, "{car}_P", True),
     "FittingsN": (None, "{car}_N", True),
+    # round 3: roof and end loads (Workshop, Stores), split by side like the shell
+    "Crate": (None, "{car}", True),
+    "CrateP": (None, "{car}_P", True),
+    "CrateN": (None, "{car}_N", True),
+    "Tarp": (None, "{car}", True),
+    "TarpP": (None, "{car}_P", True),
+    "TarpN": (None, "{car}_N", True),
+    # the Guard's Van's red tail lenses: unbaked, like the Lens
+    "Tail": ("Lamp", None, False),
+    # car-specific heavy door leaves (Workshop, Stores), painted in the platform side's atlas;
+    # a car that has them uses these instead of the kit's leaves
+    "DoorLeafL": ("Accent", "{car}_P", True),
+    "DoorLeafR": ("Accent", "{car}_P", True),
 }
 # per piece: the door lamps' light lives on the Lens; the window veil is mostly see-through
 EXTRA = {"Lens": {"light": "true"}, "Haze": {"transparency": "0.86"}}

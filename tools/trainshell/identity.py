@@ -370,7 +370,7 @@ def Stores(spec, P, C):
     crate_box(crate, fit, (ra + 2.3, C.roof_y(4.0), 3.2), (ra + 3.4, C.roof_y(4.0) + 0.9, 5.4))
     crate_box(crate, fit, (ra + 2.45, C.roof_y(4.0) + 0.9, 3.5), (ra + 3.25, C.roof_y(4.0) + 1.45, 4.6))
     for x in (ra + 0.2, ra + 2.1, ra + 3.6):
-        crate.box_between((x - 0.1, C.roof_y(5.9) - 0.05, 3.0), (x + 0.1, C.roof_y(5.9) + 0.2, 5.9))
+        crate.box_between((x - 0.1, C.roof_y(5.9) - 0.05, 3.0), (x + 0.1, C.roof_y(5.9) + 0.2, 5.85))  # inside 5.9, or split_sides takes the end caps
     for z in (3.8, 5.0):
         lashing(crate, [(ra, C.roof_y(z), z), (ra + 0.4, C.roof_y(z) + 0.86, z), (ra + 2.3, C.roof_y(z) + 0.95, z), (ra + 3.5, C.roof_y(z) + 1.0, z), (ra + 3.8, C.roof_y(z), z)], 0.04)
     # stencils (canvas.py paints them in the stencil layer; the far side's read mirrored)
