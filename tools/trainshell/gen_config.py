@@ -56,7 +56,7 @@ PIECES = {
     "DoorLeafR": ("Accent", "{car}_P", True),
 }
 # per piece: the door lamps' light lives on the Lens; the window veil is mostly see-through
-EXTRA = {"Lens": {"light": "true"}, "Haze": {"transparency": "0.86"}}
+EXTRA = {"Lens": {"light": "true"}, "Haze": {"transparency": "0.86"}, "Tail": {"color": "{ 0.78, 0.07, 0.04 }"}}
 KIT = {
     "DoorLeafL": ((0, 0, 0), "Accent"),
     "DoorLeafR": ((0, 0, 0), "Accent"),
@@ -91,6 +91,7 @@ lines = [
     "\tshadow: boolean,",
     "\tlight: boolean?,",
     "\ttransparency: number?,",
+    "\tcolor: { number }?,",
     "}",
     "",
     "export type KitPiece = {",
