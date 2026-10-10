@@ -1,5 +1,18 @@
 # HANDOFF
 
+## 2026-10-10: Recovery check, train exterior round 3 cars built (Workshop, Guard's Van, Last Train Out, Stores)
+1. Completed:
+   - Recovery: every committed lobby change from the last days is on HEAD (`LobbyBuilder`, `UI/Lobby`, `Sky`, `PianoNotes`, `LobbyService` unchanged since 0f43aa9); the Astra merge a3563a1 had no conflict resolutions; both codex branches are contained in HEAD. The rear lobby lamps are 9118e1c. The lobby's changed look is the new train shell (round 2, `docs/train-exterior/round2/before_after_lobby.jpg`).
+   - Dropped by the user: the Roblox Assistant piano/lamp edits. They were not in the autosave (10-09), `astra.rbxl` (10-08), `OneDrive/Documents/Roblox.rbxl` (10-07) or the open place. **Studio-only edits are never saved by Rojo** (it syncs disk -> Studio only and overwrites synced scripts); put changes in files.
+   - Pipeline fixes: `build_car2.py` bakes identity.py's Crate and Tarp pieces (side-split like Fittings) and joins each car's door leaves with their iron/brass (`spec.leafJoins`) into the platform-side atlas (before, they rendered untextured white). `build_car.measure` derives `rearDeck` from the dump: the WoodPlanks slab behind a rear wall ending at it, the Guard's van veranda (-96 to -90) gives -96, matching the posts, tail rail and lamps.
+   - Built and committed (previews checked, `lune run check` passing each time): Workshop a7a428a, Guard's Van 6047405, Last Train Out 9ba88fa, Stores 5a6bed1.
+2. Known / open:
+   - `canvas.py` does not paint `feat.crests`, `feat.stencils` or `feat.scorch` yet: Last Train Out's crest and double gilt lining, Stores' stencilled lettering and Workshop's stovepipe/tool scorch are missing. The crest panel (kind "crest") gets no lining either.
+   - The four new cars are not uploaded (no ids in `asset_ids.json`) and not wired in `Config/TrainShell` (`gen_config.py`); the runtime places only the kit's DoorLeafL/R, not car-specific leaves (`leafAnchors`).
+   - Not viewed in Studio: Crew Saloon round 3 FBX (80611a8), Workshop, Guard's Van, Last Train Out, Stores.
+   - Guard's Van `far` preview crops the longer car (camera framing only).
+3. Next: paint crests/stencils/scorch in `canvas.py` and rebake those three cars; then upload, run `gen_config.py`, place car-specific leaves in `TrainShell`, and check every car in Studio.
+
 ## 2026-10-10: Train exterior round 2, Crew Saloon rebuilt at the new bar, awaiting sign-off
 1. Completed:
    - Found why round 1 looked soft: Roblox serves SurfaceAppearance maps at 1024 whatever is uploaded (a 4096 upload comes back 1024), so the whole car had one effective 1024 map (~10 texels/stud). Each side now has its own 1024 atlas (`CrewSaloon_P`, `_N`: ~47 texels/stud on side-facing surfaces, ~25 on moulding returns) plus `CrewSaloon` for ends, roof, underframe and gangway. Door leaves have their own `Doors` atlas.
