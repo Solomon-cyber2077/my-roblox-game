@@ -106,7 +106,9 @@ def main():
     names = [p.name for p in pieces]
     shell_family = [n for n in names if n.startswith((f"{car}_skin", f"{car}_end", f"{car}_mon"))]
     fittings = [f"{car}_Brass", f"{car}_Teak", f"{car}_Velvet", f"{car}_Bellows"]
-    objs = kit.assemble(col, pieces, {f"{car}_Shell": shell_family, f"{car}_Fittings": fittings})
+    joins = {f"{car}_Shell": shell_family, f"{car}_Fittings": fittings}
+    joins.update(spec.get("leafJoins", {}))  # identity.py's heavy door leaves take their iron and brass
+    objs = kit.assemble(col, pieces, joins)
     for ob in list(col.objects):
         if ob.type == "MESH" and not ob.data.polygons:
             bpy.data.objects.remove(ob)  # the empty Sign base would steal the Sign name
@@ -128,7 +130,7 @@ def main():
         objs.pop(f"{car}_Sign", None)
         objs[f"{car}_Sign"] = main_ob
     spec["signRects"] = rects
-    for base in ("Shell", "Trim", "Fittings"):
+    for base in ("Shell", "Trim", "Fittings", "Crate", "Tarp"):
         ob = objs.get(f"{car}_{base}")
         if ob is None:
             continue
@@ -139,6 +141,9 @@ def main():
             bpy.data.objects.remove(ob)
     if f"{car}_Roof" in objs:
         objs[f"{car}_Roof"]["atlas"] = car
+    for leaf in spec.get("leafJoins", {}):
+        if leaf in objs:
+            objs[leaf]["atlas"] = f"{car}_P"  # painted in the platform side's atlas
     meta = {"car": car, "spec": {k: v for k, v in spec.items() if not k.startswith("_")}, "parts": kit.describe(objs)}
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, f"{car}.blend"))
     json.dump(meta, open(os.path.join(out, f"{car}.json"), "w"), indent=1)
