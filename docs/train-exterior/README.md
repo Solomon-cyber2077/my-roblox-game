@@ -8,9 +8,19 @@ the old look. Read `INVENTORY.md` (what exists and what touches it) and `DESIGN_
 ## Making or changing a car
 
 ```
-python tools/trainshell/pipeline.py Kit           # shared door leaves, bogie, wheel (1024 atlas)
-python tools/trainshell/pipeline.py CrewSaloon    # a car: model, sign, bake 2048 atlas, FBX, previews
+python tools/trainshell/pipeline.py Kit           # door leaves (Doors atlas), bogie and wheel (Kit atlas)
+python tools/trainshell/pipeline.py CrewSaloon    # a car: model, signs, wear canvases, 3 atlases, FBX, previews
 ```
+
+Round 2 (the default; `--v1` runs round 1): `carriage2.py` carves the panels into a thick skin
+(the side wall primitives hide behind it at runtime, `hideWalls`), adds mouldings, pilasters,
+corbels, dentils, glazing, curtains, plates, hardware, buffers, coupling and the gangway in front of
+the car, and records the causes of wear (`spec.feat`). `canvas.py` paints each side's wear at those
+causes; `bake2.py` bakes three 1024 atlases per car: `<car>_P` and `<car>_N` (one per side, ~50
+texels per stud) and `<car>` (ends, roof, underframe, gangway). Roblox serves SurfaceAppearance maps
+at 1024 whatever is uploaded, so detail comes from splitting atlases, not from bigger images.
+`make_sign2.py` paints the boards and cast plates with a normal map. Pieces per car: Shell/Trim/
+Fittings (+P/N per side), Roof, Lens (the door light), Glow (fanlights), Haze (window veil), Sign.
 
 Needs Lune, Blender 5.2 and Python with NumPy and Pillow. Outputs land in `assets/train/`;
 previews in `docs/train-exterior/preview/`. The car is measured from the primitive train

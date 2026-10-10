@@ -6,10 +6,21 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://138043438629601",
-    "NormalMap": "rbxassetid://117662857134062",
-    "RoughnessMap": "rbxassetid://123920149931631",
-    "MetalnessMap": "rbxassetid://73072115300001"
+    "ColorMap": "rbxassetid://76499338619371",
+    "NormalMap": "rbxassetid://97671229285692",
+    "RoughnessMap": "rbxassetid://108893311021146",
+    "MetalnessMap": "rbxassetid://72270018790912"
+   }
+  },
+  {
+   "name": "Doors",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://92765813921324",
+    "NormalMap": "rbxassetid://106803118905302",
+    "RoughnessMap": "rbxassetid://108954363827875",
+    "MetalnessMap": "rbxassetid://132157292606140"
    }
   },
   {
@@ -17,10 +28,32 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://118855689022511",
-    "NormalMap": "rbxassetid://105871895068073",
-    "RoughnessMap": "rbxassetid://138802394989886",
-    "MetalnessMap": "rbxassetid://98720665663404"
+    "ColorMap": "rbxassetid://105812809692306",
+    "NormalMap": "rbxassetid://101081674806205",
+    "RoughnessMap": "rbxassetid://98630812145910",
+    "MetalnessMap": "rbxassetid://110503780845882"
+   }
+  },
+  {
+   "name": "CrewSaloon_P",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://118732721616026",
+    "NormalMap": "rbxassetid://132926262485156",
+    "RoughnessMap": "rbxassetid://132950707275148",
+    "MetalnessMap": "rbxassetid://105441094551460"
+   }
+  },
+  {
+   "name": "CrewSaloon_N",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://85612979271170",
+    "NormalMap": "rbxassetid://73658619446240",
+    "RoughnessMap": "rbxassetid://101695475581210",
+    "MetalnessMap": "rbxassetid://128291390334903"
    }
   },
   {
@@ -28,7 +61,8 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://112244286608414"
+    "ColorMap": "rbxassetid://136636009362926",
+    "NormalMap": "rbxassetid://106367549348027"
    }
   }
  ]

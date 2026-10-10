@@ -20,7 +20,12 @@ os.makedirs(out, exist_ok=True)
 bpy.ops.wm.read_factory_settings(use_empty=True)
 col = bpy.data.collections.new("Kit")
 bpy.context.scene.collection.children.link(col)
-pieces = kitparts.door_leaf("DoorLeafL", 1) + kitparts.door_leaf("DoorLeafR", -1) + kitparts.bogie("Bogie") + kitparts.wheel("Wheel")
+V2 = "--v1" not in sys.argv
+if V2:
+    # round 2: framed and braced leaves with hinges and flush pulls; a lighter bogie
+    pieces = kitparts.door_leaf2("DoorLeafL", 1) + kitparts.door_leaf2("DoorLeafR", -1) + kitparts.bogie2("Bogie") + kitparts.wheel("Wheel")
+else:
+    pieces = kitparts.door_leaf("DoorLeafL", 1) + kitparts.door_leaf("DoorLeafR", -1) + kitparts.bogie("Bogie") + kitparts.wheel("Wheel")
 objs = kit.assemble(
     col,
     pieces,
@@ -30,6 +35,9 @@ objs = kit.assemble(
         "Wheel": ["Wheel_teak"],
     },
 )
+# the leaves get an atlas of their own (a SurfaceAppearance map is capped at 1024)
+for key, ob in objs.items():
+    ob["atlas"] = "Doors" if V2 and key.startswith("DoorLeaf") else "Kit"
 meta = {"car": "Kit", "parts": kit.describe(objs)}
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, "Kit.blend"))
 json.dump(meta, open(os.path.join(out, "Kit.json"), "w"), indent=1)

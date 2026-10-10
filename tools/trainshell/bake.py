@@ -38,7 +38,8 @@ scene.cycles.samples = 1
 scene.render.bake.margin = 6
 scene.render.bake.use_clear = True
 
-targets = [ob for ob in bpy.data.objects if ob.type == "MESH" and not ob.hide_render and ob.get("material") not in ("Lamp", "Sign")]
+targets = [ob for ob in bpy.data.objects if ob.type == "MESH" and not ob.hide_render and ob.get("material") not in ("Lamp", "Sign")
+           and ob.get("atlas", ATLAS) == ATLAS]
 print("BAKE", ATLAS, [ob.name for ob in targets])
 
 # -- UVs: one shared atlas, equal texel density ------------------------------------------

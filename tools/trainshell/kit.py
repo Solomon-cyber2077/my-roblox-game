@@ -179,6 +179,15 @@ class Piece:
             mod.operation = "DIFFERENCE"
             mod.solver = "EXACT"
             mod.object = cutter
+        after = getattr(self, "bevel_after", None)
+        if after:
+            # chamfer the edges the cuts made (recess lips catch the lamp light)
+            width, segs, angle = after
+            mod = ob.modifiers.new("BevelCuts", "BEVEL")
+            mod.width = width
+            mod.segments = segs
+            mod.limit_method = "ANGLE"
+            mod.angle_limit = math.radians(angle)
         return ob
 
 

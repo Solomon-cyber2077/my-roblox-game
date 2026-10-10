@@ -1,134 +1,324 @@
 {
  "creator": "user 11744048795",
  "meshes": {
-  "Bogie": {
-   "id": 99759056175489,
+  "CrewSaloon_Fittings": {
+   "id": 102717224646466,
    "center": [
-    0,
+    -31.6,
+    2.4,
+    0.0
+   ],
+   "size": [
+    22.88,
+    12.4,
+    13.16
+   ],
+   "tris": 3492
+  },
+  "CrewSaloon_FittingsN": {
+   "id": 81169123431225,
+   "center": [
+    -32.25,
+    4.02,
+    -6.475
+   ],
+   "size": [
+    19.42,
+    11.14,
+    0.75
+   ],
+   "tris": 3794
+  },
+  "CrewSaloon_FittingsP": {
+   "id": 139248218573925,
+   "center": [
+    -32.25,
+    4.02,
+    6.415
+   ],
+   "size": [
+    19.42,
+    11.14,
+    1.03
+   ],
+   "tris": 2902
+  },
+  "CrewSaloon_Glow": {
+   "id": 132499869577682,
+   "center": [
+    -32.25,
+    6.555,
+    0.0
+   ],
+   "size": [
+    13.76,
+    0.65,
+    12.69
+   ],
+   "tris": 160
+  },
+  "CrewSaloon_Haze": {
+   "id": 110347656674929,
+   "center": [
+    -32.25,
+    4.845,
+    0.0
+   ],
+   "size": [
+    13.76,
+    2.45,
+    12.68
+   ],
+   "tris": 48
+  },
+  "CrewSaloon_Lens": {
+   "id": 74614283917238,
+   "center": [
+    -36.25,
+    8.2,
+    6.7425
+   ],
+   "size": [
+    0.48,
+    0.52,
+    0.205
+   ],
+   "tris": 12
+  },
+  "CrewSaloon_Roof": {
+   "id": 79089634597558,
+   "center": [
+    -32.25,
+    10.49,
+    0.0
+   ],
+   "size": [
+    19.1,
+    1.86,
+    13.84
+   ],
+   "tris": 2900
+  },
+  "CrewSaloon_Shell": {
+   "id": 81340983640413,
+   "center": [
+    -32.25,
+    5.55,
+    0.0
+   ],
+   "size": [
+    19.04,
+    11.14,
+    13.136
+   ],
+   "tris": 1512
+  },
+  "CrewSaloon_ShellN": {
+   "id": 118170711788587,
+   "center": [
+    -32.25,
+    4.85,
+    -6.384
+   ],
+   "size": [
+    19.04,
+    9.74,
+    0.992
+   ],
+   "tris": 5144
+  },
+  "CrewSaloon_ShellP": {
+   "id": 138084250899987,
+   "center": [
+    -32.25,
+    4.68,
+    6.384
+   ],
+   "size": [
+    19.04,
+    10.08,
+    0.992
+   ],
+   "tris": 3436
+  },
+  "CrewSaloon_Sign": {
+   "id": 119892004419610,
+   "center": [
+    -32.085,
+    3.79,
+    0.0
+   ],
+   "size": [
+    16.27,
+    9.18,
+    13.42
+   ],
+   "tris": 232
+  },
+  "CrewSaloon_Trim": {
+   "id": 82501001954359,
+   "center": [
+    -32.25,
+    5.8275,
+    0.0
+   ],
+   "size": [
+    18.832,
+    10.205,
+    11.35
+   ],
+   "tris": 528
+  },
+  "CrewSaloon_TrimN": {
+   "id": 128695274456393,
+   "center": [
+    -32.25,
+    4.7925,
+    -6.605
+   ],
+   "size": [
+    18.7,
+    8.455,
+    0.33
+   ],
+   "tris": 1234
+  },
+  "CrewSaloon_TrimP": {
+   "id": 84710784232871,
+   "center": [
+    -32.25,
+    4.4,
+    6.605
+   ],
+   "size": [
+    18.7,
+    9.24,
+    0.33
+   ],
+   "tris": 878
+  },
+  "Bogie": {
+   "id": 83482060285743,
+   "center": [
+    0.0,
     -3.145,
-    0
+    0.0
    ],
    "size": [
     7.2,
     1.91,
     13.36
-   ]
+   ],
+   "tris": 610
   },
   "DoorLeafL": {
-   "id": 111563819245135,
+   "id": 122705056149935,
    "center": [
-    0,
-    0,
-    0.09
+    0.0,
+    0.0,
+    0.065
    ],
    "size": [
-    2.84,
-    7.54,
-    0.34
-   ]
+    2.8,
+    7.5,
+    0.29
+   ],
+   "tris": 466
   },
   "DoorLeafR": {
-   "id": 121727413917599,
+   "id": 91512285719500,
    "center": [
-    0,
-    0,
-    0.09
+    0.0,
+    0.0,
+    0.065
    ],
    "size": [
-    2.84,
-    7.54,
-    0.34
-   ]
+    2.8,
+    7.5,
+    0.29
+   ],
+   "tris": 466
   },
   "Wheel": {
-   "id": 107708080038907,
+   "id": 118639491061532,
    "center": [
-    0,
-    0,
-    0
+    0.0,
+    0.0,
+    0.0
    ],
    "size": [
     0.84,
     3.48,
     3.48
-   ]
-  },
-  "CrewSaloon_Shell": {
-   "id": 140095278909664,
-   "center": [
-    -32.25,
-    3.66,
-    0.075
    ],
-   "size": [
-    19.16,
-    14.92,
-    13.83
-   ]
-  },
-  "CrewSaloon_Trim": {
-   "id": 114718527433832,
-   "center": [
-    -32.25,
-    5.37,
-    0
-   ],
-   "size": [
-    18.736,
-    11.12,
-    13.416
-   ]
-  },
-  "CrewSaloon_Roof": {
-   "id": 76945032214839,
-   "center": [
-    -32.25,
-    10.53,
-    0
-   ],
-   "size": [
-    19.1,
-    1.78,
-    13.84
-   ]
-  },
-  "CrewSaloon_Lens": {
-   "id": 76841430167272,
-   "center": [
-    -36.25,
-    8.155,
-    6.81
-   ],
-   "size": [
-    0.48,
-    0.41,
-    0.06
-   ]
-  },
-  "CrewSaloon_Sign": {
-   "id": 85934571408240,
-   "center": [
-    -31.275,
-    8.21,
-    0
-   ],
-   "size": [
-    14.95,
-    0.82,
-    13.3
-   ]
+   "tris": 552
   }
  },
  "images": {
-  "Kit_color": 138043438629601,
-  "Kit_normal": 117662857134062,
-  "Kit_rough": 123920149931631,
-  "Kit_metal": 73072115300001,
-  "CrewSaloon_color": 118855689022511,
-  "CrewSaloon_normal": 105871895068073,
-  "CrewSaloon_rough": 138802394989886,
-  "CrewSaloon_metal": 98720665663404,
-  "CrewSaloon_sign": 112244286608414
+  "Kit_color": 76499338619371,
+  "Kit_normal": 97671229285692,
+  "Kit_rough": 108893311021146,
+  "Kit_metal": 72270018790912,
+  "CrewSaloon_color": 105812809692306,
+  "CrewSaloon_normal": 101081674806205,
+  "CrewSaloon_rough": 98630812145910,
+  "CrewSaloon_metal": 110503780845882,
+  "CrewSaloon_sign": 136636009362926,
+  "CrewSaloon_signnormal": 106367549348027,
+  "CrewSaloon_P_normal": 132926262485156,
+  "CrewSaloon_P_color": 118732721616026,
+  "CrewSaloon_P_metal": 105441094551460,
+  "CrewSaloon_P_rough": 132950707275148,
+  "CrewSaloon_N_normal": 73658619446240,
+  "CrewSaloon_N_color": 85612979271170,
+  "CrewSaloon_N_rough": 101695475581210,
+  "CrewSaloon_N_metal": 128291390334903,
+  "Doors_color": 92765813921324,
+  "Doors_rough": 108954363827875,
+  "Doors_metal": 132157292606140,
+  "Doors_normal": 106803118905302
  },
- "superseded_uploads": "Meshes: Kit and CrewSaloon were uploaded twice before the axis fix (turned 180 degrees). Images: Kit_color 140200912052062 and CrewSaloon_color 73117788416675 (first wear pass, too dark). None are used."
+ "unused": {
+  "note": "Uploaded under user 11744048795 and no longer referenced by the game.",
+  "round1_superseded": "Meshes: Kit and CrewSaloon were uploaded twice before the axis fix (turned 180 degrees). Images: Kit_color 140200912052062 and CrewSaloon_color 73117788416675 (first wear pass, too dark). None are used.",
+  "round1_crew_saloon_meshes": {
+   "CrewSaloon_Shell": 140095278909664,
+   "CrewSaloon_Trim": 114718527433832,
+   "CrewSaloon_Roof": 76945032214839,
+   "CrewSaloon_Lens": 76841430167272,
+   "CrewSaloon_Sign": 85934571408240
+  },
+  "round1_crew_saloon_images": {
+   "CrewSaloon_color": 118855689022511,
+   "CrewSaloon_normal": 105871895068073,
+   "CrewSaloon_rough": 138802394989886,
+   "CrewSaloon_metal": 98720665663404,
+   "CrewSaloon_sign": 112244286608414
+  },
+  "round1_unused_images": {
+   "Kit_color_first": 140200912052062,
+   "CrewSaloon_color_first": 73117788416675
+  },
+  "round2_superseded_meshes": {
+   "Bogie": 99759056175489,
+   "DoorLeafL": 111563819245135,
+   "DoorLeafR": 121727413917599,
+   "Wheel": 107708080038907,
+   "CrewSaloon_Fittings": 95977122323270,
+   "CrewSaloon_Roof": 79444072052204,
+   "CrewSaloon_Shell": 110689214322897,
+   "CrewSaloon_Trim": 127768859823666
+  },
+  "round2_superseded_images": {
+   "Kit_color": 138043438629601,
+   "Kit_normal": 117662857134062,
+   "Kit_rough": 123920149931631,
+   "Kit_metal": 73072115300001,
+   "CrewSaloon_color": 132647647992863,
+   "CrewSaloon_normal": 118285815998327,
+   "CrewSaloon_rough": 109164744265879,
+   "CrewSaloon_metal": 97726586684091
+  },
+  "round2_note": "Round 2 first uploaded the Saloon with one 4096 atlas; Roblox serves SurfaceAppearance maps at 1024, so it was re-cut into per-side atlases. Kit (round 1 leaves, bogie, wheel) replaced by kit v2."
+ }
 }

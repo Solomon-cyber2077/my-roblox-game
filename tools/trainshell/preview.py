@@ -29,8 +29,13 @@ def srgb(c):
     return (f(c[0]), f(c[1]), f(c[2]), 1)
 
 
+KITDIR = os.path.dirname(args[4]) if len(args) > 5 else MAPS
+
+
 def load(name, colorspace):
     path = os.path.join(MAPS, f"{name}.png")
+    if not os.path.exists(path):
+        path = os.path.join(KITDIR, f"{name}.png")
     img = bpy.data.images.load(path, check_existing=True)
     img.colorspace_settings.name = colorspace
     return img
@@ -45,6 +50,12 @@ def dress(ob, atlas):
         bsdf = nt.nodes["Principled BSDF"]
         bsdf.inputs["Emission Color"].default_value = srgb((255, 196, 120))
         bsdf.inputs["Emission Strength"].default_value = 12
+        if ob.name.endswith("_Glow"):
+            bsdf.inputs["Emission Strength"].default_value = 4
+        if ob.name.endswith("_Haze"):
+            # the warm veil: mostly see-through (Neon at Transparency ~0.85 in Roblox)
+            bsdf.inputs["Emission Strength"].default_value = 0.6
+            bsdf.inputs["Alpha"].default_value = 0.15
         ob.data.materials.clear()
         ob.data.materials.append(mat)
         return
@@ -53,9 +64,15 @@ def dress(ob, atlas):
         mat.use_nodes = True
         nt = mat.node_tree
         t = nt.nodes.new("ShaderNodeTexImage")
-        t.image = load(f"{atlas}_sign", "sRGB")
+        t.image = load(f"{ATLAS}_sign", "sRGB")
         nt.links.new(t.outputs["Color"], nt.nodes["Principled BSDF"].inputs["Base Color"])
         nt.nodes["Principled BSDF"].inputs["Roughness"].default_value = 0.4
+        if os.path.exists(os.path.join(MAPS, f"{ATLAS}_signnormal.png")):
+            n = nt.nodes.new("ShaderNodeTexImage")
+            n.image = load(f"{ATLAS}_signnormal", "Non-Color")
+            nm = nt.nodes.new("ShaderNodeNormalMap")
+            nt.links.new(n.outputs["Color"], nm.inputs["Color"])
+            nt.links.new(nm.outputs["Normal"], nt.nodes["Principled BSDF"].inputs["Normal"])
         ob.data.materials.clear()
         ob.data.materials.append(mat)
         return
@@ -87,7 +104,7 @@ def dress(ob, atlas):
 
 for ob in bpy.data.objects:
     if ob.type == "MESH" and not ob.hide_render:
-        dress(ob, ATLAS)
+        dress(ob, ob.get("atlas") or ATLAS)
 
 if len(args) > 5:
     kit_blend, kit_atlas = args[4], args[5]
@@ -95,12 +112,12 @@ if len(args) > 5:
         dst.objects = list(src.objects)
     kit = {ob.name: ob for ob in dst.objects if ob and ob.type == "MESH"}
     for ob in kit.values():
-        dress(ob, kit_atlas)
+        dress(ob, ob.get("atlas") or kit_atlas)
     # place them as the runtime will (train space -> Blender: x, -z, y)
     import json
 
     car = json.load(open(os.path.join(MAPS, f"{ATLAS}.json")))
-    kmeta = {p["name"]: p for p in json.load(open(os.path.join(MAPS, "Kit.json")))["parts"]}
+    kmeta = {p["name"]: p for p in json.load(open(os.path.join(KITDIR, "Kit.json")))["parts"]}
     spec = car["spec"]
     x0, x1 = spec["x0"], spec["x1"]
     inset = 6.5 if x1 - x0 >= 24 else 4.5
@@ -180,9 +197,14 @@ views = {
     "far": Vector((cx - 14, 26, 6)),
     "roof": Vector((cx + 14, -16, 22)),
     "low": Vector((cx + 9, -12, -2.5)),
+    # the acceptance shot: on the platform 5-6 studs from the side at eye height (Roblox FOV 70)
+    "platform": Vector((cx + 4.5, -12.4, 4.6)),
+    "closeup": Vector((cx + 1.5, -10.6, 4.4)),
 }
+if VIEW in ("platform", "closeup"):
+    target = Vector((cx + (3.0 if VIEW == "platform" else 3.6), 0, 4.0 if VIEW == "platform" else 4.6))
 cam.location = views[VIEW]
-cam_data.lens = 35
+cam_data.lens = 15 if VIEW in ("platform",) else 22 if VIEW == "closeup" else 35
 cam.rotation_mode = "QUATERNION"
 cam.rotation_quaternion = (target - cam.location).to_track_quat("-Z", "Y")
 scene.render.filepath = OUT
