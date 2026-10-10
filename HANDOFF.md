@@ -1,5 +1,13 @@
 # HANDOFF
 
+**Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
+
+## 2026-10-10: Train exterior round 3: Studio check, painted details, upload
+1. Step 1, Studio check:
+   - Why nothing new showed in Studio: Rojo 7.7.0 serves this folder (branch `claude/last-train-out`) and Studio ("Untitled Experience", place 140367160674731) is synced (`Config/TrainShell` and `Builders/TrainShell` match disk byte for byte). But only the Crew Saloon's round-2 uploads are in `asset_ids.json` / `Config/TrainShell`; the round-3 Saloon rebake and the four new cars exist only as local FBX/PNG files, which Studio cannot see until they are uploaded.
+   - Viewed without uploading: a scratch primitive train built in edit mode (`TrainBuilder.build` at y 300, z 3000) with every car's meshes streamed from a local server into EditableMeshes and 512 colour maps into EditableImages (HttpEnabled on only for that, then restored). All removed afterwards.
+   - Per car: **Crew Saloon** (round 3): sits exactly on the primitive car, both sides and gangways line up; nothing broken. **Workshop**: scale and placement right, roof crate and tarp sit on the roof; its own door leaves fit the opening (the colour map is an overlay: they take the Accent livery green, so they look white with no livery). **Guard's Van**: veranda, cupola and tail all on the primitive; nothing broken. **Last Train Out**: fits; crest and double lining missing (step 2). **Stores**: fits; door leaves fit; stencils missing (step 2).
+   - Nothing was plainly broken, so step 1 needed no code fix.
 ## 2026-10-10: Recovery check, train exterior round 3 cars built (Workshop, Guard's Van, Last Train Out, Stores)
 1. Completed:
    - Recovery: every committed lobby change from the last days is on HEAD (`LobbyBuilder`, `UI/Lobby`, `Sky`, `PianoNotes`, `LobbyService` unchanged since 0f43aa9); the Astra merge a3563a1 had no conflict resolutions; both codex branches are contained in HEAD. The rear lobby lamps are 9118e1c. The lobby's changed look is the new train shell (round 2, `docs/train-exterior/round2/before_after_lobby.jpg`).
