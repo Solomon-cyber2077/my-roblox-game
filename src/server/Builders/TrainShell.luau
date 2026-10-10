@@ -206,6 +206,9 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 		local colors = liveryColors(mine)
 
 		for name, piece in car.pieces do
+			if string.sub(name, 1, 8) == "DoorLeaf" then
+				continue -- the car's own leaves go on its door panels below
+			end
 			local part = place(piece.mesh, origin * CFrame.new(v3(piece.center)), piece.size, folder)
 			part.Name = `{carName}{name}`
 			part.CastShadow = piece.shadow
@@ -217,6 +220,9 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 			end
 			if piece.livery == "Lamp" then
 				part.Material = Enum.Material.Neon
+			end
+			if piece.color then
+				part.Color = Color3.new(piece.color[1], piece.color[2], piece.color[3])
 			end
 			if piece.transparency then
 				part.Transparency = piece.transparency
@@ -274,6 +280,19 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 				else
 					local slide = part:GetAttribute("DoorSlide") :: number?
 					local kitName = if slide and slide < 0 then "DoorLeafL" else "DoorLeafR"
+					-- a car with its own heavy leaves (Workshop, Stores) uses them on the door they were modelled on
+					local own = car.pieces[kitName]
+					if own and math.abs(own.center[1] - cf.X) < 2 and own.center[3] * cf.Z > 0 then
+						local leaf = place(own.mesh, origin * CFrame.new(v3(own.center)), own.size, folder)
+						leaf.Name = kitName
+						leaf.Color = colors[own.livery or "Accent"] or part.Color
+						leaf.CastShadow = own.shadow
+						leaf:SetAttribute("Livery", own.livery)
+						leaf:SetAttribute("DoorSlide", slide)
+						look(looks, own.look, leaf)
+						retire(part, archive)
+						continue
+					end
 					local kit = Config.Kit[kitName]
 					local leaf = place(
 						kit.mesh,

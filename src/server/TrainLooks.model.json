@@ -24,14 +24,98 @@
    }
   },
   {
+   "name": "GuardsVan",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://94325344034964",
+    "NormalMap": "rbxassetid://130940415356188",
+    "RoughnessMap": "rbxassetid://86385901131400",
+    "MetalnessMap": "rbxassetid://114914463595763"
+   }
+  },
+  {
+   "name": "GuardsVan_P",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://74649192122907",
+    "NormalMap": "rbxassetid://118793786652376",
+    "RoughnessMap": "rbxassetid://87032018053505",
+    "MetalnessMap": "rbxassetid://72892586254033"
+   }
+  },
+  {
+   "name": "GuardsVan_N",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://71589424549368",
+    "NormalMap": "rbxassetid://133123457555895",
+    "RoughnessMap": "rbxassetid://72478642502433",
+    "MetalnessMap": "rbxassetid://99115489841410"
+   }
+  },
+  {
+   "name": "GuardsVan_Sign",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://71526834887238",
+    "NormalMap": "rbxassetid://90497800231728"
+   }
+  },
+  {
+   "name": "LastTrainOut",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://135353963697307",
+    "NormalMap": "rbxassetid://91274053204769",
+    "RoughnessMap": "rbxassetid://99209026826008",
+    "MetalnessMap": "rbxassetid://113364270073012"
+   }
+  },
+  {
+   "name": "LastTrainOut_P",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://75532718611520",
+    "NormalMap": "rbxassetid://71256493487877",
+    "RoughnessMap": "rbxassetid://140414503260645",
+    "MetalnessMap": "rbxassetid://110344133892813"
+   }
+  },
+  {
+   "name": "LastTrainOut_N",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://86186915622662",
+    "NormalMap": "rbxassetid://123355518418172",
+    "RoughnessMap": "rbxassetid://70606567031394",
+    "MetalnessMap": "rbxassetid://128106683810655"
+   }
+  },
+  {
+   "name": "LastTrainOut_Sign",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://125461446100305",
+    "NormalMap": "rbxassetid://93337361364777"
+   }
+  },
+  {
    "name": "CrewSaloon",
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://105812809692306",
-    "NormalMap": "rbxassetid://101081674806205",
-    "RoughnessMap": "rbxassetid://98630812145910",
-    "MetalnessMap": "rbxassetid://110503780845882"
+    "ColorMap": "rbxassetid://79052348566865",
+    "NormalMap": "rbxassetid://95473113865250",
+    "RoughnessMap": "rbxassetid://135679734021184",
+    "MetalnessMap": "rbxassetid://127055879218799"
    }
   },
   {
@@ -39,10 +123,10 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://118732721616026",
+    "ColorMap": "rbxassetid://135560017716979",
     "NormalMap": "rbxassetid://132926262485156",
-    "RoughnessMap": "rbxassetid://132950707275148",
-    "MetalnessMap": "rbxassetid://105441094551460"
+    "RoughnessMap": "rbxassetid://139915406101177",
+    "MetalnessMap": "rbxassetid://112280613038920"
    }
   },
   {
@@ -50,10 +134,10 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://85612979271170",
+    "ColorMap": "rbxassetid://78491834828609",
     "NormalMap": "rbxassetid://73658619446240",
-    "RoughnessMap": "rbxassetid://101695475581210",
-    "MetalnessMap": "rbxassetid://128291390334903"
+    "RoughnessMap": "rbxassetid://71100479117927",
+    "MetalnessMap": "rbxassetid://105673588396418"
    }
   },
   {
@@ -63,6 +147,90 @@
     "AlphaMode": "Overlay",
     "ColorMap": "rbxassetid://136636009362926",
     "NormalMap": "rbxassetid://106367549348027"
+   }
+  },
+  {
+   "name": "Workshop",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://100184338735757",
+    "NormalMap": "rbxassetid://73887173670888",
+    "RoughnessMap": "rbxassetid://120952414395773",
+    "MetalnessMap": "rbxassetid://82328064290611"
+   }
+  },
+  {
+   "name": "Workshop_P",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://127691707481467",
+    "NormalMap": "rbxassetid://105039264645728",
+    "RoughnessMap": "rbxassetid://128414155283955",
+    "MetalnessMap": "rbxassetid://83846986479392"
+   }
+  },
+  {
+   "name": "Workshop_N",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://88340787646295",
+    "NormalMap": "rbxassetid://113169212834541",
+    "RoughnessMap": "rbxassetid://80875070789985",
+    "MetalnessMap": "rbxassetid://115942606550408"
+   }
+  },
+  {
+   "name": "Workshop_Sign",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://74893363074773",
+    "NormalMap": "rbxassetid://130929181825562"
+   }
+  },
+  {
+   "name": "Stores",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://123097279984696",
+    "NormalMap": "rbxassetid://109750428673109",
+    "RoughnessMap": "rbxassetid://127005914481449",
+    "MetalnessMap": "rbxassetid://73545364577487"
+   }
+  },
+  {
+   "name": "Stores_P",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://97415447109774",
+    "NormalMap": "rbxassetid://92770061643084",
+    "RoughnessMap": "rbxassetid://81832688130856",
+    "MetalnessMap": "rbxassetid://99255759376357"
+   }
+  },
+  {
+   "name": "Stores_N",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://130996439204078",
+    "NormalMap": "rbxassetid://73112698662032",
+    "RoughnessMap": "rbxassetid://75649389552924",
+    "MetalnessMap": "rbxassetid://70905082524005"
+   }
+  },
+  {
+   "name": "Stores_Sign",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://126415823539685",
+    "NormalMap": "rbxassetid://131270158014175"
    }
   }
  ]

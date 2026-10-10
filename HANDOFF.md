@@ -3,6 +3,18 @@
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
 ## 2026-10-10: Train exterior round 3: Studio check, painted details, upload
+0. Steps 2-3 (later the same day):
+   - Painted details (`canvas.py`, `bake2.py` stencil layer): Last Train Out crest (gilt garter, star, LTO monogram) and double gilt lining in every lined panel; Stores stencils (Oswald Bold, off-white, worn, mirrored on the far side so they read right); Workshop scorch round the stovepipe and door grips. Last Train Out, Stores and Workshop rebuilt.
+   - Uploaded (user approved in chat): all five cars' FBX via the 3D Importer (creator Me) and their 70 maps via MCP `upload_image`. Ids in `asset_ids.json` (superseded ids under `unused.round3_superseded_*`); `gen_config.py` run, `Config/TrainShell` and `TrainLooks.model.json` regenerated.
+   - Runtime (`Builders/TrainShell`): a car's own DoorLeafL/R replace the kit leaves on the door they were modelled on (they keep `DoorSlide`); pieces may carry a `color` (the Guard's Van tail lenses are red).
+   - Verified in Play: both trains dressed (all five cars, 2 leaves each, every textured piece has its SurfaceAppearance), console clean (DataStore notice only), `lune run check` passes (228 tests).
+   - **Review these** (decided on the user's behalf):
+     - Stores CrateP (6 tris) was the outboard end caps of the three roof chocks, cut off by the side split at z 5.9. The chocks now end at 5.85 (`identity.py`), so the caps stay in Stores_Crate. Workshop_CrateP (156 tris) is real side-mounted kit and stays.
+     - Guard's Van tail: livery role Lamp (Neon) with a red `color` override.
+     - Car-specific leaves are matched to a door panel by side and |x| within 2 studs; door sliding with them is not yet watched in a run.
+     - Stores: the small "L.T.O. No 5 / TARE / KEEP DRY" block on the platform side sits at x0+2, half over the left door leaf's edge, and the big STORES stencil is crossed by a security strap. Moving them needs a Stores rebake and re-upload.
+     - Crew Saloon was re-uploaded with its round-3 build (new mesh ids).
+     - Pushing is denied for Claude by `.claude/settings.json` (`deny: Bash(git push:*)`); the user pushes, or removes that rule.
 1. Step 1, Studio check:
    - Why nothing new showed in Studio: Rojo 7.7.0 serves this folder (branch `claude/last-train-out`) and Studio ("Untitled Experience", place 140367160674731) is synced (`Config/TrainShell` and `Builders/TrainShell` match disk byte for byte). But only the Crew Saloon's round-2 uploads are in `asset_ids.json` / `Config/TrainShell`; the round-3 Saloon rebake and the four new cars exist only as local FBX/PNG files, which Studio cannot see until they are uploaded.
    - Viewed without uploading: a scratch primitive train built in edit mode (`TrainBuilder.build` at y 300, z 3000) with every car's meshes streamed from a local server into EditableMeshes and 512 colour maps into EditableImages (HttpEnabled on only for that, then restored). All removed afterwards.

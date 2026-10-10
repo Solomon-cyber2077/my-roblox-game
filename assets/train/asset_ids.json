@@ -2,7 +2,7 @@
  "creator": "user 11744048795",
  "meshes": {
   "CrewSaloon_Fittings": {
-   "id": 102717224646466,
+   "id": 85791970272802,
    "center": [
     -31.6,
     2.4,
@@ -13,10 +13,10 @@
     12.4,
     13.16
    ],
-   "tris": 3492
+   "tris": 3620
   },
   "CrewSaloon_FittingsN": {
-   "id": 81169123431225,
+   "id": 80051012486005,
    "center": [
     -32.25,
     4.02,
@@ -30,7 +30,7 @@
    "tris": 3794
   },
   "CrewSaloon_FittingsP": {
-   "id": 139248218573925,
+   "id": 125446497842511,
    "center": [
     -32.25,
     4.02,
@@ -44,7 +44,7 @@
    "tris": 2902
   },
   "CrewSaloon_Glow": {
-   "id": 132499869577682,
+   "id": 100508338303205,
    "center": [
     -32.25,
     6.555,
@@ -58,7 +58,7 @@
    "tris": 160
   },
   "CrewSaloon_Haze": {
-   "id": 110347656674929,
+   "id": 110058542841361,
    "center": [
     -32.25,
     4.845,
@@ -72,7 +72,7 @@
    "tris": 48
   },
   "CrewSaloon_Lens": {
-   "id": 74614283917238,
+   "id": 84082383276274,
    "center": [
     -36.25,
     8.2,
@@ -86,7 +86,7 @@
    "tris": 12
   },
   "CrewSaloon_Roof": {
-   "id": 79089634597558,
+   "id": 140379696819502,
    "center": [
     -32.25,
     10.49,
@@ -100,7 +100,7 @@
    "tris": 2900
   },
   "CrewSaloon_Shell": {
-   "id": 81340983640413,
+   "id": 120143675244346,
    "center": [
     -32.25,
     5.55,
@@ -114,7 +114,7 @@
    "tris": 1512
   },
   "CrewSaloon_ShellN": {
-   "id": 118170711788587,
+   "id": 101619544754504,
    "center": [
     -32.25,
     4.85,
@@ -128,7 +128,7 @@
    "tris": 5144
   },
   "CrewSaloon_ShellP": {
-   "id": 138084250899987,
+   "id": 110261498321170,
    "center": [
     -32.25,
     4.68,
@@ -142,7 +142,7 @@
    "tris": 3436
   },
   "CrewSaloon_Sign": {
-   "id": 119892004419610,
+   "id": 131957773885038,
    "center": [
     -32.085,
     3.79,
@@ -156,7 +156,7 @@
    "tris": 232
   },
   "CrewSaloon_Trim": {
-   "id": 82501001954359,
+   "id": 73532693292523,
    "center": [
     -32.25,
     5.8275,
@@ -170,7 +170,7 @@
    "tris": 528
   },
   "CrewSaloon_TrimN": {
-   "id": 128695274456393,
+   "id": 93060591322859,
    "center": [
     -32.25,
     4.7925,
@@ -184,7 +184,7 @@
    "tris": 1234
   },
   "CrewSaloon_TrimP": {
-   "id": 84710784232871,
+   "id": 92444868873072,
    "center": [
     -32.25,
     4.4,
@@ -252,6 +252,916 @@
     3.48
    ],
    "tris": 552
+  },
+  "GuardsVan_Shell": {
+   "id": 76265955049339,
+   "center": [
+    -81.045,
+    6.59,
+    0.0
+   ],
+   "size": [
+    30.63,
+    13.22,
+    13.8
+   ],
+   "tris": 2400
+  },
+  "GuardsVan_Trim": {
+   "id": 103490891348832,
+   "center": [
+    -78.0,
+    5.8275,
+    0.0
+   ],
+   "size": [
+    24.332,
+    10.205,
+    11.35
+   ],
+   "tris": 528
+  },
+  "GuardsVan_Roof": {
+   "id": 123472391382634,
+   "center": [
+    -81.0,
+    11.75,
+    0.0
+   ],
+   "size": [
+    30.6,
+    4.38,
+    13.84
+   ],
+   "tris": 3866
+  },
+  "GuardsVan_Lens": {
+   "id": 126569265727871,
+   "center": [
+    -78.0,
+    8.2,
+    6.7425
+   ],
+   "size": [
+    0.48,
+    0.52,
+    0.205
+   ],
+   "tris": 12
+  },
+  "GuardsVan_Glow": {
+   "id": 135839250947475,
+   "center": [
+    -78.565,
+    9.44,
+    0.0
+   ],
+   "size": [
+    20.09,
+    6.42,
+    12.69
+   ],
+   "tris": 312
+  },
+  "GuardsVan_Haze": {
+   "id": 135736906045548,
+   "center": [
+    -78.0,
+    4.845,
+    0.0
+   ],
+   "size": [
+    18.96,
+    2.45,
+    12.68
+   ],
+   "tris": 72
+  },
+  "GuardsVan_Fittings": {
+   "id": 123418099025587,
+   "center": [
+    -80.24,
+    4.425,
+    0.0
+   ],
+   "size": [
+    34.16,
+    16.45,
+    13.16
+   ],
+   "tris": 4658
+  },
+  "GuardsVan_Tail": {
+   "id": 125176139856600,
+   "center": [
+    -96.27,
+    5.5,
+    0.0
+   ],
+   "size": [
+    0.08,
+    0.44,
+    11.74
+   ],
+   "tris": 92
+  },
+  "GuardsVan_Sign": {
+   "id": 71709260313139,
+   "center": [
+    -81.025,
+    3.79,
+    0.0
+   ],
+   "size": [
+    16.05,
+    9.18,
+    13.42
+   ],
+   "tris": 232
+  },
+  "GuardsVan_ShellP": {
+   "id": 75585104917591,
+   "center": [
+    -81.045,
+    4.68,
+    6.39
+   ],
+   "size": [
+    30.63,
+    10.08,
+    1.02
+   ],
+   "tris": 5328
+  },
+  "GuardsVan_ShellN": {
+   "id": 139371639128485,
+   "center": [
+    -81.045,
+    4.85,
+    -6.39
+   ],
+   "size": [
+    30.63,
+    9.74,
+    1.02
+   ],
+   "tris": 6852
+  },
+  "GuardsVan_TrimP": {
+   "id": 139838787698414,
+   "center": [
+    -78.0,
+    4.4,
+    6.605
+   ],
+   "size": [
+    24.2,
+    9.24,
+    0.33
+   ],
+   "tris": 1348
+  },
+  "GuardsVan_TrimN": {
+   "id": 74655379279131,
+   "center": [
+    -78.0,
+    4.7925,
+    -6.605
+   ],
+   "size": [
+    24.2,
+    8.455,
+    0.33
+   ],
+   "tris": 1648
+  },
+  "GuardsVan_FittingsP": {
+   "id": 72140910106315,
+   "center": [
+    -80.925,
+    4.02,
+    6.4069
+   ],
+   "size": [
+    30.77,
+    11.14,
+    1.0462
+   ],
+   "tris": 4204
+  },
+  "GuardsVan_FittingsN": {
+   "id": 100428420269488,
+   "center": [
+    -80.925,
+    4.02,
+    -6.3541
+   ],
+   "size": [
+    30.77,
+    11.14,
+    0.9919
+   ],
+   "tris": 5104
+  },
+  "LastTrainOut_Shell": {
+   "id": 102749405835421,
+   "center": [
+    -53.75,
+    5.55,
+    0.0
+   ],
+   "size": [
+    19.04,
+    11.14,
+    13.136
+   ],
+   "tris": 1512
+  },
+  "LastTrainOut_Trim": {
+   "id": 138579783422623,
+   "center": [
+    -53.75,
+    5.8275,
+    0.0
+   ],
+   "size": [
+    18.832,
+    10.205,
+    11.35
+   ],
+   "tris": 528
+  },
+  "LastTrainOut_Roof": {
+   "id": 94469407445326,
+   "center": [
+    -53.75,
+    10.49,
+    0.0
+   ],
+   "size": [
+    19.1,
+    1.86,
+    13.84
+   ],
+   "tris": 2900
+  },
+  "LastTrainOut_Lens": {
+   "id": 134776615683532,
+   "center": [
+    -49.75,
+    8.2,
+    6.7425
+   ],
+   "size": [
+    0.48,
+    0.52,
+    0.205
+   ],
+   "tris": 12
+  },
+  "LastTrainOut_Glow": {
+   "id": 81451087311088,
+   "center": [
+    -53.75,
+    6.555,
+    0.0
+   ],
+   "size": [
+    13.76,
+    0.65,
+    12.69
+   ],
+   "tris": 160
+  },
+  "LastTrainOut_Haze": {
+   "id": 117024598733894,
+   "center": [
+    -53.75,
+    4.845,
+    0.0
+   ],
+   "size": [
+    13.76,
+    2.45,
+    12.68
+   ],
+   "tris": 48
+  },
+  "LastTrainOut_Fittings": {
+   "id": 74779910854417,
+   "center": [
+    -53.1,
+    2.4,
+    0.0
+   ],
+   "size": [
+    22.88,
+    12.4,
+    13.16
+   ],
+   "tris": 3620
+  },
+  "LastTrainOut_Sign": {
+   "id": 133900181816194,
+   "center": [
+    -54.65,
+    3.79,
+    0.0
+   ],
+   "size": [
+    14.8,
+    9.18,
+    13.42
+   ],
+   "tris": 232
+  },
+  "LastTrainOut_ShellP": {
+   "id": 82775443429072,
+   "center": [
+    -53.75,
+    4.68,
+    6.384
+   ],
+   "size": [
+    19.04,
+    10.08,
+    0.992
+   ],
+   "tris": 3392
+  },
+  "LastTrainOut_ShellN": {
+   "id": 112492094963811,
+   "center": [
+    -53.75,
+    4.85,
+    -6.384
+   ],
+   "size": [
+    19.04,
+    9.74,
+    0.992
+   ],
+   "tris": 5144
+  },
+  "LastTrainOut_TrimP": {
+   "id": 121790428490131,
+   "center": [
+    -53.75,
+    4.4,
+    6.605
+   ],
+   "size": [
+    18.7,
+    9.24,
+    0.33
+   ],
+   "tris": 866
+  },
+  "LastTrainOut_TrimN": {
+   "id": 83609769696824,
+   "center": [
+    -53.75,
+    4.7925,
+    -6.605
+   ],
+   "size": [
+    18.7,
+    8.455,
+    0.33
+   ],
+   "tris": 1234
+  },
+  "LastTrainOut_FittingsP": {
+   "id": 121161650494631,
+   "center": [
+    -53.75,
+    4.02,
+    6.415
+   ],
+   "size": [
+    19.42,
+    11.14,
+    1.03
+   ],
+   "tris": 2902
+  },
+  "LastTrainOut_FittingsN": {
+   "id": 83454177842788,
+   "center": [
+    -53.75,
+    4.02,
+    -6.475
+   ],
+   "size": [
+    19.42,
+    11.14,
+    0.75
+   ],
+   "tris": 3794
+  },
+  "Workshop_Shell": {
+   "id": 93694070591397,
+   "center": [
+    -10.75,
+    5.55,
+    0.0
+   ],
+   "size": [
+    19.04,
+    11.14,
+    13.136
+   ],
+   "tris": 1512
+  },
+  "Workshop_Trim": {
+   "id": 84624995725787,
+   "center": [
+    -10.75,
+    5.8275,
+    0.0
+   ],
+   "size": [
+    18.832,
+    10.205,
+    11.35
+   ],
+   "tris": 528
+  },
+  "Workshop_Roof": {
+   "id": 91551976508510,
+   "center": [
+    -10.75,
+    10.87,
+    0.0
+   ],
+   "size": [
+    19.1,
+    2.62,
+    13.84
+   ],
+   "tris": 3020
+  },
+  "Workshop_Lens": {
+   "id": 110823580635234,
+   "center": [
+    -6.25,
+    8.2,
+    6.7425
+   ],
+   "size": [
+    0.48,
+    0.52,
+    0.205
+   ],
+   "tris": 12
+  },
+  "Workshop_Glow": {
+   "id": 93910981543266,
+   "center": [
+    -10.75,
+    6.555,
+    0.0
+   ],
+   "size": [
+    13.76,
+    0.65,
+    12.69
+   ],
+   "tris": 160
+  },
+  "Workshop_Haze": {
+   "id": 99542655739983,
+   "center": [
+    -10.75,
+    4.845,
+    0.0
+   ],
+   "size": [
+    13.76,
+    2.45,
+    12.68
+   ],
+   "tris": 48
+  },
+  "Workshop_Fittings": {
+   "id": 79530268118404,
+   "center": [
+    -10.1,
+    5.465,
+    0.0
+   ],
+   "size": [
+    22.88,
+    18.53,
+    13.16
+   ],
+   "tris": 3950
+  },
+  "Workshop_Crate": {
+   "id": 72685163119011,
+   "center": [
+    -14.125,
+    10.2931,
+    4.35
+   ],
+   "size": [
+    5.45,
+    1.0712,
+    3.1
+   ],
+   "tris": 212
+  },
+  "Workshop_Tarp": {
+   "id": 91560542996399,
+   "center": [
+    -14.125,
+    10.3209,
+    4.3
+   ],
+   "size": [
+    5.75,
+    0.9394,
+    2.6
+   ],
+   "tris": 356
+  },
+  "Workshop_DoorLeafL": {
+   "id": 80085262027506,
+   "center": [
+    -7.655,
+    3.75,
+    6.788
+   ],
+   "size": [
+    2.81,
+    7.5,
+    0.256
+   ],
+   "tris": 408
+  },
+  "Workshop_DoorLeafR": {
+   "id": 84918566499223,
+   "center": [
+    -4.845,
+    3.75,
+    6.788
+   ],
+   "size": [
+    2.81,
+    7.5,
+    0.256
+   ],
+   "tris": 408
+  },
+  "Workshop_Sign": {
+   "id": 132723400767331,
+   "center": [
+    -12.15,
+    3.79,
+    0.0
+   ],
+   "size": [
+    13.8,
+    9.18,
+    13.42
+   ],
+   "tris": 232
+  },
+  "Workshop_ShellP": {
+   "id": 115954360879023,
+   "center": [
+    -10.75,
+    4.68,
+    6.384
+   ],
+   "size": [
+    19.04,
+    10.08,
+    0.992
+   ],
+   "tris": 3384
+  },
+  "Workshop_ShellN": {
+   "id": 132136579493084,
+   "center": [
+    -10.75,
+    4.85,
+    -6.384
+   ],
+   "size": [
+    19.04,
+    9.74,
+    0.992
+   ],
+   "tris": 5136
+  },
+  "Workshop_TrimP": {
+   "id": 118981882894759,
+   "center": [
+    -10.75,
+    4.4,
+    6.605
+   ],
+   "size": [
+    18.7,
+    9.24,
+    0.33
+   ],
+   "tris": 866
+  },
+  "Workshop_TrimN": {
+   "id": 137036146855946,
+   "center": [
+    -10.75,
+    4.7925,
+    -6.605
+   ],
+   "size": [
+    18.7,
+    8.455,
+    0.33
+   ],
+   "tris": 1234
+  },
+  "Workshop_FittingsP": {
+   "id": 71347326337582,
+   "center": [
+    -10.75,
+    3.9825,
+    6.415
+   ],
+   "size": [
+    19.42,
+    11.215,
+    1.03
+   ],
+   "tris": 3362
+  },
+  "Workshop_FittingsN": {
+   "id": 131702808376311,
+   "center": [
+    -10.75,
+    3.9825,
+    -6.4
+   ],
+   "size": [
+    19.42,
+    11.215,
+    0.9
+   ],
+   "tris": 4166
+  },
+  "Workshop_CrateP": {
+   "id": 126888806534779,
+   "center": [
+    -15.175,
+    6.1187,
+    6.3538
+   ],
+   "size": [
+    7.55,
+    7.8375,
+    0.9076
+   ],
+   "tris": 156
+  },
+  "Stores_Shell": {
+   "id": 107227393802773,
+   "center": [
+    10.75,
+    5.55,
+    0.0
+   ],
+   "size": [
+    19.04,
+    11.14,
+    13.136
+   ],
+   "tris": 1448
+  },
+  "Stores_Trim": {
+   "id": 84042148543983,
+   "center": [
+    10.75,
+    5.8275,
+    0.0
+   ],
+   "size": [
+    18.832,
+    10.205,
+    11.35
+   ],
+   "tris": 528
+  },
+  "Stores_Roof": {
+   "id": 81588796625178,
+   "center": [
+    10.75,
+    10.49,
+    0.0
+   ],
+   "size": [
+    19.1,
+    1.86,
+    13.84
+   ],
+   "tris": 2900
+  },
+  "Stores_Lens": {
+   "id": 70865939435331,
+   "center": [
+    6.25,
+    8.2,
+    6.7425
+   ],
+   "size": [
+    0.48,
+    0.52,
+    0.205
+   ],
+   "tris": 12
+  },
+  "Stores_Glow": {
+   "id": 73830803548213,
+   "center": [
+    10.75,
+    6.555,
+    0.0
+   ],
+   "size": [
+    13.76,
+    0.65,
+    12.69
+   ],
+   "tris": 160
+  },
+  "Stores_Haze": {
+   "id": 78647298730442,
+   "center": [
+    10.75,
+    4.845,
+    0.0
+   ],
+   "size": [
+    13.76,
+    2.45,
+    12.68
+   ],
+   "tris": 48
+  },
+  "Stores_Fittings": {
+   "id": 126502286539009,
+   "center": [
+    11.37,
+    3.8168,
+    0.0
+   ],
+   "size": [
+    22.82,
+    15.2337,
+    13.16
+   ],
+   "tris": 3656
+  },
+  "Stores_Crate": {
+   "id": 127044395419013,
+   "center": [
+    17.245,
+    5.8918,
+    0.15
+   ],
+   "size": [
+    7.77,
+    11.1437,
+    11.4
+   ],
+   "tris": 912
+  },
+  "Stores_DoorLeafL": {
+   "id": 75027289875027,
+   "center": [
+    4.845,
+    3.75,
+    6.7923
+   ],
+   "size": [
+    2.81,
+    7.5,
+    0.2646
+   ],
+   "tris": 576
+  },
+  "Stores_DoorLeafR": {
+   "id": 111621227724575,
+   "center": [
+    7.655,
+    3.75,
+    6.79
+   ],
+   "size": [
+    2.81,
+    7.5,
+    0.26
+   ],
+   "tris": 600
+  },
+  "Stores_Sign": {
+   "id": 85030368895430,
+   "center": [
+    10.915,
+    3.79,
+    0.0
+   ],
+   "size": [
+    16.27,
+    9.18,
+    13.42
+   ],
+   "tris": 232
+  },
+  "Stores_ShellP": {
+   "id": 127158250924667,
+   "center": [
+    10.75,
+    4.68,
+    6.384
+   ],
+   "size": [
+    19.04,
+    10.08,
+    0.992
+   ],
+   "tris": 3436
+  },
+  "Stores_ShellN": {
+   "id": 115594216725060,
+   "center": [
+    10.75,
+    4.85,
+    -6.384
+   ],
+   "size": [
+    19.04,
+    9.74,
+    0.992
+   ],
+   "tris": 5136
+  },
+  "Stores_TrimP": {
+   "id": 95095256100063,
+   "center": [
+    10.75,
+    4.4,
+    6.605
+   ],
+   "size": [
+    18.7,
+    9.24,
+    0.33
+   ],
+   "tris": 878
+  },
+  "Stores_TrimN": {
+   "id": 122806781015738,
+   "center": [
+    10.75,
+    4.7925,
+    -6.605
+   ],
+   "size": [
+    18.7,
+    8.455,
+    0.33
+   ],
+   "tris": 1234
+  },
+  "Stores_FittingsP": {
+   "id": 126853692618037,
+   "center": [
+    10.75,
+    4.02,
+    6.415
+   ],
+   "size": [
+    19.42,
+    11.14,
+    1.03
+   ],
+   "tris": 3056
+  },
+  "Stores_FittingsN": {
+   "id": 91969859497245,
+   "center": [
+    10.75,
+    4.02,
+    -6.475
+   ],
+   "size": [
+    19.42,
+    11.14,
+    0.75
+   ],
+   "tris": 3996
   }
  },
  "images": {
@@ -259,24 +1169,80 @@
   "Kit_normal": 97671229285692,
   "Kit_rough": 108893311021146,
   "Kit_metal": 72270018790912,
-  "CrewSaloon_color": 105812809692306,
-  "CrewSaloon_normal": 101081674806205,
-  "CrewSaloon_rough": 98630812145910,
-  "CrewSaloon_metal": 110503780845882,
+  "CrewSaloon_color": 79052348566865,
+  "CrewSaloon_normal": 95473113865250,
+  "CrewSaloon_rough": 135679734021184,
+  "CrewSaloon_metal": 127055879218799,
   "CrewSaloon_sign": 136636009362926,
   "CrewSaloon_signnormal": 106367549348027,
   "CrewSaloon_P_normal": 132926262485156,
-  "CrewSaloon_P_color": 118732721616026,
-  "CrewSaloon_P_metal": 105441094551460,
-  "CrewSaloon_P_rough": 132950707275148,
+  "CrewSaloon_P_color": 135560017716979,
+  "CrewSaloon_P_metal": 112280613038920,
+  "CrewSaloon_P_rough": 139915406101177,
   "CrewSaloon_N_normal": 73658619446240,
-  "CrewSaloon_N_color": 85612979271170,
-  "CrewSaloon_N_rough": 101695475581210,
-  "CrewSaloon_N_metal": 128291390334903,
+  "CrewSaloon_N_color": 78491834828609,
+  "CrewSaloon_N_rough": 71100479117927,
+  "CrewSaloon_N_metal": 105673588396418,
   "Doors_color": 92765813921324,
   "Doors_rough": 108954363827875,
   "Doors_metal": 132157292606140,
-  "Doors_normal": 106803118905302
+  "Doors_normal": 106803118905302,
+  "GuardsVan_N_color": 71589424549368,
+  "GuardsVan_signnormal": 90497800231728,
+  "GuardsVan_N_rough": 72478642502433,
+  "GuardsVan_P_normal": 118793786652376,
+  "GuardsVan_rough": 86385901131400,
+  "GuardsVan_N_normal": 133123457555895,
+  "GuardsVan_sign": 71526834887238,
+  "GuardsVan_P_metal": 72892586254033,
+  "GuardsVan_normal": 130940415356188,
+  "GuardsVan_N_metal": 99115489841410,
+  "GuardsVan_color": 94325344034964,
+  "GuardsVan_P_rough": 87032018053505,
+  "GuardsVan_metal": 114914463595763,
+  "GuardsVan_P_color": 74649192122907,
+  "LastTrainOut_P_color": 75532718611520,
+  "LastTrainOut_N_normal": 123355518418172,
+  "LastTrainOut_N_color": 86186915622662,
+  "LastTrainOut_N_rough": 70606567031394,
+  "LastTrainOut_P_metal": 110344133892813,
+  "LastTrainOut_metal": 113364270073012,
+  "LastTrainOut_rough": 99209026826008,
+  "LastTrainOut_sign": 125461446100305,
+  "LastTrainOut_signnormal": 93337361364777,
+  "LastTrainOut_normal": 91274053204769,
+  "LastTrainOut_color": 135353963697307,
+  "LastTrainOut_P_rough": 140414503260645,
+  "LastTrainOut_N_metal": 128106683810655,
+  "LastTrainOut_P_normal": 71256493487877,
+  "Stores_P_color": 97415447109774,
+  "Stores_rough": 127005914481449,
+  "Stores_N_metal": 70905082524005,
+  "Stores_N_rough": 75649389552924,
+  "Stores_P_normal": 92770061643084,
+  "Stores_metal": 73545364577487,
+  "Stores_P_rough": 81832688130856,
+  "Stores_signnormal": 131270158014175,
+  "Stores_P_metal": 99255759376357,
+  "Stores_color": 123097279984696,
+  "Stores_sign": 126415823539685,
+  "Stores_N_normal": 73112698662032,
+  "Stores_normal": 109750428673109,
+  "Stores_N_color": 130996439204078,
+  "Workshop_N_normal": 113169212834541,
+  "Workshop_metal": 82328064290611,
+  "Workshop_rough": 120952414395773,
+  "Workshop_N_metal": 115942606550408,
+  "Workshop_P_normal": 105039264645728,
+  "Workshop_normal": 73887173670888,
+  "Workshop_color": 100184338735757,
+  "Workshop_N_rough": 80875070789985,
+  "Workshop_P_metal": 83846986479392,
+  "Workshop_sign": 74893363074773,
+  "Workshop_signnormal": 130929181825562,
+  "Workshop_P_color": 127691707481467,
+  "Workshop_P_rough": 128414155283955,
+  "Workshop_N_color": 88340787646295
  },
  "unused": {
   "note": "Uploaded under user 11744048795 and no longer referenced by the game.",
@@ -319,6 +1285,34 @@
    "CrewSaloon_rough": 109164744265879,
    "CrewSaloon_metal": 97726586684091
   },
-  "round2_note": "Round 2 first uploaded the Saloon with one 4096 atlas; Roblox serves SurfaceAppearance maps at 1024, so it was re-cut into per-side atlases. Kit (round 1 leaves, bogie, wheel) replaced by kit v2."
+  "round2_note": "Round 2 first uploaded the Saloon with one 4096 atlas; Roblox serves SurfaceAppearance maps at 1024, so it was re-cut into per-side atlases. Kit (round 1 leaves, bogie, wheel) replaced by kit v2.",
+  "round3_superseded_images": {
+   "CrewSaloon_rough": 98630812145910,
+   "CrewSaloon_normal": 101081674806205,
+   "CrewSaloon_P_color": 118732721616026,
+   "CrewSaloon_metal": 110503780845882,
+   "CrewSaloon_N_metal": 128291390334903,
+   "CrewSaloon_N_rough": 101695475581210,
+   "CrewSaloon_P_rough": 132950707275148,
+   "CrewSaloon_color": 105812809692306,
+   "CrewSaloon_P_metal": 105441094551460,
+   "CrewSaloon_N_color": 85612979271170
+  },
+  "round3_superseded_meshes": {
+   "CrewSaloon_Shell": 81340983640413,
+   "CrewSaloon_Trim": 82501001954359,
+   "CrewSaloon_Roof": 79089634597558,
+   "CrewSaloon_Lens": 74614283917238,
+   "CrewSaloon_Glow": 132499869577682,
+   "CrewSaloon_Haze": 110347656674929,
+   "CrewSaloon_Fittings": 102717224646466,
+   "CrewSaloon_Sign": 119892004419610,
+   "CrewSaloon_ShellP": 138084250899987,
+   "CrewSaloon_ShellN": 118170711788587,
+   "CrewSaloon_TrimP": 84710784232871,
+   "CrewSaloon_TrimN": 128695274456393,
+   "CrewSaloon_FittingsP": 139248218573925,
+   "CrewSaloon_FittingsN": 81169123431225
+  }
  }
 }

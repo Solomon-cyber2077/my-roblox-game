@@ -8,15 +8,18 @@ each drawn at its cause from spec["feat"] (carriage2.py): rain streaks under eve
 rust weeping from each rivet and strap, soot under the cornice and over the lamp, spray along the
 skirt and round the step, scuffs and chips where hands and boots go, paint crazing on the upper
 panels, a dark pinstripe inside every bead, gilt corner ornaments, tongue-and-groove boards (height).
+Per car (identity.py's feat): the LastTrainOut's crest and double gilt lining, the Stores' stencils,
+the Workshop's scorch round the stovepipe and doors.
 """
 
+import glob
 import json
 import math
 import os
 import sys
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 META = json.load(open(sys.argv[1]))
 SPEC = META["spec"]
@@ -32,6 +35,15 @@ CY0, CY1 = -2.6, 10.4
 CW, CH = int((CX1 - CX0) * PPU), int((CY1 - CY0) * PPU)
 
 
+FONTS = sorted(glob.glob(os.path.expandvars(r"%LOCALAPPDATA%\Roblox\Versions\*\content\fonts")))
+
+
+def font(name, size):
+    """Roblox's own fonts (as make_sign2.py); None if Roblox is not installed."""
+    path = os.path.join(FONTS[-1], name) if FONTS else ""
+    return ImageFont.truetype(path, size) if os.path.exists(path) else None
+
+
 def cpx(x):
     return (x - CX0) * PPU
 
@@ -41,7 +53,7 @@ def cpy(y):
 
 
 class Canvas:
-    LAYERS = ("height", "dirt", "rain", "rust", "soot", "scuff", "chip", "gild", "pin", "craze", "polish", "spray")
+    LAYERS = ("height", "dirt", "rain", "rust", "soot", "scuff", "chip", "gild", "pin", "craze", "polish", "spray", "stencil")
 
     def __init__(self):
         for k in self.LAYERS:
@@ -133,11 +145,17 @@ def paint_canvas(side):
             cv.dirt[ja:jb, ia:ib] = np.maximum(cv.dirt[ja:jb, ia:ib], 0.55 * groove[None, :] * yfac)
         # pinstripe inside the bead and a dark shadow under the bead's lower run (lined panels only)
         inset = 0.36
-        lined = p["kind"] in ("boards", "upper", "eaves")
+        lined = p["kind"] in ("boards", "upper", "eaves", "crest")
         for (qa, qb, qc, qd) in ((xa + inset, ya + inset, xb - inset, ya + inset + 0.035), (xa + inset, yb - inset - 0.035, xb - inset, yb - inset),
                                  (xa + inset, ya + inset, xa + inset + 0.035, yb - inset), (xb - inset - 0.035, ya + inset, xb - inset, yb - inset)):
             if lined:
                 cv.pin[int(cpy(qd)) : int(cpy(qb)) + 1, int(cpx(qa)) : int(cpx(qc)) + 1] = 1
+        # the namesake's double gilt lining: a fine gold line either side of the pinstripe
+        if lined and SPEC["name"] == "LastTrainOut":
+            for gi in (inset - 0.1, inset + 0.12):
+                for (qa, qb, qc, qd) in ((xa + gi, ya + gi, xb - gi, ya + gi + 0.03), (xa + gi, yb - gi - 0.03, xb - gi, yb - gi),
+                                         (xa + gi, ya + gi, xa + gi + 0.03, yb - gi), (xb - gi - 0.03, ya + gi, xb - gi, yb - gi)):
+                    cv.gild[int(cpy(qd)) : int(cpy(qb)) + 1, int(cpx(qa)) : int(cpx(qc)) + 1] = 1
         # chips on the moulding's corners and lower edge (feet, buckets, luggage)
         for cxp, cyp in ((xa, ya), (xb, ya), (xa, yb), (xb, yb)):
             for _ in range(rng.integers(1, 4)):
@@ -280,6 +298,67 @@ def paint_canvas(side):
     for b in FEAT.get("boards", []):
         if b["side"] != side:
             continue
+    # the crest: a gilt garter round a dark field, a star and the monogram, a buckle at the foot
+    for cr in FEAT.get("crests", []):
+        if cr["side"] != side:
+            continue
+        R = int(cr["r"] * PPU)
+        S = 2 * R + 8
+        g, f = Image.new("L", (S, S), 0), Image.new("L", (S, S), 0)
+        dg, df = ImageDraw.Draw(g), ImageDraw.Draw(f)
+        c0 = S // 2
+        ring = max(3, R // 5)
+        dg.ellipse((c0 - R, c0 - R, c0 + R, c0 + R), outline=255, width=3)
+        dg.ellipse((c0 - R + ring, c0 - R + ring, c0 + R - ring, c0 + R - ring), outline=255, width=2)
+        df.ellipse((c0 - R + 2, c0 - R + 2, c0 + R - 2, c0 + R - 2), fill=150)
+        df.ellipse((c0 - R + ring, c0 - R + ring, c0 + R - ring, c0 + R - ring), fill=255)
+        for k in range(24):  # studs round the garter
+            a = 2 * math.pi * k / 24
+            rr = R - ring / 2
+            dg.ellipse((c0 + rr * math.cos(a) - 1.5, c0 + rr * math.sin(a) - 1.5, c0 + rr * math.cos(a) + 1.5, c0 + rr * math.sin(a) + 1.5), fill=255)
+        dg.rectangle((c0 - ring, c0 + R - ring - 2, c0 + ring, c0 + R + 2), outline=255, width=2)
+        ri = R - ring - 4
+        star = [(c0 + (ri * 0.42 if k % 2 == 0 else ri * 0.16) * math.sin(math.pi * k / 4), c0 - ri * 0.3 - (ri * 0.42 if k % 2 == 0 else ri * 0.16) * math.cos(math.pi * k / 4)) for k in range(8)]
+        dg.polygon(star, fill=255)
+        mono = font("Merriweather-Regular.ttf", max(8, int(ri * 0.5)))
+        if mono:
+            dg.text((c0, c0 + ri * 0.38), "LTO", fill=255, font=mono, anchor="mm")
+        gg = np.asarray(g.filter(ImageFilter.GaussianBlur(0.6)), np.float32) / 255
+        ff = np.asarray(f.filter(ImageFilter.GaussianBlur(0.8)), np.float32) / 255
+        if side < 0:
+            gg, ff = gg[:, ::-1], ff[:, ::-1]
+        cv.add("gild", cpx(cr["x"]) - S / 2, cpy(cr["y"]) - S / 2, gg)
+        cv.add("pin", cpx(cr["x"]) - S / 2, cpy(cr["y"]) - S / 2, ff * 0.7)
+    # stencilled lettering: worn off-white paint, rubbed through in patches (the far side reads mirrored in x)
+    for st in FEAT.get("stencils", []):
+        if st["side"] != side:
+            continue
+        hp = int(st["h"] * PPU)
+        fnt = font("Oswald-Bold.ttf", int(hp * 1.3))
+        if fnt is None:
+            continue
+        l, t, r, b = fnt.getbbox(st["text"])
+        img = Image.new("L", (r - l + 8, b - t + 8), 0)
+        ImageDraw.Draw(img).text((4 - l, 4 - t), st["text"], fill=255, font=fnt)
+        img = img.resize((max(1, int(img.width * hp / img.height)), hp))
+        a = np.asarray(img.filter(ImageFilter.GaussianBlur(0.5)), np.float32) / 255
+        a = a * np.clip(0.55 + 0.9 * value_noise(*a.shape, 5), 0, 1)
+        if side < 0:
+            a = a[:, ::-1]
+        cv.add("stencil", cpx(st["x"]) - a.shape[1] / 2, cpy(st["y"]) - a.shape[0] / 2, a)
+    # scorch: soot thrown round the forge's stovepipe and the doors, with spark burns in it
+    for sc in FEAT.get("scorch", []):
+        if sc["side"] != side:
+            continue
+        rp = int(sc["r"] * PPU)
+        py, px = np.mgrid[-rp:rp, -rp:rp].astype(np.float32)
+        d = np.sqrt(px * px + py * py) / rp
+        haze = np.clip(1 - d, 0, 1) ** 1.4 * (0.5 + 0.5 * value_noise(2 * rp, 2 * rp, 10))
+        cv.add("soot", cpx(sc["x"]) - rp, cpy(sc["y"]) - rp, haze.astype(np.float32) * 0.85)
+        for _ in range(sc["n"]):
+            r = rng.uniform(1.5, 4)
+            cv.add("soot", cpx(sc["x"] + rng.normal(0, sc["r"] * 0.5)) - r, cpy(sc["y"] + rng.normal(0, sc["r"] * 0.5)) - r, blob(r, 0.4))
+            cv.add("chip", cpx(sc["x"] + rng.normal(0, sc["r"] * 0.6)) - r / 2, cpy(sc["y"] + rng.normal(0, sc["r"] * 0.6)) - r / 2, blob(r / 2) * 0.6)
     # every chip dents the paint a hair
     cv.height -= 0.004 * np.clip(cv.chip, 0, 1)
     cv.height -= 0.002 * np.clip(cv.scuff, 0, 1)

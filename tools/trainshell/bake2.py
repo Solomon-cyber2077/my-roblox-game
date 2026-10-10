@@ -192,7 +192,7 @@ NPZ = np.load(args[4])
 CX0, CX1, CY0, CY1, PPU = [float(v) for v in NPZ["geom"]]
 PPU = int(PPU)
 CH, CW = NPZ["height1"].shape
-LAYERS = ("height", "dirt", "rain", "rust", "soot", "scuff", "chip", "gild", "pin", "craze", "polish", "spray")
+LAYERS = ("height", "dirt", "rain", "rust", "soot", "scuff", "chip", "gild", "pin", "craze", "polish", "spray", "stencil")
 
 
 class Canvas:
@@ -203,7 +203,7 @@ canvases = {}
 for s in (1, -1):
     cv = Canvas()
     for k in LAYERS:
-        v = NPZ[f"{k}{s}"]
+        v = NPZ[f"{k}{s}"] if f"{k}{s}" in NPZ.files else np.zeros((CH, CW), np.uint8)  # older canvases
         setattr(cv, k, v.astype(np.float32) if k == "height" else v.astype(np.float32) / 255)
     canvases[s] = cv
 
@@ -487,6 +487,7 @@ for k, kind in enumerate(MATS, start=1):
         over(m, c(16, 11, 10), 0.85 * S["pin"])
         over(m, c(186, 146, 76), 0.95 * S["gild"] * (1 - 0.6 * S["chip"]))
         over(m, c(150, 118, 100), 0.55 * S["scuff"])
+        over(m, c(188, 180, 158), 0.8 * S["stencil"] * (1 - 0.7 * S["chip"]) * (1 - 0.5 * S["rain"]))  # stencilled lettering
         # chips: a pale rim of primer round dark undercoat
         over(m, c(150, 128, 104), 0.7 * np.clip(S["chip"] * 3, 0, 1) * (1 - np.clip(S["chip"] * 1.6 - 0.6, 0, 1)))
         over(m, c(44, 30, 24), 0.9 * np.clip(S["chip"] * 1.6 - 0.6, 0, 1))
@@ -568,6 +569,7 @@ for k, kind in enumerate(MATS, start=1):
         over(m, rust_dark, 0.35 * S["rust"] ** 2)
         over(m, c(20, 24, 20), 0.32 * S["craze"])
         over(m, c(150, 146, 120), 0.5 * S["scuff"])
+        over(m, c(188, 180, 158), 0.8 * S["stencil"] * (1 - 0.7 * S["chip"]) * (1 - 0.5 * S["rain"]))
         # worn through to grey timber at the chips and along knocked edges
         over(m, c(122, 108, 88), 0.85 * np.clip(S["chip"] * 1.8, 0, 1))
         over(m, c(120, 112, 92), 0.45 * E * np.clip(S["chip"] * 2 + S["scuff"] * 1.5 + ss(1.0, 0.0, Y) * onside, 0, 1))
