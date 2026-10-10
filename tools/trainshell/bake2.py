@@ -36,7 +36,7 @@ META = json.load(open(args[3]))
 SPEC = META["spec"]
 os.makedirs(OUT, exist_ok=True)
 
-MATS = ["Paint", "Gilt", "Canvas", "Planks", "Iron", "Brass", "Teak", "Velvet", "Bellows"]
+MATS = ["Paint", "Gilt", "Canvas", "Planks", "Iron", "Brass", "Teak", "Velvet", "Bellows", "Crate", "Tarp", "Coal", "Boiler", "Smokebox"]
 NM = len(MATS) + 1
 
 scene = bpy.context.scene
@@ -243,6 +243,11 @@ MICRO = {  # (scale, amplitude in studs, stretch) of a material's own surface
     "Velvet": (3, 0.02, (1, 1, 0.2)),
     "Bellows": (8, 0.006, (1, 1, 1)),
     "Planks": (10, 0.004, (6, 6, 0.3)),
+    "Crate": (10, 0.005, (6, 6, 0.3)),
+    "Tarp": (12, 0.008, (1, 1, 1)),
+    "Coal": (30, 0.02, (1, 1, 1)),
+    "Boiler": (6, 0.0015, (1, 1, 1)),
+    "Smokebox": (20, 0.004, (1, 1, 1)),
 }
 
 passes = {}
@@ -492,14 +497,18 @@ for k, kind in enumerate(MATS, start=1):
         over(m * end, mud_col, 0.5 * ss(2.0, -0.2, Y) * (0.5 + 0.5 * blot))
         rough[:] = np.where(m > 0, 0.38 + 0.35 * grime + 0.3 * S["rain"] + 0.4 * S["spray"] + 0.3 * S["soot"] + 0.3 * up, rough)
     elif kind == "Gilt":
-        over(m, c(70, 48, 24), 0.5 * grime)
-        over(m, c(112, 32, 26), 0.95 * np.clip(S["chip"] * 2 + 0.6 * E * ss(0.6, 0.85, blot), 0, 1))  # leaf off to the red ground
-        over(m, rain_col, 0.4 * S["rain"])
-        over(m, soot_col, 0.5 * S["soot"])
+        # aged gold leaf, not bright yellow: a darker, less saturated film over the Trim colour
+        # (so the livery tint still shows through), patchy, dulled in recesses, chipped at edges
+        gv = 0.75 + 0.5 * blot
+        over(m, c(112, 86, 50) * gv[..., None], 0.5 + 0.12 * ss(0.3, 0.8, streakn))
+        over(m, c(70, 50, 28), 0.55 * grime)
+        over(m, c(112, 32, 26), 0.95 * np.clip(S["chip"] * 2 + 0.9 * E * ss(0.5, 0.8, blot), 0, 1))  # leaf off to the red ground
+        over(m, rain_col, 0.45 * S["rain"])
+        over(m, soot_col, 0.55 * S["soot"])
         over(m, mud_col, 0.5 * S["spray"])
-        over(m, c(230, 196, 120), 0.35 * E * (1 - grime))  # rubbed bright on the crests
-        rough[:] = np.where(m > 0, 0.22 + 0.5 * grime + 0.3 * S["soot"], rough)
-        metal[:] = np.where(m > 0, 0.9 * (1 - 0.7 * grime) * (1 - S["chip"]), metal)
+        over(m, c(196, 160, 98), 0.22 * E * (1 - grime) * (1 - S["chip"]))  # rubbed on the crests
+        rough[:] = np.where(m > 0, 0.3 + 0.28 * blot + 0.4 * grime + 0.3 * S["soot"] + 0.2 * S["rain"], rough)
+        metal[:] = np.where(m > 0, 0.75 * (1 - 0.7 * grime) * (1 - S["chip"]) * (0.8 + 0.2 * blot), metal)
     elif kind == "Canvas":
         # tarred canvas: soot blown back from the vents and lamp tops, runs down to the eaves
         over(m, soot_col, 0.35 + 0.3 * blot)
@@ -548,6 +557,70 @@ for k, kind in enumerate(MATS, start=1):
         over(m, c(80, 70, 60), 0.4 * E)
         rough[:] = np.where(m > 0, 0.85, rough)
 
+    elif kind == "Planks":
+        # painted door boards (Accent tint underneath): the same weathering as the body, by cause
+        over(m, c(150, 150, 130), 0.08 * ss(3.6, 7.4, Y) * onside)
+        over(m, dirt_col, 0.55 * grime ** 0.85 + 0.4 * S["dirt"])
+        over(m, rain_col, 0.5 * S["rain"])
+        over(m, soot_col, 0.55 * S["soot"])
+        over(m, mud_col, 0.55 * S["spray"])
+        over(m, rust_col, 0.7 * S["rust"])
+        over(m, rust_dark, 0.35 * S["rust"] ** 2)
+        over(m, c(20, 24, 20), 0.32 * S["craze"])
+        over(m, c(150, 146, 120), 0.5 * S["scuff"])
+        # worn through to grey timber at the chips and along knocked edges
+        over(m, c(122, 108, 88), 0.85 * np.clip(S["chip"] * 1.8, 0, 1))
+        over(m, c(120, 112, 92), 0.45 * E * np.clip(S["chip"] * 2 + S["scuff"] * 1.5 + ss(1.0, 0.0, Y) * onside, 0, 1))
+        rough[:] = np.where(m > 0, 0.5 + 0.3 * grime + 0.25 * S["rain"] + 0.3 * S["spray"] + 0.25 * S["chip"], rough)
+    elif kind == "Crate":
+        # raw, untinted timber: crates, barrels' staves, toolboxes, tool racks
+        g = 0.75 + 0.45 * streakn
+        over(m, c(104, 80, 54) * g[..., None], np.ones_like(A))
+        over(m, c(70, 60, 50), 0.5 * ss(0.4, 0.8, blot))  # weathered grey
+        over(m, dirt_col, 0.6 * grime + 0.5 * S["spray"] + 0.4 * S["dirt"])
+        over(m, rust_col, 0.6 * S["rust"])
+        over(m, soot_col, 0.5 * S["soot"])
+        over(m, c(160, 136, 100), 0.35 * E * (1 - grime))
+        rough[:] = np.where(m > 0, 0.72 + 0.2 * grime, rough)
+    elif kind == "Tarp":
+        # an oiled tarpaulin, olive drab, pale where it folds over edges, dark in the folds
+        over(m, c(64, 66, 50) * (0.85 + 0.3 * blot[..., None]), np.ones_like(A))
+        over(m, c(20, 20, 16), 0.6 * grime)
+        over(m, c(120, 118, 96), 0.45 * E)
+        over(m, dust_col, 0.4 * up)
+        over(m, soot_col, 0.5 * S["soot"])
+        rough[:] = np.where(m > 0, 0.78 - 0.15 * grime, rough)
+    elif kind == "Coal":
+        over(m, c(20, 19, 19) * (0.7 + 0.6 * blot[..., None]), np.ones_like(A))
+        over(m, c(70, 70, 74), 0.45 * E)  # glinting fracture faces
+        over(m, c(6, 6, 6), 0.6 * grime)
+        rough[:] = np.where(m > 0, 0.45 + 0.3 * grime - 0.2 * E, rough)
+        metal[:] = np.where(m > 0, 0.15 * E, metal)
+    elif kind == "Boiler":
+        # the boiler's sheet cladding, painted and varnished: streaks below every fitting, scale
+        # from the clack valves, heat darkening towards the smokebox, soot from the chimney
+        over(m, c(44, 62, 58) * (0.9 + 0.2 * blot[..., None]), np.ones_like(A))
+        over(m, c(150, 160, 150), 0.10 * ss(0.3, 0.9, NY))  # sky on the top
+        over(m, dirt_col, 0.45 * grime)
+        over(m, rain_col, 0.5 * ss(0.55, 0.85, streakn) * ss(0.2, -0.6, NY))
+        for v in FEAT.get("boilerFittings", []):
+            # a run below the fitting, down the side of the barrel it sits over (side 0 = both)
+            run = np.exp(-((X - v["x"]) / v.get("w", 0.35)) ** 2) * ss(v["y"] + 0.1, v["y"] - 0.4, Y) * ss(v["y"] - 6, v["y"] - 0.5, Y)
+            if v.get("side"):
+                run = run * (Z * v["side"] > 0)
+            over(m, c(196, 196, 180) if v.get("kind") == "scale" else rain_col, 0.55 * run * (0.5 + 0.5 * streakn))
+        over(m, soot_col, 0.6 * ss(SPEC.get("smokeboxX", 1e9) - 6, SPEC.get("smokeboxX", 1e9), X) * ss(0.0, 0.8, NY))
+        over(m, c(150, 140, 120), 0.3 * E)
+        rough[:] = np.where(m > 0, 0.3 + 0.35 * grime + 0.2 * blot, rough)
+        metal[:] = np.where(m > 0, 0.1 + 0.25 * E, metal)
+    elif kind == "Smokebox":
+        # graphite-and-oil black, burnt brown where the heat sits, ash at the bottom of the door
+        over(m, c(26, 25, 25) * (0.85 + 0.3 * blot[..., None]), np.ones_like(A))
+        over(m, c(70, 52, 40), 0.4 * ss(0.5, 0.85, blot) * ss(-0.2, 0.6, NY))
+        over(m, c(120, 118, 112), 0.35 * ss(0.35, -0.5, NY) * ss(0.4, 0.8, streakn))  # ash
+        over(m, c(96, 96, 96), 0.4 * E)
+        rough[:] = np.where(m > 0, 0.75 - 0.25 * E, rough)
+        metal[:] = np.where(m > 0, 0.3 + 0.3 * E, metal)
 alpha[~covered] = 0
 
 

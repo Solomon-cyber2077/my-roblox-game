@@ -120,7 +120,7 @@ def paint_canvas(side):
     for p in P:
         xa, ya, xb, yb = p["rect"]
         ia, ib, ja, jb = int(cpx(xa)), int(cpx(xb)), int(cpy(yb)), int(cpy(ya))
-        if p["kind"] == "boards":
+        if p["kind"] in ("boards", "leafboards", "plainboards"):
             xs = (np.arange(ia, ib) / PPU + CX0 - xa) / 0.3
             frac = xs - np.floor(xs)
             groove = np.clip(1 - np.minimum(frac, 1 - frac) / 0.09, 0, 1) ** 1.5
@@ -131,17 +131,19 @@ def paint_canvas(side):
             # dirt gathers in the grooves, more low down
             yfac = np.linspace(0.3, 1.0, jb - ja)[:, None]
             cv.dirt[ja:jb, ia:ib] = np.maximum(cv.dirt[ja:jb, ia:ib], 0.55 * groove[None, :] * yfac)
-        # pinstripe inside the bead and a dark shadow under the bead's lower run
+        # pinstripe inside the bead and a dark shadow under the bead's lower run (lined panels only)
         inset = 0.36
+        lined = p["kind"] in ("boards", "upper", "eaves")
         for (qa, qb, qc, qd) in ((xa + inset, ya + inset, xb - inset, ya + inset + 0.035), (xa + inset, yb - inset - 0.035, xb - inset, yb - inset),
                                  (xa + inset, ya + inset, xa + inset + 0.035, yb - inset), (xb - inset - 0.035, ya + inset, xb - inset, yb - inset)):
-            cv.pin[int(cpy(qd)) : int(cpy(qb)) + 1, int(cpx(qa)) : int(cpx(qc)) + 1] = 1
+            if lined:
+                cv.pin[int(cpy(qd)) : int(cpy(qb)) + 1, int(cpx(qa)) : int(cpx(qc)) + 1] = 1
         # chips on the moulding's corners and lower edge (feet, buckets, luggage)
         for cxp, cyp in ((xa, ya), (xb, ya), (xa, yb), (xb, yb)):
             for _ in range(rng.integers(1, 4)):
                 r = rng.uniform(1.5, 5)
                 cv.add("chip", cpx(cxp + rng.uniform(-0.12, 0.12)) - r, cpy(cyp + rng.uniform(-0.12, 0.12)) - r, blob(r))
-        if p["kind"] in ("boards",):
+        if p["kind"] in ("boards", "leafboards", "plainboards"):
             for _ in range(int((xb - xa) * 2)):
                 r = rng.uniform(1, 3.5)
                 cv.add("chip", cpx(rng.uniform(xa, xb)) - r, cpy(ya + rng.uniform(-0.1, 0.25)) - r, blob(r))
@@ -162,7 +164,7 @@ def paint_canvas(side):
             g = np.asarray(img.filter(ImageFilter.GaussianBlur(0.6)), np.float32) / 255
             cv.gild[ja:jb, ia:ib] = np.maximum(cv.gild[ja:jb, ia:ib], g)
         # paint crazing in the sunny upper and eaves panels
-        if p["kind"] in ("upper", "eaves") and ib - ia > 8 and jb - ja > 8:
+        if p["kind"] in ("upper", "eaves", "leaf", "leafboards", "plain") and ib - ia > 8 and jb - ja > 8:
             # fine and patchy: the old varnish has crazed only where the sun sits longest
             cr = voronoi_cracks(jb - ja, ib - ia, int(0.1 * PPU)) ** 2
             patch = value_noise(jb - ja, ib - ia, 36)

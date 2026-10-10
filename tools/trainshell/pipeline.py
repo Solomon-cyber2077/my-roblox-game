@@ -69,15 +69,27 @@ def main():
     ap.add_argument("--views", default="three_quarter,far,low,roof,platform,closeup")
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--v1", action="store_true")
+    ap.add_argument("--r2", action="store_true", help="the kit as round 2 built it")
     a = ap.parse_args()
     out = os.path.abspath(a.out)
     os.makedirs(out, exist_ok=True)
     dump = os.path.join(OUT, "train_dump.json")
     run(["lune", "run", "tools/trainshell/dump_train.luau", dump])
     if a.car == "Kit":
-        blender("build_kit.py", OUT, *(["--v1"] if a.v1 else []))
+        blender("build_kit.py", OUT, *(["--v1"] if a.v1 else []), *(["--r2"] if a.r2 else []))
         if a.v1:
             blender("bake.py", OUT, "Kit", str(a.size or 1024), blend=os.path.join(OUT, "Kit.blend"))
+        elif not a.r2:
+            # round 3: the leaves are painted by cause like the cars (posed as a closed door on a
+            # car side), and the bogie, wheels, rods and coal through bake2 too
+            posed = os.path.join(OUT, "Kit_posed.blend")
+            blender("kitpose.py", "car", OUT, posed, blend=os.path.join(OUT, "Kit.blend"))
+            for atlas in ("Doors", "Kit"):
+                run([sys.executable, os.path.join(TOOLS, "canvas.py"), os.path.join(OUT, f"{atlas}.json"), os.path.join(OUT, f"{atlas}_canvas.npz")])
+            blender("bake2.py", OUT, "Doors", "2048", os.path.join(OUT, "Doors.json"), os.path.join(OUT, "Doors_canvas.npz"), blend=posed)
+            blender("bake2.py", OUT, "Kit", "2048", os.path.join(OUT, "Kit.json"), os.path.join(OUT, "Kit_canvas.npz"), blend=os.path.join(OUT, "Doors_baked.blend"))
+            blender("kitpose.py", "home", os.path.join(OUT, "Kit_baked.blend"), blend=os.path.join(OUT, "Kit_baked.blend"))
+            os.remove(posed)
         else:
             # round 2: the door leaves have their own 1024 atlas, the bogie and wheel share another
             blender("bake.py", OUT, "Doors", "1024", blend=os.path.join(OUT, "Kit.blend"))
