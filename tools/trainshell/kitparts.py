@@ -198,3 +198,138 @@ def bogie2(name):
             for hx in (ax - 0.95, ax + 0.95):
                 iron.box_between((hx - 0.05, -3.0, min(side * 6.44, side * 6.6)), (hx + 0.05, -2.8, max(side * 6.44, side * 6.6)))
     return [iron]
+
+
+# -- round 3 -------------------------------------------------------------------------------------
+# The Mansell wheel at ~60% of the triangles: the tyre's bore (hidden by the teak) and the bolts on
+# the face nobody sees go, the round parts drop segments (the skirt hides the top third anyway).
+
+
+def wheel3(name):
+    tyre = Piece(name, None, "Iron")
+    teak = Piece(name + "_teak", None, "Teak")
+    segs = 18
+    tyre.lathe([(1.25, -0.3), (1.6, -0.3), (1.6, 0.18), (1.74, 0.24), (1.74, 0.3), (1.25, 0.3)], (0, 0, 0), "x", segs, caps=False)
+    teak.lathe([(0.0, -0.26), (1.27, -0.26), (1.27, 0.26), (0.0, 0.26)], (0, 0, 0), "x", 12)
+    tyre.lathe([(0.0, -0.42), (0.42, -0.42), (0.42, 0.42), (0.0, 0.42)], (0, 0, 0), "x", 8)
+    for k in range(6):
+        a = 2 * math.pi * (k + 0.5) / 6
+        for sx in (-1, 1):
+            tyre.rivets([(sx * 0.27, 1.1 * math.cos(a), 1.1 * math.sin(a))], (sx, 0, 0), 0.08, 0.04, 4)
+    return [tyre, teak]
+
+
+def drive_wheel(name, r=2.8, width=0.7):
+    """A locomotive driving wheel on a cylinder primitive (axle on local X, radius r): flanged tyre,
+    rim, fourteen tapered spokes, a crescent balance weight and a hub with its axle cap."""
+    iron = Piece(name, None, "Iron")
+    hw = width / 2
+    segs = 28
+    # tyre and flange (the flange on the inner face, local -X is towards the track centre on +Z)
+    iron.lathe([(r - 0.42, -hw), (r - 0.05, -hw), (r, -hw + 0.06), (r, hw - 0.18), (r + 0.16, hw - 0.1), (r + 0.16, hw), (r - 0.42, hw)], (0, 0, 0), "x", segs, caps=False)
+    # rim: a ring inside the tyre, a little narrower, with a bead on each face
+    ri = r - 0.68
+    iron.lathe([(ri, -hw + 0.1), (r - 0.42, -hw + 0.1), (r - 0.42, hw - 0.1), (ri, hw - 0.1), (ri, -hw + 0.1)], (0, 0, 0), "x", segs, caps=False)
+    # spokes: tapered, thicker at the hub, oval-ish (two bevels)
+    n = 14
+    for k in range(n):
+        a = 2 * math.pi * k / n
+        ca, sa = math.cos(a), math.sin(a)
+        ux, uy = -sa, ca  # across
+        r0, r1 = 0.62, ri + 0.04
+        w0, w1 = 0.15, 0.09
+        prof = [(ca * r0 - ux * w0, sa * r0 - uy * w0), (ca * r1 - ux * w1, sa * r1 - uy * w1),
+                (ca * r1 + ux * w1, sa * r1 + uy * w1), (ca * r0 + ux * w0, sa * r0 + uy * w0)]
+        # prism_x takes (y, z)
+        iron.prism_x([(py, pz) for py, pz in prof], -0.16, 0.16)
+    # balance weight: a crescent filling the spokes opposite the crank
+    arc = []
+    m = 9
+    for j in range(m + 1):
+        t = -0.9 + 1.8 * j / m
+        arc.append((math.cos(math.pi + t) * (ri - 0.02), math.sin(math.pi + t) * (ri - 0.02)))
+    inner = []
+    for j in range(m + 1):
+        t = 0.75 - 1.5 * j / m
+        inner.append((math.cos(math.pi + t) * (ri - 0.9), math.sin(math.pi + t) * (ri - 0.9)))
+    iron.prism_x([(py, pz) for py, pz in arc + inner], -0.2, 0.2)
+    # hub and axle cap, with six nuts on the outer face
+    iron.lathe([(0.0, -0.36), (0.5, -0.36), (0.72, -0.3), (0.72, 0.3), (0.0, 0.3)], (0, 0, 0), "x", 14)
+    # the hub's outer face is local -X (the platform side's wheels; mirror() makes the far side's)
+    iron.lathe([(0.0, -0.56), (0.32, -0.5), (0.32, -0.36), (0.0, -0.36)], (0, 0, 0), "x", 10)
+    iron.rivets([(-0.36, 0.5 * math.cos(2 * math.pi * k / 6), 0.5 * math.sin(2 * math.pi * k / 6)) for k in range(6)], (-1, 0, 0), 0.07, 0.06, 6)
+    return [iron]
+
+
+def coupling_rod(name, length=10.2, h=0.45, t=0.3):
+    """The coupling rod on its block primitive (length on local X): an I-section rod with bossed
+    ends, bronze bushes and crank pins with collars."""
+    iron = Piece(name, None, "Iron")
+    brass = Piece(name + "_brass", None, "Brass")
+    half = length / 2 - 0.45
+    # the rod: flanged edges with a fluted web (front face recessed)
+    iron.box_between((-half, -h / 2, -t / 2), (half, -h / 2 + 0.1, t / 2))
+    iron.box_between((-half, h / 2 - 0.1, -t / 2), (half, h / 2, t / 2))
+    iron.box_between((-half, -h / 2 + 0.1, -t / 2), (half, h / 2 - 0.1, t / 2 - 0.08))
+    for ex in (-1, 1):
+        cx = ex * (length / 2 - 0.45)
+        iron.lathe([(0.0, -t / 2), (0.46, -t / 2), (0.46, t / 2), (0.0, t / 2)], (cx, 0, 0), "z", 16)
+        brass.lathe([(0.0, t / 2), (0.24, t / 2), (0.24, t / 2 + 0.04), (0.0, t / 2 + 0.04)], (cx, 0, 0), "z", 10)
+        iron.lathe([(0.0, t / 2 + 0.04), (0.14, t / 2 + 0.04), (0.14, t / 2 + 0.22), (0.2, t / 2 + 0.24), (0.2, t / 2 + 0.3), (0.0, t / 2 + 0.32)], (cx, 0, 0), "z", 8)
+        # oil cup on top of the boss
+        brass.lathe([(0.0, 0.0), (0.08, 0.0), (0.1, 0.12), (0.06, 0.16), (0.0, 0.17)], (cx, 0.44, 0), "y", 8)
+    return [iron, brass]
+
+
+def coal_lump(name, seed=7):
+    """A heap of coal lumps for a unit-diameter Ball (the runtime scales it to each CoalTier ball):
+    a faceted mound of angular lumps, flat-bottomed where the bunker hides it."""
+    import random
+
+    rnd = random.Random(seed)
+    coal = Piece(name, None, "Coal")
+    # the mound: a low-poly dome with jittered verts
+    rings, segs = 5, 11
+    pts = []
+    for i in range(rings + 1):
+        phi = (math.pi / 2) * i / rings
+        row = []
+        for k in range(segs):
+            th = 2 * math.pi * (k + 0.5 * (i % 2)) / segs
+            rr = 0.5 * math.cos(phi) * rnd.uniform(0.86, 1.06)
+            yy = 0.5 * math.sin(phi) * rnd.uniform(0.82, 1.04) - 0.02
+            row.append((rr * math.cos(th), yy, rr * math.sin(th)))
+        pts.append(row)
+    from kit import V
+
+    bm = coal.bm
+    vs = [[bm.verts.new(V(*p)) for p in row] for row in pts]
+    for i in range(rings):
+        for k in range(segs):
+            a, b = vs[i][k], vs[i][(k + 1) % segs]
+            c, d = vs[i + 1][(k + 1) % segs], vs[i + 1][k]
+            bm.faces.new((a, b, c, d))
+    bm.faces.new(list(reversed(vs[0])))
+    # lumps on top: little irregular octahedra poking out of the mound
+    for _ in range(22):
+        th = rnd.uniform(0, 2 * math.pi)
+        phi = rnd.uniform(0.15, 1.35)
+        cx, cy, cz = 0.47 * math.cos(phi) * math.cos(th), 0.45 * math.sin(phi) - 0.02, 0.47 * math.cos(phi) * math.sin(th)
+        s = rnd.uniform(0.06, 0.13)
+        ax = [(s * rnd.uniform(0.7, 1.3), 0, 0), (-s * rnd.uniform(0.7, 1.3), 0, 0), (0, s * rnd.uniform(0.6, 1.2), 0),
+              (0, -s * rnd.uniform(0.4, 0.8), 0), (0, 0, s * rnd.uniform(0.7, 1.3)), (0, 0, -s * rnd.uniform(0.7, 1.3))]
+        v = [bm.verts.new(V(cx + dx, cy + dy, cz + dz)) for dx, dy, dz in ax]
+        for f in ((0, 2, 4), (4, 2, 1), (1, 2, 5), (5, 2, 0), (4, 3, 0), (1, 3, 4), (5, 3, 1), (0, 3, 5)):
+            bm.faces.new([v[j] for j in f])
+    return [coal]
+
+
+def mirror(pieces, axis):
+    """Mirror pieces through their local origin along a Roblox axis ("x" or "z")."""
+    import bmesh
+
+    vec = (-1, 1, 1) if axis == "x" else (1, -1, 1)  # Blender (x, y, z) = Roblox (x, -z, y)
+    for p in pieces:
+        bmesh.ops.scale(p.bm, vec=vec, verts=p.bm.verts)
+        bmesh.ops.reverse_faces(p.bm, faces=p.bm.faces)
+    return pieces

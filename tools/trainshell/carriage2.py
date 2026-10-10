@@ -25,7 +25,9 @@ Every wear mark bake2.py paints has a cause, so this module also records where t
 """
 
 import math
+from types import SimpleNamespace
 
+import identity
 from kit import Piece, V, arch_outline, cutter_object, offset_outline, on_end, on_side, rect_outline
 
 SKIN_IN, SKIN = 6.32, 6.58  # the skin is a thick slab; the wall primitive behind it is hidden
@@ -95,7 +97,12 @@ def build(spec, col):
     teak = Piece(f"{name}_Teak", None, "Teak")
     velvet = Piece(f"{name}_Velvet", None, "Velvet")
     bellows = Piece(f"{name}_Bellows", None, "Bellows")
+    crate = Piece(f"{name}_Crate", None, "Crate")
+    tarp = Piece(f"{name}_Tarp", None, "Tarp")
     extra = []
+    # "saloon": panelled, gilt-beaded, arched curtained windows; "van": matchboarded framing, square
+    # windows behind bars or mesh, plain cornice (Workshop, Stores, Guard's van)
+    van = spec.get("style", "saloon") == "van"
     feat = {"panels": [], "ledges": [], "rivets": [], "grips": [], "steps": [], "doorEdges": [],
             "vents": [], "straps": [], "plates": [], "windows": [], "boards": [], "lamps": []}
     labels = []  # (piece, label name, rect in train space, side) for make_sign2's atlas
@@ -131,7 +138,7 @@ def build(spec, col):
         cuts_open = []
         cuts_recess = []
         for wx in windows(side):
-            o = arch_outline(wx, WIN_SILL, WIN_W, WIN_SPRING, WIN_CROWN)
+            o = rect_outline(wx - WIN_W / 2, WIN_SILL, wx + WIN_W / 2, WIN_CROWN) if van else arch_outline(wx, WIN_SILL, WIN_W, WIN_SPRING, WIN_CROWN)
             cuts_open.append(o)
         door_rects = []
         for d in doors(side):
@@ -188,9 +195,15 @@ def build(spec, col):
                 return
             o = rect_outline(xa, ya, xb, yb)
             cuts_recess.append((o, depth))
-            prof = bolection(depth, 0.035 if zmax(side, xa, xb, ya) < 6.7 else 0.06)
+            if van:
+                # a square framing lip, chamfered into the boarded recess
+                prof = [(-0.07, 0.0), (-0.07, 0.025), (0.0, 0.025), (0.03, -depth + 0.01), (0.07, -depth), (0.0, -depth)]
+                kind = {"boards": "plainboards", "upper": "plainboards", "eaves": "plain"}.get(kind, kind)
+            else:
+                prof = bolection(depth, 0.035 if zmax(side, xa, xb, ya) < 6.7 else 0.06)
+                kind = spec.get("panelKinds", {}).get(kind, kind)
             shell.sweep(on_side(o, side, SKIN), prof, (0, 0, side))
-            if bead:
+            if bead and not van:
                 trim.sweep(on_side(offset_outline(o, -0.27), side, SKIN - depth), BEAD, (0, 0, side))
             feat["panels"].append({"side": side, "rect": [xa, ya, xb, yb], "depth": depth, "kind": kind})
 
@@ -202,7 +215,15 @@ def build(spec, col):
             panel(a, b, EAVES[0] + 0.08, EAVES[1] - 0.06, 0.07, "eaves")
 
         # -- pilasters: fluted posts between upper panels, with base and capital ----------
-        for p in posts:
+        for p in posts if van else []:
+            # a plain timber stanchion with an iron cap
+            zt = min(zmax(side, p - 0.2, p + 0.2), 6.64)
+            zbox(shell, side, p - 0.15, UPPER[0] - 0.28, SKIN - 0.02, p + 0.15, UPPER[1] + 0.02, zt)
+            zbox(fit, side, p - 0.17, UPPER[1] - 0.12, SKIN - 0.02, p + 0.17, UPPER[1] + 0.04, zt + 0.02)
+            fit.rivets([(p, UPPER[1] - 0.04, side * (zt + 0.02))], (0, 0, side), 0.045, 0.025, 6)
+            feat["rivets"].append({"side": side, "x": p, "y": UPPER[1] - 0.04})
+            feat["ledges"].append({"side": side, "x": [p - 0.17, p + 0.17], "y": UPPER[1] - 0.12, "iron": True})
+        for p in [] if van else posts:
             zt = min(zmax(side, p - 0.2, p + 0.2), 6.66)
             w = 0.2
             prof = [(-w, SKIN - 0.02), (-w, zt - 0.02), (-w + 0.02, zt)]
@@ -234,7 +255,7 @@ def build(spec, col):
             if side < 0:
                 prof.reverse()
             shell.prism_x(prof, a, b)
-            for yb in (WAIST[0] + 0.07, WAIST[1] - 0.09):
+            for yb in () if van else (WAIST[0] + 0.07, WAIST[1] - 0.09):
                 trim.sweep([(a + 0.05, yb, side * zw), (b - 0.05, yb, side * zw)], FINE_BEAD, (0, 0, side), closed=False)
             feat["ledges"].append({"side": side, "x": [a, b], "y": WAIST[0]})
             feat["ledges"].append({"side": side, "x": [a, b], "y": LOWER[0] - 0.02})
@@ -253,11 +274,59 @@ def build(spec, col):
             if side < 0:
                 pr.reverse()
             shell.prism_x(pr, a, b)
-            trim.sweep([(a + 0.05, FRIEZE[0] + 0.11, side * 6.64), (b - 0.05, FRIEZE[0] + 0.11, side * 6.64)], FINE_BEAD, (0, 0, side), closed=False)
+            if not van:
+                trim.sweep([(a + 0.05, FRIEZE[0] + 0.11, side * 6.64), (b - 0.05, FRIEZE[0] + 0.11, side * 6.64)], FINE_BEAD, (0, 0, side), closed=False)
             feat["ledges"].append({"side": side, "x": [a, b], "y": FRIEZE[0]})
 
+        # -- van windows: a square timber frame, a drip board, a plain sill, bars or mesh ----
+        for wx in windows(side) if van else []:
+            hw = WIN_W / 2
+            o = rect_outline(wx - hw, WIN_SILL, wx + hw, WIN_CROWN)
+            shell.sweep(on_side(o, side, SKIN), [(0.07, -0.44), (0.07, 0.07), (-0.2, 0.07), (-0.24, 0.0), (0.0, 0.0), (0.0, -0.44)], (0, 0, side))
+            dp = [(WIN_CROWN + 0.08, SKIN - 0.02), (WIN_CROWN + 0.08, SKIN + 0.2), (WIN_CROWN + 0.14, SKIN + 0.22), (WIN_CROWN + 0.3, SKIN - 0.02)]
+            dp = [(y, side * z) for y, z in dp]
+            if side < 0:
+                dp.reverse()
+            shell.prism_x(dp, wx - hw - 0.4, wx + hw + 0.4)
+            feat["ledges"].append({"side": side, "x": [wx - hw - 0.4, wx + hw + 0.4], "y": WIN_CROWN + 0.08})
+            sp = [(WIN_SILL - 0.2, SKIN - 0.02), (WIN_SILL - 0.2, SKIN + 0.16), (WIN_SILL - 0.02, SKIN + 0.2), (WIN_SILL - 0.02, SKIN - 0.02)]
+            sp = [(y, side * z) for y, z in sp]
+            if side < 0:
+                sp.reverse()
+            shell.prism_x(sp, wx - hw - 0.3, wx + hw + 0.3)
+            feat["ledges"].append({"side": side, "x": [wx - hw - 0.3, wx + hw + 0.3], "y": WIN_SILL - 0.2})
+            feat["windows"].append({"side": side, "x": wx})
+            zg0, zg1 = 6.36, 6.43
+            zbox(teak, side, wx - 0.1, WIN_SILL, zg0, wx + 0.1, WIN_CROWN, zg1)
+            zbox(teak, side, wx - hw, 5.2 - 0.07, zg0, wx + hw, 5.2 + 0.07, zg1)
+            hz = [(wx - hw, WIN_SILL + 0.05), (wx + hw, WIN_SILL + 0.05), (wx + hw, WIN_CROWN - 0.05), (wx - hw, WIN_CROWN - 0.05)]
+            haze.prism_z(hz, side * 6.335, side * 6.34)
+            guard = spec.get("windowGuard", "bars")
+            zb = 6.5
+            if guard == "bars":
+                # round iron bars in two flat ties, let into the frame
+                for k in range(7):
+                    bx = wx - hw + 0.24 + k * (WIN_W - 0.48) / 6
+                    fit.cylinder((bx, (WIN_SILL + WIN_CROWN) / 2, side * zb), "y", 0.045, WIN_CROWN - WIN_SILL, 6)
+                for by in (WIN_SILL + 0.7, WIN_CROWN - 0.7):
+                    zbox(fit, side, wx - hw - 0.05, by - 0.06, zb - 0.05, wx + hw + 0.05, by + 0.06, zb + 0.05)
+                    fit.rivets([(wx + sx * (hw + 0.0), by, side * (zb + 0.05)) for sx in (-1, 1)], (0, 0, side), 0.04, 0.02, 6)
+            else:
+                # a wire-mesh guard in an iron frame (the grille as a lattice of thin flats)
+                zbox(fit, side, wx - hw, WIN_SILL, zb - 0.03, wx - hw + 0.08, WIN_CROWN, zb + 0.03)
+                zbox(fit, side, wx + hw - 0.08, WIN_SILL, zb - 0.03, wx + hw, WIN_CROWN, zb + 0.03)
+                zbox(fit, side, wx - hw, WIN_SILL, zb - 0.03, wx + hw, WIN_SILL + 0.08, zb + 0.03)
+                zbox(fit, side, wx - hw, WIN_CROWN - 0.08, zb - 0.03, wx + hw, WIN_CROWN, zb + 0.03)
+                for k in range(1, 9):
+                    bx = wx - hw + k * WIN_W / 9
+                    zbox(fit, side, bx - 0.012, WIN_SILL, zb - 0.01, bx + 0.012, WIN_CROWN, zb + 0.01)
+                for k in range(1, 9):
+                    by = WIN_SILL + k * (WIN_CROWN - WIN_SILL) / 9
+                    zbox(fit, side, wx - hw, by - 0.012, zb - 0.02, wx + hw, by + 0.012, zb)
+                fit.rivets([(wx + sx * (hw - 0.04), by, side * (zb + 0.03)) for sx in (-1, 1) for by in (WIN_SILL + 0.3, WIN_CROWN - 0.3)], (0, 0, side), 0.035, 0.02, 6)
+
         # -- windows: deep moulded frame, drip mould, sill on brackets, glazing, curtains --
-        for wx in windows(side):
+        for wx in [] if van else windows(side):
             outline = arch_outline(wx, WIN_SILL, WIN_W, WIN_SPRING, WIN_CROWN)
             prof = [(0.07, -0.44), (0.07, 0.04), (0.04, 0.08), (-0.02, 0.1), (-0.12, 0.12), (-0.2, 0.1), (-0.26, 0.05),
                     (-0.3, 0.0), (0.0, 0.0), (0.0, -0.44)]
@@ -344,7 +413,8 @@ def build(spec, col):
             # architrave: flat, 0.3 wide, with a groove and a bead sunk in it (leaves pass over)
             arch = [(0.0, 0.0), (0.0, 0.04), (-0.12, 0.04), (-0.14, 0.01), (-0.2, 0.01), (-0.22, 0.04), (-0.32, 0.04), (-0.34, 0.0)]
             shell.sweep(on_side(o, side, SKIN), arch, (0, 0, side))
-            trim.sweep(on_side(offset_outline(o, 0.17), side, SKIN + 0.0), FINE_BEAD, (0, 0, side))
+            if not van:
+                trim.sweep(on_side(offset_outline(o, 0.17), side, SKIN + 0.0), FINE_BEAD, (0, 0, side))
             feat["doorEdges"].append({"side": side, "x": [d - DOOR_W / 2, d + DOOR_W / 2]})
             # the hanging track over the opening: a hooded rail on brackets
             a, b = max(x0 + 0.05, d - DOOR_W - 0.25), min(x1 - 0.05, d + DOOR_W + 0.25)
@@ -432,54 +502,68 @@ def build(spec, col):
 
         # -- the name board: dark sunk ground, moulded frame, gilt bead -------------------
         by0, by1 = 7.66, 8.38
-        sb = Piece(f"{name}_Sign_board{side}", None, "Sign")
-        sb.box_between((bc - blen / 2, by0, side * (SKIN - 0.03)), (bc + blen / 2, by1, side * (SKIN + 0.02)))
-        extra.append(sb)
-        labels.append({"piece": sb.name, "label": f"board{side}", "side": side, "rect": [bc - blen / 2, by0, bc + blen / 2, by1], "z": SKIN + 0.02})
-        bo = rect_outline(bc - blen / 2, by0, bc + blen / 2, by1)
-        shell.sweep(on_side(bo, side, SKIN), [(0.0, -0.02), (0.0, 0.08), (-0.04, 0.11), (-0.09, 0.11), (-0.12, 0.05), (-0.12, 0.0)], (0, 0, side))
-        trim.sweep(on_side(offset_outline(bo, 0.065), side, SKIN + 0.11), FINE_BEAD, (0, 0, side))
-        for sx in (-1, 1):
+        board = spec.get("nameBoard", True)
+        if board:
+            sb = Piece(f"{name}_Sign_board{side}", None, "Sign")
+            sb.box_between((bc - blen / 2, by0, side * (SKIN - 0.03)), (bc + blen / 2, by1, side * (SKIN + 0.02)))
+            extra.append(sb)
+            labels.append({"piece": sb.name, "label": f"board{side}", "side": side, "rect": [bc - blen / 2, by0, bc + blen / 2, by1], "z": SKIN + 0.02})
+            bo = rect_outline(bc - blen / 2, by0, bc + blen / 2, by1)
+            shell.sweep(on_side(bo, side, SKIN), [(0.0, -0.02), (0.0, 0.08), (-0.04, 0.11), (-0.09, 0.11), (-0.12, 0.05), (-0.12, 0.0)], (0, 0, side))
+            if not van:
+                trim.sweep(on_side(offset_outline(bo, 0.065), side, SKIN + 0.11), FINE_BEAD, (0, 0, side))
+        for sx in (-1, 1) if board and not van else ():
             # scroll ends either side of the board
             ex = bc + sx * (blen / 2 + 0.26)
             zbox(shell, side, ex - 0.1, by0 + 0.05, SKIN, ex + 0.1, by1 - 0.05, SKIN + 0.1)
             zbox(trim, side, ex - 0.05, (by0 + by1) / 2 - 0.12, SKIN + 0.1, ex + 0.05, (by0 + by1) / 2 + 0.12, SKIN + 0.13)
-        feat["boards"].append({"side": side, "rect": [bc - blen / 2, by0, bc + blen / 2, by1]})
+        if board:
+            feat["boards"].append({"side": side, "rect": [bc - blen / 2, by0, bc + blen / 2, by1]})
 
         # -- dentil course and corbels under the cornice -----------------------------------
         y0d, y1d = DENTIL
-        shell.box_between((x0 - 0.06, y0d - 0.02, side * (SKIN - 0.02)), (x1 + 0.06, y0d + 0.04, side * 6.66))
-        n = int((x1 - x0) / 0.24)
-        for k in range(n):
-            xa = x0 + 0.06 + k * (x1 - x0 - 0.12) / n
-            if any(abs(xa + 0.06 - d) < 0.55 for d in doors(side)):
-                continue
-            zbox(shell, side, xa, y0d + 0.04, SKIN - 0.02, xa + 0.12, y1d, 6.7)
-        corbels = [x0 + 0.25, x1 - 0.25] + posts
-        for d in doors(side):
-            corbels += [d - DOOR_W / 2 - 0.2, d + DOOR_W / 2 + 0.2]
-        for wx in windows(side):
-            corbels.append(wx)
-        corbels = sorted(set(round(c, 2) for c in corbels if abs(c - bc) > blen / 2 + 0.5 and min([abs(c - d) for d in doors(side)] or [9]) > 0.6))
-        for c in corbels:
-            cp = [(y1d, SKIN - 0.02), (TOP + 0.02, SKIN - 0.02), (TOP + 0.02, 6.84), (TOP - 0.06, 6.84), (TOP - 0.16, 6.76),
-                  (y1d - 0.08, 6.7), (y1d - 0.3, 6.66), (y1d - 0.46, 6.62), (y1d - 0.52, SKIN - 0.02)]
-            cp = [(y, side * z) for y, z in cp]
+        if van:
+            # a plain cornice: a fascia with a drip, no dentils or corbels
+            cor = [(TOP - 0.3, SKIN_IN), (TOP - 0.3, SKIN + 0.02), (TOP - 0.22, SKIN + 0.08), (TOP + 0.3, SKIN + 0.12),
+                   (TOP + 0.36, SKIN + 0.2), (EAVE_Y - 0.06, SKIN + 0.22), (EAVE_Y - 0.06, SKIN_IN)]
+            cor = [(y, side * z) for y, z in cor]
             if side < 0:
-                cp.reverse()
-            shell.prism_x(cp, c - 0.09, c + 0.09)
-            trim.box_between((c - 0.1, y1d - 0.53, side * (SKIN - 0.02)), (c + 0.1, y1d - 0.47, side * 6.64))
+                cor.reverse()
+            shell.prism_x(cor, x0 - 0.12, x1 + 0.12)
+            feat["ledges"].append({"side": side, "x": [x0, x1], "y": TOP - 0.3})
+        if not van:
+            shell.box_between((x0 - 0.06, y0d - 0.02, side * (SKIN - 0.02)), (x1 + 0.06, y0d + 0.04, side * 6.66))
+            n = int((x1 - x0) / 0.24)
+            for k in range(n):
+                xa = x0 + 0.06 + k * (x1 - x0 - 0.12) / n
+                if any(abs(xa + 0.06 - d) < 0.55 for d in doors(side)):
+                    continue
+                zbox(shell, side, xa, y0d + 0.04, SKIN - 0.02, xa + 0.12, y1d, 6.7)
+            corbels = [x0 + 0.25, x1 - 0.25] + posts
+            for d in doors(side):
+                corbels += [d - DOOR_W / 2 - 0.2, d + DOOR_W / 2 + 0.2]
+            for wx in windows(side):
+                corbels.append(wx)
+            corbels = sorted(set(round(c, 2) for c in corbels if abs(c - bc) > blen / 2 + 0.5 and min([abs(c - d) for d in doors(side)] or [9]) > 0.6))
+            for c in corbels:
+                cp = [(y1d, SKIN - 0.02), (TOP + 0.02, SKIN - 0.02), (TOP + 0.02, 6.84), (TOP - 0.06, 6.84), (TOP - 0.16, 6.76),
+                      (y1d - 0.08, 6.7), (y1d - 0.3, 6.66), (y1d - 0.46, 6.62), (y1d - 0.52, SKIN - 0.02)]
+                cp = [(y, side * z) for y, z in cp]
+                if side < 0:
+                    cp.reverse()
+                shell.prism_x(cp, c - 0.09, c + 0.09)
+                trim.box_between((c - 0.1, y1d - 0.53, side * (SKIN - 0.02)), (c + 0.1, y1d - 0.47, side * 6.64))
 
-        # -- cornice: ogee with a fascia, carrying the roof's edge --------------------------
-        cor = [(TOP - 0.1, SKIN_IN), (TOP - 0.1, SKIN + 0.02), (TOP + 0.02, SKIN + 0.06), (TOP + 0.08, SKIN + 0.12),
-               (TOP + 0.2, SKIN + 0.12), (TOP + 0.26, SKIN + 0.18), (TOP + 0.38, SKIN + 0.2), (TOP + 0.46, SKIN + 0.28),
-               (TOP + 0.5, SKIN + 0.3), (EAVE_Y - 0.06, SKIN + 0.3), (EAVE_Y - 0.06, SKIN_IN)]
-        cor = [(y, side * z) for y, z in cor]
-        if side < 0:
-            cor.reverse()
-        shell.prism_x(cor, x0 - 0.12, x1 + 0.12)
-        trim.sweep([(x0 - 0.1, TOP + 0.14, side * (SKIN + 0.12)), (x1 + 0.1, TOP + 0.14, side * (SKIN + 0.12))], FINE_BEAD, (0, 0, side), closed=False)
-        feat["ledges"].append({"side": side, "x": [x0, x1], "y": y0d - 0.02})
+            # -- cornice: ogee with a fascia, carrying the roof's edge --------------------------
+            cor = [(TOP - 0.1, SKIN_IN), (TOP - 0.1, SKIN + 0.02), (TOP + 0.02, SKIN + 0.06), (TOP + 0.08, SKIN + 0.12),
+                   (TOP + 0.2, SKIN + 0.12), (TOP + 0.26, SKIN + 0.18), (TOP + 0.38, SKIN + 0.2), (TOP + 0.46, SKIN + 0.28),
+                   (TOP + 0.5, SKIN + 0.3), (EAVE_Y - 0.06, SKIN + 0.3), (EAVE_Y - 0.06, SKIN_IN)]
+            cor = [(y, side * z) for y, z in cor]
+            if side < 0:
+                cor.reverse()
+            shell.prism_x(cor, x0 - 0.12, x1 + 0.12)
+            trim.sweep([(x0 - 0.1, TOP + 0.14, side * (SKIN + 0.12)), (x1 + 0.1, TOP + 0.14, side * (SKIN + 0.12))], FINE_BEAD, (0, 0, side), closed=False)
+            feat["ledges"].append({"side": side, "x": [x0, x1], "y": y0d - 0.02})
 
         # -- the skin: one slab with every opening and recess cut into it ------------------
         skin = Piece(f"{name}_skin{side}", "Body", "Paint")
@@ -503,7 +587,7 @@ def build(spec, col):
         sol = [(y, side * z) for y, z in sol]
         if side < 0:
             sol.reverse()
-        fit.prism_x(sol, x0 - 0.1, x1 + 0.1)
+        fit.prism_x(sol, spec.get("rearDeck", x0) - 0.1, x1 + 0.1)
         n = int((x1 - x0) / 0.55)
         rv = []
         for k in range(n + 1):
@@ -558,8 +642,11 @@ def build(spec, col):
         extra.append(end)
         for za, ya, zb, yb in rects:
             o = rect_outline(za, ya, zb, yb)
-            shell.sweep(on_end(o, ed, xf), bolection(0.1, 0.05), (ed, 0, 0))
-            trim.sweep(on_end(offset_outline(o, -0.27), ed, xf - ed * 0.1), BEAD, (ed, 0, 0))
+            if van:
+                shell.sweep(on_end(o, ed, xf), [(-0.07, 0.0), (-0.07, 0.025), (0.0, 0.025), (0.03, -0.09), (0.07, -0.1), (0.0, -0.1)], (ed, 0, 0))
+            else:
+                shell.sweep(on_end(o, ed, xf), bolection(0.1, 0.05), (ed, 0, 0))
+                trim.sweep(on_end(offset_outline(o, -0.27), ed, xf - ed * 0.1), BEAD, (ed, 0, 0))
         # gangway frame round the opening, iron, bolted
         if gang:
             gp = rect_outline(-2.04, -0.02, 2.04, 7.04)
@@ -585,6 +672,8 @@ def build(spec, col):
             for by in (1.5, 4.0, 6.5):
                 fit.box_between((min(xf, xf + ed * 0.2), by - 0.04, zs - 0.1), (max(xf, xf + ed * 0.2), by + 0.04, zs + 0.1))
         # headstock: the end beam, bolted, with buffers and a coupling hook
+        if ed < 0 and "rearDeck" in spec:
+            xf = spec["rearDeck"]  # the guard's veranda: the buffers are at the deck's end
         hs0, hs1 = sorted((xf, xf + ed * 0.16))
         fit.box_between((hs0, -1.05, -SKIN), (hs1, 0.0, SKIN))
         fit.rivets([(xf + ed * 0.16, y, z) for z in (-5.6, -4.6, -2.6, 2.6, 4.6, 5.6) for y in (-0.25, -0.8)], (ed, 0, 0), 0.05, 0.035)
@@ -607,7 +696,7 @@ def build(spec, col):
     # ---------------------------------------------------------------------------------
     # the gangway in front of the car: bellows, frames, chain, hoses (the car owns its front gap)
     if spec["frontGangway"]:
-        g0, g1 = x1 + 0.22, x1 + GAP - 0.22
+        g0, g1 = x1 + 0.22, x1 + spec.get("frontGap", GAP) - 0.22
         folds = 11
         rings = []
         for k in range(folds + 1):
@@ -624,12 +713,41 @@ def build(spec, col):
             o = rect_outline(-2.92, -0.3, 2.92, 8.0)
             path = [(gx, y, z) for z, y in o]
             fit.sweep(path, [(0.0, -0.06), (0.0, 0.06), (0.22, 0.06), (0.22, -0.06)], (1, 0, 0))
+        feat["gangway"] = [g0, g1]
+    if spec.get("frontGap", GAP) > 0:
+        coupling(fit, x1, spec.get("frontGap", GAP))
+    spec["lights"] = lights
+    pieces = SimpleNamespace(shell=shell, trim=trim, roof=roof, lens=lens, glow=glow, haze=haze, sign=sign, fit=fit, brass=brass,
+                             teak=teak, velvet=velvet, bellows=bellows, crate=crate, tarp=tarp)
+    roof_and_under(spec, pieces, van, col)
+    extra += spec.pop("_extra", [])
+    extra += identity.add(spec, pieces, SimpleNamespace(feat=feat, labels=labels, lights=lights, zbox=zbox, zmax=zmax, in_slide=in_slide,
+                                                        doors=doors, windows=windows, roof_y=roof_y, van=van, col=col))
+    # no geometric bevel on the many small parts: bake2 rounds every edge in the normal map
+    for p in extra:
+        if not hasattr(p, "bevel_after"):
+            p.bevel_after = None
+    return [shell, trim, roof, lens, glow, haze, fit, brass, teak, velvet, bellows, crate, tarp, sign] + extra
+
+
+def coupling(fit, x1, gap):
+    """Screw coupling, safety chains, steam-heat hose and vacuum pipe across the gap at x1..x1+gap."""
+    if True:
+        # the screw coupling: two links and a screw with its tommy bar, slung between the hooks
+        cy = -1.5
+        for k, (xa, xb) in enumerate(((x1 + 0.6, x1 + gap * 0.42), (x1 + gap * 0.58, x1 + gap - 0.6))):
+            lk = [(xa, cy - 0.08), (xb, cy - 0.12), (xb, cy + 0.0), (xa, cy + 0.04)]
+            fit.prism_z(lk, -0.16, -0.1)
+            fit.prism_z(lk, 0.1, 0.16)
+        fit.cylinder((x1 + gap / 2, cy - 0.06, 0), "x", 0.07, gap * 0.22, 8)
+        fit.cylinder((x1 + gap / 2, cy - 0.06, 0), "z", 0.035, 0.7, 6)
+        fit.lathe([(0.0, -0.1), (0.13, -0.1), (0.13, 0.1), (0.0, 0.1)], (x1 + gap / 2, cy - 0.06, 0), "x", 8)
         # buffer-height safety chains either side, sagging between the cars
         for cz in (-1.5, 1.5):
             pts = []
             for k in range(9):
                 t = k / 8
-                pts.append((x1 + 0.4 + (GAP - 0.8) * t, -1.35 - 0.35 * math.sin(math.pi * t), cz))
+                pts.append((x1 + 0.4 + (gap - 0.8) * t, -1.35 - 0.35 * math.sin(math.pi * t), cz))
             for k in range(len(pts) - 1):
                 a, b = pts[k], pts[k + 1]
                 mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
@@ -642,12 +760,24 @@ def build(spec, col):
             path = []
             for k in range(11):
                 t = k / 10
-                path.append((x1 + 0.3 + (GAP - 0.6) * t, -1.2 - 0.6 * math.sin(math.pi * t), hz))
+                path.append((x1 + 0.3 + (gap - 0.6) * t, -1.2 - 0.6 * math.sin(math.pi * t), hz))
             prof = [(r * math.cos(2 * math.pi * j / 8), r * math.sin(2 * math.pi * j / 8)) for j in range(8)]
             fit.sweep(path, prof, (0, 0, 1), closed=False)
-            for gx in (x1 + 0.3, x1 + GAP - 0.3):
+            for gx in (x1 + 0.3, x1 + gap - 0.3):
                 fit.cylinder((gx, -1.2, hz), "x", r + 0.04, 0.16, 8)
-        feat["gangway"] = [g0, g1]
+
+
+def roof_and_under(spec, P, van, col):
+    """The cambered roof, clerestory, gutters, vents, and the underframe's boxes."""
+    x0, x1 = spec["x0"], spec["x1"]
+    cx = (x0 + x1) / 2
+    name = spec["name"]
+    roof, shell, trim, fit = P.roof, P.shell, P.trim, P.fit
+    feat = spec["feat"]
+    extra = spec.setdefault("_extra", [])
+
+    def windows(side):
+        return spec["windows"].get(side, [])
 
     # ---------------------------------------------------------------------------------
     # roof
@@ -683,7 +813,8 @@ def build(spec, col):
         b0, b1 = ma + 0.4, mb - 0.4
         mon.cutters = [cutter_object(f"cut_m{side}", col, lambda p: p.box_between((b0, 10.2, side * 2.0), (b1, 10.8, side * 2.5)))]
         extra.append(mon)
-        trim.sweep(on_side(rect_outline(b0 - 0.1, 10.1, b1 + 0.1, 10.9), side, MON_Z), FINE_BEAD, (0, 0, side))
+        if not van:
+            trim.sweep(on_side(rect_outline(b0 - 0.1, 10.1, b1 + 0.1, 10.9), side, MON_Z), FINE_BEAD, (0, 0, side))
         n = max(1, round((b1 - b0) / 1.2))
         for k in range(n + 1):
             bx = b0 + (b1 - b0) * k / n
@@ -699,7 +830,7 @@ def build(spec, col):
     roof.prism_x(capp, ma - 0.55, mb + 0.55)
     # lamp-tops over every window, and torpedo vents between them on the platform side
     for side in (-1, 1):
-        for wx in windows(side) or [cx]:
+        for wx in [] if van else (windows(side) or [cx]):
             zz_ = side * 4.4
             roof.lathe([(0.44, -0.1), (0.44, 0.12), (0.36, 0.22), (0.18, 0.42), (0.2, 0.48), (0.06, 0.58), (0.0, 0.6)], (wx, roof_y(zz_), zz_), "y", 12)
             feat["vents"].append({"x": wx, "z": zz_, "kind": "lamp"})
@@ -718,11 +849,4 @@ def build(spec, col):
     fit.lathe([(0.0, 0.0), (0.42, 0.0), (0.42, 0.9), (0.3, 1.0), (0.1, 1.05), (0.1, 1.4)], (cx, -2.4 - 1.4, -2.2), "y", 12)
     fit.box_between((cx - 1.0, -2.3, 2.6), (cx + 1.0, -1.0, 4.4))
     fit.rivets([(cx + dx, -1.6, 4.4) for dx in (-0.8, -0.4, 0.0, 0.4, 0.8)], (0, 0, 1), 0.04, 0.03)
-
-    spec["lights"] = lights
-    # no geometric bevel on the many small parts: bake2 rounds every edge in the normal map
-    for p in extra:
-        if not hasattr(p, "bevel_after"):
-            p.bevel_after = None
-    return [shell, trim, roof, lens, glow, haze, fit, brass, teak, velvet, bellows, sign] + extra
 
