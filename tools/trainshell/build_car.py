@@ -34,9 +34,12 @@ def measure(dump, x0, x1):
     rear = front = False
     for p in dump:
         x, y, z = p["cf"][:3]
+        s = p["size"]
+        # an open deck floored behind the rear wall (the guard's veranda): its far end is the car's end
+        if p["material"] == "WoodPlanks" and abs(y + 0.5) < 0.01 and x < x0 and abs(x + s[0] / 2 - x0) < 0.05:
+            spec["rearDeck"] = x - s[0] / 2
         if not (x0 - 0.01 <= x <= x1 + 0.01):
             continue
-        s = p["size"]
         if p["material"] == "Glass" and p["name"] == "Part" and abs(abs(z) - 6.25) < 0.05 and abs(s[0] - 3.6) < 0.01:
             spec["windows"][1 if z > 0 else -1].append(round(x, 3))
         if p["name"] == "DoorBlocker":
