@@ -81,4 +81,5 @@ def main():
     json.dump(meta, open(os.path.join(out, f"{car}.json"), "w"), indent=1)
 
 
-main()
+if __name__ == "__main__":
+    main()

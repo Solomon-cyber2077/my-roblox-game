@@ -34,3 +34,9 @@ out.png
 
 # Blender auto-backups
 *.blend1
+
+# train exterior intermediates (the last bake's .blend holds every UV set; canvas.py rebuilds the npz)
+assets/train/*_P_baked.blend
+assets/train/*_N_baked.blend
+assets/train/Doors_baked.blend
+assets/train/*_canvas.npz

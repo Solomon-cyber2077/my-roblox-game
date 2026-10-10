@@ -30,7 +30,20 @@ PIECES = {
     "Roof": ("Roof", "{car}", True),
     "Lens": ("Lamp", None, False),
     "Sign": (None, "{car}_Sign", False),
+    # round 2
+    "Fittings": (None, "{car}", True),
+    "Glow": ("Lamp", None, False),
+    "Haze": ("Lamp", None, False),
+    # each side has its own 1024 atlas (a SurfaceAppearance map is capped at 1024)
+    "ShellP": ("Body", "{car}_P", True),
+    "ShellN": ("Body", "{car}_N", True),
+    "TrimP": ("Trim", "{car}_P", False),
+    "TrimN": ("Trim", "{car}_N", False),
+    "FittingsP": (None, "{car}_P", True),
+    "FittingsN": (None, "{car}_N", True),
 }
+# per piece: the door lamps' light lives on the Lens; the window veil is mostly see-through
+EXTRA = {"Lens": {"light": "true"}, "Haze": {"transparency": "0.86"}}
 KIT = {
     "DoorLeafL": ((0, 0, 0), "Accent"),
     "DoorLeafR": ((0, 0, 0), "Accent"),
@@ -63,6 +76,8 @@ lines = [
     "\tlivery: string?,",
     "\tlook: string?,",
     "\tshadow: boolean,",
+    "\tlight: boolean?,",
+    "\ttransparency: number?,",
     "}",
     "",
     "export type KitPiece = {",
@@ -70,10 +85,17 @@ lines = [
     "\tcenter: { number },",
     "\tsize: { number },",
     "\tanchor: { number },",
+    "\tlook: string?,",
     "\tlivery: string?,",
     "}",
     "",
-    "export type Car = { x0: number, x1: number, pieces: { [string]: Piece } }",
+    "export type Car = {",
+    "\tx0: number,",
+    "\tx1: number,",
+    "\tpieces: { [string]: Piece },",
+    "\tlights: { { number } }?,",
+    "\thideWalls: boolean?,",
+    "}",
     "",
     "local TrainShell: {",
     "\tEnabled: boolean,",
@@ -96,6 +118,12 @@ for car, (x0, x1) in CARS.items():
     lines.append(f"\t\t{car} = {{")
     lines.append(f"\t\t\tx0 = {num(x0)},")
     lines.append(f"\t\t\tx1 = {num(x1)},")
+    meta_path = os.path.join(ROOT, "assets", "train", f"{car}.json")
+    spec = json.load(open(meta_path))["spec"] if os.path.exists(meta_path) else {}
+    if spec.get("lights") and any(k.startswith(f"{car}_Fittings") for k in meshes):
+        # round 2: the lamps' lights sit at the lamps, and the side walls hide behind the carved skin
+        lines.append("\t\t\tlights = { " + ", ".join(vec(v) for v in spec["lights"]) + " },")
+        lines.append("\t\t\thideWalls = true,")
     lines.append("\t\t\tpieces = {")
     for p in found:
         m = meshes[f"{car}_{p}"]
@@ -106,6 +134,8 @@ for car, (x0, x1) in CARS.items():
         if look:
             fields.append(f'look = "{look.format(car=car)}"')
         fields.append(f"shadow = {'true' if shadow else 'false'}")
+        for k, v in EXTRA.get(p, {}).items():
+            fields.append(f"{k} = {v}")
         lines.append(f"\t\t\t\t{p} = {{ " + ", ".join(fields) + " },")
     lines.append("\t\t\t},")
     lines.append("\t\t},")
@@ -116,6 +146,8 @@ for k, (anchor, livery) in KIT.items():
     fields = [f"mesh = {m['id']}", f"center = {vec(m['center'])}", f"size = {vec(m['size'])}", f"anchor = {vec(anchor)}"]
     if livery:
         fields.append(f'livery = "{livery}"')
+    if k.startswith("DoorLeaf") and "Doors_color" in ids["images"]:
+        fields.append('look = "Doors"')  # round 2: the leaves have their own atlas
     lines.append(f"\t\t{k} = {{ " + ", ".join(fields) + " },")
 lines.append("\t},")
 lines.append("}")
@@ -128,9 +160,11 @@ images = ids["images"]
 children = []
 
 
-def look(name, prefix, pbr=True):
+def look(name, prefix, pbr=True, normal=None):
     props = {"AlphaMode": "Overlay"}  # the part's (livery) colour shows under the colour map's alpha
     props["ColorMap"] = f"rbxassetid://{images[prefix + '_color' if pbr else prefix]}"
+    if normal:
+        props["NormalMap"] = f"rbxassetid://{images[normal]}"
     if pbr:
         props["NormalMap"] = f"rbxassetid://{images[prefix + '_normal']}"
         props["RoughnessMap"] = f"rbxassetid://{images[prefix + '_rough']}"
@@ -139,11 +173,16 @@ def look(name, prefix, pbr=True):
 
 
 look("Kit", "Kit")
+if "Doors_color" in images:
+    look("Doors", "Doors")
 for car in CARS:
     if f"{car}_color" in images:
         look(car, car)
+    for tag in ("P", "N"):
+        if f"{car}_{tag}_color" in images:
+            look(f"{car}_{tag}", f"{car}_{tag}")
     if f"{car}_sign" in images:
-        look(f"{car}_Sign", f"{car}_sign", pbr=False)
+        look(f"{car}_Sign", f"{car}_sign", pbr=False, normal=f"{car}_signnormal" if f"{car}_signnormal" in images else None)
 model = {"className": "Folder", "children": children}
 json.dump(model, open(os.path.join(ROOT, "src", "server", "TrainLooks.model.json"), "w"), indent=1)
 print("wrote Config/TrainShell.luau and TrainLooks.model.json:", [c["name"] for c in children])

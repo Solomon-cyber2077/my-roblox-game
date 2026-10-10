@@ -5,7 +5,7 @@
 | Link | What it informed |
 |---|---|
 | https://create.roblox.com/docs/art/modeling/specifications | 20,000 triangles per mesh cap; watertight, no zero-thickness, avoid n-gons |
-| https://create.roblox.com/docs/art/modeling/texture-specifications | 4096 max texture; ~1024 for a 20-stud object (car atlases 2048, kit 1024); OpenGL tangent normals; single-channel roughness/metalness |
+| https://create.roblox.com/docs/art/modeling/texture-specifications | uploads may be 4096, but UV-mapped texture maps (SurfaceAppearance) are 1024 at most: verified in round 2, the asset server hands a 4096 upload back as 1024. So each car side has its own 1024 atlas. OpenGL tangent normals; single-channel roughness/metalness |
 | https://create.roblox.com/docs/art/modeling/surface-appearance | AlphaMode Overlay shows the MeshPart colour under the colour map's alpha: how the Livery cosmetic keeps tinting |
 | https://create.roblox.com/docs/reference/engine/classes/SurfaceAppearance | texture properties are not script-writable at runtime, so templates come in through Rojo (a plugin may set them) |
 | https://create.roblox.com/docs/reference/engine/classes/AssetService | `CreateMeshPartAsync` makes MeshParts from uploaded ids at runtime (plugins, so Rojo, cannot write MeshId) |

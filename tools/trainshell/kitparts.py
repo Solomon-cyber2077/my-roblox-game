@@ -108,3 +108,93 @@ def wheel(name):
     for p, ax in pts:
         tyre.rivets([p], ax, 0.07, 0.04, 6)
     return [tyre, teak]
+
+
+# -- round 2 -------------------------------------------------------------------------------------
+# The leaves keep their envelope (local z -0.08..0.16, so 6.66..6.90 on the car) and get real joinery:
+# framed and braced boards, a beaded glazing light, strap hinges with bolts, a kick plate, and a
+# flush brass pull with a backplate (a sliding door's pull sits in the leaf, it never sticks out).
+
+
+def door_leaf2(name, meeting):
+    planks = Piece(name, "Accent", "Planks")
+    iron = Piece(name + "_iron", None, "Iron")
+    brass = Piece(name + "_brass", None, "Brass")
+    hw, hh = LEAF_W / 2, LEAF_H / 2
+    zb, zf, zt = LEAF_Z0, LEAF_Z1 - 0.07, LEAF_Z1
+    wx0, wx1, wy0, wy1 = -0.35, 0.35, 0.1, 2.3  # the glass slit the old leaf had (y local)
+    # boards (recessed field) round the light
+    for a, b in ((-hw, wx0), (wx1, hw)):
+        planks.box_between((a, -hh, zb), (b, hh, zf))
+    planks.box_between((wx0, -hh, zb), (wx1, wy0, zf))
+    planks.box_between((wx0, wy1, zb), (wx1, hh, zf))
+    st = 0.32
+    # stiles and three rails, proud of the boards
+    for a, b in ((-hw, -hw + st), (hw - st, hw)):
+        planks.box_between((a, -hh, zf), (b, hh, zt))
+    for ya, yb in ((-hh, -hh + 0.5), (-0.62, -0.22), (hh - 0.42, hh)):
+        planks.box_between((-hw + st, ya, zf), (hw - st, yb, zt))
+    # a diagonal brace in the lower field (ledged, braced and framed)
+    dx0, dy0, dx1, dy1 = -hw + st, -hh + 0.5, hw - st, -0.62
+    ang = math.atan2(dy1 - dy0, dx1 - dx0)
+    if meeting < 0:
+        dx0, dx1 = dx1, dx0
+        ang = math.atan2(dy1 - dy0, dx1 - dx0)
+    w = 0.13
+    nx, ny = -math.sin(ang) * w, math.cos(ang) * w
+    prof = [(dx0 - nx, dy0 - ny), (dx1 - nx, dy1 - ny), (dx1 + nx, dy1 + ny), (dx0 + nx, dy0 + ny)]
+    if meeting < 0:
+        prof.reverse()
+    planks.prism_z(prof, zf - 0.01, zt - 0.02)
+    # the light: a moulded frame round the glass with a brass bead
+    for a, b, c, d in ((wx0 - 0.16, wy0 - 0.16, wx1 + 0.16, wy0), (wx0 - 0.16, wy1, wx1 + 0.16, wy1 + 0.16),
+                       (wx0 - 0.16, wy0, wx0, wy1), (wx1, wy0, wx1 + 0.16, wy1)):
+        planks.box_between((a, b, zf), (c, d, zt + 0.01))
+    brass.box_between((wx0 - 0.03, wy0 - 0.03, zt - 0.06), (wx1 + 0.03, wy0, zt - 0.02))
+    brass.box_between((wx0 - 0.03, wy1, zt - 0.06), (wx1 + 0.03, wy1 + 0.03, zt - 0.02))
+    brass.box_between((wx0 - 0.03, wy0, zt - 0.06), (wx0, wy1, zt - 0.02))
+    brass.box_between((wx1, wy0, zt - 0.06), (wx1 + 0.03, wy1, zt - 0.02))
+    # strap hinges on the outer stile side: tapered straps with bolt heads
+    ox = -meeting * hw
+    for y in (-2.55, 2.85):
+        L = 1.7
+        tip = ox + meeting * L
+        pts = [(ox, y - 0.11), (tip - meeting * 0.25, y - 0.06), (tip, y), (tip - meeting * 0.25, y + 0.06), (ox, y + 0.11)]
+        if meeting < 0:
+            pts.reverse()
+        iron.prism_z(pts, zt, zt + 0.025)
+        iron.rivets([(ox + meeting * (0.15 + k * 0.38), y, zt + 0.025) for k in range(4)], (0, 0, 1), 0.04, 0.025)
+    # kick plate, riveted
+    iron.box_between((-hw + 0.06, -hh + 0.04, zt), (hw - 0.06, -hh + 0.42, zt + 0.02))
+    iron.rivets([(-hw + 0.2 + k * (LEAF_W - 0.4) / 6, -hh + 0.23, zt + 0.02) for k in range(7)], (0, 0, 1), 0.035, 0.02)
+    # flush pull near the meeting edge at hand height: brass backplate, a dark cup, a grip bar inside
+    hx = meeting * (hw - 0.17)
+    brass.box_between((hx - 0.1, -1.05, zt), (hx + 0.1, 0.25, zt + 0.02))
+    brass.box_between((hx - 0.06, -0.75, zt - 0.05), (hx + 0.06, -0.05, zt + 0.0))
+    brass.box_between((hx - 0.02, -0.7, zt - 0.03), (hx + 0.02, -0.1, zt + 0.015))
+    brass.rivets([(hx, y, zt + 0.02) for y in (-0.95, 0.15)], (0, 0, 1), 0.025, 0.015, 6)
+    return [planks, iron, brass]
+
+
+def bogie2(name):
+    """The bogie at about half the triangles: what shows under the skirt kept, the rest simplified."""
+    iron = Piece(name, None, "Iron")
+    iron.box_between((-1.2, -3.55, -4.8), (1.2, -2.45, 4.8))
+    iron.lathe([(0.9, 0), (0.9, 0.18), (0.0, 0.26)], (0, -2.45, 0), "y", 8)
+    for side in (-1, 1):
+        zi, zo = side * 6.0, side * 6.3
+        prof = [(-3.6, -3.35), (-3.0, -3.85), (3.0, -3.85), (3.6, -3.35), (3.6, -2.78), (-3.6, -2.78)]
+        iron.prism_z(prof, min(zi, zo), max(zi, zo))
+        iron.box_between((-3.6, -2.86, min(zi, side * 6.42)), (3.6, -2.74, max(zi, side * 6.42)))
+        for ax in (-2.1, 2.1):
+            for gx in (ax - 0.5, ax + 0.5):
+                iron.box_between((gx - 0.08, -4.1, min(side * 6.28, side * 6.42)), (gx + 0.08, -2.9, max(side * 6.28, side * 6.42)))
+            iron.box_between((ax - 0.4, -4.05, min(side * 6.25, side * 6.58)), (ax + 0.4, -3.2, max(side * 6.25, side * 6.58)))
+            iron.lathe([(0.26, 0), (0.2, side * 0.06), (0.0, side * 0.1)], (ax, -3.62, side * 6.58), "z", 8)
+            for k in range(3):
+                half = 0.95 - k * 0.22
+                y = -2.94 - k * 0.09
+                iron.box_between((ax - half, y - 0.045, min(side * 6.42, side * 6.62)), (ax + half, y + 0.045, max(side * 6.42, side * 6.62)))
+            for hx in (ax - 0.95, ax + 0.95):
+                iron.box_between((hx - 0.05, -3.0, min(side * 6.44, side * 6.6)), (hx + 0.05, -2.8, max(side * 6.44, side * 6.6)))
+    return [iron]

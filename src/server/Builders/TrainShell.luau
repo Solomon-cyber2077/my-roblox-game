@@ -41,6 +41,7 @@ local KEEP_NAMES = {
 local KEEP_ATTRIBUTES = { "BreachAnchor", "CoalTier", "CrankRadius" }
 local MOVED = { "DoorSlide", "WheelRadius", "WheelPivot" }
 local WALL_OUT = 6.45 -- a part wholly beyond this |z| is outside the side walls, under the skin
+local WALL_FACE, WALL_IN = 6.56, 5.95 -- a side wall: outer face up to the skin, inner face clear of the lining
 local UNDER = -2.3 -- a part wholly below this is bogie: its frames and bolster
 local GLASS_IN = 0.13 -- door glass moves this far in, into the new leaf's glazing slit
 local LAMP = Color3.fromRGB(255, 206, 150)
@@ -216,12 +217,25 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 			end
 			if piece.livery == "Lamp" then
 				part.Material = Enum.Material.Neon
-				local light = Instance.new("PointLight")
-				light.Color = LAMP
-				light.Range = Config.LampLight.Range
-				light.Brightness = Config.LampLight.Brightness
-				light.Shadows = false
-				light.Parent = part
+			end
+			if piece.transparency then
+				part.Transparency = piece.transparency
+			end
+			if piece.light then
+				-- one light per door lamp, at the lamp (a round-1 car has one lamp: the lens itself)
+				local spots: { { number } } = car.lights or { piece.center }
+				for _, at in spots do
+					local holder = Instance.new("Attachment")
+					holder.Name = "LampLight"
+					holder.Parent = part
+					holder.WorldCFrame = origin * CFrame.new(v3(at))
+					local light = Instance.new("PointLight")
+					light.Color = LAMP
+					light.Range = Config.LampLight.Range
+					light.Brightness = Config.LampLight.Brightness
+					light.Shadows = false
+					light.Parent = holder
+				end
 			end
 			look(looks, piece.look, part)
 		end
@@ -239,6 +253,16 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 				+ math.abs(cf.UpVector.Y) * half.Y
 				+ math.abs(cf.LookVector.Y) * half.Z
 			local outside = math.abs(cf.Z) - ez >= WALL_OUT
+			-- round 2 carves its panels into the skin, deeper than the side wall's outer face:
+			-- the wall (and the window's arch decoration in it) hides, keeping its collision
+			local wall = car.hideWalls == true
+				and math.abs(cf.Z) + ez <= WALL_FACE
+				and math.abs(cf.Z) + ez >= WALL_OUT
+				and math.abs(cf.Z) - ez >= WALL_IN
+			local arch = car.hideWalls == true
+				and part.Material == Enum.Material.Wood
+				and math.abs(math.abs(cf.Z) - 6.25) < 0.05
+				and ez <= 0.16
 			local under = cf.Y + ey <= UNDER
 			local roof = part:GetAttribute("Livery") == "Roof"
 
@@ -261,7 +285,7 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 					leaf.Color = part.Color
 					leaf:SetAttribute("Livery", kit.livery)
 					leaf:SetAttribute("DoorSlide", slide)
-					look(looks, Config.KitLook, leaf)
+					look(looks, kit.look or Config.KitLook, leaf)
 					retire(part, archive)
 				end
 			elseif part:GetAttribute("WheelRadius") ~= nil and cf.Y < 0 then
@@ -277,7 +301,7 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 				for _, attr in MOVED do
 					wheel:SetAttribute(attr, part:GetAttribute(attr))
 				end
-				look(looks, Config.KitLook, wheel)
+				look(looks, kit.look or Config.KitLook, wheel)
 				retire(part, archive)
 			elseif under or (cf.Y < 0 and part.Size:FuzzyEq(TEAK, 0.01)) then
 				local size = part.Size
@@ -291,10 +315,10 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 					)
 					bogie.Name = "Bogie"
 					bogie.Color = Color3.new(1, 1, 1)
-					look(looks, Config.KitLook, bogie)
+					look(looks, kit.look or Config.KitLook, bogie)
 				end
 				retire(part, archive)
-			elseif outside or roof then
+			elseif outside or roof or wall or arch then
 				retire(part, archive)
 			end
 		end
