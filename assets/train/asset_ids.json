@@ -1,0 +1,134 @@
+{
+ "creator": "user 11744048795",
+ "meshes": {
+  "Bogie": {
+   "id": 99759056175489,
+   "center": [
+    0,
+    -3.145,
+    0
+   ],
+   "size": [
+    7.2,
+    1.91,
+    13.36
+   ]
+  },
+  "DoorLeafL": {
+   "id": 111563819245135,
+   "center": [
+    0,
+    0,
+    0.09
+   ],
+   "size": [
+    2.84,
+    7.54,
+    0.34
+   ]
+  },
+  "DoorLeafR": {
+   "id": 121727413917599,
+   "center": [
+    0,
+    0,
+    0.09
+   ],
+   "size": [
+    2.84,
+    7.54,
+    0.34
+   ]
+  },
+  "Wheel": {
+   "id": 107708080038907,
+   "center": [
+    0,
+    0,
+    0
+   ],
+   "size": [
+    0.84,
+    3.48,
+    3.48
+   ]
+  },
+  "CrewSaloon_Shell": {
+   "id": 140095278909664,
+   "center": [
+    -32.25,
+    3.66,
+    0.075
+   ],
+   "size": [
+    19.16,
+    14.92,
+    13.83
+   ]
+  },
+  "CrewSaloon_Trim": {
+   "id": 114718527433832,
+   "center": [
+    -32.25,
+    5.37,
+    0
+   ],
+   "size": [
+    18.736,
+    11.12,
+    13.416
+   ]
+  },
+  "CrewSaloon_Roof": {
+   "id": 76945032214839,
+   "center": [
+    -32.25,
+    10.53,
+    0
+   ],
+   "size": [
+    19.1,
+    1.78,
+    13.84
+   ]
+  },
+  "CrewSaloon_Lens": {
+   "id": 76841430167272,
+   "center": [
+    -36.25,
+    8.155,
+    6.81
+   ],
+   "size": [
+    0.48,
+    0.41,
+    0.06
+   ]
+  },
+  "CrewSaloon_Sign": {
+   "id": 85934571408240,
+   "center": [
+    -31.275,
+    8.21,
+    0
+   ],
+   "size": [
+    14.95,
+    0.82,
+    13.3
+   ]
+  }
+ },
+ "images": {
+  "Kit_color": 138043438629601,
+  "Kit_normal": 117662857134062,
+  "Kit_rough": 123920149931631,
+  "Kit_metal": 73072115300001,
+  "CrewSaloon_color": 118855689022511,
+  "CrewSaloon_normal": 105871895068073,
+  "CrewSaloon_rough": 138802394989886,
+  "CrewSaloon_metal": 98720665663404,
+  "CrewSaloon_sign": 112244286608414
+ },
+ "superseded_uploads": "Meshes: Kit and CrewSaloon were uploaded twice before the axis fix (turned 180 degrees). Images: Kit_color 140200912052062 and CrewSaloon_color 73117788416675 (first wear pass, too dark). None are used."
+}
