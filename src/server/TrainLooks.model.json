@@ -1,0 +1,35 @@
+{
+ "className": "Folder",
+ "children": [
+  {
+   "name": "Kit",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://138043438629601",
+    "NormalMap": "rbxassetid://117662857134062",
+    "RoughnessMap": "rbxassetid://123920149931631",
+    "MetalnessMap": "rbxassetid://73072115300001"
+   }
+  },
+  {
+   "name": "CrewSaloon",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://118855689022511",
+    "NormalMap": "rbxassetid://105871895068073",
+    "RoughnessMap": "rbxassetid://138802394989886",
+    "MetalnessMap": "rbxassetid://98720665663404"
+   }
+  },
+  {
+   "name": "CrewSaloon_Sign",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://112244286608414"
+   }
+  }
+ ]
+}

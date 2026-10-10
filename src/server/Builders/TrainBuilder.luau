@@ -29,6 +29,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 
 local TrainInterior = require(script.Parent.TrainInterior)
+local TrainShell = require(script.Parent.TrainShell)
 
 local TrainBuilder = {}
 
@@ -1709,6 +1710,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			part.Anchored = true
 		end
 	end
+	TrainShell.dress(model, origin)
 	model.Parent = parent
 
 	local spawnPoints: { CFrame } = {}

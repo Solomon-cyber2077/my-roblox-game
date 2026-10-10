@@ -31,3 +31,6 @@ Thumbs.db
 *.ogg
 out.json
 out.png
+
+# Blender auto-backups
+*.blend1
