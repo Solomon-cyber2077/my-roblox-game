@@ -112,7 +112,7 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
 - Make small changes. Never rewrite working files. Explain before deleting anything.
 - One task per session. Stop when the task is done.
 - Verify before saying done: run the tests, or state exactly how I can check it.
-- Commit after each completed task with a clear message. Never push.
+- Commit after each completed task with a clear message. Push only when I say I'm happy with the changes.
 - Never print or commit secrets (keys, tokens, passwords).
 - At the end of every task, update HANDOFF.md with: 1. features completed, 2. known bugs/regressions, 3. next logical step.
 - When asked for "the next task": do only the first unchecked item in TASKS.md, tick it off, then stop. If none are left, say so and stop.
