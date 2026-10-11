@@ -35,6 +35,7 @@ local Remotes: { [string]: RemoteDef } = {
 	BuyUpgrade = { direction = "ToServer", args = { "id" }, rate = 3, burst = 3 },
 	HullPatch = { direction = "ToServer", args = {}, rate = 2, burst = 2 },
 	ShopPurchase = { direction = "ToServer", args = { "id" }, rate = 2, burst = 3 },
+	SetSetting = { direction = "ToServer", args = { "id", "id" }, rate = 4, burst = 4 },
 	ShopEquip = { direction = "ToServer", args = { "id" }, rate = 4, burst = 4 },
 	JoinInProgress = { direction = "ToServer", args = {}, rate = 1, burst = 1 },
 	Struggle = { direction = "ToServer", args = {}, rate = 12, burst = 14 }, -- fighting out of a Hollow's grip
