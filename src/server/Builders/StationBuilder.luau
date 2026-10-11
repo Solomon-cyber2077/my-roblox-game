@@ -347,6 +347,50 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			palette.accent,
 			plan.seed + building.id * 7919
 		)
+		-- a ledge of land outside the ways out that open over the island's edge, one per wall
+		local spans: { [string]: { alongZ: boolean, outward: number, at: number, lo: number, hi: number } } =
+			{}
+		for _, door in building.plan.doors do
+			if door.exterior and door.y < 1 then
+				local alongZ = door.axis == "X" -- the door faces along z
+				local x, z = building.x + door.x, building.z + door.z
+				local edge = if alongZ then plan.depth else plan.length / 2
+				local reach = if alongZ then z + door.outward * 12 else math.abs(x + door.outward * 12)
+				if (not alongZ or door.outward > 0) and reach > edge then
+					local key = `{door.axis}{door.outward}`
+					local across = if alongZ then x else z
+					local span = spans[key]
+					if span then
+						span.lo = math.min(span.lo, across - door.width / 2)
+						span.hi = math.max(span.hi, across + door.width / 2)
+					else
+						spans[key] = {
+							alongZ = alongZ,
+							outward = door.outward,
+							at = if alongZ then edge else door.outward * edge,
+							lo = across - door.width / 2,
+							hi = across + door.width / 2,
+						}
+					end
+				end
+			end
+		end
+		for _, span in spans do
+			local out, wide = 14, span.hi - span.lo + 12
+			local mid = span.at + span.outward * out / 2
+			local across = (span.lo + span.hi) / 2
+			local size = if span.alongZ then Vector3.new(wide, 2, out) else Vector3.new(out, 2, wide)
+			local cx, cz = if span.alongZ then across else mid, if span.alongZ then mid else across
+			local ledge = Kit.block(piece, size, L(cx, -1, cz), palette.ground, { material = groundMaterial })
+			ledge.Name = "DoorLedge"
+			Kit.block(
+				piece,
+				size - Vector3.new(1, -8, 1),
+				L(cx, -6.5, cz),
+				EARTH,
+				{ material = Enum.Material.Ground }
+			)
+		end
 		attachTo(piece, building.slab)
 	end
 

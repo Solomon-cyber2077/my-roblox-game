@@ -2,6 +2,16 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
+## 2026-10-11: Settings menu, operators toggle, Ashgrove door ledge
+1. Completed:
+   - Settings button moved top left under the lobby pass and its shortcuts (`UI/Settings`, offset 14,244); it no longer covers the route ballot.
+   - Settings menu text much larger (titles 26, notes 19, buttons 24). Broken thing markers: only Always / Off (first few runs is the default, not a button).
+   - Operators panel: no top-right button; panel sits in the corner (`UI/Operators`). Settings has one toggle that reads TURN OFF / TURN ON (status ON / OFF), stored in the existing `OperatorsPanel` setting.
+   - Ashgrove: when the school sits on the island's end edge its corridor exit opened over the drop. `StationBuilder` now builds a 14-stud ledge of ground (plus earth under it) outside any ground-floor way out that leads off the island, one per wall, welded with the building.
+   - Verified: `lune run check` passes (240 tests, station audit with 6 seeds, no z-fights). Headless: of 30 Ashgrove seeds, the 2 with the school on the edge both got a ledge. In Play: button position, the bigger menu, the toggle hiding the panel. Console: only the DataStore/Arvo notices that were already there.
+2. Known: the ledge was not walked in Studio (no dev command to force the Schoolhouse stop). Players who saved "FirstFew" see neither Always nor Off highlighted (intended).
+3. Next: on an Ashgrove stop, `tp mid` and walk out the school's end exit to confirm the ledge.
+
 ## 2026-10-11: Round 1 bug fixes (input, grab, hotbar, doors, vote, Ready)
 Not playtested: this round was told to stay out of Studio. `lune run check` could not run whole because Windows Application Control blocks `rojo.exe` (sourcemap step); every other step (StyLua, selene, luau-lsp on the existing sourcemap, 233 tests, audit) passes.
 1. Completed:
