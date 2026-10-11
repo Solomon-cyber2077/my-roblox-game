@@ -298,7 +298,9 @@ function TrainVisualsController.Start()
 							pivot * CFrame.Angles(0, 0, -a) * pivot:Inverse() * spin.base
 						)
 					else
-						table.insert(spinFrames, spin.base * CFrame.Angles(-a, 0, 0))
+						-- about world Z through its own centre, the same way round as the spokes and rods
+						local at = spin.base.Position
+						table.insert(spinFrames, CFrame.Angles(0, 0, -a) * (spin.base - at) + at)
 					end
 				end
 				for _, rod in rig.rods do
