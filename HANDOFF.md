@@ -2,6 +2,15 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
+## 2026-10-11: Round-1 Studio job done on disk (revive marker, door check, railing pilot)
+1. Completed:
+   - Revive marker (Astra's edit, verified): the guard's van bunk is now `Train.Bunk` (base, mattress, cover, pillow, two hidden Bunk seats) with `ReviveSpawn` on the mattress at train (-86.5, 1.6, -4.53), invisible, anchored, no collide/query/touch, LookVector -X toward the pillow. One bed in the train; the display train gets its own copy.
+   - Door check: every carriage's side doors come from one `sideWall` path in `TrainBuilder` (DoorBlocker + DoorPanel leaves with `DoorSlide`), opened for everyone by `TrainService.SetDoors` (model attribute + blocker CanCollide). No per-car model mismatch, nothing changed. Suspicious: the guard's van has leaves only on the platform (+Z) side; Workshop/Stores/loco use their own leaf meshes (`car.pieces`); round 1's streaming fix in `TrainVisualsController` was never tested on a second client.
+   - Railing pilot: `Builders/RailingPilot` builds `ServerStorage.PerformanceTrain_Pilot` (12 Parts: Rear/Side Rail1-3, Post1-2, Infill) at the run train's position, called from `TrainService.Init`. Stand-in for the guard's van veranda balustrade baked into `GuardsVanFittings` (~41 balusters, 6 rails, 14 knobs, ~1000 tris est.); pilot ~144 tris. Live railing untouched.
+   - Verified: `lune run check` passes; Play: folder has 12 parts, ReviveSpawn as above, console only the DataStore notices.
+2. Known: the pilot was not judged by eye (the lobby night left the train black in screenshots). Doors not tested with two clients.
+3. Next: drag the pilot into Workspace in Play (daylight) and compare with the van's railing from the platform; Test > Clients and Servers (2 players) to check doors in cars 1, 2, 5 and the loco.
+
 ## 2026-10-11: HUD toggle in Settings; Settings button rides up in a run
 1. Completed: no hotkey (F1 is the user's monitor switch, V did not suit). Settings has a HUD row (TURN OFF / TURN ON), saved as setting `Hud` (Show/Hide, `Config/Settings`, spec updated). `UI/Hud` hides only an outer `HudRoot` frame, so tool keys keep working. The Settings button sits at 14,244 under the lobby pass, and at 14,156 (just under the coal/hull gauges) while the lobby panel is hidden. Verified in Play: button 244 -> 156 in a run, Hide/Show flips the HUD; console only the old DataStore/Arvo notices.
 2. Known: none.

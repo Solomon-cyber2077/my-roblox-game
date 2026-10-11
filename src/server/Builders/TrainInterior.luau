@@ -909,12 +909,35 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		{ material = M.Fabric, collide = false, shadow = false }
 	)
 	-- the bunk along the far wall at the back, and the guard's desk across from it
-	solid(Vector3.new(8.0, 1.1, 2.26), at(-85.2, 0.55, -4.53), C.woodDark, M.Wood)
-	solid(Vector3.new(7.8, 0.5, 2.1), at(-85.2, 1.35, -4.53), C.ticking, M.Fabric)
-	decor(Vector3.new(5.2, 0.14, 2.16), at(-84.0, 1.67, -4.53), rgb(126, 46, 44), M.Fabric)
-	decor(Vector3.new(1.3, 0.4, 1.6), at(-88.25, 1.8, -4.5), C.pillow, M.Fabric)
+	local bunk = Instance.new("Model")
+	bunk.Name = "Bunk"
+	bunk.Parent = model
+	local bunkBase = solid(Vector3.new(8.0, 1.1, 2.26), at(-85.2, 0.55, -4.53), C.woodDark, M.Wood)
+	bunkBase.Parent = bunk
+	local bunkMattress = solid(Vector3.new(7.8, 0.5, 2.1), at(-85.2, 1.35, -4.53), C.ticking, M.Fabric)
+	bunkMattress.Parent = bunk
+	local bunkCover = decor(Vector3.new(5.2, 0.14, 2.16), at(-84.0, 1.67, -4.53), rgb(126, 46, 44), M.Fabric)
+	bunkCover.Parent = bunk
+	local bunkPillow = decor(Vector3.new(1.3, 0.4, 1.6), at(-88.25, 1.8, -4.5), C.pillow, M.Fabric)
+	bunkPillow.Parent = bunk
+	local reviveSpawn = Kit.block(
+		bunk,
+		Vector3.new(0.2, 0.2, 0.2),
+		at(-86.5, 1.6, -4.53) * Kit.angles(0, 90, 0),
+		Color3.new(),
+		{ transparency = 1, collide = false, shadow = false, name = "ReviveSpawn" }
+	)
+	reviveSpawn.CanQuery = false
+	reviveSpawn.CanTouch = false
 	for _, x in { -84.4, -82.4 } do
-		seat(Vector3.new(1.9, 0.3, 1.2), at(x, 1.75, -3.95) * Kit.angles(0, 180, 0), C.pillow, "Bunk", true)
+		local bunkSeat = seat(
+			Vector3.new(1.9, 0.3, 1.2),
+			at(x, 1.75, -3.95) * Kit.angles(0, 180, 0),
+			C.pillow,
+			"Bunk",
+			true
+		)
+		bunkSeat.Parent = bunk
 	end
 	solid(Vector3.new(4.0, 0.16, 1.76), at(-87.2, 3.0, 4.78), C.polish, M.Wood)
 	solid(Vector3.new(1.6, 2.92, 1.6), at(-88.3, 1.46, 4.8), C.woodDark, M.Wood)
