@@ -9,7 +9,7 @@
       "Bash(git commit:*)"
     ],
     "deny": [
-      "Bash(git push:*)",
+
       "Bash(rm -rf:*)",
       "Bash(del /s:*)",
       "Bash(rmdir /s:*)"
