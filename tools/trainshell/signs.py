@@ -18,6 +18,8 @@ def layout(labels):
             y += h + 8
     rects["builders"] = (0, y, 512, y + 307)
     rects["number"] = (520, y, 776, y + 128)
+    if any(lab["label"] == "nameplate" for lab in labels):
+        rects["nameplate"] = (784, y, 1684, y + 270)  # the engine's cast nameplate (3.0 x 0.9 studs)
     return rects
 
 

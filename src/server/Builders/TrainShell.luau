@@ -46,6 +46,8 @@ local UNDER = -2.3 -- a part wholly below this is bogie: its frames and bolster
 local GLASS_IN = 0.13 -- door glass moves this far in, into the new leaf's glazing slit
 local LAMP = Color3.fromRGB(255, 206, 150)
 local TEAK = Vector3.new(0.7, 2.5, 2.5) -- a Mansell wheel's teak centre, inside its tyre
+local RETIRE_EPS = 0.02 -- an engine's retire list matches a primitive's centre and size this closely
+local DRIVER_RADIUS = 2 -- a WheelRadius above this is a driving wheel, not a bogie's
 
 local templates: { [number]: MeshPart } = {}
 
@@ -132,6 +134,23 @@ local function retire(part: BasePart, archive: Folder)
 	end
 end
 
+-- Is this primitive (centre cf, size) in an engine car's retire list?
+local function listed(list: { { number } }, cf: CFrame, size: Vector3): boolean
+	for _, r in list do
+		if
+			math.abs(cf.X - r[1]) < RETIRE_EPS
+			and math.abs(cf.Y - r[2]) < RETIRE_EPS
+			and math.abs(cf.Z - r[3]) < RETIRE_EPS
+			and math.abs(size.X - r[4]) < RETIRE_EPS
+			and math.abs(size.Y - r[5]) < RETIRE_EPS
+			and math.abs(size.Z - r[6]) < RETIRE_EPS
+		then
+			return true
+		end
+	end
+	return false
+end
+
 -- The first colour a car's primitives wear in each livery role (what applyLivery last set).
 local function liveryColors(parts: { BasePart }): { [string]: Color3 }
 	local colors = {}
@@ -142,6 +161,83 @@ local function liveryColors(parts: { BasePart }): { [string]: Color3 }
 		end
 	end
 	return colors
+end
+
+-- A kit piece on the primitive it stands in for, taking over its animation attributes.
+local function kitOn(
+	name: string,
+	part: BasePart,
+	looks: Instance,
+	folder: Instance,
+	scale: number?
+): MeshPart
+	local kit = Config.Kit[name]
+	local k = scale or 1
+	local at = if scale then CFrame.new(part.Position) else part.CFrame
+	local piece = place(kit.mesh, at * CFrame.new((v3(kit.center) - v3(kit.anchor)) * k), {
+		kit.size[1] * k,
+		kit.size[2] * k,
+		kit.size[3] * k,
+	}, folder)
+	piece.Name = name
+	piece.Color = if kit.color
+		then Color3.new(kit.color[1], kit.color[2], kit.color[3])
+		else Color3.new(1, 1, 1)
+	for _, attr in { "WheelRadius", "WheelPivot", "CrankRadius", "CrankPhase", "CoalTier" } do
+		piece:SetAttribute(attr, part:GetAttribute(attr))
+	end
+	look(looks, kit.look or Config.KitLook, piece)
+	return piece
+end
+
+-- The engine and her tender (Config `engine` cars): the kit's driving wheels, coupling rods and coal
+-- go on the primitives that carry WheelRadius, CrankRadius and CoalTier; the rest of the dressing
+-- retires exactly the primitives in the car's list. Returns false for parts the carriage rules
+-- still handle (door panels, the bogies).
+local function dressEngine(
+	part: BasePart,
+	cf: CFrame,
+	car: Config.Car,
+	looks: Instance,
+	folder: Instance,
+	archive: Folder
+): boolean
+	-- (until the kit has a piece uploaded, the primitive it would replace stays as it is)
+	local radius = part:GetAttribute("WheelRadius") :: number?
+	if radius and (part:GetAttribute("WheelPivot") ~= nil or radius > DRIVER_RADIUS) then
+		if Config.Kit.DriveWheelP then
+			if part:GetAttribute("WheelPivot") == nil then
+				kitOn(if cf.Z > 0 then "DriveWheelP" else "DriveWheelN", part, looks, folder)
+			end
+			retire(part, archive) -- spokes and balance weights too: the kit's driving wheel has its own
+		end
+		return true
+	elseif part:GetAttribute("CrankRadius") ~= nil then
+		if Config.Kit.RodP then
+			kitOn(if cf.Z > 0 then "RodP" else "RodN", part, looks, folder).CastShadow = false
+			retire(part, archive)
+		end
+		return true
+	elseif part:GetAttribute("CoalTier") ~= nil then
+		if Config.Kit.CoalLump then
+			local heap = kitOn("CoalLump", part, looks, folder, part.Size.X)
+			heap.Transparency = part.Transparency
+			heap.CastShadow = false
+			retire(part, archive)
+		end
+		return true
+	elseif part.Name == "DoorPanel" or radius then
+		return false
+	end
+	if car.retire and listed(car.retire, cf, part.Size) then
+		if kept(part) and not part.CanCollide then
+			part.Transparency = 1 -- found by name (it keeps its job), only its look goes
+		else
+			retire(part, archive)
+		end
+		return true
+	end
+	return false
 end
 
 function TrainShell.dress(model: Model, origin: CFrame): boolean
@@ -247,10 +343,13 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 		end
 
 		for _, part in mine do
+			local cf = locals[part]
+			if car.engine and dressEngine(part, cf, car, looks, folder, archive) then
+				continue
+			end
 			if kept(part) then
 				continue
 			end
-			local cf = locals[part]
 			local half = part.Size / 2
 			local ez = math.abs(cf.RightVector.Z) * half.X
 				+ math.abs(cf.UpVector.Z) * half.Y
@@ -337,7 +436,7 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 					look(looks, kit.look or Config.KitLook, bogie)
 				end
 				retire(part, archive)
-			elseif outside or roof or wall or arch then
+			elseif (outside or roof or wall or arch) and not car.engine then
 				retire(part, archive)
 			end
 		end

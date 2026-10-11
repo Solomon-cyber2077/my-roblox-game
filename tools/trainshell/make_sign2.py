@@ -137,8 +137,13 @@ def plate(rect, lines, oval):
     dl = ImageDraw.Draw(let)
     n = len(lines)
     for i, (txt, rel) in enumerate(lines):
-        f = font("Merriweather-Regular.ttf", int(h * rel))
+        size = int(h * rel)
+        f = font("Merriweather-Regular.ttf", size)
         bb = dl.textbbox((0, 0), txt, font=f)
+        while bb[2] - bb[0] > w * 0.8 and size > 8:  # long numbers shrink to fit inside the rim
+            size -= 2
+            f = font("Merriweather-Regular.ttf", size)
+            bb = dl.textbbox((0, 0), txt, font=f)
         tw, th = bb[2] - bb[0], bb[3] - bb[1]
         cy = h * (i + 1) / (n + 1)
         dl.text(((w - tw) / 2 - bb[0], cy - th / 2 - bb[1]), txt, font=f, fill=255)
@@ -169,6 +174,8 @@ for lab in spec["labels"]:
         board(rects[lab["label"]], NAME)
 plate(rects["builders"], [("LAST TRAIN Co.", 0.14), ("WORKS No 214", 0.12), ("1887", 0.12)], True)
 plate(rects["number"], [(f"No {NUMBER}", 0.56)], False)
+if "nameplate" in rects:
+    plate(rects["nameplate"], [(NAME, 0.36), (f"No. {NUMBER}", 0.17)], False)
 
 Image.fromarray(color.clip(0, 255).astype(np.uint8)).save(OUT + "_sign.png")
 hb = np.asarray(Image.fromarray((height * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2)), np.float32) / 255

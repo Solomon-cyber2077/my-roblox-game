@@ -16,6 +16,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(__file__))
 import build_car  # noqa: E402  (measure, CARS)
 import carriage2  # noqa: E402
+import engine2  # noqa: E402
 import kit  # noqa: E402
 import signs  # noqa: E402
 from kit import R  # noqa: E402
@@ -26,24 +27,32 @@ def label_uv(ob, lab, rect_px):
     uv = me.uv_layers.get("UVMap") or me.uv_layers.new(name="UVMap")
     mw = ob.matrix_world
     x0, y0, x1, y1 = lab["rect"]
-    side = lab["side"]
+    end = lab.get("end") if lab.get("face") == "x" else None
+    side = lab.get("side", 1)
     gu, gv = signs.GROUND[0] / signs.W, 1 - signs.GROUND[1] / signs.H
     for poly in me.polygons:
         n = mw.to_3x3() @ poly.normal
         rz = -n.y
-        front = rz * side > 0.9
+        front = n.x * end > 0.9 if end else rz * side > 0.9
         for li in poly.loop_indices:
             p = R(mw @ me.vertices[me.loops[li].vertex_index].co)
-            if front:
+            if front and end:
+                # an end-facing plate: rect is (z0, y0, z1, y1); seen from the front, +Z is to the left
+                u = (p[2] - x0) / (x1 - x0)
+                if end > 0:
+                    u = 1 - u
+            elif front:
                 u = (p[0] - x0) / (x1 - x0)
                 if side < 0:
                     u = 1 - u
+            if front:
                 v = (p[1] - y0) / (y1 - y0)
                 uv.data[li].uv = signs.uv_for(rect_px, min(max(u, 0), 1), min(max(v, 0), 1))
             else:
                 uv.data[li].uv = (gu, gv)
 
 
+ENGINES = {"Tender": (23.0, 49.0), "Locomotive": (52.0, 99.6)}  # body extents (the canvases cover these)
 SIDE_Y = (-1.5, 9.95)  # the band of a side players see (solebar and step up to the cornice)
 
 
@@ -100,13 +109,18 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     col = bpy.data.collections.new(car)
     bpy.context.scene.collection.children.link(col)
-    spec = build_car.measure(dump, *build_car.CARS[car])
-    spec["name"] = car
-    pieces = carriage2.build(spec, col)
-    names = [p.name for p in pieces]
-    shell_family = [n for n in names if n.startswith((f"{car}_skin", f"{car}_end", f"{car}_mon"))]
-    fittings = [f"{car}_Brass", f"{car}_Teak", f"{car}_Velvet", f"{car}_Bellows"]
-    joins = {f"{car}_Shell": shell_family, f"{car}_Fittings": fittings}
+    if car in ENGINES:
+        # the engine and her tender (engine2.py): their own model, measured against fixed primitives
+        spec = {"name": car, "x0": ENGINES[car][0], "x1": ENGINES[car][1], "windows": {}, "doors": {}}
+        pieces, joins = engine2.build(spec, dump)
+    else:
+        spec = build_car.measure(dump, *build_car.CARS[car])
+        spec["name"] = car
+        pieces = carriage2.build(spec, col)
+        names = [p.name for p in pieces]
+        shell_family = [n for n in names if n.startswith((f"{car}_skin", f"{car}_end", f"{car}_mon"))]
+        fittings = [f"{car}_Brass", f"{car}_Teak", f"{car}_Velvet", f"{car}_Bellows"]
+        joins = {f"{car}_Shell": shell_family, f"{car}_Fittings": fittings}
     joins.update(spec.get("leafJoins", {}))  # identity.py's heavy door leaves take their iron and brass
     objs = kit.assemble(col, pieces, joins)
     for ob in list(col.objects):
@@ -144,7 +158,14 @@ def main():
     for leaf in spec.get("leafJoins", {}):
         if leaf in objs:
             objs[leaf]["atlas"] = f"{car}_P"  # painted in the platform side's atlas
-    meta = {"car": car, "spec": {k: v for k, v in spec.items() if not k.startswith("_")}, "parts": kit.describe(objs)}
+    for base in ("Boiler", "Trim"):
+        if car == "Locomotive" and f"{car}_{base}" in objs:
+            objs[f"{car}_{base}"]["atlas"] = f"{car}_B"  # the boiler, its bands and domes: an atlas of their own
+    parts = kit.describe(objs)
+    if car in ENGINES:
+        for p in parts:
+            p["atlas"] = objs[p["name"]].get("atlas")
+    meta = {"car": car, "spec": {k: v for k, v in spec.items() if not k.startswith("_")}, "parts": parts}
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, f"{car}.blend"))
     json.dump(meta, open(os.path.join(out, f"{car}.json"), "w"), indent=1)
 

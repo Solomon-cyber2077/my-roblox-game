@@ -158,6 +158,14 @@ class Piece:
         mesh = bpy.data.meshes.new(self.name)
         bmesh.ops.remove_doubles(self.bm, verts=self.bm.verts, dist=1e-5)
         bmesh.ops.recalc_face_normals(self.bm, faces=self.bm.faces)
+        smooth = getattr(self, "smooth", None)
+        if smooth:
+            # round bodies (boiler, domes, stack): smooth, with edges sharper than `smooth` degrees kept hard
+            for f in self.bm.faces:
+                f.smooth = True
+            for e in self.bm.edges:
+                lf = e.link_faces
+                e.smooth = len(lf) == 2 and lf[0].normal.angle(lf[1].normal, 0.0) < math.radians(smooth)
         self.bm.to_mesh(mesh)
         self.bm.free()
         ob = bpy.data.objects.new(self.name, mesh)
@@ -165,7 +173,7 @@ class Piece:
         ob["role"] = self.role or ""
         ob["material"] = self.material
         for poly in mesh.polygons:
-            poly.use_smooth = False
+            poly.use_smooth = bool(smooth)
         if self.bevel:
             width, segs, angle = self.bevel
             mod = ob.modifiers.new("Bevel", "BEVEL")

@@ -245,7 +245,7 @@ def paint_canvas(side):
     # spray off the wheels along the skirt, worst over the bogies and at the step
     t = np.clip((1.3 - yv) / 2.2, 0, 1)
     cv.spray = np.maximum(cv.spray, (t ** 1.3 * (0.5 + 0.5 * value_noise(CH, CW, 20))).astype(np.float32))
-    for bx in (x0 + 3.4, x1 - 3.4):
+    for bx in SPEC.get("bogies", (x0 + 3.4, x1 - 3.4)):
         for _ in range(500):
             x = bx + rng.normal(0, 1.8)
             y = -1.5 + abs(rng.normal(0, 1.0))
@@ -346,6 +346,30 @@ def paint_canvas(side):
         if side < 0:
             a = a[:, ::-1]
         cv.add("stencil", cpx(st["x"]) - a.shape[1] / 2, cpy(st["y"]) - a.shape[0] / 2, a)
+    # sign-written lettering (the tender's name): gilt, shaded to the lower right, letter-spaced
+    for lt in FEAT.get("letters", []):
+        if lt["side"] != side:
+            continue
+        hp = int(lt["h"] * PPU)
+        fnt = font("Merriweather-Bold.ttf", int(hp * 1.4)) or font("Merriweather-Regular.ttf", int(hp * 1.4))
+        if fnt is None:
+            continue
+        text = "  ".join(" ".join(lt["text"]).split("   "))
+        l, t, r, b = fnt.getbbox(text)
+        sh = max(2, int(0.07 * PPU))
+        W_, H_ = r - l + 8 + sh, b - t + 8 + sh
+        g, d = Image.new("L", (W_, H_), 0), Image.new("L", (W_, H_), 0)
+        ImageDraw.Draw(g).text((4 - l, 4 - t), text, fill=255, font=fnt)
+        ImageDraw.Draw(d).text((4 - l + sh, 4 - t + sh), text, fill=255, font=fnt)
+        scale = min(hp / (b - t), lt.get("w", 99) * PPU / W_)  # no wider than the panel allows
+        size = (max(1, int(W_ * scale)), max(1, int(H_ * scale)))
+        ga = np.asarray(g.resize(size, Image.LANCZOS).filter(ImageFilter.GaussianBlur(0.5)), np.float32) / 255
+        da = np.asarray(d.resize(size, Image.LANCZOS).filter(ImageFilter.GaussianBlur(0.8)), np.float32) / 255
+        da = np.clip(da - ga, 0, 1)
+        if side < 0:
+            ga, da = ga[:, ::-1], da[:, ::-1]
+        cv.add("gild", cpx(lt["x"]) - ga.shape[1] / 2, cpy(lt["y"]) - ga.shape[0] / 2, ga)
+        cv.add("pin", cpx(lt["x"]) - da.shape[1] / 2, cpy(lt["y"]) - da.shape[0] / 2, da * 0.9)
     # scorch: soot thrown round the forge's stovepipe and the doors, with spark burns in it
     for sc in FEAT.get("scorch", []):
         if sc["side"] != side:
