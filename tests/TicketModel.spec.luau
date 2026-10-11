@@ -115,4 +115,17 @@ describe("TicketModel", function()
 		expect(TicketModel.track(16, 8, 16)).toBe(1)
 		expect(TicketModel.track(10, 10, 10)).toBe(1)
 	end)
+
+	it("shows the ballot only while the vote is open, or for the punch", function()
+		local open = { options = { {}, {} }, votes = {} }
+		local closed = { options = { {}, {} }, votes = {}, chosen = 2 }
+		expect(TicketModel.ballotShown("Junction", open, true, false)).toBe(true)
+		expect(TicketModel.ballotShown("Junction", open, false, false)).toBe(false)
+		expect(TicketModel.ballotShown("Junction", closed, true, false)).toBe(false)
+		expect(TicketModel.ballotShown("Cruise", closed, true, true)).toBe(true)
+		expect(TicketModel.ballotShown("Cruise", closed, true, false)).toBe(false)
+		expect(TicketModel.ballotShown("Dwell", open, true, false)).toBe(false)
+		expect(TicketModel.ballotShown("Junction", nil, true, true)).toBe(false)
+		expect(TicketModel.ballotShown("Junction", { options = {} }, true, false)).toBe(false)
+	end)
 end)

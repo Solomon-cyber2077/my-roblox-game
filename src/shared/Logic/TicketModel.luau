@@ -203,6 +203,16 @@ function TicketModel.pile(
 	return pile, extra
 end
 
+-- Whether the junction ballot is up for this player: only while the vote is open (a Junction
+-- with no line chosen yet) and they are alive, or for the short punch after lock-in. The
+-- route stays replicated with its winner through the leg, so it alone must never show it.
+function TicketModel.ballotShown(phase: string, route: any?, alive: boolean, lingering: boolean): boolean
+	if not alive or route == nil or #(route.options or {}) == 0 then
+		return false
+	end
+	return lingering or (phase == "Junction" and route.chosen == nil)
+end
+
 -- The dial's sweep in [0, 1] from the vote's start to its end, and the whole seconds left
 -- once inside the last NumeralSeconds (else nil).
 function TicketModel.dial(now: number, startedAt: number?, endsAt: number?): (number, number?)
