@@ -372,3 +372,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
    - Checks: `lune run check` passes (193 tests, audit clean: Train 1752/1800, Lobby 1304, 0 z-fights, 0 clashes). Studio console: only the known DataStore 403 and `Arvo.json failed to load: Temp read failed` (Studio font cache, appears every boot, also before this pass).
 2. Known: gamepad navigation not verified (Studio's VirtualInput refuses ButtonB). Modal body text on phones is still small (the modal fits but is drawn at ~0.6). The quarry-tile walk still shows bright grout lines and the rosette brass still reads yellow under the pendant (left alone: another session is editing that area). Station grading at the first stops is warm dusk by design of the sky keys; the colder outside is carried by sound and the later night stops, not changed here. `after_lobby_spawn_hud.jpg` and `after_saloon.jpg` were shot before the door green changed. The vertex colours of the Blender wheel are not verified inside Roblox.
 3. Next: decide on uploading `MansellWheel.fbx` (then a `Config` mesh id and a MeshPart path in `TrainBuilder.bogie`, keeping the primitives as the fallback); give modals a compact phone layout; check gamepad by hand.
+
+## HUD toggle hides lobby cards (2026-10-11)
+1. Settings HUD = Hide now also hides the lobby's crew pass, Outfitter/Line Mastery, tier bar and waiting box; the Settings button moves to the top left (14,14) and returns when HUD is shown.
+2. Hidden state not playtested by tool (needs a click in the Settings menu); shown state verified, no console errors.
+3. Next: confirm in Studio by toggling HUD in the lobby and in a run.

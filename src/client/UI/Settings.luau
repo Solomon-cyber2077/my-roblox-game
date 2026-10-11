@@ -35,10 +35,14 @@ function SettingsUi.mount(gui: ScreenGui)
 	task.spawn(function()
 		local lobby = gui:WaitForChild("Lobby") :: GuiObject
 		local function place()
-			open.Position = if lobby.Visible then UDim2.fromOffset(14, 244) else UDim2.fromOffset(14, 156)
+			open.Position = if player:GetAttribute("Hud") == "Hide"
+				then UDim2.fromOffset(14, 14)
+				elseif lobby.Visible then UDim2.fromOffset(14, 244)
+				else UDim2.fromOffset(14, 156)
 		end
 		place()
 		lobby:GetPropertyChangedSignal("Visible"):Connect(place)
+		player:GetAttributeChangedSignal("Hud"):Connect(place)
 	end)
 
 	local list = Ui.new("ScrollingFrame", {
