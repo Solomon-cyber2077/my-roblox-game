@@ -6,7 +6,12 @@ describe("Settings", function()
 		expect(Settings.read({ GraphicsQuality = 5, OperatorsPanel = "bad" })).toEqual(Settings.Defaults)
 	end)
 	it("retains supported saved choices", function()
-		local saved = { GraphicsQuality = "Performance", BrokenThingMarkers = "Off", OperatorsPanel = "Hide" }
+		local saved = {
+			GraphicsQuality = "Performance",
+			BrokenThingMarkers = "Off",
+			OperatorsPanel = "Hide",
+			Hud = "Hide",
+		}
 		expect(Settings.read(saved)).toEqual(saved)
 	end)
 	it("rejects unknown settings and values without changing the save", function()

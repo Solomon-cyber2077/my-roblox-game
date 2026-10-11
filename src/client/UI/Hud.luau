@@ -47,7 +47,6 @@ local FADE_RATE = 2.5
 local WATCH_IDLE = 0.2 -- settled, but the stop ticket must stay legible over bright scenery
 local BACKPACK_IDLE = 0.5
 local HIDDEN = 1
-local TOGGLE_KEY = Enum.KeyCode.V -- hides and shows the HUD (free in this game and in Roblox's own controls)
 
 local function tierStamps(tier: number): string
 	return string.rep("●", tier) .. string.rep("○", 3 - tier)
@@ -56,7 +55,7 @@ end
 function Hud.mount(gui: ScreenGui)
 	local State = Registry.StateController
 
-	-- V hides only this outer frame, so container.Visible (which gates the tool keys) is untouched
+	-- the HUD setting hides only this outer frame, so container.Visible (which gates the tool keys) is untouched
 	local root = Ui.new("Frame", {
 		Name = "HudRoot",
 		Size = UDim2.fromScale(1, 1),
@@ -70,12 +69,13 @@ function Hud.mount(gui: ScreenGui)
 		Visible = false,
 		Parent = root,
 	})
-	ContextActionService:BindAction("LTO_ToggleHud", function(_, inputState)
-		if inputState == Enum.UserInputState.Begin then
-			root.Visible = not root.Visible
-		end
-		return Enum.ContextActionResult.Pass
-	end, false, TOGGLE_KEY)
+	-- the Settings menu's HUD toggle (player attribute "Hud", saved with the other settings)
+	local player = Players.LocalPlayer
+	local function applyHudSetting()
+		root.Visible = player:GetAttribute("Hud") ~= "Hide"
+	end
+	applyHudSetting()
+	player:GetAttributeChangedSignal("Hud"):Connect(applyHudSetting)
 
 	-- Fading ---------------------------------------------------------------------------------
 	-- Each piece of the HUD sits in a CanvasGroup that comes up when its figures change (or

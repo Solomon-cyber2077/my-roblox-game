@@ -31,6 +31,15 @@ function SettingsUi.mount(gui: ScreenGui)
 	})
 	open.ZIndex = 20
 	open.Parent = gui
+	-- with the lobby panel gone (in a run) it rides up under the coal and hull gauges (Hud.luau)
+	task.spawn(function()
+		local lobby = gui:WaitForChild("Lobby") :: GuiObject
+		local function place()
+			open.Position = if lobby.Visible then UDim2.fromOffset(14, 244) else UDim2.fromOffset(14, 156)
+		end
+		place()
+		lobby:GetPropertyChangedSignal("Visible"):Connect(place)
+	end)
 
 	local list = Ui.new("ScrollingFrame", {
 		Size = UDim2.new(1, 0, 1, -8),
@@ -71,6 +80,13 @@ function SettingsUi.mount(gui: ScreenGui)
 			values = { "Show", "Hide" },
 			toggle = true,
 			note = "The crew panel in the top-right corner.",
+		},
+		{
+			key = "Hud",
+			title = "HUD",
+			values = { "Show", "Hide" },
+			toggle = true,
+			note = "The pocket watch, gauges, backpack and crew roster during a run.",
 		},
 	}
 

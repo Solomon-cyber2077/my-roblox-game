@@ -10,10 +10,12 @@ return {
 		GraphicsQuality = "Quality",
 		BrokenThingMarkers = "FirstFew",
 		OperatorsPanel = "Show",
+		Hud = "Show",
 	},
 	Choices = {
 		GraphicsQuality = { "Quality", "Performance" },
 		BrokenThingMarkers = { "FirstFew", "Always", "Off" },
 		OperatorsPanel = { "Show", "Hide" },
+		Hud = { "Show", "Hide" },
 	},
 }
