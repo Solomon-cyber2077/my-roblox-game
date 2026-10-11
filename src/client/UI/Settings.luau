@@ -18,15 +18,15 @@ end
 function SettingsUi.mount(gui: ScreenGui)
 	require(script.Parent.BrokenThingMarkers).mount(gui)
 	local player = Players.LocalPlayer
-	local modal = Modal.new(gui, "Settings", Vector2.new(620, 460))
+	local modal = Modal.new(gui, "Settings", Vector2.new(720, 600))
 	local open = Ui.button("SETTINGS", "Secondary", function()
 		modal:open()
 	end, {
 		Name = "SettingsButton",
-		Size = UDim2.fromOffset(120, 34),
-		Position = UDim2.new(0.5, 0, 0, 12),
-		AnchorPoint = Vector2.new(0.5, 0),
-		TextSize = 14,
+		-- top left, under the lobby's crew pass and its shortcuts (Lobby.luau)
+		Size = UDim2.fromOffset(160, 40),
+		Position = UDim2.fromOffset(14, 244),
+		TextSize = 20,
 		Selectable = true,
 	})
 	open.ZIndex = 20
@@ -51,29 +51,34 @@ function SettingsUi.mount(gui: ScreenGui)
 			key = "GraphicsQuality",
 			title = "GRAPHICS",
 			values = { "Quality", "Performance" },
+			toggle = false,
 			note = "Choose your preferred graphics mode.",
 		},
 		{
 			key = "BrokenThingMarkers",
 			title = "BROKEN THING MARKERS",
-			values = { "FirstFew", "Always", "Off" },
-			note = `First few runs shows markers during your first {require(
+			-- first few runs is the default, not a choice
+			values = { "Always", "Off" },
+			toggle = false,
+			note = `Markers show during your first {require(
 				game:GetService("ReplicatedStorage").Shared.Config.Settings
-			).FirstFewRuns} runs.`,
+			).FirstFewRuns} runs. Choose to keep them always or turn them off.`,
 		},
 		{
 			key = "OperatorsPanel",
 			title = "OPERATORS PANEL",
+			-- one button that flips between the two
 			values = { "Show", "Hide" },
-			note = "Show or hide the top-right crew panel.",
+			toggle = true,
+			note = "The crew panel in the top-right corner.",
 		},
 	}
 
-	local labels = { FirstFew = "First few runs" } :: { [string]: string }
+	local labels = {} :: { [string]: string }
 	local repaint: () -> ()
 	for index, choice in choices do
 		local row = Ui.new("Frame", {
-			Size = UDim2.new(1, -8, 0, 106),
+			Size = UDim2.new(1, -8, 0, 150),
 			BackgroundColor3 = Theme.Color.leather,
 			BackgroundTransparency = 0.08,
 			LayoutOrder = index,
@@ -84,44 +89,51 @@ function SettingsUi.mount(gui: ScreenGui)
 		local title = Ui.text({
 			Text = choice.title,
 			Font = Theme.Font.displayMedium,
-			TextSize = 17,
+			TextSize = 26,
 			Color = Theme.Color.brassLight,
-			Position = UDim2.fromOffset(14, 8),
-			Size = UDim2.new(1, -28, 0, 22),
+			Position = UDim2.fromOffset(16, 10),
+			Size = UDim2.new(1, -32, 0, 30),
 		})
 		title.ZIndex = 33
 		title.Parent = row
 		local note = Ui.text({
 			Text = choice.note,
 			Font = Theme.Font.body,
-			TextSize = 12,
-			Color = Theme.Color.tarnish,
-			Position = UDim2.fromOffset(14, 32),
-			Size = UDim2.new(1, -28, 0, 18),
+			TextSize = 19,
+			Wrapped = true,
+			Color = Theme.Color.white,
+			Position = UDim2.fromOffset(16, 44),
+			Size = UDim2.new(1, -32, 0, 48),
 		})
 		note.ZIndex = 33
 		note.Parent = row
 		local state = Ui.text({
 			Text = "",
 			Font = Theme.Font.body,
-			TextSize = 13,
-			Color = Theme.Color.white,
-			Position = UDim2.fromOffset(14, 78),
-			Size = UDim2.fromOffset(120, 20),
+			TextSize = 18,
+			Color = Theme.Color.brass,
+			Position = UDim2.fromOffset(16, 104),
+			Size = UDim2.fromOffset(180, 30),
 		})
 		state.ZIndex = 34
 		state.Parent = row
 		local buttons: { [string]: TextButton } = {}
-		for optionIndex, option in choice.values do
+		local options: { string } = if choice.toggle then { choice.values[1] } else choice.values
+		for optionIndex, option in options do
 			local button = Ui.button(labels[option] or option, "Secondary", function()
 				if player:GetAttribute("SettingsReady") ~= true then
 					return
 				end
-				Net.Fire("SetSetting", choice.key, option)
+				if choice.toggle then
+					local on = current(player, choice.key) == choice.values[1]
+					Net.Fire("SetSetting", choice.key, choice.values[if on then 2 else 1])
+				else
+					Net.Fire("SetSetting", choice.key, option)
+				end
 			end, {
-				Size = UDim2.fromOffset(130, 30),
-				Position = UDim2.new(1, -((#choice.values - optionIndex + 1) * 138), 0, 70),
-				TextSize = 12,
+				Size = UDim2.fromOffset(170, 42),
+				Position = UDim2.new(1, -((#options - optionIndex + 1) * 180), 0, 96),
+				TextSize = 24,
 				Selectable = true,
 			})
 			button.ZIndex = 34
@@ -136,12 +148,22 @@ function SettingsUi.mount(gui: ScreenGui)
 		for _, choice in choices do
 			local selected = current(player, choice.key)
 			local row = rows[choice.key]
-			row.value.Text = if ready then "SAVED CHOICE" else "LOADING..."
+			row.value.Text = if not ready
+				then "LOADING..."
+				elseif choice.toggle then (if selected == choice.values[1] then "ON" else "OFF")
+				else "SAVED CHOICE"
 			for option, button in row.buttons do
 				Ui.setButtonEnabled(button, ready)
 				button.Selectable = ready
-				button.Text = (if option == selected then "> " else "") .. (labels[option] or option)
-				Ui.setButtonStyle(button, if option == selected then "Primary" else "Secondary")
+				if choice.toggle then
+					-- the button names what it will do
+					local on = selected == choice.values[1]
+					button.Text = if on then "TURN OFF" else "TURN ON"
+					Ui.setButtonStyle(button, if on then "Secondary" else "Primary")
+				else
+					button.Text = (if option == selected then "> " else "") .. (labels[option] or option)
+					Ui.setButtonStyle(button, if option == selected then "Primary" else "Secondary")
+				end
 			end
 		end
 	end
