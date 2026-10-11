@@ -6,10 +6,10 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://76499338619371",
-    "NormalMap": "rbxassetid://97671229285692",
-    "RoughnessMap": "rbxassetid://108893311021146",
-    "MetalnessMap": "rbxassetid://72270018790912"
+    "ColorMap": "rbxassetid://126895872238937",
+    "NormalMap": "rbxassetid://100582497751012",
+    "RoughnessMap": "rbxassetid://118266450804837",
+    "MetalnessMap": "rbxassetid://87078014580220"
    }
   },
   {
@@ -17,10 +17,10 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://92765813921324",
-    "NormalMap": "rbxassetid://106803118905302",
-    "RoughnessMap": "rbxassetid://108954363827875",
-    "MetalnessMap": "rbxassetid://132157292606140"
+    "ColorMap": "rbxassetid://97504885871899",
+    "NormalMap": "rbxassetid://93605693009436",
+    "RoughnessMap": "rbxassetid://131226475701662",
+    "MetalnessMap": "rbxassetid://139029838501628"
    }
   },
   {
@@ -231,6 +231,101 @@
     "AlphaMode": "Overlay",
     "ColorMap": "rbxassetid://126415823539685",
     "NormalMap": "rbxassetid://131270158014175"
+   }
+  },
+  {
+   "name": "Tender",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://93018382115573",
+    "NormalMap": "rbxassetid://122933233804052",
+    "RoughnessMap": "rbxassetid://78782518201578",
+    "MetalnessMap": "rbxassetid://78060787686655"
+   }
+  },
+  {
+   "name": "Tender_P",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://73314730728971",
+    "NormalMap": "rbxassetid://137069759044104",
+    "RoughnessMap": "rbxassetid://83002517654380",
+    "MetalnessMap": "rbxassetid://129157074669856"
+   }
+  },
+  {
+   "name": "Tender_N",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://131669871197751",
+    "NormalMap": "rbxassetid://95566237266190",
+    "RoughnessMap": "rbxassetid://97214457192890",
+    "MetalnessMap": "rbxassetid://139663209735252"
+   }
+  },
+  {
+   "name": "Tender_Sign",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://116325397415200",
+    "NormalMap": "rbxassetid://76957785407887"
+   }
+  },
+  {
+   "name": "Locomotive",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://136526801982451",
+    "NormalMap": "rbxassetid://89459401149626",
+    "RoughnessMap": "rbxassetid://80384469406503",
+    "MetalnessMap": "rbxassetid://89596859759397"
+   }
+  },
+  {
+   "name": "Locomotive_P",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://125292783315962",
+    "NormalMap": "rbxassetid://88518148487096",
+    "RoughnessMap": "rbxassetid://90902038112600",
+    "MetalnessMap": "rbxassetid://132986807455239"
+   }
+  },
+  {
+   "name": "Locomotive_N",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://114994370038829",
+    "NormalMap": "rbxassetid://119658182066758",
+    "RoughnessMap": "rbxassetid://78469157731062",
+    "MetalnessMap": "rbxassetid://119680689165546"
+   }
+  },
+  {
+   "name": "Locomotive_B",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://95357689433446",
+    "NormalMap": "rbxassetid://124435191139001",
+    "RoughnessMap": "rbxassetid://70847295736254",
+    "MetalnessMap": "rbxassetid://104117216020548"
+   }
+  },
+  {
+   "name": "Locomotive_Sign",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://114209098568040",
+    "NormalMap": "rbxassetid://78844910549802"
    }
   }
  ]
