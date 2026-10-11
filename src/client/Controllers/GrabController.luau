@@ -12,6 +12,14 @@
 	    the screen red, and your heart pounds
 	  * when you tear free (or a flash makes it let go) you are thrown clear
 
+	While it has you, your own look and turn are frozen: the server pins your anchored root
+	to the hold every tick, and shift lock or AutoRotate turning it locally made the body
+	spin and tilt against that pin, with the camera swinging along. So the camera goes
+	Scriptable (this module drags it to the thing's face), AutoRotate and shift lock are off
+	and the mouse is freed. `unlock` puts it all back and is safe to run any number of times;
+	it runs however the grab ends (the attribute clears, you die or respawn, the run ends, or
+	the K unstick key).
+
 	Your own "Pull free" prompt is the crew's, not yours: it is hidden on this client.
 ]]
 
@@ -19,6 +27,7 @@ local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
@@ -26,6 +35,7 @@ local Grabs = require(Shared.Config.Grabs)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
+local Session = require(script.Parent.Parent.Session)
 local Overlay = require(script.Parent.Parent.UI.Overlay)
 local Struggle = require(script.Parent.Parent.UI.Struggle)
 local Theme = require(script.Parent.Parent.UI.Theme)
@@ -33,6 +43,8 @@ local Theme = require(script.Parent.Parent.UI.Theme)
 local GrabController = {}
 
 local ACTION = "LTO_Struggle"
+local LOOK_STEP = "LTO_GrabLook"
+local MIN_EYE_DISTANCE = 6 -- studs: the frozen view never sits inside your own head
 local OUTCOMES: { [string]: { text: string, color: Color3 } } = {
 	Escaped = { text = "YOU TORE FREE. RUN!", color = Theme.Color.go },
 	Flash = { text = "IT LET GO. RUN!", color = Theme.Color.sky },
@@ -44,6 +56,12 @@ local struggle = 0 -- 0..1 how hard you have been fighting lately
 local escapeShown = 0
 local heartAt = 0
 local watching: RBXScriptConnection? = nil
+local dying: RBXScriptConnection? = nil
+
+-- What the grab took away, kept to give back (nil while nothing is locked).
+type Saved = { humanoid: Humanoid?, autoRotate: boolean, mouseLock: boolean }
+local saved: Saved? = nil
+local eyeOffset = Vector3.new(0, 4, 10)
 
 local function audio(cue: string, gain: number?, pitch: number?)
 	if Registry.AudioController then
@@ -99,6 +117,79 @@ local function hidePry(model: Model)
 	end
 end
 
+-- Freezes your own look and turn for the grab: Scriptable camera, no AutoRotate, no shift lock.
+local function lock(model: Model)
+	if saved then
+		return
+	end
+	local player = Players.LocalPlayer
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	saved = {
+		humanoid = humanoid,
+		autoRotate = if humanoid then humanoid.AutoRotate else true,
+		mouseLock = player.DevEnableMouseLock,
+	}
+	if humanoid then
+		humanoid.AutoRotate = false
+	end
+	player.DevEnableMouseLock = false
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	local camera = Workspace.CurrentCamera
+	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if root then
+		local offset = camera.CFrame.Position - root.Position
+		eyeOffset = if offset.Magnitude >= MIN_EYE_DISTANCE
+			then offset
+			else (-root.CFrame.LookVector + Vector3.yAxis * 0.4).Unit * MIN_EYE_DISTANCE * 1.5
+	end
+	camera.CameraType = Enum.CameraType.Scriptable
+	-- after CameraController's unshake (Camera - 1) and before its feel (Camera + 1)
+	RunService:BindToRenderStep(LOOK_STEP, Enum.RenderPriority.Camera.Value, function(dt: number)
+		local own = character()
+		local body = own and own:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if own == nil or body == nil then
+			return
+		end
+		local cam = Workspace.CurrentCamera
+		cam.CameraType = Enum.CameraType.Scriptable -- a phase change's camera reset must not hand it back
+		local eye = body.Position + eyeOffset
+		-- the view is dragged round to its face
+		local target = holderHead(own) or body.Position
+		local want = CFrame.lookAt(eye, target)
+		local turn = (cam.CFrame - cam.CFrame.Position):Lerp(want - want.Position, 1 - math.exp(-dt * 2.4))
+		cam.CFrame = CFrame.new(eye) * turn
+		cam.Focus = CFrame.new(target)
+	end)
+end
+
+-- Gives back everything `lock` took. Safe to run twice, or with nothing locked.
+local function unlock()
+	RunService:UnbindFromRenderStep(LOOK_STEP)
+	local was = saved
+	saved = nil
+	local player = Players.LocalPlayer
+	if was then
+		local humanoid = was.humanoid
+		if humanoid and humanoid.Parent then
+			humanoid.AutoRotate = was.autoRotate
+		end
+		player.DevEnableMouseLock = was.mouseLock
+	end
+	local trainCam = Registry.TrainCamController
+	local camera = Workspace.CurrentCamera
+	if camera.CameraType == Enum.CameraType.Scriptable and not (trainCam and trainCam.Active()) then
+		camera.CameraType = Enum.CameraType.Custom
+		local own = player.Character
+		local humanoid = own and own:FindFirstChildOfClass("Humanoid")
+		if humanoid and Registry.CameraController.SpectateTarget() == nil then
+			camera.CameraSubject = humanoid
+		end
+	end
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	UserInputService.MouseIconEnabled = true
+	Registry.CameraController.Focus(nil)
+end
+
 local function begin(model: Model, style: string)
 	local def = Grabs.ById[style]
 	local kind = (model:GetAttribute("GrabKind") :: string?) or "Stalker"
@@ -115,6 +206,7 @@ local function begin(model: Model, style: string)
 		Enum.KeyCode.ButtonA,
 		Enum.KeyCode.ButtonR2
 	)
+	lock(model)
 	hidePry(model)
 	task.delay(0.1, function()
 		if held then
@@ -125,12 +217,13 @@ end
 
 local function finish(model: Model)
 	if not held then
+		unlock()
 		return
 	end
 	held = false
 	ContextActionService:UnbindAction(ACTION)
 	Struggle.hide()
-	Registry.CameraController.Focus(nil)
+	unlock()
 	local outcome = OUTCOMES[(model:GetAttribute("GrabOutcome") :: string?) or ""]
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	if outcome and humanoid and humanoid.Health > 0 then
@@ -141,6 +234,17 @@ end
 local function watch(model: Model)
 	if watching then
 		watching:Disconnect()
+	end
+	if dying then
+		dying:Disconnect()
+		dying = nil
+	end
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		-- dead in its grip: the hold may linger on the body, but the controls come back
+		dying = humanoid.Died:Connect(function()
+			finish(model)
+		end)
 	end
 	watching = model:GetAttributeChangedSignal("GrabStyle"):Connect(function()
 		if model ~= Players.LocalPlayer.Character then
@@ -177,13 +281,28 @@ function GrabController.Start()
 			held = false
 			ContextActionService:UnbindAction(ACTION)
 			Struggle.hide()
-			Registry.CameraController.Focus(nil)
 		end
+		unlock()
+		model:WaitForChild("Humanoid", 10)
 		watch(model)
 	end)
 	if player.Character then
 		watch(player.Character)
 	end
+	-- the run ending (or any phase change) while held must never leave you locked
+	Registry.StateController.Observe("public", { "run", "phase" }, function()
+		local model = character()
+		if held and (model == nil or model:GetAttribute("GrabStyle") == nil or not Session.isRunActive()) then
+			if model then
+				finish(model)
+			else
+				held = false
+				ContextActionService:UnbindAction(ACTION)
+				Struggle.hide()
+				unlock()
+			end
+		end
+	end)
 
 	RunService.RenderStepped:Connect(function(dt)
 		struggle *= math.exp(-dt * 2.2)
@@ -194,12 +313,15 @@ function GrabController.Start()
 		if model == nil then
 			return
 		end
+		-- a missed attribute change still lets you go
+		if model:GetAttribute("GrabStyle") == nil then
+			finish(model)
+			return
+		end
 		local now = Workspace:GetServerTimeNow()
 		local escape = (model:GetAttribute("GrabEscape") :: number?) or 0
 		escapeShown += (escape - escapeShown) * math.min(dt * 12, 1)
 		Struggle.set(escapeShown, now)
-		-- the view is dragged round to its face
-		Registry.CameraController.Focus(holderHead(model))
 		-- your heart, quickening as the hold wears you down
 		local humanoid = model:FindFirstChildOfClass("Humanoid")
 		local life = if humanoid then humanoid.Health / math.max(humanoid.MaxHealth, 1) else 1
@@ -218,6 +340,13 @@ end
 
 function GrabController.IsHeld(): boolean
 	return held
+end
+
+-- The K unstick key: if nothing holds you, give back any look, turn or mouse state a grab kept.
+function GrabController.Unstick()
+	if not held then
+		unlock()
+	end
 end
 
 -- A bite, squeeze or yank landed on you (Fx from HollowService).
