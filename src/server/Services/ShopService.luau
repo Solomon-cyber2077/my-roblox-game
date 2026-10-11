@@ -148,12 +148,13 @@ function ShopService.Start()
 		if not Catalog.canUse(profile.owned, itemId, player.UserId, RunService:IsStudio()) then
 			return
 		end
+		-- Keep the selection in the profile even for dev-unlocked cosmetics so it
+		-- survives a reserved-server teleport and later character rebuilds.
+		DataService.Update(player, function(p)
+			p.equipped[def.category] = itemId
+		end)
 		if isDev then
 			player:SetAttribute("DevCosmetic_" .. def.category, itemId)
-		else
-			DataService.Update(player, function(p)
-				p.equipped[def.category] = itemId
-			end)
 		end
 		if def.category == "Livery" then
 			Registry.CosmeticService.RefreshLivery()
