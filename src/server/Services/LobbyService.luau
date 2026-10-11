@@ -3,6 +3,8 @@
 	The Depot Hall: ready-ups, lobby spawning, kiosk prompts and late joining.
 	A player is "in the lobby" whenever they are not a live crew member and not
 	aboard a boarding car (CarService); car players are ready by being aboard.
+	Ready is per player: the hall's run takes only the players who pressed Ready, so one
+	player can go solo while the rest of the hall stays put.
 	The host (the lobby player who has been in the server longest) picks the opt-in
 	run tier, up to the lowest tier any hall player has unlocked.
 ]]
@@ -197,13 +199,26 @@ function LobbyService.TierFor(crew: { Player }): number
 	return math.min(selectedTier, crewMax(crew))
 end
 
--- The crew for the next Boarding: a launching car's players if one was set, else the hall.
+-- The hall players who pressed Ready.
+function LobbyService.ReadyPlayers(): { Player }
+	local out: { Player } = {}
+	for _, player in LobbyService.LobbyPlayers() do
+		if ready[player] then
+			table.insert(out, player)
+		end
+	end
+	return out
+end
+
+-- The crew for the next Boarding: a launching car's players if one was set, else the hall's
+-- ready players (the whole hall only if nobody is ready, as when a dev command starts a run).
 function LobbyService.SetCrew(crew: { Player })
 	crewOverride = crew
 end
 
 function LobbyService.TakeCrew(): { Player }
-	local crew = crewOverride or LobbyService.LobbyPlayers()
+	local readied = LobbyService.ReadyPlayers()
+	local crew = crewOverride or (if #readied > 0 then readied else LobbyService.LobbyPlayers())
 	crewOverride = nil
 	return crew
 end

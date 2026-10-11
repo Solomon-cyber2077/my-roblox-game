@@ -71,8 +71,10 @@ function RunRules.isFinalLeg(ctx: Context): boolean
 	return ctx.nextStop > ctx.stopCount
 end
 
-function RunRules.requiredReady(lobbyCount: number): number
-	return math.max(1, math.ceil(lobbyCount * Tuning.Run.MinReadyShare))
+-- Ready is per player: one ready player is a crew of their own (LobbyService.TakeCrew takes
+-- only the ready), so a single Ready starts the countdown however many others are in the hall.
+function RunRules.requiredReady(_lobbyCount: number): number
+	return 1
 end
 
 --[[
