@@ -377,10 +377,12 @@ def Stores(spec, P, C):
     for side in (1, -1):
         ws = C.windows(side)
         big = (ws[-1] if side > 0 and ws else cx)
-        feat["stencils"].append({"side": side, "x": big, "y": 1.55, "h": 0.78, "text": "STORES"})
-        feat["stencils"].append({"side": side, "x": x0 + 2.0 if side > 0 else x1 - 2.0, "y": 2.15, "h": 0.3, "text": "L.T.O. No 5"})
-        feat["stencils"].append({"side": side, "x": x0 + 2.0 if side > 0 else x1 - 2.0, "y": 1.7, "h": 0.22, "text": "TARE 11-4-0"})
-        feat["stencils"].append({"side": side, "x": x0 + 2.0 if side > 0 else x1 - 2.0, "y": 1.3, "h": 0.22, "text": "KEEP DRY"})
+        # above the security strap (y 1.5); the data block sits at the blind end, clear of the door leaves
+        feat["stencils"].append({"side": side, "x": big, "y": 2.15, "h": 0.78, "text": "STORES"})
+        xb = x1 - 2.1
+        feat["stencils"].append({"side": side, "x": xb, "y": 2.3, "h": 0.26, "text": "L.T.O. No 5"})
+        feat["stencils"].append({"side": side, "x": xb, "y": 2.0, "h": 0.22, "text": "TARE 11-4-0"})
+        feat["stencils"].append({"side": side, "x": xb, "y": 1.77, "h": 0.22, "text": "KEEP DRY"})
     for d in C.doors(1):
         feat["stencils"].append({"side": 1, "x": d + 1.4, "y": 1.75, "h": 0.55, "text": "No 5"})
     return heavy_leaves(spec, P, C, "hasp")
