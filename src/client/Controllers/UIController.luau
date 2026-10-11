@@ -122,6 +122,7 @@ function UIController.Start()
 
 	Overlay.mount(gui)
 	Hud.mount(gui)
+	require(script.Parent.Parent.UI.Settings).mount(gui)
 	RouteVote.mount(gui)
 	Unseal.mount(gui)
 	Lobby.mount(gui)

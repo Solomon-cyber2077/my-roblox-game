@@ -31,6 +31,7 @@ local ORDER = {
 	"RunDirector",
 	"CarService",
 	"DevService",
+	"SettingsService",
 }
 
 local services: { { name: string, module: any } } = {}
