@@ -5,6 +5,7 @@
 	departure board.
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -531,7 +532,8 @@ function Lobby.mount(gui: ScreenGui)
 
 	RunService.RenderStepped:Connect(function()
 		local member = Session.isMember()
-		container.Visible = not member
+		-- the Settings menu's HUD toggle hides the lobby cards too (Settings.luau moves its button)
+		container.Visible = not member and Players.LocalPlayer:GetAttribute("Hud") ~= "Hide"
 		-- aboard a boarding car you are ready already: its countdown (UI/CarBoarding) replaces this panel
 		panel.Visible = CarBoarding.MyCar() == nil
 		local phase = Session.phase()
