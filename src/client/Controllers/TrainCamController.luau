@@ -71,8 +71,6 @@ local nextButton: TextButton
 local backButton: TextButton
 local zoomIn: TextButton
 local zoomOut: TextButton
-local savedMouse = Enum.MouseBehavior.Default
-local savedCursor = true
 local savedFov = 70
 local touch: InputObject? = nil
 local rayParams = RaycastParams.new()
@@ -133,8 +131,6 @@ local function setActive(on: boolean)
 		current = nil
 		currentFov = camera.FieldOfView
 		savedFov = camera.FieldOfView
-		savedMouse = UserInputService.MouseBehavior
-		savedCursor = UserInputService.MouseIconEnabled
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		UserInputService.MouseIconEnabled = true
 		camera.CameraType = Enum.CameraType.Scriptable
@@ -155,8 +151,11 @@ local function setActive(on: boolean)
 		bar.Visible = false
 		dragging = false
 		touch = nil
-		UserInputService.MouseBehavior = savedMouse
-		UserInputService.MouseIconEnabled = savedCursor
+		-- Never restore a snapshot of the mouse: if shift lock changed while we watched, the old
+		-- LockCenter stuck the cursor in the middle of the screen. Default and a visible cursor let
+		-- the camera module put LockCenter back on its next frame if shift lock is still on.
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		UserInputService.MouseIconEnabled = true
 		camera.FieldOfView = savedFov
 		camera.CameraType = Enum.CameraType.Custom
 		local character = Players.LocalPlayer.Character
@@ -404,6 +403,11 @@ end
 
 function TrainCamController.Active(): boolean
 	return active
+end
+
+-- Closes the train camera if it is out (the K unstick key).
+function TrainCamController.Close()
+	setActive(false)
 end
 
 return TrainCamController

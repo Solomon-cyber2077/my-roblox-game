@@ -48,16 +48,19 @@ local function onSprint(
 	else
 		sprintHeld = inputState == Enum.UserInputState.Begin or inputState == Enum.UserInputState.Change
 	end
-	return Enum.ContextActionResult.Pass
+	-- Shift is also Roblox's shift-lock switch: passing it on toggled shift lock with every
+	-- sprint and left the cursor locked to the middle of the screen
+	return Enum.ContextActionResult.Sink
 end
 
 function MovementController.Init() end
 
 function MovementController.Start()
-	ContextActionService:BindAction(
+	ContextActionService:BindActionAtPriority(
 		"LTO_Sprint",
 		onSprint,
 		true,
+		Enum.ContextActionPriority.High.Value,
 		Enum.KeyCode.LeftShift,
 		Enum.KeyCode.RightShift,
 		Enum.KeyCode.ButtonL3

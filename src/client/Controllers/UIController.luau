@@ -4,6 +4,7 @@
 	inventory and reset button, and mounts every UI module.
 ]]
 
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
@@ -15,6 +16,7 @@ local Ledger = require(UI.Ledger)
 local CarBoarding = require(UI.CarBoarding)
 local Dialogue = require(UI.Dialogue)
 local Lobby = require(UI.Lobby)
+local Modal = require(UI.Modal)
 local Outfitter = require(UI.Outfitter)
 local Overlay = require(UI.Overlay)
 local Prompts = require(UI.Prompts)
@@ -27,7 +29,11 @@ local TicketBook = require(UI.TicketBook)
 local Unseal = require(UI.Unseal)
 local Workshop = require(UI.Workshop)
 
+local Registry = require(script.Parent.Parent.Registry)
+
 local UIController = {}
+
+local UNSTICK_KEY = Enum.KeyCode.K
 
 local gui: ScreenGui
 
@@ -62,6 +68,35 @@ local function fitScale(scale: UIScale)
 	end
 	camera:GetPropertyChangedSignal("ViewportSize"):Connect(update)
 	update()
+end
+
+-- K: always gives the mouse back. Frees the cursor, closes any modal and the train camera,
+-- drops gamepad selection and returns a camera left Scriptable to the player.
+local function unstick()
+	Modal.closeAll()
+	GuiService.SelectedObject = nil
+	local trainCam = Registry.TrainCamController
+	if trainCam then
+		trainCam.Close()
+	end
+	local grab = Registry.GrabController
+	if grab then
+		grab.Unstick()
+	end
+	if not (grab and grab.IsHeld()) then
+		local camera = Workspace.CurrentCamera
+		if camera.CameraType ~= Enum.CameraType.Custom then
+			camera.CameraType = Enum.CameraType.Custom
+		end
+		local character = Players.LocalPlayer.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local cam = Registry.CameraController
+		if humanoid and not (cam and cam.SpectateTarget()) then
+			camera.CameraSubject = humanoid
+		end
+	end
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	UserInputService.MouseIconEnabled = true
 end
 
 function UIController.Init()
@@ -101,6 +136,14 @@ function UIController.Start()
 	Prompts.mount(gui)
 	QuestTracker.mount(gui)
 	Dialogue.mount(gui)
+
+	UserInputService.InputBegan:Connect(function(input, processed)
+		-- ignored while typing in a text box
+		if input.KeyCode ~= UNSTICK_KEY or processed or UserInputService:GetFocusedTextBox() then
+			return
+		end
+		unstick()
+	end)
 end
 
 function UIController.Gui(): ScreenGui
