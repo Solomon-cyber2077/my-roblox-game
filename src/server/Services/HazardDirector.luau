@@ -15,6 +15,7 @@ local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
+local HollowBudget = require(Shared.Logic.HollowBudget)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Types = require(Shared.Types)
 
@@ -126,10 +127,10 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	if info.terminus then
 		return
 	end
-	local early = Difficulty.EarlyHollowCap
-	if info.hazards.hollowCap > 0 and info.hazards.difficulty < early.UntilDifficulty then
+	-- One budget for every Hollow at the stop, by the players in the run (Logic/HollowBudget).
+	if info.hazards.hollowCap > 0 then
 		local hazards = table.clone(info.hazards)
-		hazards.hollowCap = math.min(Difficulty.HollowCap.Max, math.max(hazards.hollowCap, early.Minimum))
+		hazards.hollowCap = HollowBudget.total(#Registry.CrewService.MemberPlayers())
 		info.hazards = hazards
 		Registry.StateService.Set({ "run", "station", "hazards" }, hazards)
 	end

@@ -41,6 +41,7 @@ local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
+local HollowBudget = require(Shared.Logic.HollowBudget)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local MathX = require(Shared.Util.MathX)
 local Rng = require(Shared.Util.Rng)
@@ -667,11 +668,8 @@ local function resolveStrike(hollow: Hollow)
 end
 
 local function wake(hollow: Hollow)
-	if
-		hollow.state ~= "Dormant"
-		or params == nil
-		or HollowService.Count() >= params.hollowCap - (if wandererPending then 1 else 0)
-	then
+	-- sleepers already count toward the stop's budget, so waking never adds one
+	if hollow.state ~= "Dormant" or params == nil then
 		return
 	end
 	hollow.sleeper = false
@@ -1120,7 +1118,12 @@ function HollowService.Prepare(plan: LayoutGen.Plan)
 			end
 		end
 	end
-	for _, sleeper in sleepers do
+	-- sleepers share the stop's budget with the fog spawns and the wanderer
+	placement:shuffle(sleepers)
+	for i, sleeper in sleepers do
+		if i > HollowBudget.sleepers(p.hollowCap) then
+			break
+		end
 		local height = HollowBuilder.rootHeight(sleeper.kind)
 		local position = StationService.ToWorld(sleeper.x, sleeper.y + height, sleeper.z)
 		local facing = StationService.ToWorld(
@@ -1133,15 +1136,9 @@ function HollowService.Prepare(plan: LayoutGen.Plan)
 	end
 end
 
--- Hollows on the hunt or prowling (sleepers do not count toward the cap).
+-- Every Hollow at the stop, sleepers included: the stop's budget covers them all.
 function HollowService.Count(): number
-	local count = 0
-	for _, hollow in hollows do
-		if hollow.state ~= "Dormant" then
-			count += 1
-		end
-	end
-	return count
+	return #hollows
 end
 
 -- Spawns one Hollow near station-local (x, z) if the cap allows and the ground holds.

@@ -319,6 +319,16 @@ local Tuning = {
 	},
 
 	--[[
+		How many Hollows a stop holds at once (Logic/HollowBudget), by the players in the run:
+		sleepers, fog spawns and the wanderer all count, so the total never grows past this.
+		Difficulty still sets how fast they come, how fast they move and how hard they hurt.
+	]]
+	HollowCount = {
+		ByCrew = { 3, 4, 5, 6 }, -- 1, 2, 3, 4 players
+		SleeperShare = 0.5, -- at most this share may start asleep in buildings
+	},
+
+	--[[
 		The kinds of Hollow (Config/Difficulty holds how often each comes). walk and chase
 		scale the hazard's speeds by body: the Crawler creeps, then bolts; the Brute is slow
 		but never stops. reach scales the strike and hit ranges, radius is the body's
