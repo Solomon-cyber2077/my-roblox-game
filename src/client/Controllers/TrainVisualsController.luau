@@ -7,6 +7,11 @@
 	none), the guard's stove and the lantern over his chairs. All of it is local
 	CFrame and emitter work on anchored parts the server never touches again, so
 	none of it replicates.
+
+	The place streams instances, so a car's parts can arrive after the train model does
+	(and leave and come back as new instances). Parts are registered as they stream in and
+	dropped as they stream out; reading the model once left whole cars' doors still for
+	players whose cars streamed in late.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -84,6 +89,104 @@ local function steamEmitter(parent: BasePart, rate: number): ParticleEmitter
 	return emitter
 end
 
+-- Picks up one part of a rig: a wheel, rod, door leaf, coal lump, chimney, vent or fire.
+local function register(rig: Rig, part: Instance)
+	if not part:IsA("BasePart") then
+		return
+	end
+	local radius = part:GetAttribute("WheelRadius")
+	local crank = part:GetAttribute("CrankRadius")
+	local slide = part:GetAttribute("DoorSlide")
+	if type(radius) == "number" then
+		local pivot = part:GetAttribute("WheelPivot")
+		table.insert(rig.spins, {
+			part = part,
+			base = part.CFrame,
+			radius = radius,
+			pivot = if typeof(pivot) == "Vector3" then pivot else nil,
+		})
+	elseif type(crank) == "number" then
+		table.insert(rig.rods, {
+			part = part,
+			base = part.CFrame,
+			radius = crank,
+			phase = math.rad((part:GetAttribute("CrankPhase") :: number?) or 0),
+		})
+	elseif type(slide) == "number" then
+		table.insert(rig.doors, { part = part, base = part.CFrame, slide = slide })
+	end
+	if part:GetAttribute("CoalTier") then
+		table.insert(rig.heap, part)
+	end
+	if part.Name == "DoorBlocker" then
+		rig.doorLamps = nil -- a doorway arrived: the Last Call lamps are found again
+	end
+	if part.Name == "ChimneyTop" then
+		rig.smoke = smokeEmitter(part)
+	elseif part.Name == "SteamVent" then
+		table.insert(rig.vents, steamEmitter(part, 0))
+	elseif part.Name == "Firebox" then
+		rig.firebox = part:FindFirstChildOfClass("PointLight")
+	elseif part.Name == "FireFlame" then
+		for _, emitter in part:GetChildren() do
+			if emitter:IsA("ParticleEmitter") then
+				table.insert(rig.flames, emitter)
+			end
+		end
+	elseif part.Name == "StoveGlow" or part.Name == "LanternFlame" then
+		local light = part:FindFirstChildOfClass("PointLight")
+		if light then
+			light:SetAttribute("Base", light.Brightness)
+			table.insert(rig.glows, light)
+		end
+	end
+end
+
+local function without<T>(list: { T }, gone: (T) -> boolean)
+	for i = #list, 1, -1 do
+		if gone(list[i]) then
+			table.remove(list, i)
+		end
+	end
+end
+
+-- Drops a part that streamed out (it comes back as a new instance and is registered again).
+local function unregister(rig: Rig, part: Instance)
+	if not part:IsA("BasePart") then
+		return
+	end
+	without(rig.spins, function(spin: Spin)
+		return spin.part == part
+	end)
+	without(rig.rods, function(rod: Rod)
+		return rod.part == part
+	end)
+	without(rig.doors, function(door: Door)
+		return door.part == part
+	end)
+	without(rig.heap, function(lump: BasePart)
+		return lump == part
+	end)
+	without(rig.vents, function(emitter: ParticleEmitter)
+		return emitter.Parent == part
+	end)
+	without(rig.flames, function(emitter: ParticleEmitter)
+		return emitter.Parent == part
+	end)
+	without(rig.glows, function(light: PointLight)
+		return light.Parent == part
+	end)
+	if rig.smoke and rig.smoke.Parent == part then
+		rig.smoke = nil
+	end
+	if rig.firebox and rig.firebox.Parent == part then
+		rig.firebox = nil
+	end
+	if part.Name == "DoorBlocker" then
+		rig.doorLamps = nil
+	end
+end
+
 local function rigFor(model: Model, live: boolean): Rig
 	local rig: Rig = {
 		model = model,
@@ -104,52 +207,14 @@ local function rigFor(model: Model, live: boolean): Rig
 		doorLamps = nil,
 	}
 	for _, part in model:GetDescendants() do
-		if part:IsA("BasePart") then
-			local radius = part:GetAttribute("WheelRadius")
-			local crank = part:GetAttribute("CrankRadius")
-			local slide = part:GetAttribute("DoorSlide")
-			if type(radius) == "number" then
-				local pivot = part:GetAttribute("WheelPivot")
-				table.insert(rig.spins, {
-					part = part,
-					base = part.CFrame,
-					radius = radius,
-					pivot = if typeof(pivot) == "Vector3" then pivot else nil,
-				})
-			elseif type(crank) == "number" then
-				table.insert(rig.rods, {
-					part = part,
-					base = part.CFrame,
-					radius = crank,
-					phase = math.rad((part:GetAttribute("CrankPhase") :: number?) or 0),
-				})
-			elseif type(slide) == "number" then
-				table.insert(rig.doors, { part = part, base = part.CFrame, slide = slide })
-			end
-			if part:GetAttribute("CoalTier") then
-				table.insert(rig.heap, part)
-			end
-			if part.Name == "ChimneyTop" then
-				rig.smoke = smokeEmitter(part)
-			elseif part.Name == "SteamVent" then
-				table.insert(rig.vents, steamEmitter(part, 0))
-			elseif part.Name == "Firebox" then
-				rig.firebox = part:FindFirstChildOfClass("PointLight")
-			elseif part.Name == "FireFlame" then
-				for _, emitter in part:GetChildren() do
-					if emitter:IsA("ParticleEmitter") then
-						table.insert(rig.flames, emitter)
-					end
-				end
-			elseif part.Name == "StoveGlow" or part.Name == "LanternFlame" then
-				local light = part:FindFirstChildOfClass("PointLight")
-				if light then
-					light:SetAttribute("Base", light.Brightness)
-					table.insert(rig.glows, light)
-				end
-			end
-		end
+		register(rig, part)
 	end
+	model.DescendantAdded:Connect(function(part)
+		register(rig, part)
+	end)
+	model.DescendantRemoving:Connect(function(part)
+		unregister(rig, part)
+	end)
 	return rig
 end
 
@@ -169,7 +234,7 @@ local function updateDoorLamps(rig: Rig, t: number)
 			if not (doorway:IsA("BasePart") and doorway.Name == "DoorBlocker" and doorway.Position.Z > 0) then
 				continue
 			end
-			local light = Instance.new("PointLight")
+			local light = doorway:FindFirstChild("LastCallLamp") :: PointLight? or Instance.new("PointLight")
 			light.Name = "LastCallLamp"
 			light.Color = LAMP
 			light.Range = Tuning.LastCallGrace.LanternRange
