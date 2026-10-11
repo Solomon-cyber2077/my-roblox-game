@@ -47,7 +47,7 @@ local FADE_RATE = 2.5
 local WATCH_IDLE = 0.2 -- settled, but the stop ticket must stay legible over bright scenery
 local BACKPACK_IDLE = 0.5
 local HIDDEN = 1
-local TOGGLE_KEY = Enum.KeyCode.F1 -- hides and shows the HUD (the usual PC key; free in this game)
+local TOGGLE_KEY = Enum.KeyCode.V -- hides and shows the HUD (free in this game and in Roblox's own controls)
 
 local function tierStamps(tier: number): string
 	return string.rep("●", tier) .. string.rep("○", 3 - tier)
@@ -56,7 +56,7 @@ end
 function Hud.mount(gui: ScreenGui)
 	local State = Registry.StateController
 
-	-- F1 hides only this outer frame, so container.Visible (which gates the tool keys) is untouched
+	-- V hides only this outer frame, so container.Visible (which gates the tool keys) is untouched
 	local root = Ui.new("Frame", {
 		Name = "HudRoot",
 		Size = UDim2.fromScale(1, 1),
