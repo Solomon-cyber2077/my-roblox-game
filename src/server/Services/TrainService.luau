@@ -20,6 +20,7 @@ local Types = require(Shared.Types)
 local NetService = require(script.Parent.NetService)
 local Registry = require(script.Parent.Parent.Registry)
 local StateService = require(script.Parent.StateService)
+local RailingPilot = require(script.Parent.Parent.Builders.RailingPilot)
 local TrainBuilder = require(script.Parent.Parent.Builders.TrainBuilder)
 
 type Train = Types.TrainState
@@ -190,6 +191,7 @@ end
 
 function TrainService.Init()
 	built = TrainBuilder.build(TrainService.Origin(), Workspace)
+	RailingPilot.build(TrainService.Origin())
 	built.model:SetAttribute("DoorsOpen", false)
 	seatPrompts()
 	makePrompt(built.workbench, "Workshop", "Workbench", "Upgrades", 0)
