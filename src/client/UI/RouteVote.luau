@@ -95,6 +95,7 @@ function RouteVote.mount(gui: ScreenGui)
 	type Placed = { index: number, mark: Frame, landedAt: number }
 	local placed: { [string]: Placed } = {}
 	local punchedKey: string? = nil
+	local lingeredKey: string? = nil -- the ballot whose punch already lingered (once per ballot)
 	local lingerUntil = 0
 
 	local function clearTickets()
@@ -105,6 +106,7 @@ function RouteVote.mount(gui: ScreenGui)
 		table.clear(placed)
 		builtKey = nil
 		punchedKey = nil
+		lingeredKey = nil
 	end
 
 	local function ballotKey(route: any, coal: number?): string
@@ -172,13 +174,16 @@ function RouteVote.mount(gui: ScreenGui)
 		local phase = Session.phase()
 		local route = State.Get({ "run", "route" })
 		local chosen = if route then route.chosen else nil
-		if chosen ~= nil and builtKey ~= nil and punchedKey ~= builtKey and lingerUntil < os.clock() then
-			-- the vote just closed (the phase leaves Junction with it): hold up for the punch
+		if chosen ~= nil and builtKey ~= nil and punchedKey ~= builtKey and lingeredKey ~= builtKey then
+			-- the vote just closed (the phase leaves Junction with it): hold up for the punch, once.
+			-- Re-arming on every render (coal, crew or the board walking in and out) brought the
+			-- closed ballot back whenever the punch had not landed.
+			lingeredKey = builtKey
 			lingerUntil = os.clock() + LINGER_SECONDS
 			task.delay(LINGER_SECONDS + 0.05, render)
 		end
 		local lingering = chosen ~= nil and builtKey ~= nil and os.clock() < lingerUntil
-		local visible = route ~= nil and Session.isAlive() and (phase == "Junction" or lingering)
+		local visible = TicketModel.ballotShown(phase, route, Session.isAlive(), lingering)
 		container.Visible = visible
 		if not visible then
 			board.update({ active = false, tickets = {}, options = {}, votes = {}, vote = castVote })
