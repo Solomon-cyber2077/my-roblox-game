@@ -2,6 +2,19 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
+## 2026-10-11: Round 1 bug fixes (input, grab, hotbar, doors, vote, Ready)
+Not playtested: this round was told to stay out of Studio. `lune run check` could not run whole because Windows Application Control blocks `rojo.exe` (sourcemap step); every other step (StyLua, selene, luau-lsp on the existing sourcemap, 233 tests, audit) passes.
+1. Completed:
+   - Grab (`GrabController`): the server pins the grabbed root every tick and shift lock/AutoRotate turned it locally, so the body spun and the camera swung. While held: Scriptable camera dragged to the Hollow's face, AutoRotate and shift lock off, mouse freed; an idempotent `unlock` runs on release, death, respawn, phase change/run end and a missed attribute.
+   - Stuck cursor: Shift was sprint and Roblox's shift-lock switch, so sprinting toggled LockCenter (`MovementController` now sinks Shift at High priority, so keyboard shift lock is effectively off). The train camera restored a stale MouseBehavior snapshot (`TrainCamController` now restores Default + visible cursor). K (`UIController`, ignored while typing) frees the mouse, closes modals and the train camera, clears gamepad selection and hands back a Scriptable camera unless held.
+   - Mash key is Q (Space swallowed, not counted); keycap reads Q. Pull free stays on E.
+   - Hotbar (`Hud`, rules in `Logic/Inventory` + spec): slot key/click holds a tool (brass outline), same key puts it away, E uses it only while no E prompt is showing; clicking/tapping the held tool uses it.
+   - Doors (`TrainVisualsController`): rig parts register on DescendantAdded/Removing, so cars that stream in late (or stream out and back) slide their doors for everyone.
+   - Vote (`RouteVote`, `TicketModel.ballotShown` + spec): the punch linger re-armed on every render, bringing a closed ballot back; it now lingers once and the ballot shows only at an open Junction.
+   - Ready (`LobbyService`, `RunRules`, Run spec): one Ready starts the countdown and the crew is only the ready players. `Tuning.Run.MinReadyShare` removed.
+2. Known: none of this was seen in Studio. Gamepad has no hotbar select/use (never had slot keys). Breach steam listeners in TrainVisualsController still bind only parts present at start (leak markers are another area). A run occupies the server's one train, so other hall players wait for it to end; only the host can change the run tier. `.claude/settings.json` has an uncommitted change (the commit was blocked by permissions). The rbxmap MCP server failed to start (CLI fallback works).
+3. Next: playtest each fix (see the round-1 report): grab and every way it ends, sprint/train-cam cursor, K, Q mash, hotbar + E near a Pick up prompt, doors in cars 1, 2, 5 and Last Light on a second client, vote after walking between cars, solo Ready with two in the hall.
+
 ## 2026-10-10: Engine watched in a run: rods and drivers fixed
 1. Completed:
    - Rode a run with the sky pinned at noon (`sky 12`) and watched the engine docked and moving.
