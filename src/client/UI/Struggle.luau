@@ -35,7 +35,7 @@ local function keyText(): string
 	elseif UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
 		return "TAP"
 	end
-	return "SPACE"
+	return "Q"
 end
 
 function Struggle.mount(gui: ScreenGui, press: () -> ())
@@ -107,7 +107,7 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	Ui.stroke(Theme.Color.brassLight, 2, 0.1).Parent = keycap
 	keyScale = Ui.new("UIScale", { Parent = keycap })
 	keyLabel = Ui.text({
-		Text = "SPACE",
+		Text = "Q",
 		Font = Theme.Font.display,
 		TextSize = 24,
 		Color = Theme.Color.ink,

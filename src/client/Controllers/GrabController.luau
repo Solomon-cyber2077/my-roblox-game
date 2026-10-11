@@ -5,9 +5,9 @@
 
 	  * the struggle plate (UI/Struggle) names what it is doing to you and shows the hold
 	    weakening as you fight (GrabEscape, from the server)
-	  * Space, gamepad A or a tap on the plate is one struggle: a Struggle remote, the
-	    keycap punching down, a jolt of the camera, and your body thrashing harder
-	    (CharacterAnimator reads Struggle())
+	  * Q, gamepad A or a tap on the plate is one struggle: a Struggle remote, the keycap
+	    punching down, a jolt of the camera, and your body thrashing harder
+	    (CharacterAnimator reads Struggle()). Space is swallowed (no jump) but does not count.
 	  * the view is dragged round toward the thing's face, every bite jolts it and pulses
 	    the screen red, and your heart pounds
 	  * when you tear free (or a flash makes it let go) you are thrown clear
@@ -85,8 +85,8 @@ local function press()
 	audio("Winded", 0.35, 0.8 + math.random() * 0.3)
 end
 
-local function onAction(_: string, state: Enum.UserInputState): Enum.ContextActionResult
-	if state == Enum.UserInputState.Begin then
+local function onAction(_: string, state: Enum.UserInputState, input: InputObject): Enum.ContextActionResult
+	if state == Enum.UserInputState.Begin and input.KeyCode ~= Enum.KeyCode.Space then
 		press()
 	end
 	-- the jump key must not jump (nor anything else) while it has you
@@ -202,6 +202,7 @@ local function begin(model: Model, style: string)
 		onAction,
 		false,
 		Enum.ContextActionPriority.High.Value + 100,
+		Enum.KeyCode.Q,
 		Enum.KeyCode.Space,
 		Enum.KeyCode.ButtonA,
 		Enum.KeyCode.ButtonR2
