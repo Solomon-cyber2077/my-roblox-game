@@ -223,13 +223,14 @@ def drive_wheel(name, r=2.8, width=0.7):
     """A locomotive driving wheel on a cylinder primitive (axle on local X, radius r): flanged tyre,
     rim, fourteen tapered spokes, a crescent balance weight and a hub with its axle cap."""
     iron = Piece(name, None, "Iron")
+    paint = Piece(name + "_paint", None, "Paint")  # the centre: red under the runtime's colour (Overlay)
     hw = width / 2
     segs = 28
     # tyre and flange (the flange on the inner face, local -X is towards the track centre on +Z)
     iron.lathe([(r - 0.42, -hw), (r - 0.05, -hw), (r, -hw + 0.06), (r, hw - 0.18), (r + 0.16, hw - 0.1), (r + 0.16, hw), (r - 0.42, hw)], (0, 0, 0), "x", segs, caps=False)
     # rim: a ring inside the tyre, a little narrower, with a bead on each face
     ri = r - 0.68
-    iron.lathe([(ri, -hw + 0.1), (r - 0.42, -hw + 0.1), (r - 0.42, hw - 0.1), (ri, hw - 0.1), (ri, -hw + 0.1)], (0, 0, 0), "x", segs, caps=False)
+    paint.lathe([(ri, -hw + 0.1), (r - 0.42, -hw + 0.1), (r - 0.42, hw - 0.1), (ri, hw - 0.1), (ri, -hw + 0.1)], (0, 0, 0), "x", segs, caps=False)
     # spokes: tapered, thicker at the hub, oval-ish (two bevels)
     n = 14
     for k in range(n):
@@ -241,7 +242,7 @@ def drive_wheel(name, r=2.8, width=0.7):
         prof = [(ca * r0 - ux * w0, sa * r0 - uy * w0), (ca * r1 - ux * w1, sa * r1 - uy * w1),
                 (ca * r1 + ux * w1, sa * r1 + uy * w1), (ca * r0 + ux * w0, sa * r0 + uy * w0)]
         # prism_x takes (y, z)
-        iron.prism_x([(py, pz) for py, pz in prof], -0.16, 0.16)
+        paint.prism_x([(py, pz) for py, pz in prof], -0.16, 0.16)
     # balance weight: a crescent filling the spokes opposite the crank
     arc = []
     m = 9
@@ -252,13 +253,13 @@ def drive_wheel(name, r=2.8, width=0.7):
     for j in range(m + 1):
         t = 0.75 - 1.5 * j / m
         inner.append((math.cos(math.pi + t) * (ri - 0.9), math.sin(math.pi + t) * (ri - 0.9)))
-    iron.prism_x([(py, pz) for py, pz in arc + inner], -0.2, 0.2)
+    paint.prism_x([(py, pz) for py, pz in arc + inner], -0.2, 0.2)
     # hub and axle cap, with six nuts on the outer face
     iron.lathe([(0.0, -0.36), (0.5, -0.36), (0.72, -0.3), (0.72, 0.3), (0.0, 0.3)], (0, 0, 0), "x", 14)
     # the hub's outer face is local -X (the platform side's wheels; mirror() makes the far side's)
     iron.lathe([(0.0, -0.56), (0.32, -0.5), (0.32, -0.36), (0.0, -0.36)], (0, 0, 0), "x", 10)
     iron.rivets([(-0.36, 0.5 * math.cos(2 * math.pi * k / 6), 0.5 * math.sin(2 * math.pi * k / 6)) for k in range(6)], (-1, 0, 0), 0.07, 0.06, 6)
-    return [iron]
+    return [iron, paint]
 
 
 def coupling_rod(name, length=10.2, h=0.45, t=0.3):

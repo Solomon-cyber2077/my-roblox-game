@@ -599,10 +599,11 @@ for k, kind in enumerate(MATS, start=1):
         rough[:] = np.where(m > 0, 0.45 + 0.3 * grime - 0.2 * E, rough)
         metal[:] = np.where(m > 0, 0.15 * E, metal)
     elif kind == "Boiler":
-        # the boiler's sheet cladding, painted and varnished: streaks below every fitting, scale
-        # from the clack valves, heat darkening towards the smokebox, soot from the chimney
-        over(m, c(44, 62, 58) * (0.9 + 0.2 * blot[..., None]), np.ones_like(A))
-        over(m, c(150, 160, 150), 0.10 * ss(0.3, 0.9, NY))  # sky on the top
+        # Russia iron: planished blue-grey sheet, mottled where it was rolled: streaks below every
+        # fitting, scale from the clack valves, heat darkening towards the smokebox, soot from the chimney
+        over(m, c(66, 80, 92) * (0.82 + 0.36 * blot[..., None]), np.ones_like(A))
+        over(m, c(112, 124, 134), 0.35 * ss(0.55, 0.9, noise_pos(0.35)))  # the planished mottle
+        over(m, c(150, 160, 166), 0.10 * ss(0.3, 0.9, NY))  # sky on the top
         over(m, dirt_col, 0.45 * grime)
         over(m, rain_col, 0.5 * ss(0.55, 0.85, streakn) * ss(0.2, -0.6, NY))
         for v in FEAT.get("boilerFittings", []):
@@ -612,14 +613,14 @@ for k, kind in enumerate(MATS, start=1):
                 run = run * (Z * v["side"] > 0)
             over(m, c(196, 196, 180) if v.get("kind") == "scale" else rain_col, 0.55 * run * (0.5 + 0.5 * streakn))
         over(m, soot_col, 0.6 * ss(SPEC.get("smokeboxX", 1e9) - 6, SPEC.get("smokeboxX", 1e9), X) * ss(0.0, 0.8, NY))
-        over(m, c(150, 140, 120), 0.3 * E)
-        rough[:] = np.where(m > 0, 0.3 + 0.35 * grime + 0.2 * blot, rough)
-        metal[:] = np.where(m > 0, 0.1 + 0.25 * E, metal)
+        over(m, c(150, 150, 146), 0.3 * E)
+        rough[:] = np.where(m > 0, 0.26 + 0.35 * grime + 0.15 * blot, rough)
+        metal[:] = np.where(m > 0, 0.45 + 0.25 * E - 0.3 * grime, metal)
     elif kind == "Smokebox":
         # graphite-and-oil black, burnt brown where the heat sits, ash at the bottom of the door
         over(m, c(26, 25, 25) * (0.85 + 0.3 * blot[..., None]), np.ones_like(A))
-        over(m, c(70, 52, 40), 0.4 * ss(0.5, 0.85, blot) * ss(-0.2, 0.6, NY))
-        over(m, c(120, 118, 112), 0.35 * ss(0.35, -0.5, NY) * ss(0.4, 0.8, streakn))  # ash
+        over(m, c(62, 48, 38), 0.18 * ss(0.55, 0.9, blot) * ss(-0.2, 0.6, NY))
+        over(m, c(110, 108, 104), 0.2 * ss(0.35, -0.5, NY) * ss(0.5, 0.85, streakn))  # ash
         over(m, c(96, 96, 96), 0.4 * E)
         rough[:] = np.where(m > 0, 0.75 - 0.25 * E, rough)
         metal[:] = np.where(m > 0, 0.3 + 0.3 * E, metal)

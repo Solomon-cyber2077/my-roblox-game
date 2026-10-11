@@ -24,6 +24,7 @@ export type KitPiece = {
 	anchor: { number },
 	look: string?,
 	livery: string?,
+	color: { number }?,
 }
 
 export type Car = {
@@ -32,6 +33,8 @@ export type Car = {
 	pieces: { [string]: Piece },
 	lights: { { number } }?,
 	hideWalls: boolean?,
+	engine: boolean?,
+	retire: { { number } }?,
 }
 
 local TrainShell: {

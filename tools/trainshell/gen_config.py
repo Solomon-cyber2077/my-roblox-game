@@ -22,6 +22,9 @@ CARS = {
     "CrewSaloon": (-41.5, -23),
     "Workshop": (-20, -1.5),
     "Stores": (1.5, 20),
+    # the engine and her tender (engine2.py): the primitive centres each one owns
+    "Tender": (21.5, 50.5),
+    "Locomotive": (50.5, 100),
 }
 PIECES = {
     # piece: livery role, look, casts a shadow
@@ -54,6 +57,8 @@ PIECES = {
     # a car that has them uses these instead of the kit's leaves
     "DoorLeafL": ("Accent", "{car}_P", True),
     "DoorLeafR": ("Accent", "{car}_P", True),
+    # the engine's boiler, smokebox, stack and cylinder lagging (its own atlas, <car>_B)
+    "Boiler": (None, "{car}_B", True),
 }
 # per piece: the door lamps' light lives on the Lens; the window veil is mostly see-through
 EXTRA = {"Lens": {"light": "true"}, "Haze": {"transparency": "0.86"}, "Tail": {"color": "{ 0.78, 0.07, 0.04 }"}}
@@ -62,7 +67,14 @@ KIT = {
     "DoorLeafR": ((0, 0, 0), "Accent"),
     "Bogie": ((0, -3, 0), None),
     "Wheel": ((0, 0, 0), None),
+    # round 3: the engine's driving wheels (red centres), coupling rods, and a coal heap per CoalTier ball
+    "DriveWheelP": ((0, 0, 0), None),
+    "DriveWheelN": ((0, 0, 0), None),
+    "RodP": ((0, 0, 0), None),
+    "RodN": ((0, 0, 0), None),
+    "CoalLump": ((0, 0, 0), None),
 }
+KIT_EXTRA = {"DriveWheelP": {"color": "{ 0.518, 0.133, 0.11 }"}, "DriveWheelN": {"color": "{ 0.518, 0.133, 0.11 }"}}
 
 
 def num(v):
@@ -101,6 +113,7 @@ lines = [
     "\tanchor: { number },",
     "\tlook: string?,",
     "\tlivery: string?,",
+    "\tcolor: { number }?,",
     "}",
     "",
     "export type Car = {",
@@ -109,6 +122,8 @@ lines = [
     "\tpieces: { [string]: Piece },",
     "\tlights: { { number } }?,",
     "\thideWalls: boolean?,",
+    "\tengine: boolean?,",
+    "\tretire: { { number } }?,",
     "}",
     "",
     "local TrainShell: {",
@@ -133,11 +148,20 @@ for car, (x0, x1) in CARS.items():
     lines.append(f"\t\t\tx0 = {num(x0)},")
     lines.append(f"\t\t\tx1 = {num(x1)},")
     meta_path = os.path.join(ROOT, "assets", "train", f"{car}.json")
-    spec = json.load(open(meta_path))["spec"] if os.path.exists(meta_path) else {}
+    meta = json.load(open(meta_path)) if os.path.exists(meta_path) else {}
+    spec = meta.get("spec", {})
+    atlas = {p["name"]: p.get("atlas") for p in meta.get("parts", [])}
     if spec.get("lights") and any(k.startswith(f"{car}_Fittings") for k in meshes):
         # round 2: the lamps' lights sit at the lamps, and the side walls hide behind the carved skin
         lines.append("\t\t\tlights = { " + ", ".join(vec(v) for v in spec["lights"]) + " },")
         lines.append("\t\t\thideWalls = true,")
+    if spec.get("retire") is not None:
+        # the engine and tender retire exactly the primitives their meshes replace (engine2.retire_list)
+        lines.append("\t\t\tengine = true,")
+        lines.append("\t\t\tretire = {")
+        for r in spec["retire"]:
+            lines.append(f"\t\t\t\t{vec(r)},")
+        lines.append("\t\t\t},")
     lines.append("\t\t\tpieces = {")
     for p in found:
         m = meshes[f"{car}_{p}"]
@@ -146,7 +170,8 @@ for car, (x0, x1) in CARS.items():
         if livery:
             fields.append(f'livery = "{livery}"')
         if look:
-            fields.append(f'look = "{look.format(car=car)}"')
+            # an engine part names its own atlas (the boiler's bands and domes bake into <car>_B)
+            fields.append(f'look = "{atlas.get(f"{car}_{p}") or look.format(car=car)}"')
         fields.append(f"shadow = {'true' if shadow else 'false'}")
         for k, v in EXTRA.get(p, {}).items():
             fields.append(f"{k} = {v}")
@@ -156,12 +181,16 @@ for car, (x0, x1) in CARS.items():
 lines.append("\t},")
 lines.append("\tKit = {")
 for k, (anchor, livery) in KIT.items():
+    if k not in meshes:
+        continue  # not uploaded yet
     m = meshes[k]
     fields = [f"mesh = {m['id']}", f"center = {vec(m['center'])}", f"size = {vec(m['size'])}", f"anchor = {vec(anchor)}"]
     if livery:
         fields.append(f'livery = "{livery}"')
     if k.startswith("DoorLeaf") and "Doors_color" in ids["images"]:
         fields.append('look = "Doors"')  # round 2: the leaves have their own atlas
+    for key, v in KIT_EXTRA.get(k, {}).items():
+        fields.append(f"{key} = {v}")
     lines.append(f"\t\t{k} = {{ " + ", ".join(fields) + " },")
 lines.append("\t},")
 lines.append("}")
@@ -192,7 +221,7 @@ if "Doors_color" in images:
 for car in CARS:
     if f"{car}_color" in images:
         look(car, car)
-    for tag in ("P", "N"):
+    for tag in ("P", "N", "B"):
         if f"{car}_{tag}_color" in images:
             look(f"{car}_{tag}", f"{car}_{tag}")
     if f"{car}_sign" in images:

@@ -33,8 +33,11 @@ SIGNS = {
     "CrewSaloon": "CREW SALOON",
     "Workshop": "WORKSHOP",
     "Stores": "STORES",
+    "Tender": "LAST TRAIN OUT",
+    "Locomotive": "LAST LIGHT",
 }
-NUMBERS = {"GuardsVan": 1, "LastTrainOut": 2, "CrewSaloon": 3, "Workshop": 4, "Stores": 5}
+NUMBERS = {"GuardsVan": 1, "LastTrainOut": 2, "CrewSaloon": 3, "Workshop": 4, "Stores": 5, "Tender": 1931, "Locomotive": 1931}
+ATLASES = {"Locomotive": ("_P", "_N", "_B", "")}  # the engine's boiler has an atlas of its own
 
 
 def fonts_dir():
@@ -103,7 +106,7 @@ def main():
         run([sys.executable, os.path.join(TOOLS, "canvas.py"), j, os.path.join(out, f"{a.car}_canvas.npz")])
         # each atlas bakes into the previous one's .blend, so the last holds every UV set
         blend = os.path.join(out, f"{a.car}.blend")
-        for atlas in (f"{a.car}_P", f"{a.car}_N", a.car):
+        for atlas in (a.car + t for t in ATLASES.get(a.car, ("_P", "_N", ""))):
             blender("bake2.py", out, atlas, str(a.size or 2048), j, os.path.join(out, f"{a.car}_canvas.npz"), blend=blend)
             blend = os.path.join(out, f"{atlas}_baked.blend")
         blender("export.py", os.path.join(out, f"{a.car}.fbx"), blend=blend)

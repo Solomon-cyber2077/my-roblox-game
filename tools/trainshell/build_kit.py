@@ -33,6 +33,8 @@ if V2 and "--r2" not in sys.argv:
     pieces += kitparts.drive_wheel("DriveWheelP") + kitparts.mirror(kitparts.drive_wheel("DriveWheelN"), "x")
     pieces += kitparts.coupling_rod("RodP") + kitparts.mirror(kitparts.coupling_rod("RodN"), "z")
     pieces += kitparts.coal_lump("CoalLump")
+    joins["DriveWheelP"] = ["DriveWheelP_paint"]
+    joins["DriveWheelN"] = ["DriveWheelN_paint"]
     joins["RodP"] = ["RodP_brass"]
     joins["RodN"] = ["RodN_brass"]
 elif V2:

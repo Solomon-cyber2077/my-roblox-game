@@ -85,7 +85,7 @@ def dress(ob, atlas):
     col.image = load(f"{atlas}_color", "sRGB")
     mix = nodes.new("ShaderNodeMix")
     mix.data_type = "RGBA"
-    mix.inputs["A"].default_value = srgb(LIVERY.get(role, (255, 255, 255)))
+    mix.inputs["A"].default_value = srgb((132, 34, 28) if ob.name.startswith("DriveWheel") else LIVERY.get(role, (255, 255, 255)))
     links.new(col.outputs["Alpha"], mix.inputs["Factor"])
     links.new(col.outputs["Color"], mix.inputs["B"])
     links.new(mix.outputs["Result"], bsdf.inputs["Base Color"])
@@ -134,11 +134,15 @@ if len(args) > 5:
         ob.location = Vector((c[0] + kc[0], -(c[2] + kc[2]), c[1] + kc[1]))
         placed.append(ob)
 
-    for bx in (x0 + inset, x1 - inset):
+    bogies = (x0 + inset, x1 - inset) if "kit" not in spec else [b for b in spec.get("bogies", ()) if b not in (70.5, 79.5)]
+    for bx in bogies:
         put("Bogie", (bx, -3, 0))
         for ax in (-2.1, 2.1):
             for s in (-1, 1):
                 put("Wheel", (bx + ax, -3.6, s * 5.3), True)
+    for name, at, rot in spec.get("kit", []):  # the engine's driving wheels and rods
+        if name in kit:
+            put(name, at, rot)
     for s_key, xs in spec["doors"].items():
         s = 1 if int(s_key) > 0 else -1
         for d in xs:
@@ -191,11 +195,14 @@ cam = bpy.data.objects.new("Cam", cam_data)
 scene.collection.objects.link(cam)
 scene.camera = cam
 target = Vector((cx, 0, 4))
+K = 1.0
+if len(args) > 5:
+    K = max(1.0, (spec["x1"] - spec["x0"]) / 24)  # the engine is twice a carriage's length
 views = {
-    "three_quarter": Vector((cx + 16, -26, 7)),
-    "side": Vector((cx, -30, 4.5)),
-    "far": Vector((cx - 14, 26, 6)),
-    "roof": Vector((cx + 14, -16, 22)),
+    "three_quarter": Vector((cx + 16 * K, -26 * K, 7 * K)),
+    "side": Vector((cx, -30 * K, 4.5)),
+    "far": Vector((cx - 14 * K, 26 * K, 6 * K)),
+    "roof": Vector((cx + 14 * K, -16 * K, 22 * K)),
     "low": Vector((cx + 9, -12, -2.5)),
     # the acceptance shot: on the platform 5-6 studs from the side at eye height (Roblox FOV 70)
     "platform": Vector((cx + 4.5, -12.4, 4.6)),
