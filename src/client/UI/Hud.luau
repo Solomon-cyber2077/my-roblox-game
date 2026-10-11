@@ -10,6 +10,7 @@
 local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage.Shared
@@ -776,7 +777,37 @@ function Hud.mount(gui: ScreenGui)
 	})
 	backpackHint.Parent = backpack
 
-	local function renderBackpack(inv: { [string]: any }?)
+	-- The tool in hand: its slot key holds it, E uses it (Logic/Inventory's hand rules).
+	local handSlot: number? = nil
+	local handId: string? = nil
+	local promptsOnE: { [ProximityPrompt]: true } = {}
+	ProximityPromptService.PromptShown:Connect(function(prompt)
+		if prompt.KeyboardKeyCode == Enum.KeyCode.E then
+			promptsOnE[prompt] = true
+		end
+	end)
+	ProximityPromptService.PromptHidden:Connect(function(prompt)
+		promptsOnE[prompt] = nil
+	end)
+	local function promptOnE(): boolean
+		for prompt in promptsOnE do
+			if prompt.Parent and prompt.Enabled then
+				return true
+			end
+			promptsOnE[prompt] = nil
+		end
+		return false
+	end
+
+	local renderBackpack: (inv: { [string]: any }?) -> ()
+	local function hold(slot: number?)
+		local inv = State.GetPrivate({ "inventory" })
+		handSlot = slot
+		handId = if slot and inv and inv.items then inv.items[slot] else nil
+		renderBackpack(inv)
+	end
+
+	function renderBackpack(inv: { [string]: any }?)
 		for _, child in backpack:GetChildren() do
 			if child.Name == "Cell" or child.Name == "Item" then
 				child:Destroy()
@@ -784,6 +815,8 @@ function Hud.mount(gui: ScreenGui)
 		end
 		local state = inv or { items = {}, capacity = Tuning.Crew.BackpackSlots }
 		local capacity = state.capacity or Tuning.Crew.BackpackSlots
+		handSlot = Inventory.follow({ items = state.items or {}, capacity = capacity }, handSlot, handId)
+		handId = if handSlot then state.items[handSlot] else nil
 		backpack.Size = UDim2.fromOffset(capacity * CELL + (capacity - 1) * GAP, CELL)
 		for i = 1, capacity do
 			-- an empty slot: a sunken soot well in a blackened-brass bezel
@@ -823,9 +856,13 @@ function Hud.mount(gui: ScreenGui)
 					Parent = backpack,
 				})
 				Ui.corner(2).Parent = button
+				local inHand = index == handSlot
 				Ui.stroke(
-					if def.kind == "Relic" then Theme.Color.brass else Theme.Color.steelLine,
-					if def.kind == "Relic" then 2 else 1,
+					if inHand
+						then Theme.Color.brassLight
+						elseif def.kind == "Relic" then Theme.Color.brass
+						else Theme.Color.steelLine,
+					if inHand then 3 elseif def.kind == "Relic" then 2 else 1,
 					0.1
 				).Parent =
 					button
@@ -863,8 +900,13 @@ function Hud.mount(gui: ScreenGui)
 					hasTool = true
 				end
 				button.Activated:Connect(function()
+					-- a click or tap holds a tool; on the one in hand it uses it (touch has no E)
 					if def.kind == "Tool" then
-						Net.Fire("UseItem", index)
+						if inHand then
+							Net.Fire("UseItem", index)
+						else
+							hold(index)
+						end
 					end
 				end)
 				button.MouseButton2Click:Connect(function()
@@ -875,7 +917,7 @@ function Hud.mount(gui: ScreenGui)
 		end
 		local hints = {}
 		if hasTool then
-			table.insert(hints, "1-6 use a tool")
+			table.insert(hints, if handSlot then "E use  ·  same key puts away" else "1-6 hold a tool")
 		end
 		if heavy > 0 then
 			table.insert(
@@ -975,7 +1017,7 @@ function Hud.mount(gui: ScreenGui)
 			local inv = State.GetPrivate({ "inventory" })
 			local itemId = inv and inv.items and inv.items[slot]
 			if itemId and Items[itemId] and Items[itemId].kind == "Tool" then
-				Net.Fire("UseItem", slot)
+				hold(Inventory.select(inv, handSlot, slot))
 				return Enum.ContextActionResult.Sink
 			end
 		end
@@ -992,6 +1034,18 @@ function Hud.mount(gui: ScreenGui)
 		Enum.KeyCode.Five,
 		Enum.KeyCode.Six
 	)
+	-- E uses the tool in hand, but only while no interact prompt (Pick up, Pull free) is on E
+	ContextActionService:BindAction("LTO_UseHand", function(_, inputState)
+		if inputState ~= Enum.UserInputState.Begin or not container.Visible or handSlot == nil then
+			return Enum.ContextActionResult.Pass
+		end
+		local inv = State.GetPrivate({ "inventory" })
+		if inv and inv.items and Inventory.canUseHand(inv, handSlot, promptOnE()) then
+			Net.Fire("UseItem", handSlot)
+			return Enum.ContextActionResult.Sink
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.E)
 	ContextActionService:BindAction("LTO_DropLast", function(_, inputState)
 		if inputState == Enum.UserInputState.Begin and container.Visible then
 			local inv = State.GetPrivate({ "inventory" })

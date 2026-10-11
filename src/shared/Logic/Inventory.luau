@@ -123,4 +123,39 @@ function Inventory.withCapacity(inv: State, capacity: number): State
 	return { items = table.clone(inv.items), capacity = capacity }
 end
 
+-- The hand. A tool's slot key puts it in the hand (the same key again puts it away) and E
+-- uses it. These take and return the slot in hand (nil is an empty hand).
+
+local function isTool(inv: State, slot: number?): boolean
+	local id = if slot then inv.items[slot] else nil
+	local def = if id then Items[id] else nil
+	return def ~= nil and def.kind == "Tool"
+end
+
+-- The slot in hand after pressing `slot`'s key. Keys of slots without a tool change nothing.
+function Inventory.select(inv: State, held: number?, slot: number): number?
+	if not isTool(inv, slot) then
+		return held
+	end
+	return if held == slot then nil else slot
+end
+
+-- The slot in hand after the backpack changed: it follows the item if it moved and
+-- empties if the item left.
+function Inventory.follow(inv: State, held: number?, heldId: string?): number?
+	if held == nil or heldId == nil then
+		return nil
+	end
+	if inv.items[held] == heldId then
+		return held
+	end
+	return table.find(inv.items, heldId)
+end
+
+-- Whether E uses what is in hand: never while an interact prompt (Pick up, Pull free)
+-- is showing, so E keeps meaning that prompt.
+function Inventory.canUseHand(inv: State, held: number?, promptShowing: boolean): boolean
+	return not promptShowing and isTool(inv, held)
+end
+
 return table.freeze(Inventory)
