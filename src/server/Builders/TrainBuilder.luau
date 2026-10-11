@@ -1520,7 +1520,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			{ material = Enum.Material.Metal, collide = false }
 		)
 		rod:SetAttribute("CrankRadius", 1.1)
-		rod:SetAttribute("CrankPhase", if side > 0 then 0 else 90)
+		-- built on the top crank, over the balance weights at the bottom: the animator's angle for "up"
+		rod:SetAttribute("CrankPhase", -90)
 		Kit.cylinder(
 			model,
 			4,

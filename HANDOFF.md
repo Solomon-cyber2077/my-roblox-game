@@ -2,6 +2,15 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
+## 2026-10-10: Engine watched in a run: rods and drivers fixed
+1. Completed:
+   - Rode a run with the sky pinned at noon (`sky 12`) and watched the engine docked and moving.
+   - Fixed the coupling rods: they were built on the top crank, but `CrankPhase` 0/90 told the animator they started at the front/bottom, so each rod orbited a centre 1.1 studs off the axle (the far-side rod rose above the wheel tops). Both rods now carry `CrankPhase` -90 (`Builders/TrainBuilder`), so they ride the crank pins opposite the kit wheels' balance weights. The far side is no longer quartered, because the kit wheels have their weights in the same place on both sides.
+   - Fixed the wheel direction: wheels without a `WheelPivot` (the kit drivers and bogie wheels) turned about their local X, which runs backwards on these wheels. They now turn about world Z through their own centre, the same way as the spokes and rods (`TrainVisualsController`).
+   - Verified in Play: the far-side rod sits 1.14 studs from the axle and stays level with the wheel angle (34 vs 37 degrees), on the crank pins with the weights opposite. At 60 coal the tender shows 9 of 16 lumps; at 31.8 coal it shows 5; at 0 coal it shows none. While moving, smoke streams back over the train (rate 14). Console clean (DataStore/Arvo notices only). `lune run check` passes.
+2. Known: smoke at a dock (rate 6, dark grey, fast 8-12) is barely visible against the sky. "Noon" still renders as a dusky red sky at this biome/dread. The near-side drivers are hidden behind the platform when docked. The bogie wheels now turn the other way than before; they were not watched closely.
+3. Next: look at the gangways and couplings between cars; maybe thicken the idle smoke (slower and paler at a dock).
+
 ## 2026-10-10: Stores stencils moved, door slide watched in a run
 1. Completed:
    - Stores stencils (`tools/trainshell/identity.py`): the big STORES now sits above the security strap (y 2.15), and the L.T.O. No 5 / TARE / KEEP DRY block is at the blind end (x1 - 2.1, y 2.3/2.0/1.77) on both sides, away from the door leaves. Stores was rebuilt. Its geometry and UVs match the uploaded meshes (checked vertex by vertex), so the mesh ids stay and the FBX is unchanged. Only the 8 changed maps were re-uploaded (old ids in `unused.round3_superseded_images` `*_prestencilmove`). `gen_config.py` was run.
