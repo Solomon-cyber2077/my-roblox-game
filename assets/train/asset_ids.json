@@ -198,7 +198,7 @@
    "tris": 878
   },
   "Bogie": {
-   "id": 83482060285743,
+   "id": 114006295546722,
    "center": [
     0.0,
     -3.145,
@@ -212,7 +212,7 @@
    "tris": 610
   },
   "DoorLeafL": {
-   "id": 122705056149935,
+   "id": 131365759490341,
    "center": [
     0.0,
     0.0,
@@ -226,7 +226,7 @@
    "tris": 466
   },
   "DoorLeafR": {
-   "id": 91512285719500,
+   "id": 115632451028379,
    "center": [
     0.0,
     0.0,
@@ -240,7 +240,7 @@
    "tris": 466
   },
   "Wheel": {
-   "id": 118639491061532,
+   "id": 120343796036224,
    "center": [
     0.0,
     0.0,
@@ -249,9 +249,9 @@
    "size": [
     0.84,
     3.48,
-    3.48
+    3.4271
    ],
-   "tris": 552
+   "tris": 332
   },
   "GuardsVan_Shell": {
    "id": 76265955049339,
@@ -1162,13 +1162,419 @@
     0.75
    ],
    "tris": 3996
+  },
+  "CoalLump": {
+   "id": 102475244655342,
+   "center": [
+    -0.0168,
+    0.2455,
+    0.0114
+   ],
+   "size": [
+    0.9962,
+    0.531,
+    0.9982
+   ],
+   "tris": 295
+  },
+  "DriveWheelN": {
+   "id": 78225284758024,
+   "center": [
+    0.105,
+    0.0,
+    0.0
+   ],
+   "size": [
+    0.91,
+    5.92,
+    5.92
+   ],
+   "tris": 988
+  },
+  "DriveWheelP": {
+   "id": 97469404003640,
+   "center": [
+    -0.105,
+    0.0,
+    0.0
+   ],
+   "size": [
+    0.91,
+    5.92,
+    5.92
+   ],
+   "tris": 988
+  },
+  "RodN": {
+   "id": 74248730248768,
+   "center": [
+    0.0,
+    0.075,
+    -0.16
+   ],
+   "size": [
+    10.22,
+    1.07,
+    0.62
+   ],
+   "tris": 468
+  },
+  "RodP": {
+   "id": 109322905933366,
+   "center": [
+    0.0,
+    0.075,
+    0.16
+   ],
+   "size": [
+    10.22,
+    1.07,
+    0.62
+   ],
+   "tris": 468
+  },
+  "Locomotive_Boiler": {
+   "id": 95541790557280,
+   "center": [
+    79.33,
+    7.515,
+    0.0
+   ],
+   "size": [
+    30.76,
+    16.93,
+    11.2
+   ],
+   "tris": 2012
+  },
+  "Locomotive_DoorLeafL": {
+   "id": 110848679965588,
+   "center": [
+    57.0,
+    3.5,
+    6.7702
+   ],
+   "size": [
+    2.0,
+    7.0,
+    0.3003
+   ],
+   "tris": 164
+  },
+  "Locomotive_DoorLeafR": {
+   "id": 90406609274531,
+   "center": [
+    59.0,
+    3.5,
+    6.7702
+   ],
+   "size": [
+    2.0,
+    7.0,
+    0.3003
+   ],
+   "tris": 164
+  },
+  "Locomotive_Fittings": {
+   "id": 116051386516449,
+   "center": [
+    75.675,
+    5.535,
+    0.29
+   ],
+   "size": [
+    48.15,
+    20.49,
+    13.18
+   ],
+   "tris": 6870
+  },
+  "Locomotive_FittingsN": {
+   "id": 90253804088550,
+   "center": [
+    74.04,
+    2.81,
+    -6.345
+   ],
+   "size": [
+    44.28,
+    8.38,
+    1.05
+   ],
+   "tris": 734
+  },
+  "Locomotive_FittingsP": {
+   "id": 131566820695781,
+   "center": [
+    74.04,
+    1.6724,
+    6.345
+   ],
+   "size": [
+    44.28,
+    7.2553,
+    1.05
+   ],
+   "tris": 718
+  },
+  "Locomotive_Glow": {
+   "id": 130595194197908,
+   "center": [
+    66.035,
+    3.535,
+    0.0
+   ],
+   "size": [
+    3.83,
+    9.17,
+    11.1212
+   ],
+   "tris": 148
+  },
+  "Locomotive_Roof": {
+   "id": 99113286884127,
+   "center": [
+    58.0,
+    10.18,
+    0.0
+   ],
+   "size": [
+    14.0,
+    1.92,
+    14.2
+   ],
+   "tris": 1344
+  },
+  "Locomotive_Shell": {
+   "id": 108850314542177,
+   "center": [
+    75.6831,
+    2.3082,
+    0.0
+   ],
+   "size": [
+    47.6062,
+    13.9835,
+    13.16
+   ],
+   "tris": 132
+  },
+  "Locomotive_ShellN": {
+   "id": 86981470842019,
+   "center": [
+    74.015,
+    3.975,
+    -6.43
+   ],
+   "size": [
+    44.27,
+    10.65,
+    0.66
+   ],
+   "tris": 78
+  },
+  "Locomotive_ShellP": {
+   "id": 116599393963831,
+   "center": [
+    74.015,
+    3.975,
+    6.34
+   ],
+   "size": [
+    44.27,
+    10.65,
+    0.48
+   ],
+   "tris": 54
+  },
+  "Locomotive_Sign": {
+   "id": 98133712772072,
+   "center": [
+    76.355,
+    4.425,
+    0.0
+   ],
+   "size": [
+    39.71,
+    8.45,
+    13.32
+   ],
+   "tris": 60
+  },
+  "Locomotive_Trim": {
+   "id": 126172691394074,
+   "center": [
+    69.915,
+    6.81,
+    0.0
+   ],
+   "size": [
+    36.13,
+    12.88,
+    11.8995
+   ],
+   "tris": 3324
+  },
+  "Locomotive_TrimN": {
+   "id": 108123272853736,
+   "center": [
+    70.51,
+    4.45,
+    -6.2719
+   ],
+   "size": [
+    37.38,
+    9.7,
+    0.7362
+   ],
+   "tris": 740
+  },
+  "Locomotive_TrimP": {
+   "id": 75815928783122,
+   "center": [
+    70.51,
+    4.45,
+    6.2719
+   ],
+   "size": [
+    37.38,
+    9.7,
+    0.7362
+   ],
+   "tris": 836
+  },
+  "Tender_Fittings": {
+   "id": 77074294620679,
+   "center": [
+    36.68,
+    3.325,
+    0.0
+   ],
+   "size": [
+    30.54,
+    10.81,
+    13.76
+   ],
+   "tris": 2210
+  },
+  "Tender_FittingsN": {
+   "id": 107563964719844,
+   "center": [
+    36.0,
+    3.7098,
+    -6.37
+   ],
+   "size": [
+    26.55,
+    11.4277,
+    0.94
+   ],
+   "tris": 2006
+  },
+  "Tender_FittingsP": {
+   "id": 94878698971550,
+   "center": [
+    36.0,
+    3.7098,
+    6.37
+   ],
+   "size": [
+    26.55,
+    11.4277,
+    0.94
+   ],
+   "tris": 2006
+  },
+  "Tender_Shell": {
+   "id": 135200946022582,
+   "center": [
+    36.0,
+    2.475,
+    0.0
+   ],
+   "size": [
+    27.2,
+    9.05,
+    11.96
+   ],
+   "tris": 72
+  },
+  "Tender_ShellN": {
+   "id": 88249004874955,
+   "center": [
+    36.0,
+    4.075,
+    -6.31
+   ],
+   "size": [
+    26.1,
+    8.25,
+    0.98
+   ],
+   "tris": 68
+  },
+  "Tender_ShellP": {
+   "id": 126649587179880,
+   "center": [
+    36.0,
+    4.075,
+    6.31
+   ],
+   "size": [
+    26.1,
+    8.25,
+    0.98
+   ],
+   "tris": 68
+  },
+  "Tender_Sign": {
+   "id": 122674627196514,
+   "center": [
+    24.795,
+    2.47,
+    0.0
+   ],
+   "size": [
+    3.81,
+    6.66,
+    13.36
+   ],
+   "tris": 36
+  },
+  "Tender_TrimN": {
+   "id": 125067036895053,
+   "center": [
+    36.0,
+    3.475,
+    -6.603
+   ],
+   "size": [
+    23.69,
+    5.84,
+    0.046
+   ],
+   "tris": 224
+  },
+  "Tender_TrimP": {
+   "id": 72310974733049,
+   "center": [
+    36.0,
+    3.475,
+    6.603
+   ],
+   "size": [
+    23.69,
+    5.84,
+    0.046
+   ],
+   "tris": 224
   }
  },
  "images": {
-  "Kit_color": 76499338619371,
-  "Kit_normal": 97671229285692,
-  "Kit_rough": 108893311021146,
-  "Kit_metal": 72270018790912,
+  "Kit_color": 126895872238937,
+  "Kit_normal": 100582497751012,
+  "Kit_rough": 118266450804837,
+  "Kit_metal": 87078014580220,
   "CrewSaloon_color": 79052348566865,
   "CrewSaloon_normal": 95473113865250,
   "CrewSaloon_rough": 135679734021184,
@@ -1183,10 +1589,10 @@
   "CrewSaloon_N_color": 78491834828609,
   "CrewSaloon_N_rough": 71100479117927,
   "CrewSaloon_N_metal": 105673588396418,
-  "Doors_color": 92765813921324,
-  "Doors_rough": 108954363827875,
-  "Doors_metal": 132157292606140,
-  "Doors_normal": 106803118905302,
+  "Doors_color": 97504885871899,
+  "Doors_rough": 131226475701662,
+  "Doors_metal": 139029838501628,
+  "Doors_normal": 93605693009436,
   "GuardsVan_N_color": 71589424549368,
   "GuardsVan_signnormal": 90497800231728,
   "GuardsVan_N_rough": 72478642502433,
@@ -1242,7 +1648,39 @@
   "Workshop_signnormal": 130929181825562,
   "Workshop_P_color": 127691707481467,
   "Workshop_P_rough": 128414155283955,
-  "Workshop_N_color": 88340787646295
+  "Workshop_N_color": 88340787646295,
+  "Tender_metal": 78060787686655,
+  "Tender_normal": 122933233804052,
+  "Tender_N_color": 131669871197751,
+  "Tender_P_rough": 83002517654380,
+  "Tender_signnormal": 76957785407887,
+  "Tender_N_rough": 97214457192890,
+  "Tender_P_metal": 129157074669856,
+  "Tender_rough": 78782518201578,
+  "Tender_sign": 116325397415200,
+  "Tender_P_normal": 137069759044104,
+  "Tender_color": 93018382115573,
+  "Tender_N_metal": 139663209735252,
+  "Tender_P_color": 73314730728971,
+  "Tender_N_normal": 95566237266190,
+  "Locomotive_B_normal": 124435191139001,
+  "Locomotive_N_rough": 78469157731062,
+  "Locomotive_B_metal": 104117216020548,
+  "Locomotive_P_normal": 88518148487096,
+  "Locomotive_sign": 114209098568040,
+  "Locomotive_P_color": 125292783315962,
+  "Locomotive_B_rough": 70847295736254,
+  "Locomotive_rough": 80384469406503,
+  "Locomotive_P_rough": 90902038112600,
+  "Locomotive_B_color": 95357689433446,
+  "Locomotive_normal": 89459401149626,
+  "Locomotive_P_metal": 132986807455239,
+  "Locomotive_N_metal": 119680689165546,
+  "Locomotive_color": 136526801982451,
+  "Locomotive_N_color": 114994370038829,
+  "Locomotive_metal": 89596859759397,
+  "Locomotive_signnormal": 78844910549802,
+  "Locomotive_N_normal": 119658182066758
  },
  "unused": {
   "note": "Uploaded under user 11744048795 and no longer referenced by the game.",
@@ -1313,6 +1751,22 @@
    "CrewSaloon_TrimN": 128695274456393,
    "CrewSaloon_FittingsP": 139248218573925,
    "CrewSaloon_FittingsN": 81169123431225
+  },
+  "round3_kit_superseded_images": {
+   "Kit_color": 76499338619371,
+   "Doors_rough": 108954363827875,
+   "Doors_metal": 132157292606140,
+   "Kit_metal": 72270018790912,
+   "Doors_normal": 106803118905302,
+   "Kit_rough": 108893311021146,
+   "Doors_color": 92765813921324,
+   "Kit_normal": 97671229285692
+  },
+  "round3_kit_superseded_meshes": {
+   "Bogie": 83482060285743,
+   "DoorLeafL": 122705056149935,
+   "DoorLeafR": 91512285719500,
+   "Wheel": 118639491061532
   }
  }
 }
