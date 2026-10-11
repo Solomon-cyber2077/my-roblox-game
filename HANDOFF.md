@@ -2,6 +2,13 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
+## 2026-10-10: Stores stencils moved, door slide watched in a run
+1. Completed:
+   - Stores stencils (`tools/trainshell/identity.py`): the big STORES now sits above the security strap (y 2.15), and the L.T.O. No 5 / TARE / KEEP DRY block is at the blind end (x1 - 2.1, y 2.3/2.0/1.77) on both sides, away from the door leaves. Stores was rebuilt. Its geometry and UVs match the uploaded meshes (checked vertex by vertex), so the mesh ids stay and the FBX is unchanged. Only the 8 changed maps were re-uploaded (old ids in `unused.round3_superseded_images` `*_prestencilmove`). `gen_config.py` was run.
+   - Verified in Play: the Stores car shows the new maps (24 SurfaceAppearances, none stale), and the stencils read clear of the strap and leaves on the display train and on the run train. In a run (client-side sampling): every car's leaves closed on departure, each sliding 2.85 studs (the Loco cab 2.05), meeting at the door centre, and opened again at stop 3, clear of their openings. Console clean (DataStore/Arvo notices only). `lune run check` passes.
+2. Known: the Stores' "No 5" on the platform side is painted on the right door leaf, so it slides away with the leaf (intended?). Coal heap and drivers/rods are still not watched in daylight.
+3. Next: ride a run in daylight and watch the drivers, rods, coal heap filling and smoke. Then the gangways and couplings between cars.
+
 ## 2026-10-10: Train exterior round 3: Tender and Locomotive
 1. Done:
    - `tools/trainshell/engine2.py` models both (run with `pipeline.py Tender|Locomotive`). Tender: riveted U-tank with round corners, a lined panel with gilt shaded "LAST TRAIN OUT" (canvas.py `letters`), flared coal boards with a rolled edge and coal rails, rear deck with the water filler, tool lockers and brake column at the front, steps, grab irons, ladder, lamp irons, buffers, drawbar. Locomotive: panelled 1800s cab (arched roof with ribs and a louvred ventilator, glowing spectacles, cast "LAST LIGHT / No. 1931" plates over the door), Russia-iron boiler (bake2 `Boiler` is now blue-grey) with gilt bands, wagon-top firebox with a glowing ash pan, sand and steam domes, bell on its yoke, whistle, safety valves, smokebox with dished door and dart, balloon stack, headlamp box round the kept Headlamp (its beam stays), cylinders and valve chests, plate frames, axle boxes and springs, running boards on a lined valance, handrails, sand and feed pipes, clack valves, buffer beam, slatted pilot, its own cab door leaves. The boiler has a 4th atlas, `Locomotive_B`.

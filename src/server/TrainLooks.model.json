@@ -196,10 +196,10 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://123097279984696",
+    "ColorMap": "rbxassetid://128328628737248",
     "NormalMap": "rbxassetid://109750428673109",
-    "RoughnessMap": "rbxassetid://127005914481449",
-    "MetalnessMap": "rbxassetid://73545364577487"
+    "RoughnessMap": "rbxassetid://102935881207999",
+    "MetalnessMap": "rbxassetid://105416260431553"
    }
   },
   {
@@ -207,7 +207,7 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://97415447109774",
+    "ColorMap": "rbxassetid://111059205882494",
     "NormalMap": "rbxassetid://92770061643084",
     "RoughnessMap": "rbxassetid://81832688130856",
     "MetalnessMap": "rbxassetid://99255759376357"
@@ -218,10 +218,10 @@
    "className": "SurfaceAppearance",
    "properties": {
     "AlphaMode": "Overlay",
-    "ColorMap": "rbxassetid://130996439204078",
-    "NormalMap": "rbxassetid://73112698662032",
-    "RoughnessMap": "rbxassetid://75649389552924",
-    "MetalnessMap": "rbxassetid://70905082524005"
+    "ColorMap": "rbxassetid://106227606892171",
+    "NormalMap": "rbxassetid://97303573125421",
+    "RoughnessMap": "rbxassetid://76497866428946",
+    "MetalnessMap": "rbxassetid://96377863793452"
    }
   },
   {
