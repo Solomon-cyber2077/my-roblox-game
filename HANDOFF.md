@@ -2,10 +2,10 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
-## 2026-10-11: V hides the HUD
-1. Completed: V toggles the in-run HUD (`UI/Hud`, `TOGGLE_KEY`). It hides an outer `HudRoot` frame only, so `Hud.Visible` (which gates the 1-6, E and G keys) is untouched and tools still work while hidden. V is free (F1 is the user's monitor switch, H run card, K unstick, I/O Roblox zoom). Menus, prompts, quest tracker and edge vitals stay. Verified in Play: V hides, V again shows; console only the old DataStore/Arvo notices.
-2. Known: keyboard only, no gamepad or touch button.
-3. Next: add a Settings toggle or gamepad bind if wanted.
+## 2026-10-11: HUD toggle in Settings; Settings button rides up in a run
+1. Completed: no hotkey (F1 is the user's monitor switch, V did not suit). Settings has a HUD row (TURN OFF / TURN ON), saved as setting `Hud` (Show/Hide, `Config/Settings`, spec updated). `UI/Hud` hides only an outer `HudRoot` frame, so tool keys keep working. The Settings button sits at 14,244 under the lobby pass, and at 14,156 (just under the coal/hull gauges) while the lobby panel is hidden. Verified in Play: button 244 -> 156 in a run, Hide/Show flips the HUD; console only the old DataStore/Arvo notices.
+2. Known: none.
+3. Next: none for this.
 
 ## 2026-10-11: Settings menu, operators toggle, Ashgrove door ledge
 1. Completed:
