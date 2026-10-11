@@ -26,6 +26,7 @@ local Session = require(script.Parent.Parent.Session)
 local Sky = require(script.Parent.Parent.Scenery.Sky)
 local ItemIcon = require(script.Parent.ItemIcon)
 local Overlay = require(script.Parent.Overlay)
+local Operators = require(script.Parent.Operators)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
@@ -653,6 +654,7 @@ function Hud.mount(gui: ScreenGui)
 		LayoutOrder = 0,
 	})
 	rosterTitle.Parent = roster
+	Operators.mount(rosterFade.group, container)
 
 	local function callSigns(map: { [string]: any }): { [string]: string }
 		local keys = {}

@@ -19,6 +19,21 @@ local DataService = require(script.Parent.DataService)
 local Registry = require(script.Parent.Parent.Registry)
 
 local CosmeticService = {}
+local appliedSelections: { [Player]: string } = {}
+local appliedCharacters: { [Player]: Model } = {}
+
+local function selectionSignature(player: Player): string
+	local profile = DataService.GetProfile(player)
+	local equippedItems = if profile then profile.equipped else {}
+	local parts = {}
+	for _, category in { "Lantern", "Headwear", "Trail", "Livery" } do
+		local override = player:GetAttribute("DevCosmetic_" .. category)
+		parts[#parts + 1] = category
+			.. ":"
+			.. tostring(if type(override) == "string" then override else equippedItems[category])
+	end
+	return table.concat(parts, "|")
+end
 
 local function equipped(player: Player, category: string): Cosmetics.CosmeticDef
 	local profile = DataService.GetProfile(player)
@@ -55,19 +70,55 @@ end
 function CosmeticService.Init() end
 
 function CosmeticService.Start()
-	DataService.ProfileChanged:Connect(function(player)
+	local function watchCharacter(player: Player)
+		player.CharacterAdded:Connect(function(character)
+			-- CharacterAdded can fire before the rig has finished parenting its parts.
+			-- Apply on the next task turn so respawns get the same cosmetics as the
+			-- initial run spawn.
+			task.defer(function()
+				if player.Character == character then
+					CosmeticService.Apply(player)
+				end
+			end)
+		end)
+	end
+	for _, player in Players:GetPlayers() do
+		watchCharacter(player)
+	end
+	Players.PlayerAdded:Connect(watchCharacter)
+	local function onProfile(player: Player)
+		local signature = selectionSignature(player)
+		if appliedSelections[player] ~= signature then
+			CosmeticService.Apply(player)
+		end
 		if not Registry.CrewService.IsMember(player) then
 			CosmeticService.RefreshLivery()
 		end
+	end
+	DataService.ProfileChanged:Connect(onProfile)
+	DataService.ProfileLoaded:Connect(onProfile)
+	Players.PlayerRemoving:Connect(function(player)
+		appliedSelections[player] = nil
+		appliedCharacters[player] = nil
 	end)
 end
 
 function CosmeticService.Apply(player: Player)
 	local character = player.Character
-	if character == nil then
+	if
+		character == nil
+		or character:FindFirstChild("Head") == nil
+		or (character:FindFirstChild("Torso") == nil and character:FindFirstChild("LowerTorso") == nil)
+	then
 		return
 	end
+	local signature = selectionSignature(player)
 	local old = character:FindFirstChild("Cosmetics")
+	if old and appliedCharacters[player] == character and appliedSelections[player] == signature then
+		return
+	end
+	appliedSelections[player] = signature
+	appliedCharacters[player] = character
 	if old then
 		old:Destroy()
 	end
