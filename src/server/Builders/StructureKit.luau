@@ -547,6 +547,53 @@ Builders.Arches = function(ctx)
 	end
 end
 
+-- A bandstand: an octagon of iron columns on a stone plinth with steps, a lead roof rising
+-- to a finial. Nobody has played in it for a long time.
+Builders.Bandstand = function(ctx)
+	local r = math.min(ctx.width, ctx.depth) / 2 - 3.5
+	Kit.cylinder(ctx.parent, 1.6, r * 2 + 1, f(ctx, 0, 0.8, 0) * Kit.angles(0, 0, 90), C.stone, {
+		material = Enum.Material.Limestone,
+	})
+	Kit.block(
+		ctx.parent,
+		Vector3.new(4, 0.8, 1.6),
+		f(ctx, 0, 0.4, -r - 1.1),
+		C.stone,
+		{ material = Enum.Material.Limestone }
+	)
+	for k = 0, 7 do
+		local a = math.rad(k * 45 + 22.5)
+		Kit.post(
+			ctx.parent,
+			8,
+			0.35,
+			f(ctx, math.cos(a) * (r - 0.4), 5.6, math.sin(a) * (r - 0.4)),
+			C.iron,
+			{ material = Enum.Material.Metal }
+		)
+	end
+	Kit.cylinder(ctx.parent, 0.6, r * 2 + 1.4, f(ctx, 0, 9.9, 0) * Kit.angles(0, 0, 90), C.company, {
+		material = Enum.Material.Metal,
+	})
+	for _, side in { -1, 1 } do
+		Kit.wedge(
+			ctx.parent,
+			Vector3.new(r * 1.7, 3.2, r * 0.85),
+			f(ctx, 0, 11.8, side * r * 0.425) * Kit.angles(0, if side > 0 then 180 else 0, 0),
+			C.slate,
+			{ material = Enum.Material.Slate, collide = false }
+		)
+	end
+	Kit.post(
+		ctx.parent,
+		2,
+		0.25,
+		f(ctx, 0, 14.2, 0),
+		C.iron,
+		{ material = Enum.Material.Metal, collide = false }
+	)
+end
+
 Builders.CoalTower = function(ctx)
 	local h = 20
 	for _, x in { -8, 8 } do

@@ -320,6 +320,25 @@ local Rooms: { [string]: Room } = {
 		lamp = 0.3,
 		sleeper = 0.3,
 	},
+	Stables = {
+		label = "Stables",
+		place = {
+			{
+				pattern = "wall",
+				item = "Crates",
+				wall = "far",
+				count = 2,
+				gap = 3,
+				container = "Crate",
+				share = 0.5,
+			},
+			{ pattern = "wall", item = "Barrels", wall = "sides", count = 2, gap = 2 },
+			{ pattern = "corner", item = "Trunk", container = "ToolChest" },
+		},
+		lamp = 0.2,
+		sleeper = 0.45,
+		sleeperKind = "Brute",
+	},
 	Bedroom = {
 		label = "Guest Room",
 		place = {
@@ -1020,6 +1039,22 @@ local Defs: { [string]: Building } = {
 		roofStyle = "Pitched",
 		front = "Laundry",
 		rooms = { "BoilerRoom" },
+	},
+	CoachHouse = {
+		name = "Stables & Coach House",
+		size = { 5, 3 },
+		layout = "Hall",
+		height = 13,
+		wall = { 150, 112, 84 },
+		trim = { 52, 74, 60 },
+		roof = { 110, 58, 46 },
+		floor = { 92, 84, 74 },
+		wallMaterial = "Brick",
+		floorMaterial = "Cobblestone",
+		roofMaterial = "ClayRoofTiles",
+		roofStyle = "Pitched",
+		front = "Stables",
+		rooms = { "Store", "CoalStore" },
 	},
 	GeneralStore = {
 		name = "General Store",
