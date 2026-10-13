@@ -21,6 +21,7 @@ local Motion = require(Shared.Logic.Motion)
 local Signal = require(Shared.Util.Signal)
 local Types = require(Shared.Types)
 
+local HazardRail = require(script.Parent.Parent.Builders.HazardRail)
 local StationBuilder = require(script.Parent.Parent.Builders.StationBuilder)
 
 type Mode = "Arriving" | "Docked" | "Departing"
@@ -112,6 +113,10 @@ end
 function StationService.Spawn(plan: LayoutGen.Plan, info: Types.StationInfo)
 	StationService.Clear()
 	local built = StationBuilder.build(plan, DOCKED, info.name)
+	-- the first stop's sinkhole edge gets a hazard rail (part 3 replaces it with the proper edge)
+	if (info.hazards.stop or 1) == 1 and not info.terminus then
+		HazardRail.build(built, plan, DOCKED)
+	end
 	local offset = Motion.arrivalDistance()
 	built.model:PivotTo(CFrame.new(offset, 0, 0) * built.model:GetPivot())
 
