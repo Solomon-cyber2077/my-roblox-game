@@ -580,6 +580,9 @@ return table.freeze({
 	CanopyColumnZ = CANOPY_COLUMN_Z,
 	canopyColumns = canopyColumns,
 	EdgeInset = 0.8, -- the boundary stands this far in from the station edge
+	-- Walking distances (Logic/StationReach) start from the platform within this far of the
+	-- middle, where the train's doors are
+	Reach = table.freeze({ DoorHalfSpan = 72 }),
 	DressingCount = 6, -- things scattered round the yard
 	-- How much likelier the better containers are to stand in the far zone, behind the last barrier
 	FarLoot = table.freeze({ ToolChest = 2.5, Crate = 1.3 }),
