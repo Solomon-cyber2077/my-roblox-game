@@ -16,6 +16,7 @@ local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local Threat = require(Shared.Logic.Threat)
+local Tutorial = require(Shared.Logic.Tutorial)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Types = require(Shared.Types)
 
@@ -153,10 +154,18 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	-- players in the run (Logic/Threat).
 	if info.hazards.hollowCap > 0 then
 		local hazards = table.clone(info.hazards)
-		hazards.hollowCap = Threat.total(hazards.stop or 1, #Registry.CrewService.MemberPlayers())
+		local stop = hazards.stop or 1
+		hazards.hollowCap = Threat.total(stop, #Registry.CrewService.MemberPlayers())
+		-- the tutorial's first stop: at most stop1Cap Hollows, all asleep (Config/Tutorial)
+		local tier = Tutorial.def(hazards.tutorial)
+		if tier and stop == 1 and tier.stop1Cap then
+			hazards.hollowCap = math.min(hazards.hollowCap, tier.stop1Cap)
+		end
+		hazards.dormantStart = tier ~= nil and stop == 1 and tier.stop1Dormant
 		info.hazards = hazards
 		Registry.StateService.Set({ "run", "station", "hazards" }, hazards)
 	end
+	local dormant = info.hazards.dormantStart == true
 	local geo = { depth = plan.depth, safe = Tuning.World.SafeStrip }
 	local refs: { HazardSchedule.SlabRef } = {}
 	for _, slab in plan.slabs do
@@ -169,18 +178,20 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 		events = HazardSchedule.collapsePlan(info.hazards, geo, refs, info.layoutSeed),
 		warnIndex = 1,
 		collapseIndex = 1,
-		spawns = HazardSchedule.spawnTimes(info.hazards, info.layoutSeed),
+		spawns = if dormant then {} else HazardSchedule.spawnTimes(info.hazards, info.layoutSeed),
 		spawnIndex = 1,
 		wandererAt = Difficulty.WandererDelay[1]
 			+ (Difficulty.WandererDelay[2] - Difficulty.WandererDelay[1]) * info.hazards.difficulty,
-		wandererSpawned = false,
+		wandererSpawned = dormant,
 		frozenAt = nil,
 		lastDamage = 0,
 		rng = Random.new(info.layoutSeed % 2147483647),
 	}
 	Registry.HollowService.Configure(info.hazards)
 	Registry.HollowService.Prepare(plan)
-	TimedEventDirector.Begin(info)
+	if not dormant then
+		TimedEventDirector.Begin(info)
+	end
 	connection = RunService.Heartbeat:Connect(step)
 end
 

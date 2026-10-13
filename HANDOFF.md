@@ -40,6 +40,14 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - Owner reset: chat `/tutorial reset` or `/tutorial 0-3`, only for UserId `Config/Tutorial.OwnerUserId` = 11744048795 (the uploader id in AGENTS.md; **owner to confirm it is their account**). On a not-loaded profile (Studio) it is a session-only override, so the tutorial can be tested there.
 - Specs: counting, load-failure fallback (`tests/Tutorial.spec`). Unverified live: a real DataStore save of the field.
 
+### C.3 Tutorial effects (draft, all in `Config/Tutorial`)
+- Stop 1 of runs 1-2 (`stop1Cap` 1, `stop1Dormant`): `HazardDirector.Begin` caps the stop at 1 Hollow and sets `HazardParams.dormantStart`: no fog spawns, no wanderer, no timed events; `HollowService.Prepare` lets the whole cap sleep and they never stir on their own (only crew coming close wakes them). A station without building sleeper spots then has none.
+- SafeLight: parts tagged `SafeLight` with attribute `Radius` (studs). Platform lamps (`StructureKit` Props.Lamp lens, radius 16) and 6 invisible parts along the train's platform side (`TrainService.safeLights`, radius 34, warm PointLight on only while the tutorial lights them). Effective radius = Radius x tier `safeLightScale` (1 / 0.7 / 0.45; 0 after the tutorial). `HollowService.isLit` includes them: Hollows hold at the edge of a lit target, cower and walk out if caught inside, and never spawn inside one. Part 3 can tag more parts; HollowService reads the tag at each stop's Configure.
+- Grace: Hollows ignore a player until they have been off the train `grace` seconds at that stop (25 / 15 / 10; first time off per stop, recorded in `tutorialStep`).
+- Run 2's teaching grab (`ScriptedGrab`): at stop 1, 4 s after a player's grace ends (off the train, not in a safe light), a Crawler claws up 18 studs behind them, chases only them at 0.55 of its speed (slower than a jog: you see it coming), its hold has a 140-degree zone and cannot kill (the clock running out drops you). It is dismissed after its grab ends. One per run (its stop only).
+- Run 3: grace 10 s, small lights, no stop-1 cap. After the tutorial: none of this; only the curve and B.2.
+- Unverified in Studio: all of it (sleeper placement at stop 1, the edge-holding at light radii, the Crawler's spawn spot on real geometry).
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
