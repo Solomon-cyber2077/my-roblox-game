@@ -3,11 +3,15 @@
 	Your side of a grab (Config/Grabs). While a Hollow holds you (the GrabStyle attribute
 	the server puts on your character):
 
-	  * the struggle plate (UI/Struggle) names what it is doing to you and shows the hold
-	    weakening as you fight (GrabEscape, from the server)
-	  * Q, gamepad A or a tap on the plate is one struggle: a Struggle remote, the keycap
-	    punching down, a jolt of the camera, and your body thrashing harder
-	    (CharacterAnimator reads Struggle()). Space is swallowed (no jump) but does not count.
+	  * the struggle plate (UI/Struggle) names what it is doing to you, shows the hold
+	    weakening as you win skill checks (GrabEscape) and its clock running down
+	    (GrabFinishAt), both from the server
+	  * the server sends each skill check (Fx SkillCheck: Logic/SkillCheck); its needle
+	    sweeps the ring on the server clock. Space, gamepad A or a tap on the keycap is your
+	    one press for it: a SkillCheck remote the server judges, the keycap punching down, a
+	    jolt of the camera, and your body thrashing harder (CharacterAnimator reads
+	    Struggle()). Space and A never jump while it has you (this binding sinks them and
+	    MovementController zeroes the jump; both give it back when the hold ends)
 	  * the view is dragged round toward the thing's face, every bite jolts it and pulses
 	    the screen red, and your heart pounds
 	  * when you tear free (or a flash makes it let go) you are thrown clear
@@ -32,6 +36,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Grabs = require(Shared.Config.Grabs)
+local SkillCheck = require(Shared.Logic.SkillCheck)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
@@ -55,6 +60,11 @@ local held = false
 local struggle = 0 -- 0..1 how hard you have been fighting lately
 local escapeShown = 0
 local heartAt = 0
+local check: SkillCheck.Check? = nil -- the check on screen now
+local pressed = false -- its one press has gone to the server
+local finishFrom = 0 -- server times the grab's clock runs between
+local finishAt = 0
+local inputWatch: RBXScriptConnection? = nil
 local watching: RBXScriptConnection? = nil
 local dying: RBXScriptConnection? = nil
 
@@ -81,20 +91,22 @@ local function character(): Model?
 	return Players.LocalPlayer.Character
 end
 
--- One struggle against the hold.
+-- Your one press for the check on screen.
 local function press()
-	if not held then
+	local current = check
+	if not held or current == nil or pressed then
 		return
 	end
-	Net.Fire("Struggle")
+	pressed = true
+	Net.Fire("SkillCheck", current.id)
 	struggle = math.min(struggle + 0.3, 1)
 	Struggle.punch()
 	Registry.CameraController.Shake(0.12)
 	audio("Winded", 0.35, 0.8 + math.random() * 0.3)
 end
 
-local function onAction(_: string, state: Enum.UserInputState, input: InputObject): Enum.ContextActionResult
-	if state == Enum.UserInputState.Begin and input.KeyCode ~= Enum.KeyCode.Space then
+local function onAction(_: string, state: Enum.UserInputState, _input: InputObject): Enum.ContextActionResult
+	if state == Enum.UserInputState.Begin then
 		press()
 	end
 	-- the jump key must not jump (nor anything else) while it has you
@@ -207,17 +219,25 @@ local function begin(model: Model, style: string)
 	held = true
 	struggle = 0.6
 	escapeShown = 0
+	check = nil
+	pressed = false
+	finishFrom = Workspace:GetServerTimeNow()
+	finishAt = (model:GetAttribute("GrabFinishAt") :: number?) or finishFrom
 	Struggle.show(if def then def.name else "IT HAS YOU", kind)
 	ContextActionService:BindActionAtPriority(
 		ACTION,
 		onAction,
 		false,
 		Enum.ContextActionPriority.High.Value + 100,
-		Enum.KeyCode.Q,
 		Enum.KeyCode.Space,
-		Enum.KeyCode.ButtonA,
-		Enum.KeyCode.ButtonR2
+		Enum.KeyCode.ButtonA
 	)
+	if inputWatch then
+		inputWatch:Disconnect()
+	end
+	inputWatch = UserInputService.LastInputTypeChanged:Connect(function()
+		Struggle.refreshKey()
+	end)
 	safely("lock", function()
 		lock(model)
 	end)
@@ -235,7 +255,12 @@ local function finish(model: Model)
 		return
 	end
 	held = false
+	check = nil
 	ContextActionService:UnbindAction(ACTION)
+	if inputWatch then
+		inputWatch:Disconnect()
+		inputWatch = nil
+	end
 	safely("hide struggle", Struggle.hide)
 	safely("unlock", unlock)
 	local outcome = OUTCOMES[(model:GetAttribute("GrabOutcome") :: string?) or ""]
@@ -337,6 +362,12 @@ function GrabController.Start()
 		local escape = (model:GetAttribute("GrabEscape") :: number?) or 0
 		escapeShown += (escape - escapeShown) * math.min(dt * 12, 1)
 		Struggle.set(escapeShown, now)
+		finishAt = (model:GetAttribute("GrabFinishAt") :: number?) or finishAt
+		Struggle.clock((finishAt - now) / math.max(finishAt - finishFrom, 0.1))
+		-- the needle runs on the server clock; once its turn is over the check waits for the verdict
+		local current = check
+		local angle = if current then SkillCheck.angleAt(current, now) else nil
+		Struggle.needle(if angle and angle >= 0 and angle <= 360 then angle else nil)
 		-- your heart, quickening as the hold wears you down
 		local humanoid = model:FindFirstChildOfClass("Humanoid")
 		local life = if humanoid then humanoid.Health / math.max(humanoid.MaxHealth, 1) else 1
@@ -376,6 +407,35 @@ function GrabController.Seized()
 	Overlay.pulse(Theme.Color.signal, 1, 0.9)
 	Registry.CameraController.Shake(1)
 	audio("Hit", 1, 0.7)
+end
+
+-- The server's next skill check for you (Fx SkillCheck).
+function GrabController.Check(data: SkillCheck.Check)
+	if not held or type(data) ~= "table" then
+		return
+	end
+	check = data
+	pressed = false
+	Struggle.zone(data.zoneStart, data.zoneWidth, data.greatWidth)
+	audio("WarnTick", 0.8, 1.2)
+end
+
+-- The server's verdict on a check (Fx SkillResult).
+function GrabController.Result(data: { id: number, result: string, progress: number })
+	if not held or type(data) ~= "table" then
+		return
+	end
+	if check and check.id == data.id then
+		check = nil
+		Struggle.clearCheck()
+	end
+	Struggle.result(data.result)
+	if data.result == "Miss" then
+		Registry.CameraController.Shake(0.35)
+		audio("Hit", 0.4, 1.3)
+	else
+		audio("Click", 0.8, if data.result == "Great" then 1.4 else 1.1)
+	end
 end
 
 -- A crewmate is tearing at it.

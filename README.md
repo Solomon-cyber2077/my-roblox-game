@@ -55,7 +55,7 @@ monetization and the backlog) is the
 | WASD, Shift | Move; sprint while your breath lasts |
 | E | Search, take, sit, patch, pull a crewmate free (whatever the prompt says) |
 | 1-6, G, right-click | Use a tool, drop the last item, drop the one you click |
-| Space (gamepad A, or tap the plate) | In a Hollow's grip: struggle. Mash it to break free |
+| Space (gamepad A, or tap the keycap) | In a Hollow's grip: press when the needle is in the zone (skill checks) to break free |
 | C (gamepad D-pad up) | Aboard: the train camera, watching the train from outside. F (D-pad right) cuts between shots |
 
 The train camera also has **Next**, **Back**, and **+ / −** buttons for touch and mouse.

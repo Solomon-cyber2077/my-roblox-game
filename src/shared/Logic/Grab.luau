@@ -2,15 +2,12 @@
 --[[
 	The rules of a grab (Config/Grabs), pure so the server and the specs agree.
 
-	A hold's escape runs from 0 to Tuning.Grab.Escape:
-	  press   the victim's struggle key adds the stop's grabMash, divided by the kind's grip
-	  pry     a crewmate tearing at the Hollow adds AllyPresses times as much
-	  slip    it slides back at grabSlip per second
-	Damage comes in bites on the grab's rhythm, the first one bite after the snatch has
+	The victim breaks free with skill checks (Logic/SkillCheck) before the grab's clock runs
+	out. Damage comes in bites on the grab's rhythm, the first one bite after the snatch has
 	settled, each worth dps * bite (capped at MaxBiteShare of MaxHealth), where
-	dps = hollowDamage * DpsShare * the kind's crush.
-
-	Escape time for a victim pressing r times a second: Escape / (r * grabMash / grip - grabSlip).
+	dps = hollowDamage * DpsShare * the kind's crush (Difficulty.GrabDamage). Bites never take
+	the last BiteFloor of health: only the clock running out (the finish) kills, so no grab
+	kills before the victim has had the checks to act on.
 ]]
 
 local Shared = script.Parent.Parent
@@ -34,24 +31,7 @@ function Grab.kind(name: string): Kind
 	return if def then def else Tuning.HollowKinds.Stalker
 end
 
--- Escape after one press of the victim's own struggle key.
-function Grab.press(escape: number, params: Params, kind: Kind): number
-	return escape + params.grabMash / kind.grip
-end
-
--- Escape after a crewmate tears at the Hollow once.
-function Grab.pry(escape: number, params: Params, kind: Kind): number
-	return escape + params.grabMash * G.AllyPresses / kind.grip
-end
-
--- Escape after `dt` seconds of the Hollow tightening its hold.
-function Grab.slip(escape: number, params: Params, dt: number): number
-	return math.max(escape - params.grabSlip * math.max(dt, 0), 0)
-end
-
-function Grab.free(escape: number): boolean
-	return escape >= G.Escape - 1e-9
-end
+Grab.BiteFloor = 1 -- health a bite always leaves: only the grab's finish kills
 
 function Grab.dps(params: Params, kind: Kind): number
 	return params.hollowDamage * D.DpsShare * kind.crush
@@ -72,6 +52,11 @@ end
 function Grab.bite(def: Grabs.Def, params: Params, kind: Kind): number
 	local dps = if def.pin then params.hollowDamage * D.PinDpsShare else Grab.dps(params, kind)
 	return math.min(dps * def.bite, D.MaxBiteShare * Tuning.Crew.MaxHealth)
+end
+
+-- The share of `damage` a bite may deal to someone at `health` before the grab's finish.
+function Grab.survivable(damage: number, health: number): number
+	return math.clamp(damage, 0, math.max(health - Grab.BiteFloor, 0))
 end
 
 -- Damage of the bites that land between `from` and `to` seconds into the hold.
@@ -106,15 +91,6 @@ function Grab.order(kindName: string, seed: number): { Grabs.Def }
 		list = pins
 	end
 	return Rng.new(Rng.derive(seed, "grab")):shuffle(list)
-end
-
--- Seconds a victim pressing `rate` times a second needs to break free alone (math.huge if never).
-function Grab.escapeSeconds(params: Params, kind: Kind, rate: number): number
-	local net = rate * params.grabMash / kind.grip - params.grabSlip
-	if net <= 0 then
-		return math.huge
-	end
-	return G.Escape / net
 end
 
 return table.freeze(Grab)

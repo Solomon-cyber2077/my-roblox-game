@@ -235,7 +235,8 @@ Enter.Cruise = function()
 	local train = Registry.TrainService.Get()
 	state.chosen = option
 	state.lastArchetype = option.archetype
-	state.params = DifficultyModel.params(d, arch, Registry.CrewService.AliveCount(), train.upgrades)
+	state.params = DifficultyModel.params(d, arch, Registry.CrewService.AliveCount(), train.upgrades);
+	(state.params :: Types.HazardParams).stop = state.nextStop
 	state.sealed = Mystery.isSealed(ticket)
 	if state.sealed then
 		local params = state.params :: Types.HazardParams

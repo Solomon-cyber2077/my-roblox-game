@@ -60,8 +60,7 @@ export type HazardParams = {
 	hollowWalk: number,
 	hollowChase: number,
 	hollowDamage: number,
-	grabMash: number,
-	grabSlip: number,
+	stop: number?, -- the stop's number in the run (RunDirector), for the per-stop rules
 	departureAccel: number,
 	chaseWindow: number,
 	lootMul: number,

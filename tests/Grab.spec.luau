@@ -7,37 +7,21 @@ local Tuning = require(Shared.Config.Tuning)
 
 local KINDS = { "Stalker", "Crawler", "Brute" }
 
--- Plays a hold out frame by frame: the victim presses `rate` times a second (and an ally
--- `ally` times), from full health. Returns whether they broke free and the health left.
-local function struggle(def, params, kindName: string, rate: number, ally: number?): (boolean, number)
+local SkillCheck = require(Shared.Logic.SkillCheck)
+
+-- Plays a hold out frame by frame from full health with the bite floor, up to its finish.
+-- Returns the health left when the clock runs out.
+local function holdOut(def, params, kindName: string, finish: number): number
 	local kind = Grab.kind(kindName)
 	local dt = 1 / 60
 	local health = Tuning.Crew.MaxHealth
-	local escape = 0
 	local t = 0
-	local nextPress = 1 / rate
-	local nextPry = if ally then 1 / ally else math.huge
-	while t < Tuning.Grab.MaxSeconds do
+	while t < finish do
 		local after = t + dt
-		while nextPress <= after do
-			escape = Grab.press(escape, params, kind)
-			nextPress += 1 / rate
-		end
-		while nextPry <= after do
-			escape = Grab.pry(escape, params, kind)
-			nextPry += 1 / (ally :: number)
-		end
-		escape = Grab.slip(escape, params, dt)
-		health -= Grab.damage(def, params, kind, t, after)
+		health -= Grab.survivable(Grab.damage(def, params, kind, t, after), health)
 		t = after
-		if health <= 0 then
-			return false, 0
-		end
-		if Grab.free(escape) then
-			return true, health
-		end
 	end
-	return false, health
+	return health
 end
 
 describe("Grab", function()
@@ -87,29 +71,28 @@ describe("Grab", function()
 		expect(total).toBe(Grab.bitesBetween(def, 0, 5))
 	end)
 
-	-- 7 presses a second since damage rose 25% (fix pass A.2); B.1 replaces the mash with skill checks
-	it("lets a steady masher break every grab at every stop from full health", function()
+	it("never kills before the grab's clock runs out, at any stop, for any grab", function()
 		for _, id in Stations.Order do
-			for d = 0, 1, 0.25 do
+			for stop = 1, Tuning.Run.StationCount do
+				local d = DifficultyModel.forStop(stop, Tuning.Run.StationCount, 3)
 				local params = DifficultyModel.params(d, Stations.List[id], 4, nil)
+				local finish = SkillCheck.finishSeconds(stop, SkillCheck.zoneWidth(stop))
 				for _, kind in KINDS do
 					for _, def in Grabs.Kinds[kind] do
-						local free = struggle(def, params, kind, 7)
-						expect(free).toBe(true)
+						expect(holdOut(def, params, kind, finish)).toBeAtLeast(Grab.BiteFloor)
 					end
 				end
 			end
 		end
 	end)
 
-	it("kills someone who barely struggles, unless the crew pulls them free", function()
+	it("still hurts: a long hold takes most of a full-health crew member", function()
 		local params = DifficultyModel.params(0.8, Stations.List.Market, 4, nil)
-		local def = Grabs.ById.Bearhug
-		expect(Grab.escapeSeconds(params, Grab.kind("Brute"), 2)).toBe(math.huge)
-		local free = struggle(def, params, "Brute", 2)
-		expect(free).toBe(false)
-		local saved = struggle(def, params, "Brute", 2, 4)
-		expect(saved).toBe(true)
+		local left = holdOut(Grabs.ById.Bearhug, params, "Brute", 9)
+		expect(left).toBeLessThan(Tuning.Crew.MaxHealth / 2)
+		expect(Grab.survivable(50, 30)).toBe(30 - Grab.BiteFloor)
+		expect(Grab.survivable(5, 30)).toBe(5)
+		expect(Grab.survivable(5, 0.5)).toBe(0)
 	end)
 
 	it("makes every Brute strike a face-down slam and pin", function()
@@ -148,18 +131,16 @@ describe("Grab", function()
 		expect(Grab.damage(def, params, Grab.kind("Brute"), 0, Tuning.Grab.Settle + def.bite)).toBe(cap)
 	end)
 
-	it("holds tighter at the hard stops", function()
+	it("hurts more at the hard stops", function()
 		local halt = Stations.List.Halt
 		local easy = DifficultyModel.params(0, halt, 4, nil)
 		local hard = DifficultyModel.params(1, halt, 4, nil)
 		for _, kind in KINDS do
 			local k = Grab.kind(kind)
-			expect(Grab.escapeSeconds(hard, k, 6)).toBeGreaterThan(Grab.escapeSeconds(easy, k, 6))
 			expect(Grab.dps(hard, k)).toBeGreaterThan(Grab.dps(easy, k))
 		end
-		-- the Brute holds hardest and hurts most, the Crawler least
+		-- the Brute hurts most, the Crawler least
 		local brute, crawler = Grab.kind("Brute"), Grab.kind("Crawler")
-		expect(Grab.escapeSeconds(hard, brute, 6)).toBeGreaterThan(Grab.escapeSeconds(hard, crawler, 6))
 		expect(Grab.dps(hard, brute)).toBeGreaterThan(Grab.dps(hard, crawler))
 	end)
 end)

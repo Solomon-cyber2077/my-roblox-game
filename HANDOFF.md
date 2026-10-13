@@ -16,6 +16,14 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - `tests/HollowSpeed.spec` reads MovementController's source to confirm it moves the crew at `Tuning.Crew.SprintSpeed/WalkSpeed`, then checks every kind at D 0..1. The old masher spec now mashes 7/s (B.1 replaces the mash).
 - Unverified in Studio: how the harder Hollows feel.
 
+### B.1 Grab escape: skill checks on Space (Q mash gone)
+- Rules: `Logic/SkillCheck` (+ `tests/SkillCheck.spec`), numbers in `Difficulty.SkillCheck`. The needle turns once in `SweepSeconds` (1.25) on the server clock; the zone starts 110-230 degrees ahead (pulled in for wide zones), the leading 25% is great. Good = +1, great = +1.5, miss (early, late, or no press in one turn) = -0.5 and the grab clock 1.5 s closer. 3 progress frees you. Crewmates' Pull free adds 0.15 per pry (PryInterval 0.15 s still applies).
+- Server (`HollowService`): picks each check with `Random` when it appears (Fx `SkillCheck` to the victim), first one >= 1.1 s after the grab, 0.45-0.9 s between checks. `SkillCheck` remote (arg kind `check`, 10/s) carries only the check id; the server judges on arrival with tolerance 0.05 s + half the player's `GetNetworkPing()`, capped 0.2 s. One judged press per check (replays and stale ids ignored), presses closer than 0.12 s ignored. Verdict back as Fx `SkillResult`.
+- Grab clock: `FinishByStop` 12 -> 9 s by stop (`HazardParams.stop`, set in `RunDirector` Enter.Cruise), never shorter than the worst-case time to win the minimum checks + 1 s (`SkillCheck.finishSeconds`, tested for every stop and zone). Bites still hurt (+25% from A.2) but never take the last 1 HP (`Grab.survivable`); the clock running out kills (`finishHold`, death cause Taken). Replaces `Tuning.Grab.MaxSeconds`/`Escape`/`AllyPresses`, `Difficulty.GrabMash/GrabSlip`, `HazardParams.grabMash/grabSlip` (all removed). Zone width shrinks with the stop (70 -> 38 degrees by stop 7); tutorial run 2 and the scripted grab use `Config/Tutorial` zones (wired in C.3).
+- Client: `UI/Struggle` plate (now 460x236 at 0.5/0.62) keeps title, meter and crew line; the keycap+mash hint became a ring (track, zone segments, needle, verdict) plus a keycap showing SPACE / A / TAP by last input type (also the touch button). The red rule on top is the grab clock. `GrabController` binds Space and ButtonA only (Q and R2 removed), sinks them while held; MovementController already zeroes JumpHeight while `GrabStyle` is set and restores it each frame after. README controls row updated.
+- Audit `GrabLifecycle` now wins holds with skill checks and checks an early press misses (clock jumps) and a replay is ignored.
+- Unverified in Studio: the ring and needle on screen, input feel, ping tolerance on a real connection.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
