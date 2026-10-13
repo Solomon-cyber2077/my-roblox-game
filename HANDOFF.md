@@ -46,6 +46,10 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - Readability: the hit pulses, dread and vitals edges moved from `LastTrainOutEdges` (DisplayOrder 6, over the HUD) to a new `LastTrainOutEdgesUnder` ScreenGui (DisplayOrder 3, under the HUD (5) and the train camera gui (4)), still IgnoreGuiInset + ScreenInsets None, so the inset fix holds. Only the full-screen fade stays above the HUD.
 - Verified: `lune run check` passes. Not seen on screen.
 
+### 2.2 Vignette (`UI/Overlay` dread, driven by `AtmosphereController` as a Hollow nears)
+- Black edges at up to 0.8 opacity -> cold blue-grey `SHADE_COLOR` (34,42,56) at up to `SHADE_MAX` 0.55, with a gradient that clears faster toward the centre (0.6 at 35% in, 0.92 at 70%). A `Dread` ColorCorrectionEffect drains saturation (`SHADE_DESATURATE` 0.35) and cools the tint toward `SHADE_TINT` with the same level. Never pitch black; it draws under the HUD (2.1). Inset fix unchanged (the edges ScreenGui ignores the inset).
+- Verified: `lune run check` passes. Not seen on screen: owner to judge the tone near a Hollow.
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:
