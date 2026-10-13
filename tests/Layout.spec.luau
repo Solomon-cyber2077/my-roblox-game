@@ -65,12 +65,12 @@ describe("LayoutGen", function()
 		end
 	end)
 
-	it("places vaults only in the far zone", function()
+	it("places vaults only in the far zone or the village beyond it", function()
 		for _, id in ALL do
 			for seed = 1, 6 do
 				for _, c in LayoutGen.generate(id, seed, 1).containers do
 					if c.kind == "Vault" then
-						expect(c.zone).toBe("Far")
+						expect(c.zone == "Far" or c.zone == "Village").toBe(true)
 					end
 				end
 			end
@@ -82,6 +82,10 @@ describe("LayoutGen", function()
 		local plan2 = LayoutGen.generate("Halt", 9, 1.35)
 		local base = 0
 		for _, n in Stations.List.Halt.containers do
+			base += n
+		end
+		local village = Stations.List.Halt.village
+		for _, n in if village then village.containers else {} do
 			base += n
 		end
 		local function outdoors(p)

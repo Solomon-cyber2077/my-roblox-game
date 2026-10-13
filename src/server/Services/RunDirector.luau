@@ -58,6 +58,7 @@ type RunState = {
 	mystery: Mystery.History, -- junctions since the last mystery ticket
 	sealed: boolean, -- this leg's destination is a mystery not yet revealed
 	forceMystery: boolean, -- Dev `mystery`: the next ballot has one
+	forceArchetype: string?, -- Dev `station <id>`: every option on the next ballot is this archetype
 	pending: Types.LogEntry?, -- this stop's run.log entry, appended when the stop resolves
 	mark: Types.StopHaul, -- the run's loot and downs when the previous stop resolved
 	tutorial: number, -- the crew's tutorial tier for this run (Services/TutorialService), 0 past it
@@ -83,6 +84,7 @@ local state: RunState = {
 	mystery = Mystery.newHistory(),
 	sealed = false,
 	forceMystery = false,
+	forceArchetype = nil,
 	pending = nil,
 	mark = { coal = 0, parts = 0, relics = 0, downs = 0 },
 	tutorial = 0,
@@ -203,6 +205,13 @@ end
 local function openBallot()
 	local leg, stops = state.nextStop, Tuning.Run.StationCount
 	local options = RouteGen.options(state.seed, leg, stops, state.lastArchetype)
+	local forced = state.forceArchetype
+	if forced and leg <= stops then
+		for _, option in options do
+			option.archetype = forced
+		end
+	end
+	state.forceArchetype = nil
 	local roll = Rng.new(Rng.derive(state.seed, "mystery", leg)):next()
 	local offered = state.forceMystery and leg <= stops or Mystery.offers(state.mystery, leg, stops, roll)
 	local sealed: { [number]: Types.RouteOption } = {}
@@ -518,6 +527,11 @@ function RunDirector.DevWarp(seconds: number)
 end
 
 -- Studio only (DevService `mystery`): the next ballot carries a mystery ticket; at a junction, now.
+-- Dev `station <id>`: the next ballot offers only that archetype (Studio checks of a stop).
+function RunDirector.DevForceArchetype(id: string)
+	state.forceArchetype = id
+end
+
 function RunDirector.DevForceMystery()
 	state.forceMystery = true
 	if state.phase == "Junction" then

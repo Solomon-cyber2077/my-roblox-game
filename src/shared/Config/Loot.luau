@@ -108,6 +108,8 @@ local Zones: { [string]: ZoneDef } = {
 	Near = { rolls = 1, rareMultiplier = 1.0, holdMultiplier = 1.0 },
 	Mid = { rolls = 2, rareMultiplier = 1.0, holdMultiplier = 1.25 },
 	Far = { rolls = 3, rareMultiplier = 2.5, holdMultiplier = 1.5 },
+	-- the village at the far edge: the longest walk, the richest searches
+	Village = { rolls = 3, rareMultiplier = 3.0, holdMultiplier = 1.6 },
 }
 
 -- Items worth at least this much (coal-equivalent) count as rare for zone scaling.

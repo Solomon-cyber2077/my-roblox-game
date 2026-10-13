@@ -178,6 +178,16 @@ Commands.strike = function()
 	ReplicatedStorage:SetAttribute("DevStrike", workspace:GetServerTimeNow() + 0.2)
 end
 
+-- `station Halt`: the next ballot offers only that stop (the one open now, if a vote is on, is
+-- not changed; skip through it).
+Commands.station = function(_, args)
+	local Stations = require(ReplicatedStorage.Shared.Config.Stations)
+	local id = args[1]
+	if id and Stations.List[id] and not Stations.List[id].terminus then
+		Registry.RunDirector.DevForceArchetype(id)
+	end
+end
+
 Commands.mystery = function()
 	Registry.RunDirector.DevForceMystery()
 end

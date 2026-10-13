@@ -231,6 +231,77 @@ Builders.WaterTower = function(ctx)
 	)
 end
 
+-- A cattle dock: a brick-faced loading bank at the back with steps up, and the pens in front
+-- of it, iron-railed on three sides with a gate gap toward the track.
+Builders.CattleDock = function(ctx)
+	local w, d = ctx.width - 4, ctx.depth - 4
+	local bankD, bankH = d * 0.42, 1.6
+	local bankZ = d / 2 - bankD / 2
+	Kit.block(
+		ctx.parent,
+		Vector3.new(w, bankH, bankD),
+		f(ctx, 0, bankH / 2, bankZ),
+		C.brick,
+		{ material = Enum.Material.Brick }
+	)
+	Kit.block(
+		ctx.parent,
+		Vector3.new(w + 0.4, 0.3, bankD + 0.4),
+		f(ctx, 0, bankH + 0.15, bankZ),
+		C.stone,
+		{ material = Enum.Material.Slate }
+	)
+	-- steps up at one end: a long low step, a short high one on it, both tucked into the bank
+	local front = bankZ - bankD / 2
+	Kit.block(
+		ctx.parent,
+		Vector3.new(3, 0.75, 2.8),
+		f(ctx, w / 2 - 2, 0.375, front - 1.3),
+		C.stone,
+		{ material = Enum.Material.Slate }
+	)
+	Kit.block(
+		ctx.parent,
+		Vector3.new(2.7, 1.0, 1.5),
+		f(ctx, w / 2 - 2, 1.1, front - 0.55),
+		C.stone,
+		{ material = Enum.Material.Slate }
+	)
+	-- the pens: posts every four studs round three sides, two rails, a gap for the gate
+	local penD = d - bankD - 0.6
+	local z0, z1 = -d / 2, -d / 2 + penD
+	local function rail(a: Vector3, b: Vector3)
+		for _, y in { 1.2, 2.6 } do
+			local mid = (a + b) / 2
+			local length = (b - a).Magnitude
+			Kit.block(
+				ctx.parent,
+				Vector3.new(length, 0.2, 0.2),
+				f(ctx, mid.X, y, mid.Z) * Kit.angles(0, math.deg(math.atan2(-(b - a).Z, (b - a).X)), 0),
+				C.iron,
+				{ material = Enum.Material.Metal }
+			)
+		end
+	end
+	local gate = 5
+	for _, side in { -1, 1 } do
+		local x = side * (w / 2 - 0.3)
+		for z = z0, z1, 4 do
+			Kit.post(ctx.parent, 3, 0.3, f(ctx, x, 1.5, z), C.iron, { material = Enum.Material.Metal })
+		end
+		rail(Vector3.new(x, 0, z0), Vector3.new(x, 0, z1))
+		-- the front, either side of the gate
+		local inner = side * gate / 2
+		for xx = inner, x, side * 4 do
+			Kit.post(ctx.parent, 3, 0.3, f(ctx, xx, 1.5, z0), C.iron, { material = Enum.Material.Metal })
+		end
+		rail(Vector3.new(inner, 0, z0), Vector3.new(x, 0, z0))
+	end
+	-- a divider down the middle of the pens
+	rail(Vector3.new(0, 0, z0 + 4), Vector3.new(0, 0, z1))
+	Kit.post(ctx.parent, 3, 0.3, f(ctx, 0, 1.5, z0 + 4), C.iron, { material = Enum.Material.Metal })
+end
+
 Builders.CoalTower = function(ctx)
 	local h = 20
 	for _, x in { -8, 8 } do

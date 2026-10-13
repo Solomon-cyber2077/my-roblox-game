@@ -1115,7 +1115,8 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			onTile("DecorCrates", 3)
 		end
 		-- the things that say what this place was: a haycart, a well, a swing in the school yard
-		for n = 1, Stations.DressingCount do
+		-- a big stop is littered in proportion to its ground
+		for n = 1, math.max(Stations.DressingCount, (cols * rows) // 60) do
 			if #arch.dressing == 0 or not onTile(arch.dressing[(n - 1) % #arch.dressing + 1], 2) then
 				break
 			end
