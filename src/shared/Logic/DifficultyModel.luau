@@ -52,11 +52,36 @@ function DifficultyModel.hollowCap(d: number, crewCount: number, hollowBias: num
 	return math.min(cap.Max, math.ceil(raw - 1e-9))
 end
 
+-- Tiles of enterable building at a stop (upper floors included), the village's too.
+function DifficultyModel.buildingTiles(archetype: Archetype): number
+	local tiles = BuildingGen.tiles(archetype.landmarks)
+	if archetype.village then
+		tiles += BuildingGen.tiles(archetype.village.landmarks)
+	end
+	return tiles
+end
+
+-- Studs on foot from the train's doors to the stop's far corner (Difficulty.StopClock).
+function DifficultyModel.farWalk(archetype: Archetype): number
+	local reach = archetype.length / 2 - Stations.Reach.DoorHalfSpan + archetype.depth
+	return math.max(reach, 0) * Difficulty.StopClock.Detour
+end
+
+-- Seconds the doors stay open at stop `stop` of difficulty `d` (Difficulty.StopClock).
+function DifficultyModel.dwell(d: number, archetype: Archetype, stop: number): number
+	local clock = Difficulty.StopClock
+	local tiles = math.min(DifficultyModel.buildingTiles(archetype), clock.BuildingTileCap)
+	local search = (blend(clock.Search, d) + clock.PerBuildingTile * tiles) * archetype.dwellMultiplier
+	local walk = 2 * DifficultyModel.farWalk(archetype) / Tuning.Crew.WalkSpeed * clock.WalkMargin
+	return math.floor(search + walk + clock.PerStop * math.max(stop - 1, 0) + 0.5)
+end
+
 function DifficultyModel.params(
 	d: number,
 	archetype: Archetype,
 	crewCount: number,
-	upgrades: { [string]: number }?
+	upgrades: { [string]: number }?,
+	stop: number?
 ): Types.HazardParams
 	local levels: { [string]: number } = upgrades or {}
 	local effects = UpgradesConfig.Effects
@@ -67,13 +92,12 @@ function DifficultyModel.params(
 	local fogBias = math.max(bias.fog, 0.01)
 	local collapseBias = math.max(bias.collapse, 0.01)
 	local hollowBias = math.max(bias.hollows, 0.01)
-	local tiles = BuildingGen.tiles(archetype.landmarks)
-	local sizeDwell = 1 + Difficulty.SizeDwellPerTile * tiles
-	local sizeCap = 1 + Difficulty.SizeCapPerTile * tiles
+	local tiles = DifficultyModel.buildingTiles(archetype)
+	local sizeCap = 1 + Difficulty.SizeCapPerTile * math.min(tiles, Difficulty.SizeCapTiles)
 
 	return {
 		difficulty = d,
-		dwell = math.floor(blend(Difficulty.Dwell, d) * archetype.dwellMultiplier * sizeDwell + 0.5),
+		dwell = DifficultyModel.dwell(d, archetype, stop or 1),
 		lastCall = Tuning.Run.LastCallSeconds,
 		fogStartU = MathX.clamp(blend(Difficulty.FogStartU, d) / fogBias, 0.08, 0.9),
 		fogEndFraction = MathX.clamp(blend(Difficulty.FogEndFraction, d) / fogBias, 0.05, 1),

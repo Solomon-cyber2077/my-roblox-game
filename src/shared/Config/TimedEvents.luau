@@ -4,8 +4,8 @@
 	Events/TimedEventDirector runs them). Each comes with a HUD warning Lead seconds
 	ahead, lasts `duration` and cleans up after itself. They only run while the doors are
 	open (the Dwell phase), never two at once, with a Gap between them, and every one ends
-	EndMargin seconds before Last Call. A dwell is roughly 94 to 150 seconds (Config/
-	Difficulty Dwell, scaled by the station), so a typical stop gets one, a long one two.
+	EndMargin seconds before Last Call. A dwell is roughly 150 to 300 seconds (Config/
+	Difficulty StopClock, scaled by the station's size), so most stops get two.
 
 	cue    an existing Config/Audio cue played with the warning
 	title  the toast's headline; warning is the line under it

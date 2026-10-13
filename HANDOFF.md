@@ -3,7 +3,16 @@
 ## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
 
 ### Resume point
-- Steps 1 (audit) and 3 (design notes: `docs/stations/DESIGN.md`, one paragraph per archetype, sources) done. Next: generator scale-up (sizes, village band, more landmarks), then edge, lamps, timers.
+- Done: audit (1), design notes (3, `docs/stations/DESIGN.md`), shared generator (below). Next: per archetype, starting with Halt: new size, village band, more buildings (new `Config/Buildings` defs), landmarks; one commit each.
+
+### Shared generator (commit "Stations: shared generator")
+- `Config/Stations`: `village` (rows, landmarks, containers; zone `Village` = the last rows), `Lamps` (PoolGap 4.5 tiles, YardMax 22), `VillageFill`, `Edge` (RailBack 4.5, TapeBack 6.6, GlowLights 6), `Reach.DoorHalfSpan` 72.
+- `Logic/LayoutGen`: village street, a third barrier line at the village, sidings kept out of the village, village containers, no loot on edge tiles, lamp pools along the routes (`YardLamp`, not SafeLight; the platform's `Lamp`s still are), `EdgeMark` on every open edge tile and a few `EdgeGlow`s, `plan.blocked`.
+- `StationDressing`: `EdgeMark` (hazard rail, tape, glowing lip; rail tagged `SinkholeEdge`, collision group `EdgeRail` so Hollows climbing from the edge pass it), `EdgeGlow`, `YardLamp`. `Builders/HazardRail` deleted (part 2 stand-in).
+- `StationBuilder`: rock keel only under edge and foundation slabs (saves ~1 part per tile).
+- Stop clock (`Difficulty.StopClock`, `DifficultyModel.dwell`): (Search {105, 75} + 0.5 s per building tile, cap 90) x dwellMultiplier + 2 x far corner walk / jog x 1.6 + 4 s per stop after the first. `params(..., stop)`; RunDirector passes the stop.
+- Budget per stop (audit): 9000 parts, 64 lights, 0 shadow lights, 60 emitters.
+- Tests: `tests/StationReach.spec` (all loot reachable, no cut-off ground, spawn lanes valid, loot off the edge, every open edge tile marked, the farthest loot fits the clock 2.5x at a jog at D=1, clock grows with stop), Difficulty and TimedEventSchedule specs updated.
 
 ### 1. Audit (before)
 Generator: `Logic/LayoutGen` lays a 12-stud tile grid (x along the track, z away from the platform; Safe strip 24, zones Near < 0.4 depth < Mid < 0.75 depth < Far). Per archetype (`Config/Stations`): a layout style (Street, Plaza, Yard, Sidings) carves routes, enterable landmarks (`Config/Buildings`, rooms by `Logic/BuildingGen`, upper floors only on the big Spine buildings, no cellars) go first, then structures (`StructureKit`), barriers pinch the Mid/Far boundaries, then containers, loose pickups, platform props, boundary fence and trees, yard lamps (`cols // 5`), dressing and broken ground. Built by `Builders/StationBuilder` (one welded assembly; every floor tile is a 3-part slab: top, earth, keel).

@@ -45,6 +45,12 @@ export type LandmarkRule = {
 	decor: boolean?, -- set dressing (default false): searched, but not counted in the stop's size (dwell, Hollow cap)
 }
 
+export type Village = {
+	rows: number, -- tiles of depth, the last rows of the stop
+	landmarks: { LandmarkRule }, -- placed in the Village zone
+	containers: { [string]: number }, -- on top of the stop's own, before difficulty scaling
+}
+
 export type Archetype = {
 	id: string,
 	name: string,
@@ -68,6 +74,7 @@ export type Archetype = {
 	dressing: { string },
 	yardTrees: number,
 	layout: Layout?,
+	village: Village?,
 	terminus: boolean?,
 }
 
@@ -583,6 +590,13 @@ return table.freeze({
 	-- Walking distances (Logic/StationReach) start from the platform within this far of the
 	-- middle, where the train's doors are
 	Reach = table.freeze({ DoorHalfSpan = 72 }),
+	-- Lamp pools along the routes: at least PoolGap tiles apart, so darkness lies between them
+	-- (Hollows rest there). Yard lamps are not SafeLights; the platform's lamps are.
+	Lamps = table.freeze({ PoolGap = 4.5, YardMax = 22 }),
+	VillageFill = 0.55, -- the share of the Far/Village boundary closed off
+	-- The sinkhole edge (props EdgeMark on every open edge tile): a hazard rail this far in from
+	-- the edge, tape on the ground in front of it and a glow strip along the lip.
+	Edge = table.freeze({ RailBack = 4.5, TapeBack = 6.6, GlowLights = 6 }),
 	DressingCount = 6, -- things scattered round the yard
 	-- How much likelier the better containers are to stand in the far zone, behind the last barrier
 	FarLoot = table.freeze({ ToolChest = 2.5, Crate = 1.3 }),

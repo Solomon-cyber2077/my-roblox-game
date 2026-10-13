@@ -120,12 +120,17 @@ local DIRECTIONS = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
 
 local LayoutGen = {}
 
-function LayoutGen.zoneFor(z: number, depth: number, safe: number): string
+-- `village`: the depth of the village band at the far edge (0 or nil: none); the other zones
+-- share out what is left.
+function LayoutGen.zoneFor(z: number, depth: number, safe: number, village: number?): string
+	local core = depth - (village or 0)
 	if z < safe then
 		return "Safe"
-	elseif z < 0.4 * depth then
+	elseif z >= core then
+		return "Village"
+	elseif z < 0.4 * core then
 		return "Near"
-	elseif z < 0.75 * depth then
+	elseif z < 0.75 * core then
 		return "Mid"
 	end
 	return "Far"
@@ -148,8 +153,15 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	local function tileZ(gz: number): number
 		return (gz + 0.5) * tile
 	end
+	local village = arch.village
+	local villageRows = if village then village.rows else 0
+	local coreRows = rows - villageRows -- the rows before the village
 	local function zoneOf(gz: number): string
-		return LayoutGen.zoneFor(tileZ(gz), arch.depth, safe)
+		return LayoutGen.zoneFor(tileZ(gz), arch.depth, safe, villageRows * tile)
+	end
+	-- the edge tiles belong to the boundary and its hazard rail: nothing is put down there
+	local function onEdge(gx: number, gz: number): boolean
+		return gx == 0 or gx == cols - 1 or gz == rows - 1
 	end
 	local function index(gx: number, gz: number): number
 		return gz * cols + gx + 1
@@ -284,6 +296,14 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		end
 	end
 
+	-- the village's own street, across its middle, so its cottages front a lane
+	if village and villageRows >= 3 then
+		local row = coreRows + villageRows // 2
+		for gx = 1, cols - 2 do
+			reserve(gx, row, 3)
+		end
+	end
+
 	-- Lots: every free footprint in the rows `rowOk` allows, weighted by the route it fronts.
 	local function lots(w: number, d: number, rowOk: (number) -> boolean): { Rng.Weighted<{ number }> }
 		local out: { Rng.Weighted<{ number }> } = {}
@@ -355,7 +375,12 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 
 	-- Enterable buildings first: they are the biggest, and the stop is built around them --
 	local buildings: { Building } = {}
-	local landmarks: { Stations.LandmarkRule } = arch.landmarks or {}
+	local landmarks: { Stations.LandmarkRule } = table.clone(arch.landmarks or {})
+	if village then
+		for _, rule in village.landmarks do
+			table.insert(landmarks, rule)
+		end
+	end
 	for _, rule in landmarks do
 		local def = Buildings.Defs[rule.kind]
 		local w, d = def.size[1], def.size[2]
@@ -385,9 +410,9 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	if layout and layout.style == "Sidings" then
 		local count = layout.sidings or 2
 		for k = 1, count do
-			local mark = safeRows + math.floor((rows - safeRows) * k / (count + 1)) + rng:int(0, 1)
+			local mark = safeRows + math.floor((coreRows - safeRows) * k / (count + 1)) + rng:int(0, 1)
 			local best, bestCost = nil, math.huge
-			for gz = math.max(safeRows + 1, mark - 2), math.min(rows - 3, mark + 2) do
+			for gz = math.max(safeRows + 1, mark - 2), math.min(coreRows - 3, mark + 2) do
 				local cost = math.abs(gz - mark) * 0.5
 				for gx = 1, cols - 2 do
 					if occupancy[index(gx, gz)] ~= 0 then
@@ -467,7 +492,11 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	local barrierAt: { [number]: string } = {}
 	local barrierRows: { number } = {}
 	if layout then
-		for b, zone in { "Mid", "Far" } do
+		local boundaries: { string } = { "Mid", "Far" }
+		if village then
+			table.insert(boundaries, "Village")
+		end
+		for b, zone in boundaries do
 			local first: number? = nil
 			for gz = safeRows, rows - 2 do
 				if first == nil and zoneOf(gz) == zone then
@@ -494,7 +523,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 				local gx = 0
 				while gx < cols do
 					local span = rng:int(2, 4)
-					if rng:chance(layout.fill[b]) then
+					if rng:chance(layout.fill[b] or Stations.VillageFill) then
 						local kind = rng:pick(layout.barriers)
 						for x = gx, math.min(gx + span - 1, cols - 1) do
 							local i = index(x, gz)
@@ -673,7 +702,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			if zone == nil or zoneOf(gz) == zone then
 				for gx = 0, cols - 1 do
 					local i = index(gx, gz)
-					if occupancy[i] == 0 and not claimed[i] then
+					if occupancy[i] == 0 and not claimed[i] and not onEdge(gx, gz) then
 						table.insert(out, { gx, gz })
 					end
 				end
@@ -696,48 +725,57 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	end
 
 	local containers: { Container } = {}
-	for _, kind in CONTAINER_ORDER do
-		local base = arch.containers[kind] or 0
-		local def = Loot.Containers[kind]
-		if base > 0 and def then
-			local count = math.max(1, math.floor(base * lootMul + 0.5))
-			for _ = 1, count do
-				local zone: string
-				if def.farOnly then
-					zone = "Far"
-				else
-					zone = rng:weighted({
-						{ weight = def.zoneWeights.Near, value = "Near" },
-						{ weight = def.zoneWeights.Mid, value = "Mid" },
-						{ weight = def.zoneWeights.Far * (Stations.FarLoot[kind] or 1), value = "Far" },
+	-- the stop's own containers, then the village's extra ones in the village
+	local passes: { { counts: { [string]: number }, zone: string? } } = { { counts = arch.containers } }
+	if village then
+		table.insert(passes, { counts = village.containers, zone = "Village" })
+	end
+	for _, pass in passes do
+		for _, kind in CONTAINER_ORDER do
+			local base = pass.counts[kind] or 0
+			local def = Loot.Containers[kind]
+			if base > 0 and def then
+				local count = math.max(1, math.floor(base * lootMul + 0.5))
+				for _ = 1, count do
+					local zone: string
+					if pass.zone then
+						zone = pass.zone
+					elseif def.farOnly then
+						zone = "Far"
+					else
+						zone = rng:weighted({
+							{ weight = def.zoneWeights.Near, value = "Near" },
+							{ weight = def.zoneWeights.Mid, value = "Mid" },
+							{ weight = def.zoneWeights.Far * (Stations.FarLoot[kind] or 1), value = "Far" },
+						})
+					end
+					local candidates = freeTiles(zone)
+					if #candidates == 0 and not def.farOnly and pass.zone == nil then
+						candidates = freeTiles(nil)
+					end
+					if #candidates == 0 then
+						break
+					end
+					local weighted = {}
+					for _, cell in candidates do
+						local favoured = (kind == "CoalBin" and nextToKind(cell[1], cell[2], COAL_NEIGHBOURS))
+							or (kind == "ToolChest" and nextToKind(cell[1], cell[2], TOOL_NEIGHBOURS))
+						local weight = if favoured then 4 else 1
+						table.insert(weighted, { weight = weight, value = cell })
+					end
+					local cell = rng:weighted(weighted)
+					local i = index(cell[1], cell[2])
+					claimed[i] = true
+					table.insert(containers, {
+						id = #containers + 1,
+						kind = kind,
+						zone = zoneOf(cell[2]),
+						slab = slabOfTile[i],
+						x = tileX(cell[1]) + rng:range(-2.5, 2.5),
+						z = tileZ(cell[2]) + rng:range(-2.5, 2.5),
+						rot = rng:int(0, 3) * 90 + rng:range(-8, 8),
 					})
 				end
-				local candidates = freeTiles(zone)
-				if #candidates == 0 and not def.farOnly then
-					candidates = freeTiles(nil)
-				end
-				if #candidates == 0 then
-					break
-				end
-				local weighted = {}
-				for _, cell in candidates do
-					local favoured = (kind == "CoalBin" and nextToKind(cell[1], cell[2], COAL_NEIGHBOURS))
-						or (kind == "ToolChest" and nextToKind(cell[1], cell[2], TOOL_NEIGHBOURS))
-					local weight = if favoured then 4 else 1
-					table.insert(weighted, { weight = weight, value = cell })
-				end
-				local cell = rng:weighted(weighted)
-				local i = index(cell[1], cell[2])
-				claimed[i] = true
-				table.insert(containers, {
-					id = #containers + 1,
-					kind = kind,
-					zone = zoneOf(cell[2]),
-					slab = slabOfTile[i],
-					x = tileX(cell[1]) + rng:range(-2.5, 2.5),
-					z = tileZ(cell[2]) + rng:range(-2.5, 2.5),
-					rot = rng:int(0, 3) * 90 + rng:range(-8, 8),
-				})
 			end
 		end
 	end
@@ -939,6 +977,64 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		end
 	end
 
+	--[[
+		The sinkhole edge: on every open edge tile a hazard rail RailBack in from the edge, tape
+		in front of it and a glowing lip behind it (StationDressing EdgeMark), and a few red
+		lights low on the rail line (EdgeGlow). The far rail stops short of the side rails.
+	]]
+	if not arch.terminus then
+		local E = Stations.Edge
+		local marks: { Prop } = {}
+		local cornerX = half - E.RailBack - 0.4
+		for gx = 0, cols - 1 do
+			local i = index(gx, rows - 1)
+			if occupancy[i] == 0 then
+				local x0 = math.max(tileX(gx) - tile / 2, -cornerX)
+				local x1 = math.min(tileX(gx) + tile / 2, cornerX)
+				table.insert(marks, {
+					kind = "EdgeMark",
+					slab = slabOfTile[i],
+					x = (x0 + x1) / 2,
+					z = arch.depth - E.RailBack,
+					rot = 0,
+					size = x1 - x0,
+				})
+			end
+		end
+		for _, gx in { 0, cols - 1 } do
+			local s = if gx == 0 then -1 else 1
+			for gz = safeRows, rows - 1 do
+				local i = index(gx, gz)
+				if occupancy[i] == 0 then
+					local z0 = tileZ(gz) - tile / 2
+					local z1 = math.min(tileZ(gz) + tile / 2, arch.depth - E.RailBack - 0.4)
+					table.insert(marks, {
+						kind = "EdgeMark",
+						slab = slabOfTile[i],
+						x = s * (half - E.RailBack),
+						z = (z0 + z1) / 2,
+						rot = if s > 0 then 90 else -90,
+						size = z1 - z0,
+					})
+				end
+			end
+		end
+		local every = math.max(1, #marks // E.GlowLights)
+		for k, mark in marks do
+			table.insert(props, mark)
+			if k % every == every // 2 and (mark.size or 0) > 8 then
+				local alongX = mark.rot == 0
+				table.insert(props, {
+					kind = "EdgeGlow",
+					slab = mark.slab,
+					x = mark.x + (if alongX then 3 else 0),
+					z = mark.z + (if alongX then 0 else 3),
+					rot = mark.rot,
+				})
+			end
+		end
+	end
+
 	-- The yard ---------------------------------------------------------------------------
 	-- Inner tiles only: the edge strip belongs to the boundary, and the routes stay open
 	-- unless `onRoutes`.
@@ -974,8 +1070,45 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		})
 		return true
 	end
-	for _ = 1, cols // 5 do
-		onTile("Lamp", 0, true)
+	-- Lamp pools along the routes, PoolGap tiles apart at least, so darkness lies between them.
+	-- They stand at a tile's corner, so they light the route; a stop without routes is scattered.
+	local pools: { { number } } = {}
+	local routeCells: { { number } } = {}
+	for _, cell in innerTiles(true) do
+		if route[index(cell[1], cell[2])] then
+			table.insert(routeCells, cell)
+		end
+	end
+	rng:shuffle(routeCells)
+	local gap = Stations.Lamps.PoolGap
+	for _, cell in routeCells do
+		if #pools >= Stations.Lamps.YardMax then
+			break
+		end
+		local apart = true
+		for _, other in pools do
+			if (other[1] - cell[1]) ^ 2 + (other[2] - cell[2]) ^ 2 < gap * gap then
+				apart = false
+				break
+			end
+		end
+		if apart then
+			table.insert(pools, cell)
+			local i = index(cell[1], cell[2])
+			claimed[i] = true
+			table.insert(props, {
+				kind = "YardLamp",
+				slab = slabOfTile[i],
+				x = tileX(cell[1]) + tile / 2 - 1,
+				z = tileZ(cell[2]) + tile / 2 - 1,
+				rot = 0,
+			})
+		end
+	end
+	if #routeCells == 0 then
+		for _ = 1, cols // 5 do
+			onTile("Lamp", 0, true)
+		end
 	end
 	if not arch.terminus then
 		for _ = 1, cols // 4 do

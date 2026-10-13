@@ -49,9 +49,9 @@ for _, id in Stations.Order do
 	local reach = StationReach.measure(plan)
 	local jog = StationReach.roundTrip(reach.farthestLoot, crew, false)
 	local sprint = StationReach.roundTrip(reach.farthestLoot, crew, true)
-	local first =
-		DifficultyModel.params(DifficultyModel.forStop(arch.minStation, stops, arch.tier), arch, 1, nil)
-	local last = DifficultyModel.params(DifficultyModel.forStop(stops, stops, 3), arch, 4, nil)
+	local d1 = DifficultyModel.forStop(arch.minStation, stops, arch.tier)
+	local first = DifficultyModel.params(d1, arch, 1, nil, arch.minStation)
+	local last = DifficultyModel.params(DifficultyModel.forStop(stops, stops, 3), arch, 4, nil, stops)
 	print(
 		string.format(
 			"%-13s %4dx%-4d %7d %4d %4d %5d %5d %6.1f %6.1f %6d %6d %6.2f",
