@@ -406,6 +406,12 @@ local Tuning = {
 		MaxSeconds = 14, -- no hold lasts longer than this
 		Settle = 0.3, -- seconds the snatch takes before the hold begins to hurt
 		PryInterval = 0.15, -- server limit per helper, matching a deliberate button mash
+		-- A Brute's strike slams its victim face down and pins them (Config/Grabs "Slam").
+		Pin = {
+			Tick = 1, -- seconds between damage ticks while pinned
+			DpsShare = 0.5, -- damage per second pinned, as a share of the stop's hollowDamage
+			SlamSeconds = 0.35, -- the body is driven from standing to the ground over this long
+		},
 	},
 
 	Tools = {

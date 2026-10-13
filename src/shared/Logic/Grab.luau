@@ -68,7 +68,8 @@ end
 
 -- One bite, never more than MaxBiteShare of a full-health crew member: no single hit kills.
 function Grab.bite(def: Grabs.Def, params: Params, kind: Kind): number
-	return math.min(Grab.dps(params, kind) * def.bite, G.MaxBiteShare * Tuning.Crew.MaxHealth)
+	local dps = if def.pin then params.hollowDamage * G.Pin.DpsShare else Grab.dps(params, kind)
+	return math.min(dps * def.bite, G.MaxBiteShare * Tuning.Crew.MaxHealth)
 end
 
 -- Damage of the bites that land between `from` and `to` seconds into the hold.
@@ -90,8 +91,18 @@ function Grab.squeeze(def: Grabs.Def, t: number): number
 end
 
 -- The kind's grabs in the order this Hollow tries them: each one has a favourite.
+-- A kind with a pin (the Brute) uses only its pins.
 function Grab.order(kindName: string, seed: number): { Grabs.Def }
 	local list = table.clone(Grabs.Kinds[kindName] or Grabs.Kinds.Stalker)
+	local pins = {}
+	for _, def in list do
+		if def.pin then
+			table.insert(pins, def)
+		end
+	end
+	if #pins > 0 then
+		list = pins
+	end
 	return Rng.new(Rng.derive(seed, "grab")):shuffle(list)
 end
 
