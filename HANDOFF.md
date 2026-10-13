@@ -74,6 +74,11 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - Markers OFF: no plate, no arrow; `TrainVisualsController.shapeLeak` makes the steam thicker and longer-lived (`SteamRateOff` 90 x severity, bigger puffs: visible through doorways) and the hiss louder (x`MarkersOffBoost` 1.4) carrying `HissRangeOff` 95 studs into neighbouring cars; it re-shapes when the setting changes. Fuse-box and leak billboard markers (`UI/BrokenThingMarkers`) unchanged.
 - Unverified on screen (screenshot below if Studio was reachable).
 
+### D.4 Hull tiers
+- `Logic/HullTier` (+ spec): tier 1 below 75%, 2 below 50%, 3 below 25% (`Difficulty.Hull.Tiers`); `strength` x1.4 (`MarkersOffBoost`) with markers off.
+- New `Controllers/HullController` (client): a one-time warning toast (`Overlay.alert`) per tier crossed per run (again after a repair takes it back up); creaks (SkyGroan cue, pitched down) every ~9/6/4 s by tier; the Alarm cue every 3.4 s at tier 3; all faster/louder with markers off. `TrainVisualsController`'s lamp loop (StoveGlow/LanternFlame lights) multiplies by `HullController.LightScale` (random dropouts at tier 2, dim red pulse at tier 3) and takes `LightTint` (emergency red), restoring each lamp's `BaseColor` otherwise. Always on in a run.
+- Unverified: the sound mix and how the flicker reads.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 

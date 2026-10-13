@@ -140,6 +140,7 @@ local function register(rig: Rig, part: Instance)
 		local light = part:FindFirstChildOfClass("PointLight")
 		if light then
 			light:SetAttribute("Base", light.Brightness)
+			light:SetAttribute("BaseColor", light.Color)
 			table.insert(rig.glows, light)
 		end
 	end
@@ -444,9 +445,14 @@ function TrainVisualsController.Start()
 				local base = if emitter.Name == "Sparks" then 4 else 18
 				emitter.Rate = if starving then base * 0.15 else base * (1 + 1.5 * rig.flare)
 			end
+			-- a failing hull flickers the lamps, then turns them to emergency red (HullController)
+			local hull = Registry.HullController
+			local tint = if hull then hull.LightTint() else nil
 			for i, light in rig.glows do
 				local base = (light:GetAttribute("Base") :: number?) or 1
-				light.Brightness = base * (0.82 + 0.3 * math.noise(t * 4.5, i * 7.1))
+				local scale = if hull then hull.LightScale(t, i) else 1
+				light.Brightness = base * (0.82 + 0.3 * math.noise(t * 4.5, i * 7.1)) * scale
+				light.Color = tint or (light:GetAttribute("BaseColor") :: Color3?) or light.Color
 			end
 		end
 		if #spinParts > 0 then
