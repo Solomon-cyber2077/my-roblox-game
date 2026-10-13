@@ -7,7 +7,8 @@
 	  pry     a crewmate tearing at the Hollow adds AllyPresses times as much
 	  slip    it slides back at grabSlip per second
 	Damage comes in bites on the grab's rhythm, the first one bite after the snatch has
-	settled, each worth dps * bite, where dps = hollowDamage * DpsShare * the kind's crush.
+	settled, each worth dps * bite (capped at MaxBiteShare of MaxHealth), where
+	dps = hollowDamage * DpsShare * the kind's crush.
 
 	Escape time for a victim pressing r times a second: Escape / (r * grabMash / grip - grabSlip).
 ]]
@@ -65,9 +66,14 @@ function Grab.bitesBetween(def: Grabs.Def, from: number, to: number): number
 	return math.max(count(to) - count(from), 0)
 end
 
+-- One bite, never more than MaxBiteShare of a full-health crew member: no single hit kills.
+function Grab.bite(def: Grabs.Def, params: Params, kind: Kind): number
+	return math.min(Grab.dps(params, kind) * def.bite, G.MaxBiteShare * Tuning.Crew.MaxHealth)
+end
+
 -- Damage of the bites that land between `from` and `to` seconds into the hold.
 function Grab.damage(def: Grabs.Def, params: Params, kind: Kind, from: number, to: number): number
-	return Grab.bitesBetween(def, from, to) * Grab.dps(params, kind) * def.bite
+	return Grab.bitesBetween(def, from, to) * Grab.bite(def, params, kind)
 end
 
 --[[

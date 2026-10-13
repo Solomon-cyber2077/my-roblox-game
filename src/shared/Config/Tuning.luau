@@ -386,7 +386,7 @@ local Tuning = {
 			windup = 1.4,
 			radius = 2.2,
 			grip = 1.2,
-			crush = 1.4,
+			crush = 1.2, -- was 1.4: with DpsShare 0.6 a steady masher must still survive its hold
 		},
 	},
 
@@ -397,7 +397,8 @@ local Tuning = {
 	]]
 	Grab = {
 		Escape = 1,
-		DpsShare = 0.4, -- damage per second while held, as a share of the stop's hollowDamage
+		DpsShare = 0.6, -- damage per second while held, as a share of the stop's hollowDamage (was 0.4)
+		MaxBiteShare = 0.35, -- no single bite takes more than this share of a crew member's MaxHealth
 		AllyPresses = 2.5, -- a crewmate prying at the Hollow counts as this many presses
 		Grace = 2.5, -- seconds after breaking free before anything can grab you again
 		Stagger = 1.6, -- seconds a Hollow reels when its victim breaks free
