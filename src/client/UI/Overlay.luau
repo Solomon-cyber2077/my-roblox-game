@@ -57,7 +57,12 @@ local SHADE_SPECS = {
 	{ size = UDim2.fromScale(0.26, 1), pos = UDim2.fromScale(0, 0), rotation = 0 },
 	{ size = UDim2.fromScale(0.26, 1), pos = UDim2.fromScale(0.74, 0), rotation = 180 },
 }
-local SHADE_MAX = 0.8 -- opacity at the screen's edge at full dread
+local SHADE_MAX = 0.55 -- opacity at the screen's edge at full dread: never pitch black
+-- Not lights out but a cold, lonely dark: blue-grey gathering at the edges while the colour drains.
+local SHADE_COLOR = Color3.fromRGB(34, 42, 56)
+local SHADE_TINT = Color3.fromRGB(214, 226, 242) -- the whole view cools toward this at full dread
+local SHADE_DESATURATE = 0.35
+local dreadGrade: ColorCorrectionEffect? = nil
 
 -- Your body instead of bars: wounds bleed in from the edges and drain the colour, a spent
 -- sprint closes the edges in grey.
@@ -211,7 +216,7 @@ function Overlay.mount(gui: ScreenGui)
 			Name = "Dread",
 			Size = spec.size,
 			Position = spec.pos,
-			BackgroundColor3 = Theme.Color.black,
+			BackgroundColor3 = SHADE_COLOR,
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			ZIndex = 19,
@@ -221,7 +226,8 @@ function Overlay.mount(gui: ScreenGui)
 			Rotation = spec.rotation,
 			Transparency = NumberSequence.new({
 				NumberSequenceKeypoint.new(0, 0),
-				NumberSequenceKeypoint.new(0.45, 0.55),
+				NumberSequenceKeypoint.new(0.35, 0.6),
+				NumberSequenceKeypoint.new(0.7, 0.92),
 				NumberSequenceKeypoint.new(1, 1),
 			}),
 			Parent = edge,
@@ -396,6 +402,17 @@ function Overlay.dread(level: number)
 	for _, edge in shade do
 		edge.BackgroundTransparency = 1 - alpha
 	end
+	local camera = workspace.CurrentCamera
+	if dreadGrade == nil or dreadGrade.Parent ~= camera then
+		local grade = Instance.new("ColorCorrectionEffect")
+		grade.Name = "Dread"
+		grade.Parent = camera
+		dreadGrade = grade
+	end
+	local grade = dreadGrade :: ColorCorrectionEffect
+	grade.Saturation = -SHADE_DESATURATE * level
+	grade.TintColor = Color3.new(1, 1, 1):Lerp(SHADE_TINT, level)
+	grade.Enabled = level > 0.005
 end
 
 -- Wound 0..1 (missing health) and winded 0..1 (spent stamina), set every frame.
