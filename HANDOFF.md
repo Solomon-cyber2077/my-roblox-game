@@ -10,6 +10,12 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - Moved in (values unchanged): `Tuning.HollowCount` -> `Difficulty.Threat` (`FullByCrew` 3/4/5/6, `SleeperShare`); `Tuning.Grab.DpsShare/MaxBiteShare/Pin.DpsShare` + Brute crush -> `Difficulty.GrabDamage` (Tuning's Brute `crush` now reads it); `Tuning.Hollow.SightRange/AwarenessRange/StrikeCooldown` and HollowService's hard-coded 4 s search -> `Difficulty.Aggression`. Brief 002's `EarlyHollowCap` deleted (was unused). `WandererDelay`, `Sleepers`, `HollowDamage`, `Dwell` were already in Difficulty.
 - Sections not yet read by code are wired by the later tasks below. `tests/Part2Config.spec` checks the schema.
 
+### A.2 Aggression and damage up (speed unchanged)
+- `Difficulty.Aggression`: SightRange 95 -> 118.75 (+25%), AwarenessRange 30 -> 37.5 (+25%), Persistence (search after losing sight) 4 -> 5.2 s (+30%), StrikeCooldown 0.9 -> 0.72 s (-20%). `HollowDamage` {20, 32} -> {25, 40} (+25%). Counts stay 3/4/5/6 full.
+- Speed: every kind's chase must sit between the crew's jog (`Tuning.Crew.WalkSpeed` 20) and sprint (31), pace spread included. The Brute's chase was 0.82 (18-21, slower than a jog at easy stops) -> 0.98. Lunges (x1.45 for 0.55 s within 16 studs) still briefly beat a sprint, as before.
+- `tests/HollowSpeed.spec` reads MovementController's source to confirm it moves the crew at `Tuning.Crew.SprintSpeed/WalkSpeed`, then checks every kind at D 0..1. The old masher spec now mashes 7/s (B.1 replaces the mash).
+- Unverified in Studio: how the harder Hollows feel.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 

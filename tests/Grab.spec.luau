@@ -87,13 +87,14 @@ describe("Grab", function()
 		expect(total).toBe(Grab.bitesBetween(def, 0, 5))
 	end)
 
+	-- 7 presses a second since damage rose 25% (fix pass A.2); B.1 replaces the mash with skill checks
 	it("lets a steady masher break every grab at every stop from full health", function()
 		for _, id in Stations.Order do
 			for d = 0, 1, 0.25 do
 				local params = DifficultyModel.params(d, Stations.List[id], 4, nil)
 				for _, kind in KINDS do
 					for _, def in Grabs.Kinds[kind] do
-						local free = struggle(def, params, kind, 6)
+						local free = struggle(def, params, kind, 7)
 						expect(free).toBe(true)
 					end
 				end

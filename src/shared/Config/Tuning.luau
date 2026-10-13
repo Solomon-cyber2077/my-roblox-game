@@ -370,7 +370,7 @@ local Tuning = {
 		},
 		Brute = {
 			walk = 0.9,
-			chase = 0.82,
+			chase = 0.98, -- was 0.82: every Hollow on the hunt outpaces a jog (tests/HollowSpeed.spec)
 			reach = 1.25,
 			windup = 1.4,
 			radius = 2.2,
