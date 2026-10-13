@@ -3,7 +3,7 @@
 ## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
 
 ### Resume point
-- Step 1 (audit) done. Next: step 3 design notes (`docs/stations/DESIGN.md`), then the generator scale-up.
+- Steps 1 (audit) and 3 (design notes: `docs/stations/DESIGN.md`, one paragraph per archetype, sources) done. Next: generator scale-up (sizes, village band, more landmarks), then edge, lamps, timers.
 
 ### 1. Audit (before)
 Generator: `Logic/LayoutGen` lays a 12-stud tile grid (x along the track, z away from the platform; Safe strip 24, zones Near < 0.4 depth < Mid < 0.75 depth < Far). Per archetype (`Config/Stations`): a layout style (Street, Plaza, Yard, Sidings) carves routes, enterable landmarks (`Config/Buildings`, rooms by `Logic/BuildingGen`, upper floors only on the big Spine buildings, no cellars) go first, then structures (`StructureKit`), barriers pinch the Mid/Far boundaries, then containers, loose pickups, platform props, boundary fence and trees, yard lamps (`cols // 5`), dressing and broken ground. Built by `Builders/StationBuilder` (one welded assembly; every floor tile is a 3-part slab: top, earth, keel).
