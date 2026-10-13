@@ -114,6 +114,16 @@ Commands.grab = function(player, args)
 	print(`[Dev] grab: {Registry.HollowService.DevGrab(player, args[1])}`)
 end
 
+-- A steam leak bursts now while the train runs, or as soon as it next does.
+Commands.leak = function()
+	Registry.TrainService.OpenBreach()
+end
+
+-- The hull to a percent (a breakdown's floor is Difficulty.Hull.Floor).
+Commands.hull = function(_, args)
+	Registry.TrainService.SetIntegrity(tonumber(args[1]) or 100)
+end
+
 Commands.coal = function(_, args)
 	Registry.TrainService.DevSet("coal", tonumber(args[1]) or 50)
 end

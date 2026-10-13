@@ -97,6 +97,8 @@ game.ReplicatedStorage.Remotes.Dev:FireServer("state")
 | `hollow`, `hollow Crawler` | Spawn a Hollow near you (of a kind: `Stalker`, `Crawler` or `Brute`) |
 | `grab`, `grab Brute` | A Hollow seizes you at once (a station must be docked): to try the holds and the struggle |
 | `coal 50`, `parts 20` | Set the train's stores |
+| `leak` | A steam leak bursts now while the train runs (or as soon as it next does) |
+| `hull 20` | Set the hull to a percent (`hull 1` while the train runs is a breakdown) |
 | `state` | Print the run, crew, train and backpack to the Output |
 | `sky 26` / `sky` | Pin every client's sky to an hour (18.3 dusk, 21 the amber moon rising, 26 the blood moon, 30.5 sunrise), or let it follow the run again |
 | `omen Eye` | Every client sees an omen now: `Hush`, `TallOnes`, `Blink`, `Bleed` or `Eye` |
