@@ -4,9 +4,12 @@
 	client can show the same cards before the server even sends them.
 
 	Leg k leads to stop k. Legs past the last stop lead to the Terminus.
-	Rules: options use distinct archetypes, an archetype never repeats the
-	previous stop unless nothing else is eligible, legs 1 and 2 never show tier 3,
-	and every junction offers at least one leg of 5 km or less.
+	Rules: every station (weight > 0) can come up at any leg, stop 1 included, so
+	no stop is fixed (the run seed is fresh every run, RunDirector Enter.Boarding;
+	`minStation` in Config/Stations is no longer a gate). Options use distinct
+	archetypes (a ballot never shows the same station twice), an archetype never
+	repeats the previous stop unless nothing else is eligible, legs 1 and 2 never
+	show tier 3, and every junction offers at least one leg of 5 km or less.
 ]]
 
 local Shared = script.Parent.Parent
@@ -40,13 +43,13 @@ function RouteGen.options(runSeed: number, leg: number, stopCount: number, previ
 	local pool: { Rng.Weighted<string> } = {}
 	for _, id in Stations.Order do
 		local arch = Stations.List[id]
-		if arch.minStation <= leg and arch.weight > 0 and id ~= previous then
+		if arch.weight > 0 and not arch.terminus and id ~= previous then
 			table.insert(pool, { weight = arch.weight, value = id })
 		end
 	end
 	if #pool < count and previous then
 		local arch = Stations.List[previous]
-		if arch and arch.minStation <= leg then
+		if arch and arch.weight > 0 then
 			table.insert(pool, { weight = arch.weight, value = previous })
 		end
 	end
