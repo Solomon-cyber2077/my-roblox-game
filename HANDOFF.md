@@ -53,6 +53,10 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - `Controllers/TutorialController` (client): once per run per prompt, on runs of the crew's tier (`run.tutorial`), one at a time in data order. Drawn in a new HUD slot `Hud.tutorialSlot()` at (14, 250, 236x84), left column under the in-run Settings button; it yields exactly like the leak slot (hidden under any modal/full-screen UI, and the prompt's time pauses while hidden). It sits left of the grab plate, so the run-2 skill-check line shows beside the ring, not on it.
 - Spec: prompt schema in `tests/Part2Config.spec`. Unverified on screen.
 
+### C.5 Stop 1 sinkhole edge marker (stand-in for part 3)
+- New `Builders/HazardRail`, built by `StationService.Spawn` at stop 1 only (not the Terminus): yellow posts with black bands every 8 studs, a yellow top rail and red mid rail (both collide), and a painted yellow line on the ground in front, 4.5 studs in from the far edge (inside the boundary fence and tree line), only over Floor slabs (buildings keep their own edge). Welded to the slab under it, so it falls with the ground. Top rails carry the `SinkholeEdge` tag the run-1 "edge" prompt uses.
+- Not covered by the visual audit (it is built at runtime); unverified in Studio for clashes with edge props.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
