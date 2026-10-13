@@ -96,7 +96,6 @@ describe("DifficultyModel", function()
 		expect(upgraded.chaseWindow).toBeCloseTo(base.chaseWindow + 2)
 		expect(upgraded.safeBand).toBe(base.safeBand + 6)
 		expect(upgraded.fogDps).toBeCloseTo(base.fogDps * 0.85)
-		expect(upgraded.breachRate).toBeCloseTo(base.breachRate * 0.75 ^ 2)
 	end)
 
 	it("matches the published dwell range of 94 to 148 seconds before archetype scaling", function()

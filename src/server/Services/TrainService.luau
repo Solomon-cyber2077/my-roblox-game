@@ -13,6 +13,7 @@ local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local UpgradesConfig = require(Shared.Config.Upgrades)
+local Leaks = require(Shared.Logic.Leaks)
 local Ledger = require(Shared.Logic.Ledger)
 local RunRules = require(Shared.Logic.RunRules)
 local Signal = require(Shared.Util.Signal)
@@ -42,8 +43,17 @@ local CAR_NAMES: { [string]: string } = {
 
 local built: TrainBuilder.Built
 local train: Train = Ledger.newTrain()
-local leg: { cost: number, seconds: number, burned: number }? = nil
-local breachRate = 0
+-- this trip: its coal, and its leaks (Logic/Leaks) as burst times in seconds of travel
+type Leg = {
+	cost: number,
+	seconds: number,
+	burned: number,
+	elapsed: number,
+	bursts: { number },
+	opened: number,
+	cap: number,
+}
+local leg: Leg? = nil
 local breachSeq = 0
 local breachPrompts: { [string]: { prompt: ProximityPrompt, anchor: BasePart } } = {}
 local pendingBursts = 0 -- leaks asked for while standing (a timed Breakdown): they burst once moving
@@ -53,8 +63,9 @@ local lastPublished = ""
 local safeGlows: { PointLight } = {}
 
 local function publish(force: boolean?)
+	-- integrity keeps its fraction (Ledger.drain); the crew sees it in tenths
 	local signature =
-		`{train.coal}|{train.parts}|{train.integrity}|{train.coalMax}|{train.starving}|{Ledger.breachCount(
+		`{train.coal}|{train.parts}|{math.floor(train.integrity * 10)}|{train.coalMax}|{train.starving}|{Ledger.breachCount(
 			train
 		)}`
 	if force or signature ~= lastPublished then
@@ -109,7 +120,14 @@ local function patchBreach(player: Player, id: string)
 	local nextTrain, ok, reason = Ledger.patchBreach(train, id)
 	if not ok then
 		if reason == "Parts" then
-			NetService.Fire("Notify", player, "Warning", "You need 1 part to patch a leak.")
+			NetService.Fire(
+				"Notify",
+				player,
+				"Warning",
+				`You need {Difficulty.Leaks.PatchParts} part{if Difficulty.Leaks.PatchParts == 1
+					then ""
+					else "s"} to patch a leak.`
+			)
 		end
 		return
 	end
@@ -137,7 +155,14 @@ local function openBreach()
 	anchor:SetAttribute("Breach", true)
 	anchor:SetAttribute("LeakId", id)
 	anchor:AddTag(LEAK_TAG)
-	local prompt = makePrompt(anchor, "Breach", "Steam leak", "Patch (1 part)", Tuning.Train.BreachPatchHold)
+	anchor:SetAttribute("LeakSeverity", 1)
+	local prompt = makePrompt(
+		anchor,
+		"Breach",
+		"Steam leak",
+		`Patch ({Difficulty.Leaks.PatchParts} part{if Difficulty.Leaks.PatchParts == 1 then "" else "s"})`,
+		Difficulty.Leaks.PatchHold
+	)
 	prompt.Triggered:Connect(function(player)
 		patchBreach(player, id)
 	end)
@@ -159,17 +184,33 @@ local function tick(dt: number)
 		end
 	end
 	-- leaks burst and the hull drains only while the train is running (never at the vote or a stop)
-	local moving = RunRules.hullDrains(phase)
-	if moving and Ledger.breachCount(train) < Tuning.Train.MaxBreaches then
-		if pendingBursts > 0 then
-			pendingBursts -= 1
-			openBreach()
-		elseif rng:NextNumber() < breachRate * dt then
+	local current = leg
+	if current and RunRules.hullDrains(phase) then
+		current.elapsed += dt
+		local due = current.bursts[1]
+		local wantsBurst = (due ~= nil and current.elapsed >= due) or pendingBursts > 0
+		if
+			wantsBurst
+			and current.opened < current.cap
+			and Ledger.breachCount(train) < Difficulty.Leaks.Cap
+		then
+			if due ~= nil and current.elapsed >= due then
+				table.remove(current.bursts, 1)
+			else
+				pendingBursts -= 1
+			end
+			current.opened += 1
 			openBreach()
 		end
-	end
-	if moving then
-		train = Ledger.drain(train, dt)
+		train = Ledger.drain(train, dt, current.seconds)
+		-- how bad each leak has got, for its steam and hiss (TrainVisualsController)
+		for id, breach in train.breaches do
+			local entry = breachPrompts[id]
+			if entry then
+				local severity = Leaks.severity(breach.age or 0, current.seconds)
+				entry.anchor:SetAttribute("LeakSeverity", math.floor(severity * 10 + 0.5) / 10)
+			end
+		end
 	end
 	publish()
 end
@@ -315,7 +356,6 @@ function TrainService.ResetForRun()
 	end
 	train = Ledger.newTrain()
 	leg = nil
-	breachRate = 0
 	pendingBursts = 0
 	publish(true)
 end
@@ -339,13 +379,26 @@ function TrainService.OpenBreach(): boolean
 	return Ledger.breachCount(train) > before
 end
 
-function TrainService.SetBreachRate(rate: number)
-	breachRate = rate
-end
-
-function TrainService.BeginLeg(km: number, seconds: number, rate: number)
-	leg = { cost = Ledger.legCoalCost(train, km), seconds = math.max(seconds, 1), burned = 0 }
-	breachRate = rate
+-- A trip of `km` and `seconds` toward stop `stop` of difficulty `d`: plans its leaks.
+function TrainService.BeginLeg(km: number, seconds: number, stop: number, d: number)
+	local count = Leaks.count(stop, d, train.upgrades, rng:NextNumber())
+	local shares = Leaks.shares(count, function()
+		return rng:NextNumber(-1, 1)
+	end)
+	local bursts = {}
+	for _, share in shares do
+		table.insert(bursts, share * math.max(seconds, 1))
+	end
+	table.sort(bursts)
+	leg = {
+		cost = Ledger.legCoalCost(train, km),
+		seconds = math.max(seconds, 1),
+		burned = 0,
+		elapsed = 0,
+		bursts = bursts,
+		opened = 0,
+		cap = Leaks.cap(stop),
+	}
 end
 
 -- Settles the leg's full coal cost even if the tick loop came up a little short.
@@ -357,7 +410,6 @@ function TrainService.EndLeg()
 		end
 		leg = nil
 	end
-	breachRate = 0
 	publish()
 end
 

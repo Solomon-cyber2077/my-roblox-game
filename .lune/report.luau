@@ -11,6 +11,7 @@ local require = Loader.requireNode
 
 local DifficultyModel = require(Shared.Logic.DifficultyModel)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
+local Leaks = require(Shared.Logic.Leaks)
 local Tuning = require(Shared.Config.Tuning)
 
 local N = Tuning.Run.StationCount
@@ -50,7 +51,7 @@ print(table.concat({
 	"pull",
 	"window_s",
 	"loot_x",
-	"breach_per_min",
+	"leaks_per_trip",
 }, ","))
 for n = 1, N do
 	local d = DifficultyModel.forStop(n, N, 2)
@@ -71,7 +72,7 @@ for n = 1, N do
 		round(p.departureAccel, 2),
 		round(p.chaseWindow, 2),
 		round(p.lootMul, 2),
-		round(p.breachRate * 60, 2),
+		Leaks.count(n, d, nil, 0.5),
 	}, ","))
 end
 

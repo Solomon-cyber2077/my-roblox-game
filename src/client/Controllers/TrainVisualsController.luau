@@ -20,6 +20,7 @@ local Workspace = game:GetService("Workspace")
 
 local MathX = require(ReplicatedStorage.Shared.Util.MathX)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Difficulty = require(ReplicatedStorage.Shared.Config.Difficulty)
 
 local Registry = require(script.Parent.Parent.Registry)
 local ChalkSlate = require(script.Parent.Parent.UI.ChalkSlate)
@@ -253,6 +254,19 @@ local function updateDoorLamps(rig: Rig, t: number)
 	end
 end
 
+-- A leak's steam and hiss, by how bad it has got (LeakSeverity, from TrainService). Always on,
+-- whatever the settings say: the leak is a thing in the world.
+local function shapeLeak(part: BasePart, emitter: ParticleEmitter)
+	local leaks = Difficulty.Leaks
+	local severity = (part:GetAttribute("LeakSeverity") :: number?) or 1
+	emitter.Rate = leaks.SteamRate * severity
+	local sound = Registry.AudioController and Registry.AudioController.LoopSound(`breach_{part.Name}`)
+	if sound then
+		sound.RollOffMaxDistance = leaks.HissRange
+		sound.Volume = 0.45 + 0.25 * severity
+	end
+end
+
 local function updateBreaches(rig: Rig)
 	for _, part in rig.model:GetDescendants() do
 		if part:IsA("BasePart") and part:GetAttribute("BreachAnchor") then
@@ -266,6 +280,9 @@ local function updateBreaches(rig: Rig)
 				if Registry.AudioController then
 					Registry.AudioController.Loop(`breach_{part.Name}`, "SteamLeak", part)
 				end
+				shapeLeak(part, steam)
+			elseif active and emitter then
+				shapeLeak(part, emitter)
 			elseif not active and emitter then
 				emitter:Destroy()
 				rig.breaches[part] = nil
@@ -298,6 +315,9 @@ local function track(model: Model, live: boolean)
 		for _, part in model:GetDescendants() do
 			if part:IsA("BasePart") and part:GetAttribute("BreachAnchor") then
 				part:GetAttributeChangedSignal("Breach"):Connect(function()
+					updateBreaches(rig)
+				end)
+				part:GetAttributeChangedSignal("LeakSeverity"):Connect(function()
 					updateBreaches(rig)
 				end)
 			end

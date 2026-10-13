@@ -66,7 +66,6 @@ export type HazardParams = {
 	departureAccel: number,
 	chaseWindow: number,
 	lootMul: number,
-	breachRate: number,
 	safeBand: number,
 }
 
@@ -94,7 +93,8 @@ export type TrainState = {
 	integrity: number,
 	integrityMax: number,
 	upgrades: { [string]: number },
-	breaches: { [string]: { anchor: string, openedAt: number } },
+	-- open steam leaks; age is the seconds of travel each has been left open (Logic/Leaks)
+	breaches: { [string]: { anchor: string, openedAt: number, age: number? } },
 	starving: boolean,
 }
 

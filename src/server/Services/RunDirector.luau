@@ -221,13 +221,6 @@ end
 
 Enter.Junction = function()
 	openBallot()
-	local d = DifficultyModel.forStop(
-		math.min(state.nextStop, Tuning.Run.StationCount),
-		Tuning.Run.StationCount,
-		2,
-		state.runTier
-	)
-	Registry.TrainService.SetBreachRate(DifficultyModel.breachRate(d, Registry.TrainService.Get().upgrades))
 end
 
 Enter.Cruise = function()
@@ -249,11 +242,7 @@ Enter.Cruise = function()
 		params.lootMul = Mystery.lootMul(params.lootMul)
 	end
 	state.cruiseSeconds = DifficultyModel.cruiseSeconds(option.distanceKm)
-	Registry.TrainService.BeginLeg(
-		option.distanceKm,
-		state.cruiseSeconds,
-		(state.params :: Types.HazardParams).breachRate
-	)
+	Registry.TrainService.BeginLeg(option.distanceKm, state.cruiseSeconds, state.nextStop, d)
 	local coalCost = Ledger.legCoalCost(train, option.distanceKm)
 	local destination: Types.Destination = if state.sealed
 		then Mystery.sealed(option.distanceKm, coalCost, option.archetype)
