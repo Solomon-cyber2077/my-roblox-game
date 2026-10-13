@@ -112,7 +112,7 @@ return table.freeze({
 			table.freeze({ fromStop = 7, immunity = 2, stagger = false }),
 		}),
 		StaggerSeconds = 1.5,
-		StaggerPush = 30, -- studs per second the staggered Hollow is shoved back
+		StaggerPush = 16, -- studs per second the staggered Hollow is shoved back at first, easing off
 	}),
 
 	-- Breaking a hold (Logic/SkillCheck): a needle sweeps a ring; Space (gamepad A, or the

@@ -41,6 +41,7 @@ local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 local SkillCheck = require(Shared.Logic.SkillCheck)
+local Threat = require(Shared.Logic.Threat)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local HollowBudget = require(Shared.Logic.HollowBudget)
 local LayoutGen = require(Shared.Logic.LayoutGen)
@@ -445,7 +446,12 @@ local function release(hollow: Hollow, why: string)
 			end
 		end
 	end
-	graceUntil[hold.victim] = os.clock() + G.Grace
+	-- post-grab protection (Logic/Threat): no Hollow may grab them for a while, and early on
+	-- the one that held them is staggered and shoved away
+	local p = params
+	local protection = Threat.protection(if p then p.stop or 1 else 1, if p then p.tutorial else nil)
+	graceUntil[hold.victim] = os.clock() + protection.immunity
+	character:SetAttribute("GrabImmuneUntil", serverNow() + protection.immunity)
 	for _, name in { "GrabStyle", "GrabAt", "GrabVictim" } do
 		hollow.model:SetAttribute(name, nil)
 	end
@@ -454,9 +460,13 @@ local function release(hollow: Hollow, why: string)
 		hollow.root:SetNetworkOwner(nil)
 	end)
 	hollow.lastStrike = os.clock()
-	if why == "Escaped" then
-		hollow.reelUntil = os.clock() + G.Stagger
+	if why == "Escaped" and protection.stagger then
+		-- staggered: it reels back, shoved hard at first, and cannot strike until it recovers
+		hollow.reelUntil = os.clock() + Difficulty.PostGrab.StaggerSeconds
 		setState(hollow, "Reel")
+		NetService.FireAll("Notify", "Crew", `{hold.victim.DisplayName} fought free of a {hollow.kind}!`)
+	elseif why == "Escaped" then
+		setState(hollow, "Recover")
 		NetService.FireAll("Notify", "Crew", `{hold.victim.DisplayName} fought free of a {hollow.kind}!`)
 	elseif why == "Flash" then
 		setState(hollow, "Stunned")
@@ -832,8 +842,9 @@ local function think(hollow: Hollow)
 		return
 	end
 	if clock < hollow.reelUntil then
-		-- thrown off: it staggers back a few steps before it comes again
-		hollow.humanoid.WalkSpeed = walk * 0.4
+		-- thrown off: it is shoved back, slowing, before it comes again
+		local left = (hollow.reelUntil - clock) / Difficulty.PostGrab.StaggerSeconds
+		hollow.humanoid.WalkSpeed = math.max(Difficulty.PostGrab.StaggerPush * left, walk * 0.4)
 		hollow.humanoid:MoveTo(position - hollow.root.CFrame.LookVector * 4)
 		return
 	end

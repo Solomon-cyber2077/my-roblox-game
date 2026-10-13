@@ -20,6 +20,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Grabs = require(Shared.Config.Grabs)
+local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 
@@ -966,7 +967,7 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		return out
 	end
 	if state == "Reel" then
-		local t = input.elapsed / Tuning.Grab.Stagger
+		local t = input.elapsed / Difficulty.PostGrab.StaggerSeconds
 		if crawler then
 			crawlerCower(rig, out, input.now, t)
 		else

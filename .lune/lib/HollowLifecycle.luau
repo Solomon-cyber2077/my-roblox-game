@@ -312,7 +312,7 @@ local function run(): string
 		check(not service.IsHeld(victim), "skill checks must free the victim")
 		service.Clear()
 		service.Configure(params)
-		tick(tuning.Grab.Grace + 1)
+		tick(6) -- past the longest post-grab immunity
 	end
 	for _, kind in { "Stalker", "Crawler", "Brute" } do
 		local prompt = seize(kind)
@@ -351,7 +351,7 @@ local function run(): string
 		winChecks()
 		if attempt < 3 then
 			root.CFrame = roblox.CFrame.new(0, 3, 80)
-			tick(tuning.Grab.Grace + 1)
+			tick(6) -- past the longest post-grab immunity
 			tick(1)
 		end
 	end

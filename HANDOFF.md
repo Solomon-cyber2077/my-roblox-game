@@ -24,6 +24,11 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - Audit `GrabLifecycle` now wins holds with skill checks and checks an early press misses (clock jumps) and a replay is ignored.
 - Unverified in Studio: the ring and needle on screen, input feel, ping tolerance on a real connection.
 
+### B.2 Post-grab protection by stop
+- `Logic/Threat.protection(stop, tutorialTier)` from `Difficulty.PostGrab.Schedule`: stops 1-2 5 s + stagger, 3-4 4 s + stagger, 5-6 3 s + stagger, 7+ 2 s no stagger. Any tutorial tier: 5 s + stagger everywhere (`Config/Tutorial` `postGrab`). `tests/Threat.spec`.
+- `HollowService.release`: immunity applies to every release the victim survives (no Hollow may seize them: `graceUntil`), also published as the character attribute `GrabImmuneUntil` (server time; no UI reads it yet). Stagger on a break-free (skill checks or crew): the holder goes to Reel for `StaggerSeconds` (1.5) and is shoved back at `StaggerPush` (16 studs/s) easing off; it cannot strike while reeling. Without stagger it just recovers. Replaces `Tuning.Grab.Grace/Stagger` (removed). `HazardParams.tutorial` added (set in C.1).
+- Unverified in Studio: how far the shove carries.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
