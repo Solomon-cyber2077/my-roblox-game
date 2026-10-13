@@ -94,6 +94,19 @@ function Breakdown.arrive(state: State): State
 	return with(state, { phase = "None", endsAt = nil, repairs = 0 })
 end
 
+-- The Emergency Village stop is over: `found` repair parts came aboard of the `needed`. Enough,
+-- and the train runs again (the run's count stays, so a second breakdown still loses it); short,
+-- and it falls back on the halt and the rally.
+function Breakdown.villageDone(state: State, found: number, needed: number, now: number): State
+	if state.phase ~= "Village" then
+		return state
+	end
+	if found >= needed then
+		return with(state, { phase = "None", endsAt = nil })
+	end
+	return with(state, { phase = "Stopped", endsAt = now + C.StopSeconds, repairs = 0 })
+end
+
 -- The share of its cruising speed the train runs at.
 function Breakdown.speedShare(state: State): number
 	if state.phase == "Limp" then

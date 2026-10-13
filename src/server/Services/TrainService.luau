@@ -330,6 +330,16 @@ function TrainService.SetIntegrity(value: number)
 	publish(true)
 end
 
+-- Spends `parts` from the stores (the Emergency Village's repair). False when there are not enough.
+function TrainService.SpendParts(parts: number): boolean
+	local nextTrain, ok = Ledger.spend(train, parts)
+	if ok then
+		train = nextTrain
+		publish(true)
+	end
+	return ok
+end
+
 -- Where leaks burst, one or two per car (BreachAnchor attribute names the car).
 function TrainService.BreachAnchors(): { BasePart }
 	return table.clone(built.breachAnchors)

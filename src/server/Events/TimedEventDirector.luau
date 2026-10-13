@@ -96,7 +96,8 @@ function TimedEventDirector.Begin(stationInfo: Types.StationInfo)
 	TimedEventDirector.Finish()
 	info = stationInfo
 	index = 1
-	slots = if stationInfo.terminus
+	-- the Emergency Village has its own clock and toast (BreakdownService): no events there
+	slots = if stationInfo.terminus or stationInfo.emergency
 		then {}
 		else Schedule.plan(stationInfo.dwell, stationInfo.lastCall, stationInfo.layoutSeed)
 end

@@ -13,6 +13,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Difficulty = require(Shared.Config.Difficulty)
 local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 local DifficultyModel = require(Shared.Logic.DifficultyModel)
@@ -62,6 +63,8 @@ type RunState = {
 	pending: Types.LogEntry?, -- this stop's run.log entry, appended when the stop resolves
 	mark: Types.StopHaul, -- the run's loot and downs when the previous stop resolved
 	tutorial: number, -- the crew's tutorial tier for this run (Services/TutorialService), 0 past it
+	-- the Emergency Village after a breakdown: the trip it interrupted, to resume after it
+	village: { resume: number, params: Types.HazardParams, partsAt: number?, needed: number }?,
 }
 
 local state: RunState = {
@@ -88,6 +91,7 @@ local state: RunState = {
 	pending = nil,
 	mark = { coal = 0, parts = 0, relics = 0, downs = 0 },
 	tutorial = 0,
+	village = nil,
 }
 
 local rng = Random.new()
@@ -157,6 +161,7 @@ local function cleanupRun()
 	Registry.TrainService.SetDoors(false)
 	Registry.CrewService.EndRun()
 	state.info, state.plan, state.params, state.chosen = nil, nil, nil, nil
+	state.village = nil
 	StateService.Set({ "run", "station" }, nil)
 	StateService.Set({ "run", "destination" }, nil)
 end
@@ -233,6 +238,14 @@ Enter.Junction = function()
 end
 
 Enter.Cruise = function()
+	local village = state.village
+	if village then
+		-- back on the line after the Emergency Village: the same trip, the time it had left
+		state.village = nil
+		state.params = village.params
+		state.cruiseSeconds = village.resume
+		return
+	end
 	local index, ticket, option = Registry.RouteService.Close()
 	local arch = Stations.List[option.archetype]
 	local d = if arch.terminus
@@ -280,7 +293,41 @@ Enter.Cruise = function()
 	})
 end
 
+-- The Emergency Village: built and braked in like a stop, but not one of them (no leg ends, no
+-- log entry, the destination stays the trip's).
+local function arriveAtVillage()
+	local params = state.params :: Types.HazardParams
+	local arch = Stations.List.EmergencyVillage
+	local layoutSeed = Rng.derive(state.seed, "village", state.nextStop)
+	local plan = LayoutGen.generate(arch.id, layoutSeed, params.lootMul)
+	local startedAt = now() + Tuning.Run.ArrivalSeconds
+	local info: Types.StationInfo = {
+		archetype = arch.id,
+		name = arch.name,
+		tier = 1,
+		difficulty = params.difficulty,
+		dwell = params.dwell,
+		lastCall = Tuning.Run.LastCallSeconds,
+		length = plan.length,
+		depth = plan.depth,
+		startedAt = startedAt,
+		departAt = startedAt + params.dwell,
+		layoutSeed = layoutSeed,
+		hazards = params,
+		terminus = false,
+		emergency = { needed = (state.village :: any).needed, found = 0 },
+	}
+	state.info = info
+	state.plan = plan
+	Registry.StationService.Spawn(plan, info)
+	StateService.Set({ "run", "station" }, info)
+end
+
 Enter.Arrival = function()
+	if state.village then
+		arriveAtVillage()
+		return
+	end
 	Registry.TrainService.EndLeg()
 	local option = state.chosen :: Types.RouteOption
 	local params = state.params :: Types.HazardParams
@@ -346,6 +393,18 @@ Enter.Dwell = function()
 	end
 	Registry.HazardDirector.Begin(plan, info)
 	Registry.CrewService.SpawnPendingJoiners()
+	local village = state.village
+	if village and info.emergency then
+		village.partsAt = Registry.TrainService.Get().parts
+		NetService.FireAll(
+			"Notify",
+			"Alarm",
+			`Emergency stop. Bring {info.emergency.needed} repair parts aboard. The train leaves in {Format.clock(
+				info.dwell
+			)}.`
+		)
+		return
+	end
 	NetService.FireAll(
 		"Notify",
 		"Station",
@@ -383,7 +442,21 @@ end
 
 Exit.Departure = function(nextPhase)
 	state.departed = true
-	if nextPhase == "Junction" then
+	local village = state.village
+	if village then
+		-- left behind at the village is left behind; the stop does not count and logs nothing
+		Registry.CrewService.ResolveDeparture()
+		local found = RunDirector.VillageFound()
+		local ok = found >= village.needed
+		if ok then
+			Registry.TrainService.SpendParts(village.needed)
+			Registry.TrainService.SetIntegrity(Difficulty.Breakdown.VillageRestore)
+			NetService.FireAll("Notify", "Upgrade", "Repairs made. The train runs again.")
+		else
+			NetService.FireAll("Notify", "Alarm", "Not enough parts. The crew will have to patch her aboard.")
+		end
+		Registry.BreakdownService.VillageDone(found, village.needed)
+	elseif nextPhase == "Junction" then
 		local closeCalls = Registry.CrewService.ResolveDeparture()
 		-- the last of the crew left behind: the run ends at this stop, not the next, and it does
 		-- not count as cleared
@@ -472,7 +545,11 @@ local function tick()
 		end
 	end
 	if state.endsAt and now() >= state.endsAt then
-		transition(RunRules.next(state.phase, ctx), nil)
+		local nextPhase = RunRules.next(state.phase, ctx)
+		if state.phase == "Departure" and state.village then
+			nextPhase = "Cruise" -- the Emergency Village: back on the interrupted trip
+		end
+		transition(nextPhase, nil)
 	end
 end
 
@@ -526,12 +603,62 @@ function RunDirector.DevWarp(seconds: number)
 	end
 end
 
--- Studio only (DevService `mystery`): the next ballot carries a mystery ticket; at a junction, now.
 -- Dev `station <id>`: the next ballot offers only that archetype (Studio checks of a stop).
 function RunDirector.DevForceArchetype(id: string)
 	state.forceArchetype = id
 end
 
+--[[
+	The Emergency Village (Services/BreakdownService, at the run's first breakdown): the trip is
+	interrupted where it is, the village braked in, a stop's phases run (Arrival, Dwell, Last
+	Call, Departure) with the village's window as the clock, then the trip resumes with the time
+	it had left. Its threat is the stop the train was heading for (difficulty, stop index and the
+	tutorial tier). False when it cannot start (not cruising, or already at one).
+]]
+function RunDirector.BeginVillageStop(): boolean
+	local base = state.params
+	if state.phase ~= "Cruise" or state.village or base == nil then
+		return false
+	end
+	local C = Difficulty.Breakdown
+	local arch = Stations.List.EmergencyVillage
+	local train = Registry.TrainService.Get()
+	local params = DifficultyModel.params(
+		base.difficulty,
+		arch,
+		Registry.CrewService.AliveCount(),
+		train.upgrades,
+		state.nextStop
+	)
+	params.dwell = C.VillageSeconds
+	params.stop = state.nextStop
+	params.tutorial = state.tutorial
+	state.village = {
+		resume = math.max((state.endsAt or now()) - now(), 1),
+		params = base,
+		partsAt = nil,
+		needed = C.VillageParts,
+	}
+	state.params = params
+	transition("Arrival", nil)
+	return true
+end
+
+-- True while the run is at (or braking into, or leaving) the Emergency Village.
+function RunDirector.IsVillageStop(): boolean
+	return state.village ~= nil
+end
+
+-- Repair parts brought aboard since the village's doors opened.
+function RunDirector.VillageFound(): number
+	local village = state.village
+	if village == nil or village.partsAt == nil then
+		return 0
+	end
+	return math.max(Registry.TrainService.Get().parts - village.partsAt, 0)
+end
+
+-- Studio only (DevService `mystery`): the next ballot carries a mystery ticket; at a junction, now.
 function RunDirector.DevForceMystery()
 	state.forceMystery = true
 	if state.phase == "Junction" then

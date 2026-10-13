@@ -862,7 +862,10 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		table.insert(props, { kind = kind, slab = 1, x = x, z = z, rot = rot or 0 })
 		table.insert(taken, { x - hx, x + hx, z - hz, z + hz })
 	end
-	local canopy = if arch.terminus then 0 else math.clamp(half - 60, 30, Stations.CanopyHalfSpan)
+	-- the Emergency Village has no station: no canopy, lamps, benches, boards or clutter
+	local canopy = if arch.terminus or arch.emergency
+		then 0
+		else math.clamp(half - 60, 30, Stations.CanopyHalfSpan)
 	if canopy > 0 then
 		table.insert(props, { kind = "Canopy", slab = 1, x = 0, z = 0, rot = 0, size = canopy * 2 })
 		for _, x in Stations.canopyColumns(canopy) do
@@ -872,38 +875,40 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			)
 		end
 	end
-	local spacing = arch.lampSpacing
-	local lampCount = math.floor(arch.length / spacing)
-	for i = 0, lampCount - 1 do
-		local x = -half + spacing * (i + 0.5)
-		if math.abs(x) > canopy + 2 then
-			onPlatform("Lamp", x, safe - 3, 1, 1)
+	if not arch.emergency then
+		local spacing = arch.lampSpacing
+		local lampCount = math.floor(arch.length / spacing)
+		for i = 0, lampCount - 1 do
+			local x = -half + spacing * (i + 0.5)
+			if math.abs(x) > canopy + 2 then
+				onPlatform("Lamp", x, safe - 3, 1, 1)
+			end
+			if i % 2 == 0 and i < lampCount - 1 then
+				onPlatform("Bench", x + spacing / 2, 12, 2.8, 1.2)
+			end
 		end
-		if i % 2 == 0 and i < lampCount - 1 then
-			onPlatform("Bench", x + spacing / 2, 12, 2.8, 1.2)
+		onPlatform("Sign", 0, safe - 6, 7.4, 0.6)
+		if arch.length >= 280 then
+			onPlatform("Sign", -arch.length / 3, safe - 6, 7.4, 0.6)
+			onPlatform("Sign", arch.length / 3, safe - 6, 7.4, 0.6)
 		end
-	end
-	onPlatform("Sign", 0, safe - 6, 7.4, 0.6)
-	if arch.length >= 280 then
-		onPlatform("Sign", -arch.length / 3, safe - 6, 7.4, 0.6)
-		onPlatform("Sign", arch.length / 3, safe - 6, 7.4, 0.6)
-	end
-	-- a luggage trolley, milk churns, the fire buckets and the timetable, wherever they fit
-	for _, spot in
-		{
-			{ kind = "Trolley", x = canopy + 13, z = 15.5, hx = 3.2, hz = 1.8, rot = 8 },
-			{ kind = "Churns", x = -(canopy + 10), z = 16.5, hx = 2.4, hz = 1.6, rot = 0 },
-			{ kind = "FireBuckets", x = 9.5, z = 21.6, hx = 2.2, hz = 0.8, rot = 0 },
-			{ kind = "Timetable", x = -11, z = 21.4, hx = 2.4, hz = 0.8, rot = 0 },
-			{ kind = "Planter", x = canopy * 0.55, z = 16.2, hx = 2, hz = 1, rot = 0 },
-			{ kind = "Planter", x = -canopy * 0.55, z = 16.2, hx = 2, hz = 1, rot = 0 },
-		}
-	do
-		for _, dx in { 0, 6, -6, 12, -12 } do
-			local x = spot.x + dx
-			if room(x - spot.hx, x + spot.hx, spot.z - spot.hz, spot.z + spot.hz) then
-				onPlatform(spot.kind, x, spot.z, spot.hx, spot.hz, spot.rot)
-				break
+		-- a luggage trolley, milk churns, the fire buckets and the timetable, wherever they fit
+		for _, spot in
+			{
+				{ kind = "Trolley", x = canopy + 13, z = 15.5, hx = 3.2, hz = 1.8, rot = 8 },
+				{ kind = "Churns", x = -(canopy + 10), z = 16.5, hx = 2.4, hz = 1.6, rot = 0 },
+				{ kind = "FireBuckets", x = 9.5, z = 21.6, hx = 2.2, hz = 0.8, rot = 0 },
+				{ kind = "Timetable", x = -11, z = 21.4, hx = 2.4, hz = 0.8, rot = 0 },
+				{ kind = "Planter", x = canopy * 0.55, z = 16.2, hx = 2, hz = 1, rot = 0 },
+				{ kind = "Planter", x = -canopy * 0.55, z = 16.2, hx = 2, hz = 1, rot = 0 },
+			}
+		do
+			for _, dx in { 0, 6, -6, 12, -12 } do
+				local x = spot.x + dx
+				if room(x - spot.hx, x + spot.hx, spot.z - spot.hz, spot.z + spot.hz) then
+					onPlatform(spot.kind, x, spot.z, spot.hx, spot.hz, spot.rot)
+					break
+				end
 			end
 		end
 	end
@@ -1082,7 +1087,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	rng:shuffle(routeCells)
 	local gap = Stations.Lamps.PoolGap
 	for _, cell in routeCells do
-		if #pools >= Stations.Lamps.YardMax then
+		if #pools >= (arch.yardLamps or Stations.Lamps.YardMax) then
 			break
 		end
 		local apart = true
