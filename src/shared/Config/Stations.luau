@@ -328,22 +328,26 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 3,
 		minStation = 4,
 		weight = 0.8,
-		length = 372,
-		depth = 120,
+		length = 612,
+		depth = 216,
 		dwellMultiplier = 0.9,
 		hint = "Relics, fragile ground",
 		loot = { coal = 1.0, parts = 1.0, relic = 2.0, tools = 1.4 },
 		hazard = { collapse = 1.5, fog = 0.9, hollows = 0.9 },
-		containers = { Crate = 5, CoalBin = 2, ToolChest = 2, Vault = 1 },
-		looseItems = 6,
+		containers = { Crate = 9, CoalBin = 3, ToolChest = 4, Vault = 1 },
+		looseItems = 10,
 		structures = {
+			{ kind = "Arches", count = 3, zones = { "Near", "Mid", "Far" } },
 			{ kind = "SignalBox", count = 1, zones = { "Mid", "Far" } },
-			{ kind = "Shed", count = 1, zones = { "Far" } },
+			{ kind = "Shed", count = 2, zones = { "Far" } },
 		},
 		landmarks = {
 			{ kind = "Chapel", zones = { "Mid", "Far" } },
+			{ kind = "SignalCabin", zones = { "Near", "Mid" } },
+			{ kind = "CoalOffice", zones = { "Near" } },
+			{ kind = "House", zones = { "Mid" }, decor = true },
 		},
-		lampSpacing = 30,
+		lampSpacing = 40,
 		ground = "Brick",
 		palette = {
 			ground = { 150, 96, 74 },
@@ -352,15 +356,26 @@ local Archetypes: { [string]: Archetype } = {
 			light = { 255, 206, 150 },
 		},
 		edge = { fence = "WallStone", trees = { "Pine", "Birch", "Pine" }, treeChance = 0.55 },
-		dressing = { "Graves", "Puddle", "Bonfire", "Barrels" },
-		yardTrees = 1,
+		dressing = { "Graves", "Puddle", "Bonfire", "Barrels", "Graves" },
+		yardTrees = 2,
 		layout = {
 			style = "Street",
 			lane = 1,
 			barriers = { "WallStone" },
 			fill = { 0.4, 0.6 },
 			ground = { "Rubble", "Trench", "BrokenRoad" },
-			groundCount = 4,
+			groundCount = 8,
+		},
+		-- the platelayers' cottages along the far edge, and their inn
+		village = {
+			rows = 5,
+			landmarks = {
+				{ kind = "Terrace", zones = { "Village" } },
+				{ kind = "Inn", zones = { "Village" } },
+				{ kind = "House", zones = { "Village" } },
+				{ kind = "House", zones = { "Village" }, decor = true },
+			},
+			containers = { Crate = 2, ToolChest = 1, Vault = 1 },
 		},
 	},
 	Minehead = {
@@ -629,6 +644,7 @@ local Footprints: { [string]: { number } } = {
 	Chimney = { 2, 2 },
 	Gantry = { 3, 1 },
 	ClockTower = { 2, 2 },
+	Arches = { 4, 1 },
 }
 
 for _, def in Archetypes do
