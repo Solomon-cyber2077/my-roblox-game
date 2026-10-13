@@ -483,6 +483,70 @@ Builders.ClockTower = function(ctx)
 	)
 end
 
+-- What is left of the old viaduct: stone piers with arched spans between them and a broken
+-- deck high overhead, one span fallen. The dark under the arches is somewhere to hide.
+Builders.Arches = function(ctx)
+	local span = ctx.width - 4
+	local piers, h = 3, 15
+	local gap = span / (piers - 1)
+	for k = 0, piers - 1 do
+		local x = -span / 2 + k * gap
+		Kit.block(
+			ctx.parent,
+			Vector3.new(3.4, h, 6),
+			f(ctx, x, h / 2, 0),
+			C.stone,
+			{ material = Enum.Material.Limestone }
+		)
+	end
+	for k = 0, piers - 2 do
+		local x0 = -span / 2 + k * gap + 1.7
+		local x1 = x0 + gap - 3.4
+		local mid = (x0 + x1) / 2
+		local half = (x1 - x0) / 2
+		-- the arch's shoulders, rising to the crown
+		Kit.wedge(
+			ctx.parent,
+			Vector3.new(5.6, 4.5, half),
+			f(ctx, x0 + half / 2, h - 2.25, 0) * Kit.angles(0, 90, 0),
+			C.stone,
+			{ material = Enum.Material.Limestone }
+		)
+		Kit.wedge(
+			ctx.parent,
+			Vector3.new(5.6, 4.5, half),
+			f(ctx, x1 - half / 2, h - 2.25, 0) * Kit.angles(0, -90, 0),
+			C.stone,
+			{ material = Enum.Material.Limestone }
+		)
+		if k == 0 then
+			Kit.block(
+				ctx.parent,
+				Vector3.new(x1 - x0 + 3.4, 1.4, 6.6),
+				f(ctx, mid, h + 0.7, 0),
+				C.brickDark,
+				{ material = Enum.Material.Brick }
+			)
+		else
+			-- the fallen span lies broken at the foot of the piers
+			Kit.block(
+				ctx.parent,
+				Vector3.new(half * 0.9, 1.4, 5.2),
+				f(ctx, mid - half * 0.4, 0.9, -0.4) * Kit.angles(4, 12, 9),
+				C.brickDark,
+				{ material = Enum.Material.Brick }
+			)
+			Kit.block(
+				ctx.parent,
+				Vector3.new(half * 0.7, 1.2, 4.6),
+				f(ctx, mid + half * 0.5, 0.7, 0.6) * Kit.angles(-6, -20, -7),
+				C.stone,
+				{ material = Enum.Material.Limestone }
+			)
+		end
+	end
+end
+
 Builders.CoalTower = function(ctx)
 	local h = 20
 	for _, x in { -8, 8 } do
