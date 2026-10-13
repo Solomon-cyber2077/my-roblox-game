@@ -104,6 +104,9 @@ export type Plan = {
 	props: { Prop },
 	sleepers: { Sleeper },
 	spawnLanes: { number },
+	-- tiles nobody walks through (structures and barriers), keyed gz * cols + gx; enterable
+	-- buildings are not in it (their doors let you through)
+	blocked: { [number]: boolean },
 }
 
 local CONTAINER_ORDER = { "Crate", "Locker", "CoalBin", "ToolChest", "Vault" }
@@ -1030,6 +1033,14 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		end
 	end
 
+	local blocked: { [number]: boolean } = {}
+	for i = 1, cols * rows do
+		local id = occupancy[i]
+		if id == BARRIER or (id > 0 and id < LANDMARK) then
+			blocked[i - 1] = true
+		end
+	end
+
 	-- Hollow spawn lanes along the far edge ---------------------------------------------
 	local lanes: { number } = {}
 	local laneCount = 8
@@ -1055,6 +1066,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		props = props,
 		sleepers = sleepers,
 		spawnLanes = lanes,
+		blocked = blocked,
 	}
 end
 

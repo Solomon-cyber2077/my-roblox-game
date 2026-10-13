@@ -1,5 +1,36 @@
 # HANDOFF
 
+## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
+
+### Resume point
+- Step 1 (audit) done. Next: step 3 design notes (`docs/stations/DESIGN.md`), then the generator scale-up.
+
+### 1. Audit (before)
+Generator: `Logic/LayoutGen` lays a 12-stud tile grid (x along the track, z away from the platform; Safe strip 24, zones Near < 0.4 depth < Mid < 0.75 depth < Far). Per archetype (`Config/Stations`): a layout style (Street, Plaza, Yard, Sidings) carves routes, enterable landmarks (`Config/Buildings`, rooms by `Logic/BuildingGen`, upper floors only on the big Spine buildings, no cellars) go first, then structures (`StructureKit`), barriers pinch the Mid/Far boundaries, then containers, loose pickups, platform props, boundary fence and trees, yard lamps (`cols // 5`), dressing and broken ground. Built by `Builders/StationBuilder` (one welded assembly; every floor tile is a 3-part slab: top, earth, keel).
+- Loot spots: `containers` (Crate/CoalBin/ToolChest/Vault counts x lootMul, zone-weighted, `FarLoot` bias; furniture containers inside buildings) and `looseItems` (60% Near).
+- Hollow spawns: 8 `spawnLanes` along the far edge (shuffled x), sleepers in building rooms (`Difficulty.Sleepers`), wanderers after `WandererDelay`.
+- Edge hazards: the station is an island over a sinkhole (`Journey.sinkhole`: length + 2x70, depth + 60). Fog front from the far edge, collapse front trailing it (slabs fall). Part 2's stand-in `Builders/HazardRail` (tag `SinkholeEdge`) only at stop 1.
+- Tags: `SafeLight` on every Lamp lens (radius 16) and the train's side lights (34); `SinkholeEdge` on the stand-in rail tops.
+- Departure timer: `DifficultyModel.params` dwell = blend(`Difficulty.Dwell` {148, 94}, D) x `dwellMultiplier` x (1 + 0.02 x building tiles); `RunDirector` sets `startedAt`/`departAt` from the server clock at Dwell; clients count down via `DepartureClock`/`Logic/DepartureSchedule`.
+- Movement (Tuning.Crew, read by MovementController): jog 20, sprint 31, stamina 100, drain 18/s (5.6 s sprint), regen 22/s after 0.9 s.
+
+Before (seed 424242, `lune run stations`; far = studs on foot from the nearest door to the farthest loot; jog2x/spr2x = seconds there and back; dwell at the archetype's first stop / at stop 10 tier 3; margin = dwellN / jog2x):
+
+| archetype | size | walkable area | bldgs | structs | loot | far | jog2x | spr2x | dwell1 | dwellN |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Halt | 276x168 | 41040 | 3 | 4 | 23 | 210 | 21.0 | 15.3 | 157 | 101 |
+| CoalYard | 312x192 | 52128 | 2 | 9 | 37 | 258 | 25.8 | 19.0 | 170 | 112 |
+| SignalWorks | 300x216 | 58320 | 1 | 7 | 24 | 282 | 28.2 | 20.9 | 176 | 118 |
+| Market | 312x204 | 57168 | 1 | 10 | 23 | 258 | 25.8 | 19.0 | 172 | 118 |
+| Viaduct | 372x120 | 38448 | 1 | 2 | 20 | 162 | 16.2 | 11.5 | 144 | 106 |
+| Minehead | 300x228 | 60336 | 3 | 6 | 30 | 306 | 30.6 | 22.8 | 170 | 130 |
+| Schoolhouse | 312x204 | 56592 | 1 | 3 | 29 | 306 | 30.6 | 22.8 | 244 | 164 |
+| Infirmary | 300x192 | 52128 | 1 | 2 | 31 | 246 | 24.6 | 18.1 | 221 | 152 |
+| RailwayHotel | 324x204 | 59616 | 1 | 3 | 32 | 270 | 27.0 | 19.9 | 206 | 152 |
+| PostTown | 336x204 | 63792 | 2 | 4 | 27 | 282 | 28.2 | 20.9 | 187 | 143 |
+
+Audit build (`lune run audit Station`): 2742-3746 parts, 18-36 lights, 0 shadows per station (budget 4200 parts / 40 lights). Terminus 2230 parts (not part of this pass).
+
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
 ## 2026-10-13: FIX PASS PART 2 (grabs, threat curve, tutorial, hull and leaks) -- READ THIS FIRST
