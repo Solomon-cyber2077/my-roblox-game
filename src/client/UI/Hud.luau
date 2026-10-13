@@ -552,7 +552,7 @@ function Hud.mount(gui: ScreenGui)
 
 	-- Train gauges -----------------------------------------------------------------------------
 	-- A steel plate read left to right, row by row: the name, its figure, then a flat gauge.
-	-- It shows when a figure moves or something is wrong, and is gone otherwise.
+	-- Always on through a run: the crew must be able to read coal, parts and hull at a glance.
 	local TINT = {
 		coal = Theme.Color.brass,
 		parts = Theme.Color.parts,
@@ -560,14 +560,17 @@ function Hud.mount(gui: ScreenGui)
 		caution = Theme.Color.caution,
 		signal = Theme.Color.signal,
 	}
-	local gaugeFade = fader("GaugeCase", HIDDEN, {
+	local gaugeCase = Ui.new("Frame", {
+		Name = "GaugeCase",
 		Size = UDim2.fromOffset(236, 136),
 		Position = UDim2.fromOffset(14, 12),
+		BackgroundTransparency = 1,
+		Parent = container,
 	})
 	local gauges = Ui.panel({
 		Name = "Gauges",
 		Size = UDim2.fromOffset(236, 96),
-		Parent = gaugeFade.group,
+		Parent = gaugeCase,
 	})
 	Ui.padding(10, 14, 10, 12).Parent = gauges
 	local function gaugeRow(
@@ -973,26 +976,10 @@ function Hud.mount(gui: ScreenGui)
 		renderBackpack(inv)
 		wake(backpackFade)
 	end)
-	-- the gauges come up when coal goes in, parts or the hull change, or a leak opens; the
-	-- steady burn of coal on the move does not wake them
-	local lastTrain = { coal = 0, parts = 0, integrity = 0, breaches = 0 }
 	function renderTrain(train: any)
 		if train == nil then
 			return
 		end
-		local leaks = 0
-		for _ in train.breaches or {} do
-			leaks += 1
-		end
-		if
-			train.coal > lastTrain.coal + 0.5
-			or train.parts ~= lastTrain.parts
-			or math.abs(train.integrity - lastTrain.integrity) >= 1
-			or leaks ~= lastTrain.breaches
-		then
-			wake(gaugeFade)
-		end
-		lastTrain = { coal = train.coal, parts = train.parts, integrity = train.integrity, breaches = leaks }
 		setCoal(train.coal / math.max(train.coalMax, 1))
 		coalValue.Text = `{math.floor(train.coal)}/{train.coalMax}`
 		partsValue.Text = tostring(train.parts)
@@ -1013,15 +1000,6 @@ function Hud.mount(gui: ScreenGui)
 		end
 	end
 	State.Observe("public", { "train" }, renderTrain)
-	-- a respawn or the train pulling out brings the gauges up again
-	player.CharacterAdded:Connect(function()
-		wake(gaugeFade)
-	end)
-	State.Observe("public", { "run", "phase" }, function(phase: any)
-		if phase == "Departure" or phase == "Boarding" then
-			wake(gaugeFade)
-		end
-	end)
 
 	-- Tool hotkeys 1-6
 	local function onKey(
@@ -1169,9 +1147,6 @@ function Hud.mount(gui: ScreenGui)
 		watchScale.Scale = if hurry then 1 + 0.03 * math.sin(now * 10) else 1
 		if hurry or (phase == "Dwell" and timerValue < 30) then
 			wake(watchFade, 0.5)
-		end
-		if warning.Text ~= "" then
-			wake(gaugeFade, 0.5)
 		end
 		updateWatch(now, left, lastCall, Session.status() == "Aboard")
 

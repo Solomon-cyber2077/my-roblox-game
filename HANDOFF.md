@@ -41,6 +41,11 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - Fix: the seal (and a mystery's lantern) moved to the right of the danger rows: disc at x 173, wax x 161-217 / y 89-145 on the 224x214 card, so it clears the name (ends y 85), the title (now width-limited to end before x 161, and shrinks to fit), the tallies (now at x 16-32 under the title), the stamps (x 48-157) and the vote button (y 160). Positions are fixed offsets on a fixed-size card, scaled as a whole, so this holds at any card size. `WAX_SPREAD` names the 1.7.
 - Verified: `lune run check` passes; geometry checked by arithmetic. Not seen on screen (Studio access declined).
 
+### 2.1 Resource panel always on
+- `UI/Hud`: `GaugeCase` is a plain Frame (no longer a fader CanvasGroup), so coal/parts/hull stay up for the whole run; the change-detection wake code (and 1.3's extra wakes) is gone, `renderTrain` still refreshes on run start.
+- Readability: the hit pulses, dread and vitals edges moved from `LastTrainOutEdges` (DisplayOrder 6, over the HUD) to a new `LastTrainOutEdgesUnder` ScreenGui (DisplayOrder 3, under the HUD (5) and the train camera gui (4)), still IgnoreGuiInset + ScreenInsets None, so the inset fix holds. Only the full-screen fade stays above the HUD.
+- Verified: `lune run check` passes. Not seen on screen.
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:
