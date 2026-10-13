@@ -211,6 +211,10 @@ local function onFx(kind: string, data: { [string]: any }?)
 		Registry.GrabController.Seized()
 	elseif kind == "Bite" then
 		Registry.GrabController.Bite()
+	elseif kind == "SkillCheck" then
+		Registry.GrabController.Check(d)
+	elseif kind == "SkillResult" then
+		Registry.GrabController.Result(d)
 	elseif kind == "Pried" then
 		local helper = Players:GetPlayerByUserId(d.by or 0)
 		Registry.GrabController.Pried(if helper then helper.DisplayName else "Someone")

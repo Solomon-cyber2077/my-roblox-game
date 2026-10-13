@@ -48,8 +48,6 @@ return table.freeze({
 	HollowWalk = table.freeze({ 11, 14 }),
 	HollowChase = table.freeze({ 22, 26 }), -- between the crew's jog (20) and sprint (31)
 	HollowDamage = table.freeze({ 25, 40 }), -- was { 20, 32 } (+25%)
-	GrabMash = table.freeze({ 0.15, 0.105 }), -- escape won per press of the struggle key
-	GrabSlip = table.freeze({ 0.2, 0.3 }), -- escape lost per second of a hold
 	-- how often each kind of Hollow comes
 	HollowKinds = table.freeze({
 		Stalker = table.freeze({ 1, 0.55 }),
@@ -131,8 +129,8 @@ return table.freeze({
 		LeadDegrees = table.freeze({ 110, 230 }), -- the zone starts this far ahead of the needle
 		ZoneByStop = table.freeze({ 70, 64, 58, 52, 47, 42, 38 }), -- zone width by stop, the last for later stops
 		GreatShare = 0.25, -- the great zone: this leading share of the zone
-		LatencyBase = 0.05, -- seconds of press tolerance on top of the player's ping
-		LatencyMax = 0.25, -- never more tolerance than this
+		LatencyBase = 0.05, -- seconds of press tolerance on top of half the player's round-trip ping
+		LatencyMax = 0.2, -- never more tolerance than this
 		MinPressGap = 0.12, -- presses closer together than this are ignored
 		FinishByStop = table.freeze({ 12, 11.5, 11, 10.5, 10, 9.5, 9 }), -- the grab clock by stop
 		FinishMargin = 1, -- the clock always exceeds the time the minimum checks need by this

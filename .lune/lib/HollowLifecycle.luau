@@ -260,6 +260,60 @@ local function run(): string
 		check(service.IsHeld(victim) and root.Anchored, "grab must immobilize its victim")
 		return prompts[#prompts]
 	end
+	-- The latest skill check the server sent the victim (Fx SkillCheck), if it is new.
+	local used = {}
+	local function latestCheck()
+		for i = #events, 1, -1 do
+			local event = events[i]
+			if event[1] == "Fx" and event[3] == "SkillCheck" then
+				return if used[event[4]] then nil else event[4]
+			end
+		end
+		return nil
+	end
+	-- Wins the hold with skill checks: waits for each check, presses in its great zone.
+	local function winChecks()
+		for _ = 1, 40 do
+			if not service.IsHeld(victim) then
+				return
+			end
+			tick(0.3)
+			local latest = latestCheck()
+			if latest then
+				used[latest] = true
+				clock = latest.startsAt + (latest.zoneStart + latest.greatWidth / 2) / 360 * latest.sweep
+				callbacks.SkillCheck(victim, latest.id)
+			end
+		end
+	end
+	-- An early press is a miss (the clock jumps closer), and a replay of a judged check is ignored.
+	do
+		seize("Stalker")
+		local before = character:GetAttribute("GrabFinishAt")
+		local first
+		for _ = 1, 10 do
+			tick(0.3)
+			first = latestCheck()
+			if first then
+				break
+			end
+		end
+		check(first ~= nil, "a skill check must reach the victim")
+		check(clock - first.startsAt >= 0 and first.startsAt - (before - 20) > 0, "check timing")
+		used[first] = true
+		clock = first.startsAt + 0.01
+		callbacks.SkillCheck(victim, first.id)
+		local after = character:GetAttribute("GrabFinishAt")
+		check(after < before, "an early press must be a miss that speeds up the clock")
+		clock += 1
+		callbacks.SkillCheck(victim, first.id)
+		check(character:GetAttribute("GrabFinishAt") == after, "a replayed check must be ignored")
+		winChecks()
+		check(not service.IsHeld(victim), "skill checks must free the victim")
+		service.Clear()
+		service.Configure(params)
+		tick(tuning.Grab.Grace + 1)
+	end
 	for _, kind in { "Stalker", "Crawler", "Brute" } do
 		local prompt = seize(kind)
 		allyRoot.CFrame = roblox.CFrame.new(1000, 3, 0)
@@ -270,10 +324,11 @@ local function run(): string
 		local once = character:GetAttribute("GrabEscape")
 		prompt.trigger(ally)
 		check(character:GetAttribute("GrabEscape") == once, "helper spam must be limited")
-		for _ = 1, 30 do
-			callbacks.Struggle(victim)
-		end
-		check(not service.IsHeld(victim) and not root.Anchored, "struggle must release both state and body")
+		winChecks()
+		check(
+			not service.IsHeld(victim) and not root.Anchored,
+			"skill checks must release both state and body"
+		)
 		check(
 			character:GetAttribute("GrabStyle") == nil and character:GetAttribute("GrabOutcome") == "Escaped",
 			"escape attributes"
@@ -293,9 +348,7 @@ local function run(): string
 		local style = character:GetAttribute("GrabStyle")
 		check(style ~= nil and not styles[style], "a repeated attacker must vary its holds")
 		styles[style] = true
-		for _ = 1, 30 do
-			callbacks.Struggle(victim)
-		end
+		winChecks()
 		if attempt < 3 then
 			root.CFrame = roblox.CFrame.new(0, 3, 80)
 			tick(tuning.Grab.Grace + 1)
@@ -305,7 +358,7 @@ local function run(): string
 	service.Clear()
 	service.Configure(params)
 	local rescue = seize("Brute")
-	for _ = 1, 12 do
+	for _ = 1, 30 do
 		if not service.IsHeld(victim) then
 			break
 		end
@@ -338,7 +391,7 @@ local function run(): string
 	service.Clear()
 	check(#events > 0, "grab outcomes must be sent to clients")
 	space:Destroy()
-	return `server grab lifecycle: {checks} checks (struggle, rescue distance/rate, flash, death, respawn)`
+	return `server grab lifecycle: {checks} checks (skill checks, early miss, replay, rescue distance/rate, flash, death, respawn)`
 end
 
 return run

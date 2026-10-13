@@ -380,17 +380,14 @@ local Tuning = {
 	},
 
 	--[[
-		Grabs (Logic/Grab). Every press of the struggle key adds the stop's grabMash to the
-		victim's escape, which slips back at grabSlip per second; reaching Escape breaks the
-		hold. Meanwhile the Hollow bites, squeezes or yanks once per its grab's rhythm.
+		Grabs (Logic/Grab). The victim breaks free with skill checks (Logic/SkillCheck,
+		Difficulty.SkillCheck) before the grab's clock runs out. Meanwhile the Hollow bites,
+		squeezes or yanks once per its grab's rhythm.
 	]]
 	Grab = {
-		Escape = 1,
-		AllyPresses = 2.5, -- a crewmate prying at the Hollow counts as this many presses
 		Grace = 2.5, -- seconds after breaking free before anything can grab you again
 		Stagger = 1.6, -- seconds a Hollow reels when its victim breaks free
 		Throw = 42, -- studs per second the victim is flung clear when they break free
-		MaxSeconds = 14, -- no hold lasts longer than this
 		Settle = 0.3, -- seconds the snatch takes before the hold begins to hurt
 		PryInterval = 0.15, -- server limit per helper, matching a deliberate button mash
 		-- A Brute's strike slams its victim face down and pins them (Config/Grabs "Slam").

@@ -13,8 +13,8 @@
 	  Hunt      chase the nearest crew member it senses, pathing around walls, lunging close
 	  Windup    the tell: it rears back, and seizes the target if it is still in reach
 	  Grab      holding its prey (Config/Grabs): it bites on the grab's rhythm until the
-	            victim fights free, the crew pry them loose, a flash makes it let go, or
-	            they die in its hands
+	            victim wins their skill checks (Logic/SkillCheck), the crew pry them loose,
+	            a flash makes it let go, or its clock runs out and it finishes them
 	  Recover   after a strike that missed
 	  Reel      thrown off by a victim who broke free
 	  Repelled  the target stands in light: hold at its edge
@@ -40,6 +40,7 @@ local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
+local SkillCheck = require(Shared.Logic.SkillCheck)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local HollowBudget = require(Shared.Logic.HollowBudget)
 local LayoutGen = require(Shared.Logic.LayoutGen)
@@ -74,7 +75,14 @@ type Hold = {
 	humanoid: Humanoid,
 	frame: CFrame, -- where the victim's root is held
 	slamFrom: CFrame?, -- a pin drives the body from here down to `frame` (Tuning.Grab.Pin)
-	escape: number,
+	progress: number, -- skill-check progress toward SkillCheck.Required (crewmates' pries add to it)
+	zone: number, -- skill-check zone width in degrees
+	check: SkillCheck.Check?, -- the check on the victim's screen now
+	judged: boolean, -- its one press has been judged (a second one is a replay)
+	checkSeq: number,
+	nextCheckAt: number, -- server time the next check appears
+	lastPressAt: number, -- server time of the last press the server looked at
+	finishAt: number, -- server time the grab's clock runs out and it finishes them
 	startedAt: number, -- os.clock()
 	elapsed: number, -- seconds into the hold at the last tick
 	shownEscape: number,
@@ -379,7 +387,7 @@ local function roomFor(base: CFrame, frame: CFrame): boolean
 end
 
 local function publishEscape(hold: Hold)
-	local shown = math.floor(hold.escape * 50 + 0.5) / 50
+	local shown = math.floor(SkillCheck.fraction(hold.progress) * 50 + 0.5) / 50
 	if shown ~= hold.shownEscape then
 		hold.shownEscape = shown
 		hold.character:SetAttribute("GrabEscape", shown)
@@ -402,7 +410,7 @@ local function release(hollow: Hollow, why: string)
 		-- Publish the outcome before clearing the attribute the client watches.
 		character:SetAttribute("GrabOutcome", why)
 		character:SetAttribute("GrabFreeAt", serverNow())
-		for _, name in { "GrabStyle", "GrabAt", "GrabKind", "GrabEscape" } do
+		for _, name in { "GrabStyle", "GrabAt", "GrabKind", "GrabEscape", "GrabFinishAt" } do
 			character:SetAttribute(name, nil)
 		end
 		if hold.root.Parent then
@@ -511,6 +519,9 @@ local function seize(hollow: Hollow, target: Player): boolean
 	root.AssemblyLinearVelocity = Vector3.zero
 
 	local now = serverNow()
+	local stop = (params :: Types.HazardParams).stop or 1
+	local zone = SkillCheck.zoneWidth(stop)
+	local finishAt = now + SkillCheck.finishSeconds(stop, zone)
 	local link = Instance.new("ObjectValue")
 	link.Name = "GrabbedBy"
 	link.Value = hollow.model
@@ -519,6 +530,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 	character:SetAttribute("GrabKind", hollow.kind)
 	character:SetAttribute("GrabAt", now)
 	character:SetAttribute("GrabEscape", 0)
+	character:SetAttribute("GrabFinishAt", finishAt)
 	character:SetAttribute("GrabStyle", def.id)
 	Registry.CrewService.TagDamage(character, "Hollow")
 	hollow.model:SetAttribute("GrabStyle", def.id)
@@ -544,7 +556,14 @@ local function seize(hollow: Hollow, target: Player): boolean
 		humanoid = humanoid,
 		frame = frame,
 		slamFrom = slamFrom,
-		escape = 0,
+		progress = 0,
+		zone = zone,
+		check = nil,
+		judged = false,
+		checkSeq = 0,
+		nextCheckAt = now + Difficulty.SkillCheck.FirstDelay,
+		lastPressAt = -math.huge,
+		finishAt = finishAt,
 		startedAt = os.clock(),
 		elapsed = 0,
 		shownEscape = 0,
@@ -569,7 +588,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 			and clock - (hold.pryAt[ally] or -math.huge) >= G.PryInterval
 		then
 			hold.pryAt[ally] = clock
-			hold.escape = Grab.pry(hold.escape, params :: Types.HazardParams, hollow.def)
+			hold.progress = SkillCheck.pry(hold.progress)
 			publishEscape(hold)
 			NetService.Fire("Fx", target, "Pried", { by = ally.UserId })
 		end
@@ -577,6 +596,44 @@ local function seize(hollow: Hollow, target: Player): boolean
 	setState(hollow, "Grab")
 	NetService.Fire("Fx", target, "Grabbed", { style = def.id, kind = hollow.kind })
 	return true
+end
+
+-- Applies one skill-check result to the hold: progress, the clock, the next check.
+local function judgeCheck(hollow: Hollow, result: SkillCheck.Result)
+	local hold = hollow.hold
+	local check = hold and hold.check
+	if hold == nil or check == nil then
+		return
+	end
+	hold.judged = true
+	local progress, penalty = SkillCheck.apply(hold.progress, result)
+	hold.progress = progress
+	hold.finishAt -= penalty
+	hold.check = nil
+	hold.nextCheckAt = serverNow() + SkillCheck.gap(function(lo, hi)
+		return rng:NextNumber(lo, hi)
+	end)
+	hold.character:SetAttribute("GrabFinishAt", hold.finishAt)
+	publishEscape(hold)
+	NetService.Fire("Fx", hold.victim, "SkillResult", {
+		id = check.id,
+		result = result,
+		progress = SkillCheck.fraction(progress),
+	})
+	if SkillCheck.freed(progress) then
+		release(hollow, "Escaped")
+	end
+end
+
+-- The grab's clock ran out: it finishes them.
+local function finishHold(hollow: Hollow)
+	local hold = hollow.hold :: Hold
+	if Registry.DevService.IsGod(hold.victim) then
+		release(hollow, "Timeout")
+		return
+	end
+	Registry.CrewService.TagDamage(hold.character, "Hollow")
+	hold.humanoid.Health = 0
 end
 
 -- One tick of a hold: the grip tightens, the bites land, and the victim may be free.
@@ -620,7 +677,6 @@ local function holdTick(hollow: Hollow)
 		return
 	end
 	local elapsed = clock - hold.startedAt
-	local dt = elapsed - hold.elapsed
 	-- keep the victim where the Hollow holds them (a pin slams them there first)
 	hold.root.Anchored = true
 	local slamFrom = hold.slamFrom
@@ -630,21 +686,38 @@ local function holdTick(hollow: Hollow)
 	else
 		hold.root.CFrame = hold.frame
 	end
-	if elapsed > G.Settle then
-		hold.escape = Grab.slip(hold.escape, p, dt)
-	end
-	local damage = Grab.damage(hold.def, p, hollow.def, hold.elapsed, elapsed)
+	-- bites hurt, but never take the last of you: only the clock running out does
+	local damage =
+		Grab.survivable(Grab.damage(hold.def, p, hollow.def, hold.elapsed, elapsed), hold.humanoid.Health)
 	hold.elapsed = elapsed
 	if damage > 0 and not Registry.DevService.IsGod(hold.victim) then
 		Registry.CrewService.TagDamage(character, "Hollow")
 		hold.humanoid:TakeDamage(damage)
 		NetService.Fire("Fx", hold.victim, "Bite", { style = hold.def.id, damage = damage })
 	end
+	local now = serverNow()
+	-- an unpressed check runs out after its turn: a miss
+	local check = hold.check
+	if check and not hold.judged and now > SkillCheck.endsAt(check) then
+		judgeCheck(hollow, "Miss")
+		if hollow.hold ~= hold then
+			return
+		end
+	end
+	if hold.check == nil and now >= hold.nextCheckAt and now < hold.finishAt then
+		hold.checkSeq += 1
+		local fresh = SkillCheck.new(hold.checkSeq, now, hold.zone, function(lo, hi)
+			return rng:NextNumber(lo, hi)
+		end)
+		hold.check = fresh
+		hold.judged = false
+		NetService.Fire("Fx", hold.victim, "SkillCheck", fresh)
+	end
 	publishEscape(hold)
-	if Grab.free(hold.escape) then
+	if SkillCheck.freed(hold.progress) then
 		release(hollow, "Escaped")
-	elseif elapsed > G.MaxSeconds then
-		release(hollow, "Timeout")
+	elseif now >= hold.finishAt then
+		finishHold(hollow)
 	end
 end
 
@@ -1010,21 +1083,27 @@ end
 
 function HollowService.Start()
 	StationService.Cleared:Connect(HollowService.Clear)
-	NetService.Handle("Struggle", function(player)
+	-- One press for skill check `id`: judged on arrival, with the victim's ping as tolerance.
+	NetService.Handle("SkillCheck", function(player, id: number)
 		local hollow = holderOf(player)
-		local p = params
-		if hollow == nil or p == nil then
+		if hollow == nil or params == nil then
 			return
 		end
 		local hold = hollow.hold :: Hold
 		if hold.diedAt then
 			return
 		end
-		hold.escape = Grab.press(hold.escape, p, hollow.def)
-		publishEscape(hold)
-		if Grab.free(hold.escape) then
-			release(hollow, "Escaped")
+		local now = serverNow()
+		local ok = SkillCheck.accept(hold.check, hold.judged, id, now, hold.lastPressAt)
+		hold.lastPressAt = now
+		if not ok then
+			return
 		end
+		local ping = 0
+		pcall(function()
+			ping = player:GetNetworkPing()
+		end)
+		judgeCheck(hollow, SkillCheck.judge(hold.check :: SkillCheck.Check, now, SkillCheck.tolerance(ping)))
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		graceUntil[player] = nil

@@ -11,6 +11,7 @@
 	  option    integer 1..3
 	  id        string of 1..48 letters, digits or underscores
 	  tier      integer 1..Difficulty.RunTier.Max
+	  check     integer 1..1e6, a skill check's id (Logic/SkillCheck)
 ]]
 
 local Difficulty = require(script.Parent.Parent.Config.Difficulty)
@@ -38,7 +39,8 @@ local Remotes: { [string]: RemoteDef } = {
 	SetSetting = { direction = "ToServer", args = { "id", "id" }, rate = 4, burst = 4 },
 	ShopEquip = { direction = "ToServer", args = { "id" }, rate = 4, burst = 4 },
 	JoinInProgress = { direction = "ToServer", args = {}, rate = 1, burst = 1 },
-	Struggle = { direction = "ToServer", args = {}, rate = 12, burst = 14 }, -- fighting out of a Hollow's grip
+	-- one press for a skill check while a Hollow holds you; the server judges and rate-limits it
+	SkillCheck = { direction = "ToServer", args = { "check" }, rate = 10, burst = 10 },
 
 	-- Server to client
 	Snapshot = { direction = "ToClient", args = {}, rate = 0, burst = 0 },
@@ -64,6 +66,9 @@ local Checks: { [ArgKind]: (any) -> boolean } = {
 	end,
 	tier = function(value)
 		return isInteger(value, 1, Difficulty.RunTier.Max)
+	end,
+	check = function(value)
+		return isInteger(value, 1, 1e6)
 	end,
 	id = function(value)
 		return type(value) == "string"
