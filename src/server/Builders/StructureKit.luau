@@ -409,6 +409,80 @@ Builders.Gantry = function(ctx)
 	end
 end
 
+-- A clock tower: a stone base with an arched passage, a brick shaft, a clock face on every
+-- side (stopped, each at its own hour), a slate pyramid and a weathervane.
+Builders.ClockTower = function(ctx)
+	local base = math.min(ctx.width, ctx.depth) - 8
+	Kit.block(
+		ctx.parent,
+		Vector3.new(base, 6, base),
+		f(ctx, 0, 3, 0),
+		C.stone,
+		{ material = Enum.Material.Limestone }
+	)
+	local shaft, top = base * 0.72, 26
+	Kit.block(
+		ctx.parent,
+		Vector3.new(shaft, top - 6, shaft),
+		f(ctx, 0, 6 + (top - 6) / 2, 0),
+		C.brick,
+		{ material = Enum.Material.Brick }
+	)
+	Kit.block(
+		ctx.parent,
+		Vector3.new(shaft + 1, 1, shaft + 1),
+		f(ctx, 0, top + 0.5, 0),
+		C.stone,
+		{ material = Enum.Material.Limestone }
+	)
+	for k = 0, 3 do
+		local face = f(ctx, 0, top - 4, 0) * Kit.angles(0, k * 90, 0) * CFrame.new(0, 0, -shaft / 2 - 0.15)
+		Kit.cylinder(ctx.parent, 0.3, 4.4, face * Kit.angles(0, 90, 0), C.enamel, { collide = false })
+		Kit.cylinder(ctx.parent, 0.34, 4.9, face * CFrame.new(0, 0, 0.05) * Kit.angles(0, 90, 0), C.iron, {
+			collide = false,
+		})
+		local hour = ctx.rng:NextNumber(0, 360)
+		Kit.block(
+			ctx.parent,
+			Vector3.new(0.25, 1.5, 0.1),
+			face * CFrame.new(0, 0, -0.25) * Kit.angles(0, 0, hour) * CFrame.new(0, 0.6, 0),
+			C.iron,
+			{ collide = false }
+		)
+		Kit.block(
+			ctx.parent,
+			Vector3.new(0.18, 2, 0.1),
+			face * CFrame.new(0, 0, -0.3) * Kit.angles(0, 0, hour * 7) * CFrame.new(0, 0.85, 0),
+			C.iron,
+			{ collide = false }
+		)
+	end
+	for _, side in { -1, 1 } do
+		Kit.wedge(
+			ctx.parent,
+			Vector3.new(shaft + 1, 6, (shaft + 1) / 2),
+			f(ctx, 0, top + 4, side * (shaft + 1) / 4) * Kit.angles(0, if side > 0 then 180 else 0, 0),
+			C.slate,
+			{ material = Enum.Material.Slate }
+		)
+	end
+	Kit.post(
+		ctx.parent,
+		4,
+		0.2,
+		f(ctx, 0, top + 9, 0),
+		C.iron,
+		{ material = Enum.Material.Metal, collide = false }
+	)
+	Kit.block(
+		ctx.parent,
+		Vector3.new(2.2, 0.6, 0.08),
+		f(ctx, 0.6, top + 10.4, 0) * Kit.angles(0, ctx.rng:NextNumber(0, 360), 0),
+		C.iron,
+		{ material = Enum.Material.Metal, collide = false }
+	)
+end
+
 Builders.CoalTower = function(ctx)
 	local h = 20
 	for _, x in { -8, 8 } do
