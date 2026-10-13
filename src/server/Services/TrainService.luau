@@ -46,6 +46,8 @@ local leg: { cost: number, seconds: number, burned: number }? = nil
 local breachRate = 0
 local breachSeq = 0
 local breachPrompts: { [string]: { prompt: ProximityPrompt, anchor: BasePart } } = {}
+local pendingBursts = 0 -- leaks asked for while standing (a timed Breakdown): they burst once moving
+local LEAK_TAG = "Leak" -- every open leak's anchor carries it: the HUD and markers count these
 local rng = Random.new()
 local lastPublished = ""
 local safeGlows: { PointLight } = {}
@@ -94,6 +96,8 @@ local function closeBreach(id: string)
 	if entry then
 		entry.prompt:Destroy()
 		entry.anchor:SetAttribute("Breach", false)
+		entry.anchor:SetAttribute("LeakId", nil)
+		entry.anchor:RemoveTag(LEAK_TAG)
 		breachPrompts[id] = nil
 	end
 end
@@ -131,6 +135,8 @@ local function openBreach()
 	local name = anchor:GetAttribute("BreachAnchor") :: string
 	train = Ledger.openBreach(train, id, name, Workspace:GetServerTimeNow())
 	anchor:SetAttribute("Breach", true)
+	anchor:SetAttribute("LeakId", id)
+	anchor:AddTag(LEAK_TAG)
 	local prompt = makePrompt(anchor, "Breach", "Steam leak", "Patch (1 part)", Tuning.Train.BreachPatchHold)
 	prompt.Triggered:Connect(function(player)
 		patchBreach(player, id)
@@ -152,12 +158,17 @@ local function tick(dt: number)
 			train = Ledger.burn(train, amount)
 		end
 	end
-	if RunRules.isTravel(phase) and Ledger.breachCount(train) < Tuning.Train.MaxBreaches then
-		if rng:NextNumber() < breachRate * dt then
+	-- leaks burst and the hull drains only while the train is running (never at the vote or a stop)
+	local moving = RunRules.hullDrains(phase)
+	if moving and Ledger.breachCount(train) < Tuning.Train.MaxBreaches then
+		if pendingBursts > 0 then
+			pendingBursts -= 1
+			openBreach()
+		elseif rng:NextNumber() < breachRate * dt then
 			openBreach()
 		end
 	end
-	if RunRules.isTravel(phase) then
+	if moving then
 		train = Ledger.drain(train, dt)
 	end
 	publish()
@@ -305,6 +316,7 @@ function TrainService.ResetForRun()
 	train = Ledger.newTrain()
 	leg = nil
 	breachRate = 0
+	pendingBursts = 0
 	publish(true)
 end
 
@@ -315,8 +327,13 @@ function TrainService.SetSafeGlow(on: boolean)
 	end
 end
 
--- Bursts one steam leak now, wherever a free spot is (a timed Breakdown). False if none is free.
+-- Bursts one steam leak (a timed Breakdown): now if the train is running, otherwise as soon as
+-- it next is, since leaks only burst while moving. False if no spot is free right now.
 function TrainService.OpenBreach(): boolean
+	if not RunRules.hullDrains(Registry.RunDirector.Phase()) then
+		pendingBursts += 1
+		return true
+	end
 	local before = Ledger.breachCount(train)
 	openBreach()
 	return Ledger.breachCount(train) > before
@@ -460,6 +477,7 @@ function TrainService.ClearBreaches()
 	local nextTrain = table.clone(train)
 	nextTrain.breaches = {}
 	train = nextTrain
+	pendingBursts = 0
 	publish(true)
 end
 

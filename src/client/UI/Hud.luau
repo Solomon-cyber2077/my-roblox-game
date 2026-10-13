@@ -7,6 +7,7 @@
 	Visible only to crew members while a run is active; the lobby has its own panel.
 ]]
 
+local CollectionService = game:GetService("CollectionService")
 local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -1067,10 +1068,9 @@ function Hud.mount(gui: ScreenGui)
 		local hull = train.integrity / math.max(train.integrityMax, 1)
 		setHull(hull, if hull > 0.6 then TINT.hull elseif hull > 0.3 then TINT.caution else TINT.signal)
 		hullValue.Text = `{math.floor(hull * 100 + 0.5)}%`
-		local breaches = 0
-		for _ in train.breaches or {} do
-			breaches += 1
-		end
+		-- the leaks are counted from the leak objects on the train (TrainService tags each open one),
+		-- not a replicated counter: patching one takes it off at once
+		local breaches = #CollectionService:GetTagged("Leak")
 		if train.starving then
 			warning.Text = "FIREBOX EMPTY: HULL FAILING"
 		elseif breaches > 0 then
@@ -1080,6 +1080,16 @@ function Hud.mount(gui: ScreenGui)
 		end
 	end
 	State.Observe("public", { "train" }, renderTrain)
+	for _, signal in
+		{
+			CollectionService:GetInstanceAddedSignal("Leak"),
+			CollectionService:GetInstanceRemovedSignal("Leak"),
+		}
+	do
+		signal:Connect(function()
+			renderTrain(State.Get({ "train" }))
+		end)
+	end
 
 	-- Tool hotkeys 1-6
 	local function onKey(

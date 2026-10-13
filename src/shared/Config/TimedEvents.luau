@@ -29,12 +29,13 @@ local Events: { [string]: Def } = {
 		warning = "The Hollows are stirring. Stay near the light!",
 		cue = "HollowScream",
 	},
-	-- the boiler gives: two steam leaks burst on the train at once
+	-- the boiler strains: two steam leaks burst once the train is moving again (leaks only burst
+	-- while it runs: TrainService.OpenBreach)
 	Breakdown = {
 		weight = 1,
 		duration = 6,
-		title = "BREAKDOWN",
-		warning = "The boiler is straining. Something is about to burst!",
+		title = "BOILER STRAIN",
+		warning = "The boiler is straining. It will burst once we're moving!",
 		cue = "SteamLeak",
 		breaks = 2,
 	},
