@@ -85,23 +85,24 @@ local Archetypes: { [string]: Archetype } = {
 		tier = 1,
 		minStation = 1,
 		weight = 1.0,
-		length = 276,
-		depth = 168,
+		length = 432,
+		depth = 348,
 		dwellMultiplier = 0.95,
 		hint = "Balanced haul",
 		loot = { coal = 1.0, parts = 1.0, relic = 0.8, tools = 1.0 },
 		hazard = { collapse = 0.9, fog = 1.0, hollows = 0.8 },
-		containers = { Crate = 6, CoalBin = 2, ToolChest = 1 },
-		looseItems = 6,
+		containers = { Crate = 9, CoalBin = 3, ToolChest = 2 },
+		looseItems = 9,
 		structures = {
+			{ kind = "CattleDock", count = 1, zones = { "Near", "Mid" } },
+			{ kind = "WaterTower", count = 1, zones = { "Near", "Mid" } },
 			{ kind = "Shed", count = 3, zones = { "Mid", "Far" } },
-			{ kind = "WaterTower", count = 1, zones = { "Far" } },
 		},
 		landmarks = {
-			{ kind = "BookingHall", zones = { "Near", "Mid" } },
-			-- the hamlet: the stationmaster's and the porter's cottages up the lane
+			{ kind = "BookingHall", zones = { "Near" } },
+			{ kind = "StationmasterHouse", zones = { "Near", "Mid" } },
+			{ kind = "GoodsShed", zones = { "Mid", "Far" } },
 			{ kind = "House", zones = { "Mid", "Far" }, decor = true },
-			{ kind = "House", zones = { "Far" }, decor = true },
 		},
 		lampSpacing = 36,
 		ground = "Cobblestone",
@@ -112,15 +113,36 @@ local Archetypes: { [string]: Archetype } = {
 			light = { 255, 196, 128 },
 		},
 		edge = { fence = "FencePicket", trees = { "Oak", "Oak", "Poplar" }, treeChance = 0.8 },
-		dressing = { "Haystack", "Cart", "Pump", "Wheelbarrow", "Puddle", "Barrels", "Scarecrow", "Well" },
-		yardTrees = 3,
+		dressing = {
+			"Haystack",
+			"Cart",
+			"Pump",
+			"Wheelbarrow",
+			"Puddle",
+			"Barrels",
+			"Scarecrow",
+			"Well",
+			"Haystack",
+		},
+		yardTrees = 6,
 		layout = {
 			style = "Street",
 			lane = 1,
 			barriers = { "FencePicket", "Wreck" },
 			fill = { 0.4, 0.6 },
 			ground = { "BrokenRoad", "Rubble", "Wreck" },
-			groundCount = 5,
+			groundCount = 8,
+		},
+		-- the hamlet up the lane: an inn and the cottages round the green
+		village = {
+			rows = 7,
+			landmarks = {
+				{ kind = "Inn", zones = { "Village" } },
+				{ kind = "House", zones = { "Village" } },
+				{ kind = "House", zones = { "Village" } },
+				{ kind = "House", zones = { "Village" }, decor = true },
+			},
+			containers = { Crate = 3, ToolChest = 1, Vault = 1 },
 		},
 	},
 	CoalYard = {
@@ -557,6 +579,7 @@ local Footprints: { [string]: { number } } = {
 	Headframe = { 3, 3 },
 	TunnelMouth = { 4, 2 },
 	Concourse = { 6, 3 },
+	CattleDock = { 3, 2 },
 }
 
 for _, def in Archetypes do
@@ -592,11 +615,11 @@ return table.freeze({
 	Reach = table.freeze({ DoorHalfSpan = 72 }),
 	-- Lamp pools along the routes: at least PoolGap tiles apart, so darkness lies between them
 	-- (Hollows rest there). Yard lamps are not SafeLights; the platform's lamps are.
-	Lamps = table.freeze({ PoolGap = 4.5, YardMax = 22 }),
+	Lamps = table.freeze({ PoolGap = 4.5, YardMax = 14 }),
 	VillageFill = 0.55, -- the share of the Far/Village boundary closed off
 	-- The sinkhole edge (props EdgeMark on every open edge tile): a hazard rail this far in from
 	-- the edge, tape on the ground in front of it and a glow strip along the lip.
-	Edge = table.freeze({ RailBack = 4.5, TapeBack = 6.6, GlowLights = 6 }),
+	Edge = table.freeze({ RailBack = 4.5, TapeBack = 6.6, GlowLights = 4 }),
 	DressingCount = 6, -- things scattered round the yard
 	-- How much likelier the better containers are to stand in the far zone, behind the last barrier
 	FarLoot = table.freeze({ ToolChest = 2.5, Crate = 1.3 }),

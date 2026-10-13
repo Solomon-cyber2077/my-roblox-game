@@ -210,7 +210,8 @@ describe("BuildingGen", function()
 				end
 				count += 1
 				expect(def.layout).toBe("Spine")
-				expect(def.size[1] * def.size[2]).toBeAtLeast(24)
+				-- 4 x 4 is the smallest footprint with room for the stairwell and a back room
+				expect(def.size[1] * def.size[2]).toBeAtLeast(16)
 				local upper = plan.upper
 				expect(#upper.rooms).toBeGreaterThan(0)
 				expect(#plan.stairs).toBe(1)

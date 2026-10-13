@@ -1165,7 +1165,7 @@ Builders.YardLamp = function(ctx)
 	local glass = Kit.neon(ctx.parent, Vector3.new(0.8, 1.1, 0.8), f(ctx, 0, 10.55, 0), ctx.palette.light)
 	wedge(ctx, Vector3.new(1.3, 0.5, 0.65), f(ctx, 0, 11.35, -0.325), C.iron, M.Metal)
 	wedge(ctx, Vector3.new(1.3, 0.5, 0.65), f(ctx, 0, 11.35, 0.325) * Kit.angles(0, 180, 0), C.iron, M.Metal)
-	Kit.pointLight(glass, ctx.palette.light, 1.15, 26, false)
+	Kit.pointLight(glass, ctx.palette.light, 1.6, 30, false)
 end
 
 Builders.Scarecrow = function(ctx)

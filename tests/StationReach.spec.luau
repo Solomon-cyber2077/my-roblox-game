@@ -3,6 +3,7 @@ local LayoutGen = require(Shared.Logic.LayoutGen)
 local StationReach = require(Shared.Logic.StationReach)
 local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
+local LootRoll = require(Shared.Logic.LootRoll)
 
 local SEEDS = 8
 local STOPS = Tuning.Run.StationCount
@@ -53,6 +54,17 @@ describe("Station reach", function()
 			for _, sleeper in plan.sleepers do
 				local building = plan.buildings[sleeper.building]
 				expect(building ~= nil).toBe(true)
+			end
+		end)
+	end)
+
+	it("gives every container a zone the loot tables know", function()
+		eachPlan(function(id, _, plan)
+			for _, c in plan.containers do
+				local ok = pcall(LootRoll.holdSeconds, c.kind, c.zone)
+				if not ok then
+					error(`{id}: no loot rules for a {c.kind} in zone {c.zone}`)
+				end
 			end
 		end)
 	end)

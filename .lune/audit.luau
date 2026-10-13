@@ -118,7 +118,17 @@ local CLASH_DEPTH = 0.2 -- separate objects may touch, or sink this far into eac
 local SHOW = tonumber(process.env.AUDIT_SHOW) or 12 -- z-fights printed per target
 local VERBOSE = process.env.AUDIT_VERBOSE ~= nil -- also print each shown fight's face polygons
 
-type Budget = { parts: number?, lights: number?, shadows: number?, emitters: number?, particles: number? }
+-- lit: lights switched on as built (a building's dead lamps come on only with its power);
+-- tris: an estimate from each primitive's shape (block 12, wedge 8, cylinder 48, ball 192)
+type Budget = {
+	parts: number?,
+	lights: number?,
+	lit: number?,
+	shadows: number?,
+	emitters: number?,
+	particles: number?,
+	tris: number?,
+}
 --[[
 	context: built only so the window's edges look the way they will once the
 	game builds the neighbouring chunks. Its parts bury and fight like any other,
@@ -315,7 +325,9 @@ for _, id in archetypes do
 		name = `Station/{id}`,
 		-- fix pass part 3: stops three times the size; budget per stop for weaker machines
 		-- (docs/stations/DESIGN.md, HANDOFF.md); no shadow-casting lights at a stop
-		budget = { parts = 9000, lights = 64, shadows = 0, emitters = 60 },
+		-- lights: every light instance, even the dead room lamps a building's power wakes;
+		-- lit: those on as the stop docks
+		budget = { parts = 9000, tris = 300000, lights = 96, lit = 64, shadows = 0, emitters = 60 },
 		build = function()
 			local plan = LayoutGen.generate(id, 424242, 1)
 			local edge = Tuning.World.PlatformEdgeZ
@@ -840,10 +852,18 @@ end
 
 -- Checking -------------------------------------------------------------------------------------------
 
-type Stats = { parts: number, lights: number, shadows: number, emitters: number, particles: number }
+type Stats = {
+	parts: number,
+	lights: number,
+	lit: number,
+	shadows: number,
+	emitters: number,
+	particles: number,
+	tris: number,
+}
 
 local function newStats(): Stats
-	return { parts = 0, lights = 0, shadows = 0, emitters = 0, particles = 0 }
+	return { parts = 0, lights = 0, lit = 0, shadows = 0, emitters = 0, particles = 0, tris = 0 }
 end
 
 local function tally(
@@ -861,6 +881,17 @@ local function tally(
 		end
 		if d:IsA("BasePart") then
 			stats.parts += 1
+			if d:IsA("WedgePart") then
+				stats.tris += 8
+			elseif d:IsA("CornerWedgePart") then
+				stats.tris += 6
+			elseif d:IsA("Part") and d.Shape.Name == "Cylinder" then
+				stats.tris += 48
+			elseif d:IsA("Part") and d.Shape.Name == "Ball" then
+				stats.tris += 192
+			else
+				stats.tris += 12
+			end
 			if faces and d.Transparency < 0.98 then
 				for _, f in Faces.of(d, item.offset) do
 					table.insert(faces, f)
@@ -895,6 +926,9 @@ local function tally(
 			end
 		elseif d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight") then
 			stats.lights += 1
+			if d.Enabled then
+				stats.lit += 1
+			end
 			if d.Shadows then
 				stats.shadows += 1
 			end
@@ -908,7 +942,7 @@ end
 local function over(stats: Stats, budget: Budget?): { string }
 	local problems: { string } = {}
 	if budget then
-		for _, key in { "parts", "lights", "shadows", "emitters", "particles" } do
+		for _, key in { "parts", "lights", "lit", "shadows", "emitters", "particles", "tris" } do
 			local limit = (budget :: any)[key]
 			local value = (stats :: any)[key]
 			if limit ~= nil and value > limit then
@@ -1052,10 +1086,12 @@ for _, target in targets do
 	print(
 		stdio.color(color)
 			.. string.format(
-				"%-22s %5d parts %4d lights (%d shadow) %4d emitters (%5d particles) %4d z-fights %3d clashes%s",
+				"%-22s %5d parts ~%4dk tris %4d lights (%d lit, %d shadow) %4d emitters (%5d particles) %4d z-fights %3d clashes%s",
 				target.name,
 				total.parts,
+				math.floor(total.tris / 1000 + 0.5),
 				total.lights,
+				total.lit,
 				total.shadows,
 				total.emitters,
 				total.particles,

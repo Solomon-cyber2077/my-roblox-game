@@ -89,6 +89,7 @@ game.ReplicatedStorage.Remotes.Dev:FireServer("state")
 | Command | Effect |
 | --- | --- |
 | `skip` | End the current phase now |
+| `station Halt` | The next ballot offers only that archetype (fire it before Ready for stop 1) |
 | `warp 30` | Move the station clock forward 30 seconds |
 | `god` | Toggle no damage, no falling and never left behind |
 | `search` | Search the nearest unsearched container |

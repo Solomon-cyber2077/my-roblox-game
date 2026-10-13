@@ -78,7 +78,11 @@ describe("DifficultyModel", function()
 		expect(DifficultyModel.hollowCap(0, 1, 1)).toBe(1)
 		expect(DifficultyModel.hollowCap(0.5, 4, 1)).toBe(6)
 		expect(DifficultyModel.hollowCap(1, 8, 1)).toBe(11)
-		expect(DifficultyModel.params(0.5, halt, 4, nil).hollowCap).toBe(5) -- 0.8 bias, a small booking hall
+		-- 0.8 bias, raised by the stop's buildings (at most SizeCapTiles of them count)
+		local tiles = math.min(DifficultyModel.buildingTiles(halt), 48)
+		expect(DifficultyModel.params(0.5, halt, 4, nil).hollowCap).toBe(
+			DifficultyModel.hollowCap(0.5, 4, 0.8 * (1 + 0.025 * tiles))
+		)
 	end)
 
 	it("keeps big stops open longer and fuller than small ones", function()
