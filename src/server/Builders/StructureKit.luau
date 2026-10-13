@@ -302,6 +302,54 @@ Builders.CattleDock = function(ctx)
 	Kit.post(ctx.parent, 3, 0.3, f(ctx, 0, 1.5, z0 + 4), C.iron, { material = Enum.Material.Metal })
 end
 
+-- A brick chimney stack over a boiler or a winding engine: a plinth, a stack tapering in three
+-- lifts with iron bands, a corbelled cap. The tallest thing on a stop after a headframe.
+Builders.Chimney = function(ctx)
+	local base = math.min(ctx.width, ctx.depth) - 6
+	Kit.block(
+		ctx.parent,
+		Vector3.new(base, 4, base),
+		f(ctx, 0, 2, 0),
+		C.brickDark,
+		{ material = Enum.Material.Brick }
+	)
+	local y, side = 4, base * 0.62
+	for lift = 1, 3 do
+		local h = 14 - lift * 2
+		Kit.block(
+			ctx.parent,
+			Vector3.new(side, h, side),
+			f(ctx, 0, y + h / 2, 0),
+			if lift == 2 then C.brick else C.brickDark,
+			{ material = Enum.Material.Brick }
+		)
+		Kit.block(
+			ctx.parent,
+			Vector3.new(side + 0.3, 0.4, side + 0.3),
+			f(ctx, 0, y + h - 0.6, 0),
+			C.iron,
+			{ material = Enum.Material.Metal, collide = false }
+		)
+		y += h
+		side *= 0.86
+	end
+	Kit.block(
+		ctx.parent,
+		Vector3.new(side + 1.2, 1.2, side + 1.2),
+		f(ctx, 0, y + 0.6, 0),
+		C.brickDark,
+		{ material = Enum.Material.Brick, collide = false }
+	)
+	-- the cold mouth: soot, no smoke (nobody has fired the boiler in years)
+	Kit.block(
+		ctx.parent,
+		Vector3.new(side - 0.8, 0.3, side - 0.8),
+		f(ctx, 0, y + 1.25, 0),
+		C.coal,
+		{ material = Enum.Material.Slate, collide = false }
+	)
+end
+
 Builders.CoalTower = function(ctx)
 	local h = 20
 	for _, x in { -8, 8 } do
