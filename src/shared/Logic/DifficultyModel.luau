@@ -63,7 +63,6 @@ function DifficultyModel.params(
 	local bias = archetype.hazard
 	local flood = levels.Floodlamps or 0
 	local whistle = levels.SteamWhistle or 0
-	local armour = levels.ArmorPlating or 0
 
 	local fogBias = math.max(bias.fog, 0.01)
 	local collapseBias = math.max(bias.collapse, 0.01)
@@ -95,16 +94,8 @@ function DifficultyModel.params(
 		departureAccel = blend(Difficulty.DepartureAccel, d),
 		chaseWindow = blend(Difficulty.ChaseWindow, d) + effects.ChaseSecondsPerLevel * whistle,
 		lootMul = blend(Difficulty.LootMultiplier, d),
-		breachRate = blend(Difficulty.BreachRate, d) * effects.BreachMultiplierPerLevel ^ armour,
 		safeBand = Tuning.World.SafeStrip + effects.SafeBandPerLevel * flood,
 	}
-end
-
--- Breaches per second while travelling toward a stop of difficulty d.
-function DifficultyModel.breachRate(d: number, upgrades: { [string]: number }?): number
-	local levels: { [string]: number } = upgrades or {}
-	local armour = levels.ArmorPlating or 0
-	return blend(Difficulty.BreachRate, d) * UpgradesConfig.Effects.BreachMultiplierPerLevel ^ armour
 end
 
 -- Seconds of cruising for a leg of `km` kilometres.

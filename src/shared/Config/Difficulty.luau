@@ -62,7 +62,6 @@ return table.freeze({
 	ChaseWindow = table.freeze({ 7, 5 }), -- seconds the boarding volume stays live while pulling out
 
 	LootMultiplier = table.freeze({ 1.0, 1.35 }), -- container count scaling
-	BreachRate = table.freeze({ 0.015, 0.045 }), -- breaches per second while travelling
 
 	--[[
 		Fix pass part 2: the one table for grabs, the threat curve, the tutorial, post-grab

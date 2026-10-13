@@ -6,10 +6,12 @@
 ]]
 
 local Shared = script.Parent.Parent
+local Difficulty = require(Shared.Config.Difficulty)
 local Items = require(Shared.Config.Items)
 local Tuning = require(Shared.Config.Tuning)
 local UpgradesConfig = require(Shared.Config.Upgrades)
 local Types = require(Shared.Types)
+local Leaks = require(script.Parent.Leaks)
 
 type Train = Types.TrainState
 
@@ -134,22 +136,35 @@ function Ledger.burn(train: Train, amount: number): Train
 	return nextTrain
 end
 
--- Integrity loss over dt seconds from open breaches and an empty firebox.
-function Ledger.drain(train: Train, dt: number): Train
-	local breaches = 0
-	for _ in train.breaches do
-		breaches += 1
-	end
-	local rate = breaches * Tuning.Train.BreachDrainPerSecond
-	if train.starving then
-		rate += Tuning.Train.StarvingDrainPerSecond
-	end
-	if rate <= 0 then
+--[[
+	Integrity lost over dt seconds of a trip `tripSeconds` long, from open leaks (Logic/Leaks:
+	each grows with the travel time it is left open) and an empty firebox. Call it only while
+	the train is moving (RunRules.hullDrains). It never takes the hull below Difficulty.Hull.Floor:
+	reaching the floor is a breakdown (Services/BreakdownService). Integrity keeps its fraction,
+	so slow drains are not lost to rounding.
+]]
+function Ledger.drain(train: Train, dt: number, tripSeconds: number): Train
+	if dt <= 0 or (next(train.breaches) == nil and not train.starving) then
 		return train
 	end
 	local nextTrain = copy(train)
-	nextTrain.integrity = round1(math.max(train.integrity - rate * dt, 0))
+	local loss = 0
+	for id, breach in train.breaches do
+		local age = breach.age or 0
+		loss += Leaks.rate(Leaks.severity(age, tripSeconds), tripSeconds) * dt
+		nextTrain.breaches[id] = { anchor = breach.anchor, openedAt = breach.openedAt, age = age + dt }
+	end
+	if train.starving then
+		loss += Difficulty.Hull.StarvingPerSecond * dt
+	end
+	local floor = math.min(train.integrity, Difficulty.Hull.Floor)
+	nextTrain.integrity = math.max(train.integrity - loss, floor)
 	return nextTrain
+end
+
+-- True once the hull has drained to its floor (a breakdown).
+function Ledger.atFloor(train: Train): boolean
+	return train.integrity <= Difficulty.Hull.Floor + 1e-6
 end
 
 function Ledger.upgradeCost(train: Train, upgradeId: string): number?
@@ -195,7 +210,7 @@ end
 
 function Ledger.openBreach(train: Train, id: string, anchor: string, now: number): Train
 	local nextTrain = copy(train)
-	nextTrain.breaches[id] = { anchor = anchor, openedAt = now }
+	nextTrain.breaches[id] = { anchor = anchor, openedAt = now, age = 0 }
 	return nextTrain
 end
 
@@ -203,11 +218,11 @@ function Ledger.patchBreach(train: Train, id: string): (Train, boolean, FailReas
 	if train.breaches[id] == nil then
 		return train, false, "Unknown"
 	end
-	if train.parts < Tuning.Train.BreachPatchCost then
+	if train.parts < Difficulty.Leaks.PatchParts then
 		return train, false, "Parts"
 	end
 	local nextTrain = copy(train)
-	nextTrain.parts -= Tuning.Train.BreachPatchCost
+	nextTrain.parts -= Difficulty.Leaks.PatchParts
 	nextTrain.breaches[id] = nil
 	return nextTrain, true, nil
 end

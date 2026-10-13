@@ -78,11 +78,7 @@ local Tuning = {
 		StartParts = 4,
 		IntegrityMax = 100,
 		BurnPerKm = 2.0,
-		StarvingDrainPerSecond = 3,
-		BreachDrainPerSecond = 0.5,
-		MaxBreaches = 3,
-		BreachPatchCost = 1,
-		BreachPatchHold = 1.5,
+		-- leaks, hull drain and repair: Config/Difficulty Leaks and Hull
 		HullPatchCost = 5,
 		HullPatchAmount = 20,
 		TickSeconds = 0.25,

@@ -475,6 +475,11 @@ function AudioController.Loop(key: string, cueName: string, parent: Instance)
 	end
 end
 
+-- The Sound of a running loop, to shape it (a leak's hiss grows louder and carries further).
+function AudioController.LoopSound(key: string): Sound?
+	return loops[key]
+end
+
 function AudioController.StopLoop(key: string)
 	local sound = loops[key]
 	if sound then

@@ -1,3 +1,5 @@
+local Difficulty = require(Shared.Config.Difficulty)
+local Leaks = require(Shared.Logic.Leaks)
 local Ledger = require(Shared.Logic.Ledger)
 local Tuning = require(Shared.Config.Tuning)
 
@@ -40,15 +42,25 @@ describe("Ledger", function()
 		expect(refuelled.starving).toBe(false)
 	end)
 
-	it("drains integrity from breaches and starvation", function()
+	it("drains integrity from leaks and starvation, never below the hull floor", function()
+		local trip = 60
 		local train = Ledger.openBreach(Ledger.newTrain(), "b1", "Car2", 0)
-		train = Ledger.drain(train, 10)
-		expect(train.integrity).toBeCloseTo(100 - 10 * Tuning.Train.BreachDrainPerSecond)
+		train = Ledger.drain(train, 1, trip)
+		expect(train.integrity).toBeCloseTo(100 - Leaks.rate(1, trip))
+		expect(train.breaches.b1.age).toBe(1)
 		train.starving = true
-		local starving = Ledger.drain(train, 1)
+		local starving = Ledger.drain(train, 1, trip)
 		expect(starving.integrity).toBeCloseTo(
-			train.integrity - Tuning.Train.BreachDrainPerSecond - Tuning.Train.StarvingDrainPerSecond
+			train.integrity - Leaks.rate(Leaks.severity(1, trip), trip) - Difficulty.Hull.StarvingPerSecond
 		)
+		-- a long drain stops at the floor: that is a breakdown, not a wreck
+		local drained = Ledger.drain(starving, 10000, trip)
+		expect(drained.integrity).toBe(Difficulty.Hull.Floor)
+		expect(Ledger.atFloor(drained)).toBe(true)
+		expect(Ledger.atFloor(train)).toBe(false)
+		-- nothing open, nothing lost
+		local sound = Ledger.newTrain()
+		expect(Ledger.drain(sound, 5, trip)).toBe(sound)
 	end)
 
 	it("patches breaches for one part", function()
