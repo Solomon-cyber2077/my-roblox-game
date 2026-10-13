@@ -39,6 +39,16 @@ local focusPoint: Vector3? = nil -- a point the view is dragged toward (a Hollow
 local BOB_DROP = 0.12 -- studs the view dips at each footfall in first person
 local BOB_SWAY = 0.04 -- studs it sways side to side with the stride
 
+-- The train's skin is non-colliding mesh over invisible colliding walls, and Roblox's own
+-- occlusion skips both (it wants opaque and colliding), so the third-person view went
+-- through the walls. Each frame the view is pulled in front of any colliding train part.
+local WALL_MARGIN = 0.6 -- studs kept between the view and the wall
+local wallParams = RaycastParams.new()
+wallParams.FilterType = Enum.RaycastFilterType.Include
+wallParams.RespectCanCollide = true
+local displayTrain: Instance? = nil
+local displayLookAt = 0
+
 local function ownHumanoid(): Humanoid?
 	local character = Players.LocalPlayer.Character
 	return character and character:FindFirstChildOfClass("Humanoid")
@@ -79,6 +89,37 @@ end
 local function onCharacter(character: Model)
 	character:WaitForChild("Humanoid", 10)
 	resetCamera(true)
+end
+
+-- How far to pull the view in so it stays this side of the train's walls (0 when clear).
+local function wallPull(camera: Camera): number
+	local trains: { Instance } = {}
+	local run = Workspace:FindFirstChild("Train")
+	if run then
+		table.insert(trains, run)
+	end
+	if (displayTrain == nil or displayTrain.Parent == nil) and os.clock() >= displayLookAt then
+		displayLookAt = os.clock() + 2
+		displayTrain = Workspace:FindFirstChild("DisplayTrain", true)
+	end
+	if displayTrain and displayTrain.Parent then
+		table.insert(trains, displayTrain)
+	end
+	if #trains == 0 then
+		return 0
+	end
+	local focus = camera.Focus.Position
+	local span = camera.CFrame.Position - focus
+	local distance = span.Magnitude
+	if distance < 1 then
+		return 0 -- first person
+	end
+	wallParams.FilterDescendantsInstances = trains
+	local hit = Workspace:Raycast(focus, span, wallParams)
+	if hit == nil then
+		return 0
+	end
+	return math.max(distance - math.max(hit.Distance - WALL_MARGIN, 0.5), 0)
 end
 
 -- True while our character stands inside the train's body.
@@ -146,8 +187,14 @@ function CameraController.Start()
 		local shake = trauma * trauma + rumble
 		local t = os.clock()
 		local offset = CFrame.identity
+		if camera.CameraType == Enum.CameraType.Custom then
+			local pull = wallPull(camera)
+			if pull > 0 then
+				offset = CFrame.new(0, 0, -pull)
+			end
+		end
 		if shake > 0.001 then
-			offset = CFrame.Angles(
+			offset *= CFrame.Angles(
 				math.rad((math.noise(t * 12, 1) * 2) * shake),
 				math.rad((math.noise(t * 12, 2) * 2) * shake),
 				math.rad((math.noise(t * 12, 3) * 1.5) * shake)

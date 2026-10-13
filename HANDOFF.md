@@ -30,6 +30,12 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - Fix: the train renderer is a named `renderTrain`, re-run with the current state whenever the HUD becomes visible (run start); the gauges also wake on `CharacterAdded` and on Boarding/Departure. Task 2.1 then removes the idle fade entirely.
 - Verified: `lune run check` passes. Unverified in Studio.
 
+### 1.4 Camera clipping and spawn facing
+- Cause: the train's visible skin is non-colliding mesh over invisible (Transparency 1) colliding walls. Roblox's Poppercam only treats opaque AND colliding parts as occluders, so it ignored both and the view went through the walls.
+- Fix (`CameraController`): `wallPull` raycasts each frame from `camera.Focus` to the camera against `Workspace.Train` and the lobby's `DisplayTrain` (Include filter, `RespectCanCollide = true`) and pulls the view in to 0.6 studs short of the hit. The pull is folded into the existing shake offset (`applied`), so the unshake step undoes it before the camera module runs (no drift). Skipped in first person and when the camera is not Custom. Open doors (blockers non-colliding) let the view through.
+- Spawn facing (`TrainBuilder` spawnPoints): each aisle spawn is turned a quarter about Y to look down its car toward the farther end, instead of the default -Z (the side wall ~7 studs away).
+- Verified: `lune run check` passes. **Not verified: Studio access for screenshots was declined this session**, so the spawn view and wall clipping need the owner's eyes.
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:
