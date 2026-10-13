@@ -13,6 +13,11 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
   - Dropped: early-station count bump `Difficulty.EarlyHollowCap` (Difficulty.luau ~line 40, already unused). Part 2 must delete it and replace the flat `Tuning.HollowCount.ByCrew` override in `HazardDirector.Begin` (~line 152, `hazards.hollowCap = HollowBudget.total(...)`) with the stop-index threat curve. `DifficultyModel.hollowCap` (Difficulty `HollowCap`) still computes a cap that this override discards.
   - Carry into part 2 config table (aggression/damage kept): `Difficulty.WandererDelay` {18, 10} s (one wanderer per stop, hunts the nearest player off the train); `Difficulty.Sleepers` TilesPerSleeper 6 (now capped by `HollowCount.SleeperShare` 0.5); `Difficulty.HollowDamage` {20, 32}; `Tuning.Grab.DpsShare` 0.6, `MaxBiteShare` 0.35, `Pin.DpsShare` 0.5, Brute `crush` 1.2; `Difficulty.Dwell` {148, 94} (002's dwell change, kept).
 
+### 1.1 Grab errors (GrabController)
+- Still present: `lock()` set `player.DevEnableMouseLock` (server-only, threw every grab) and `unlock()` set it back. Both lines and `saved.mouseLock` removed. A thrown `lock()` used to skip `hidePry`, so the grabbed player saw their own "PULL FREE (E)"; a thrown `unlock()` skipped the camera reset, the outcome alert and (on respawn) `watch(model)`.
+- New `safely(name, fn)` pcall helper (warns "GrabController: <name> failed: ..."): `lock` in `begin` (hidePry always runs after), every `unlock` call (finish, respawn, phase change), `Struggle.hide`. Inside `unlock` the AutoRotate restore, camera reset and mouse free are separate steps so one failing does not skip the next.
+- Verified: `lune run check` passes (250 tests). Unverified: a live grab in Studio (no console errors, pry prompt only on crewmates' screens).
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:
