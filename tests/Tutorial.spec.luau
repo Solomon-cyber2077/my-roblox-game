@@ -61,3 +61,33 @@ describe("Tutorial tiers", function()
 		expect(Tutorial.runs(false, 0, 0)).toBe(0)
 	end)
 end)
+
+describe("Tutorial stop 1 in the bigger stations", function()
+	local LayoutGen = require(Shared.Logic.LayoutGen)
+	local Stations = require(Shared.Config.Stations)
+	local T = Difficulty.Tutorial
+
+	it("lights the way out in safe pools at the stop the teaching Crawler comes", function()
+		expect(T.SafeLight.YardLampsAtStop).toBe(T.ScriptedGrab.Stop)
+		for _, id in Stations.Order do
+			local arch = Stations.List[id]
+			if arch.minStation <= T.ScriptedGrab.Stop then
+				for seed = 1, 4 do
+					local plan = LayoutGen.generate(id, seed * 17, 1)
+					local pools, rails = 0, 0
+					for _, prop in plan.props do
+						if prop.kind == "YardLamp" then
+							pools += 1
+						elseif prop.kind == "EdgeMark" then
+							rails += 1
+						end
+					end
+					-- pools across the yard, and the dark between them for the Crawler
+					expect(pools).toBeAtLeast(6)
+					expect(pools).toBeAtMost(Stations.Lamps.YardMax)
+					expect(rails).toBeGreaterThan(20)
+				end
+			end
+		end
+	end)
+end)

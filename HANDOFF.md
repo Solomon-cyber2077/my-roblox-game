@@ -3,7 +3,7 @@
 ## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
 
 ### Resume point
-- Done: audit (1), design notes (3), shared generator, shared kit (4), all ten archetypes, Emergency Village (8) with its specs (10). Next: tutorial stop 1 (9), then the walk-time maths and final summary. Pending Studio (the place closed mid-session): PostTown shot; an Emergency Village run (Dev: at Cruise, `hull 1`).
+- Done: steps 1-10 (audit, design notes, shared generator, kit, ten archetypes, Emergency Village, tutorial stop 1, specs). Pending Studio (the place closed mid-session): PostTown shot, an Emergency Village run (Dev: at Cruise, `hull 1`), a tutorial stop 1 run (`/tutorial reset`, Dev `station Halt` before Ready). Owner: upload the station kit FBX.
 - Per archetype recipe: new `length`/`depth` (+ `village` rows), more `landmarks` (new `Config/Buildings` defs as needed; Spine 4x4+ may have `upper`, measure its `tiles` from the slab), new structures in `StructureKit` + `Stations.Footprints`; `lune run stations` (walkable area >= 3x before), `lune run check`, then Studio: Dev `station <Id>` before Ready, skip to Dwell, one overview + one edge shot (`docs/stations/<id>_*.jpg`).
 
 ### After (per archetype, seed 424242)

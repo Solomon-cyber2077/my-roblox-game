@@ -17,6 +17,8 @@ local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local LayoutGen = require(Shared.Logic.LayoutGen)
+local Tutorial = require(Shared.Logic.Tutorial)
+local TutorialConfig = require(Shared.Config.Tutorial)
 local Motion = require(Shared.Logic.Motion)
 local Signal = require(Shared.Util.Signal)
 local Types = require(Shared.Types)
@@ -114,6 +116,20 @@ end
 function StationService.Spawn(plan: LayoutGen.Plan, info: Types.StationInfo)
 	StationService.Clear()
 	local built = StationBuilder.build(plan, DOCKED, info.name)
+	-- the tutorial's first stop: the yard's lamp pools keep Hollows out too (HollowService)
+	local light = TutorialConfig.SafeLight
+	if Tutorial.def(info.hazards.tutorial) and (info.hazards.stop or 1) == light.YardLampsAtStop then
+		for _, piece in built.model:GetChildren() do
+			if piece.Name == "YardLamp" then
+				for _, part in piece:GetDescendants() do
+					if part:IsA("BasePart") and part.Material == Enum.Material.Neon then
+						part:SetAttribute("Radius", light.LampRadius)
+						part:AddTag(light.Tag)
+					end
+				end
+			end
+		end
+	end
 	local offset = Motion.arrivalDistance()
 	built.model:PivotTo(CFrame.new(offset, 0, 0) * built.model:GetPivot())
 
