@@ -15,7 +15,7 @@ export type Phase =
 	| "RunEnd"
 
 export type CrewStatus = "Lobby" | "Aboard" | "Afield" | "Straggler" | "Eliminated"
-export type Cause = "LeftBehind" | "Taken" | "Smothered" | "Fell" | "Disconnected"
+export type Cause = "LeftBehind" | "Taken" | "Smothered" | "Fell" | "Wrecked" | "Disconnected" | "Other"
 export type Outcome = "Victory" | "Wiped" | "Derailed"
 export type Zone = "Safe" | "Near" | "Mid" | "Far"
 

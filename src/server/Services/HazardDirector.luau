@@ -71,7 +71,7 @@ local function damageInFog(state: Timeline, t: number)
 			if root and humanoid and humanoid.Health > 0 and not Registry.DevService.IsGod(player) then
 				local z = StationService.ToLocal(root.Position).Z
 				if z > fog then
-					(character :: Model):SetAttribute("LastDamageSource", "Fog")
+					Registry.CrewService.TagDamage(character :: Model, "Fog")
 					humanoid:TakeDamage(params.fogDps * DAMAGE_TICK)
 					NetService.Fire("Fx", player, "FogTick", {})
 				end

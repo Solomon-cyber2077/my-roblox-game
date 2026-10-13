@@ -7,21 +7,15 @@
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local DeathCause = require(ReplicatedStorage.Shared.Logic.DeathCause)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
 local Spectate = {}
-
-local CAUSES: { [string]: { title: string, line: string } } = {
-	LeftBehind = { title = "LEFT BEHIND", line = "The train pulled out without you." },
-	Taken = { title = "TAKEN", line = "A Hollow caught you in the open." },
-	Smothered = { title = "LOST IN THE FOG", line = "You stayed too long past the fog line." },
-	Fell = { title = "FELL", line = "The ground gave way beneath you." },
-	Disconnected = { title = "DISCONNECTED", line = "" },
-}
 
 local card: Frame
 local cardTitle: TextLabel
@@ -159,11 +153,12 @@ function Spectate.mount(gui: ScreenGui)
 end
 
 function Spectate.showElimination(cause: string, canRescue: boolean)
-	local info = CAUSES[cause] or CAUSES.Taken
+	local info = DeathCause.line(cause)
 	cardTitle.Text = info.title
 	cardLine.Text = info.line
-	cardHope.Text = if canRescue
+	cardHope.Text = if canRescue and #aliveOthers() > 0
 		then "A crewmate can still bring you back with a Signal Flare."
+		elseif #aliveOthers() == 0 and canRescue then "No one is left to bring you back."
 		else "This was your second chance. Watch your crew bring it home."
 	card.Visible = true
 	card.BackgroundTransparency = 1

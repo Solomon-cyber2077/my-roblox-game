@@ -18,6 +18,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
+local DeathCause = require(Shared.Logic.DeathCause)
 local Economy = require(Shared.Logic.Economy)
 local Ledger = require(Shared.Logic.Ledger)
 local RunRules = require(Shared.Logic.RunRules)
@@ -58,7 +59,9 @@ local CAUSE_TEXT: { [string]: string } = {
 	Taken = "was taken by a Hollow",
 	Smothered = "was lost in the fog",
 	Fell = "fell into the dark",
+	Wrecked = "went down with the train",
 	Disconnected = "left the line",
+	Other = "was lost on the line",
 }
 
 local function isAliveStatus(status: CrewStatus): boolean
@@ -82,8 +85,17 @@ end
 local function onDied(player: Player, character: Model)
 	local member = members[player]
 	if member and isAliveStatus(member.status) and player.Character == character then
-		local source = character:GetAttribute("LastDamageSource")
-		CrewService.Eliminate(player, if source == "Fog" then "Smothered" else "Taken")
+		local root = character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local fell = root ~= nil and root.Position.Y < Tuning.World.FloorY - Tuning.Crew.FallDepth
+		CrewService.Eliminate(
+			player,
+			DeathCause.fromDeath(
+				character:GetAttribute("LastDamageSource") :: string?,
+				character:GetAttribute("LastDamageAt") :: number?,
+				Workspace:GetServerTimeNow(),
+				fell
+			)
+		)
 	elseif member == nil then
 		task.delay(3, function()
 			if player.Parent and members[player] == nil and player.Character == character then
@@ -204,6 +216,7 @@ function CrewService.LoadCharacterAt(player: Player, cframe: CFrame)
 		return
 	end
 	WorldService.TagCharacter(character)
+	CrewService.TagDamage(character, nil) -- a fresh body carries no cause
 	local humanoid = character:WaitForChild("Humanoid", 5) :: Humanoid?
 	character:WaitForChild("HumanoidRootPart", 5)
 	character:PivotTo(cframe)
@@ -423,6 +436,22 @@ function CrewService.EndRun()
 	for _, player in former do
 		if player.Parent then
 			task.spawn(Registry.LobbyService.Spawn, player)
+		end
+	end
+end
+
+-- Marks what last hurt a character (Logic/DeathCause reads it on death); nil clears it.
+function CrewService.TagDamage(character: Model, source: string?)
+	character:SetAttribute("LastDamageSource", source)
+	character:SetAttribute("LastDamageAt", if source then Workspace:GetServerTimeNow() else nil)
+end
+
+-- The train broke down with them still on the line: their ticket reads Wrecked.
+function CrewService.MarkWrecked()
+	for _, member in members do
+		if isAliveStatus(member.status) then
+			member.cause = "Wrecked"
+			publish(member)
 		end
 	end
 end
