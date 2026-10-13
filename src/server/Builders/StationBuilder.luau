@@ -24,6 +24,7 @@ local Stations = require(Shared.Config.Stations)
 local BuildingBuilder = require(script.Parent.BuildingBuilder)
 local FurnitureKit = require(script.Parent.FurnitureKit)
 local StructureKit = require(script.Parent.StructureKit)
+local StationKit = require(script.Parent.StationKit)
 
 type Plan = LayoutGen.Plan
 
@@ -457,16 +458,18 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 	-- Props -----------------------------------------------------------------------------------
 	for _, prop in plan.props do
 		local piece = Kit.model(prop.kind, model)
+		local frame = L(prop.x, 0, prop.z) * Kit.angles(0, prop.rot, 0)
 		StructureKit.prop(prop.kind, {
 			parent = piece,
 			base = slabParts[prop.slab],
-			frame = L(prop.x, 0, prop.z) * Kit.angles(0, prop.rot, 0),
+			frame = frame,
 			width = prop.size or 4,
 			depth = 4,
 			palette = palette,
 			rng = Random.new(math.floor(prop.x * 31 + prop.z * 17) + plan.seed % 7907),
 			label = stationName,
 		})
+		StationKit.dress(prop.kind, piece, frame, prop.size) -- the Blender kit, once uploaded
 		attachTo(piece, prop.slab)
 	end
 

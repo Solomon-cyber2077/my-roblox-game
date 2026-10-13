@@ -14,7 +14,12 @@
 - Budget per stop (audit): 9000 parts, 64 lights, 0 shadow lights, 60 emitters.
 - Tests: `tests/StationReach.spec` (all loot reachable, no cut-off ground, spawn lanes valid, loot off the edge, every open edge tile marked, the farthest loot fits the clock 2.5x at a jog at D=1, clock grows with stop), Difficulty and TimedEventSchedule specs updated.
 
-### 1. Audit (before)
+### Shared kit (step 4)
+- Blender: `tools/stationkit/build_kit.py` (headless, Blender 5.2) builds GasLamp 260 tris, HazardRail 180, FencePicket 456, Crate 168, SignBoard 48, WallBrick 120, RoofSlate 132 into `assets/stationkit/StationKit.fbx` (+ `.blend`, `StationKit.json` sizes/centres); preview `docs/stations/kit_preview.png`.
+- Runtime: `Config/StationKit` (mesh ids nil), `Builders/StationKit` (Preload via AssetService at server start; `dress` puts the mesh over YardLamp, EdgeMark and FencePicket props, hides their solid primitives, keeps collision, Neon and lights). With nil ids nothing changes.
+- **Needs the owner:** upload `assets/stationkit/StationKit.fbx` with Studio's 3D Importer (creator Me), paste the 7 mesh ids into `Config/StationKit`, then check one stop in Studio (axes and centres are unverified until then). AGENTS.md's upload exception covers the train only; extending it to this kit is your call.
+
+
 Generator: `Logic/LayoutGen` lays a 12-stud tile grid (x along the track, z away from the platform; Safe strip 24, zones Near < 0.4 depth < Mid < 0.75 depth < Far). Per archetype (`Config/Stations`): a layout style (Street, Plaza, Yard, Sidings) carves routes, enterable landmarks (`Config/Buildings`, rooms by `Logic/BuildingGen`, upper floors only on the big Spine buildings, no cellars) go first, then structures (`StructureKit`), barriers pinch the Mid/Far boundaries, then containers, loose pickups, platform props, boundary fence and trees, yard lamps (`cols // 5`), dressing and broken ground. Built by `Builders/StationBuilder` (one welded assembly; every floor tile is a 3-part slab: top, earth, keel).
 - Loot spots: `containers` (Crate/CoalBin/ToolChest/Vault counts x lootMul, zone-weighted, `FarLoot` bias; furniture containers inside buildings) and `looseItems` (60% Near).
 - Hollow spawns: 8 `spawnLanes` along the far edge (shuffled x), sleepers in building rooms (`Difficulty.Sleepers`), wanderers after `WandererDelay`.
