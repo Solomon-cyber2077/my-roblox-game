@@ -54,6 +54,12 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - `Stamina` CanvasGroup, 200x8, bottom-centre, its bottom 10 px above the hotbar slots (`Position (0.5, 0, 1, -22 - CELL - STAMINA_GAP)`); the backpack hint line sits higher (40-24 px above the slots), so nothing overlaps. Steel track, blackened-brass rim, brass fill with a sheen that warms to ember as it drains. Group transparency 0.7 (`STAMINA_REST`) when full, fully opaque at half or less; pulses moon red while exhausted. The pocket watch/departure ticket (bottom right) and the slate (top centre) are elsewhere.
 - Verified: `lune run check` passes. Not seen on screen; on very narrow phone screens the centred hotbar row was already close to the watch.
 
+### 2.4 Leak alert slot (for part 2)
+- `UI/Hud` `LeakSlot` Frame, empty: **AnchorPoint (0, 0), Position `UDim2.fromOffset(14, 152)`, Size `UDim2.fromOffset(236, 40)`** (`LEAK_SLOT`), in the HUD container, directly under the gauge case (14, 12, 236x136, ends y 148). ZIndex 1, ClipsDescendants on. Get it with `Hud.leakSlot()` and parent the alert into it.
+- Yields: every frame `Visible = not slotBlocked()`; blocked while `Modal.anyOpen()` (new; covers Settings, Dialogue, the Run receipt, Workshop, Outfitter, Ledger, Ticket book) or any of `RouteVote`, `RunCard`, `Unseal`, `CarBoarding`, `Eliminated` is visible (`FULL_SCREEN`). There is no tutorial UI in the code yet; add its root's name to `FULL_SCREEN` when one exists. Also hidden with the rest of the HUD outside a run or with the HUD setting off.
+- Settings button in a run moved from (14, 156) to **(14, 200)** (`UI/Settings`), below the slot; lobby (14, 244) and HUD-hidden (14, 14) positions unchanged.
+- Verified: `lune run check` passes. Not seen on screen.
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:

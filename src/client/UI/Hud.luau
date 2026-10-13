@@ -26,6 +26,7 @@ local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local Sky = require(script.Parent.Parent.Scenery.Sky)
 local ItemIcon = require(script.Parent.ItemIcon)
+local Modal = require(script.Parent.Modal)
 local Overlay = require(script.Parent.Overlay)
 local Operators = require(script.Parent.Operators)
 local Theme = require(script.Parent.Theme)
@@ -51,6 +52,12 @@ local HIDDEN = 1
 -- how faint it is when full.
 local STAMINA_W, STAMINA_H, STAMINA_GAP = 200, 8, 10
 local STAMINA_REST = 0.7
+-- The leak alert's slot in the left column, directly under the gauge case (14, 12, 236x136);
+-- the Settings button sits below it in a run (UI/Settings).
+local LEAK_SLOT = { x = 14, y = 152, w = 236, h = 40 }
+-- Full-screen UI the leak slot hides behind (direct children of the HUD ScreenGui).
+local FULL_SCREEN = { "RouteVote", "RunCard", "Unseal", "CarBoarding", "Eliminated" }
+local leakSlot: Frame? = nil
 
 local function tierStamps(tier: number): string
 	return string.rep("●", tier) .. string.rep("○", 3 - tier)
@@ -571,6 +578,32 @@ function Hud.mount(gui: ScreenGui)
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
+	-- Reserved for the leak alert (fix pass part 2 fills it). It holds nothing yet. Whatever it
+	-- holds yields: it hides while a modal or full-screen UI is open, sits at the bottom of the
+	-- HUD's z-order and clips its contents, so it never draws over anything.
+	local leakFrame = Ui.new("Frame", {
+		Name = "LeakSlot",
+		Size = UDim2.fromOffset(LEAK_SLOT.w, LEAK_SLOT.h),
+		Position = UDim2.fromOffset(LEAK_SLOT.x, LEAK_SLOT.y),
+		BackgroundTransparency = 1,
+		ClipsDescendants = true,
+		ZIndex = 1,
+		Parent = container,
+	})
+	leakSlot = leakFrame
+	local function slotBlocked(): boolean
+		if Modal.anyOpen() then
+			return true
+		end
+		for _, name in FULL_SCREEN do
+			local screen = gui:FindFirstChild(name)
+			if screen and screen:IsA("GuiObject") and screen.Visible then
+				return true
+			end
+		end
+		return false
+	end
+
 	local gauges = Ui.panel({
 		Name = "Gauges",
 		Size = UDim2.fromOffset(236, 96),
@@ -1256,6 +1289,8 @@ function Hud.mount(gui: ScreenGui)
 			end
 		end
 
+		leakFrame.Visible = not slotBlocked()
+
 		local clock = os.clock()
 		for _, f in faders do
 			local target = if clock < f.untilAt then 0 else f.idle
@@ -1263,6 +1298,12 @@ function Hud.mount(gui: ScreenGui)
 			f.group.GroupTransparency = f.shown
 		end
 	end)
+end
+
+-- The leak alert's layout slot under the gauges (nil before mount). Parent the alert into it;
+-- the slot hides itself whenever a modal or full-screen UI is open.
+function Hud.leakSlot(): Frame?
+	return leakSlot
 end
 
 return Hud
