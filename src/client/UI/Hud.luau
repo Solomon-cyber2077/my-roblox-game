@@ -948,9 +948,12 @@ function Hud.mount(gui: ScreenGui)
 	end
 
 	-- Bindings ------------------------------------------------------------------------------
+	local renderTrain: (train: any) -> ()
 	local function refreshVisibility()
 		local visible = Session.isMember() and Session.isRunActive()
 		if visible and not container.Visible then
+			-- a run that starts with the same figures as the last one still shows them
+			renderTrain(State.Get({ "train" }))
 			wakeAll()
 		elseif not visible then
 			Overlay.vitals(0, 0)
@@ -973,7 +976,7 @@ function Hud.mount(gui: ScreenGui)
 	-- the gauges come up when coal goes in, parts or the hull change, or a leak opens; the
 	-- steady burn of coal on the move does not wake them
 	local lastTrain = { coal = 0, parts = 0, integrity = 0, breaches = 0 }
-	State.Observe("public", { "train" }, function(train: any)
+	function renderTrain(train: any)
 		if train == nil then
 			return
 		end
@@ -1007,6 +1010,16 @@ function Hud.mount(gui: ScreenGui)
 			warning.Text = `{breaches} STEAM LEAK{if breaches > 1 then "S" else ""}: PATCH WITH PARTS`
 		else
 			warning.Text = ""
+		end
+	end
+	State.Observe("public", { "train" }, renderTrain)
+	-- a respawn or the train pulling out brings the gauges up again
+	player.CharacterAdded:Connect(function()
+		wake(gaugeFade)
+	end)
+	State.Observe("public", { "run", "phase" }, function(phase: any)
+		if phase == "Departure" or phase == "Boarding" then
+			wake(gaugeFade)
 		end
 	end)
 
