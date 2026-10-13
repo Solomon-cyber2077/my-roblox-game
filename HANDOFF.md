@@ -2,6 +2,23 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
+## 2026-10-13: Round 2 (enemies, combat, timed events)
+Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
+1. Completed:
+   - Counts: before, a stop held up to `Difficulty.HollowCap` active Hollows (1 + 5*difficulty + 0.6 per extra crew, times station bias and size, max 16) PLUS every sleeper (one per 6 building tiles, uncapped, not counted). Now one budget per stop, `Tuning.HollowCount.ByCrew` = 3/4/5/6 for 1-4 players in the run (`Logic/HollowBudget`, set in `HazardDirector.Begin`), counting sleepers, fog spawns and the wanderer. Sleepers take at most half (`SleeperShare`), leaving room for the wanderer. `Difficulty.EarlyHollowCap` is now unused.
+   - Damage: `Tuning.Grab.DpsShare` 0.4 -> 0.6 (+50%). Each bite capped at `MaxBiteShare` 0.35 of MaxHealth (`Grab.bite`). Brute `crush` 1.4 -> 1.2 so a 6/s masher still survives the hardest stops.
+   - Brute slam and pin: new `Slam` grab (`Config/Grabs`, `pin = true`), the Brute's only attack (`Grab.order`). The victim is slammed face down over `Tuning.Grab.Pin.SlamSeconds`, damage ticks every `Pin.Tick` at `Pin.DpsShare` of the stop's damage. It reuses the grab lock, Q struggle, E "Pull free" (object text "<name>: Brute pin"), plate "PINNED BY THE BRUTE" and release, death and run-end restore. Poses: CrewPoses reuses the face-down Drag pose and HollowPoses the shovel pose (blade on the back).
+   - Timed events: `Config/TimedEvents`, `Logic/TimedEventSchedule` (+spec), `server/Events/TimedEventDirector` (driven by HazardDirector), toast `client/UI/EventToast` + `client/TimedEventToast.client`. 9 s warning toast with an existing cue, Dwell only, 1 per short stop and 2 per long one, never overlapping, 30-45 s cooldown, all end 8 s before Last Call. Surge (15 s): every Hollow wakes and hunts, plus one extra Hollow at the fog front, removed at the end unless winding up or holding someone. Breakdown: two steam leaks burst at once via the new `TrainService.OpenBreach` (wraps the existing local `openBreach`).
+   - Testing: the owner (or anyone in Studio) types `/event surge` or `/event breakdown` in chat while the doors are open.
+2. Known: outside the brief's area: `TrainService.OpenBreach` (4-line wrapper) and one-line pose hooks in `Animation/CrewPoses` and `HollowPoses`. Fuse boxes cannot break (no code exists to cut a building's power), so Breakdown bursts steam leaks only. Crew count is the run's member list, which includes mid-run joiners. `Player.Chatted` is the trigger, so if TextChatService stops firing it, the command does nothing.
+3. Next (playtest checklist):
+   - [ ] Solo stop: at most 3 Hollows in `Workspace.Hollows` (sleepers included); 4 players: at most 6.
+   - [ ] Stalker/Crawler holds hurt clearly more; no single bite over 35 HP; mashing Q still frees you.
+   - [ ] Brute strike: slammed face down, camera and body locked, Q breaks free, a teammate's E prompt reads "<name>: Brute pin", damage ticks once a second, upright and unlocked after escape, death and run end.
+   - [ ] `/event surge`: toast counts down 9 s with a scream, Alarm at start, all Hollows come for you, one extra appears and is gone after 15 s (stays if it is mid-attack).
+   - [ ] `/event breakdown`: toast with steam cue, two "Hull breach" alarms, two patchable leaks on the train.
+   - [ ] Let a long stop run: 1-2 events, never overlapping, none after Last Call; a non-owner's `/event` does nothing.
+
 ## 2026-10-11: Round-1 Studio job done on disk (revive marker, door check, railing pilot)
 1. Completed:
    - Revive marker (Astra's edit, verified): the guard's van bunk is now `Train.Bunk` (base, mattress, cover, pillow, two hidden Bunk seats) with `ReviveSpawn` on the mattress at train (-86.5, 1.6, -4.53), invisible, anchored, no collide/query/touch, LookVector -X toward the pillow. One bed in the train; the display train gets its own copy.
