@@ -82,10 +82,24 @@ describe("DifficultyModel", function()
 	end)
 
 	it("keeps big stops open longer and fuller than small ones", function()
-		local halt = DifficultyModel.params(0.5, Stations.List.Halt, 4, nil)
+		local halt = Stations.List.Halt
+		local bigger = table.clone(halt)
+		bigger.length += 120
+		bigger.depth += 120
+		local small = DifficultyModel.params(0.5, halt, 4, nil, 3)
+		local big = DifficultyModel.params(0.5, bigger, 4, nil, 3)
+		-- 240 studs more walk there and back, at a jog, with the margin
+		local extra = 2 * 180 * 1.2 / Tuning.Crew.WalkSpeed * 1.6
+		expect(big.dwell - small.dwell).toBeCloseTo(extra, 1)
 		local school = DifficultyModel.params(0.5, Stations.List.Schoolhouse, 4, nil)
-		expect(school.dwell).toBeGreaterThan(halt.dwell * 1.4)
-		expect(school.hollowCap).toBeGreaterThan(halt.hollowCap)
+		expect(school.hollowCap).toBeAtLeast(DifficultyModel.params(0.5, halt, 4, nil).hollowCap)
+	end)
+
+	it("adds time for every stop after the first", function()
+		local halt = Stations.List.Halt
+		local first = DifficultyModel.params(0.5, halt, 1, nil, 1)
+		local fifth = DifficultyModel.params(0.5, halt, 1, nil, 5)
+		expect(fifth.dwell - first.dwell).toBe(4 * 4)
 	end)
 
 	it("applies upgrades", function()
@@ -98,10 +112,12 @@ describe("DifficultyModel", function()
 		expect(upgraded.fogDps).toBeCloseTo(base.fogDps * 0.85)
 	end)
 
-	it("matches the published dwell range of 94 to 148 seconds before archetype scaling", function()
+	it("runs the search time from 105 to 75 seconds, on top of the walk", function()
 		local neutral = table.clone(Stations.List.CoalYard)
 		neutral.landmarks = nil
-		expect(DifficultyModel.params(0, neutral, 1, nil).dwell).toBe(148)
-		expect(DifficultyModel.params(1, neutral, 1, nil).dwell).toBe(94)
+		neutral.village = nil
+		local walk = 2 * DifficultyModel.farWalk(neutral) / Tuning.Crew.WalkSpeed * 1.6
+		expect(DifficultyModel.params(0, neutral, 1, nil).dwell).toBe(math.floor(105 + walk + 0.5))
+		expect(DifficultyModel.params(1, neutral, 1, nil).dwell).toBe(math.floor(75 + walk + 0.5))
 	end)
 end)

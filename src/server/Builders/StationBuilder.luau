@@ -245,21 +245,29 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 				{ material = Enum.Material.Ground }
 			)
 			Kit.weld(under, top)
-			local keelDepth = 12 + rng:NextNumber() * 18
-			local keel = Kit.block(
-				slabModel,
-				Vector3.new((slab.sizeX - 0.8) * 0.7, keelDepth, (slab.sizeZ - 0.8) * 0.7),
-				L(
-					slab.x + rng:NextNumber() * 2 - 1,
-					-2 - depth + 0.6 - keelDepth / 2,
-					slab.z + rng:NextNumber() * 2 - 1
-				)
-					* Kit.angles(rng:NextNumber() * 8 - 4, rng:NextNumber() * 40, rng:NextNumber() * 8 - 4),
-				Kit.jitter(DEEP_ROCK, 0.12, rng:NextNumber()),
-				{ material = Enum.Material.Slate }
-			)
-			Kit.weld(keel, top)
 			local edge = slab.gx == 0 or slab.gx + slab.w == plan.cols or slab.gz + slab.d == plan.rows
+			-- a keel of rock under the edge and the buildings only: inside, nobody sees under
+			-- the ground until it falls, and the earth alone reads at that distance
+			local keelDepth = 12 + rng:NextNumber() * 18
+			if edge or foundation then
+				local keel = Kit.block(
+					slabModel,
+					Vector3.new((slab.sizeX - 0.8) * 0.7, keelDepth, (slab.sizeZ - 0.8) * 0.7),
+					L(
+						slab.x + rng:NextNumber() * 2 - 1,
+						-2 - depth + 0.6 - keelDepth / 2,
+						slab.z + rng:NextNumber() * 2 - 1
+					)
+						* Kit.angles(
+							rng:NextNumber() * 8 - 4,
+							rng:NextNumber() * 40,
+							rng:NextNumber() * 8 - 4
+						),
+					Kit.jitter(DEEP_ROCK, 0.12, rng:NextNumber()),
+					{ material = Enum.Material.Slate }
+				)
+				Kit.weld(keel, top)
+			end
 			if edge then
 				-- the torn edge shows: rock teeth and roots hanging into the drop
 				if rng:NextNumber() < 0.7 then
@@ -465,7 +473,7 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 	-- Everything except Root moves with physics; Root holds the assembly when anchored.
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
-			part.CollisionGroup = "Station"
+			part.CollisionGroup = if part.Name == "EdgeRail" then "EdgeRail" else "Station"
 			part.Anchored = part == root
 		end
 	end

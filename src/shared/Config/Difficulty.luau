@@ -25,7 +25,23 @@ return table.freeze({
 		LobbyRefreshSeconds = 1,
 	}),
 
-	Dwell = table.freeze({ 148, 94 }), -- seconds the doors stay open, before archetype scaling
+	--[[
+		The stop's clock (fix pass part 3): the doors stay open for
+		  (Search(D) + PerBuildingTile x building tiles, capped) x the archetype's dwellMultiplier
+		  + the walk to the far corner and back at a jog x WalkMargin
+		  + PerStop for every stop after the first.
+		The far corner is (half the length - Stations.Reach.DoorHalfSpan + the depth) x Detour,
+		so a bigger stop gets more time; tests/StationReach.spec checks the real farthest loot
+		of every layout fits in it.
+	]]
+	StopClock = table.freeze({
+		Search = table.freeze({ 105, 75 }), -- seconds, D0 -> D1
+		PerBuildingTile = 0.5,
+		BuildingTileCap = 90,
+		WalkMargin = 1.6,
+		Detour = 1.2,
+		PerStop = 4,
+	}),
 
 	FogStartU = table.freeze({ 0.45, 0.15 }), -- share of the dwell before the fog front moves
 	FogEndFraction = table.freeze({ 0.45, 0.10 }), -- clear depth left past the safe strip at departure
@@ -55,8 +71,8 @@ return table.freeze({
 		Brute = table.freeze({ 0.04, 0.2 }),
 	}),
 	-- bigger stops take longer and hold more Hollows: per tile of enterable building
-	SizeDwellPerTile = 0.02, -- dwell multiplier added per building tile
 	SizeCapPerTile = 0.025, -- Hollow cap multiplier added per building tile
+	SizeCapTiles = 48, -- at most this many tiles count toward the cap
 
 	DepartureAccel = table.freeze({ 4, 6 }), -- studs per second squared
 	ChaseWindow = table.freeze({ 7, 5 }), -- seconds the boarding volume stays live while pulling out

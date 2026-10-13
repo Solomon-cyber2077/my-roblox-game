@@ -12,7 +12,7 @@ local Workspace = game:GetService("Workspace")
 
 local WorldService = {}
 
-local GROUPS = { "Players", "Train", "Station", "Hollows", "Debris", "Pickups" }
+local GROUPS = { "Players", "Train", "Station", "Hollows", "Debris", "Pickups", "EdgeRail" }
 
 local function setupCollisionGroups()
 	for _, name in GROUPS do
@@ -29,6 +29,10 @@ local function setupCollisionGroups()
 		{ "Debris", "Train" },
 		{ "Debris", "Station" },
 		{ "Debris", "Hollows" },
+		-- the sinkhole edge's rail stops the crew walking off; Hollows climb up over it
+		{ "EdgeRail", "Hollows" },
+		{ "EdgeRail", "Train" },
+		{ "EdgeRail", "Debris" },
 	}
 	for _, pair in rules do
 		PhysicsService:CollisionGroupSetCollidable(pair[1], pair[2], false)

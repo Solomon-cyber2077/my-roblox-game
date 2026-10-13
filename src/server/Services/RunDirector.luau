@@ -232,7 +232,8 @@ Enter.Cruise = function()
 	local train = Registry.TrainService.Get()
 	state.chosen = option
 	state.lastArchetype = option.archetype
-	state.params = DifficultyModel.params(d, arch, Registry.CrewService.AliveCount(), train.upgrades)
+	state.params =
+		DifficultyModel.params(d, arch, Registry.CrewService.AliveCount(), train.upgrades, state.nextStop)
 	local stopParams = state.params :: Types.HazardParams
 	stopParams.stop = state.nextStop
 	stopParams.tutorial = state.tutorial

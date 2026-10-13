@@ -25,6 +25,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Stations = require(Shared.Config.Stations)
 local Kit = require(Shared.Visual.Kit)
+local Tutorial = require(Shared.Config.Tutorial)
 
 export type Context = {
 	parent: Model,
@@ -1095,6 +1096,76 @@ Builders.SignalPost = function(ctx)
 	for y = 1.5, 14, 1.25 do
 		block(ctx, Vector3.new(0.8, 0.08, 0.08), f(ctx, 0, y, 0.55), C.iron, M.Metal)
 	end
+end
+
+-- The sinkhole edge ---------------------------------------------------------------------------
+--[[
+	EdgeMark: one tile of the edge, the frame on the rail's line, -Z toward the train. A
+	yellow-and-black hazard rail (posts, a yellow top rail, a red mid rail) the crew cannot
+	walk through (collision group EdgeRail: Hollows climb over it), striped tape on the ground
+	in front of it, and a glow strip along the lip behind it. The top rail carries the
+	SinkholeEdge tag the tutorial's edge prompt looks for.
+	EdgeGlow: a red light low over the lip, a few to a stop, so the edge reads from afar.
+]]
+local HAZARD = rgb(226, 182, 58)
+local HAZARD_DARK = rgb(26, 24, 22)
+local GLOW = rgb(214, 70, 46)
+
+Builders.EdgeMark = function(ctx)
+	local length = ctx.width
+	local edge = Stations.Edge
+	Kit.post(ctx.parent, 3.6, 0.4, f(ctx, 0, 1.8, 0), HAZARD, { name = "EdgeRail", material = M.Metal })
+	Kit.post(ctx.parent, 0.5, 0.44, f(ctx, 0, 2.4, 0), HAZARD_DARK, { collide = false, material = M.Metal })
+	local top = Kit.block(
+		ctx.parent,
+		Vector3.new(length, 0.28, 0.28),
+		f(ctx, 0, 3.4, 0),
+		HAZARD,
+		{ name = "EdgeRail", material = M.Metal }
+	)
+	top:AddTag(Tutorial.EdgeTag)
+	Kit.block(
+		ctx.parent,
+		Vector3.new(length, 0.22, 0.22),
+		f(ctx, 0, 1.7, 0.02),
+		rgb(170, 40, 32),
+		{ name = "EdgeRail", material = M.Metal }
+	)
+	-- tape: yellow and black halves, a little thicker on one axis than the other so the
+	-- corners where two edges meet never share a plane
+	local tapeZ = -(edge.TapeBack - edge.RailBack)
+	local thick = if math.abs(ctx.frame.LookVector.Z) > 0.5 then 0.08 else 0.12
+	for k, color in { HAZARD, HAZARD_DARK } do
+		local x = (k - 1.5) * length / 2
+		Kit.block(
+			ctx.parent,
+			Vector3.new(length / 2 - 0.1, thick, 1.1),
+			f(ctx, x, thick / 2, tapeZ),
+			color,
+			{ collide = false, shadow = false, material = M.SmoothPlastic }
+		)
+	end
+	-- the lip: a glowing seam at the very edge of the ground, a hair off it and short of the
+	-- tile's ends so it shares no plane with the boundary standing over it
+	Kit.neon(ctx.parent, Vector3.new(length - 0.3, 0.1, 0.5), f(ctx, 0, 0.08, edge.RailBack - 0.4), GLOW)
+end
+
+Builders.EdgeGlow = function(ctx)
+	local lamp = Kit.neon(ctx.parent, Vector3.new(0.6, 0.3, 0.6), f(ctx, 0, 0.6, 0), GLOW)
+	Kit.pointLight(lamp, GLOW, 1.2, 18, false)
+end
+
+-- A yard lamp: a gas lamp on a post, lighting a pool of the route round it. Not a SafeLight
+-- (only the platform's lamps are): the dark between the pools is where Hollows wait.
+Builders.YardLamp = function(ctx)
+	block(ctx, Vector3.new(1.1, 0.6, 1.1), f(ctx, 0, 0.3, 0), C.iron, M.Metal, true)
+	post(ctx, 9.4, 0.36, f(ctx, 0, 5, 0), C.iron, M.Metal, true)
+	block(ctx, Vector3.new(1.6, 0.2, 0.2), f(ctx, 0, 8.6, 0), C.iron, M.Metal)
+	block(ctx, Vector3.new(1.2, 0.3, 1.2), f(ctx, 0, 9.85, 0), C.iron, M.Metal)
+	local glass = Kit.neon(ctx.parent, Vector3.new(0.8, 1.1, 0.8), f(ctx, 0, 10.55, 0), ctx.palette.light)
+	wedge(ctx, Vector3.new(1.3, 0.5, 0.65), f(ctx, 0, 11.35, -0.325), C.iron, M.Metal)
+	wedge(ctx, Vector3.new(1.3, 0.5, 0.65), f(ctx, 0, 11.35, 0.325) * Kit.angles(0, 180, 0), C.iron, M.Metal)
+	Kit.pointLight(glass, ctx.palette.light, 1.15, 26, false)
 end
 
 Builders.Scarecrow = function(ctx)

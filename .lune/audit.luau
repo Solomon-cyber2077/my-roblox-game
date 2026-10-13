@@ -313,7 +313,9 @@ table.sort(archetypes)
 for _, id in archetypes do
 	table.insert(targets, {
 		name = `Station/{id}`,
-		budget = { parts = 4200, lights = 40, shadows = 12, emitters = 60 },
+		-- fix pass part 3: stops three times the size; budget per stop for weaker machines
+		-- (docs/stations/DESIGN.md, HANDOFF.md); no shadow-casting lights at a stop
+		budget = { parts = 9000, lights = 64, shadows = 0, emitters = 60 },
 		build = function()
 			local plan = LayoutGen.generate(id, 424242, 1)
 			local edge = Tuning.World.PlatformEdgeZ

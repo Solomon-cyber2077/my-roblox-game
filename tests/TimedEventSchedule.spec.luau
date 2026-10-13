@@ -1,4 +1,5 @@
-local Difficulty = require(Shared.Config.Difficulty)
+local DifficultyModel = require(Shared.Logic.DifficultyModel)
+local Stations = require(Shared.Config.Stations)
 local TimedEvents = require(Shared.Config.TimedEvents)
 local Tuning = require(Shared.Config.Tuning)
 local Schedule = require(Shared.Logic.TimedEventSchedule)
@@ -33,13 +34,15 @@ describe("TimedEventSchedule", function()
 	it("gives a typical stop one or two events", function()
 		local counts = { [0] = 0, [1] = 0, [2] = 0 }
 		for seed = 1, 400 do
+			-- the real stop clock: any regular stop, any difficulty, any stop index
 			local d = (seed % 5) / 4
-			local dwell = Difficulty.Dwell[1] + (Difficulty.Dwell[2] - Difficulty.Dwell[1]) * d
+			local id = Stations.Order[seed % #Stations.Order + 1]
+			local dwell = DifficultyModel.dwell(d, Stations.List[id], seed % 10 + 1)
 			local n = #Schedule.plan(dwell, LAST_CALL, seed)
 			counts[n] += 1
 		end
 		expect(counts[1] + counts[2]).toBeGreaterThan(counts[0] * 4)
-		expect(counts[1]).toBeGreaterThan(0)
+		expect(counts[2]).toBeGreaterThan(0)
 	end)
 
 	it("is the same plan for the same stop", function()
