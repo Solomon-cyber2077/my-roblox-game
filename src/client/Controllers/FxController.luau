@@ -20,7 +20,6 @@ local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local Overlay = require(script.Parent.Parent.UI.Overlay)
 local Spectate = require(script.Parent.Parent.UI.Spectate)
-local Summary = require(script.Parent.Parent.UI.Summary)
 local Theme = require(script.Parent.Parent.UI.Theme)
 
 local FxController = {}
@@ -242,11 +241,9 @@ local function onFx(kind: string, data: { [string]: any }?)
 		local def = Cosmetics.ById[d.id or ""]
 		Overlay.alert(`ADDED: {string.upper(def and def.name or "ITEM")}`, Theme.Color.brassLight, 2)
 		audio("Purchase")
-	elseif kind == "RunSummary" then
-		task.delay(1.2, function()
-			Summary.show(d)
-		end)
 	end
+	-- "RunSummary" (brass, XP, rank-ups) is no longer shown at run end: the one end screen is the
+	-- run ticket (UI/RunCard). UI/Summary is kept for when the payout gets a home again.
 end
 
 local ALERT_KINDS: { [string]: Color3 } = {
