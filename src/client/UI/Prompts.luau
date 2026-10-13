@@ -153,11 +153,25 @@ function Prompts.mount(gui: ScreenGui)
 			return
 		end
 		local billboard = build(container, prompt, inputType)
-		local hidden: RBXScriptConnection
-		hidden = prompt.PromptHidden:Connect(function()
-			hidden:Disconnect()
+		-- PromptHidden does not reliably fire when the server destroys a prompt (a patched leak's),
+		-- which left its chip on screen: it also goes when the prompt leaves the game
+		local connections: { RBXScriptConnection } = {}
+		local function drop()
+			for _, connection in connections do
+				connection:Disconnect()
+			end
 			billboard:Destroy()
-		end)
+		end
+		table.insert(connections, prompt.PromptHidden:Connect(drop))
+		table.insert(connections, prompt.Destroying:Connect(drop))
+		table.insert(
+			connections,
+			prompt.AncestryChanged:Connect(function()
+				if not prompt:IsDescendantOf(game) then
+					drop()
+				end
+			end)
+		)
 	end)
 
 	ProximityPromptService.PromptTriggered:Connect(function(prompt)

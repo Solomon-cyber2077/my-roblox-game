@@ -62,6 +62,12 @@ function RunRules.isTravel(phase: Phase): boolean
 	return phase == "Junction" or phase == "Cruise"
 end
 
+-- The train is running between stops: the only time the hull drains and steam leaks burst.
+-- Not the Junction: the crew is still voting there, whatever the scenery is doing.
+function RunRules.hullDrains(phase: Phase): boolean
+	return phase == "Cruise"
+end
+
 -- Doors open, loot live, hazards running.
 function RunRules.isStationOpen(phase: Phase): boolean
 	return phase == "Dwell" or phase == "LastCall" or phase == "Departure"
