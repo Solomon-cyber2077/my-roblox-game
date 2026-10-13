@@ -50,6 +50,10 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - Black edges at up to 0.8 opacity -> cold blue-grey `SHADE_COLOR` (34,42,56) at up to `SHADE_MAX` 0.55, with a gradient that clears faster toward the centre (0.6 at 35% in, 0.92 at 70%). A `Dread` ColorCorrectionEffect drains saturation (`SHADE_DESATURATE` 0.35) and cools the tint toward `SHADE_TINT` with the same level. Never pitch black; it draws under the HUD (2.1). Inset fix unchanged (the edges ScreenGui ignores the inset).
 - Verified: `lune run check` passes. Not seen on screen: owner to judge the tone near a Hollow.
 
+### 2.3 Stamina bar (`UI/Hud`, reads `MovementController.StaminaFraction/IsExhausted`)
+- `Stamina` CanvasGroup, 200x8, bottom-centre, its bottom 10 px above the hotbar slots (`Position (0.5, 0, 1, -22 - CELL - STAMINA_GAP)`); the backpack hint line sits higher (40-24 px above the slots), so nothing overlaps. Steel track, blackened-brass rim, brass fill with a sheen that warms to ember as it drains. Group transparency 0.7 (`STAMINA_REST`) when full, fully opaque at half or less; pulses moon red while exhausted. The pocket watch/departure ticket (bottom right) and the slate (top centre) are elsewhere.
+- Verified: `lune run check` passes. Not seen on screen; on very narrow phone screens the centred hotbar row was already close to the watch.
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:

@@ -47,6 +47,10 @@ local FADE_RATE = 2.5
 local WATCH_IDLE = 0.2 -- settled, but the stop ticket must stay legible over bright scenery
 local BACKPACK_IDLE = 0.5
 local HIDDEN = 1
+-- Stamina bar above the hotbar: size, its gap above the slots (the hint line sits higher), and
+-- how faint it is when full.
+local STAMINA_W, STAMINA_H, STAMINA_GAP = 200, 8, 10
+local STAMINA_REST = 0.7
 
 local function tierStamps(tier: number): string
 	return string.rep("●", tier) .. string.rep("○", 3 - tier)
@@ -796,6 +800,35 @@ function Hud.mount(gui: ScreenGui)
 	})
 	backpackHint.Parent = backpack
 
+	-- Stamina: a thin brass-rimmed gauge just above the hotbar (below the hint line). It sits
+	-- dim while you are fresh, brightens as a sprint drains it and pulses red when you are spent.
+	local staminaCase = Ui.new("CanvasGroup", {
+		Name = "Stamina",
+		Size = UDim2.fromOffset(STAMINA_W, STAMINA_H),
+		Position = UDim2.new(0.5, 0, 1, -22 - CELL - STAMINA_GAP),
+		AnchorPoint = Vector2.new(0.5, 1),
+		BackgroundColor3 = Theme.Color.steel,
+		BackgroundTransparency = 0.15,
+		GroupTransparency = STAMINA_REST,
+		Parent = container,
+	})
+	Ui.corner(3).Parent = staminaCase
+	Ui.stroke(BRASS_DARK, 1, 0).Parent = staminaCase
+	local staminaFill = Ui.new("Frame", {
+		Name = "Fill",
+		Size = UDim2.new(1, -4, 1, -4),
+		Position = UDim2.fromOffset(2, 2),
+		BackgroundColor3 = Theme.Color.brass,
+		BorderSizePixel = 0,
+		Parent = staminaCase,
+	})
+	Ui.corner(2).Parent = staminaFill
+	Ui.new("UIGradient", { -- a worn brass sheen along the bar
+		Rotation = 90,
+		Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(176, 164, 140)),
+		Parent = staminaFill,
+	})
+
 	-- The tool in hand: its slot key holds it, E uses it (Logic/Inventory's hand rules).
 	local handSlot: number? = nil
 	local handId: string? = nil
@@ -1199,10 +1232,19 @@ function Hud.mount(gui: ScreenGui)
 		local winded = 0
 		local movement = Registry.MovementController
 		if movement then
-			winded = MathX.saturate((0.45 - movement.StaminaFraction()) / 0.45)
-			if movement.IsExhausted() then
+			local fraction = movement.StaminaFraction()
+			winded = MathX.saturate((0.45 - fraction) / 0.45)
+			local exhausted = movement.IsExhausted()
+			if exhausted then
 				winded = math.max(winded, 0.75 + 0.25 * math.sin(now * 5))
 			end
+			staminaFill.Size = UDim2.new(MathX.saturate(fraction), -4, 1, -4)
+			staminaFill.BackgroundColor3 = if exhausted
+				then Theme.Color.signal
+				else Theme.Color.ember:Lerp(Theme.Color.brass, MathX.saturate(fraction * 1.6))
+			staminaCase.GroupTransparency = if exhausted
+				then 0.25 * (0.5 + 0.5 * math.sin(now * 6))
+				else STAMINA_REST * MathX.saturate((fraction - 0.5) / 0.5)
 		end
 		Overlay.vitals(wound, winded)
 		-- (GrabController keeps the heart while a Hollow holds you)
