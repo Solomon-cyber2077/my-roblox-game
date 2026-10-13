@@ -34,6 +34,12 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - `Logic/Tutorial.tier/crewTier/def`: tier 1-3 on a player's first three runs, 0 after; the crew rides at its least experienced player's tier via `NpcQuest.runStage` (the errands' lowest-stage rule; a spec checks they agree). An unreadable count counts as finished. Wired to save data in C.2.
 - Specs: `tests/Threat.spec` (curve), `tests/Tutorial.spec`.
 
+### C.2 Tutorial runs in the save
+- One new profile field `tutorialRuns` (default 0, filled by `reconcile` for old profiles, so **existing players, the owner included, get the tutorial once**). No other schema change. `DataService.IsLoaded(player)`: false when the load failed or there is no DataStore (e.g. unpublished Studio).
+- New `Services/TutorialService` (in ORDER before RunDirector): `CrewTier(players)` fixed at Boarding (`RunDirector` state.tutorial -> `run.tutorial` in state and `HazardParams.tutorial`); polls who is Afield/Straggler; at RunEnd adds 1 for each member who stepped off at least once (`Tutorial.afterRun`). Not loaded -> plays as finished (tier 0) and nothing is written.
+- Owner reset: chat `/tutorial reset` or `/tutorial 0-3`, only for UserId `Config/Tutorial.OwnerUserId` = 11744048795 (the uploader id in AGENTS.md; **owner to confirm it is their account**). On a not-loaded profile (Studio) it is a session-only override, so the tutorial can be tested there.
+- Specs: counting, load-failure fallback (`tests/Tutorial.spec`). Unverified live: a real DataStore save of the field.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 

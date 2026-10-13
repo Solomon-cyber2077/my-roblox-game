@@ -6,6 +6,10 @@
 	crewTier(list)    the crew rides at its least experienced player's tier. This is the NPC
 	                  errands' rule for the crew's lowest stage (Logic/NpcQuest.runStage): the
 	                  lowest count among the crew still inside the tutorial decides
+
+	Counting (profile.tutorialRuns, Services/TutorialService): a run counts once it ends,
+	for each player who stepped off the train at least once in it. A profile that failed to
+	load counts as a finished tutorial and is never written back.
 ]]
 
 local Shared = script.Parent.Parent
@@ -39,6 +43,25 @@ function Tutorial.crewTier(runsList: { number }): number
 	end
 	local lowest = NpcQuest.runStage(counts, T.Runs - 1)
 	return if lowest then Tutorial.tier(lowest) else 0
+end
+
+-- The completed tutorial runs to play by: the stored count, or a finished tutorial when the
+-- profile did not load. `override` is the owner's dev setting and wins over both.
+function Tutorial.runs(loaded: boolean, stored: any, override: number?): number
+	if override ~= nil then
+		return count(override)
+	end
+	return if loaded then count(stored) else T.Runs
+end
+
+-- The count to store after a run, or nil to write nothing: the profile did not load, the
+-- player never stepped off the train, or the tutorial is already behind them.
+function Tutorial.afterRun(loaded: boolean, stored: any, steppedOff: boolean): number?
+	if not loaded or not steppedOff then
+		return nil
+	end
+	local done = count(stored)
+	return if done < T.Runs then done + 1 else nil
 end
 
 -- The tier's settings, or nil past the tutorial.

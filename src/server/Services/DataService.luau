@@ -29,7 +29,8 @@ local Types = require(Shared.Types)
 local StateService = require(script.Parent.StateService)
 
 type Profile = Types.Profile
-type Session = { profile: Profile, online: boolean, dirty: boolean, released: boolean }
+-- loaded: the profile came from the store (false when it failed to load or there is no store)
+type Session = { profile: Profile, online: boolean, loaded: boolean, dirty: boolean, released: boolean }
 
 local SCHEMA_VERSION = NpcSave.VERSION -- 2: profile.npcs (Logic/NpcSave)
 
@@ -60,6 +61,7 @@ local function defaultProfile(): Profile
 		receipts = {},
 		settings = {},
 		npcs = NpcSave.defaults(),
+		tutorialRuns = 0,
 	}
 end
 
@@ -177,8 +179,13 @@ local function onPlayerAdded(player: Player)
 	if player.Parent == nil then
 		return
 	end
-	local session: Session =
-		{ profile = profile or defaultProfile(), online = online, dirty = false, released = false }
+	local session: Session = {
+		profile = profile or defaultProfile(),
+		online = online,
+		loaded = profile ~= nil,
+		dirty = false,
+		released = false,
+	}
 	sessions[player] = session
 	publish(player)
 	DataService.ProfileLoaded:Fire(player, session.profile)
@@ -252,6 +259,12 @@ function DataService.WaitForProfile(player: Player, timeout: number?): Profile?
 		task.wait(0.1)
 	end
 	return DataService.GetProfile(player)
+end
+
+-- True when the player's profile came from the store (not a stand-in after a failed load).
+function DataService.IsLoaded(player: Player): boolean
+	local session = sessions[player]
+	return session ~= nil and session.loaded
 end
 
 function DataService.IsOnline(player: Player): boolean

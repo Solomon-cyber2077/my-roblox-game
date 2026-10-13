@@ -40,4 +40,24 @@ describe("Tutorial tiers", function()
 		expect(Tutorial.def(1)).toBe(Difficulty.Tutorial.Tiers[1])
 		expect(Tutorial.def(3)).toBe(Difficulty.Tutorial.Tiers[3])
 	end)
+
+	it("counts a run for a player who stepped off the train, once it ends", function()
+		expect(Tutorial.afterRun(true, 0, true)).toBe(1)
+		expect(Tutorial.afterRun(true, 2, true)).toBe(3)
+		-- never off the train: the run does not count
+		expect(Tutorial.afterRun(true, 0, false)).toBe(nil)
+		-- the tutorial is behind them: nothing to write
+		expect(Tutorial.afterRun(true, 3, true)).toBe(nil)
+	end)
+
+	it("plays a profile that failed to load as a finished tutorial and writes nothing", function()
+		expect(Tutorial.runs(false, 0, nil)).toBe(Difficulty.Tutorial.Runs)
+		expect(Tutorial.tier(Tutorial.runs(false, 0, nil))).toBe(0)
+		expect(Tutorial.afterRun(false, 0, true)).toBe(nil)
+		expect(Tutorial.afterRun(false, nil, true)).toBe(nil)
+		-- a loaded profile plays by its count; the owner's dev setting wins over both
+		expect(Tutorial.runs(true, 1, nil)).toBe(1)
+		expect(Tutorial.runs(true, nil, nil)).toBe(Difficulty.Tutorial.Runs)
+		expect(Tutorial.runs(false, 0, 0)).toBe(0)
+	end)
 end)
