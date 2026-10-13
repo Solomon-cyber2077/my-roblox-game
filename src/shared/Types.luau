@@ -61,6 +61,7 @@ export type HazardParams = {
 	hollowChase: number,
 	hollowDamage: number,
 	stop: number?, -- the stop's number in the run (RunDirector), for the per-stop rules
+	tutorial: number?, -- the crew's tutorial tier (Logic/Tutorial): 1..3, nil or 0 when past it
 	departureAccel: number,
 	chaseWindow: number,
 	lootMul: number,
