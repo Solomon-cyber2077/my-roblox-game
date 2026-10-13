@@ -18,6 +18,13 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - New `safely(name, fn)` pcall helper (warns "GrabController: <name> failed: ..."): `lock` in `begin` (hidePry always runs after), every `unlock` call (finish, respawn, phase change), `Struggle.hide`. Inside `unlock` the AutoRotate restore, camera reset and mouse free are separate steps so one failing does not skip the next.
 - Verified: `lune run check` passes (250 tests). Unverified: a live grab in Studio (no console errors, pry prompt only on crewmates' screens).
 
+### 1.2 Death cause
+- New `Logic/DeathCause` (+ `tests/DeathCause.spec`): sources Hollow/Fog/Fall/Train -> causes Taken/Smothered/Fell/Wrecked; no tag, unknown tag or a tag older than `StaleSeconds` (8) -> `Other`; a body below `FloorY - FallDepth` -> Fell. `DeathCause.Lines` holds every cause's title and line (death screen and, later, the run ticket). `Types.Cause` gained `Wrecked` and `Other`.
+- Server: `CrewService.TagDamage(character, source)` sets `LastDamageSource` + `LastDamageAt` (HollowService grab/bites, HazardDirector fog); cleared in `LoadCharacterAt`. `onDied` uses `DeathCause.fromDeath`. `CrewService.MarkWrecked()` (called in `RunDirector` Enter.RunEnd on Derailed) sets cause Wrecked on everyone still alive. Fell via the 10 Hz position check is unchanged.
+- `UI/Spectate` reads `DeathCause.line`; with no other living crew it no longer says a crewmate can bring you back.
+- Audit stub `.lune/lib/HollowLifecycle.luau` gained `TagDamage`.
+- Verified: `lune run check` passes (255 tests). Unverified in Studio: each death screen line. No source tags "Train" or "Fall" damage yet (no such damage exists); add `TagDamage` wherever such damage is added.
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:

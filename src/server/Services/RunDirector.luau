@@ -410,6 +410,9 @@ Enter.RunEnd = function(previous, outcome)
 	Registry.HazardDirector.Stop()
 	Registry.HollowService.Clear()
 	local finalOutcome = state.outcome :: Types.Outcome
+	if finalOutcome == "Derailed" then
+		Registry.CrewService.MarkWrecked()
+	end
 	logStop(finalOutcome :: any, nil) -- Outcome is a subset of StopOutcome
 	Registry.ProgressionService.PayRun(
 		finalOutcome,

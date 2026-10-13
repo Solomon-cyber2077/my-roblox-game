@@ -122,6 +122,9 @@ local function run(): string
 			AlivePlayers = function()
 				return { victim }
 			end,
+			TagDamage = function(model, source)
+				model:SetAttribute("LastDamageSource", source)
+			end,
 		},
 	}
 	local net = {

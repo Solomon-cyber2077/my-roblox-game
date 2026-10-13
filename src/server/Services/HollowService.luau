@@ -519,7 +519,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 	character:SetAttribute("GrabAt", now)
 	character:SetAttribute("GrabEscape", 0)
 	character:SetAttribute("GrabStyle", def.id)
-	character:SetAttribute("LastDamageSource", "Hollow")
+	Registry.CrewService.TagDamage(character, "Hollow")
 	hollow.model:SetAttribute("GrabStyle", def.id)
 	hollow.model:SetAttribute("GrabAt", now)
 	hollow.model:SetAttribute("GrabVictim", target.UserId)
@@ -635,7 +635,7 @@ local function holdTick(hollow: Hollow)
 	local damage = Grab.damage(hold.def, p, hollow.def, hold.elapsed, elapsed)
 	hold.elapsed = elapsed
 	if damage > 0 and not Registry.DevService.IsGod(hold.victim) then
-		character:SetAttribute("LastDamageSource", "Hollow")
+		Registry.CrewService.TagDamage(character, "Hollow")
 		hold.humanoid:TakeDamage(damage)
 		NetService.Fire("Fx", hold.victim, "Bite", { style = hold.def.id, damage = damage })
 	end
