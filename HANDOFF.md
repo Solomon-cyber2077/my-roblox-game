@@ -3,7 +3,7 @@
 ## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
 
 ### Resume point
-- Done: audit (1), design notes (3), shared generator, shared kit (4), Halt, CoalYard, SignalWorks. Next archetype: Market, then, Viaduct, Minehead, Schoolhouse, Infirmary, RailwayHotel, PostTown; then Emergency Village (8), tutorial stop 1 (9), village hook tests (10).
+- Done: audit (1), design notes (3), shared generator, shared kit (4), Halt, CoalYard, SignalWorks, Market. Next archetype: Viaduct, then, Viaduct, Minehead, Schoolhouse, Infirmary, RailwayHotel, PostTown; then Emergency Village (8), tutorial stop 1 (9), village hook tests (10).
 - Per archetype recipe: new `length`/`depth` (+ `village` rows), more `landmarks` (new `Config/Buildings` defs as needed; Spine 4x4+ may have `upper`, measure its `tiles` from the slab), new structures in `StructureKit` + `Stations.Footprints`; `lune run stations` (walkable area >= 3x before), `lune run check`, then Studio: Dev `station <Id>` before Ready, skip to Dwell, one overview + one edge shot (`docs/stations/<id>_*.jpg`).
 
 ### After (per archetype, seed 424242)
@@ -12,9 +12,11 @@
 | Halt | 432x348 | 138672 (3.4x) | 8 (was 3) | 5 | 77 (was 23) | 450 | 45.0 | 34.0 | 234 | 242 | 7579 | 86 (58) |
 | CoalYard | 480x372 | 162720 (3.1x) | 8 (was 2) | 16 (was 9) | 85 (was 37) | 462 | 46.2 | 35.0 | 237 | 246 | 7403 | 64 (47) |
 | SignalWorks | 468x420 | 182592 (3.1x) | 8 (was 1) | 14 (was 7) | 78 (was 24) | 570 | 57.0 | 43.4 | 257 | 263 | 8774 | 76 (51) |
+| Market | 480x408 | 181152 (3.2x) | 8 (was 1) | 20 (was 10) | 98 (was 23) | 534 | 53.4 | 40.6 | 271 | 273 | 8856 | 82 (59) |
 
 - CoalYard: coaling tower, brick chimney (new), 7 heaps, 5 hoppers, 3 sidings; boiler house, engine shed (now searchable), coal office (new); village: two railwaymen's terraces (new), chapel, cottage. Studio stop 1: docked, 3:49, no errors; `docs/stations/coalyard_overview.jpg`.
 - SignalWorks: two-storey signal cabin (new: locking room below, lever rooms above), 2 signal gantries (new), workshop, goods shed, lineman's cottage, 8 cable-drum stacks, 3 sidings; village: terrace, general store, cottages. Iron fences now have bars every 2 studs (2339 -> ~1200 parts). Studio stop 1: 4:05, no errors; `docs/stations/signalworks_overview.jpg`.
+- Market: covered market hall (new, its floor a grid of searchable stalls), clock tower (new), fountain square (8x5), 16 stalls, general store, the inn as the public house; village: two terraces, chapel, cottage. Studio stop 1: 4:17, no errors; `docs/stations/market_overview.jpg`.
 - Halt: stationmaster's house (2 storeys), goods shed, booking hall, cattle dock (new), water tower, sheds; village: the Lamp & Anchor inn (2 storeys), cottages. Studio (stop 1): docked, clock 3:39-3:48, no errors after the fix below; shots `docs/stations/halt_overview.jpg`, `halt_edge.jpg`. Fixed in Studio: loot zone `Village` was missing from `Config/Loot` (LootService errored at Dwell); spec added.
 
 ### Shared generator (commit "Stations: shared generator")

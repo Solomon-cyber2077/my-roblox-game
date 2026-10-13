@@ -275,6 +275,23 @@ local Rooms: { [string]: Room } = {
 		lamp = 0.35,
 		sleeper = 0.2,
 	},
+	MarketFloor = {
+		label = "Market Floor",
+		place = {
+			{ pattern = "grid", item = "Table", gap = 4, container = "Crate", share = 0.4 },
+			{
+				pattern = "wall",
+				item = "ShopShelf",
+				wall = "sides",
+				count = 2,
+				gap = 2,
+				container = "Crate",
+				share = 0.5,
+			},
+		},
+		lamp = 0.3,
+		sleeper = 0.35,
+	},
 	Bedroom = {
 		label = "Guest Room",
 		place = {
@@ -875,6 +892,22 @@ local Defs: { [string]: Building } = {
 		rooms = { "LockingRoom", "Kitchen" },
 		corridor = Corridors.Plain,
 		upper = { rooms = { "LeverRoom", "LeverRoom" }, height = 10, tiles = 3 },
+	},
+	MarketHall = {
+		name = "Covered Market",
+		size = { 6, 4 },
+		layout = "Hall",
+		height = 15,
+		wall = { 170, 150, 120 },
+		trim = { 132, 46, 52 },
+		roof = { 74, 76, 82 },
+		floor = { 120, 112, 100 },
+		wallMaterial = "Brick",
+		floorMaterial = "Cobblestone",
+		roofMaterial = "Slate",
+		roofStyle = "Pitched",
+		front = "MarketFloor",
+		rooms = { "Store", "Office", "BackStore" },
 	},
 	GeneralStore = {
 		name = "General Store",
