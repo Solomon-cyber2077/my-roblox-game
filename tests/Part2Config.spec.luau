@@ -131,4 +131,36 @@ describe("Part 2 config (Config/Difficulty)", function()
 		end
 		expect(Difficulty.SkillCheck.LeadDegrees[1] + tutorial.ScriptedGrab.ZoneDegrees).toBeLessThan(360)
 	end)
+
+	it("defines every tutorial prompt with a known moment, a tier and short text", function()
+		local moments = {
+			RunStart = true,
+			OffTrain = true,
+			AwayFromTrain = true,
+			NearEdge = true,
+			Grabbed = true,
+			Cruise = true,
+			Leak = true,
+			Exhausted = true,
+			Junction = true,
+		}
+		local ids = {}
+		local tiers = {}
+		for _, prompt in Difficulty.Tutorial.Prompts do
+			expect(moments[prompt.when]).toBe(true)
+			expect(ids[prompt.id]).toBe(nil)
+			ids[prompt.id] = true
+			expect(prompt.tier).toBeAtLeast(1)
+			expect(prompt.tier).toBeAtMost(Difficulty.Tutorial.Runs)
+			expect(#prompt.text).toBeGreaterThan(0)
+			expect(#prompt.text).toBeLessThan(90)
+			tiers[prompt.tier] = (tiers[prompt.tier] or 0) + 1
+		end
+		for tier = 1, Difficulty.Tutorial.Runs do
+			expect(tiers[tier] or 0).toBeGreaterThan(0)
+		end
+		-- run 2 teaches the skill check in the owner's words
+		expect(ids.SkillCheck).toBe(true)
+		expect(Difficulty.Tutorial.PromptSeconds).toBeGreaterThan(0)
+	end)
 end)
