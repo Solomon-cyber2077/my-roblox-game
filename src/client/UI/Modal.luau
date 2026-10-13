@@ -222,6 +222,11 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 	return modal
 end
 
+-- True while any modal window is open (other HUD pieces yield to it).
+function Modal.anyOpen(): boolean
+	return current ~= nil
+end
+
 function Modal.closeAll()
 	if current then
 		current:close()

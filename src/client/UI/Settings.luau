@@ -31,14 +31,15 @@ function SettingsUi.mount(gui: ScreenGui)
 	})
 	open.ZIndex = 20
 	open.Parent = gui
-	-- with the lobby panel gone (in a run) it rides up under the coal and hull gauges (Hud.luau)
+	-- with the lobby panel gone (in a run) it rides up under the coal and hull gauges and the
+	-- leak alert slot below them (Hud.luau LEAK_SLOT: 14, 152, 236x40)
 	task.spawn(function()
 		local lobby = gui:WaitForChild("Lobby") :: GuiObject
 		local function place()
 			open.Position = if player:GetAttribute("Hud") == "Hide"
 				then UDim2.fromOffset(14, 14)
 				elseif lobby.Visible then UDim2.fromOffset(14, 244)
-				else UDim2.fromOffset(14, 156)
+				else UDim2.fromOffset(14, 200)
 		end
 		place()
 		lobby:GetPropertyChangedSignal("Visible"):Connect(place)
