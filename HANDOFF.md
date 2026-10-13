@@ -36,6 +36,11 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - Spawn facing (`TrainBuilder` spawnPoints): each aisle spawn is turned a quarter about Y to look down its car toward the farther end, instead of the default -Z (the side wall ~7 studs away).
 - Verified: `lune run check` passes. **Not verified: Studio access for screenshots was declined this session**, so the spawn view and wall clipping need the owner's eyes.
 
+### 1.5 Vote card seals (`UI/Ticket` full ticket)
+- Cause: the wax render is 1.7x the 32 px disc, so it spilled ~11 px past the disc onto the DANGER title above and the first chalk tally beside it.
+- Fix: the seal (and a mystery's lantern) moved to the right of the danger rows: disc at x 173, wax x 161-217 / y 89-145 on the 224x214 card, so it clears the name (ends y 85), the title (now width-limited to end before x 161, and shrinks to fit), the tallies (now at x 16-32 under the title), the stamps (x 48-157) and the vote button (y 160). Positions are fixed offsets on a fixed-size card, scaled as a whole, so this holds at any card size. `WAX_SPREAD` names the 1.7.
+- Verified: `lune run check` passes; geometry checked by arithmetic. Not seen on screen (Studio access declined).
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:

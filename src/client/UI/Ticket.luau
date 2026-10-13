@@ -186,13 +186,24 @@ local function stock(parent: Instance, size: UDim2, routeId: string, z: number):
 	return paper
 end
 
--- The wax seal holding the danger number, its chalk tallies beside it.
-local function seal(parent: Instance, s: TicketModel.Seal, x: number, y: number, size: number, z: number)
+-- How far the poured wax spreads past the seal's disc, as a share of the disc.
+local WAX_SPREAD = 1.7
+
+-- The wax seal holding the danger number at (x, y); its chalk tallies start at (tallyX, y).
+local function seal(
+	parent: Instance,
+	s: TicketModel.Seal,
+	x: number,
+	y: number,
+	size: number,
+	z: number,
+	tallyX: number
+)
 	-- poured wax (a Blender render: sheen, ragged rim, the company wheel pressed in), turned so
 	-- no two seals on the board sit alike
 	Ui.new("ImageLabel", {
 		Name = "Wax",
-		Size = UDim2.fromOffset(math.floor(size * 1.7), math.floor(size * 1.7)),
+		Size = UDim2.fromOffset(math.floor(size * WAX_SPREAD), math.floor(size * WAX_SPREAD)),
 		Position = UDim2.fromOffset(x + size / 2, y + size / 2),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Rotation = math.floor(TicketModel.hash(`{s.number}:{s.strokes}:wax`) * 360),
@@ -212,7 +223,7 @@ local function seal(parent: Instance, s: TicketModel.Seal, x: number, y: number,
 		Ui.new("Frame", {
 			Name = "Tally",
 			Size = UDim2.fromOffset(3, math.floor(size * 0.6)),
-			Position = UDim2.fromOffset(x + size + 8 + (i - 1) * 8, y + size / 2),
+			Position = UDim2.fromOffset(tallyX + 2 + (i - 1) * 8, y + size / 2),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Rotation = -6 + i * 4,
 			BackgroundColor3 = INK,
@@ -440,19 +451,28 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 		INK_SOFT,
 		4
 	)
+	-- The seal sits in the empty right of the danger rows, its poured wax kept inside the paper
+	-- and clear of the name above, the title and tallies to its left and the button below.
+	local SEAL = 32
+	local waxHalf = math.ceil(SEAL * WAX_SPREAD / 2)
+	local sealX = W - PAD // 2 - waxHalf - SEAL // 2 -- the wax's right edge stays PAD/2 inside the paper
+	local waxLeft = sealX + SEAL // 2 - waxHalf
 	dangerTitle.Position = UDim2.fromOffset(PAD, y)
-	dangerTitle.Size = UDim2.fromOffset(150, 14)
+	dangerTitle.Size = UDim2.fromOffset(waxLeft - PAD - 4, 14)
+	shrink(dangerTitle, 11, 8)
 	y += 16
+	-- the seal centred on the tally row, nudged up so its wax never reaches the button
 	if view.seal then
-		seal(paper, view.seal, PAD, y, 32, 4)
+		seal(paper, view.seal, sealX, y - 4, SEAL, 4, PAD)
 	elseif view.mystery then
-		lantern(paper, PAD, y, 32, 4)
+		lantern(paper, sealX, y - 4, SEAL, 4)
 	end
-	-- the stamps pile up to the right of the seal
+	-- the stamps pile up between the tallies and the seal
+	local stampsX = PAD + 3 * 8 + 10
 	local stamps = Ui.new("Frame", {
 		Name = "Stamps",
-		Size = UDim2.fromOffset(W - 100 - PAD, 50),
-		Position = UDim2.fromOffset(96, y - 2),
+		Size = UDim2.fromOffset(waxLeft - 4 - stampsX, 50),
+		Position = UDim2.fromOffset(stampsX, y - 2),
 		BackgroundTransparency = 1,
 		ZIndex = 6,
 		Parent = paper,
