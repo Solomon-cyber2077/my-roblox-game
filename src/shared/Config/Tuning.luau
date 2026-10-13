@@ -5,6 +5,8 @@
 	Units: seconds, studs, studs per second, and resource units.
 ]]
 
+local Difficulty = require(script.Parent.Difficulty)
+
 local Tuning = {
 	Run = {
 		StationCount = 10, -- regular stops before the Terminus
@@ -290,13 +292,10 @@ local Tuning = {
 		HitRange = 8, -- and lands if the target is still this close when the windup ends
 		WindupSeconds = 0.3, -- the tell: the Hollow rears back before it strikes
 		RecoverSeconds = 0.4,
-		StrikeCooldown = 0.9, -- from one strike's start to the next
 		LungeRange = 16, -- a hunter this close bursts forward
 		LungeBoost = 1.45, -- its speed multiplier while lunging
 		LungeSeconds = 0.55,
 		LungeCooldown = 3.5,
-		SightRange = 95,
-		AwarenessRange = 30,
 		SafeMargin = 3,
 		ThinkHz = 12,
 		RetreatSeconds = 6,
@@ -316,16 +315,6 @@ local Tuning = {
 		FlankAngle = 58, -- degrees between hunters closing on the same crew member
 		FlankUntil = 11, -- hunters fan out around a target until this close, then go straight in
 		Spacing = 1.5, -- studs Hollows keep between their bodies (on top of their kinds' radii)
-	},
-
-	--[[
-		How many Hollows a stop holds at once (Logic/HollowBudget), by the players in the run:
-		sleepers, fog spawns and the wanderer all count, so the total never grows past this.
-		Difficulty still sets how fast they come, how fast they move and how hard they hurt.
-	]]
-	HollowCount = {
-		ByCrew = { 3, 4, 5, 6 }, -- 1, 2, 3, 4 players
-		SleeperShare = 0.5, -- at most this share may start asleep in buildings
 	},
 
 	--[[
@@ -386,7 +375,7 @@ local Tuning = {
 			windup = 1.4,
 			radius = 2.2,
 			grip = 1.2,
-			crush = 1.2, -- was 1.4: with DpsShare 0.6 a steady masher must still survive its hold
+			crush = Difficulty.GrabDamage.BruteCrush,
 		},
 	},
 
@@ -397,8 +386,6 @@ local Tuning = {
 	]]
 	Grab = {
 		Escape = 1,
-		DpsShare = 0.6, -- damage per second while held, as a share of the stop's hollowDamage (was 0.4)
-		MaxBiteShare = 0.35, -- no single bite takes more than this share of a crew member's MaxHealth
 		AllyPresses = 2.5, -- a crewmate prying at the Hollow counts as this many presses
 		Grace = 2.5, -- seconds after breaking free before anything can grab you again
 		Stagger = 1.6, -- seconds a Hollow reels when its victim breaks free
@@ -408,8 +395,7 @@ local Tuning = {
 		PryInterval = 0.15, -- server limit per helper, matching a deliberate button mash
 		-- A Brute's strike slams its victim face down and pins them (Config/Grabs "Slam").
 		Pin = {
-			Tick = 1, -- seconds between damage ticks while pinned
-			DpsShare = 0.5, -- damage per second pinned, as a share of the stop's hollowDamage
+			Tick = 1, -- seconds between damage ticks while pinned (damage: Difficulty.GrabDamage)
 			SlamSeconds = 0.35, -- the body is driven from standing to the ground over this long
 		},
 	},

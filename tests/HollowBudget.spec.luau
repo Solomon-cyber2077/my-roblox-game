@@ -1,5 +1,5 @@
 local HollowBudget = require(Shared.Logic.HollowBudget)
-local Tuning = require(Shared.Config.Tuning)
+local Difficulty = require(Shared.Config.Difficulty)
 
 describe("HollowBudget", function()
 	it("scales the Hollows at a stop by the players in the run", function()
@@ -10,8 +10,8 @@ describe("HollowBudget", function()
 	end)
 
 	it("clamps crews outside the table", function()
-		expect(HollowBudget.total(0)).toBe(Tuning.HollowCount.ByCrew[1])
-		expect(HollowBudget.total(9)).toBe(Tuning.HollowCount.ByCrew[#Tuning.HollowCount.ByCrew])
+		expect(HollowBudget.total(0)).toBe(Difficulty.Threat.FullByCrew[1])
+		expect(HollowBudget.total(9)).toBe(Difficulty.Threat.FullByCrew[#Difficulty.Threat.FullByCrew])
 	end)
 
 	it("leaves room for the wanderer and the fog spawns beside the sleepers", function()

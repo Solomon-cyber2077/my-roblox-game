@@ -2,7 +2,15 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
-## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI) -- READ THIS FIRST
+## 2026-10-13: FIX PASS PART 2 (grabs, threat curve, tutorial, hull and leaks) -- READ THIS FIRST
+Part 1 was finished and pushed before this started. One commit per task, each pushed. `lune run check` ran in full (rojo was not blocked).
+
+### A.1 One config table (`Config/Difficulty`)
+- New sections, all first drafts: `Aggression`, `GrabDamage`, `Threat`, `PostGrab`, `SkillCheck`, `Hull`, `Leaks`, `Breakdown`, and `Tutorial` (= `Config/Tutorial`, the tutorial's own data file, re-exported so Difficulty stays the one table).
+- Moved in (values unchanged): `Tuning.HollowCount` -> `Difficulty.Threat` (`FullByCrew` 3/4/5/6, `SleeperShare`); `Tuning.Grab.DpsShare/MaxBiteShare/Pin.DpsShare` + Brute crush -> `Difficulty.GrabDamage` (Tuning's Brute `crush` now reads it); `Tuning.Hollow.SightRange/AwarenessRange/StrikeCooldown` and HollowService's hard-coded 4 s search -> `Difficulty.Aggression`. Brief 002's `EarlyHollowCap` deleted (was unused). `WandererDelay`, `Sleepers`, `HollowDamage`, `Dwell` were already in Difficulty.
+- Sections not yet read by code are wired by the later tasks below. `tests/Part2Config.spec` checks the schema.
+
+## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
 ### Phase 0: setup, merge, brief 002

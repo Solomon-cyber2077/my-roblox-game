@@ -119,6 +119,7 @@ type Hollow = {
 }
 
 local H = Tuning.Hollow
+local A = Difficulty.Aggression
 local G = Tuning.Grab
 
 local HollowService = {}
@@ -811,9 +812,9 @@ local function think(hollow: Hollow)
 			local root = characterRoot(player)
 			if root then
 				local distance = (root.Position - position).Magnitude
-				if (wanderer or distance < H.SightRange) and distance < bestDistance then
+				if (wanderer or distance < A.SightRange) and distance < bestDistance then
 					local visible = clearBetween(position, root.Position)
-					if wanderer or visible or distance <= H.AwarenessRange then
+					if wanderer or visible or distance <= A.AwarenessRange then
 						best, bestRoot, bestDistance, bestVisible = player, root, distance, visible
 					end
 				end
@@ -869,12 +870,12 @@ local function think(hollow: Hollow)
 		if
 			bestDistance <= H.StrikeRange * hollow.def.reach
 			and math.abs(bestRoot.Position.Y - position.Y) < 8
-			and clock - hollow.lastStrike >= H.StrikeCooldown
+			and clock - hollow.lastStrike >= A.StrikeCooldown
 			and (graceUntil[best] or 0) <= clock
 		then
 			setState(hollow, "Windup")
 		end
-	elseif hollow.lastSeen and clock - hollow.lastSeenAt < 4 then
+	elseif hollow.lastSeen and clock - hollow.lastSeenAt < A.Persistence then
 		-- lost sight: search where it saw them last
 		setState(hollow, "Hunt")
 		hollow.humanoid.WalkSpeed = chase * 0.85
