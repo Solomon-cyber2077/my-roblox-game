@@ -66,6 +66,18 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - Design effect for the owner: harder stations (e.g. minStation 4-5 ones) can now be stop 1, still capped at danger tier 2 and still on the stop-index difficulty curve. Part 2's threat curve should own early danger.
 - Tests: new `tests/RouteGen.spec` (no duplicate on any ballot over 300 seeds incl. mystery; every eligible station opens a run across 400 seeds; >40 of 50 seeds give distinct first-three ballots; same seed same ballot). `Run.spec` and `Mystery.spec` lost their `minStation` assertions. `lune run check` passes (259 tests).
 
+### 2.6 One end screen: the run ticket
+- New `Logic/RunTicketModel` (+ `tests/RunTicketModel.spec`, 6 tests): builds the data table `{ serial, won, hero, causeTitle, causeLine, stats (max 3: STOPS REACHED, LOOT, CREW), crew = { initials, name, lost }, stamp }` from outcome, run log, nextStop, runId, crew state and the local user key. Your own line: MADE IT on a win you survived, otherwise `DeathCause.line(cause)` (Wrecked for those aboard when the train failed). No line mentions a crewmate, so solo players are never told one can bring them back.
+- New `UI/RunTicket.build(data, z, strike?) -> (ticket, play)`: 520x340 paper ticket (Ui.ticket stock, worn double border, moonlight/lamp tint), stub with company line + serial, perforation, hero line (Arvo 32), cause title + line, rule, three stat columns (crew as initials, lost ones struck through in red), stamp (`RunLog.final`, e.g. TERMINUS / LOST AT STOP 1) struck on the right of the foot. The foot's left (`RunTicket.FOOT` = 58 px) is left for the host's buttons. Brief F's ticket book can call `RunTicket.build` with stored data tables.
+- `UI/RunCard` is now only the host: dim backdrop named `RunCard` (the leak slot yields to it), CLOSE + "H hides this button", B/backdrop close, shown once per runId at RunEnd (+0.3 s), stamp lands 0.6 s later. The old banner/crew-row/stub-cascade card is gone.
+- The run receipt is no longer shown: `FxController` ignores `RunSummary`, `UIController` no longer mounts `UI/Summary` (file kept). **Brass/XP/rank-up figures are therefore not shown at run end any more** (still paid and saved server-side); owner to decide where they belong (part 2/3 or brief F).
+- Verified: `lune run check` passes (265 tests). Not seen on screen (Studio access declined).
+
+### Next session starts here
+- Owner's eyes needed (no screenshots were possible): spawn view and wall clipping (1.4), vote card seal (1.5), panel + vignette near a Hollow (2.1/2.2), stamina bar (2.3), run ticket at a stop-1 death, a win and a derail (2.6), a live grab (1.1).
+- Open questions for the owner: Broken Things Markers default (`FirstFew` = on for 3 runs) vs `Always`; harder stations may now open a run (2.5); where brass/XP should show now the receipt is gone (2.6).
+- Part 2: threat curve replacing `HollowBudget.total` in `HazardDirector.Begin` (see Phase 0 carry-over values), leak alert into `Hud.leakSlot()`.
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:
