@@ -84,6 +84,9 @@ export type StationInfo = {
 	layoutSeed: number,
 	hazards: HazardParams,
 	terminus: boolean,
+	-- the Emergency Village after a breakdown (not one of the stops): bring `needed` repair parts
+	-- aboard; `found` counts those that have come aboard since the doors opened
+	emergency: { needed: number, found: number }?,
 }
 
 export type TrainState = {

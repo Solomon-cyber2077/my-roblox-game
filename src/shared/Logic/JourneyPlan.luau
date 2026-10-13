@@ -57,7 +57,7 @@ export type RunState = {
 	phaseEndsAt: number?,
 	breakdown: { phase: string }?,
 	destination: { archetype: string, biome: string? }?,
-	station: { archetype: string, startedAt: number?, dwell: number? }?,
+	station: { archetype: string, startedAt: number?, dwell: number?, emergency: any? }?,
 }
 
 export type Input = {
@@ -233,7 +233,16 @@ function JourneyPlan.step(plan: Plan, input: Input): Result
 
 	local stops = run.stopCount or Tuning.Run.StationCount
 	if phase ~= plan.lastPhase then
-		if phase == "Departure" then
+		local emergency = run.station ~= nil and run.station.emergency ~= nil
+		if phase == "Departure" and emergency then
+			-- leaving the Emergency Village: the same leg goes on. Its sinkhole stays cut behind
+			-- the train (the village slides away over it); the trip's dock is predicted afresh.
+			if plan.upcoming then
+				plan.lastDock = plan.upcoming.center -- the departing village keeps to its dock
+			end
+			plan.upcoming = nil
+			plan.stationChecked = false
+		elseif phase == "Departure" then
 			beginLeg(plan, (run.nextStop or plan.leg) + 1, input.odometer, stops)
 		end
 		plan.stationChecked = false

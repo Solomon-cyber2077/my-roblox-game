@@ -8,12 +8,24 @@ local LootRoll = require(Shared.Logic.LootRoll)
 local SEEDS = 8
 local STOPS = Tuning.Run.StationCount
 
+-- every regular stop and the Emergency Village, SEEDS layouts each, generated once
+local IDS = table.clone(Stations.Order)
+table.insert(IDS, "EmergencyVillage")
+local cache: { { id: string, arch: any, plan: any } } = {}
 local function eachPlan(fn: (string, any, any) -> ())
-	for _, id in Stations.Order do
-		local arch = Stations.List[id]
-		for seed = 1, SEEDS do
-			fn(id, arch, LayoutGen.generate(id, seed * 7919 + 11, 1.35))
+	if #cache == 0 then
+		for _, id in IDS do
+			for seed = 1, SEEDS do
+				table.insert(cache, {
+					id = id,
+					arch = Stations.List[id],
+					plan = LayoutGen.generate(id, seed * 7919 + 11, 1.35),
+				})
+			end
 		end
+	end
+	for _, entry in cache do
+		fn(entry.id, entry.arch, entry.plan)
 	end
 end
 
@@ -123,22 +135,18 @@ describe("Station reach", function()
 	end)
 
 	it("gives the crew time to reach the farthest loot and back, with margin, at every stop", function()
-		for _, id in Stations.Order do
-			local arch = Stations.List[id]
-			for seed = 1, SEEDS do
-				local plan = LayoutGen.generate(id, seed * 7919 + 11, 1.35)
-				local reach = StationReach.measure(plan)
-				local jog = StationReach.roundTrip(reach.farthestLoot, Tuning.Crew, false)
-				local sprint = StationReach.roundTrip(reach.farthestLoot, Tuning.Crew, true)
-				expect(sprint).toBeLessThan(jog)
-				-- the hardest case: the tightest clock (D = 1) at the first stop it can be
-				local params = DifficultyModel.params(1, arch, 4, nil, arch.minStation)
-				local open = params.dwell + params.lastCall
-				if open < jog * 2.5 then
-					error(`{id}: {open} s open, the farthest loot is {jog} s there and back at a jog`)
-				end
+		eachPlan(function(id, arch, plan)
+			local reach = StationReach.measure(plan)
+			local jog = StationReach.roundTrip(reach.farthestLoot, Tuning.Crew, false)
+			local sprint = StationReach.roundTrip(reach.farthestLoot, Tuning.Crew, true)
+			expect(sprint).toBeLessThan(jog)
+			-- the hardest case: the tightest clock (D = 1) at the first stop it can be
+			local params = DifficultyModel.params(1, arch, 4, nil, math.min(arch.minStation, STOPS))
+			local open = params.dwell + params.lastCall
+			if open < jog * 2.5 then
+				error(`{id}: {open} s open, the farthest loot is {jog} s there and back at a jog`)
 			end
-		end
+		end)
 	end)
 
 	it("computes the clock from the stop's size and its index", function()

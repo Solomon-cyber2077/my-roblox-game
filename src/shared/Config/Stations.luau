@@ -76,6 +76,8 @@ export type Archetype = {
 	layout: Layout?,
 	village: Village?,
 	terminus: boolean?,
+	emergency: boolean?, -- the Emergency Village: no platform buildings, a cinder bank and the train's lights
+	yardLamps: number?, -- lamp pools at most (default Lamps.YardMax)
 }
 
 local Archetypes: { [string]: Archetype } = {
@@ -663,6 +665,56 @@ local Archetypes: { [string]: Archetype } = {
 			},
 			containers = { Crate = 2, ToolChest = 1, Vault = 1 },
 		},
+	},
+	-- Not a station: the hamlet by the line where a broken-down train halts (Services/BreakdownService,
+	-- Difficulty.Breakdown Village*). Repair parts only (every other loot category weighs nothing), one
+	-- lamp at the lane's end, the threat of the stop the train was heading for.
+	EmergencyVillage = {
+		id = "EmergencyVillage",
+		name = "Emergency Village",
+		tier = 1,
+		minStation = 99,
+		weight = 0,
+		length = 384,
+		depth = 312,
+		dwellMultiplier = 1,
+		hint = "Repair parts",
+		loot = { coal = 0, parts = 1, relic = 0, tools = 0 },
+		hazard = { collapse = 0.8, fog = 1.0, hollows = 1.0 },
+		containers = { Crate = 8, ToolChest = 3 },
+		looseItems = 8,
+		structures = {
+			{ kind = "Shed", count = 3, zones = { "Mid", "Far" } },
+			{ kind = "WaterTower", count = 1, zones = { "Mid" } },
+		},
+		landmarks = {
+			{ kind = "Smithy", zones = { "Near", "Mid" } },
+			{ kind = "House", zones = { "Near", "Mid" } },
+			{ kind = "Terrace", zones = { "Mid", "Far" } },
+			{ kind = "House", zones = { "Far" } },
+			{ kind = "CoachHouse", zones = { "Far" } },
+		},
+		lampSpacing = 48,
+		ground = "Ground",
+		palette = {
+			ground = { 88, 80, 70 }, -- cinders and mud
+			accent = { 110, 84, 60 },
+			trim = { 44, 40, 36 },
+			light = { 255, 186, 120 },
+		},
+		edge = { fence = "FenceRail", trees = { "DeadTree", "Pine", "DeadTree" }, treeChance = 0.7 },
+		dressing = { "Haystack", "Cart", "Pump", "Well", "Wheelbarrow", "Puddle", "Scarecrow" },
+		yardTrees = 4,
+		layout = {
+			style = "Street",
+			lane = 1,
+			barriers = { "FenceRail", "Wreck" },
+			fill = { 0.35, 0.5 },
+			ground = { "BrokenRoad", "Rubble", "Wreck" },
+			groundCount = 6,
+		},
+		emergency = true,
+		yardLamps = 1,
 	},
 	Terminus = {
 		id = "Terminus",

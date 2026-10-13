@@ -192,6 +192,12 @@ return table.freeze({
 		RallyRepairs = 3, -- repair interactions the crew must complete
 		RallyHold = 1.5, -- seconds each repair takes
 		RallyRestore = 15, -- hull % after a successful rally
+		-- the Emergency Village (fix pass part 3): the train halts at its edge and the crew has
+		-- VillageSeconds to bring VillageParts repair parts aboard; done, they go into the hull,
+		-- which goes back to VillageRestore %. Not done, the train falls back on the rally.
+		VillageParts = 3,
+		VillageSeconds = 150,
+		VillageRestore = 40,
 	}),
 
 	Tutorial = Tutorial,

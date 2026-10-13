@@ -3,8 +3,10 @@
 	Breakdowns (Logic/Breakdown, Difficulty.Breakdown). The hull never drains below its floor by
 	itself (Ledger.drain); reaching the floor while the train runs is a breakdown:
 
-	  * the first in a run: the train stops and asks for an Emergency Village stop
-	    (requestVillageStop, built in part 3; until then it is never granted). Refused, the
+	  * the first in a run: the train stops at an Emergency Village (requestVillageStop ->
+	    RunDirector.BeginVillageStop): the crew has Difficulty.Breakdown.VillageSeconds to bring
+	    VillageParts repair parts aboard; done, the hull goes back to VillageRestore and the trip
+	    resumes; short, the train falls back on the halt and the rally below. Refused, the
 	    crew gets a rally: RallyRepairs repair prompts aboard and RallySeconds to make them.
 	    Done, the hull goes back to RallyRestore and the train limps on at LimpShare of its
 	    speed for the rest of the trip. Not done in time, the train is lost.
@@ -46,9 +48,9 @@ local function now(): number
 	return Workspace:GetServerTimeNow()
 end
 
--- Part 3 supplies the Emergency Village: until then a breakdown is never sent there.
+-- The first breakdown of a run halts the train at an Emergency Village (RunDirector runs the stop).
 function BreakdownService.requestVillageStop(): boolean
-	return false
+	return Registry.RunDirector.BeginVillageStop()
 end
 
 local function publish()
@@ -213,6 +215,50 @@ local function step(dt: number)
 	end
 end
 
+-- The Emergency Village's countdown in the timed-event toast, and its count in run.station.
+local shownFound = -1
+local function villageProgress()
+	local phase = Registry.RunDirector.Phase()
+	if not Registry.RunDirector.IsVillageStop() or (phase ~= "Dwell" and phase ~= "LastCall") then
+		if ReplicatedStorage:GetAttribute("TimedEvent") == "Village" then
+			for _, name in { "TimedEvent", "TimedEventTitle", "TimedEventText", "TimedEventCue" } do
+				ReplicatedStorage:SetAttribute(name, nil)
+			end
+		end
+		shownFound = -1
+		return
+	end
+	local station = StateService.Get({ "run", "station" }) :: any
+	if station == nil or station.emergency == nil then
+		return
+	end
+	local found = Registry.RunDirector.VillageFound()
+	local needed = station.emergency.needed
+	if found ~= shownFound then
+		if shownFound >= 0 and found >= needed and shownFound < needed then
+			NetService.FireAll("Notify", "Upgrade", "Enough repair parts aboard! Get back on the train.")
+		end
+		shownFound = found
+		StateService.Set({ "run", "station", "emergency", "found" }, found)
+		ReplicatedStorage:SetAttribute("TimedEventTitle", "EMERGENCY STOP")
+		ReplicatedStorage:SetAttribute(
+			"TimedEventText",
+			`Repair parts aboard: {math.min(found, needed)}/{needed}`
+		)
+		ReplicatedStorage:SetAttribute("TimedEventStartAt", station.startedAt)
+		ReplicatedStorage:SetAttribute("TimedEventEndAt", station.departAt)
+		ReplicatedStorage:SetAttribute("TimedEventCue", "Alarm")
+		ReplicatedStorage:SetAttribute("TimedEvent", "Village")
+	end
+end
+
+-- The Emergency Village is over: `found` repair parts came aboard of `needed` (RunDirector).
+function BreakdownService.VillageDone(found: number, needed: number)
+	state = Breakdown.villageDone(state, found, needed, now())
+	shownFound = -1
+	publish()
+end
+
 -- The share of its speed the train is running at (0 while broken down and stopped).
 function BreakdownService.SpeedShare(): number
 	return Breakdown.speedShare(state)
@@ -245,12 +291,13 @@ function BreakdownService.Start()
 				clearPrompts()
 				toast(false)
 			end
-		elseif phase == "Arrival" then
+		elseif phase == "Arrival" and not Registry.RunDirector.IsVillageStop() then
 			BreakdownService.Arrive()
 		end
 	end)
 	RunService.Heartbeat:Connect(function(dt)
 		Safe.call("BreakdownService.step", step, dt)
+		Safe.call("BreakdownService.village", villageProgress)
 	end)
 end
 
