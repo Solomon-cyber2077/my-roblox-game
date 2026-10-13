@@ -15,7 +15,7 @@ local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
-local HollowBudget = require(Shared.Logic.HollowBudget)
+local Threat = require(Shared.Logic.Threat)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Types = require(Shared.Types)
 
@@ -149,10 +149,11 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	if info.terminus then
 		return
 	end
-	-- One budget for every Hollow at the stop, by the players in the run (Logic/HollowBudget).
+	-- One budget for every Hollow at the stop: the threat curve's share of the full count for the
+	-- players in the run (Logic/Threat).
 	if info.hazards.hollowCap > 0 then
 		local hazards = table.clone(info.hazards)
-		hazards.hollowCap = HollowBudget.total(#Registry.CrewService.MemberPlayers())
+		hazards.hollowCap = Threat.total(hazards.stop or 1, #Registry.CrewService.MemberPlayers())
 		info.hazards = hazards
 		Registry.StateService.Set({ "run", "station", "hazards" }, hazards)
 	end
