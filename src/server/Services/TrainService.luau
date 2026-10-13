@@ -268,6 +268,13 @@ function TrainService.ResetForRun()
 	publish(true)
 end
 
+-- Bursts one steam leak now, wherever a free spot is (a timed Breakdown). False if none is free.
+function TrainService.OpenBreach(): boolean
+	local before = Ledger.breachCount(train)
+	openBreach()
+	return Ledger.breachCount(train) > before
+end
+
 function TrainService.SetBreachRate(rate: number)
 	breachRate = rate
 end

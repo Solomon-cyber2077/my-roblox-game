@@ -133,6 +133,7 @@ local roomParams = OverlapParams.new()
 roomParams.FilterType = Enum.RaycastFilterType.Exclude
 roomParams.RespectCanCollide = true
 local graceUntil: { [Player]: number } = {}
+local alertUntil = 0 -- os.clock() until which every Hollow hunts the crew (a Surge)
 local AGENT = {
 	AgentRadius = 2.2,
 	AgentHeight = 7,
@@ -804,7 +805,7 @@ local function think(hollow: Hollow)
 	local bestRoot: BasePart? = nil
 	local bestDistance = math.huge
 	local bestVisible = false
-	local wanderer = hollow.model:GetAttribute("Wanderer") == true
+	local wanderer = hollow.model:GetAttribute("Wanderer") == true or clock < alertUntil
 	for _, player in Registry.CrewService.AlivePlayers() do
 		if not Registry.CrewService.IsAboard(player) and holderOf(player) == nil then
 			local root = characterRoot(player)
@@ -1153,15 +1154,25 @@ end
 
 -- Spawns one Hollow near station-local (x, z) if the cap allows and the ground holds.
 -- Some climb up over the far edge out of the dark instead. `kind` forces its kind (Studio).
-function HollowService.TrySpawn(x: number, z: number, kind: string?, wanderer: boolean?): boolean
+-- An `extra` (a timed event's) ignores the cap. Returns the new Hollow's model too.
+function HollowService.TrySpawn(
+	x: number,
+	z: number,
+	kind: string?,
+	wanderer: boolean?,
+	extra: boolean?
+): (boolean, Model?)
 	local p = params
 	local plan = StationService.Plan()
 	if
 		p == nil
 		or plan == nil
-		or HollowService.Count() >= p.hollowCap - (if wandererPending and not wanderer then 1 else 0)
+		or (
+			not extra
+			and HollowService.Count() >= p.hollowCap - (if wandererPending and not wanderer then 1 else 0)
+		)
 	then
-		return false
+		return false, nil
 	end
 	local fromEdge = rng:NextNumber() < 0.35
 	if fromEdge then
@@ -1177,7 +1188,7 @@ function HollowService.TrySpawn(x: number, z: number, kind: string?, wanderer: b
 		slab = LayoutGen.slabAt(plan, x, z)
 	end
 	if slab == nil or slab.kind ~= "Floor" or StationService.IsCollapsed(slab.id) or z < safeEdge() + 10 then
-		return false
+		return false, nil
 	end
 	local chosen = if kind and (Tuning.HollowKinds :: any)[kind] then kind else pickKind()
 	local height = HollowBuilder.rootHeight(chosen)
@@ -1190,7 +1201,37 @@ function HollowService.TrySpawn(x: number, z: number, kind: string?, wanderer: b
 		hollow.model:SetAttribute("Wanderer", true)
 		wandererPending = false
 	end
-	return true
+	return true, hollow.model
+end
+
+-- A Surge: every Hollow at the stop wakes and hunts the nearest crew member for `seconds`.
+function HollowService.Alert(seconds: number)
+	alertUntil = os.clock() + seconds
+	for _, hollow in hollows do
+		if hollow.state == "Dormant" then
+			wake(hollow)
+		end
+	end
+end
+
+function HollowService.EndAlert()
+	alertUntil = 0
+end
+
+-- Removes the Hollow `model` unless it is mid-attack (winding up or holding someone),
+-- in which case it stays and carries on as an ordinary Hollow. True if it was removed.
+function HollowService.Dismiss(model: Model): boolean
+	for i, hollow in hollows do
+		if hollow.model == model then
+			if hollow.hold or hollow.state == "Windup" then
+				return false
+			end
+			model:Destroy()
+			table.remove(hollows, i)
+			return true
+		end
+	end
+	return false
 end
 
 -- Freezes every Hollow within `radius` studs; any it was holding drops free. Returns how many.
@@ -1257,6 +1298,7 @@ function HollowService.Clear()
 	end
 	table.clear(hollows)
 	table.clear(graceUntil)
+	alertUntil = 0
 	params = nil
 	wandererPending = false
 end
