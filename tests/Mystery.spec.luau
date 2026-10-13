@@ -118,7 +118,7 @@ describe("Mystery.pick", function()
 				local arch = Stations.List[real.archetype]
 				expect(arch ~= nil).toBe(true)
 				expect(arch.terminus == true).toBe(false)
-				expect(arch.minStation <= leg).toBe(true)
+				expect(arch.weight > 0).toBe(true) -- any station, any leg (RouteGen no longer gates by stop)
 				for _, option in visible do
 					expect(option.archetype ~= real.archetype).toBe(true)
 				end

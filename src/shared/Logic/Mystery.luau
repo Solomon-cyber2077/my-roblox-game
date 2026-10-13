@@ -62,23 +62,19 @@ function Mystery.pick(
 	for _, option in visible do
 		taken[option.archetype] = true
 	end
+	-- never a station already on the ballot: no mystery at all beats two of the same card
 	local chosen: RouteOption? = nil
-	local fallback: RouteOption? = nil
 	for attempt = 1, Mystery.Attempts do
 		for _, option in RouteGen.options(Rng.derive(hiddenSeed, attempt), leg, stopCount, previous) do
-			if not Stations.List[option.archetype].terminus then
-				fallback = fallback or option
-				if not taken[option.archetype] then
-					chosen = option
-					break
-				end
+			if not Stations.List[option.archetype].terminus and not taken[option.archetype] then
+				chosen = option
+				break
 			end
 		end
 		if chosen then
 			break
 		end
 	end
-	chosen = chosen or fallback
 	if chosen == nil then
 		return nil
 	end

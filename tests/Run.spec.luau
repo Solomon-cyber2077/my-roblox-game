@@ -131,7 +131,7 @@ describe("RunRules", function()
 end)
 
 describe("RouteGen", function()
-	it("offers two options, three on wide junctions, and only eligible archetypes", function()
+	it("offers two options, three on wide junctions, and only real stations", function()
 		for seed = 1, 20 do
 			local previous = nil
 			for leg = 1, Tuning.Run.StationCount do
@@ -142,7 +142,8 @@ describe("RouteGen", function()
 				local short = false
 				for _, option in options do
 					local arch = Stations.List[option.archetype]
-					expect(arch.minStation).toBeAtMost(leg)
+					expect(arch.terminus == true).toBe(false)
+					expect(arch.weight > 0).toBe(true)
 					expect(seen[option.archetype]).toBe(nil)
 					seen[option.archetype] = true
 					expect(option.tier).toBeBetween(1, if leg <= 2 then 2 else 3)

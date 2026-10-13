@@ -60,6 +60,12 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - Settings button in a run moved from (14, 156) to **(14, 200)** (`UI/Settings`), below the slot; lobby (14, 244) and HUD-hidden (14, 14) positions unchanged.
 - Verified: `lune run check` passes. Not seen on screen.
 
+### 2.5 Route choices fully random
+- Cause: the run seed was already fresh each run (`RunDirector` Enter.Boarding, unseeded `Random.new()`), but `RouteGen` only allowed stations whose `minStation <= leg`, and only Halt and CoalYard have `minStation = 1`, so stop 1 was always those two.
+- Fix: `RouteGen.options` ignores `minStation` (any station with weight > 0 that is not the Terminus, at any leg). Kept: distinct archetypes per ballot, no repeat of the previous stop unless nothing else is left, tier <= 2 on legs 1-2, one leg of 5 km or less. `Mystery.pick` no longer falls back to a station already on the ballot (no mystery beats a duplicate).
+- Design effect for the owner: harder stations (e.g. minStation 4-5 ones) can now be stop 1, still capped at danger tier 2 and still on the stop-index difficulty curve. Part 2's threat curve should own early danger.
+- Tests: new `tests/RouteGen.spec` (no duplicate on any ballot over 300 seeds incl. mystery; every eligible station opens a run across 400 seeds; >40 of 50 seeds give distinct first-three ballots; same seed same ballot). `Run.spec` and `Mystery.spec` lost their `minStation` assertions. `lune run check` passes (259 tests).
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:
