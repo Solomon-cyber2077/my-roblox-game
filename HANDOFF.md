@@ -25,6 +25,11 @@ Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/la
 - Audit stub `.lune/lib/HollowLifecycle.luau` gained `TagDamage`.
 - Verified: `lune run check` passes (255 tests). Unverified in Studio: each death screen line. No source tags "Train" or "Fall" damage yet (no such damage exists); add `TagDamage` wherever such damage is added.
 
+### 1.3 HUD resource panel vanishing
+- Cause: the panel (`UI/Hud`, `GaugeCase`) is built once in `Hud.mount`; the ScreenGui has `ResetOnSpawn = false`, so it survives respawns and runs. But its idle look was `HIDDEN` (fully transparent): it only appeared for 5 s after coal went in, parts/hull changed or a leak opened. A run whose figures matched the last run never woke it, so it looked missing.
+- Fix: the train renderer is a named `renderTrain`, re-run with the current state whenever the HUD becomes visible (run start); the gauges also wake on `CharacterAdded` and on Boarding/Departure. Task 2.1 then removes the idle fade entirely.
+- Verified: `lune run check` passes. Unverified in Studio.
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:
