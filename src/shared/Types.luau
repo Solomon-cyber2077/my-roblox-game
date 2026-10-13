@@ -62,6 +62,7 @@ export type HazardParams = {
 	hollowDamage: number,
 	stop: number?, -- the stop's number in the run (RunDirector), for the per-stop rules
 	tutorial: number?, -- the crew's tutorial tier (Logic/Tutorial): 1..3, nil or 0 when past it
+	dormantStart: boolean?, -- tutorial stop 1: every Hollow starts asleep, no wanderer, no fog spawns
 	departureAccel: number,
 	chaseWindow: number,
 	lootMul: number,

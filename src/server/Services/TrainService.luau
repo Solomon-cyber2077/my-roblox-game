@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local UpgradesConfig = require(Shared.Config.Upgrades)
 local Ledger = require(Shared.Logic.Ledger)
@@ -47,6 +48,7 @@ local breachSeq = 0
 local breachPrompts: { [string]: { prompt: ProximityPrompt, anchor: BasePart } } = {}
 local rng = Random.new()
 local lastPublished = ""
+local safeGlows: { PointLight } = {}
 
 local function publish(force: boolean?)
 	local signature =
@@ -161,6 +163,43 @@ local function tick(dt: number)
 	publish()
 end
 
+-- SafeLight parts (Config/Tutorial) along the train's platform side, one every SAFE_SPACING studs
+-- of its length. HollowService keeps Hollows out of their radius while the tutorial lights them.
+local SAFE_SPACING = 24
+local function safeLights()
+	local light = Difficulty.Tutorial.SafeLight
+	local lo, hi = math.huge, -math.huge
+	for _, volume in { built.carVolume, built.cabVolume } do
+		local half = volume.size.X / 2
+		lo = math.min(lo, volume.cframe.Position.X - half)
+		hi = math.max(hi, volume.cframe.Position.X + half)
+	end
+	local count = math.max(math.floor((hi - lo) / SAFE_SPACING), 1)
+	for i = 0, count do
+		local x = lo + (hi - lo) * i / count
+		local part = Instance.new("Part")
+		part.Name = "SafeLight"
+		part.Size = Vector3.new(1, 1, 1)
+		part.Transparency = 1
+		part.Anchored = true
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.CFrame = TrainService.Origin() * CFrame.new(x, 9, Tuning.World.PlatformEdgeZ)
+		part:SetAttribute("Radius", light.TrainRadius)
+		part:AddTag(light.Tag)
+		local glow = Instance.new("PointLight")
+		glow.Color = Color3.fromRGB(255, 196, 120)
+		glow.Brightness = 0.9
+		glow.Range = 22
+		glow.Shadows = false
+		glow.Enabled = false
+		glow.Parent = part
+		table.insert(safeGlows, glow)
+		part.Parent = built.model
+	end
+end
+
 -- A Sit prompt on every seat, hidden while someone is sitting in it.
 local function seatPrompts()
 	for _, seat in built.seats do
@@ -194,6 +233,7 @@ function TrainService.Init()
 	RailingPilot.build(TrainService.Origin())
 	built.model:SetAttribute("DoorsOpen", false)
 	seatPrompts()
+	safeLights()
 	makePrompt(built.workbench, "Workshop", "Workbench", "Upgrades", 0)
 	local mastPrompt = makePrompt(built.mast, "Flare", "Signal mast", "Fire Signal Flare", 0.6)
 	mastPrompt.Triggered:Connect(function(player)
@@ -266,6 +306,13 @@ function TrainService.ResetForRun()
 	leg = nil
 	breachRate = 0
 	publish(true)
+end
+
+-- The train's safe lights glow while the tutorial lights them (HollowService.Configure).
+function TrainService.SetSafeGlow(on: boolean)
+	for _, glow in safeGlows do
+		glow.Enabled = on
+	end
 end
 
 -- Bursts one steam leak now, wherever a free spot is (a timed Breakdown). False if none is free.

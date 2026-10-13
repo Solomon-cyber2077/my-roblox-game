@@ -168,6 +168,13 @@ local function run(): string
 				if name == "ReplicatedStorage" then
 					return { Shared = shared }
 				end
+				if name == "CollectionService" then
+					return {
+						GetTagged = function()
+							return {}
+						end,
+					}
+				end
 				return {}
 			end,
 		},

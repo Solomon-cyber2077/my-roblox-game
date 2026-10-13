@@ -11,6 +11,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local Tutorial = require(ReplicatedStorage.Shared.Config.Tutorial)
 
 local StationDressing = require(script.Parent.StationDressing)
 
@@ -894,6 +895,9 @@ Props.Lamp = function(ctx)
 		{ material = Enum.Material.Metal, collide = false }
 	)
 	Kit.pointLight(lens, ctx.palette.light, 1.3, 24, false)
+	-- a lamp keeps Hollows out of its pool of light in the tutorial (HollowService)
+	lens:SetAttribute("Radius", Tutorial.SafeLight.LampRadius)
+	lens:AddTag(Tutorial.SafeLight.Tag)
 end
 
 Props.Bench = function(ctx)

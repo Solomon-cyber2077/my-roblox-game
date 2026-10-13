@@ -21,6 +21,8 @@ local T = Difficulty.Tutorial
 
 local Tutorial = {}
 
+export type Def = TutorialConfig.Tier
+
 local function count(runs: any): number
 	return if type(runs) == "number"
 			and runs == runs

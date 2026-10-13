@@ -4,7 +4,13 @@
 	edge from the dark beneath it, or sits slumped in an abandoned building waiting for
 	someone to come close. One think loop drives them all at ThinkHz. They cannot be
 	killed, only outrun, stunned or kept out with light: they never enter the lit band
-	beside the train, nor a building whose power is back on.
+	beside the train, nor a building whose power is back on, nor (in the tutorial) the radius
+	of a part tagged SafeLight (attribute Radius, scaled by the tier's safeLightScale).
+
+	Tutorial (Config/Tutorial, by HazardParams.tutorial): nobody is hunted until they have been
+	off the train the tier's `grace` seconds at this stop, and on tier 2's first stop a slow
+	scripted Crawler comes for one player to teach the skill check (an oversized zone, and its
+	hold cannot kill).
 
 	States (mirrored to the model's State and StateAt attributes; HollowAnimator plays them)
 	  Emerge    rising, climbing or waking (attribute Emerge): no moving, no striking yet
@@ -29,6 +35,7 @@
 	standing on someone's head; they stop StopShort studs from their target instead.
 ]]
 
+local CollectionService = game:GetService("CollectionService")
 local PathfindingService = game:GetService("PathfindingService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -42,6 +49,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 local Threat = require(Shared.Logic.Threat)
+local Tutorial = require(Shared.Logic.Tutorial)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local HollowBudget = require(Shared.Logic.HollowBudget)
 local LayoutGen = require(Shared.Logic.LayoutGen)
@@ -91,6 +99,7 @@ type Hold = {
 	prompt: ProximityPrompt?,
 	link: ObjectValue,
 	pryAt: { [Player]: number },
+	lethal: boolean, -- the clock running out kills (not the tutorial's teaching grab)
 }
 
 type Hollow = {
@@ -125,6 +134,7 @@ type Hollow = {
 	stirAt: number, -- seconds into the dwell when a sleeper wakes by itself
 	checkAt: number,
 	hold: Hold?,
+	scripted: Player?, -- the tutorial's teaching Crawler: it hunts only this player
 }
 
 local H = Tuning.Hollow
@@ -144,6 +154,12 @@ roomParams.FilterType = Enum.RaycastFilterType.Exclude
 roomParams.RespectCanCollide = true
 local graceUntil: { [Player]: number } = {}
 local alertUntil = 0 -- os.clock() until which every Hollow hunts the crew (a Surge)
+local T = Difficulty.Tutorial
+local safeLights: { BasePart } = {} -- parts tagged SafeLight
+local lightScale = 0 -- the tutorial tier's safeLightScale; 0 past the tutorial
+local offTrainAt: { [Player]: number } = {} -- os.clock() each player first stood off the train this stop
+-- tier 2's teaching grab at its stop: pending until the Crawler has come and gone
+local scripted: { pending: boolean, hollow: Hollow? } = { pending = false, hollow = nil }
 local AGENT = {
 	AgentRadius = 2.2,
 	AgentHeight = 7,
@@ -199,14 +215,36 @@ local function safeEdge(): number
 	return p.safeBand + H.SafeMargin
 end
 
+-- The tutorial's safe light whose radius covers `position`, if any.
+local function safeLightAt(position: Vector3): BasePart?
+	if lightScale <= 0 then
+		return nil
+	end
+	for _, part in safeLights do
+		local radius = ((part:GetAttribute("Radius") :: number?) or 0) * lightScale
+		if radius > 0 and part.Parent then
+			local d = part.Position - position
+			if Vector3.new(d.X, 0, d.Z).Magnitude < radius then
+				return part
+			end
+		end
+	end
+	return nil
+end
+
 local function isLit(position: Vector3): boolean
 	local buildings = Registry.BuildingService
-	return buildings ~= nil and buildings.IsLitAt(position)
+	return (buildings ~= nil and buildings.IsLitAt(position)) or safeLightAt(position) ~= nil
+end
+
+local function tutorialTier(): Tutorial.Def?
+	return Tutorial.def(if params then params.tutorial else nil)
 end
 
 local function speeds(hollow: Hollow): (number, number)
 	local p = params :: Types.HazardParams
-	return p.hollowWalk * hollow.def.walk * hollow.pace, p.hollowChase * hollow.def.chase * hollow.pace
+	local slow = if hollow.scripted then T.ScriptedGrab.ChaseScale else 1
+	return p.hollowWalk * hollow.def.walk * hollow.pace, p.hollowChase * hollow.def.chase * hollow.pace * slow
 end
 
 -- The Hollow holding `player`, if any.
@@ -460,6 +498,13 @@ local function release(hollow: Hollow, why: string)
 		hollow.root:SetNetworkOwner(nil)
 	end)
 	hollow.lastStrike = os.clock()
+	if hollow.scripted then
+		scripted.pending = false
+		local model = hollow.model
+		task.delay(Difficulty.PostGrab.StaggerSeconds + 0.5, function()
+			HollowService.Dismiss(model)
+		end)
+	end
 	if why == "Escaped" and protection.stagger then
 		-- staggered: it reels back, shoved hard at first, and cannot strike until it recovers
 		hollow.reelUntil = os.clock() + Difficulty.PostGrab.StaggerSeconds
@@ -530,7 +575,10 @@ local function seize(hollow: Hollow, target: Player): boolean
 
 	local now = serverNow()
 	local stop = (params :: Types.HazardParams).stop or 1
-	local zone = SkillCheck.zoneWidth(stop)
+	local tier = tutorialTier()
+	local zone = if hollow.scripted
+		then T.ScriptedGrab.ZoneDegrees
+		else SkillCheck.zoneWidth(stop, tier and tier.zoneDegrees)
 	local finishAt = now + SkillCheck.finishSeconds(stop, zone)
 	local link = Instance.new("ObjectValue")
 	link.Name = "GrabbedBy"
@@ -581,6 +629,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 		prompt = prompt,
 		link = link,
 		pryAt = {},
+		lethal = hollow.scripted == nil,
 	}
 	hollow.hold = hold
 	prompt.Triggered:Connect(function(ally)
@@ -638,7 +687,7 @@ end
 -- The grab's clock ran out: it finishes them.
 local function finishHold(hollow: Hollow)
 	local hold = hollow.hold :: Hold
-	if Registry.DevService.IsGod(hold.victim) then
+	if Registry.DevService.IsGod(hold.victim) or not hold.lethal then
 		release(hollow, "Timeout")
 		return
 	end
@@ -859,7 +908,14 @@ local function think(hollow: Hollow)
 			hollow.humanoid:MoveTo(position)
 		else
 			hollow.humanoid.WalkSpeed = walk
-			local exit = Registry.BuildingService.ExitPoint(position)
+			local light = safeLightAt(position)
+			local exit = if light then nil else Registry.BuildingService.ExitPoint(position)
+			if light then
+				local away = Vector3.new(position.X - light.Position.X, 0, position.Z - light.Position.Z)
+				local radius = ((light:GetAttribute("Radius") :: number?) or 0) * lightScale
+				local out = if away.Magnitude > 0.1 then away.Unit else Vector3.zAxis
+				exit = Vector3.new(light.Position.X, position.Y, light.Position.Z) + out * (radius + 4)
+			end
 			moveToward(hollow, exit or position, false)
 		end
 		return
@@ -891,8 +947,17 @@ local function think(hollow: Hollow)
 	local bestDistance = math.huge
 	local bestVisible = false
 	local wanderer = hollow.model:GetAttribute("Wanderer") == true or clock < alertUntil
+	local tier = tutorialTier()
+	local grace = if tier then tier.grace else 0
 	for _, player in Registry.CrewService.AlivePlayers() do
-		if not Registry.CrewService.IsAboard(player) and holderOf(player) == nil then
+		local offAt = offTrainAt[player]
+		if
+			not Registry.CrewService.IsAboard(player)
+			and holderOf(player) == nil
+			and offAt ~= nil
+			and clock - offAt >= grace
+			and (hollow.scripted == nil or hollow.scripted == player)
+		then
 			local root = characterRoot(player)
 			if root then
 				local distance = (root.Position - position).Magnitude
@@ -1084,6 +1149,61 @@ local function add(at: CFrame, kind: string, state: string, emerge: string?): Ho
 	return hollow
 end
 
+-- Tutorial ------------------------------------------------------------------------------------
+
+-- Claws a slow Crawler up behind `player` to teach the skill check (Config/Tutorial ScriptedGrab).
+local function spawnScripted(player: Player): Hollow?
+	local root = characterRoot(player)
+	if root == nil then
+		return nil
+	end
+	local look = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+	local forward = if look.Magnitude > 0.1 then look.Unit else Vector3.zAxis
+	local height = HollowBuilder.rootHeight(T.ScriptedGrab.Kind)
+	for _, side in { -forward, forward:Cross(Vector3.yAxis), -forward:Cross(Vector3.yAxis), forward } do
+		local guess = root.Position + side * T.ScriptedGrab.Distance
+		local ground = Workspace:Raycast(guess + Vector3.yAxis * 12, -Vector3.yAxis * 40, sightParams)
+		if ground and ground.Normal.Y > 0.6 and not safeLightAt(ground.Position) then
+			local at = ground.Position + Vector3.yAxis * height
+			local face = Vector3.new(root.Position.X, at.Y, root.Position.Z)
+			local hollow = add(CFrame.lookAt(at, face), T.ScriptedGrab.Kind, "Emerge", "Rise")
+			hollow.scripted = player
+			hollow.model:SetAttribute("Scripted", true)
+			return hollow
+		end
+	end
+	return nil
+end
+
+-- Notes who has stepped off the train at this stop, and sends the teaching Crawler when due.
+local function tutorialStep()
+	local clock = os.clock()
+	for _, player in Registry.CrewService.AlivePlayers() do
+		if offTrainAt[player] == nil and not Registry.CrewService.IsAboard(player) then
+			offTrainAt[player] = clock
+		end
+	end
+	if not scripted.pending or scripted.hollow ~= nil then
+		return
+	end
+	local tier = tutorialTier()
+	local due = (if tier then tier.grace else 0) + T.ScriptedGrab.AfterGrace
+	for player, offAt in offTrainAt do
+		local root = characterRoot(player)
+		if
+			clock - offAt >= due
+			and root
+			and Registry.CrewService.IsAlive(player)
+			and not Registry.CrewService.IsAboard(player)
+			and holderOf(player) == nil
+			and not safeLightAt(root.Position)
+		then
+			scripted.hollow = spawnScripted(player)
+			return
+		end
+	end
+end
+
 -- Lifecycle -----------------------------------------------------------------------------------
 
 function HollowService.Init()
@@ -1124,6 +1244,7 @@ function HollowService.Start()
 			task.wait(1 / H.ThinkHz)
 			if params then
 				refreshSightFilter()
+				Safe.call("HollowService.tutorial", tutorialStep)
 				for i = #hollows, 1, -1 do
 					local hollow = hollows[i]
 					if hollow.model.Parent == nil or hollow.root.Position.Y < Tuning.World.FloorY - 60 then
@@ -1141,7 +1262,23 @@ end
 
 function HollowService.Configure(hazards: Types.HazardParams)
 	params = hazards
-	wandererPending = hazards.hollowCap > 0
+	wandererPending = hazards.hollowCap > 0 and not hazards.dormantStart
+	local tier = Tutorial.def(hazards.tutorial)
+	lightScale = if tier then tier.safeLightScale else 0
+	safeLights = {}
+	for _, part in CollectionService:GetTagged(T.SafeLight.Tag) do
+		if part:IsA("BasePart") then
+			table.insert(safeLights, part)
+		end
+	end
+	if Registry.TrainService then
+		Registry.TrainService.SetSafeGlow(lightScale > 0)
+	end
+	table.clear(offTrainAt)
+	scripted = {
+		pending = tier ~= nil and tier.scriptedGrab and (hazards.stop or 1) == T.ScriptedGrab.Stop,
+		hollow = nil,
+	}
 end
 
 -- Retain planned sleepers and fill larger buildings with distinct, clear interior spots.
@@ -1223,7 +1360,7 @@ function HollowService.Prepare(plan: LayoutGen.Plan)
 	-- sleepers share the stop's budget with the fog spawns and the wanderer
 	placement:shuffle(sleepers)
 	for i, sleeper in sleepers do
-		if i > HollowBudget.sleepers(p.hollowCap) then
+		if i > (if p.dormantStart then p.hollowCap else HollowBudget.sleepers(p.hollowCap)) then
 			break
 		end
 		local height = HollowBuilder.rootHeight(sleeper.kind)
@@ -1234,7 +1371,7 @@ function HollowService.Prepare(plan: LayoutGen.Plan)
 			sleeper.z - math.cos(math.rad(sleeper.rot))
 		)
 		local hollow = add(CFrame.lookAt(position, facing), sleeper.kind, "Dormant", nil)
-		hollow.stirAt = p.dwell * H.SleeperStir * rng:NextNumber(1, 1.6)
+		hollow.stirAt = if p.dormantStart then math.huge else p.dwell * H.SleeperStir * rng:NextNumber(1, 1.6)
 	end
 end
 
@@ -1285,6 +1422,9 @@ function HollowService.TrySpawn(
 	local height = HollowBuilder.rootHeight(chosen)
 	local localZ = if fromEdge then plan.depth - 3 else slab.z
 	local position = StationService.ToWorld(slab.x, height, localZ)
+	if safeLightAt(position) then
+		return false, nil
+	end
 	local facing = StationService.ToWorld(slab.x, height, 0)
 	local hollow =
 		add(CFrame.lookAt(position, facing), chosen, "Emerge", if fromEdge then "Climb" else "Rise")
@@ -1389,9 +1529,15 @@ function HollowService.Clear()
 	end
 	table.clear(hollows)
 	table.clear(graceUntil)
+	table.clear(offTrainAt)
 	alertUntil = 0
 	params = nil
 	wandererPending = false
+	lightScale = 0
+	scripted = { pending = false, hollow = nil }
+	if Registry.TrainService then
+		Registry.TrainService.SetSafeGlow(false)
+	end
 end
 
 return HollowService
