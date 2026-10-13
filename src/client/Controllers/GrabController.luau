@@ -59,13 +59,21 @@ local watching: RBXScriptConnection? = nil
 local dying: RBXScriptConnection? = nil
 
 -- What the grab took away, kept to give back (nil while nothing is locked).
-type Saved = { humanoid: Humanoid?, autoRotate: boolean, mouseLock: boolean }
+type Saved = { humanoid: Humanoid?, autoRotate: boolean }
 local saved: Saved? = nil
 local eyeOffset = Vector3.new(0, 4, 10)
 
 local function audio(cue: string, gain: number?, pitch: number?)
 	if Registry.AudioController then
 		Registry.AudioController.Play(cue, nil, gain, pitch)
+	end
+end
+
+-- Runs one step of a lock/unlock so a failure there never stops the rest; warns with its name.
+local function safely(name: string, step: () -> ())
+	local ok, err: any = pcall(step)
+	if not ok then
+		warn(`GrabController: {name} failed: {err}`)
 	end
 end
 
@@ -117,22 +125,20 @@ local function hidePry(model: Model)
 	end
 end
 
--- Freezes your own look and turn for the grab: Scriptable camera, no AutoRotate, no shift lock.
+-- Freezes your own look and turn for the grab: Scriptable camera, no AutoRotate. (Shift lock is
+-- already off: MovementController sinks Shift, and DevEnableMouseLock is server-only.)
 local function lock(model: Model)
 	if saved then
 		return
 	end
-	local player = Players.LocalPlayer
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	saved = {
 		humanoid = humanoid,
 		autoRotate = if humanoid then humanoid.AutoRotate else true,
-		mouseLock = player.DevEnableMouseLock,
 	}
 	if humanoid then
 		humanoid.AutoRotate = false
 	end
-	player.DevEnableMouseLock = false
 	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 	local camera = Workspace.CurrentCamera
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -169,25 +175,30 @@ local function unlock()
 	saved = nil
 	local player = Players.LocalPlayer
 	if was then
-		local humanoid = was.humanoid
-		if humanoid and humanoid.Parent then
-			humanoid.AutoRotate = was.autoRotate
-		end
-		player.DevEnableMouseLock = was.mouseLock
+		safely("restore AutoRotate", function()
+			local humanoid = was.humanoid
+			if humanoid and humanoid.Parent then
+				humanoid.AutoRotate = was.autoRotate
+			end
+		end)
 	end
-	local trainCam = Registry.TrainCamController
-	local camera = Workspace.CurrentCamera
-	if camera.CameraType == Enum.CameraType.Scriptable and not (trainCam and trainCam.Active()) then
-		camera.CameraType = Enum.CameraType.Custom
-		local own = player.Character
-		local humanoid = own and own:FindFirstChildOfClass("Humanoid")
-		if humanoid and Registry.CameraController.SpectateTarget() == nil then
-			camera.CameraSubject = humanoid
+	safely("reset camera", function()
+		local trainCam = Registry.TrainCamController
+		local camera = Workspace.CurrentCamera
+		if camera.CameraType == Enum.CameraType.Scriptable and not (trainCam and trainCam.Active()) then
+			camera.CameraType = Enum.CameraType.Custom
+			local own = player.Character
+			local humanoid = own and own:FindFirstChildOfClass("Humanoid")
+			if humanoid and Registry.CameraController.SpectateTarget() == nil then
+				camera.CameraSubject = humanoid
+			end
 		end
-	end
-	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-	UserInputService.MouseIconEnabled = true
-	Registry.CameraController.Focus(nil)
+	end)
+	safely("free mouse", function()
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		UserInputService.MouseIconEnabled = true
+		Registry.CameraController.Focus(nil)
+	end)
 end
 
 local function begin(model: Model, style: string)
@@ -207,7 +218,9 @@ local function begin(model: Model, style: string)
 		Enum.KeyCode.ButtonA,
 		Enum.KeyCode.ButtonR2
 	)
-	lock(model)
+	safely("lock", function()
+		lock(model)
+	end)
 	hidePry(model)
 	task.delay(0.1, function()
 		if held then
@@ -218,13 +231,13 @@ end
 
 local function finish(model: Model)
 	if not held then
-		unlock()
+		safely("unlock", unlock)
 		return
 	end
 	held = false
 	ContextActionService:UnbindAction(ACTION)
-	Struggle.hide()
-	unlock()
+	safely("hide struggle", Struggle.hide)
+	safely("unlock", unlock)
 	local outcome = OUTCOMES[(model:GetAttribute("GrabOutcome") :: string?) or ""]
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	if outcome and humanoid and humanoid.Health > 0 then
@@ -281,9 +294,10 @@ function GrabController.Start()
 		if held then
 			held = false
 			ContextActionService:UnbindAction(ACTION)
-			Struggle.hide()
+			safely("hide struggle", Struggle.hide)
 		end
-		unlock()
+		-- a failed unlock must never stop the new body being watched
+		safely("unlock on respawn", unlock)
 		model:WaitForChild("Humanoid", 10)
 		watch(model)
 	end)
@@ -299,8 +313,8 @@ function GrabController.Start()
 			else
 				held = false
 				ContextActionService:UnbindAction(ACTION)
-				Struggle.hide()
-				unlock()
+				safely("hide struggle", Struggle.hide)
+				safely("unlock", unlock)
 			end
 		end
 	end)
