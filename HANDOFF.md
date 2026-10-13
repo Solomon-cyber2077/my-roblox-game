@@ -3,14 +3,16 @@
 ## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
 
 ### Resume point
-- Done: audit (1), design notes (3), shared generator, shared kit (4), Halt. Next archetype: CoalYard, then SignalWorks, Market, Viaduct, Minehead, Schoolhouse, Infirmary, RailwayHotel, PostTown; then Emergency Village (8), tutorial stop 1 (9), village hook tests (10).
+- Done: audit (1), design notes (3), shared generator, shared kit (4), Halt, CoalYard. Next archetype: SignalWorks, then, Market, Viaduct, Minehead, Schoolhouse, Infirmary, RailwayHotel, PostTown; then Emergency Village (8), tutorial stop 1 (9), village hook tests (10).
 - Per archetype recipe: new `length`/`depth` (+ `village` rows), more `landmarks` (new `Config/Buildings` defs as needed; Spine 4x4+ may have `upper`, measure its `tiles` from the slab), new structures in `StructureKit` + `Stations.Footprints`; `lune run stations` (walkable area >= 3x before), `lune run check`, then Studio: Dev `station <Id>` before Ready, skip to Dwell, one overview + one edge shot (`docs/stations/<id>_*.jpg`).
 
 ### After (per archetype, seed 424242)
 | archetype | size | walkable | bldgs | structs | loot | far | jog2x | spr2x | dwell1 | dwell10 | parts | lights (lit) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Halt | 432x348 | 138672 (3.4x) | 8 (was 3) | 5 | 77 (was 23) | 450 | 45.0 | 34.0 | 234 | 242 | 7579 | 86 (58) |
+| CoalYard | 480x372 | 162720 (3.1x) | 8 (was 2) | 16 (was 9) | 85 (was 37) | 462 | 46.2 | 35.0 | 237 | 246 | 7403 | 64 (47) |
 
+- CoalYard: coaling tower, brick chimney (new), 7 heaps, 5 hoppers, 3 sidings; boiler house, engine shed (now searchable), coal office (new); village: two railwaymen's terraces (new), chapel, cottage. Studio stop 1: docked, 3:49, no errors; `docs/stations/coalyard_overview.jpg`.
 - Halt: stationmaster's house (2 storeys), goods shed, booking hall, cattle dock (new), water tower, sheds; village: the Lamp & Anchor inn (2 storeys), cottages. Studio (stop 1): docked, clock 3:39-3:48, no errors after the fix below; shots `docs/stations/halt_overview.jpg`, `halt_edge.jpg`. Fixed in Studio: loot zone `Village` was missing from `Config/Loot` (LootService errored at Dwell); spec added.
 
 ### Shared generator (commit "Stations: shared generator")
