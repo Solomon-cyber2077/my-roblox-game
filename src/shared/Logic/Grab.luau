@@ -14,6 +14,7 @@
 ]]
 
 local Shared = script.Parent.Parent
+local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
 local Rng = require(Shared.Util.Rng)
@@ -24,6 +25,7 @@ type Params = Types.HazardParams
 export type Kind = { grip: number, crush: number }
 
 local G = Tuning.Grab
+local D = Difficulty.GrabDamage
 
 local Grab = {}
 
@@ -52,7 +54,7 @@ function Grab.free(escape: number): boolean
 end
 
 function Grab.dps(params: Params, kind: Kind): number
-	return params.hollowDamage * G.DpsShare * kind.crush
+	return params.hollowDamage * D.DpsShare * kind.crush
 end
 
 -- How many bites land between `from` and `to` seconds into the hold (from < t <= to).
@@ -68,8 +70,8 @@ end
 
 -- One bite, never more than MaxBiteShare of a full-health crew member: no single hit kills.
 function Grab.bite(def: Grabs.Def, params: Params, kind: Kind): number
-	local dps = if def.pin then params.hollowDamage * G.Pin.DpsShare else Grab.dps(params, kind)
-	return math.min(dps * def.bite, G.MaxBiteShare * Tuning.Crew.MaxHealth)
+	local dps = if def.pin then params.hollowDamage * D.PinDpsShare else Grab.dps(params, kind)
+	return math.min(dps * def.bite, D.MaxBiteShare * Tuning.Crew.MaxHealth)
 end
 
 -- Damage of the bites that land between `from` and `to` seconds into the hold.

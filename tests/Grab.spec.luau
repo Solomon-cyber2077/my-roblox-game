@@ -1,3 +1,4 @@
+local Difficulty = require(Shared.Config.Difficulty)
 local DifficultyModel = require(Shared.Logic.DifficultyModel)
 local Grab = require(Shared.Logic.Grab)
 local Grabs = require(Shared.Config.Grabs)
@@ -123,12 +124,12 @@ describe("Grab", function()
 		expect(slam.bite).toBe(Tuning.Grab.Pin.Tick)
 		-- pinned damage ticks at the Tuning rate, not the kind's crush
 		local params = DifficultyModel.params(0.5, Stations.List.Halt, 4, nil)
-		local tick = params.hollowDamage * Tuning.Grab.Pin.DpsShare * Tuning.Grab.Pin.Tick
+		local tick = params.hollowDamage * Difficulty.GrabDamage.PinDpsShare * Tuning.Grab.Pin.Tick
 		expect(math.abs(Grab.bite(slam, params, Grab.kind("Brute")) - tick)).toBeLessThan(1e-6)
 	end)
 
 	it("never lets one bite kill a full-health crew member", function()
-		local cap = Tuning.Grab.MaxBiteShare * Tuning.Crew.MaxHealth
+		local cap = Difficulty.GrabDamage.MaxBiteShare * Tuning.Crew.MaxHealth
 		expect(cap).toBeLessThan(Tuning.Crew.MaxHealth)
 		for _, id in Stations.Order do
 			local params = DifficultyModel.params(1, Stations.List[id], 4, nil)
