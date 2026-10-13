@@ -45,6 +45,7 @@ local Shared = ReplicatedStorage.Shared
 local Buildings = require(Shared.Config.Buildings)
 local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
+local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 local SkillCheck = require(Shared.Logic.SkillCheck)
@@ -1151,7 +1152,29 @@ end
 
 -- Tutorial ------------------------------------------------------------------------------------
 
--- Claws a slow Crawler up behind `player` to teach the skill check (Config/Tutorial ScriptedGrab).
+-- Open ground of the stop for the teaching Crawler: the yard's own floor (not a roof, not a
+-- building, not a fallen slab), inside the edge's hazard rail and clear of the platform.
+local function openGround(position: Vector3): boolean
+	local plan = StationService.Plan()
+	if plan == nil then
+		return false
+	end
+	local p = StationService.ToLocal(position)
+	local margin = Stations.Edge.TapeBack + 1
+	if
+		math.abs(p.Y) > 2.5
+		or math.abs(p.X) > plan.length / 2 - margin
+		or p.Z < Tuning.World.SafeStrip + 4
+		or p.Z > plan.depth - margin
+	then
+		return false
+	end
+	local slab = LayoutGen.slabAt(plan, p.X, p.Z)
+	return slab ~= nil and slab.kind == "Floor" and not StationService.IsCollapsed(slab.id)
+end
+
+-- Claws a slow Crawler up behind `player` to teach the skill check (Config/Tutorial ScriptedGrab),
+-- out of the dark on the stop's open ground: behind first, then the sides, then ahead.
 local function spawnScripted(player: Player): Hollow?
 	local root = characterRoot(player)
 	if root == nil then
@@ -1159,17 +1182,35 @@ local function spawnScripted(player: Player): Hollow?
 	end
 	local look = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
 	local forward = if look.Magnitude > 0.1 then look.Unit else Vector3.zAxis
+	local right = forward:Cross(Vector3.yAxis)
 	local height = HollowBuilder.rootHeight(T.ScriptedGrab.Kind)
-	for _, side in { -forward, forward:Cross(Vector3.yAxis), -forward:Cross(Vector3.yAxis), forward } do
-		local guess = root.Position + side * T.ScriptedGrab.Distance
-		local ground = Workspace:Raycast(guess + Vector3.yAxis * 12, -Vector3.yAxis * 40, sightParams)
-		if ground and ground.Normal.Y > 0.6 and not safeLightAt(ground.Position) then
-			local at = ground.Position + Vector3.yAxis * height
-			local face = Vector3.new(root.Position.X, at.Y, root.Position.Z)
-			local hollow = add(CFrame.lookAt(at, face), T.ScriptedGrab.Kind, "Emerge", "Rise")
-			hollow.scripted = player
-			hollow.model:SetAttribute("Scripted", true)
-			return hollow
+	local sides = {
+		-forward,
+		(-forward + right).Unit,
+		(-forward - right).Unit,
+		right,
+		-right,
+		(forward + right).Unit,
+		(forward - right).Unit,
+		forward,
+	}
+	for _, scale in { 1, 0.7, 1.3 } do
+		for _, side in sides do
+			local guess = root.Position + side * T.ScriptedGrab.Distance * scale
+			local ground = Workspace:Raycast(guess + Vector3.yAxis * 12, -Vector3.yAxis * 40, sightParams)
+			if
+				ground
+				and ground.Normal.Y > 0.6
+				and openGround(ground.Position)
+				and not safeLightAt(ground.Position)
+			then
+				local at = ground.Position + Vector3.yAxis * height
+				local face = Vector3.new(root.Position.X, at.Y, root.Position.Z)
+				local hollow = add(CFrame.lookAt(at, face), T.ScriptedGrab.Kind, "Emerge", "Rise")
+				hollow.scripted = player
+				hollow.model:SetAttribute("Scripted", true)
+				return hollow
+			end
 		end
 	end
 	return nil

@@ -85,6 +85,9 @@ return table.freeze({
 		Tag = "SafeLight",
 		TrainRadius = 34,
 		LampRadius = 16,
+		-- at the tutorial's first stop the yard's lamp pools are SafeLights too: a lit way out
+		-- across the bigger stop, darkness between the pools (Services/StationService)
+		YardLampsAtStop = 1,
 	}),
 
 	-- Tier 2's teaching grab: a slow Crawler comes for the first player who is off the train
