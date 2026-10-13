@@ -40,7 +40,7 @@ RunTicketModel.MaxStats = 3
 local HERO: { [string]: string } = {
 	Victory = "REACHED THE TERMINUS",
 	Wiped = "THE CREW WAS LOST",
-	Derailed = "THE TRAIN BROKE DOWN",
+	Derailed = "THE TRAIN WAS LOST",
 }
 
 local MADE_IT = { title = "MADE IT", line = "You rode it to the end of the line." }

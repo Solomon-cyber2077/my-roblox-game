@@ -29,7 +29,7 @@ DeathCause.Lines = table.freeze({
 	Taken = table.freeze({ title = "TAKEN", line = "A Hollow caught you and would not let go." }),
 	Smothered = table.freeze({ title = "LOST IN THE FOG", line = "You stayed too long past the fog line." }),
 	Fell = table.freeze({ title = "FELL", line = "The ground gave way beneath you." }),
-	Wrecked = table.freeze({ title = "WRECKED", line = "The train broke down on the line." }),
+	Wrecked = table.freeze({ title = "WRECKED", line = "The train broke down for good and was lost." }),
 	Disconnected = table.freeze({ title = "DISCONNECTED", line = "You lost the line." }),
 	Other = table.freeze({ title = "LOST", line = "Something on the line took you." }),
 })

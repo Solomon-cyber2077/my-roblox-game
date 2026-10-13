@@ -419,7 +419,7 @@ Enter.RunEnd = function(previous, outcome)
 	local text = {
 		Victory = "The train reached the Terminus.",
 		Wiped = "The whole crew was lost.",
-		Derailed = "The train broke down on the line.",
+		Derailed = "The train broke down for good and was lost.",
 	}
 	NetService.FireAll("Notify", "RunEnd", text[finalOutcome])
 end
@@ -474,6 +474,21 @@ function RunDirector.Start()
 	RunService.Heartbeat:Connect(function()
 		Safe.call("RunDirector.tick", tick)
 	end)
+end
+
+-- Pushes the current phase's end back by `seconds` (a broken-down train: BreakdownService).
+function RunDirector.ExtendPhase(seconds: number)
+	if state.endsAt and seconds > 0 then
+		state.endsAt += seconds
+		StateService.Set({ "run", "phaseEndsAt" }, state.endsAt)
+	end
+end
+
+-- Ends the run now with `outcome` (the train lost to a second breakdown).
+function RunDirector.EndRun(outcome: Types.Outcome)
+	if RunRules.isRunPhase(state.phase) then
+		transition("RunEnd", outcome)
+	end
 end
 
 -- Studio developer console: end the current phase on the next tick.

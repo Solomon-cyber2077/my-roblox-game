@@ -190,7 +190,7 @@ describe("RunLog", function()
 
 	it("names the final stamp", function()
 		expect(RunLog.final("Victory", 11)).toBe("TERMINUS")
-		expect(RunLog.final("Derailed", 6)).toBe("DERAILED AT STOP 6")
+		expect(RunLog.final("Derailed", 6)).toBe("TRAIN LOST AT STOP 6")
 		expect(RunLog.final("Wiped", 4)).toBe("LOST AT STOP 4")
 		expect(RunLog.final(nil, nil)).toBe("LOST AT STOP 1")
 		local cleared = RunLog.append(nil, RunLog.resolve(RunLog.entry(ballot({ stop = 2 })), "Cleared", nil))

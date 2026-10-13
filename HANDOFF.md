@@ -83,6 +83,14 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - The Workbench (E "Upgrades - Workbench") panel's hull row is now "REPAIR HULL · +10% for 2 parts · hull N%" (`Difficulty.Hull.RepairParts/RepairAmount`, replacing `Tuning.Train.HullPatchCost/Amount` 5/20). Button reads REPAIR, NEED n MORE (disabled) or HULL SOUND (disabled).
 - Server: remote `HullPatch` renamed `RepairHull` (aboard-gated, 3/s); `TrainService.RepairHull` also requires a run phase; `Ledger.repairHull` refuses when short of parts or already full and never goes past the max (spec in `tests/Ledger.spec`).
 
+### D.6 Breakdown at the hull floor
+- `Logic/Breakdown` state machine (+ `tests/Breakdown.spec`): None -> (hull at `Hull.Floor` 1% during Cruise) first breakdown -> Village if `BreakdownService.requestVillageStop()` (returns false until part 3) else Stopped (`StopSeconds` 4) -> Rally (`RallySeconds` 45 for `RallyRepairs` 3) -> Limp (hull set to `RallyRestore` 15%, `LimpShare` 0.5 speed for the rest of the trip) -> None on arrival. A second breakdown in the run, or a rally that runs out, -> Lost.
+- New `Services/BreakdownService` (ORDER after TutorialService): watches the hull each Heartbeat in Cruise; rally = 3 hold-1.5 s "Repair / Breakdown" prompts aboard, one per car where possible (attachments under the leak anchors), any aboard player; countdown in the timed-event toast ("BREAKDOWN! Repairs aboard: 1/3 · 32 s", cue Alarm); notifications for each step. While stopped/limping it pushes the trip's clock back (`RunDirector.ExtendPhase`: stopped time whole, limp's shortfall) and TrainService pauses drain and leak bursts while stopped (bursts follow distance when limping). `run.breakdown` replicates the state; `JourneyPlan.speed` brakes the scenery to 0 / limps it, and skips re-predicting the dock while broken down (Arrival re-cuts if needed).
+- Lost: `RunDirector.EndRun("Derailed")` (new); `CrewService.MarkWrecked` as before. Ticket: hero "THE TRAIN WAS LOST", stamp "TRAIN LOST AT STOP n" (`RunLog.final`, spec updated), cause line "The train broke down for good and was lost."
+- **Owner decision taken for you:** a failed rally loses the train (the brief only said what success does; with the hull at 1% any further drain would be the second breakdown anyway). Easy to change in `Logic/Breakdown.tick`.
+- Part 3 notes: implement `requestVillageStop()` (true once per run when a village can be offered). The Village phase stops the train with no timer, so part 3 must move the run to the village stop. Village rules: yields repair parts only, once per run, not one of the ten stops, threat on the same curve and tutorial tier.
+- Unverified live: the full sequence on a real run (use `/event breakdown` + leaving leaks, or the Studio console to drain the hull).
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
