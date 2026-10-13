@@ -43,7 +43,7 @@ describe("Grab", function()
 	it("gives every kind three grabs with distinct ids", function()
 		for _, kind in KINDS do
 			local list = Grabs.Kinds[kind]
-			expect(#list).toBe(3)
+			expect(#list).toBe(if kind == "Brute" then 4 else 3)
 			local seen = {}
 			for _, def in list do
 				expect(seen[def.id]).toBe(nil)
@@ -55,8 +55,8 @@ describe("Grab", function()
 	end)
 
 	it("orders the grabs by the Hollow's seed, the same every time", function()
-		local a = Grab.order("Brute", 77)
-		local b = Grab.order("Brute", 77)
+		local a = Grab.order("Crawler", 77)
+		local b = Grab.order("Crawler", 77)
 		expect(#a).toBe(3)
 		for i, def in a do
 			expect(def.id).toBe(b[i].id)
@@ -108,6 +108,23 @@ describe("Grab", function()
 		expect(free).toBe(false)
 		local saved = struggle(def, params, "Brute", 2, 4)
 		expect(saved).toBe(true)
+	end)
+
+	it("makes every Brute strike a face-down slam and pin", function()
+		for seed = 1, 20 do
+			local order = Grab.order("Brute", seed)
+			expect(#order).toBe(1)
+			expect(order[1].id).toBe("Slam")
+		end
+		local slam = Grabs.ById.Slam
+		expect(slam.pin).toBe(true)
+		expect(slam.lying).toBe(true)
+		expect(slam.hold.face[2]).toBe(-1) -- face down
+		expect(slam.bite).toBe(Tuning.Grab.Pin.Tick)
+		-- pinned damage ticks at the Tuning rate, not the kind's crush
+		local params = DifficultyModel.params(0.5, Stations.List.Halt, 4, nil)
+		local tick = params.hollowDamage * Tuning.Grab.Pin.DpsShare * Tuning.Grab.Pin.Tick
+		expect(math.abs(Grab.bite(slam, params, Grab.kind("Brute")) - tick)).toBeLessThan(1e-6)
 	end)
 
 	it("never lets one bite kill a full-health crew member", function()

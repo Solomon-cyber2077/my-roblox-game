@@ -258,7 +258,7 @@ function CrewPoses.grabbed(
 		)
 		out.RootJoint = body((if bear then -0.14 else -0.05) - 0.1 * k, 0.12 * writhe, 0.25 * writhe)
 		out.Neck = head(if bear then -0.7 - 0.2 * k else -0.2, 0, if bear then 0.2 * writhe else away)
-	elseif style == "Drag" or style == "Latch" then
+	elseif style == "Drag" or style == "Latch" or style == "Slam" then
 		-- face down, clawing at the ground ahead while it hauls them back by the legs
 		local claw = math.sin(t * 5.5 + seed)
 		local held = if style == "Latch" then -0.3 else -0.35

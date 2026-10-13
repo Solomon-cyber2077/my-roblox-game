@@ -11,6 +11,7 @@
 	       ({0, 0, 1} faces the Hollow), both in the Hollow's frame.
 	lying  the victim is on the ground (the room check uses a body lying down)
 	name   what the struggle prompt calls it
+	pin    a slam and pin: the Hollow uses only its pins, which tick at Tuning.Grab.Pin
 
 	The poses that go with them live in the client's Animation/HollowPoses and
 	Animation/CrewPoses; the audit checks the Hollow's hands meet the victim.
@@ -28,7 +29,10 @@ export type Def = {
 	hold: Hold,
 	bite: number,
 	lying: boolean,
+	pin: boolean?,
 }
+
+local Tuning = require(script.Parent.Tuning)
 
 local STANDING = { 0, 1, 0 }
 local TOWARD = { 0, 0, 1 } -- facing the Hollow
@@ -110,6 +114,15 @@ local Grabs: { [string]: { Def } } = {
 			hold = { pos = { 0, -1.1, -2.9 }, up = STANDING, face = TOWARD },
 			bite = 1.3,
 			lying = false,
+		},
+		-- what it does now: slams you face down and pins you under the shovel blade
+		{
+			id = "Slam",
+			name = "PINNED BY THE BRUTE",
+			hold = { pos = { 0.9, -5.15, -5.2 }, up = AWAY, face = DOWN },
+			bite = Tuning.Grab.Pin.Tick,
+			lying = true,
+			pin = true,
 		},
 	},
 }

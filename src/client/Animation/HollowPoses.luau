@@ -233,6 +233,7 @@ local CONTACTS: { [string]: { [string]: Vector3 } } = {
 	Ride = { L = Vector3.new(-0.7, 0.4, -0.8), R = Vector3.new(0.7, 0.4, -0.8) },
 	Fist = { L = Vector3.new(0, 0.35, -1.0) },
 	Shovel = { R = Vector3.new(0, 0.3, -2.9) },
+	Slam = { R = Vector3.new(0, 0.3, 2.9) }, -- face down: the blade on their back
 	Bearhug = { L = Vector3.new(0.8, 0.25, 0.8), R = Vector3.new(-0.8, 0.25, 0.8) },
 }
 HollowPoses.Contacts = CONTACTS
@@ -354,7 +355,7 @@ local function bruteGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: nu
 		-- the shovel arm hangs heavy at its side
 		out.RShoulder = A(0.15 - 0.1 * k, 0, 0.22)
 		out.RElbow = A(0.35, 0, 0)
-	elseif def.id == "Shovel" then
+	elseif def.id == "Shovel" or def.id == "Slam" then
 		-- pins them under the shovel blade and leans its weight on it
 		local lean = 0.35 * k
 		out.RootJoint = CFrame.new(0, -1.1 - lean, -0.2) * A(-0.2, 0, -0.08)

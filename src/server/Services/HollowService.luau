@@ -73,6 +73,7 @@ type Hold = {
 	root: BasePart,
 	humanoid: Humanoid,
 	frame: CFrame, -- where the victim's root is held
+	slamFrom: CFrame?, -- a pin drives the body from here down to `frame` (Tuning.Grab.Pin)
 	escape: number,
 	startedAt: number, -- os.clock()
 	elapsed: number, -- seconds into the hold at the last tick
@@ -502,7 +503,9 @@ local function seize(hollow: Hollow, target: Player): boolean
 	end)
 	humanoid.Sit = false
 	root.Anchored = true
-	root.CFrame = frame
+	-- a pin starts from where they stood and is slammed down over the first ticks
+	local slamFrom = if def.pin then root.CFrame else nil
+	root.CFrame = slamFrom or frame
 	root.AssemblyLinearVelocity = Vector3.zero
 
 	local now = serverNow()
@@ -523,7 +526,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 	-- the crew can tear at it to pull them free
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Pull free"
-	prompt.ObjectText = target.DisplayName
+	prompt.ObjectText = if def.pin then `{target.DisplayName}: Brute pin` else target.DisplayName
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 11
 	prompt.RequiresLineOfSight = false
@@ -538,6 +541,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 		root = root,
 		humanoid = humanoid,
 		frame = frame,
+		slamFrom = slamFrom,
 		escape = 0,
 		startedAt = os.clock(),
 		elapsed = 0,
@@ -615,9 +619,15 @@ local function holdTick(hollow: Hollow)
 	end
 	local elapsed = clock - hold.startedAt
 	local dt = elapsed - hold.elapsed
-	-- keep the victim where the Hollow holds them
+	-- keep the victim where the Hollow holds them (a pin slams them there first)
 	hold.root.Anchored = true
-	hold.root.CFrame = hold.frame
+	local slamFrom = hold.slamFrom
+	if slamFrom and elapsed < G.Pin.SlamSeconds then
+		local u = elapsed / G.Pin.SlamSeconds
+		hold.root.CFrame = slamFrom:Lerp(hold.frame, u * u)
+	else
+		hold.root.CFrame = hold.frame
+	end
 	if elapsed > G.Settle then
 		hold.escape = Grab.slip(hold.escape, p, dt)
 	end
