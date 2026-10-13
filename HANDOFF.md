@@ -79,6 +79,10 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - New `Controllers/HullController` (client): a one-time warning toast (`Overlay.alert`) per tier crossed per run (again after a repair takes it back up); creaks (SkyGroan cue, pitched down) every ~9/6/4 s by tier; the Alarm cue every 3.4 s at tier 3; all faster/louder with markers off. `TrainVisualsController`'s lamp loop (StoveGlow/LanternFlame lights) multiplies by `HullController.LightScale` (random dropouts at tier 2, dim red pulse at tier 3) and takes `LightTint` (emergency red), restoring each lamp's `BaseColor` otherwise. Always on in a run.
 - Unverified: the sound mix and how the flicker reads.
 
+### D.5 Repair hull at the Workbench
+- The Workbench (E "Upgrades - Workbench") panel's hull row is now "REPAIR HULL · +10% for 2 parts · hull N%" (`Difficulty.Hull.RepairParts/RepairAmount`, replacing `Tuning.Train.HullPatchCost/Amount` 5/20). Button reads REPAIR, NEED n MORE (disabled) or HULL SOUND (disabled).
+- Server: remote `HullPatch` renamed `RepairHull` (aboard-gated, 3/s); `TrainService.RepairHull` also requires a run phase; `Ledger.repairHull` refuses when short of parts or already full and never goes past the max (spec in `tests/Ledger.spec`).
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 

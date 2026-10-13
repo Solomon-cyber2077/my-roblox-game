@@ -79,8 +79,6 @@ local Tuning = {
 		IntegrityMax = 100,
 		BurnPerKm = 2.0,
 		-- leaks, hull drain and repair: Config/Difficulty Leaks and Hull
-		HullPatchCost = 5,
-		HullPatchAmount = 20,
 		TickSeconds = 0.25,
 	},
 

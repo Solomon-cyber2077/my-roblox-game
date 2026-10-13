@@ -97,13 +97,30 @@ describe("Ledger", function()
 		expect(Ledger.legCoalCost(train, 5)).toBeCloseTo(7.2)
 	end)
 
-	it("patches the hull for five parts", function()
+	it("repairs the hull: 2 parts for +10%, refused when short of parts or already sound", function()
+		local hull = Difficulty.Hull
 		local train = Ledger.newTrain()
 		train.integrity = 50
-		train.parts = 6
-		local patched, ok = Ledger.hullPatch(train)
+		train.parts = 3
+		local repaired, ok = Ledger.repairHull(train)
 		expect(ok).toBe(true)
-		expect(patched.integrity).toBe(70)
-		expect(patched.parts).toBe(1)
+		expect(hull.RepairParts).toBe(2)
+		expect(hull.RepairAmount).toBe(10)
+		expect(repaired.integrity).toBe(50 + hull.RepairAmount)
+		expect(repaired.parts).toBe(3 - hull.RepairParts)
+		local again, ok2, why = Ledger.repairHull(repaired)
+		expect(ok2).toBe(false)
+		expect(why).toBe("Parts")
+		expect(again).toBe(repaired)
+		local full = Ledger.newTrain()
+		full.parts = 10
+		local _, ok3, why3 = Ledger.repairHull(full)
+		expect(ok3).toBe(false)
+		expect(why3).toBe("Full")
+		-- never past the max
+		local nearly = Ledger.newTrain()
+		nearly.integrity = 95
+		nearly.parts = 2
+		expect((Ledger.repairHull(nearly)).integrity).toBe(nearly.integrityMax)
 	end)
 end)

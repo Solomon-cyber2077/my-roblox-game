@@ -4,7 +4,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
-local Tuning = require(Shared.Config.Tuning)
+local Difficulty = require(Shared.Config.Difficulty)
 local UpgradesConfig = require(Shared.Config.Upgrades)
 local Ledger = require(Shared.Logic.Ledger)
 
@@ -185,7 +185,7 @@ function Workshop.mount(gui: ScreenGui)
 		Ui.corner(2).Parent = patch
 		Ui.stroke(Theme.Color.signal, 1, 0.5).Parent = patch
 		local patchText = Ui.text({
-			Text = `HULL PATCH  ·  +{Tuning.Train.HullPatchAmount} hull for {Tuning.Train.HullPatchCost} parts  ·  hull {math.floor(
+			Text = `REPAIR HULL  ·  +{Difficulty.Hull.RepairAmount}% for {Difficulty.Hull.RepairParts} parts  ·  hull {math.floor(
 				train.integrity
 			)}%`,
 			Font = Theme.Font.displayMedium,
@@ -198,10 +198,10 @@ function Workshop.mount(gui: ScreenGui)
 		patchText.ZIndex = 33
 		patchText.Parent = patch
 		local sound = train.integrity >= train.integrityMax
-		local short = Tuning.Train.HullPatchCost - train.parts
-		local patchLabel = if sound then "HULL SOUND" elseif short > 0 then `NEED {short} MORE` else "PATCH"
+		local short = Difficulty.Hull.RepairParts - train.parts
+		local patchLabel = if sound then "HULL SOUND" elseif short > 0 then `NEED {short} MORE` else "REPAIR"
 		local patchButton = Ui.button(patchLabel, "Danger", function()
-			Net.Fire("HullPatch")
+			Net.Fire("RepairHull")
 		end, {
 			Size = UDim2.fromOffset(130, 36),
 			Position = UDim2.new(1, -12, 0.5, 0),
