@@ -34,6 +34,12 @@ local function visible(): boolean
 	)
 end
 
+-- True while Broken Things Markers are on for this player (the setting, FirstFew by runs).
+-- The leak alert and arrow (Controllers/LeakController) follow it too.
+function Markers.visible(): boolean
+	return visible()
+end
+
 local function target(prompt: ProximityPrompt): boolean
 	local action = prompt:GetAttribute("Action")
 	return action == "Breach" or action == "Power"

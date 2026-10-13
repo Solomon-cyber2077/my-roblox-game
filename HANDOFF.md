@@ -68,6 +68,12 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - World object: the leak anchor (tag `Leak`, `LeakId`, `LeakSeverity` 1-2 in tenths) with steam (`SteamRate` 40 x severity) and the positional SteamLeak hiss (rolloff `HissRange` 40, louder with severity), always on. A timed Breakdown's queued bursts count toward the trip's cap.
 - `.lune/report` prints leaks_per_trip instead of breach_per_min. Unverified in Studio: how the hiss and steam read.
 
+### D.3 Broken Things Markers: leak arrow and alert
+- `Logic/LeakAlert.view(leaks, me, markersOn)` (+ `tests/LeakAlert.spec`): from the tagged leak objects only; nil with no leaks or markers off; names the nearest leak's car (`LeakAlert.Cars`, now also used by TrainService's alarm) and distance in metres (`StudsToMetres` 0.28).
+- New `Controllers/LeakController` (client, after TutorialController): markers ON (`BrokenThingMarkers.visible()`, now public; the existing setting, unchanged default FirstFew) -> a red-rimmed plate in `Hud.leakSlot()` ("STEAM LEAK · CREW CAR · 7 m" / "3 STEAM LEAKS · NEAREST ...") and a neon chevron arrow 4.2 studs over your head pointing at the nearest leak with a "7 m" tag (hidden within 7 studs). Re-evaluated every frame and on the Leak tag being removed, so the last patch clears both at once. The slot already yields to modals/full-screen UI. The gauge's leak line is gone (only FIREBOX EMPTY stays there).
+- Markers OFF: no plate, no arrow; `TrainVisualsController.shapeLeak` makes the steam thicker and longer-lived (`SteamRateOff` 90 x severity, bigger puffs: visible through doorways) and the hiss louder (x`MarkersOffBoost` 1.4) carrying `HissRangeOff` 95 studs into neighbouring cars; it re-shapes when the setting changes. Fuse-box and leak billboard markers (`UI/BrokenThingMarkers`) unchanged.
+- Unverified on screen (screenshot below if Studio was reachable).
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
