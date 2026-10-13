@@ -21,6 +21,7 @@ local Types = require(Shared.Types)
 
 local NetService = require(script.Parent.NetService)
 local Registry = require(script.Parent.Parent.Registry)
+local TimedEventDirector = require(script.Parent.Parent.Events.TimedEventDirector)
 local StationService = require(script.Parent.StationService)
 
 type Timeline = {
@@ -46,13 +47,14 @@ local connection: RBXScriptConnection? = nil
 
 local DAMAGE_TICK = 0.25
 
-local function spawnAtFront(state: Timeline, t: number)
+local function spawnAtFront(state: Timeline, t: number, extra: boolean?): Model?
 	local params = state.info.hazards
 	local fog = HazardSchedule.fogFront(params, state.geo, t)
 	local lanes = state.plan.spawnLanes
 	local lane = lanes[(state.spawnIndex - 1) % #lanes + 1] + state.rng:NextNumber(-8, 8)
 	local z = math.clamp(fog + state.rng:NextNumber(4, 16), params.safeBand + 30, state.plan.depth - 4)
-	Registry.HollowService.TrySpawn(lane, z)
+	local _, model = Registry.HollowService.TrySpawn(lane, z, nil, nil, extra)
+	return model
 end
 
 local function damageInFog(state: Timeline, t: number)
@@ -110,6 +112,9 @@ local function step()
 			state.spawnIndex += 1
 		end
 	end
+	if state.frozenAt == nil then
+		TimedEventDirector.Step(t)
+	end
 	if os.clock() - state.lastDamage >= DAMAGE_TICK then
 		state.lastDamage = os.clock()
 		damageInFog(state, t)
@@ -120,6 +125,23 @@ function HazardDirector.Init() end
 
 function HazardDirector.Start()
 	StationService.Cleared:Connect(HazardDirector.Stop)
+	TimedEventDirector.Start()
+end
+
+-- One extra Hollow at a normal spawn point at the fog front, past the cap (a timed event's).
+function HazardDirector.SpawnExtra(): Model?
+	local state = timeline
+	if state == nil or state.frozenAt then
+		return nil
+	end
+	for _ = 1, 4 do
+		local model = spawnAtFront(state, Workspace:GetServerTimeNow() - state.info.startedAt, true)
+		state.spawnIndex += 1
+		if model then
+			return model
+		end
+	end
+	return nil
 end
 
 function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
@@ -157,6 +179,7 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	}
 	Registry.HollowService.Configure(info.hazards)
 	Registry.HollowService.Prepare(plan)
+	TimedEventDirector.Begin(info)
 	connection = RunService.Heartbeat:Connect(step)
 end
 
@@ -164,9 +187,11 @@ function HazardDirector.Freeze()
 	if timeline and timeline.frozenAt == nil then
 		timeline.frozenAt = Workspace:GetServerTimeNow()
 	end
+	TimedEventDirector.Finish()
 end
 
 function HazardDirector.Stop()
+	TimedEventDirector.Finish()
 	if connection then
 		connection:Disconnect()
 		connection = nil
