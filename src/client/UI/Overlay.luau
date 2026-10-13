@@ -166,6 +166,16 @@ function Overlay.mount(gui: ScreenGui)
 	screen.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	screen.DisplayOrder = gui.DisplayOrder + 1
 	screen.Parent = gui.Parent
+	-- The edge shading (hit pulses, dread, vitals) sits UNDER the HUD so the HUD stays readable;
+	-- only the full-screen fade above covers it.
+	local under = Instance.new("ScreenGui")
+	under.Name = "LastTrainOutEdgesUnder"
+	under.ResetOnSpawn = false
+	under.IgnoreGuiInset = true
+	under.ScreenInsets = Enum.ScreenInsets.None
+	under.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	under.DisplayOrder = gui.DisplayOrder - 2 -- under the train camera's gui (4) too
+	under.Parent = gui.Parent
 
 	-- Vignette: four edge bands with gradients toward the centre.
 	local specs = {
@@ -183,7 +193,7 @@ function Overlay.mount(gui: ScreenGui)
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			ZIndex = 20,
-			Parent = screen,
+			Parent = under,
 		})
 		Ui.new("UIGradient", {
 			Rotation = spec.rotation,
@@ -205,7 +215,7 @@ function Overlay.mount(gui: ScreenGui)
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			ZIndex = 19,
-			Parent = screen,
+			Parent = under,
 		})
 		Ui.new("UIGradient", {
 			Rotation = spec.rotation,
@@ -229,7 +239,7 @@ function Overlay.mount(gui: ScreenGui)
 				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
 				ZIndex = 18,
-				Parent = screen,
+				Parent = under,
 			})
 			Ui.new("UIGradient", {
 				Rotation = spec.rotation,
