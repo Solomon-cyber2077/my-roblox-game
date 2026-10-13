@@ -2,6 +2,17 @@
 
 **Rule change (user, 2026-10-10): commit AND push after every step** (plain `git push` of `claude/last-train-out` only, never force, never another branch or worktree). The older "commit, never push" rule in AGENTS.md is retired.
 
+## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI) -- READ THIS FIRST
+Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
+
+### Phase 0: setup, merge, brief 002
+- Main worktree and `LTO-astra` were both clean, so no backup branch was needed (`backup/pre-astra-merge` from an older merge still exists). `lune run check` passed in full at the start (rojo was not blocked).
+- Astra merge: `codex/settings-astra` (96d75f3) was already fully merged into this branch by b402157; `git log HEAD..codex/settings-astra` is empty, so there was nothing to merge and no conflict.
+- Broken Things Markers: setting key `BrokenThingMarkers` (`Config/Settings`), choices FirstFew/Always/Off, saved in the profile (`SettingsService` -> `DataService` `profile.settings`, replicated as a player attribute). **Default is `FirstFew`: markers are on for a player's first 3 runs, then off** (owner's 2026-10-11 decision). Not changed; owner to confirm whether "default ON" should mean `Always`.
+- Brief 002 (`tasks/002`): superseded by fix pass. It was already built and marked done (8aea907, 1d8de8e); round 2 then replaced its count bump with `Logic/HollowBudget`.
+  - Dropped: early-station count bump `Difficulty.EarlyHollowCap` (Difficulty.luau ~line 40, already unused). Part 2 must delete it and replace the flat `Tuning.HollowCount.ByCrew` override in `HazardDirector.Begin` (~line 152, `hazards.hollowCap = HollowBudget.total(...)`) with the stop-index threat curve. `DifficultyModel.hollowCap` (Difficulty `HollowCap`) still computes a cap that this override discards.
+  - Carry into part 2 config table (aggression/damage kept): `Difficulty.WandererDelay` {18, 10} s (one wanderer per stop, hunts the nearest player off the train); `Difficulty.Sleepers` TilesPerSleeper 6 (now capped by `HollowCount.SleeperShare` 0.5); `Difficulty.HollowDamage` {20, 32}; `Tuning.Grab.DpsShare` 0.6, `MaxBiteShare` 0.35, `Pin.DpsShare` 0.5, Brute `crush` 1.2; `Difficulty.Dwell` {148, 94} (002's dwell change, kept).
+
 ## 2026-10-13: Round 2 (enemies, combat, timed events)
 Not playtested (told to stay out of Studio). `lune run check` passes in full (rojo was not blocked this time): 250 tests, audit clean.
 1. Completed:
