@@ -14,6 +14,7 @@
 	players whose cars streamed in late.
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -23,6 +24,7 @@ local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Difficulty = require(ReplicatedStorage.Shared.Config.Difficulty)
 
 local Registry = require(script.Parent.Parent.Registry)
+local BrokenThingMarkers = require(script.Parent.Parent.UI.BrokenThingMarkers)
 local ChalkSlate = require(script.Parent.Parent.UI.ChalkSlate)
 
 type Spin = { part: BasePart, base: CFrame, radius: number, pivot: Vector3? }
@@ -256,14 +258,21 @@ end
 
 -- A leak's steam and hiss, by how bad it has got (LeakSeverity, from TrainService). Always on,
 -- whatever the settings say: the leak is a thing in the world.
+-- With Broken Things Markers off there is no arrow or HUD alert, so the leak itself is louder,
+-- its hiss carries into the next cars and its steam is thick enough to see through doorways.
 local function shapeLeak(part: BasePart, emitter: ParticleEmitter)
 	local leaks = Difficulty.Leaks
 	local severity = (part:GetAttribute("LeakSeverity") :: number?) or 1
-	emitter.Rate = leaks.SteamRate * severity
+	local off = not BrokenThingMarkers.visible()
+	emitter.Rate = (if off then leaks.SteamRateOff else leaks.SteamRate) * severity
+	emitter.Lifetime = if off then NumberRange.new(1, 1.9) else NumberRange.new(0.6, 1.1)
+	emitter.Size = if off
+		then NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.2), NumberSequenceKeypoint.new(1, 6.5) })
+		else NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(1, 4) })
 	local sound = Registry.AudioController and Registry.AudioController.LoopSound(`breach_{part.Name}`)
 	if sound then
-		sound.RollOffMaxDistance = leaks.HissRange
-		sound.Volume = 0.45 + 0.25 * severity
+		sound.RollOffMaxDistance = if off then leaks.HissRangeOff else leaks.HissRange
+		sound.Volume = (0.45 + 0.25 * severity) * (if off then Difficulty.Hull.MarkersOffBoost else 1)
 	end
 end
 
@@ -321,6 +330,12 @@ local function track(model: Model, live: boolean)
 					updateBreaches(rig)
 				end)
 			end
+		end
+		-- the markers setting changes how loud and thick the leaks are
+		for _, attribute in { "BrokenThingMarkers", "RunsStarted", "SettingsReady" } do
+			Players.LocalPlayer:GetAttributeChangedSignal(attribute):Connect(function()
+				updateBreaches(rig)
+			end)
 		end
 	end
 end

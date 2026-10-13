@@ -13,6 +13,7 @@ local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local UpgradesConfig = require(Shared.Config.Upgrades)
+local LeakAlert = require(Shared.Logic.LeakAlert)
 local Leaks = require(Shared.Logic.Leaks)
 local Ledger = require(Shared.Logic.Ledger)
 local RunRules = require(Shared.Logic.RunRules)
@@ -29,16 +30,6 @@ type Train = Types.TrainState
 
 local TrainService = {
 	UpgradeBought = Signal.new() :: Signal.Signal<string, number>,
-}
-
-local CAR_NAMES: { [string]: string } = {
-	BV1 = "brake van",
-	BV2 = "brake van",
-	CR1 = "crew car",
-	CR2 = "crew car",
-	WS1 = "workshop",
-	WS2 = "workshop",
-	CAB = "cab",
 }
 
 local built: TrainBuilder.Built
@@ -168,7 +159,7 @@ local function openBreach()
 	end)
 	breachPrompts[id] = { prompt = prompt, anchor = anchor }
 	publish(true)
-	notifyAll("Alarm", `Hull breach in the {CAR_NAMES[name] or "train"}!`)
+	notifyAll("Alarm", `Hull breach in the {LeakAlert.car(name)}!`)
 end
 
 local function tick(dt: number)
