@@ -1715,9 +1715,27 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	model.Parent = parent
 
 	local spawnPoints: { CFrame } = {}
-	-- down the middle of the aisle, clear of the seats
-	for _, x in { -14, -8, 8, 14, -56, -50, -36, -30 } do
-		table.insert(spawnPoints, at(x, 3, 0))
+	-- down the middle of the aisle, clear of the seats, each looking down its car toward the
+	-- farther end (never at the side wall a few studs away): { x, car's x0, car's x1 }
+	for _, spot in
+		{
+			{ -14, -20, -1.5 },
+			{ -8, -20, -1.5 },
+			{ 8, 1.5, 20 },
+			{ 14, 1.5, 20 },
+			{ -56, -63, -44.5 },
+			{ -50, -63, -44.5 },
+			{ -36, -41.5, -23 },
+			{ -30, -41.5, -23 },
+		}
+	do
+		local x = spot[1]
+		local towardFront = spot[3] - x >= x - spot[2]
+		-- a quarter turn about Y takes the default -Z look to +X (front) or -X (rear)
+		table.insert(
+			spawnPoints,
+			at(x, 3, 0) * CFrame.Angles(0, if towardFront then -math.pi / 2 else math.pi / 2, 0)
+		)
 	end
 
 	return {
