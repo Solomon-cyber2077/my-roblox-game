@@ -350,6 +350,65 @@ Builders.Chimney = function(ctx)
 	)
 end
 
+-- A signal gantry across the lane: lattice legs at both ends, a walkway beam overhead and
+-- three dolls of semaphore signals on it, their lamps long out.
+Builders.Gantry = function(ctx)
+	local span, h = ctx.width - 4, 15
+	for _, side in { -1, 1 } do
+		local x = side * span / 2
+		for _, z in { -0.9, 0.9 } do
+			Kit.block(
+				ctx.parent,
+				Vector3.new(0.5, h, 0.5),
+				f(ctx, x, h / 2, z),
+				C.iron,
+				{ material = Enum.Material.Metal }
+			)
+		end
+		for y = 2, h - 2, 3.2 do
+			Kit.block(
+				ctx.parent,
+				Vector3.new(0.2, 3.6, 0.2),
+				f(ctx, x, y + 1.6, 0) * Kit.angles(48, 0, 0),
+				C.iron,
+				{ material = Enum.Material.Metal, collide = false }
+			)
+		end
+	end
+	Kit.block(
+		ctx.parent,
+		Vector3.new(span + 1, 0.8, 2.6),
+		f(ctx, 0, h + 0.4, 0),
+		C.iron,
+		{ material = Enum.Material.Metal }
+	)
+	Kit.block(
+		ctx.parent,
+		Vector3.new(span + 1, 0.9, 0.12),
+		f(ctx, 0, h + 1.25, -1.24),
+		C.iron,
+		{ material = Enum.Material.Metal, collide = false }
+	)
+	for k = -1, 1 do
+		local x = k * span / 3.2
+		Kit.post(ctx.parent, 7, 0.3, f(ctx, x, h + 4.3, 0.4), C.iron, { material = Enum.Material.Metal })
+		Kit.block(
+			ctx.parent,
+			Vector3.new(0.18, 0.7, 3.4),
+			f(ctx, x + 0.2, h + 6.4, -1.0) * Kit.angles(if k == 0 then -35 else 0, 0, 0),
+			C.canvasA,
+			{ collide = false }
+		)
+		Kit.block(
+			ctx.parent,
+			Vector3.new(0.5, 0.5, 0.5),
+			f(ctx, x + 0.4, h + 6.4, 0.4),
+			C.coal,
+			{ material = Enum.Material.Glass, collide = false }
+		)
+	end
+end
+
 Builders.CoalTower = function(ctx)
 	local h = 20
 	for _, x in { -8, 8 } do
@@ -576,8 +635,9 @@ Builders.SignalBox = function(ctx)
 end
 
 Builders.CableDrums = function(ctx)
-	for i = 1, 2 + (if ctx.rng:NextNumber() > 0.5 then 1 else 0) do
-		local x = (i - 2) * 3.4
+	-- two drums side by side, clear of each other (overlapping ones can share an end face)
+	for i = 1, 2 do
+		local x = (i - 1.5) * 5.1
 		local drum = Kit.cylinder(
 			ctx.parent,
 			2.6,
