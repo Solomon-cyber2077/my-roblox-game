@@ -22,6 +22,7 @@ local Signal = require(Shared.Util.Signal)
 local Types = require(Shared.Types)
 
 local StationBuilder = require(script.Parent.Parent.Builders.StationBuilder)
+local StationKit = require(script.Parent.Parent.Builders.StationKit)
 
 type Mode = "Arriving" | "Docked" | "Departing"
 
@@ -105,6 +106,7 @@ end
 function StationService.Init() end
 
 function StationService.Start()
+	task.spawn(StationKit.Preload) -- the Blender kit's meshes, for the stops to come
 	RunService.Heartbeat:Connect(step)
 end
 
