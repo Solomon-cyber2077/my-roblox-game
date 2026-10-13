@@ -110,6 +110,25 @@ describe("Grab", function()
 		expect(saved).toBe(true)
 	end)
 
+	it("never lets one bite kill a full-health crew member", function()
+		local cap = Tuning.Grab.MaxBiteShare * Tuning.Crew.MaxHealth
+		expect(cap).toBeLessThan(Tuning.Crew.MaxHealth)
+		for _, id in Stations.Order do
+			local params = DifficultyModel.params(1, Stations.List[id], 4, nil)
+			for _, kind in KINDS do
+				for _, def in Grabs.Kinds[kind] do
+					expect(Grab.bite(def, params, Grab.kind(kind))).toBeLessThan(cap + 1e-6)
+				end
+			end
+		end
+		-- even an absurd stop is clamped
+		local params = table.clone(DifficultyModel.params(1, Stations.List.Halt, 4, nil))
+		params.hollowDamage = 10000
+		local def = Grabs.ById.Throttle
+		expect(Grab.bite(def, params, Grab.kind("Brute"))).toBe(cap)
+		expect(Grab.damage(def, params, Grab.kind("Brute"), 0, Tuning.Grab.Settle + def.bite)).toBe(cap)
+	end)
+
 	it("holds tighter at the hard stops", function()
 		local halt = Stations.List.Halt
 		local easy = DifficultyModel.params(0, halt, 4, nil)
