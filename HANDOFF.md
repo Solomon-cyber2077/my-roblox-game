@@ -9,7 +9,7 @@
 ### After (per archetype, seed 424242)
 | archetype | size | walkable | bldgs | structs | loot | far | jog2x | spr2x | dwell1 | dwell10 | parts | lights (lit) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Halt | 432x348 | 138672 (3.4x) | 8 (was 3) | 5 | 77 (was 23) | 450 | 45.0 | 34.0 | 234 | 242 | 7579 | 86 (58) |
+| Halt | 432x348 | 138672 (3.4x) | 8 (was 3) | 5 | 77 (was 23) | 450 | 45.0 | 34.0 | 232 | 240 | 7579 | 86 (58) |
 | CoalYard | 480x372 | 162720 (3.1x) | 8 (was 2) | 16 (was 9) | 85 (was 37) | 462 | 46.2 | 35.0 | 237 | 246 | 7403 | 64 (47) |
 | SignalWorks | 468x420 | 182592 (3.1x) | 8 (was 1) | 14 (was 7) | 78 (was 24) | 570 | 57.0 | 43.4 | 257 | 263 | 8774 | 76 (51) |
 | Market | 480x408 | 181152 (3.2x) | 8 (was 1) | 20 (was 10) | 98 (was 23) | 534 | 53.4 | 40.6 | 271 | 273 | 8856 | 82 (59) |
@@ -30,6 +30,21 @@
 - RailwayHotel (Gallowmere Junction): the hotel (two storeys, cellar room), stables and coach house (new; Brute sleepers), the inn as the public house, shop, a bandstand (new) at the centre of the square, a signal gantry, fountain; village: two terraces, cottages. Studio stop 1: 4:13, no errors; `docs/stations/railwayhotel_overview.jpg`.
 - PostTown (Wickham Cross): sorting office, counting house (new, two storeys, strongroom), clock tower at the crossing, stalls, shop, the inn; village: two terraces, cottages. At the light limits (96 / 64 lit). **Not yet seen in Studio** (Studio's place closed before the shot).
 - Halt: stationmaster's house (2 storeys), goods shed, booking hall, cattle dock (new), water tower, sheds; village: the Lamp & Anchor inn (2 storeys), cottages. Studio (stop 1): docked, clock 3:39-3:48, no errors after the fix below; shots `docs/stations/halt_overview.jpg`, `halt_edge.jpg`. Fixed in Studio: loot zone `Village` was missing from `Config/Loot` (LootService errored at Dwell); spec added.
+
+### Performance budgets (per stop, `.lune/audit.luau`, enforced by `lune run check`)
+- 9000 parts, 300k triangles (estimate: block 12, wedge 8, cylinder 48, ball 192; MeshParts not counted), 96 light instances of which at most 64 lit at docking (the rest are dead room lamps a building's power wakes), 0 shadow-casting lights, 60 emitters.
+- Now: 7034-8856 parts, ~139-283k tris, 70-96 lights (47-64 lit), 0 shadows. Emergency Village 4485 parts, 29 lights. Before: 2742-3746 parts, 18-36 lights.
+- Savings made to fit: rock keels only under edge and foundation slabs; iron railings every 2 studs; drums no longer overlapping; lamp pools capped (YardMax 14, Viaduct platform lamps every 40).
+- Not done yet (next levers for weak machines / the planned Performance setting): the Blender kit meshes once uploaded (one MeshPart per fence tile or lamp instead of 6-20 parts); StreamingEnabled is not used (the station is one welded moving assembly); no LOD. A Performance setting could skip dressing, trees and dead room lamps.
+
+### Walk-time maths (step 7)
+- Inputs (Tuning.Crew, read by MovementController): jog 20 studs/s, sprint 31, stamina 100, drain 18/s, regen 22/s after 0.9 s.
+- Sprint pace: a full bar sprints 100/18 = 5.6 s (172 studs), refilling takes 0.9 + 100/22 = 5.4 s at a jog (109 studs), so the best sustained pace is 281 studs / 11.0 s = 25.5 studs/s. `StationReach.roundTrip` uses this (the first burst from a full bar).
+- Farthest loot = the longest walk (BFS over the tiles, round structures and barriers, through buildings) from the platform in front of the train (|x| <= 72) to any container or pickup. Worst case per stop (seed 424242): Minehead 606 studs: 60.6 s there and back at a jog, 46.2 s mixing sprints.
+- The clock: dwell = (Search(D) {105 -> 75} + 0.5 s x building tiles, cap 90) x dwellMultiplier + 2 x far-corner walk / 20 x 1.6 + 4 s x (stop - 1), plus the 15 s Last Call.
+  Example Minehead at its first stop (5, tier 3): far corner (240 - 72 + 432) x 1.2 = 720 studs -> 115 s of walk budget; ~270 s total. The farthest loot round trip is 60.6 s at a jog: 4.5x margin; at stop 10, tier 3: 272 s (4.5x).
+  Every stop's margin (dwell at stop 10, tier 3 / jog round trip) is 4.5x-5.8x (table above, column dwell10 / jog2x).
+- Enforced in `tests/StationReach.spec`: for every archetype and 8 seeds at loot x1.35, dwell + Last Call at D = 1 and the archetype's first stop >= 2.5x the jog round trip to the farthest loot. The Emergency Village: 150 s window vs its farthest part, also >= 2.5x (`tests/EmergencyVillage.spec`).
 
 ### Shared generator (commit "Stations: shared generator")
 - `Config/Stations`: `village` (rows, landmarks, containers; zone `Village` = the last rows), `Lamps` (PoolGap 4.5 tiles, YardMax 22), `VillageFill`, `Edge` (RailBack 4.5, TapeBack 6.6, GlowLights 6), `Reach.DoorHalfSpan` 72.
