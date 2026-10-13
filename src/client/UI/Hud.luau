@@ -58,6 +58,10 @@ local LEAK_SLOT = { x = 14, y = 152, w = 236, h = 40 }
 -- Full-screen UI the leak slot hides behind (direct children of the HUD ScreenGui).
 local FULL_SCREEN = { "RouteVote", "RunCard", "Unseal", "CarBoarding", "Eliminated" }
 local leakSlot: Frame? = nil
+-- The tutorial prompt's slot (Controllers/TutorialController): the left column, under the in-run
+-- Settings button (14, 200, 160x40). It yields exactly like the leak slot.
+local TUTORIAL_SLOT = { x = 14, y = 250, w = 236, h = 84 }
+local tutorialSlot: Frame? = nil
 
 local function tierStamps(tier: number): string
 	return string.rep("●", tier) .. string.rep("○", 3 - tier)
@@ -591,6 +595,16 @@ function Hud.mount(gui: ScreenGui)
 		Parent = container,
 	})
 	leakSlot = leakFrame
+	local tutorialFrame = Ui.new("Frame", {
+		Name = "TutorialSlot",
+		Size = UDim2.fromOffset(TUTORIAL_SLOT.w, TUTORIAL_SLOT.h),
+		Position = UDim2.fromOffset(TUTORIAL_SLOT.x, TUTORIAL_SLOT.y),
+		BackgroundTransparency = 1,
+		ClipsDescendants = true,
+		ZIndex = 1,
+		Parent = container,
+	})
+	tutorialSlot = tutorialFrame
 	local function slotBlocked(): boolean
 		if Modal.anyOpen() then
 			return true
@@ -1290,6 +1304,7 @@ function Hud.mount(gui: ScreenGui)
 		end
 
 		leakFrame.Visible = not slotBlocked()
+		tutorialFrame.Visible = leakFrame.Visible
 
 		local clock = os.clock()
 		for _, f in faders do
@@ -1304,6 +1319,12 @@ end
 -- the slot hides itself whenever a modal or full-screen UI is open.
 function Hud.leakSlot(): Frame?
 	return leakSlot
+end
+
+-- The tutorial prompt's slot (nil before mount). It is shown only in a run, with the HUD, and
+-- never while a modal or full-screen UI is open: check `Visible` on its ancestors.
+function Hud.tutorialSlot(): Frame?
+	return tutorialSlot
 end
 
 return Hud

@@ -18,6 +18,21 @@
 
 export type PostGrab = { immunity: number, stagger: boolean }
 
+--[[
+	A tutorial prompt: shown once per run, on runs of tier `tier`, when `when` first happens
+	(Controllers/TutorialController). {KEY} becomes SPACE, A or TAP for the input device.
+	  RunStart    the run begins (boarding, or the first junction)
+	  OffTrain    you first step off the train
+	  AwayFromTrain  you have been off the train AwaySeconds
+	  NearEdge    you come within EdgeDistance of a sinkhole-edge marker (tag SinkholeEdge)
+	  Grabbed     a Hollow seizes you
+	  Cruise      the train is running between stops
+	  Leak        a steam leak opens aboard
+	  Exhausted   you sprint your breath out
+	  Junction    the vote for the next stop opens
+]]
+export type Prompt = { id: string, tier: number, when: string, text: string }
+
 export type Tier = {
 	stop1Cap: number?,
 	stop1Dormant: boolean,
@@ -82,6 +97,67 @@ return table.freeze({
 		ChaseScale = 0.55, -- of its usual chase speed: you see it coming
 		ZoneDegrees = 140,
 	}),
+
+	-- ROUGH DRAFT: the owner rewrites these freely. Order is the order they queue in.
+	Prompts = table.freeze({
+		-- run 1: moving, looting, the light, the edge
+		{ id = "Move", tier = 1, when = "RunStart", text = "WASD to move. Hold SHIFT to sprint." },
+		{
+			id = "Loot",
+			tier = 1,
+			when = "OffTrain",
+			text = "Search crates and bags with E. Carry coal and parts back aboard.",
+		},
+		{
+			id = "Light",
+			tier = 1,
+			when = "AwayFromTrain",
+			text = "Stay in the lantern light. Hollows will not follow you into it.",
+		},
+		{
+			id = "Edge",
+			tier = 1,
+			when = "NearEdge",
+			text = "The far edge drops into a sinkhole. Keep back from it.",
+		},
+		-- run 2: the skill check
+		{
+			id = "SkillCheck",
+			tier = 2,
+			when = "Grabbed",
+			text = "Press {KEY} when the needle is in the zone.",
+		},
+		-- run 3: the hull, leaks, stamina, voting
+		{
+			id = "Hull",
+			tier = 3,
+			when = "Cruise",
+			text = "Watch the hull. Repair it with parts at the Workbench.",
+		},
+		{
+			id = "Leaks",
+			tier = 3,
+			when = "Leak",
+			text = "A steam leak! Patch it with a part before it drains the hull.",
+		},
+		{
+			id = "Stamina",
+			tier = 3,
+			when = "Exhausted",
+			text = "Out of breath. Let the bar refill before you sprint again.",
+		},
+		{
+			id = "Voting",
+			tier = 3,
+			when = "Junction",
+			text = "Vote for the next stop. More danger, better loot.",
+		},
+	} :: { Prompt }),
+	PromptSeconds = 7, -- each prompt stays this long (time behind another screen does not count)
+	PromptGap = 1.2, -- seconds between one prompt and the next
+	AwaySeconds = 8,
+	EdgeDistance = 30,
+	EdgeTag = "SinkholeEdge",
 
 	-- The owner's account: the only one the `/tutorial` chat command answers.
 	OwnerUserId = 11744048795,

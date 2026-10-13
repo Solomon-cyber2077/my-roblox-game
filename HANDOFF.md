@@ -48,6 +48,11 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - Run 3: grace 10 s, small lights, no stop-1 cap. After the tutorial: none of this; only the curve and B.2.
 - Unverified in Studio: all of it (sleeper placement at stop 1, the edge-holding at light radii, the Crawler's spawn spot on real geometry).
 
+### C.4 Tutorial prompts (ROUGH DRAFT)
+- Every stage and message is data in `Config/Tutorial` (`Prompts`, `PromptSeconds` 7, `PromptGap`, `AwaySeconds`, `EdgeDistance`, `EdgeTag`): run 1 Move / Loot / Light / Edge, run 2 SkillCheck ("Press {KEY} when the needle is in the zone.", {KEY} = SPACE / A / TAP), run 3 Hull / Leaks / Stamina / Voting. Moments: RunStart, OffTrain, AwayFromTrain, NearEdge (a `SinkholeEdge`-tagged part, C.5), Grabbed, Cruise, Leak, Exhausted, Junction.
+- `Controllers/TutorialController` (client): once per run per prompt, on runs of the crew's tier (`run.tutorial`), one at a time in data order. Drawn in a new HUD slot `Hud.tutorialSlot()` at (14, 250, 236x84), left column under the in-run Settings button; it yields exactly like the leak slot (hidden under any modal/full-screen UI, and the prompt's time pauses while hidden). It sits left of the grab plate, so the run-2 skill-check line shows beside the ring, not on it.
+- Spec: prompt schema in `tests/Part2Config.spec`. Unverified on screen.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
