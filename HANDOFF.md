@@ -3,7 +3,7 @@
 ## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
 
 ### Resume point
-- Done: audit (1), design notes (3), shared generator, shared kit (4), Halt, CoalYard, SignalWorks, Market, Viaduct, Minehead, Schoolhouse, Infirmary, RailwayHotel. Next archetype: RailwayHotel, then, Viaduct, Minehead, Schoolhouse, Infirmary, RailwayHotel, PostTown; then Emergency Village (8), tutorial stop 1 (9), village hook tests (10).
+- Done: audit (1), design notes (3), shared generator, shared kit (4), all ten archetypes. Next: Emergency Village (8), tutorial stop 1 (9), village hook tests (10). Pending Studio: the PostTown screenshot (Studio lost its place mid-session).
 - Per archetype recipe: new `length`/`depth` (+ `village` rows), more `landmarks` (new `Config/Buildings` defs as needed; Spine 4x4+ may have `upper`, measure its `tiles` from the slab), new structures in `StructureKit` + `Stations.Footprints`; `lune run stations` (walkable area >= 3x before), `lune run check`, then Studio: Dev `station <Id>` before Ready, skip to Dwell, one overview + one edge shot (`docs/stations/<id>_*.jpg`).
 
 ### After (per archetype, seed 424242)
@@ -18,6 +18,7 @@
 | Schoolhouse | 480x408 | 184320 (3.3x) | 7 (was 1) | 4 (was 3) | 82 (was 29) | 546 | 54.6 | 41.5 | 261 | 267 | 8720 | 95 (59) |
 | Infirmary | 456x396 | 169488 (3.3x) | 8 (was 1) | 4 (was 2) | 88 (was 31) | 510 | 51.0 | 38.7 | 257 | 261 | 7867 | 82 (53) |
 | RailwayHotel | 480x408 | 183744 (3.1x) | 8 (was 1) | 5 (was 3) | 91 (was 32) | 546 | 54.6 | 41.5 | 262 | 267 | 7196 | 93 (61) |
+| PostTown | 492x420 | 192816 (3.0x) | 8 (was 2) | 9 (was 4) | 81 (was 27) | 582 | 58.2 | 44.4 | 260 | 265 | 8656 | 96 (64) |
 
 - CoalYard: coaling tower, brick chimney (new), 7 heaps, 5 hoppers, 3 sidings; boiler house, engine shed (now searchable), coal office (new); village: two railwaymen's terraces (new), chapel, cottage. Studio stop 1: docked, 3:49, no errors; `docs/stations/coalyard_overview.jpg`.
 - SignalWorks: two-storey signal cabin (new: locking room below, lever rooms above), 2 signal gantries (new), workshop, goods shed, lineman's cottage, 8 cable-drum stacks, 3 sidings; village: terrace, general store, cottages. Iron fences now have bars every 2 studs (2339 -> ~1200 parts). Studio stop 1: 4:05, no errors; `docs/stations/signalworks_overview.jpg`.
@@ -27,6 +28,7 @@
 - Schoolhouse (Ashgrove): the board school (two storeys), schoolmaster's house (new, two storeys), chapel and churchyard graves, water tower, swings; village: terrace, inn, cottages. A near shop was dropped to stay under 96 light instances. Studio stop 1: 4:10, no errors; `docs/stations/schoolhouse_overview.jpg`.
 - Infirmary: cottage hospital (two storeys), doctor's house (new, two storeys), mortuary (new; sleeper-heavy, Crawlers), laundry (new), boiler chimney, graves; village: terrace, shop, cottages. Studio stop 1: 4:06, no errors; `docs/stations/infirmary_overview.jpg`.
 - RailwayHotel (Gallowmere Junction): the hotel (two storeys, cellar room), stables and coach house (new; Brute sleepers), the inn as the public house, shop, a bandstand (new) at the centre of the square, a signal gantry, fountain; village: two terraces, cottages. Studio stop 1: 4:13, no errors; `docs/stations/railwayhotel_overview.jpg`.
+- PostTown (Wickham Cross): sorting office, counting house (new, two storeys, strongroom), clock tower at the crossing, stalls, shop, the inn; village: two terraces, cottages. At the light limits (96 / 64 lit). **Not yet seen in Studio** (Studio's place closed before the shot).
 - Halt: stationmaster's house (2 storeys), goods shed, booking hall, cattle dock (new), water tower, sheds; village: the Lamp & Anchor inn (2 storeys), cottages. Studio (stop 1): docked, clock 3:39-3:48, no errors after the fix below; shots `docs/stations/halt_overview.jpg`, `halt_edge.jpg`. Fixed in Studio: loot zone `Village` was missing from `Config/Loot` (LootService errored at Dwell); spec added.
 
 ### Shared generator (commit "Stations: shared generator")
