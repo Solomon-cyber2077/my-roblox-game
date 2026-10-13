@@ -26,6 +26,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Journey = require(Shared.Logic.Journey)
+local Breakdown = require(Shared.Logic.Breakdown)
 local JourneyPlan = require(Shared.Logic.JourneyPlan)
 local MathX = require(Shared.Util.MathX)
 local Safe = require(Shared.Util.Safe)
@@ -275,7 +276,9 @@ local function advance(dt: number)
 	local stationVelocity = if root then root.AssemblyLinearVelocity.X else nil
 	local elapsed = if type(run) == "table" and run.phaseStartedAt then now - run.phaseStartedAt else 0
 
-	speed = JourneyPlan.speed(speed, phase, dt, stationVelocity, elapsed)
+	local broken = if type(run) == "table" and type(run.breakdown) == "table" then run.breakdown else nil
+	local share = if broken then Breakdown.speedShare(broken) else 1
+	speed = JourneyPlan.speed(speed, phase, dt, stationVelocity, elapsed, share)
 	local before = odometer
 	odometer += speed * dt
 	local result = JourneyPlan.step(plan, {

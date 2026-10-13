@@ -176,8 +176,11 @@ local function tick(dt: number)
 	end
 	-- leaks burst and the hull drains only while the train is running (never at the vote or a stop)
 	local current = leg
-	if current and RunRules.hullDrains(phase) then
-		current.elapsed += dt
+	local breakdown = Registry.BreakdownService
+	local share = if breakdown then breakdown.SpeedShare() else 1
+	if current and RunRules.hullDrains(phase) and share > 0 then
+		-- leaks burst by distance travelled: a limping train reaches them later
+		current.elapsed += dt * share
 		local due = current.bursts[1]
 		local wantsBurst = (due ~= nil and current.elapsed >= due) or pendingBursts > 0
 		if
@@ -317,6 +320,19 @@ end
 
 function TrainService.Integrity(): number
 	return train.integrity
+end
+
+-- Sets the hull (a breakdown rally's repair, Services/BreakdownService), never past the max.
+function TrainService.SetIntegrity(value: number)
+	local nextTrain = table.clone(train)
+	nextTrain.integrity = math.clamp(value, 0, train.integrityMax)
+	train = nextTrain
+	publish(true)
+end
+
+-- Where leaks burst, one or two per car (BreachAnchor attribute names the car).
+function TrainService.BreachAnchors(): { BasePart }
+	return table.clone(built.breachAnchors)
 end
 
 function TrainService.SpawnPoint(index: number): CFrame

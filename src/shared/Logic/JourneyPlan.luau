@@ -55,6 +55,7 @@ export type RunState = {
 	nextStop: number?,
 	phaseStartedAt: number?,
 	phaseEndsAt: number?,
+	breakdown: { phase: string }?,
 	destination: { archetype: string, biome: string? }?,
 	station: { archetype: string, startedAt: number?, dwell: number? }?,
 }
@@ -240,7 +241,9 @@ function JourneyPlan.step(plan: Plan, input: Input): Result
 	end
 
 	local destination = run.destination
-	if phase == "Cruise" and destination and run.phaseEndsAt then
+	-- while broken down the clock and the speed disagree; the dock is re-cut at Arrival if need be
+	local brokenDown = run.breakdown ~= nil and run.breakdown.phase ~= "None"
+	if phase == "Cruise" and destination and run.phaseEndsAt and not brokenDown then
 		local predicted = Journey.dockFromCruise(input.odometer, run.phaseEndsAt - input.now, input.speed)
 		local upcoming = plan.upcoming
 		if upcoming == nil or math.abs(predicted - upcoming.center) > J.DockTolerance then
@@ -305,7 +308,8 @@ function JourneyPlan.speed(
 	phase: string,
 	dt: number,
 	stationVelocity: number?,
-	phaseElapsed: number
+	phaseElapsed: number,
+	share: number? -- the broken-down train's speed share (Logic/Breakdown.speedShare)
 ): number
 	local motion = Tuning.Motion
 	if (phase == "Arrival" or phase == "Departure") and stationVelocity then
@@ -317,6 +321,10 @@ function JourneyPlan.speed(
 	-- the station just left keeps pulling away for a while: stay locked to it
 	if phase == "Junction" and stationVelocity and stationVelocity < -1 then
 		return -stationVelocity
+	end
+	if phase == "Cruise" and share and share < 1 then
+		-- broken down (Logic/Breakdown): brake to a stop, or limp
+		return MathX.approach(current, motion.CruiseSpeed * share, motion.SpinUp * dt)
 	end
 	if phase == "Junction" or phase == "Cruise" or phase == "Boarding" then
 		return MathX.approach(current, motion.CruiseSpeed, motion.SpinUp * dt)

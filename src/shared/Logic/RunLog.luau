@@ -196,12 +196,13 @@ function RunLog.endStop(log: { Entry }?, nextStop: number?): number
 	return nextStop or 1
 end
 
--- "TERMINUS", "DERAILED AT STOP 6", "LOST AT STOP 6". `stop` is where the run ended (run.nextStop).
+-- "TERMINUS", "TRAIN LOST AT STOP 6" (a second breakdown), "LOST AT STOP 6" (the crew).
+-- `stop` is where the run ended (run.nextStop).
 function RunLog.final(outcome: Types.Outcome?, stop: number?): string
 	if outcome == "Victory" then
 		return "TERMINUS"
 	end
-	local verb = if outcome == "Derailed" then "DERAILED" else "LOST"
+	local verb = if outcome == "Derailed" then "TRAIN LOST" else "LOST"
 	return `{verb} AT STOP {stop or 1}`
 end
 
