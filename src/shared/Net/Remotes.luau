@@ -34,7 +34,7 @@ local Remotes: { [string]: RemoteDef } = {
 	UseItem = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
 	DropItem = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
 	BuyUpgrade = { direction = "ToServer", args = { "id" }, rate = 3, burst = 3 },
-	HullPatch = { direction = "ToServer", args = {}, rate = 2, burst = 2 },
+	RepairHull = { direction = "ToServer", args = {}, rate = 3, burst = 3 }, -- Workbench "Repair hull"
 	ShopPurchase = { direction = "ToServer", args = { "id" }, rate = 2, burst = 3 },
 	SetSetting = { direction = "ToServer", args = { "id", "id" }, rate = 4, burst = 4 },
 	ShopEquip = { direction = "ToServer", args = { "id" }, rate = 4, burst = 4 },

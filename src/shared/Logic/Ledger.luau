@@ -195,16 +195,18 @@ function Ledger.buyUpgrade(train: Train, upgradeId: string): (Train, boolean, Fa
 	return nextTrain, true, nil
 end
 
-function Ledger.hullPatch(train: Train): (Train, boolean, FailReason?)
+-- Workbench "Repair hull": RepairParts parts for RepairAmount hull (Difficulty.Hull), up to the max.
+function Ledger.repairHull(train: Train): (Train, boolean, FailReason?)
+	local hull = Difficulty.Hull
 	if train.integrity >= train.integrityMax then
 		return train, false, "Full"
 	end
-	if train.parts < Tuning.Train.HullPatchCost then
+	if train.parts < hull.RepairParts then
 		return train, false, "Parts"
 	end
 	local nextTrain = copy(train)
-	nextTrain.parts -= Tuning.Train.HullPatchCost
-	nextTrain.integrity = math.min(train.integrity + Tuning.Train.HullPatchAmount, train.integrityMax)
+	nextTrain.parts -= hull.RepairParts
+	nextTrain.integrity = math.min(train.integrity + hull.RepairAmount, train.integrityMax)
 	return nextTrain, true, nil
 end
 

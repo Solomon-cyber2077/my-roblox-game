@@ -290,8 +290,8 @@ function TrainService.Start()
 	NetService.Handle("BuyUpgrade", function(player, upgradeId: string)
 		TrainService.BuyUpgrade(player, upgradeId)
 	end, isAboard)
-	NetService.Handle("HullPatch", function(player)
-		TrainService.HullPatch(player)
+	NetService.Handle("RepairHull", function(player)
+		TrainService.RepairHull(player)
 	end, isAboard)
 
 	task.spawn(function()
@@ -440,20 +440,27 @@ function TrainService.BuyUpgrade(player: Player, upgradeId: string)
 	TrainService.UpgradeBought:Fire(upgradeId, level)
 end
 
-function TrainService.HullPatch(player: Player)
-	local nextTrain, ok, reason = Ledger.hullPatch(train)
+-- Workbench "Repair hull": the server checks the run, the parts and the hull (Ledger.repairHull).
+function TrainService.RepairHull(player: Player)
+	if not RunRules.isRunPhase(Registry.RunDirector.Phase()) then
+		return
+	end
+	local hull = Difficulty.Hull
+	local nextTrain, ok, reason = Ledger.repairHull(train)
 	if not ok then
 		NetService.Fire(
 			"Notify",
 			player,
 			"Warning",
-			if reason == "Full" then "The hull is already sound." else "A hull patch costs 5 parts."
+			if reason == "Full"
+				then "The hull is already sound."
+				else `A hull repair takes {hull.RepairParts} parts.`
 		)
 		return
 	end
 	train = nextTrain
 	publish(true)
-	notifyAll("Upgrade", `{player.DisplayName} patched the hull (+{Tuning.Train.HullPatchAmount}).`)
+	notifyAll("Upgrade", `{player.DisplayName} repaired the hull (+{hull.RepairAmount}%).`)
 end
 
 function TrainService.FireFlare(player: Player)
