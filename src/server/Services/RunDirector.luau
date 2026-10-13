@@ -60,6 +60,7 @@ type RunState = {
 	forceMystery: boolean, -- Dev `mystery`: the next ballot has one
 	pending: Types.LogEntry?, -- this stop's run.log entry, appended when the stop resolves
 	mark: Types.StopHaul, -- the run's loot and downs when the previous stop resolved
+	tutorial: number, -- the crew's tutorial tier for this run (Services/TutorialService), 0 past it
 }
 
 local state: RunState = {
@@ -84,6 +85,7 @@ local state: RunState = {
 	forceMystery = false,
 	pending = nil,
 	mark = { coal = 0, parts = 0, relics = 0, downs = 0 },
+	tutorial = 0,
 }
 
 local rng = Random.new()
@@ -190,6 +192,8 @@ Enter.Boarding = function()
 	Registry.TrainService.ResetForRun()
 	Registry.TrainService.SetDoors(false)
 	Registry.CrewService.BeginRun(crew)
+	state.tutorial = Registry.TutorialService.CrewTier(crew)
+	StateService.Set({ "run", "tutorial" }, state.tutorial)
 	Registry.CosmeticService.RefreshLivery()
 	Registry.LobbyService.ResetReady()
 end
@@ -235,8 +239,10 @@ Enter.Cruise = function()
 	local train = Registry.TrainService.Get()
 	state.chosen = option
 	state.lastArchetype = option.archetype
-	state.params = DifficultyModel.params(d, arch, Registry.CrewService.AliveCount(), train.upgrades);
-	(state.params :: Types.HazardParams).stop = state.nextStop
+	state.params = DifficultyModel.params(d, arch, Registry.CrewService.AliveCount(), train.upgrades)
+	local stopParams = state.params :: Types.HazardParams
+	stopParams.stop = state.nextStop
+	stopParams.tutorial = state.tutorial
 	state.sealed = Mystery.isSealed(ticket)
 	if state.sealed then
 		local params = state.params :: Types.HazardParams

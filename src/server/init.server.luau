@@ -28,6 +28,7 @@ local ORDER = {
 	"ProgressionService",
 	"ShopService",
 	"NpcService",
+	"TutorialService",
 	"RunDirector",
 	"CarService",
 	"DevService",

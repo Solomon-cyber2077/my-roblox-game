@@ -172,6 +172,7 @@ export type Profile = {
 	receipts: { [string]: number },
 	settings: { [string]: any },
 	npcs: { [string]: NpcProgress }, -- Logic/NpcSave
+	tutorialRuns: number, -- tutorial runs completed (Logic/Tutorial); 0 for a new player
 }
 
 -- profile.npcs[npcId]: one resident's story for one player (Logic/NpcSave).
