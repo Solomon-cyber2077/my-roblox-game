@@ -91,6 +91,13 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - Part 3 notes: implement `requestVillageStop()` (true once per run when a village can be offered). The Village phase stops the train with no timer, so part 3 must move the run to the village stop. Village rules: yields repair parts only, once per run, not one of the ten stops, threat on the same curve and tutorial tier.
 - Unverified live: the full sequence on a real run (use `/event breakdown` + leaving leaks, or the Studio console to drain the hull).
 
+### Part 2: next session starts here
+- All 15 tasks (A.1-D.6) are committed and pushed, plus Dev `leak` / `hull N` commands. `lune run check` passed in full before every commit (311 tests, audit clean; rojo was not blocked).
+- **No screenshots.** Studio was open in edit mode with no play session. My attempt to focus it launched a second Studio instance (blank start page), which I closed straight away. The owner still needs to see: the skill-check ring (Dev `grab` at a docked stop), the leak plate and arrow (Dev `leak` during Cruise, markers on), and a tutorial prompt (`/tutorial reset` as the owner, then start a run: "WASD to move..." in the left column at boarding).
+- Owner decisions open: Broken Things Markers default (`FirstFew` vs `Always`, from part 1); a failed breakdown rally loses the train (D.6); existing players get the tutorial once (C.2); confirm `OwnerUserId` 11744048795 (C.2); the Brute now chases at 0.98 so it outpaces a jog (A.2); the timed Breakdown at a stop now only strains the boiler, and its leaks burst on the next trip (D.1).
+- Tune first: `Difficulty.SkillCheck` (ZoneByStop, SweepSeconds, FinishByStop, Required), `Difficulty.Aggression` and `HollowDamage`, `Difficulty.Leaks.OneLeakTrip` / `ExpectedPerTrip`, `Difficulty.Threat.StartShare`, `Config/Tutorial` grace and safe-light scales, `Difficulty.Breakdown.RallySeconds`.
+- Part 3: Emergency Village (`BreakdownService.requestVillageStop`, Village phase), proper sinkhole edge (replace `Builders/HazardRail`), more `SafeLight` parts.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
