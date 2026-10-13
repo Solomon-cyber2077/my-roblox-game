@@ -29,6 +29,11 @@ Part 1 was finished and pushed before this started. One commit per task, each pu
 - `HollowService.release`: immunity applies to every release the victim survives (no Hollow may seize them: `graceUntil`), also published as the character attribute `GrabImmuneUntil` (server time; no UI reads it yet). Stagger on a break-free (skill checks or crew): the holder goes to Reel for `StaggerSeconds` (1.5) and is shoved back at `StaggerPush` (16 studs/s) easing off; it cannot strike while reeling. Without stagger it just recovers. Replaces `Tuning.Grab.Grace/Stagger` (removed). `HazardParams.tutorial` added (set in C.1).
 - Unverified in Studio: how far the shove carries.
 
+### C.1 Threat curve and the crew's tutorial tier
+- `Logic/Threat.share/total`: a stop holds `round(full x share)` Hollows (sleepers, fog spawns, wanderer all count), share 35% at stop 1 rising in even steps to 100% at stop 7 (`Difficulty.Threat` StartShare/FullAtStop), never fewer than 1. Full counts unchanged 3/4/5/6. E.g. solo 1,1,2,2,2,3,3; four players 2,3,3,4,5,5,6. `HazardDirector.Begin` now sets `hazards.hollowCap = Threat.total(hazards.stop, members)`, replacing the flat `HollowBudget.total` override (HollowBudget still caps sleepers).
+- `Logic/Tutorial.tier/crewTier/def`: tier 1-3 on a player's first three runs, 0 after; the crew rides at its least experienced player's tier via `NpcQuest.runStage` (the errands' lowest-stage rule; a spec checks they agree). An unreadable count counts as finished. Wired to save data in C.2.
+- Specs: `tests/Threat.spec` (curve), `tests/Tutorial.spec`.
+
 ## 2026-10-13: FIX PASS PART 1 (merge, bug fixes, HUD/UI)
 Parts 2 and 3 run after this one. One commit per task, each pushed to `claude/last-train-out`.
 
