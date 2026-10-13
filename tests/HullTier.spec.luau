@@ -1,0 +1,22 @@
+local Difficulty = require(Shared.Config.Difficulty)
+local HullTier = require(Shared.Logic.HullTier)
+
+describe("HullTier", function()
+	it("steps at 75%, 50% and 25%", function()
+		expect(HullTier.tier(100)).toBe(0)
+		expect(HullTier.tier(75)).toBe(0)
+		expect(HullTier.tier(74.9)).toBe(1)
+		expect(HullTier.tier(50)).toBe(1)
+		expect(HullTier.tier(49)).toBe(2)
+		expect(HullTier.tier(25)).toBe(2)
+		expect(HullTier.tier(24)).toBe(3)
+		expect(HullTier.tier(Difficulty.Hull.Floor)).toBe(3)
+		-- against a bigger hull it is the percent that counts
+		expect(HullTier.tier(90, 200)).toBe(2)
+	end)
+
+	it("plays a notch stronger with markers off", function()
+		expect(HullTier.strength(true)).toBe(1)
+		expect(HullTier.strength(false)).toBeGreaterThan(1)
+	end)
+end)

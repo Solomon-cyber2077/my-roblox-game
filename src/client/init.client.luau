@@ -24,6 +24,7 @@ local ORDER = {
 	"GrabController",
 	"TutorialController",
 	"LeakController",
+	"HullController",
 	"FxController",
 	"DepartureClock",
 	"PianoNotes",
