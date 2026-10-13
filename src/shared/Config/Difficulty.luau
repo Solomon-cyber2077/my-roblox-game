@@ -47,7 +47,7 @@ return table.freeze({
 	WandererDelay = table.freeze({ 18, 10 }),
 	HollowWalk = table.freeze({ 11, 14 }),
 	HollowChase = table.freeze({ 22, 26 }), -- between the crew's jog (20) and sprint (31)
-	HollowDamage = table.freeze({ 20, 32 }),
+	HollowDamage = table.freeze({ 25, 40 }), -- was { 20, 32 } (+25%)
 	GrabMash = table.freeze({ 0.15, 0.105 }), -- escape won per press of the struggle key
 	GrabSlip = table.freeze({ 0.2, 0.3 }), -- escape lost per second of a hold
 	-- how often each kind of Hollow comes
@@ -77,10 +77,10 @@ return table.freeze({
 	-- crew's jog and sprint): how far they notice you, how long they keep after you once
 	-- they lose sight of you, and how soon they strike again.
 	Aggression = table.freeze({
-		SightRange = 95, -- studs a Hollow can see crew
-		AwarenessRange = 30, -- studs it senses crew without line of sight
-		Persistence = 4, -- seconds it keeps hunting where it last saw you
-		StrikeCooldown = 0.9, -- seconds from one strike's start to the next
+		SightRange = 118.75, -- studs a Hollow can see crew (was 95: +25%)
+		AwarenessRange = 37.5, -- studs it senses crew without line of sight (was 30: +25%)
+		Persistence = 5.2, -- seconds it keeps hunting where it last saw you (was 4: +30%)
+		StrikeCooldown = 0.72, -- seconds from one strike's start to the next (was 0.9: -20%)
 	}),
 
 	-- What a hold does to you (Logic/Grab), carried over from round 2.
