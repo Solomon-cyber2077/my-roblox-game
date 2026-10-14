@@ -805,7 +805,9 @@ return table.freeze({
 	Reach = table.freeze({ DoorHalfSpan = 72 }),
 	-- Lamp pools along the routes: at least PoolGap tiles apart, so darkness lies between them
 	-- (Hollows rest there). Yard lamps are not SafeLights; the platform's lamps are.
-	Lamps = table.freeze({ PoolGap = 4.5, YardMax = 14 }),
+	-- LitMax: lights on as the stop docks; StationBuilder turns off moonlit panes, then working
+	-- room bulbs (a building's power wakes them) past it, whatever the seed.
+	Lamps = table.freeze({ PoolGap = 4.5, YardMax = 14, LitMax = 64 }),
 	VillageFill = 0.55, -- the share of the Far/Village boundary closed off
 	-- The sinkhole edge (props EdgeMark on every open edge tile): a hazard rail this far in from
 	-- the edge, tape on the ground in front of it and a glow strip along the lip.
