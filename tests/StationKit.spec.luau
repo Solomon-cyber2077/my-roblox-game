@@ -26,4 +26,12 @@ describe("Station kit", function()
 			end
 		end
 	end)
+
+	it("draws a picket fence tile in fewer triangles than its primitives", function()
+		-- StationDressing's tile: 4 posts + 2 rails + 7 picket slots, 15% fallen, near-post
+		-- slots empty: 12.2 blocks a tile measured (1559 over 128 tiles at Halt), 12 tris a block
+		local picket = StationKit.Pieces.FencePicket
+		expect(StationKit.ByProp.FencePicket).toBe("FencePicket")
+		expect(picket.tris).toBeLessThan(12.2 * 12)
+	end)
 end)

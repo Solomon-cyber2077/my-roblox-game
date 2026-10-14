@@ -67,6 +67,9 @@ function StationKit.dress(kind: string, piece: Model, frame: CFrame, length: num
 	local mesh = template:Clone()
 	local scale = if def.stretch and length then length / def.size[1] else 1
 	mesh.Size = Vector3.new(def.size[1] * scale, def.size[2], def.size[3])
+	if def.material then
+		mesh.Material = (Enum.Material :: any)[def.material]
+	end
 	mesh.CFrame = frame * CFrame.new(def.centre[1] * scale, def.centre[2], def.centre[3])
 	mesh.Parent = piece
 	return mesh
