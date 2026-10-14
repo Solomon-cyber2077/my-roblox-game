@@ -97,6 +97,18 @@ function RunRules.hasDeparted(lastCallEndsAt: number?, now: number): boolean
 	return lastCallEndsAt == nil or now >= lastCallEndsAt
 end
 
+-- True when someone other than `self` is still alive in the run (aboard, afield or straggling),
+-- so a grabbed player has a crewmate who could pull them free.
+function RunRules.hasLivingCrewmate(crew: { [string]: { status: string } }, self: string): boolean
+	for key, entry in crew do
+		local status = entry.status
+		if key ~= self and (status == "Aboard" or status == "Afield" or status == "Straggler") then
+			return true
+		end
+	end
+	return false
+end
+
 -- The crew who were not aboard at T-0 (`missing`) but are aboard when the stop resolves.
 function RunRules.closeCalls<K>(missing: { [K]: boolean }, aboard: { [K]: boolean }): { K }
 	local out: { K } = {}

@@ -262,3 +262,27 @@ describe("Catalog and milestones", function()
 		expect(#again).toBe(0)
 	end)
 end)
+
+describe("RunRules.hasLivingCrewmate", function()
+	it("needs another living crewmate", function()
+		expect(RunRules.hasLivingCrewmate({ ["1"] = { status = "Aboard" } }, "1")).toBe(false)
+		expect(RunRules.hasLivingCrewmate({}, "1")).toBe(false)
+		expect(RunRules.hasLivingCrewmate({
+			["1"] = { status = "Afield" },
+			["2"] = { status = "Eliminated" },
+			["3"] = { status = "Lobby" },
+		}, "1")).toBe(false)
+		expect(
+			RunRules.hasLivingCrewmate(
+				{ ["1"] = { status = "Afield" }, ["2"] = { status = "Straggler" } },
+				"1"
+			)
+		).toBe(true)
+		expect(
+			RunRules.hasLivingCrewmate(
+				{ ["1"] = { status = "Eliminated" }, ["2"] = { status = "Aboard" } },
+				"1"
+			)
+		).toBe(true)
+	end)
+end)

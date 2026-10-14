@@ -36,6 +36,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Grabs = require(Shared.Config.Grabs)
+local RunRules = require(Shared.Logic.RunRules)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 
 local Net = require(script.Parent.Parent.Net)
@@ -223,7 +224,12 @@ local function begin(model: Model, style: string)
 	pressed = false
 	finishFrom = Workspace:GetServerTimeNow()
 	finishAt = (model:GetAttribute("GrabFinishAt") :: number?) or finishFrom
-	Struggle.show(if def then def.name else "IT HAS YOU", kind)
+	local crew = Registry.StateController.Get({ "crew" }) or {}
+	Struggle.show(
+		if def then def.name else "IT HAS YOU",
+		kind,
+		RunRules.hasLivingCrewmate(crew, Session.userKey)
+	)
 	ContextActionService:BindActionAtPriority(
 		ACTION,
 		onAction,
