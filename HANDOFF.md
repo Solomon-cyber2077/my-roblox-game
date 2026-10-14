@@ -1,5 +1,14 @@
 # HANDOFF
 
+## 2026-10-13: COMPLETION PASS (partial, usage limit hit) -- READ THIS FIRST
+1. Features completed
+- **Task 1 kit upload: done (68def42).** Studio 3D Importer, Upload on, creator Me. All 7 pieces came back with sizes identical to StationKit.json and rotation 0,0,0; ids matched by name and written to `Config/StationKit`. Imported model deleted from Workspace. No API key was created.
+- **Task 2 kit verification: partly done.** Halt docked in Play: the meshes load and are welded to their props (GasLamp x13, FencePicket x124 stretched, HazardRail x87 stretched). Total parts in Workspace 11965. Console showed no StationKit warnings. Crate, SignBoard, WallBrick and RoofSlate load too but have `dresses = {}`, so no station uses them yet. Not done yet: a screenshot comparing them with the primitives, a check at a second stop, and the audit part counts.
+2. Not done this pass
+- Task 2 (rest), Task 3 (triangles), Task 4 (two-player checks), Task 5 (hull toasts and sounds), Task 6 (leak after rally), Task 7 (fence look). The full `lune run check` was not run this pass.
+3. Next logical step
+- Finish Task 2 (screenshot Halt, one other stop, audit counts), then Tasks 3-7.
+
 ## 2026-10-13: FOLLOW-UP PASS (grab plate, multi-seed stations, kit upload) -- READ THIS FIRST
 1. Features completed
 - **Solo grab plate (8b762b2):** "Your crew can pull you free" shows only when another crewmate is Aboard/Afield/Straggler (`RunRules.hasLivingCrewmate`, spec in `tests/Run.spec.luau`; `GrabController` passes it to `Struggle.show`). Studio, solo: Dev `grab` -> plate lines "DRAGGED BY THE ANKLE | A STALKER HAS YOU | WHEN THE NEEDLE HITS THE ZONE | (blank)"; console clean. The 2-player case (line shown) is **not checked** in Studio.
