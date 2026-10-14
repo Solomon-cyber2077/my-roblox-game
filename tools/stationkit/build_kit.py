@@ -1,7 +1,10 @@
 """
 Station kit for Last Train Out (fix pass part 3), built headless:
 
-    blender --background --factory-startup --python tools/stationkit/build_kit.py -- <out_dir> [preview.png]
+    blender --background --factory-startup --python tools/stationkit/build_kit.py -- <out_dir> [preview.png] [--only=Name]
+
+--only=Name exports that one piece to <out_dir>/<Name>.fbx and updates only its entry in
+StationKit.json (StationKit.fbx and the .blend are left alone), so one piece can be re-uploaded.
 
 Modular pieces the stations reuse, one object (one MeshPart) each, sized in studs to stand
 exactly where the primitive builders put theirs (StationDressing, StructureKit), origin at the
@@ -12,7 +15,10 @@ toward the train:
                (its glass stays a Neon primitive, so it glows and carries the light)
   HazardRail   12 studs of the sinkhole edge's rail: post, top and mid rails, painted
                yellow and black in diagonal bands (collision stays on the primitives)
-  FencePicket  12 studs of picket fence: posts, two rails, pointed pickets
+  FencePicket  12 studs of picket fence laid out like StationDressing's primitives (posts every 3
+               studs, two rails, a pointed picket per stud clear of the posts) and nothing you
+               cannot see (no bottoms, no rail ends, no 0.1-stud picket edges): 122 tris; the
+               primitives average 12.2 blocks (146 tris) a tile once gaps and fallen pickets go
   Crate        4 x 4 x 4 plank crate with battens and corner irons
   SignBoard    an enamel name board, 8 wide, on two posts
   WallBrick    a 12 x 12 brick wall module with a window opening, sill and lintel
@@ -32,6 +38,8 @@ import bpy
 from mathutils import Matrix, Vector
 
 args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
+ONLY = next((a.split("=", 1)[1] for a in args if a.startswith("--only=")), None)
+args = [a for a in args if not a.startswith("--only=")]
 OUT_DIR = args[0] if args else "."
 PREVIEW = args[1] if len(args) > 1 else None
 
@@ -107,6 +115,48 @@ class Piece:
         bmesh.ops.transform(self.bm, matrix=Matrix.Translation(Vector(at)), verts=verts)
         self._paint({f for v in verts for f in v.link_faces}, color)
 
+    def faces(self, polys, centre, color):
+        """Faces from corner lists, each turned to face away from the (convex) solid's centre."""
+        made = []
+        for poly in polys:
+            face = self.bm.faces.new([self.bm.verts.new(Vector(c)) for c in poly])
+            face.normal_update()
+            if (face.calc_center_median() - Vector(centre)).dot(face.normal) < 0:
+                face.normal_flip()
+            made.append(face)
+        self._paint(made, color)
+
+    def open_box(self, size, at, color, skip=("bottom",)):
+        """A box without the faces in `skip` (bottom, top, left, right, front, back)."""
+        hx, hy, hz = size[0] / 2, size[1] / 2, size[2] / 2
+        x0, x1 = at[0] - hx, at[0] + hx
+        y0, y1 = at[1] - hy, at[1] + hy
+        z0, z1 = at[2] - hz, at[2] + hz
+        sides = {
+            "bottom": [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0)],
+            "top": [(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)],
+            "left": [(x0, y0, z0), (x0, y1, z0), (x0, y1, z1), (x0, y0, z1)],
+            "right": [(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)],
+            "front": [(x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)],
+            "back": [(x0, y1, z0), (x1, y1, z0), (x1, y1, z1), (x0, y1, z1)],
+        }
+        self.faces([c for name, c in sides.items() if name not in skip], at, color)
+
+    def picket(self, x, width, height, point, y, depth, z0, color):
+        """A flat picket with a pointed top: faces, back and the two slopes, 10 tris (its edges
+        are too thin to see)."""
+        w = width / 2
+        outline = [(x - w, z0), (x + w, z0), (x + w, z0 + height), (x, z0 + height + point), (x - w, z0 + height)]
+        y0, y1 = y - depth / 2, y + depth / 2
+        polys = [
+            [(px, y0, pz) for px, pz in outline],
+            [(px, y1, pz) for px, pz in outline],
+        ]
+        for a, b in ((2, 3), (3, 4)):  # the two slopes
+            (ax, az), (bx, bz) = outline[a], outline[b]
+            polys.append([(ax, y0, az), (bx, y0, bz), (bx, y1, bz), (ax, y1, az)])
+        self.faces(polys, (x, y, z0 + height / 2), color)
+
     def finish(self):
         mesh = bpy.data.meshes.new(self.name)
         self.bm.to_mesh(mesh)
@@ -152,18 +202,24 @@ def hazard_rail():
     return p.finish()
 
 
+def shaded(color, k):
+    return (color[0] * k, color[1] * k, color[2] * k, 1.0)
+
+
 def fence_picket():
+    # StationDressing.FencePicket's layout for a 12-stud tile and its colours (C.paint, posts
+    # 0.92 of it, rails 0.9): 4 posts (10 tris), 2 rails (6), 7 pickets (10) = 122 tris
     p = Piece("FencePicket")
-    for x in (-5.8, 0, 5.8):
-        p.box((0.35, 0.35, 3.6), (x, 0, 1.8), PAINT)
-        p.cone(0.3, 0.05, 0.4, (x, 0, 3.8), PAINT, segments=4)
-    for z in (0.9, 2.6):
-        p.box((12, 0.12, 0.3), (0, 0.24, z), PAINT)
-    x = -5.4
-    while x < 5.5:
-        p.box((0.34, 0.08, 3.0), (x, 0.36, 1.6), PAINT)
-        p.cone(0.24, 0.02, 0.35, (x, 0.36, 3.27), PAINT, segments=4)
-        x += 0.75
+    posts = [-6 + 0.25 + i * 3 for i in range(4)]
+    for x in posts:
+        p.open_box((0.32, 0.32, 3.4), (x, 0, 1.7), shaded(PAINT, 0.92))
+    for z in (1.0, 2.6):
+        p.open_box((12, 0.16, 0.24), (0, 0.25, z), shaded(PAINT, 0.9), skip=("bottom", "left", "right"))
+    x = -6 + 0.6
+    while x < 6 - 0.4:
+        if all(abs(px - x) >= 0.36 for px in posts):
+            p.picket(x, 0.42, 2.7, 0.3, 0.38, 0.1, 0.08, PAINT)
+        x += 1.0
     return p.finish()
 
 
@@ -227,6 +283,10 @@ def roof_slate():
 
 for build in (gas_lamp, hazard_rail, fence_picket, crate, sign_board, wall_brick, roof_slate):
     build()
+if ONLY:
+    for name in list(pieces):
+        if name != ONLY:
+            bpy.data.objects.remove(pieces.pop(name))
 
 # lay them out for the preview; origins back to each piece's own bounding-box centre on export
 tris = {}
@@ -236,8 +296,8 @@ for i, (name, ob) in enumerate(pieces.items()):
     ob.location = Vector(((i - 3) * 16, 0, 0))
 
 os.makedirs(OUT_DIR, exist_ok=True)
-blend = os.path.join(OUT_DIR, "StationKit.blend")
-bpy.ops.wm.save_as_mainfile(filepath=blend)
+if not ONLY:
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT_DIR, "StationKit.blend"))
 
 if PREVIEW:
     scene = bpy.context.scene
@@ -287,7 +347,7 @@ for name, ob in pieces.items():
     ob.data.transform(Matrix.Translation(-centre))
     ob.data.transform(turn)
     ob.select_set(True)
-fbx = os.path.join(OUT_DIR, "StationKit.fbx")
+fbx = os.path.join(OUT_DIR, f"{ONLY}.fbx" if ONLY else "StationKit.fbx")
 bpy.ops.export_scene.fbx(
     filepath=fbx,
     use_selection=True,
@@ -302,6 +362,10 @@ bpy.ops.export_scene.fbx(
 )
 import json
 
-with open(os.path.join(OUT_DIR, "StationKit.json"), "w") as f:
+path = os.path.join(OUT_DIR, "StationKit.json")
+if ONLY and os.path.exists(path):
+    with open(path) as f:
+        info = {**json.load(f), **info}
+with open(path, "w") as f:
     json.dump(info, f, indent=1)
 print("STATIONKIT", fbx, tris)

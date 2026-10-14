@@ -9,7 +9,8 @@
 
 	size and centre are in the piece's frame (X along, Y up, Z away from the train), studs,
 	the centre measured from the piece's foot. `for`: the station prop kinds it dresses;
-	`stretch` pieces scale along X to the prop's length.
+	`stretch` pieces scale along X to the prop's length; `material` (an Enum.Material name) is the
+	mesh's, where it should match the primitives it covers.
 ]]
 
 export type Piece = {
@@ -19,6 +20,7 @@ export type Piece = {
 	tris: number,
 	dresses: { string },
 	stretch: boolean?,
+	material: string?,
 }
 
 local Pieces: { [string]: Piece } = {
@@ -38,14 +40,16 @@ local Pieces: { [string]: Piece } = {
 		stretch = true,
 	},
 	FencePicket = {
-		meshId = 99670469182064,
-		size = { 12.2, 4, 0.9 },
-		centre = { 0, 2, 0.15 },
-		tris = 456,
-		-- not dressed: 456 tris over pickets whose primitives cost 168 put Schoolhouse over the
-		-- 300k drawn-triangle budget (334k measured, seed 424244); kept for a lighter mesh
-		dresses = {},
+		-- rebuilt 2026-10-14 (the first, 99670469182064, was 456 tris and went undressed): the
+		-- primitives' own layout and paint, nothing unseen, 122 tris against the 146 their 12.2
+		-- blocks a tile average
+		meshId = 133613114902851,
+		size = { 12, 3.4, 0.59 },
+		centre = { 0, 1.7, 0.135 },
+		tris = 122,
+		dresses = { "FencePicket" },
 		stretch = true,
+		material = "Wood",
 	},
 	Crate = {
 		meshId = 85895937205144,
