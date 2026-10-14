@@ -66,6 +66,14 @@ local function onTrain(train: any)
 	end
 end
 
+local function creak(atTier: number, s: number)
+	audio("SkyGroan", math.min(0.28 * s * (0.8 + 0.2 * atTier), 0.9), 0.55 + math.random() * 0.25)
+end
+
+local function alarm(s: number)
+	audio("Alarm", math.min(0.4 * s, 0.85), 0.92)
+end
+
 local function step()
 	if not Session.isRunActive() or tier == 0 then
 		return
@@ -74,11 +82,21 @@ local function step()
 	local s = strength()
 	if clock >= nextCreak then
 		nextCreak = clock + CREAK_EVERY[tier] / s * (0.8 + math.random() * 0.4)
-		audio("SkyGroan", math.min(0.28 * s * (0.8 + 0.2 * tier), 0.9), 0.55 + math.random() * 0.25)
+		creak(tier, s)
 	end
 	if tier >= 3 and clock >= nextAlarm then
 		nextAlarm = clock + ALARM_EVERY / s
-		audio("Alarm", math.min(0.4 * s, 0.85), 0.92)
+		alarm(s)
+	end
+end
+
+-- Studio only: Dev `sound creak|alarm` plays one as at the Emergency tier (DevService).
+local function devSound()
+	local kind = string.match((ReplicatedStorage:GetAttribute("DevSound") :: string?) or "", "^(%a+)@")
+	if kind == "creak" then
+		creak(3, strength())
+	elseif kind == "alarm" then
+		alarm(strength())
 	end
 end
 
@@ -113,6 +131,9 @@ function HullController.Start()
 	RunService.Heartbeat:Connect(function()
 		Safe.call("HullController.step", step)
 	end)
+	if RunService:IsStudio() then
+		ReplicatedStorage:GetAttributeChangedSignal("DevSound"):Connect(devSound)
+	end
 end
 
 return HullController

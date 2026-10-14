@@ -20,6 +20,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local MathX = require(ReplicatedStorage.Shared.Util.MathX)
+local Safe = require(ReplicatedStorage.Shared.Util.Safe)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Difficulty = require(ReplicatedStorage.Shared.Config.Difficulty)
 
@@ -360,9 +361,52 @@ function TrainVisualsController.Puff(count: number)
 	end
 end
 
+-- Studio only: Dev `sound hiss` puts a leak's steam and hiss at DevSoundAt for DEV_HISS_SECONDS,
+-- shaped like a real one (shapeLeak, so it follows Broken Things Markers) (DevService).
+local DEV_HISS_SECONDS = 30
+local function devHiss()
+	local line = (ReplicatedStorage:GetAttribute("DevSound") :: string?) or ""
+	local audio = Registry.AudioController
+	if string.match(line, "^(%a+)@") ~= "hiss" or audio == nil then
+		return
+	end
+	local old = Workspace:FindFirstChild("DevLeak")
+	if old then
+		audio.StopLoop("breach_DevLeak") -- a newer one replaces it (same loop key)
+		old:Destroy()
+	end
+	local part = Instance.new("Part")
+	part.Name = "DevLeak"
+	part.Size = Vector3.new(1, 1, 1)
+	part.Transparency = 1
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.Position = (ReplicatedStorage:GetAttribute("DevSoundAt") :: Vector3?) or Vector3.zero
+	part:SetAttribute("LeakSeverity", 1)
+	part.Parent = Workspace
+	local steam = steamEmitter(part, 40)
+	audio.Loop(`breach_{part.Name}`, "SteamLeak", part)
+	local ends = os.clock() + DEV_HISS_SECONDS
+	while os.clock() < ends and part.Parent do
+		shapeLeak(part, steam)
+		task.wait(0.5)
+	end
+	if part.Parent then
+		audio.StopLoop(`breach_{part.Name}`)
+		part:Destroy()
+	end
+end
+
 function TrainVisualsController.Init() end
 
 function TrainVisualsController.Start()
+	if RunService:IsStudio() then
+		ReplicatedStorage:GetAttributeChangedSignal("DevSound"):Connect(function()
+			Safe.call("TrainVisualsController.devHiss", devHiss)
+		end)
+	end
 	task.spawn(function()
 		local train = Workspace:WaitForChild("Train", 60) :: Model?
 		if train then
