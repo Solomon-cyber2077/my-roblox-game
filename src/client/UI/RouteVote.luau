@@ -129,9 +129,7 @@ function RouteVote.mount(gui: ScreenGui)
 				keep[key] = true
 				local mine = key == Session.userKey
 				local spread = handle.stamps.Size.X.Offset
-				local x = if slots == 1
-					then spread / 2
-					else 22 + (order - 1) * ((spread - 44) / math.max(slots - 1, 1))
+				local x = TicketModel.stampX(order, slots, spread)
 				local position = UDim2.fromOffset(x, 25 + (TicketModel.hash(key) - 0.5) * 8)
 				local entry: Placed? = placed[key]
 				if entry and entry.index ~= index then

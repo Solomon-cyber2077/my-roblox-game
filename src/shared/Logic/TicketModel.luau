@@ -203,6 +203,18 @@ function TicketModel.pile(
 	return pile, extra
 end
 
+-- Where stamp `order` of `slots` sits across the stamp strip, `spread` px wide: one alone in
+-- the middle, more spread evenly between StampInset of either end. However many there are, none
+-- lies beyond the two ends, which keeps every pile clear of the danger seal beside the strip.
+TicketModel.StampInset = 22
+function TicketModel.stampX(order: number, slots: number, spread: number): number
+	if slots <= 1 then
+		return spread / 2
+	end
+	local inset = TicketModel.StampInset
+	return inset + (order - 1) * ((spread - inset * 2) / (slots - 1))
+end
+
 -- Whether the junction ballot is up for this player: only while the vote is open (a Junction
 -- with no line chosen yet) and they are alive, or for the short punch after lock-in. The
 -- route stays replicated with its winner through the leg, so it alone must never show it.
