@@ -1,5 +1,83 @@
 # HANDOFF
 
+## 2026-10-14: FOLLOW-UP PASS (multi-player checks, rally grace, fence mesh, sounds, initials) -- READ THIS FIRST
+Shots (0.5 scale) in `docs/checks/P_*`. `lune run check` passes (343 specs).
+**Methods that worked (reuse them):** read run state from any client by firing `Remotes.ClientReady` and catching one
+`Remotes.Snapshot` (rate-limited: 1.5 s apart). Rally repair prompts share E with the Workbench: stand ~2.5 studs off the
+wall and turn character *and* camera to the prompt, then `InputHoldBegin`/`End`. Local Server: only clients the Studio MCP
+lists can be scripted (4 requested -> 1 or 3 reachable; 2 -> both); kill everyone on the Server to end a run fast. A
+grab lasts ~10 s, so arm the crewmate's watcher in a `task.spawn` *before* `grab`. MCP `screen_capture` does not show
+BillboardGui prompt chips; a real screenshot of the client window does. In Edit, `require` keeps modules cached from
+earlier sessions (it built with the pre-f5cacd7 config): place the new mesh by hand for A/B triangle reads.
+1. Features completed / verified
+- **Vote card (T1a):** 3 live voters (Local Server): seal clear of title 6 px, DANGER 5, stamps frame 6, own ring 3,
+  button 14, flap 15. 4 stamps (1 live + Studio-only `fakevote 1 3`, 00696c8, because the 4th client never attached to
+  tools): title 3.3 px, DANGER 5, stamps 4.4, ring 1.7, button 16.5, flap 14.8 (`P_vote_three_stamps`, `P_vote_four_stamps`).
+- **Pull free (T1b):** Player2 facing grabbed Player1 at 5.8 studs sees "E PULL FREE · Player1" (`P_pull_free_crewmate`);
+  Player1's own prompt read disabled in all 4 grabs.
+- **Rally path measured (T2, before T5):** 2 dev leaks + hull 1 on the first trip -> village (0 parts) -> halt -> rally ->
+  3 repairs: hull 15.0 right after, 3 leaks open, drain 0.64 -> 0.74 %/s (rising with severity), 1% ~21 s after the last
+  repair, then the second breakdown fired: **train lost**. Which breakdown goes where (code + runs): the **1st** breakdown
+  of a run, at any stop, always goes to the Emergency Village (`BreakdownService.step` asks `RunDirector.BeginVillageStop`,
+  refused only outside Cruise, which `step` never runs in). Village with 3 parts -> hull 40, runs on. Village short ->
+  4 s halt -> **rally** (45 s, 3 repairs): done -> hull 15, limp; not done -> lost. The **2nd** breakdown, any stop, any
+  path -> lost at once (no village, no rally). So the rally only ever follows a short village.
+- **Repair grace (T5, f78e5f6):** `Difficulty.Breakdown.RepairGraceSeconds = 30` (+ `GraceTitle`/`GraceText`) after either
+  success (shared `Logic/Breakdown`: `repair(state, now)` and `villageDone` set `graceUntil`; `inGrace`, `graceLeft`);
+  `TrainService` holds leaks during it (`Ledger.drain(..., leaksHeld)`: no drain, no aging, no bursts; starving still
+  drains); toast "REPAIRED / Hull holding: N s to patch the leaks". Spec `tests/RepairGrace.spec.luau`. Play: hull held
+  at 15.00 for the full 30 s with 3 leaks hissing, toast counted down, no new leaks, then drain resumed; **repair -> 1%:
+  ~21 s before, ~42 s after** (30 grace + ~12 at that leg's rate); left unpatched it still ends in the second breakdown.
+  Alternative design not built: "close all open leaks on success" = `Registry.TrainService.ClearBreaches()` at the two
+  places `BreakdownService` starts the grace (`onRepair` done branch, `VillageDone`).
+- **Fence mesh (T3, 1d2eff9):** picket rebuilt in `tools/stationkit/build_kit.py` (`--only=FencePicket` exports
+  `assets/stationkit/FencePicket.fbx` and updates only its JSON entry): the primitives' layout and paint (C.paint
+  184,190,192; posts x0.92, rails x0.9; Wood material via the new `material` config field), nothing unseen: **122 tris**
+  a tile vs 12.2 blocks = ~146 for the primitives (1559 blocks / 128 tiles at Halt). A first 158-tri cut was uploaded
+  (121758508051446) and dropped: it would have drawn ~1.5k more than primitives. Uploaded id **133613114902851**; the
+  other six ids unchanged. Edit, Ctrl+Shift+F2, seed 424244, from above: **Halt 232,333 mesh vs 235,151 primitives;
+  Schoolhouse 283,593 vs 286,853.** Standing height at Halt reads as a picket fence (`P_fence_kit_halt`). Play: Halt
+  docked with 117 fence meshes, new id, Wood, console clean.
+- **Unused kit pieces (T4): none applied.** Crate 168 tris vs the loot crate's 4 blocks (48) and a decor crate's 1 block
+  (12); RoofSlate 132 a bay vs 2 wedges for a whole roof; WallBrick: walls are split around generated doors/windows (no
+  fixed 12x12 bay with one window) and collide, so dressing could only add parts; SignBoard is 8 wide on 5.8 posts vs the
+  14-wide running-in board with its name text (a landmark). `dress()` keeps primitives for collision, so no piece can cut
+  parts without changing that. Noticed: each running-in Sign's two ball finials cost 2 x 432 tris (a primitive fix like
+  the iron railings' caps; not done, not asked).
+- **Sounds (T6):** Dev `sound hiss|creak|alarm` (e9bfa44, Studio only): hiss = a real leak (shapeLeak, follows markers)
+  6 studs ahead for 30 s, walk away to hear the falloff; creak/alarm = HullController's own Emergency-tier calls.
+  Method: PlaybackLoudness **ignores Volume** (A/B on one Sound: 25-28 at volume 1, 0.5, 0.25 and 0), so level =
+  PlaybackLoudness x Volume x SoundGroup volume; hiss distance by its InverseTapered roll-off (min 12, gain
+  min(12/d, taper)). Cruise bed (TrainRun 0.55, Wind 0.22, DepotHall 0.15, Eerie 0.06): mean 20.7, peak 41.7. Loudest
+  cue HollowSlam mean 81 / peak 238 (HollowStrike peak 60). Creak (one-shot, its peak vs bed mean): markers on 43-55
+  (2.1-2.7x) **pass**, off 48-52 **pass**, below HollowSlam. Alarm: on peak 15 (0.7x), off 20-23 (1.1x) **fail**; +25%
+  gives 19/29 (<1.5x), so **unchanged**. Hiss mean (on/off): 5 studs 9.1/12.8, 20 studs 5.5/7.7, 35 studs 1.6/4.4 vs bed
+  20.7: **markers-off at 20 studs fails** (7.7); +25% gives 9.6, still under, so **unchanged**. Spectra (AudioAnalyzer on
+  AudioPlayers, 512 bins to 24 kHz): bed 9% <300 Hz / 69% 300-2k / 22% >2k; hiss 91% >2 kHz, alarm 93% >2 kHz, creak
+  100% <300 Hz; overlap with the bed 0.22 / 0.15 / 0.01 (none masked); peaks at volume 1: hiss 0.13, alarm 0.31, creak
+  0.17 (no clipping). So the two fails are level, not masking: they sit in bands the train barely fills.
+- **Initials (T7, 1727d6b):** the "?" came from `UI/RouteVote`: it looked voters up in `Session.crew()`, which is the
+  local player's *own* crew entry, not the crew map, so every stamp got `name = nil` -> `initials(nil)` = "?" (real
+  accounts hid it under the headshot). Now it reads the crew map and falls back on the Player's DisplayName, then Name;
+  the rule moved to `TicketModel.initials` with awkward-name specs. Own account: stamp reads **OO** (display name
+  5O10M0N: the first Latin letter leads, then a capital after a digit) (`P_vote_stamp_initials`, headshot hidden for
+  the shot). Local Server stamps now read "P". **Same initials:** Player1/2/3 all stamp "P"; only the voter's own stamp
+  is told apart (brass ring) plus a few degrees of hashed tilt; real accounts show headshots over the letters.
+2. Known bugs / open items
+- Alarm (0.7-1.1x bed) and markers-off hiss at 20 studs (0.37x bed) fail the loudness rules by more than the allowed
+  25%; left unchanged. Owner: judge by ear with `sound`; a fix needs more than +25% (alarm gain 0.4 in HullController)
+  or a different rule (band level).
+- Running-in Sign ball finials (864 tris per sign), above.
+- 4-client Local Server: tools reach only some clients (see methods).
+3. Next logical step / needs the owner
+- Answer after `Remotes.Dev:FireServer("sound hiss")` (and creak, alarm; Settings > Broken Things Markers off for the
+  hiss): (1) Can you tell the three sounds apart over the train? (2) Is any harsh or too loud? (3) Can you find a leak by
+  ear with markers off?
+- **Live 2-account test (needs you + one friend), on a private published test place:** both join, ready, vote different
+  lines, then the same line. Look at: each stamp shows that player's headshot (letters under it are their initials,
+  never "?"), your own stamp has the brass ring, the seal stays clear with 2 stamps. Then one gets grabbed at a stop and
+  the other sees "Pull free" and frees them; the grabbed player's plate says "Your crew can pull you free".
+
 ## 2026-10-13: COMPLETION PASS (tasks 1-7 of the blocked/skipped list) -- READ THIS FIRST
 Shots (0.5 scale) in `docs/checks/` (K_ kit, L_ hull, M_ fences, N_ hedge, O_ vote). `lune run check` passes.
 1. Features completed / verified
