@@ -406,7 +406,7 @@ Builders.FenceIron = function(ctx)
 	local length = ctx.width
 	for _, x in stations(length, 4) do
 		block(ctx, Vector3.new(0.36, 4.0, 0.36), f(ctx, x, 2.0, 0), C.iron, M.Metal, true)
-		ball(ctx, 0.5, f(ctx, x, 4.18, 0), C.iron, M.Metal)
+		block(ctx, Vector3.new(0.5, 0.36, 0.5), f(ctx, x, 4.18, 0), C.iron, M.Metal) -- a cap: a ball is 432 tris
 	end
 	for _, y in { 0.6, 3.4 } do
 		block(ctx, Vector3.new(length, 0.16, 0.16), f(ctx, 0, y, 0.24), C.iron, M.Metal, true)
@@ -499,15 +499,8 @@ Builders.Hedge = function(ctx)
 	local length = ctx.width
 	local green = pick(ctx, FOLIAGE)
 	block(ctx, Vector3.new(length, 3.8, 2.2), f(ctx, 0, 1.9, 0), green, M.LeafyGrass, true)
-	for i = 1, 3 do
-		ball(
-			ctx,
-			2.2 + ctx.rng:NextNumber() * 0.6,
-			f(ctx, -length / 2 + length * (i - 0.5) / 3, 3.7, ctx.rng:NextNumber(-0.3, 0.3)),
-			Kit.shade(green, 1.06),
-			M.LeafyGrass
-		)
-	end
+	-- one rounded top along the hedge (a cylinder is 88 tris, the three balls it replaced 1296)
+	rod(ctx, length - 0.3, 2.4, f(ctx, 0, 3.8, 0), Kit.shade(green, 1.06), M.LeafyGrass)
 end
 
 -- The platform ------------------------------------------------------------------------------------------

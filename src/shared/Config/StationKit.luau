@@ -42,7 +42,9 @@ local Pieces: { [string]: Piece } = {
 		size = { 12.2, 4, 0.9 },
 		centre = { 0, 2, 0.15 },
 		tris = 456,
-		dresses = { "FencePicket" },
+		-- not dressed: 456 tris over pickets whose primitives cost 168 put Schoolhouse over the
+		-- 300k drawn-triangle budget (334k measured, seed 424244); kept for a lighter mesh
+		dresses = {},
 		stretch = true,
 	},
 	Crate = {

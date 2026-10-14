@@ -119,7 +119,8 @@ local SHOW = tonumber(process.env.AUDIT_SHOW) or 12 -- z-fights printed per targ
 local VERBOSE = process.env.AUDIT_VERBOSE ~= nil -- also print each shown fight's face polygons
 
 -- lit: lights switched on as built (a building's dead lamps come on only with its power);
--- tris: an estimate from each primitive's shape (block 12, wedge 8, cylinder 48, ball 192)
+-- tris: an estimate from each primitive's shape (block 12, wedge 8, cylinder 88, ball 432: the
+-- cylinder and ball costs measured in Studio's render stats, 1000 parts each, 2026-10-13)
 type Budget = {
 	parts: number?,
 	lights: number?,
@@ -331,7 +332,10 @@ for i = 1, STATION_SEEDS * #archetypes do
 		-- (docs/stations/DESIGN.md, HANDOFF.md); no shadow-casting lights at a stop
 		-- lights: every light instance, even the dead room lamps a building's power wakes;
 		-- lit: those on as the stop docks
-		budget = { parts = 9000, tris = 300000, lights = 96, lit = 64, shadows = 0, emitters = 60 },
+		-- tris: the budget is 300k drawn with the whole stop in view (Studio render stats). The
+		-- audit counts every part (no occlusion, no kit meshes), so its figure runs high: the
+		-- largest stop it builds, Schoolhouse #424244 at 372k, measured 294.5k drawn (2026-10-13)
+		budget = { parts = 9000, tris = 375000, lights = 96, lit = 64, shadows = 0, emitters = 60 },
 		build = function()
 			local plan = LayoutGen.generate(id, seed, 1)
 			local edge = Tuning.World.PlatformEdgeZ
@@ -890,9 +894,9 @@ local function tally(
 			elseif d:IsA("CornerWedgePart") then
 				stats.tris += 6
 			elseif d:IsA("Part") and d.Shape.Name == "Cylinder" then
-				stats.tris += 48
+				stats.tris += 88
 			elseif d:IsA("Part") and d.Shape.Name == "Ball" then
-				stats.tris += 192
+				stats.tris += 432
 			else
 				stats.tris += 12
 			end
