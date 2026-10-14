@@ -3,7 +3,14 @@
 ## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
 
 ### Resume point
-- Done: steps 1-10 (audit, design notes, shared generator, kit, ten archetypes, Emergency Village, tutorial stop 1, specs). Pending Studio (the place closed mid-session): PostTown shot, an Emergency Village run (Dev: at Cruise, `hull 1`), a tutorial stop 1 run (`/tutorial reset`, Dev `station Halt` before Ready). Owner: upload the station kit FBX.
+- Done: steps 1-10 (audit, design notes, shared generator, kit, ten archetypes, Emergency Village, tutorial stop 1, specs).
+- Cleanup pass (2026-10-13), verified in Studio:
+  - PostTown (Wickham Cross): docked at stop 1, console clean; `docs/stations/posttown_overview.jpg`. It docked with **67 lit lights** (budget 64): the audit builds one seed only. Fixed: `Stations.Lamps.LitMax = 64`, StationBuilder turns off moonlit panes, then working room bulbs (power relights them) past it, for any seed. `AUDIT_SEEDS=n lune run audit Station` now also sweeps n station seeds.
+  - Emergency Village: success (halt, toast "Repair parts aboard: n/3", 133 s Dwell + 15 s Last Call, loot all Scrap, parts 8 -> 5, hull 40, Cruise resumed with its time left (~33 s), no landscape inside the next stop's footprint) and failure (falls back on the rally toast "Repairs aboard 0/3 · 30 s"); nextStop stays 1, no vote, next HUD reads stop 1/10, console clean. No logic bug, so no new spec. The hull still drains after the restore when a steam leak is running (by design).
+  - Tutorial stop 1: `/tutorial reset` = tier 1, which has **no** teaching Crawler (`scriptedGrab` is tier 2 only); use `/tutorial 1` to see it. Tier 1: all 14 yard lamps SafeLight, 87 EdgeMarks each with a SinkholeEdge rail; 10% of floor tiles inside a pool, mean 23 studs and at most 69 studs to a pool edge. Tier 2: the Crawler rose 19 s after stepping off (grace 15 + 4), 18 studs away on yard floor (y 3.5), inside the rail.
+- Known (other seeds, from `AUDIT_SEEDS=4`, not fixed): Schoolhouse 9061-9189 parts and 97-98 lights on seeds 424243-5; SignalWorks 9013 parts on 424244; a Market stall z-fight (424243) and a PostTown boundary stone vs edge glow sliver (424244). The default gate (seed 424242) passes.
+- **Not done (needs the owner):** triangle measurement and the station-kit upload both need Studio's GUI (render stats Shift+F2 / the 3D Importer); the GUI pass was stopped (see below). Triangles stay the part-shape estimate (~139-300k, budget 300k). Kit ids still nil (primitives in use). AGENTS.md now carries the kit upload exception.
+- Two extra blank Studio windows were opened by mistake during this pass (started 19:43); the "Last Train" window is the real one.
 - Per archetype recipe: new `length`/`depth` (+ `village` rows), more `landmarks` (new `Config/Buildings` defs as needed; Spine 4x4+ may have `upper`, measure its `tiles` from the slab), new structures in `StructureKit` + `Stations.Footprints`; `lune run stations` (walkable area >= 3x before), `lune run check`, then Studio: Dev `station <Id>` before Ready, skip to Dwell, one overview + one edge shot (`docs/stations/<id>_*.jpg`).
 
 ### After (per archetype, seed 424242)

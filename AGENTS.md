@@ -86,6 +86,7 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
 - No uploaded assets. Models are built from parts through `Visual/Kit` and `Builders/`; sounds are public
   library ids in `Config/Audio`. Exception (approved for the train exterior overhaul): the Blender train
   meshes and maps in `assets/train/` are uploaded under user 11744048795 (ids in `asset_ids.json`).
+  Exception (approved by the owner, 2026-10-13): the station kit `assets/stationkit/StationKit.fbx` may be uploaded through Studio's 3D Importer under the owner's account (ids in `Config/StationKit`).
 - Engine-guarded properties (such as `Workspace.FallenPartsDestroyHeight`) go in `default.project.json`
   `$properties`, never in a script.
 - Escape belongs to the Roblox menu. Modals close with gamepad B, the backdrop or a CLOSE button.
