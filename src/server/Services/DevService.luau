@@ -21,9 +21,13 @@
 	  strike               a lightning strike now
 	  mystery              the next ballot has a mystery ticket (at a junction, the ballot reopens with one)
 	  npcreset [npc|all]   wipe your saved story with one resident (Mabel) or all of them
+	  sound hiss|creak|alarm  play that hull sound through the game's own code: the hiss as a leak
+	                       6 studs ahead of you for 30 s (walk away to hear it fall off), the
+	                       creak and alarm as at the Emergency tier
 
 	The sky commands set attributes on ReplicatedStorage that AtmosphereController reads in
-	Studio only (DevSkyHour, DevOmen, DevStrike).
+	Studio only (DevSkyHour, DevOmen, DevStrike); `sound` sets DevSound and DevSoundAt, read by
+	HullController and TrainVisualsController.
 ]]
 
 local Players = game:GetService("Players")
@@ -190,6 +194,21 @@ end
 
 Commands.mystery = function()
 	Registry.RunDirector.DevForceMystery()
+end
+
+Commands.sound = function(player, args)
+	local kind = args[1]
+	if kind ~= "hiss" and kind ~= "creak" and kind ~= "alarm" then
+		print("[Dev] sound hiss|creak|alarm")
+		return
+	end
+	local r = root(player)
+	ReplicatedStorage:SetAttribute(
+		"DevSoundAt",
+		if r then r.Position + r.CFrame.LookVector * 6 + Vector3.new(0, 1.5, 0) else Vector3.zero
+	)
+	ReplicatedStorage:SetAttribute("DevSound", `{kind}@{workspace:GetServerTimeNow()}`)
+	print(`[Dev] sound {kind}`)
 end
 
 Commands.npcreset = function(player, args)
