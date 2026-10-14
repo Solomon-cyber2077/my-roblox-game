@@ -1,5 +1,18 @@
 # HANDOFF
 
+## 2026-10-13: FOLLOW-UP PASS (grab plate, multi-seed stations, kit upload) -- READ THIS FIRST
+1. Features completed
+- **Solo grab plate (8b762b2):** "Your crew can pull you free" shows only when another crewmate is Aboard/Afield/Straggler (`RunRules.hasLivingCrewmate`, spec in `tests/Run.spec.luau`; `GrabController` passes it to `Struggle.show`). Studio, solo: Dev `grab` -> plate lines "DRAGGED BY THE ANKLE | A STALKER HAS YOU | WHEN THE NEEDLE HITS THE ZONE | (blank)"; console clean. The 2-player case (line shown) is **not checked** in Studio.
+- **Stations clean on `AUDIT_SEEDS=4` (20e0e65):** picket fences one picket per 1.0 stud (was 0.75), iron railings per 2.25 (was 2.0); Schoolhouse `lampSpacing` 36 -> 44 (one platform lamp fewer than before on most seeds); stall goods each get their own height band (Market z-fight); the lip neon in `EdgeMark` is turned 0.3 deg so its ends can never lie flush with a wall stone (PostTown z-fight; insetting it only moved the clash). No building counts or landmarks changed. Worst case over 4 seeds: Schoolhouse 8721 parts / 96 lights, SignalWorks 8898 / 76, PostTown 8875 / 96 (64 lit), Market 8856 / 85. Default seed: Schoolhouse 8324 / 93 (57 lit), SignalWorks 8672, Halt 7212, Market 8856, PostTown 8656. Studio: Schoolhouse docked at stop 1 with 8570 parts, 94 lights (61 lit), console clean.
+- `lune run check` passes.
+2. Known bugs / open items
+- **Station kit upload: blocked.** No uploader script exists (the train FBX went up through Studio's 3D Importer) and no Open Cloud key is set, so `Config/StationKit` ids stay nil (primitives in use, unchanged). Owner: create an Open Cloud API key (create.roblox.com > Open Cloud > API Keys) with **Assets API: read + write**, scoped to your user, and set it as the user environment variable `ROBLOX_API_KEY` (never in the repo or chat); or import `assets/stationkit/StationKit.fbx` yourself (3D Importer, creator Me) and paste the 7 ids. Then: dock Halt (`station Halt`), compare against primitives, re-run the audit.
+- Triangles: not measured (TRIANGLES block was left empty); still the part-shape estimate.
+- Leak after a successful rally: not re-observed this pass (D.6, unchanged).
+- Still for the owner from the last pass: 2-player checks (vote stamps, crewmates' Pull free, now also the plate line with a crewmate), hull toasts/creaks and hiss by ear.
+3. Next logical step
+- Upload the station kit (above), then the Halt check and fresh part counts.
+
 ## 2026-10-13: CLEANUP PASS, FIX PASS PARTS 1-2 (Studio checks) -- READ THIS FIRST
 Two Play sessions in the "Last Train" window, solo. Shots (0.5 scale) in `docs/checks/`. Console clean in both sessions apart from the one bug below.
 - **Fixed (46e0973):** `UI/RunCard` showed only the *first* run ticket in a Studio/server session; every later one threw "The Parent property of Close is locked" (CLOSE and its hint were destroyed with the old ticket). They are lifted back onto the backdrop first. Verified: 2nd and 3rd tickets in one session showed with CLOSE. UI only, so no spec.
