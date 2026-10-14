@@ -32,7 +32,7 @@ describe("Emergency Village: the breakdown's states", function()
 		-- the rally's repairs, then the limp
 		local done = false
 		for _ = 1, C.RallyRepairs do
-			s, done = Breakdown.repair(s)
+			s, done = Breakdown.repair(s, 100)
 		end
 		expect(done).toBe(true)
 		expect(s.phase).toBe("Limp")

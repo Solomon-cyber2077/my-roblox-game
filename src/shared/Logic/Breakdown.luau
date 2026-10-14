@@ -14,6 +14,11 @@
 
 	`count` is the run's breakdowns so far. The train does not move while Village, Stopped or
 	Rally, so the hull does not drain then either.
+
+	A successful repair (the village's or the rally's) starts a grace (RepairGraceSeconds): until
+	`graceUntil` the open leaks stay open but do not drain the hull, and no new leak bursts.
+	Alternative design, not built: close every open leak on success instead (TrainService
+	ClearBreaches where BreakdownService starts the grace).
 ]]
 
 local Shared = script.Parent.Parent
@@ -29,6 +34,7 @@ export type State = {
 	endsAt: number?, -- server time the current phase runs out (Stopped, Rally)
 	repairs: number,
 	needed: number,
+	graceUntil: number?, -- server time the grace after a successful repair ends
 }
 
 local Breakdown = {}
@@ -73,15 +79,19 @@ function Breakdown.tick(state: State, now: number): State
 	return state
 end
 
--- One repair made during the rally. Returns the new state and whether that finished it
--- (restore the hull to RallyRestore).
-function Breakdown.repair(state: State): (State, boolean)
+-- One repair made during the rally at `now`. Returns the new state and whether that finished
+-- it (restore the hull to RallyRestore); finishing it starts the grace.
+function Breakdown.repair(state: State, now: number): (State, boolean)
 	if state.phase ~= "Rally" then
 		return state, false
 	end
 	local repairs = state.repairs + 1
 	if repairs >= state.needed then
-		return with(state, { phase = "Limp", repairs = repairs, endsAt = nil }), true
+		return with(
+			state,
+			{ phase = "Limp", repairs = repairs, endsAt = nil, graceUntil = now + C.RepairGraceSeconds }
+		),
+			true
 	end
 	return with(state, { repairs = repairs }), false
 end
@@ -91,18 +101,20 @@ function Breakdown.arrive(state: State): State
 	if state.phase == "Lost" then
 		return state
 	end
-	return with(state, { phase = "None", endsAt = nil, repairs = 0 })
+	local out = with(state, { phase = "None", repairs = 0 })
+	out.endsAt, out.graceUntil = nil, nil -- `with` cannot clear a field
+	return out
 end
 
 -- The Emergency Village stop is over: `found` repair parts came aboard of the `needed`. Enough,
 -- and the train runs again (the run's count stays, so a second breakdown still loses it); short,
--- and it falls back on the halt and the rally.
+-- and it falls back on the halt and the rally. Enough also starts the grace.
 function Breakdown.villageDone(state: State, found: number, needed: number, now: number): State
 	if state.phase ~= "Village" then
 		return state
 	end
 	if found >= needed then
-		return with(state, { phase = "None", endsAt = nil })
+		return with(state, { phase = "None", endsAt = nil, graceUntil = now + C.RepairGraceSeconds })
 	end
 	return with(state, { phase = "Stopped", endsAt = now + C.StopSeconds, repairs = 0 })
 end
@@ -123,6 +135,17 @@ end
 ]]
 function Breakdown.delay(state: State, dt: number): number
 	return dt * (1 - Breakdown.speedShare(state))
+end
+
+-- True during the grace after a successful repair: leaks hold the hull and none burst.
+function Breakdown.inGrace(state: State, now: number): boolean
+	local graceUntil = state.graceUntil
+	return graceUntil ~= nil and now < graceUntil and state.phase ~= "Lost"
+end
+
+-- Whole seconds of grace left at `now` (0 outside it).
+function Breakdown.graceLeft(state: State, now: number): number
+	return if Breakdown.inGrace(state, now) then math.ceil((state.graceUntil :: number) - now) else 0
 end
 
 function Breakdown.lost(state: State): boolean

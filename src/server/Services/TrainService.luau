@@ -183,8 +183,11 @@ local function tick(dt: number)
 		current.elapsed += dt * share
 		local due = current.bursts[1]
 		local wantsBurst = (due ~= nil and current.elapsed >= due) or pendingBursts > 0
+		-- the grace after a successful repair: open leaks hold and none burst (they wait)
+		local held = breakdown ~= nil and breakdown.InGrace()
 		if
 			wantsBurst
+			and not held
 			and current.opened < current.cap
 			and Ledger.breachCount(train) < Difficulty.Leaks.Cap
 		then
@@ -196,7 +199,7 @@ local function tick(dt: number)
 			current.opened += 1
 			openBreach()
 		end
-		train = Ledger.drain(train, dt, current.seconds)
+		train = Ledger.drain(train, dt, current.seconds, held)
 		-- how bad each leak has got, for its steam and hiss (TrainVisualsController)
 		for id, breach in train.breaches do
 			local entry = breachPrompts[id]

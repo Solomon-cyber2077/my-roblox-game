@@ -18,13 +18,13 @@ describe("Breakdown", function()
 		expect(s.endsAt).toBe(100 + C.StopSeconds + C.RallySeconds)
 		local done = false
 		for i = 1, C.RallyRepairs do
-			s, done = Breakdown.repair(s)
+			s, done = Breakdown.repair(s, 100)
 			expect(done).toBe(i == C.RallyRepairs)
 		end
 		expect(s.phase).toBe("Limp")
 		expect(Breakdown.speedShare(s)).toBe(C.LimpShare)
 		-- extra repairs after the rally do nothing
-		local after, again = Breakdown.repair(s)
+		local after, again = Breakdown.repair(s, 100)
 		expect(after).toBe(s)
 		expect(again).toBe(false)
 	end)
@@ -32,7 +32,7 @@ describe("Breakdown", function()
 	it("loses the train when the rally runs out", function()
 		local s = Breakdown.onFloor(Breakdown.new(), 0, false)
 		s = Breakdown.tick(s, C.StopSeconds)
-		s = Breakdown.repair(s)
+		s = Breakdown.repair(s, 100)
 		s = Breakdown.tick(s, C.StopSeconds + C.RallySeconds + 0.01)
 		expect(s.phase).toBe("Lost")
 		expect(Breakdown.lost(s)).toBe(true)
@@ -42,7 +42,7 @@ describe("Breakdown", function()
 		local s = Breakdown.onFloor(Breakdown.new(), 0, false)
 		s = Breakdown.tick(s, C.StopSeconds)
 		for _ = 1, C.RallyRepairs do
-			s = Breakdown.repair(s)
+			s = Breakdown.repair(s, 100)
 		end
 		s = Breakdown.arrive(s)
 		expect(s.phase).toBe("None")
