@@ -463,7 +463,7 @@ local Archetypes: { [string]: Archetype } = {
 			{ kind = "SchoolmasterHouse", zones = { "Near", "Mid" } },
 			{ kind = "Chapel", zones = { "Far" } },
 		},
-		lampSpacing = 36,
+		lampSpacing = 44,
 		ground = "Pavement",
 		palette = {
 			ground = { 124, 118, 108 },

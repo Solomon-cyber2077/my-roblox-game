@@ -881,12 +881,13 @@ Builders.Stall = function(ctx)
 			{ material = Enum.Material.Fabric, collide = false }
 		)
 	end
-	for _ = 1, 5 do
+	-- each good its own height band, so no two tops share a plane
+	for i = 1, 5 do
 		local good = Kit.block(
 			ctx.parent,
 			Vector3.new(
 				0.6 + ctx.rng:NextNumber(),
-				0.5 + ctx.rng:NextNumber() * 0.8,
+				0.5 + (i - 1) * 0.16 + ctx.rng:NextNumber() * 0.12,
 				0.6 + ctx.rng:NextNumber()
 			),
 			f(ctx, (ctx.rng:NextNumber() - 0.5) * (w - 1.5), 3.6, (ctx.rng:NextNumber() - 0.5) * (d - 1.5)),

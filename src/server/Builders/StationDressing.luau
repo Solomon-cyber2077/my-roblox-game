@@ -398,7 +398,7 @@ Builders.FencePicket = function(ctx)
 				M.Wood
 			)
 		end
-		x += 0.75
+		x += 1.0
 	end
 end
 
@@ -411,7 +411,7 @@ Builders.FenceIron = function(ctx)
 	for _, y in { 0.6, 3.4 } do
 		block(ctx, Vector3.new(length, 0.16, 0.16), f(ctx, 0, y, 0.24), C.iron, M.Metal, true)
 	end
-	-- railings every two studs: a stop's whole boundary in them is thousands of parts
+	-- railings every 2.25 studs: a stop's whole boundary in them is thousands of parts
 	local x = -length / 2 + 1.0
 	while x < length / 2 - 0.5 do
 		if ctx.rng:NextNumber() > 0.08 then
@@ -424,7 +424,7 @@ Builders.FenceIron = function(ctx)
 				M.Metal
 			)
 		end
-		x += 2.0
+		x += 2.25
 	end
 end
 
@@ -1147,8 +1147,14 @@ Builders.EdgeMark = function(ctx)
 		)
 	end
 	-- the lip: a glowing seam at the very edge of the ground, a hair off it and short of the
-	-- tile's ends so it shares no plane with the boundary standing over it
-	Kit.neon(ctx.parent, Vector3.new(length - 0.3, 0.1, 0.5), f(ctx, 0, 0.08, edge.RailBack - 0.4), GLOW)
+	-- tile's ends so it shares no plane with the boundary standing over it; turned a fraction
+	-- of a degree so its ends never lie flush with a stone of a wall built over it
+	Kit.neon(
+		ctx.parent,
+		Vector3.new(length - 0.3, 0.1, 0.5),
+		f(ctx, 0, 0.08, edge.RailBack - 0.4) * Kit.angles(0, 0.3, 0),
+		GLOW
+	)
 end
 
 Builders.EdgeGlow = function(ctx)
