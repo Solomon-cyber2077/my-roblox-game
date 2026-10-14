@@ -48,6 +48,15 @@ function RouteService.Close(): (number, Types.RouteOption, Types.RouteOption)
 	return index, options[index], hidden[index] or options[index]
 end
 
+-- Studio only (Dev `fakevote`): a vote from `key`, a voter who is not in the game, so the ballot
+-- can be seen with more stamps than there are test players.
+function RouteService.DevVote(key: string, option: number)
+	if option >= 1 and option <= #options then
+		votes[key] = option
+		StateService.Set({ "run", "route", "votes" }, votes)
+	end
+end
+
 function RouteService.Clear()
 	options = {}
 	hidden = {}

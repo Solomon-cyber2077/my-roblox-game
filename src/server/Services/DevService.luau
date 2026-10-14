@@ -21,6 +21,7 @@
 	  strike               a lightning strike now
 	  mystery              the next ballot has a mystery ticket (at a junction, the ballot reopens with one)
 	  npcreset [npc|all]   wipe your saved story with one resident (Mabel) or all of them
+	  fakevote <option> [n]  n made-up voters (not in the game) stamp that ticket of the open ballot
 	  sound hiss|creak|alarm  play that hull sound through the game's own code: the hiss as a leak
 	                       6 studs ahead of you for 30 s (walk away to hear it fall off), the
 	                       creak and alarm as at the Emergency tier
@@ -194,6 +195,13 @@ end
 
 Commands.mystery = function()
 	Registry.RunDirector.DevForceMystery()
+end
+
+Commands.fakevote = function(_, args)
+	local option = tonumber(args[1]) or 1
+	for i = 1, tonumber(args[2]) or 1 do
+		Registry.RouteService.DevVote(tostring(-900 - i), option)
+	end
 end
 
 Commands.sound = function(player, args)
