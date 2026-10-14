@@ -246,11 +246,12 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	helpers.Parent = plate
 end
 
-function Struggle.show(name: string, kind: string)
+-- `crewmates`: another living crewmate is in the run, so the plate says they can pull you free.
+function Struggle.show(name: string, kind: string, crewmates: boolean)
 	title.Text = name
 	subtitle.Text = KIND_TEXT[kind] or "IT HAS YOU"
 	keyLabel.Text = keyText()
-	helpers.Text = "Your crew can pull you free"
+	helpers.Text = if crewmates then "Your crew can pull you free" else ""
 	rule.Size = UDim2.new(1, -24, 0, 3)
 	verdict.Text = ""
 	Struggle.clearCheck()
