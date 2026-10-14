@@ -54,6 +54,9 @@ end
 
 local function show()
 	if ticket then
+		-- CLOSE and the hint live on the ticket; lift them off before it goes, or they go with it
+		closeButton.Parent = root
+		hint.Parent = root
 		ticket:Destroy()
 	end
 	local built, play = RunTicket.build(runData(), Z + 1, true)
