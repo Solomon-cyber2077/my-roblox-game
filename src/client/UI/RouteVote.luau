@@ -8,6 +8,7 @@
 	line or two (the leg's length and coal), one ticket at a time.
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -120,7 +121,8 @@ function RouteVote.mount(gui: ScreenGui)
 	-- Moves, lands and lifts stamps to match the votes; only a new or moved stamp animates,
 	-- and never twice inside LAND_DEBOUNCE for the same voter.
 	local function updateStamps(votes: { [string]: number })
-		local crew = Session.crew() or {}
+		-- every crewmate's entry by user id (Session.crew() is only this player's own)
+		local crew = Registry.StateController.Get({ "crew" }) or {}
 		local keep: { [string]: boolean } = {}
 		for index, handle in tickets do
 			local pile = TicketModel.pile(votes, index, Session.userKey)
@@ -138,9 +140,11 @@ function RouteVote.mount(gui: ScreenGui)
 				end
 				if entry == nil then
 					local member = crew[key]
+					local voter = Players:GetPlayerByUserId(tonumber(key) or 0)
 					local mark = Stamp.new({
 						key = key,
-						name = if member then member.name else nil,
+						name = if member then member.name elseif voter then voter.DisplayName else nil,
+						fallback = if voter then voter.Name else nil,
 						mine = mine,
 						Position = position,
 						ZIndex = 6 + order * 3,

@@ -60,16 +60,15 @@ local function headshot(userId: number, image: ImageLabel)
 	end)
 end
 
-local function initials(name: string?): string
-	if name == nil or name == "" then
-		return "?"
-	end
-	local first = string.match(name, "%a") or string.sub(name, 1, 1)
-	local second = string.match(name, "[%l%d][_%s]*(%u)") or ""
-	return string.upper(first .. second)
-end
-
-export type Props = { key: string, name: string?, mine: boolean?, Position: UDim2?, ZIndex: number? }
+-- `name`: the voter's display name; `fallback`: their user name (TicketModel.initials).
+export type Props = {
+	key: string,
+	name: string?,
+	fallback: string?,
+	mine: boolean?,
+	Position: UDim2?,
+	ZIndex: number?,
+}
 
 function Stamp.new(props: Props): Frame
 	local size = if props.mine then MINE_SIZE else SIZE
@@ -89,7 +88,7 @@ function Stamp.new(props: Props): Frame
 	Ui.stroke(INK, 2, 0.15).Parent = mark
 	local letters = Ui.text({
 		Name = "Initials",
-		Text = initials(props.name),
+		Text = TicketModel.initials(props.name, props.fallback),
 		Font = Font.new("rbxasset://fonts/families/Arvo.json", Enum.FontWeight.Bold),
 		TextSize = if props.mine then 16 else 13,
 		Color = INK,
