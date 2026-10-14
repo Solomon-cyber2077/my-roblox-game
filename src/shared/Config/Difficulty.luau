@@ -192,6 +192,11 @@ return table.freeze({
 		RallyRepairs = 3, -- repair interactions the crew must complete
 		RallyHold = 1.5, -- seconds each repair takes
 		RallyRestore = 15, -- hull % after a successful rally
+		-- after a successful repair (village or rally) the open leaks hold the hull this long (no
+		-- drain, no new bursts) so the crew can patch them; shown in the timed-event toast
+		RepairGraceSeconds = 30,
+		GraceTitle = "REPAIRED",
+		GraceText = "Hull holding: %d s to patch the leaks",
 		-- the Emergency Village (fix pass part 3): the train halts at its edge and the crew has
 		-- VillageSeconds to bring VillageParts repair parts aboard; done, they go into the hull,
 		-- which goes back to VillageRestore %. Not done, the train falls back on the rally.

@@ -143,13 +143,15 @@ end
 	reaching the floor is a breakdown (Services/BreakdownService). Integrity keeps its fraction,
 	so slow drains are not lost to rounding.
 ]]
-function Ledger.drain(train: Train, dt: number, tripSeconds: number): Train
-	if dt <= 0 or (next(train.breaches) == nil and not train.starving) then
+function Ledger.drain(train: Train, dt: number, tripSeconds: number, leaksHeld: boolean?): Train
+	if dt <= 0 or ((leaksHeld or next(train.breaches) == nil) and not train.starving) then
 		return train
 	end
 	local nextTrain = copy(train)
 	local loss = 0
-	for id, breach in train.breaches do
+	-- held (the grace after a repair, Logic/Breakdown): open leaks neither drain nor worsen
+	local open: typeof(train.breaches) = if leaksHeld then {} else train.breaches
+	for id, breach in open do
 		local age = breach.age or 0
 		loss += Leaks.rate(Leaks.severity(age, tripSeconds), tripSeconds) * dt
 		nextTrain.breaches[id] = { anchor = breach.anchor, openedAt = breach.openedAt, age = age + dt }

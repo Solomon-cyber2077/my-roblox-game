@@ -15,7 +15,8 @@
 
 	While the train is stopped or limping the trip's clock is pushed back (RunDirector.ExtendPhase)
 	so the trip still covers its distance; run.breakdown tells the clients (the scenery slows
-	and stops with it). The rally shows in the timed-event toast (TimedEvent attributes).
+	and stops with it). The rally shows in the timed-event toast (TimedEvent attributes), and so
+	does the grace after a successful repair (Breakdown.inGrace: TrainService holds the leaks).
 
 	Rules for part 3's Emergency Village: it yields repair parts only, once per run, does not count
 	as one of the ten stops, and its threat follows the same curve and tutorial tier.
@@ -121,7 +122,7 @@ local function onRepair(player: Player, prompt: ProximityPrompt)
 		holder:Destroy()
 	end
 	local done
-	state, done = Breakdown.repair(state)
+	state, done = Breakdown.repair(state, now())
 	NetService.FireAll(
 		"Notify",
 		"Crew",
@@ -215,6 +216,30 @@ local function step(dt: number)
 	end
 end
 
+-- The grace's countdown in the timed-event toast after a successful repair.
+local shownGrace = -1
+local function graceToast()
+	local left = Breakdown.graceLeft(state, now())
+	if left == shownGrace then
+		return
+	end
+	shownGrace = left
+	if left <= 0 then
+		if ReplicatedStorage:GetAttribute("TimedEvent") == "Grace" then
+			for _, name in { "TimedEvent", "TimedEventTitle", "TimedEventText", "TimedEventCue" } do
+				ReplicatedStorage:SetAttribute(name, nil)
+			end
+		end
+		return
+	end
+	ReplicatedStorage:SetAttribute("TimedEventTitle", C.GraceTitle)
+	ReplicatedStorage:SetAttribute("TimedEventText", string.format(C.GraceText, left))
+	ReplicatedStorage:SetAttribute("TimedEventStartAt", now())
+	ReplicatedStorage:SetAttribute("TimedEventEndAt", state.graceUntil)
+	ReplicatedStorage:SetAttribute("TimedEventCue", nil)
+	ReplicatedStorage:SetAttribute("TimedEvent", "Grace")
+end
+
 -- The Emergency Village's countdown in the timed-event toast, and its count in run.station.
 local shownFound = -1
 local function villageProgress()
@@ -259,6 +284,11 @@ function BreakdownService.VillageDone(found: number, needed: number)
 	publish()
 end
 
+-- True during the grace after a successful repair: open leaks hold the hull, none burst.
+function BreakdownService.InGrace(): boolean
+	return Breakdown.inGrace(state, now())
+end
+
 -- The share of its speed the train is running at (0 while broken down and stopped).
 function BreakdownService.SpeedShare(): number
 	return Breakdown.speedShare(state)
@@ -298,6 +328,7 @@ function BreakdownService.Start()
 	RunService.Heartbeat:Connect(function(dt)
 		Safe.call("BreakdownService.step", step, dt)
 		Safe.call("BreakdownService.village", villageProgress)
+		Safe.call("BreakdownService.grace", graceToast)
 	end)
 end
 
