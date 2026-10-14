@@ -1,5 +1,22 @@
 # HANDOFF
 
+## 2026-10-13: CLEANUP PASS, FIX PASS PARTS 1-2 (Studio checks) -- READ THIS FIRST
+Two Play sessions in the "Last Train" window, solo. Shots (0.5 scale) in `docs/checks/`. Console clean in both sessions apart from the one bug below.
+- **Fixed (46e0973):** `UI/RunCard` showed only the *first* run ticket in a Studio/server session; every later one threw "The Parent property of Close is locked" (CLOSE and its hint were destroyed with the old ticket). They are lifted back onto the backdrop first. Verified: 2nd and 3rd tickets in one session showed with CLOSE. UI only, so no spec.
+- **Verified in Studio:**
+  - A: spawn faces down the car (+X); camera forced to 25 studs and turned into the side wall stays inside in a middle car (5.4 of 6.0 studs) and the guard's van at x -88 (`A_*`). The van's rear balcony (x -92) and open door gaps have no wall, by design.
+  - B: seal right of the danger rows, clear of title, marks, stamp and button with **one** stamp (`B_vote_one_stamp`). Several stamps need 2+ players: **not checked**.
+  - C: panel up the whole run, readable under the vignette; vignette near a Hollow is blue-grey and drained, not black (`C_vignette_near_hollow`). Stamina: 0.7 transparent when full, opaque by half while warming brass -> ember, red pulse when spent, recovers (sampled, no shot).
+  - D: stop-1 death (`D1`, cause "LOST / Something on the line took you." because the test kill carried no damage tag), win (`D2`, TERMINUS, MADE IT), breakdown loss (`D3`, WRECKED, TRAIN LOST AT STOP 5). 3 stats each, no receipt.
+  - E: live grab, release and lobby respawn without errors; your own "Pull free" prompt is disabled on your screen. **Not checked:** that crewmates see it (2-player Local Server opens extra windows; left for the owner).
+  - F: ring on screen (`F_skillcheck_ring`). Logged: an early press = Miss (clock jump), a repeat 0.03 s later and a replay 0.33 s later ignored; a press in the zone = Great (+1.5); no press = Miss at turn end + 0.2 s (-0.5); 3 progress frees ("Escaped"). Zone 70 deg at stop 1, 58 at stop 3, 140 on the tutorial grab; sweep 1.25 s; first check ~1.1 s after the grab, 0.56-0.93 s between. Dev `grab` returns false while `god` is on (seize refuses god players).
+  - G: alert "STEAM LEAK · CREW CAR · 16 m" + arrow (`G_leak_alert_arrow`); patching cleared tag, plate, arrow and chip together. Markers on: steam rate 40 x sev, hiss rolloff 40. Markers off: no plate/arrow, rate 90 x sev, lifetime 1-1.9 s, size 1.2, hiss rolloff 95, volume 0.98. **Sound not heard** (no audio from the tools).
+  - H: run 1 "WASD to move..." at boarding and "Stay in the lantern light..." off the train, text as `Config/Tutorial`. Run 2: the teaching Crawler (Pin) grabbed, 140 deg zone, "Press SPACE when the needle is in the zone." beside the plate; two misses then two Greats freed me. It stalled 6 studs short while I stood among market stalls; it reached me on open ground.
+  - I: Boiler strain toast at a stop; its 2 leaks burst only once Cruise began (none in Dwell/Departure, hull held). Rally failed (1/3) -> train lost; rally done (3/3) -> hull 15%, trip clock extended, limping -> the leaks still open drained it back to 1% in ~20 s -> second breakdown -> lost at stop 3 (`I_rally_ok_then_lost`).
+  - J: hull 70/45/20: tier 2 lamps drop out (0.33 vs 0.7), tier 3 dim red pulse. Workbench repair: 2 parts for +10% (20 -> 30, parts 3 -> 1), refused with 1 part. Tier warning toasts and creaks not confirmed (not captured as new labels/sounds).
+- **For the owner:** several-stamp vote card and crewmates' "Pull free" (2 players); hull tier toasts/creaks and the hiss by ear; a successful rally with leaks open is lost within ~20 s (D.6 rule, not changed); the struggle plate's "Your crew can pull you free" shows in solo runs; Dev `skip` does nothing in LastCall at a normal stop (use `warp 300`); `/tutorial` works through the legacy chat box.
+- Owner decisions untouched: markers default, brass/XP placement, failed rally loses the train, existing players get the tutorial once, all tuning numbers.
+
 ## 2026-10-13: FIX PASS PART 3 (stations) -- READ THIS FIRST
 
 ### Resume point
