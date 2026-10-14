@@ -82,6 +82,18 @@ describe("TicketModel", function()
 		expect(zero).toBe(0)
 	end)
 
+	it("keeps every stamp of a pile inside the two ends of the strip, for 1 to MaxStamps", function()
+		local spread, inset = 100, TicketModel.StampInset
+		expect(TicketModel.stampX(1, 1, spread)).toBe(50)
+		for slots = 2, TicketModel.MaxStamps do
+			expect(TicketModel.stampX(1, slots, spread)).toBe(inset)
+			expect(TicketModel.stampX(slots, slots, spread)).toBe(spread - inset)
+			for order = 1, slots do
+				expect(TicketModel.stampX(order, slots, spread)).toBeBetween(inset, spread - inset)
+			end
+		end
+	end)
+
 	it("sweeps the dial and shows numerals only in the last ten seconds", function()
 		local sweep, numeral = TicketModel.dial(105, 100, 120)
 		expect(sweep).toBeCloseTo(0.25)
