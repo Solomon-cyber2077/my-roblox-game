@@ -473,6 +473,30 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 		attachTo(piece, prop.slab)
 	end
 
+	-- The lit budget holds for every seed: moonlit panes go dark first, then working room
+	-- bulbs (BuildingService lights them again with the building's power).
+	local lit, spare = 0, { {}, {} } :: { { Light } }
+	for _, d in model:GetDescendants() do
+		if (d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight")) and (d :: Light).Enabled then
+			lit += 1
+			local name = (d.Parent :: Instance).Name
+			if name == "Moonlight" then
+				table.insert(spare[1], d)
+			elseif name == "Bulb" then
+				table.insert(spare[2], d)
+			end
+		end
+	end
+	for _, group in spare do
+		for _, light in group do
+			if lit <= Stations.Lamps.LitMax then
+				break
+			end
+			light.Enabled = false
+			lit -= 1
+		end
+	end
+
 	-- Everything except Root moves with physics; Root holds the assembly when anchored.
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then

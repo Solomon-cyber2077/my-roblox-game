@@ -320,16 +320,20 @@ for id in Stations.List do
 	table.insert(archetypes, id)
 end
 table.sort(archetypes)
-for _, id in archetypes do
+-- AUDIT_SEEDS=n also builds every stop from n seeds (424242, 424243, ...)
+local STATION_SEEDS = tonumber(process.env.AUDIT_SEEDS) or 1
+for i = 1, STATION_SEEDS * #archetypes do
+	local id = archetypes[(i - 1) % #archetypes + 1]
+	local seed = 424242 + (i - 1) // #archetypes
 	table.insert(targets, {
-		name = `Station/{id}`,
+		name = if seed == 424242 then `Station/{id}` else `Station/{id}#{seed}`,
 		-- fix pass part 3: stops three times the size; budget per stop for weaker machines
 		-- (docs/stations/DESIGN.md, HANDOFF.md); no shadow-casting lights at a stop
 		-- lights: every light instance, even the dead room lamps a building's power wakes;
 		-- lit: those on as the stop docks
 		budget = { parts = 9000, tris = 300000, lights = 96, lit = 64, shadows = 0, emitters = 60 },
 		build = function()
-			local plan = LayoutGen.generate(id, 424242, 1)
+			local plan = LayoutGen.generate(id, seed, 1)
 			local edge = Tuning.World.PlatformEdgeZ
 			return {
 				{
