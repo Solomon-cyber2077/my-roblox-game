@@ -9,6 +9,7 @@
 	  view      a route option (any field may be missing) -> everything one ticket prints; a sealed
 	            mystery (option.mystery) prints "????", no type, no seal: only its distance and coal
 	  pile      the votes -> whose stamps sit on one ticket, oldest first, at most MaxStamps
+	  initials  a voter's display name, else user name -> the one or two letters on their stamp
 	  dial      the vote timer -> the hand's sweep and, in the last ten seconds, the numeral
 	  tieNote   the votes -> what Logic/Vote will do with a tie, said plainly (never invented)
 ]]
@@ -218,6 +219,38 @@ end
 -- Whether the junction ballot is up for this player: only while the vote is open (a Junction
 -- with no line chosen yet) and they are alive, or for the short punch after lock-in. The
 -- route stays replicated with its winner through the leg, so it alone must never show it.
+-- True for a character the stamp leaves out: emoji, pictographs and their joiners/selectors
+-- (below 0xC0, Latin-1 controls and punctuation are left out by the caller).
+local function isSymbol(code: number): boolean
+	return (code >= 0x2000 and code < 0x3000) or (code >= 0xFE00 and code <= 0xFE0F) or code >= 0x1F000
+end
+
+-- One name's initials, or nil when it has nothing to stamp. A Latin letter leads (the first one,
+-- then a capital after a lower-case letter or digit, as in "TameGiant" or "tame_Giant"); with no
+-- Latin letter, the first character that is a digit or a letter in another script.
+local function initialsOf(name: string): string?
+	local first = string.match(name, "%a")
+	if first then
+		local second = string.match(name, "[%l%d][_%s]*(%u)") or ""
+		return string.upper(first .. second)
+	end
+	if utf8.len(name) == nil then
+		return nil -- not valid UTF-8
+	end
+	for _, code in utf8.codes(name) do
+		if (code >= 48 and code <= 57) or (code >= 0xC0 and not isSymbol(code)) then
+			return utf8.char(code)
+		end
+	end
+	return nil
+end
+
+-- The letters on a voter's stamp: from their display name, else their user name; "?" only when
+-- neither has anything to stamp.
+function TicketModel.initials(displayName: string?, name: string?): string
+	return initialsOf(displayName or "") or initialsOf(name or "") or "?"
+end
+
 function TicketModel.ballotShown(phase: string, route: any?, alive: boolean, lingering: boolean): boolean
 	if not alive or route == nil or #(route.options or {}) == 0 then
 		return false

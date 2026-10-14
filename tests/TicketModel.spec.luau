@@ -140,4 +140,25 @@ describe("TicketModel", function()
 		expect(TicketModel.ballotShown("Junction", nil, true, true)).toBe(false)
 		expect(TicketModel.ballotShown("Junction", { options = {} }, true, false)).toBe(false)
 	end)
+	it("stamps a voter's initials from awkward names, falling back on the user name", function()
+		expect(TicketModel.initials("TameGiant", "tamegiant6324")).toBe("TG")
+		expect(TicketModel.initials("tame_Giant", nil)).toBe("TG")
+		expect(TicketModel.initials("Tame Giant", nil)).toBe("TG")
+		expect(TicketModel.initials("ada", nil)).toBe("A")
+		expect(TicketModel.initials("x", nil)).toBe("X") -- one letter
+		expect(TicketModel.initials("5O10M0N", nil)).toBe("OO") -- digits: the first letter leads
+		expect(TicketModel.initials("1234", nil)).toBe("1") -- digits only
+		expect(TicketModel.initials("___", "Player_1")).toBe("P") -- underscores only: user name
+		expect(TicketModel.initials("Élodie", nil)).toBe("L") -- a Latin letter still leads
+		expect(TicketModel.initials("Жора", nil)).toBe("Ж") -- another script: its first letter
+		expect(TicketModel.initials("李小龙", nil)).toBe("李")
+		expect(TicketModel.initials("🔥🔥", "FireFan")).toBe("FF") -- emoji only: user name
+		expect(TicketModel.initials("🚂 Rail", nil)).toBe("R")
+		expect(TicketModel.initials(string.rep("Longname", 40), nil)).toBe("LL") -- capped at two
+		expect(TicketModel.initials("", "Player2")).toBe("P") -- empty display name
+		expect(TicketModel.initials(nil, "Player2")).toBe("P")
+		expect(TicketModel.initials("­¬", "bob")).toBe("B") -- broken UTF-8
+		expect(TicketModel.initials("", "")).toBe("?") -- only when both are truly empty
+		expect(TicketModel.initials(nil, nil)).toBe("?")
+	end)
 end)
