@@ -474,7 +474,7 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 	end
 
 	-- The lit budget holds for every seed: moonlit panes go dark first, then working room
-	-- bulbs (BuildingService lights them again with the building's power).
+	-- bulbs.
 	local lit, spare = 0, { {}, {} } :: { { Light } }
 	for _, d in model:GetDescendants() do
 		if (d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight")) and (d :: Light).Enabled then

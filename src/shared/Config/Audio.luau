@@ -111,7 +111,6 @@ local Cues: { [string]: Cue } = {
 	HollowStep = { id = 9113218938, volume = 0.35, spatial = true, pitch = 1.6, maxSeconds = 0.5 },
 
 	-- building interactions
-	Breaker = { id = 15675059323, volume = 0.9, spatial = true, pitch = 0.55 },
 	DoorForce = { id = 9118582680, volume = 0.75, spatial = true, pitch = 1.25, maxSeconds = 1.5 },
 	Winded = { id = 9113570506, volume = 0.45, maxSeconds = 0.8, pitch = 0.5 },
 }

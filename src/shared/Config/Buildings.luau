@@ -1186,9 +1186,7 @@ local Buildings = {
 	EscapeTop = 8.6,
 	MoonLights = 2, -- at most this many dead rooms per building lit through a broken window
 	BackLoot = { ToolChest = true, Vault = true } :: { [string]: boolean }, -- what makes a back room worth the trip
-	PowerCost = 1, -- parts to restore a building's power
 	ForceCost = 1, -- parts to force a locked door
-	PowerHold = 2.5,
 	ForceHold = 2,
 }
 

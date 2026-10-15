@@ -2,7 +2,6 @@
 --[[
 	The stops' buildings, client side: the few lamps that still work in a dead building
 	stutter and dip (each on its own rhythm, locally, so nothing goes over the wire).
-	Once the power is back the server clears their Flicker attribute and they burn steady.
 ]]
 
 local CollectionService = game:GetService("CollectionService")
