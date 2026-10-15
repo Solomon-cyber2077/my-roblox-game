@@ -10,10 +10,14 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   into the gap.
 - T3 outfitter: OUTFITTER shortcut button gone (the stand's prompt opens it); LINE MASTERY stays. Kiosk back wall
   lowered from 9 to 4.4 studs (counter height), swatches moved onto it, two slim rear posts carry the awning.
+- T4 cosmetics: Ember crimson (196,22,40 glass), Signal a deep signal green, Founder's gilt body and gold light,
+  Curio warmer and brighter, Aurora more saturated teal/violet (cycle kept); optional `look.glow` multiplier.
+  Every lantern now lights with two PointLights (strong range 6 + soft range 18) so it is brightest at the lamp.
+  Trails 9-11 particles/s per foot (was 4-6), slightly larger, steam/mist a bit denser. Checked in Studio per lantern.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T4 cosmetics).
+- Continue the lobby list (T5 piano).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran

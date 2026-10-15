@@ -7,11 +7,12 @@ local RunService = game:GetService("RunService")
 local Safe = require(ReplicatedStorage.Shared.Util.Safe)
 local CosmeticMotion = require(ReplicatedStorage.Shared.Visual.CosmeticMotion)
 
+-- particles a second per foot: easy to spot behind a runner, too few to hide anything
 local TRAIL_RATES = {
-	Steam = 5,
-	Mist = 4,
-	Cinder = 6,
-	Sparks = 6,
+	Steam = 9,
+	Mist = 8,
+	Cinder = 11,
+	Sparks = 11,
 }
 
 type Entry = {

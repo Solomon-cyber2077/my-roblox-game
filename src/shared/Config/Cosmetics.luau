@@ -58,8 +58,8 @@ local Catalog: { CosmeticDef } = {
 		brass = 600,
 		look = {
 			body = { 40, 46, 42 },
-			glass = { 150, 255, 170 },
-			light = { 120, 235, 150 },
+			glass = { 46, 196, 92 }, -- signal-lamp green: deep, not mint
+			light = { 40, 220, 96 },
 			style = "Signal",
 		},
 	},
@@ -70,7 +70,13 @@ local Catalog: { CosmeticDef } = {
 		rarity = "Fine",
 		description = "Earned by stokers who fed the firebox 100 coal.",
 		milestone = "Stoker",
-		look = { body = { 70, 42, 30 }, glass = { 255, 140, 70 }, light = { 255, 120, 50 }, style = "Squat" },
+		look = {
+			body = { 58, 30, 28 },
+			glass = { 196, 22, 40 },
+			light = { 220, 28, 44 },
+			glow = 1.4,
+			style = "Squat",
+		}, -- crimson
 	},
 	{
 		id = "lantern_curio",
@@ -81,8 +87,9 @@ local Catalog: { CosmeticDef } = {
 		milestone = "Collector",
 		look = {
 			body = { 201, 160, 82 },
-			glass = { 255, 236, 190 },
-			light = { 255, 222, 150 },
+			glass = { 255, 214, 140 },
+			light = { 255, 196, 104 },
+			glow = 1.5, -- a collector's lamp: burns brighter than standard issue
 			style = "Filigree",
 		},
 	},
@@ -96,9 +103,10 @@ local Catalog: { CosmeticDef } = {
 		rank = 15,
 		look = {
 			body = { 36, 34, 48 },
-			glass = { 160, 255, 240 },
-			light = { 110, 230, 220 },
-			light2 = { 190, 120, 255 },
+			glass = { 90, 255, 230 },
+			light = { 40, 235, 215 },
+			light2 = { 176, 84, 255 },
+			glow = 1.6,
 			style = "Prism",
 		},
 	},
@@ -110,9 +118,10 @@ local Catalog: { CosmeticDef } = {
 		description = "For the first crews to ride the line. Sparkles included.",
 		gamePass = { id = nil, price = 249 },
 		look = {
-			body = { 176, 184, 190 }, -- nickel silver
-			glass = { 236, 246, 250 },
-			light = { 255, 244, 214 },
+			body = { 206, 164, 72 }, -- gilt
+			glass = { 255, 222, 140 },
+			light = { 255, 204, 96 },
+			glow = 1.3,
 			style = "Crown",
 			sparkle = true,
 		},
