@@ -28,6 +28,7 @@ local ORDER = {
 	"FxController",
 	"DepartureClock",
 	"PianoNotes",
+	"FootstepController",
 }
 
 local controllers: { { name: string, module: any } } = {}
