@@ -506,6 +506,166 @@ end
 -- The platform ------------------------------------------------------------------------------------------
 
 --[[
+	The platform clock: a double-faced drum in a cast-iron band and a brass bezel, hung on two
+	drop rods from a scrolled bracket under the roof, a crest on top and a pendant below. Each
+	enamel dial has Roman hours (IIII for four, as the clockmakers paint it), a minute track,
+	the company's initials and the maker's name, and blued spade hands stopped at twenty to
+	ten: the up train that never came. `at` is the point on the platform under its centre,
+	the drum's axis along z (one face to the track, one to the buildings); `hangTop` the
+	underside of the roof above it.
+]]
+local CLOCK_Y = 9.0 -- the drum's centre: its pendant clears a head, its crest the roof
+local NUMERALS = { "XII", "I", "II", "III", "IIII", "V", "VI", "VII", "VIII", "IX", "X", "XI" }
+local STOPPED = { hour = 9, minute = 40 }
+
+local function dial(part: BasePart, face: Enum.NormalId)
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = face
+	gui.CanvasSize = Vector2.new(400, 400)
+	gui.LightInfluence = 0.35 -- the enamel holds what light there is
+	gui.Brightness = 1.2
+	gui.Parent = part
+	local ink = rgb(26, 24, 26)
+	local function at(radius: number, degrees: number): UDim2
+		local a = math.rad(degrees)
+		return UDim2.fromScale(0.5 + radius * math.sin(a), 0.5 - radius * math.cos(a))
+	end
+	local function piece(size: UDim2, position: UDim2, rotation: number, color: Color3, anchor: Vector2?)
+		local frame = Instance.new("Frame")
+		frame.BorderSizePixel = 0
+		frame.BackgroundColor3 = color
+		frame.AnchorPoint = anchor or Vector2.new(0.5, 0.5)
+		frame.Size = size
+		frame.Position = position
+		frame.Rotation = rotation
+		frame.Parent = gui
+		return frame
+	end
+	-- the minute track: two fine rings of ticks, the hours heavier
+	for m = 0, 59 do
+		local hour = m % 5 == 0
+		piece(
+			UDim2.fromOffset(if hour then 7 else 3, if hour then 22 else 12),
+			at(if hour then 0.432 else 0.445, m * 6),
+			m * 6,
+			ink
+		)
+	end
+	for h = 1, 12 do
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.AnchorPoint = Vector2.new(0.5, 0.5)
+		label.Size = UDim2.fromOffset(70, 46)
+		label.Position = at(0.34, (h % 12) * 30)
+		label.Rotation = (h % 12) * 30 -- radial, as on the old dials
+		label.FontFace = Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold)
+		label.Text = NUMERALS[h % 12 + 1]
+		label.TextColor3 = ink
+		label.TextScaled = true
+		label.Parent = gui
+	end
+	for _, line in
+		{
+			{ text = "S. & W. C. R.", y = 0.3, h = 0.06 },
+			{ text = "E. TOZER  BRISTOL", y = 0.68, h = 0.045 },
+		}
+	do
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.AnchorPoint = Vector2.new(0.5, 0.5)
+		label.Size = UDim2.fromScale(0.36, line.h)
+		label.Position = UDim2.fromScale(0.5, line.y)
+		label.FontFace = Font.new(Font.fromEnum(Enum.Font.Garamond).Family, Enum.FontWeight.Bold)
+		label.Text = line.text
+		label.TextColor3 = rgb(70, 60, 54)
+		label.TextScaled = true
+		label.Parent = gui
+	end
+	-- blued steel spade hands, stopped
+	local blue = rgb(30, 36, 58)
+	local minute = STOPPED.minute * 6
+	local hour = (STOPPED.hour % 12 + STOPPED.minute / 60) * 30
+	for _, hand in { { angle = hour, long = 0.24, wide = 12 }, { angle = minute, long = 0.37, wide = 8 } } do
+		-- a frame turns about its own centre, so the shaft is centred halfway along the hand
+		piece(UDim2.new(0, hand.wide, hand.long, 0), at(hand.long / 2, hand.angle), hand.angle, blue)
+		-- the spade, two thirds of the way out
+		piece(
+			UDim2.fromOffset(hand.wide * 2.6, hand.wide * 2.6),
+			at(hand.long * 0.68, hand.angle),
+			hand.angle + 45,
+			blue
+		)
+	end
+	piece(UDim2.fromOffset(26, 26), UDim2.fromScale(0.5, 0.5), 0, rgb(150, 120, 60))
+end
+
+local function stationClock(ctx: Context, at: CFrame, hangTop: number)
+	local iron, brass = C.iron, C.brass
+	local axis = at * CFrame.new(0, CLOCK_Y, 0) * Kit.angles(0, 90, 0) -- the drum's axis along x here
+	rod(ctx, 0.5, 3.62, axis, iron, M.Metal)
+	rod(ctx, 0.78, 3.5, axis, brass, M.Metal)
+	local enamel = rod(ctx, 0.82, 3.0, axis, rgb(232, 226, 210), M.SmoothPlastic)
+	dial(enamel, Enum.NormalId.Right)
+	dial(enamel, Enum.NormalId.Left)
+	-- the crest: a cast-iron saddle on the drum, scrolls either side and a finial
+	local top = CLOCK_Y + 1.81
+	block(ctx, Vector3.new(1.3, 0.5, 0.56), at * CFrame.new(0, top + 0.2, 0), iron, M.Metal)
+	for _, side in { -1, 1 } do
+		Kit.wedge(
+			ctx.parent,
+			Vector3.new(0.4, 0.62, 0.9),
+			at * CFrame.new(side * 1.0, top + 0.28, 0) * Kit.angles(0, side * 90, 0),
+			iron,
+			{ material = M.Metal, collide = false }
+		)
+	end
+	block(
+		ctx,
+		Vector3.new(0.5, 0.5, 0.5),
+		at * CFrame.new(0, top + 0.68, 0) * Kit.angles(0, 45, 0),
+		brass,
+		M.Metal
+	)
+	-- the pendant drop under the drum
+	block(ctx, Vector3.new(0.6, 0.36, 0.42), at * CFrame.new(0, CLOCK_Y - 1.92, 0), iron, M.Metal)
+	block(
+		ctx,
+		Vector3.new(0.3, 0.5, 0.3),
+		at * CFrame.new(0, CLOCK_Y - 2.3, 0) * Kit.angles(0, 45, 0),
+		brass,
+		M.Metal
+	)
+	-- two drop rods to a scrolled bracket under the roof
+	local rodTop = hangTop - 0.6
+	for _, x in { -0.5, 0.5 } do
+		block(
+			ctx,
+			Vector3.new(0.14, rodTop - (top + 0.4), 0.14),
+			at * CFrame.new(x, (rodTop + top + 0.4) / 2, 0),
+			iron,
+			M.Metal
+		)
+	end
+	block(ctx, Vector3.new(2.2, 0.3, 0.5), at * CFrame.new(0, rodTop + 0.15, 0), iron, M.Metal)
+	for _, side in { -1, 1 } do
+		Kit.wedge(
+			ctx.parent,
+			Vector3.new(0.3, 0.55, 0.7),
+			at * CFrame.new(side * 0.85, rodTop - 0.25, 0) * Kit.angles(180, side * 90, 0),
+			iron,
+			{ material = M.Metal, collide = false }
+		)
+	end
+	block(
+		ctx,
+		Vector3.new(0.6, hangTop - rodTop - 0.25, 0.4),
+		at * CFrame.new(0, (hangTop + rodTop + 0.3) / 2, 0),
+		iron,
+		M.Metal
+	)
+end
+
+--[[
 	The canopy over the middle of the platform. Its frame is the station's own (x along the
 	platform, z from the edge), ctx.width its span. Iron columns at the back carry a beam and a
 	slate roof that falls toward the track; a fretwork valance of wooden teeth hangs along its
@@ -621,28 +781,7 @@ Builders.Canopy = function(ctx)
 		post(ctx, 0.2, 0.84, f(ctx, x, 10.1, lz), C.iron, M.Metal)
 	end
 	-- the station clock, double-faced, hung from the roof over the middle of the platform
-	local cz = 7.5
-	local hangTop = roofY(cz) - 0.3
-	post(ctx, hangTop - 11.4, 0.18, f(ctx, 0, (hangTop + 11.4) / 2, cz), C.iron, M.Metal)
-	local drum = f(ctx, 0, 10.0, cz) * Kit.angles(0, 90, 0)
-	rod(ctx, 0.5, 2.6, drum, C.iron, M.Metal)
-	rod(ctx, 0.4, 2.76, drum, C.brass, M.Metal)
-	for _, side in { -1, 1 } do
-		rod(ctx, 0.04, 2.2, drum * CFrame.new(side * 0.27, 0, 0), C.enamel, M.SmoothPlastic)
-		local face = drum * CFrame.new(side * 0.3, 0, 0)
-		block(
-			ctx,
-			Vector3.new(0.02, 0.85, 0.09),
-			face * CFrame.Angles(math.rad(-60), 0, 0) * CFrame.new(0, 0.42, 0),
-			C.coal
-		)
-		block(
-			ctx,
-			Vector3.new(0.02, 0.6, 0.11),
-			face * CFrame.Angles(math.rad(150), 0, 0) * CFrame.new(0, 0.3, 0),
-			C.coal
-		)
-	end
+	stationClock(ctx, f(ctx, 0, 0, 7.5), roofY(7.5) - 0.3)
 end
 
 -- The end of the platform: an iron railing across it, a red lamp, and the old warning.
