@@ -799,13 +799,14 @@ Builders.PlatformEnd = function(ctx)
 	for _, dz in { -1.4, 1.4 } do
 		post(ctx, 5.2, 0.22, f(ctx, -1.3, 2.6, 5 + dz), C.iron, M.Metal, true)
 	end
-	local board = block(ctx, Vector3.new(0.14, 1.9, 3.6), f(ctx, -1.48, 4.4, 5), C.enamel, M.SmoothPlastic)
+	-- a cast-iron notice: raised letters picked out in cream on black, dated, By Order
+	local board = block(ctx, Vector3.new(0.14, 1.9, 3.6), f(ctx, -1.48, 4.4, 5), rgb(30, 30, 32), M.Metal)
 	letter(
 		board,
 		Enum.NormalId.Left,
-		"PASSENGERS MUST NOT CROSS THE LINE",
-		rgb(150, 30, 28),
-		Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold),
+		"NOTICE.\nPASSENGERS MUST NOT\nCROSS THE LINE.\nBY ORDER  1884",
+		rgb(214, 204, 176),
+		Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold),
 		Vector2.new(360, 190)
 	)
 	post(ctx, 3.2, 0.3, f(ctx, -0.8, 1.6, -length / 2 + 1.6), C.iron, M.Metal, true)
@@ -855,7 +856,7 @@ Builders.FireBuckets = function(ctx)
 		Enum.NormalId.Front,
 		"FIRE",
 		C.enamel,
-		Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold),
+		Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold),
 		Vector2.new(400, 50)
 	)
 	for _, x in { -1.1, 0, 1.1 } do
@@ -911,7 +912,8 @@ Builders.Timetable = function(ctx)
 		label.Parent = gui
 		return label
 	end
-	local typed = Font.new("rbxasset://fonts/families/SpecialElite.json")
+	-- letterpress, not typewriter (LORE.md section 5)
+	local typed = Font.new(Font.fromEnum(Enum.Font.Garamond).Family, Enum.FontWeight.Bold)
 	local heavy = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold)
 	frame(C.company, 0, 0, 400, 44)
 	text("LAST TRAIN OUT", C.enamel, 14, 6, 220, 32, heavy)
@@ -921,7 +923,7 @@ Builders.Timetable = function(ctx)
 	text("REMARKS", ink, 250, 52, 136, 16, heavy, Enum.TextXAlignment.Right)
 	frame(ink, 12, 72, 376, 2)
 	local rows = {
-		{ "18.20", "Coaling Yard", "CANCELLED" },
+		{ "18.20", "Coldharbour", "CANCELLED" },
 		{ "19.05", "Ashgrove", "CANCELLED" },
 		{ "20.40", "Brannoc", "CANCELLED" },
 		{ "22.15", "Gallowmere", "CANCELLED" },
@@ -966,7 +968,7 @@ Builders.Timetable = function(ctx)
 		Enum.NormalId.Front,
 		"HAVE YOU SEEN TOM?",
 		rgb(40, 52, 98),
-		Font.new("rbxasset://fonts/families/Kalam.json", Enum.FontWeight.Bold),
+		Font.new(Font.fromEnum(Enum.Font.Fondamento).Family), -- a private hand (LORE.md)
 		Vector2.new(130, 170)
 	)
 	ball(ctx, 0.16, f(ctx, 1.4, 5.55, -0.14), C.red, M.SmoothPlastic)

@@ -83,7 +83,7 @@ export type Archetype = {
 local Archetypes: { [string]: Archetype } = {
 	Halt = {
 		id = "Halt",
-		name = "Whistle-Stop Halt",
+		name = "Ashcombe Halt",
 		tier = 1,
 		minStation = 1,
 		weight = 1.0,
@@ -149,7 +149,7 @@ local Archetypes: { [string]: Archetype } = {
 	},
 	CoalYard = {
 		id = "CoalYard",
-		name = "Coaling Yard",
+		name = "Coldharbour Siding",
 		tier = 2,
 		minStation = 1,
 		weight = 1.0,
@@ -208,7 +208,7 @@ local Archetypes: { [string]: Archetype } = {
 	},
 	SignalWorks = {
 		id = "SignalWorks",
-		name = "Signal Works",
+		name = "Culverhay",
 		tier = 2,
 		minStation = 2,
 		weight = 1.0,
@@ -267,7 +267,7 @@ local Archetypes: { [string]: Archetype } = {
 	},
 	Market = {
 		id = "Market",
-		name = "Ashfall Market",
+		name = "Brendon Cross",
 		tier = 2,
 		minStation = 3,
 		weight = 1.0,
@@ -326,7 +326,7 @@ local Archetypes: { [string]: Archetype } = {
 	},
 	Viaduct = {
 		id = "Viaduct",
-		name = "Viaduct Halt",
+		name = "Exmoor Gate",
 		tier = 3,
 		minStation = 4,
 		weight = 0.8,
@@ -497,7 +497,7 @@ local Archetypes: { [string]: Archetype } = {
 	},
 	Infirmary = {
 		id = "Infirmary",
-		name = "Brannoc Infirmary",
+		name = "Brannoc Road",
 		tier = 2,
 		minStation = 3,
 		weight = 0.9,

@@ -222,7 +222,7 @@ Builders.Chalkboard = function(ctx)
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.fromScale(0.9, 0.8)
 	label.Position = UDim2.fromScale(0.05, 0.1)
-	label.FontFace = Font.new("rbxasset://fonts/families/Kalam.json")
+	label.FontFace = Font.new(Font.fromEnum(Enum.Font.Fondamento).Family) -- a teacher's round hand
 	label.Text = CHALK[ctx.rng:NextInteger(1, #CHALK)]
 	label.TextColor3 = rgb(226, 226, 214)
 	label.TextTransparency = 0.15
@@ -350,20 +350,22 @@ Builders.Bookshelf = function(ctx)
 	return shelves(ctx, 4, 7, 1.4, C.woodDark, 5, BOOKS)
 end
 
+-- A cloak press: the scholars' tall pine cupboard, a panelled door, a brass knob, and a row of
+-- iron pegs along its top rail with a cap left on one. (Steel lockers came long after.)
 Builders.SchoolLocker = function(ctx)
-	local color = Kit.shade(ctx.accent, 0.8 + ctx.rng:NextNumber() * 0.2)
-	local body = box(ctx, Vector3.new(1.8, 6.6, 1.6), at(ctx, 0, 3.3, 0), color, M.Metal)
-	for i = 0, 2 do
-		box(
-			ctx,
-			Vector3.new(1.0, 0.08, 0.06),
-			at(ctx, 0, 5.6 + i * 0.25, -0.83),
-			Kit.shade(color, 0.5),
-			M.Metal,
-			false
-		)
+	local pine = Kit.shade(C.wood, 0.9 + ctx.rng:NextNumber() * 0.2)
+	local body = box(ctx, Vector3.new(1.8, 6.6, 1.6), at(ctx, 0, 3.3, 0), pine, M.Wood)
+	for _, y in { 2.0, 4.6 } do
+		box(ctx, Vector3.new(1.3, 1.9, 0.08), at(ctx, 0, y, -0.83), Kit.shade(pine, 0.82), M.Wood, false)
 	end
-	box(ctx, Vector3.new(0.12, 0.6, 0.1), at(ctx, 0.6, 3.4, -0.85), C.steel, M.Metal, false)
+	box(ctx, Vector3.new(0.14, 0.14, 0.12), at(ctx, 0.62, 3.4, -0.86), C.brass, M.Metal, false)
+	box(ctx, Vector3.new(1.9, 0.2, 1.7), at(ctx, 0, 6.7, 0), Kit.shade(pine, 0.7), M.Wood, false)
+	for _, x in { -0.5, 0.5 } do
+		box(ctx, Vector3.new(0.08, 0.08, 0.34), at(ctx, x, 6.1, -0.97), C.iron, M.Metal, false)
+	end
+	if ctx.rng:NextNumber() < 0.4 then
+		box(ctx, Vector3.new(0.6, 0.22, 0.5), at(ctx, -0.5, 5.92, -1.08), rgb(52, 46, 40), M.Fabric, false)
+	end
 	return body
 end
 
