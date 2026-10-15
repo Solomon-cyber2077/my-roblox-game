@@ -48,7 +48,7 @@ local LobbyStorm = {}
 local rng = Random.new()
 local folder: Folder? = nil
 local sky: BasePart? = nil
-local flashLights: { PointLight } = {}
+local flashLights: { SpotLight } = {}
 local rainEmitters: { ParticleEmitter } = {}
 local centre = Vector3.zero
 local behind = Vector3.zAxis -- out through the glass, away from the hall
@@ -317,17 +317,23 @@ local function buildRain(parent: Instance, panes: { BasePart })
 		emitter.Rate = 0
 		emitter.Parent = sheet
 		table.insert(rainEmitters, emitter)
-		-- the flash: a faint cold light just outside the pane that lays the glazing bars across the
-		-- floor by the window; kept short and dim so the hall itself stays lamplit amber
-		local lamp =
-			Kit.block(parent, Vector3.one, CFrame.new(pane.Position + behind * 6 + Vector3.yAxis * 6), INK, {
-				collide = false,
-				transparency = 1,
-			})
-		local light = Instance.new("PointLight")
+		-- the flash: a narrow cold spot just outside the pane, aimed down through the glass at the
+		-- floor strip under the window, so the glazing bars fall there and nowhere else; its range
+		-- stops at that strip, so the amber hall lamps never take the cold light
+		local sill = pane.Position.Y - pane.Size.Y / 2
+		local origin = pane.Position + behind * 2 + Vector3.yAxis * (pane.Size.Y / 2)
+		local target = Vector3.new(pane.Position.X, sill - 3, pane.Position.Z) - behind * 4
+		local lamp = Kit.block(parent, Vector3.one, CFrame.lookAt(origin, target), INK, {
+			collide = false,
+			transparency = 1,
+		})
+		lamp.CastShadow = false
+		local light = Instance.new("SpotLight")
+		light.Face = Enum.NormalId.Front
+		light.Angle = 45
 		light.Color = BOLT
 		light.Brightness = 0
-		light.Range = 34
+		light.Range = (target - origin).Magnitude + 2
 		light.Shadows = true
 		light.Parent = lamp
 		table.insert(flashLights, light)
