@@ -15,31 +15,28 @@ local function key(plan, gx: number, gz: number): number
 	return gz * plan.cols + gx
 end
 
--- Barrier pieces stand on a tile's centre line, square to the track (the boundary fence does not).
-local function barrierTiles(plan, arch): { [number]: boolean }
-	local kinds = {}
-	for _, kind in arch.layout.barriers do
-		kinds[kind] = true
-	end
-	local out = {}
-	for _, prop in plan.props do
-		local gz = math.floor(prop.z / plan.tile)
-		if kinds[prop.kind] and prop.rot == 0 and prop.slab ~= 1 and prop.z == (gz + 0.5) * plan.tile then
-			local gx = math.clamp(math.floor((prop.x + plan.length / 2) / plan.tile), 0, plan.cols - 1)
-			out[key(plan, gx, gz)] = true
-		end
-	end
-	return out
+local function tileOf(plan, x: number, z: number): (number, number)
+	return math.clamp(math.floor((x + plan.length / 2) / plan.tile), 0, plan.cols - 1),
+		math.floor(z / plan.tile)
 end
 
-local function blocked(plan, arch): { [number]: boolean }
-	local out = barrierTiles(plan, arch)
+-- Every tile something stands on or in, keyed gz * cols + gx.
+local function features(plan): { [number]: boolean }
+	local out = {}
 	for _, list in { plan.structures, plan.buildings } do
 		for _, block in list do
 			for gx = block.gx, block.gx + block.w - 1 do
 				for gz = block.gz, block.gz + block.d - 1 do
 					out[key(plan, gx, gz)] = true
 				end
+			end
+		end
+	end
+	for _, list in { plan.props, plan.containers, plan.loose } do
+		for _, thing in list do
+			if thing.slab ~= 1 then
+				local gx, gz = tileOf(plan, thing.x, thing.z)
+				out[key(plan, gx, gz)] = true
 			end
 		end
 	end
@@ -67,58 +64,142 @@ describe("Station layouts", function()
 		end
 	end)
 
-	it("pinches the zone boundaries into chokepoints that still reach the far edge", function()
+	it("stands cover in a rhythm a Hollow can always walk round", function()
 		for _, id in laidOut() do
 			local arch = Stations.List[id]
+			local kinds = {}
+			for _, kind in arch.layout.cover do
+				kinds[kind] = true
+			end
 			for seed = 1, 6 do
 				local plan = LayoutGen.generate(id, seed * 37, 1)
-				local walls = barrierTiles(plan, arch)
+				local solid = {}
+				for _, list in { plan.structures, plan.buildings } do
+					for _, block in list do
+						for gx = block.gx, block.gx + block.w - 1 do
+							for gz = block.gz, block.gz + block.d - 1 do
+								solid[key(plan, gx, gz)] = true
+							end
+						end
+					end
+				end
+				local cover = {}
 				local count = 0
-				for _ in walls do
-					count += 1
-				end
-				expect(count).toBeAtLeast(3)
-
-				-- every open tile is reachable from the platform, and so is the far edge
-				local shut = blocked(plan, arch)
-				local seen, queue = {}, {}
-				for gx = 0, plan.cols - 1 do
-					seen[key(plan, gx, 0)] = true
-					table.insert(queue, { gx, 0 })
-				end
-				local head = 1
-				while head <= #queue do
-					local cell = queue[head]
-					head += 1
-					for _, dir in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
-						local nx, nz = cell[1] + dir[1], cell[2] + dir[2]
-						local k = key(plan, nx, nz)
-						if
-							nx >= 0
-							and nx < plan.cols
-							and nz >= 0
-							and nz < plan.rows
-							and not seen[k]
-							and not shut[k]
-						then
-							seen[k] = true
-							table.insert(queue, { nx, nz })
+				for _, prop in plan.props do
+					if kinds[prop.kind] and prop.slab ~= 1 then
+						local gx, gz = tileOf(plan, prop.x, prop.z)
+						if gz > plan.safeRows then
+							count += 1
+							cover[key(plan, gx, gz)] = { gx, gz }
+							-- open ground on all four sides
+							for _, dir in { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } } do
+								expect(solid[key(plan, gx + dir[1], gz + dir[2])] == nil).toBe(true)
+							end
 						end
 					end
 				end
-				local far = false
-				for gz = 0, plan.rows - 1 do
-					for gx = 0, plan.cols - 1 do
-						local k = key(plan, gx, gz)
-						if not shut[k] then
-							expect(seen[k] == true).toBe(true)
-							far = far or gz == plan.rows - 1
+				expect(count).toBeAtLeast(8)
+				for k, cell in cover do
+					for dx = -1, 1 do
+						for dz = -1, 1 do
+							local other = key(plan, cell[1] + dx, cell[2] + dz)
+							expect(other == k or cover[other] == nil).toBe(true)
 						end
 					end
 				end
-				expect(far).toBe(true)
+				-- cover never closes a tile: nothing but structures is blocked
+				local blockedCount = 0
+				for _ in plan.blocked do
+					blockedCount += 1
+				end
+				local structureTiles = 0
+				for _, block in plan.structures do
+					structureTiles += block.w * block.d
+				end
+				expect(blockedCount).toBe(structureTiles)
 			end
 		end
+	end)
+
+	it("leaves no long empty stretch to cross", function()
+		for _, id in laidOut() do
+			for seed = 1, 4 do
+				local plan = LayoutGen.generate(id, seed * 53, 1)
+				local near = features(plan)
+				for gz = plan.safeRows + 1, plan.rows - 2 do
+					for gx = 1, plan.cols - 2 do
+						local found = false
+						for dx = -3, 3 do
+							for dz = -3, 3 do
+								found = found or near[key(plan, gx + dx, gz + dz)] == true
+							end
+						end
+						if not found then
+							error(`{id} seed {seed * 53}: nothing within 3 tiles of {gx},{gz}`)
+						end
+					end
+				end
+			end
+		end
+	end)
+
+	it("lays loot out by depth: coal by the platform, the best at the back", function()
+		local depth = { CoalBin = {}, Crate = {}, ToolChest = {}, Vault = {} }
+		local mid, ground = 0, 0
+		for _, id in laidOut() do
+			for seed = 1, 6 do
+				local plan = LayoutGen.generate(id, seed * 17, 1)
+				for _, c in plan.containers do
+					if c.building == nil and c.zone ~= "Village" then
+						ground += 1
+						if c.zone == "Mid" then
+							mid += 1
+						end
+						if depth[c.kind] then
+							table.insert(depth[c.kind], c.z / plan.depth)
+						end
+						if c.kind == "CoalBin" then
+							expect(c.zone).toBe("Near")
+						end
+					end
+				end
+				for _, item in plan.loose do
+					if item.item == "CoalLump" then
+						expect(LayoutGen.zoneFor(item.z, plan.depth, plan.safeRows * plan.tile, nil) ~= "Far").toBe(
+							true
+						)
+					end
+				end
+			end
+		end
+		local function mean(list: { number }): number
+			local total = 0
+			for _, v in list do
+				total += v
+			end
+			return total / math.max(1, #list)
+		end
+		expect(mid / ground).toBeLessThan(0.1)
+		expect(mean(depth.CoalBin)).toBeLessThan(mean(depth.Crate))
+		expect(mean(depth.Crate)).toBeLessThan(mean(depth.ToolChest) + 0.02)
+		expect(mean(depth.ToolChest)).toBeLessThan(mean(depth.Vault) + 0.02)
+	end)
+
+	it("keeps the very back clear for the payroll crate", function()
+		for _, id in Stations.Order do
+			for seed = 1, 4 do
+				local plan = LayoutGen.generate(id, seed * 29, 1)
+				local spot = plan.payroll
+				expect(spot ~= nil).toBe(true)
+				local gx, gz = tileOf(plan, spot.x, spot.z)
+				expect(gz).toBe(plan.rows - 2)
+				local taken = features(plan)
+				for dx = -Stations.Payroll.HalfTiles, Stations.Payroll.HalfTiles do
+					expect(taken[key(plan, gx + dx, gz)] == nil).toBe(true)
+				end
+			end
+		end
+		expect(LayoutGen.generate("Terminus", 1, 1).payroll).toBe(nil)
 	end)
 
 	it("lays sidings across a coal yard", function()

@@ -1092,6 +1092,319 @@ Builders.SignalPost = function(ctx)
 	end
 end
 
+-- Cover -------------------------------------------------------------------------------------------
+--[[
+	Tall, solid things to break the line of sight across the yard: GatePier, Chimney, Statue,
+	Obelisk, Elm, and the sights DrinkingFountain and NoticeBoard. Each collides only through
+	unseen "Cover" blocks, sheer and taller than a jump, so nothing can be climbed; what you
+	see never collides. Footprints stay small enough that a Hollow (agent radius 2.2) always
+	fits round them in a 12-stud tile.
+]]
+local GUARD = 9 -- the collision block is at least this tall: higher than any jump
+
+local function guard(ctx: Context, sx: number, h: number, sz: number, z: number?)
+	local tall = math.max(h, GUARD)
+	Kit.block(
+		ctx.parent,
+		Vector3.new(sx, tall, sz),
+		f(ctx, 0, tall / 2, z or 0),
+		C.stone,
+		{ name = "Cover", transparency = 1, shadow = false }
+	)
+end
+
+local GARAMOND = Font.new(Font.fromEnum(Enum.Font.Garamond).Family, Enum.FontWeight.Bold)
+local OSWALD = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold)
+
+local function piece(
+	ctx: Context,
+	size: Vector3,
+	cf: CFrame,
+	color: Color3,
+	material: Enum.Material
+): BasePart
+	return Kit.block(ctx.parent, size, cf, color, { material = material, collide = false })
+end
+
+-- A dressed-stone gate pier with a moulded cap and an urn, left standing where its gate went.
+Builders.GatePier = function(ctx)
+	local stone = shade(ctx, rgb(150, 142, 126), 0.08)
+	local dark = Kit.shade(stone, 0.78)
+	local turn = ctx.frame * Kit.angles(0, ctx.rng:NextNumber(-4, 4), 0)
+	local function at(y: number): CFrame
+		return turn * CFrame.new(0, y, 0)
+	end
+	piece(ctx, Vector3.new(4.1, 0.6, 4.1), at(0.28), dark, M.Cobblestone)
+	piece(ctx, Vector3.new(3.3, 10.4, 3.3), at(5.4), stone, M.Limestone)
+	for _, y in { 3.1, 6.4 } do -- rusticated bands
+		piece(ctx, Vector3.new(3.5, 0.32, 3.5), at(y), dark, M.Limestone)
+	end
+	piece(ctx, Vector3.new(3.9, 0.55, 3.9), at(10.75), dark, M.Limestone)
+	piece(ctx, Vector3.new(2.7, 0.5, 2.7), at(11.2), stone, M.Limestone)
+	piece(ctx, Vector3.new(1.0, 0.4, 1.0), at(11.62), dark, M.Limestone)
+	piece(ctx, Vector3.new(1.5, 1.1, 1.5), at(12.3), stone, M.Limestone)
+	piece(ctx, Vector3.new(0.8, 0.3, 0.8), at(13.0), dark, M.Limestone)
+	-- the gate's hinge pins, the iron long gone
+	for _, y in { 2.2, 8.2 } do
+		piece(ctx, Vector3.new(0.3, 0.3, 0.5), at(y) * CFrame.new(1.8, 0, 0), C.iron, M.CorrodedMetal)
+	end
+	guard(ctx, 3.4, 13, 3.4)
+end
+
+-- The chimney stack of a cottage that burned: the hearth still in it, two pots on the top.
+Builders.Chimney = function(ctx)
+	local brick = shade(ctx, rgb(122, 68, 52), 0.1)
+	local soot = rgb(28, 26, 25)
+	local h = ctx.rng:NextNumber(16, 19)
+	local turn = ctx.frame * Kit.angles(0, ctx.rng:NextNumber(-6, 6), 0)
+	local function at(x: number, y: number, z: number): CFrame
+		return turn * CFrame.new(x, y, z)
+	end
+	piece(ctx, Vector3.new(5.6, 0.5, 4.4), at(0, 0.2, -0.3), rgb(60, 54, 48), M.Slate)
+	piece(ctx, Vector3.new(4.2, h, 3.0), at(0, h / 2, 0), brick, M.Brick)
+	-- soot licked up the front from the hearth
+	Kit.block(ctx.parent, Vector3.new(2.6, h * 0.55, 0.1), at(0, h * 0.3, -1.53), soot, {
+		material = M.Brick,
+		transparency = 0.35,
+		collide = false,
+	})
+	piece(ctx, Vector3.new(2.0, 2.4, 0.4), at(0, 1.45, -1.42), soot, M.Slate)
+	piece(ctx, Vector3.new(2.8, 0.35, 0.6), at(0, 2.8, -1.6), rgb(84, 76, 66), M.Wood)
+	piece(ctx, Vector3.new(4.6, 0.45, 3.4), at(0, h - 0.6, 0), Kit.shade(brick, 0.8), M.Brick)
+	for _, x in { -0.95, 0.95 } do
+		post(ctx, 1.5, 0.9, at(x, h + 0.7, 0), rgb(150, 82, 56), M.Concrete)
+	end
+	-- a charred joist still leaning on it
+	piece(ctx, Vector3.new(0.5, 0.5, 7.5), at(1.4, 2.6, 2.6) * Kit.angles(38, 12, 0), rgb(36, 30, 26), M.Wood)
+	guard(ctx, 4.2, h, 3.0)
+end
+
+-- A worthy in a frock coat on a granite pedestal, green with weather, a hand on his lapel.
+Builders.Statue = function(ctx)
+	local granite = shade(ctx, rgb(118, 116, 112), 0.06)
+	local bronze = shade(ctx, rgb(74, 102, 90), 0.08)
+	local turn = ctx.frame * Kit.angles(0, ctx.rng:NextNumber(-10, 10), 0)
+	local function at(x: number, y: number, z: number): CFrame
+		return turn * CFrame.new(x, y, z)
+	end
+	piece(ctx, Vector3.new(4.5, 0.5, 4.5), at(0, 0.24, 0), Kit.shade(granite, 0.85), M.Granite)
+	piece(ctx, Vector3.new(3.3, 8.2, 3.3), at(0, 4.45, 0), granite, M.Granite)
+	piece(ctx, Vector3.new(3.7, 0.5, 3.7), at(0, 8.55, 0), Kit.shade(granite, 0.85), M.Granite)
+	local plaque = piece(ctx, Vector3.new(2.2, 1.3, 0.1), at(0, 5.6, -1.68), rgb(96, 84, 52), M.Metal)
+	letter(
+		plaque,
+		Enum.NormalId.Front,
+		"ERECTED BY\nPUBLIC SUBSCRIPTION\nMDCCCLXXIX",
+		rgb(206, 186, 120),
+		GARAMOND,
+		Vector2.new(220, 130)
+	)
+	-- the figure: boots, trousers, the coat's skirts, body, arms, head and hat
+	piece(ctx, Vector3.new(1.5, 0.4, 1.4), at(0, 9.0, 0), bronze, M.Metal)
+	for _, x in { -0.32, 0.32 } do
+		piece(ctx, Vector3.new(0.52, 2.4, 0.62), at(x, 10.4, 0), bronze, M.Metal)
+	end
+	piece(ctx, Vector3.new(1.55, 1.6, 0.95), at(0, 11.6, 0.05), Kit.shade(bronze, 0.92), M.Metal)
+	piece(ctx, Vector3.new(1.4, 1.9, 0.82), at(0, 13.05, 0), bronze, M.Metal)
+	piece(ctx, Vector3.new(0.4, 1.7, 0.42), at(0.9, 12.9, 0), Kit.shade(bronze, 0.92), M.Metal)
+	piece(ctx, Vector3.new(0.4, 1.0, 0.42), at(-0.45, 13.4, -0.5) * Kit.angles(0, 0, 70), bronze, M.Metal)
+	piece(ctx, Vector3.new(0.78, 0.9, 0.8), at(0, 14.45, 0), bronze, M.Metal)
+	piece(ctx, Vector3.new(1.25, 0.12, 1.25), at(0, 14.94, 0), Kit.shade(bronze, 0.85), M.Metal)
+	piece(ctx, Vector3.new(0.75, 0.75, 0.75), at(0, 15.37, 0), Kit.shade(bronze, 0.85), M.Metal)
+	guard(ctx, 3.3, 9.0, 3.3)
+end
+
+-- A granite obelisk for the Queen's Jubilee, 1887, on a stepped base.
+Builders.Obelisk = function(ctx)
+	local granite = shade(ctx, rgb(104, 100, 98), 0.06)
+	local dark = Kit.shade(granite, 0.82)
+	local turn = ctx.frame * Kit.angles(0, ctx.rng:NextNumber(-8, 8), 0)
+	local function at(y: number): CFrame
+		return turn * CFrame.new(0, y, 0)
+	end
+	piece(ctx, Vector3.new(4.6, 0.6, 4.6), at(0.28), dark, M.Granite)
+	piece(ctx, Vector3.new(3.8, 0.6, 3.8), at(0.84), granite, M.Granite)
+	local die = piece(ctx, Vector3.new(3.0, 2.8, 3.0), at(2.5), granite, M.Granite)
+	letter(
+		die,
+		Enum.NormalId.Front,
+		"V.R.\n1837 - 1887\nJUBILEE",
+		rgb(214, 204, 184),
+		GARAMOND,
+		Vector2.new(160, 150)
+	)
+	piece(ctx, Vector3.new(3.3, 0.4, 3.3), at(4.05), dark, M.Granite)
+	-- the shaft in three tapering drums
+	local y = 4.2
+	for k, w in { 2.3, 2.0, 1.7 } do
+		local h = 4.2 - k * 0.3
+		piece(ctx, Vector3.new(w, h, w), at(y + h / 2), granite, M.Granite)
+		y += h - 0.04
+	end
+	-- the pyramidion: two crossed gables
+	for g = 0, 1 do
+		local cf = turn * Kit.angles(0, g * 90, 0) * CFrame.new(0, y + 0.8 + g * 0.03, 0)
+		Kit.wedge(ctx.parent, Vector3.new(0.6, 1.6, 0.85), cf * CFrame.new(0, 0, -0.42), granite, {
+			material = M.Granite,
+			collide = false,
+		})
+		Kit.wedge(
+			ctx.parent,
+			Vector3.new(0.6, 1.57, 0.85),
+			cf * CFrame.new(0, -0.015, 0.42) * Kit.angles(0, 180, 0),
+			granite,
+			{ material = M.Granite, collide = false }
+		)
+	end
+	guard(ctx, 3.0, y, 3.0)
+end
+
+-- An old elm: a broad trunk you can stand behind, a high crown, no low limbs.
+Builders.Elm = function(ctx)
+	local rng = ctx.rng
+	local h = rng:NextNumber(30, 38)
+	local bark = shade(ctx, rgb(58, 48, 40), 0.1)
+	local trunkH = h * 0.48
+	local base = ctx.frame * Kit.angles(0, rng:NextNumber(0, 90), 0)
+	post(ctx, trunkH + 0.4, 3.2, base * CFrame.new(0, trunkH / 2 - 0.2, 0), bark, M.Wood)
+	for k = 0, 3 do -- buttress roots
+		wedge(
+			ctx,
+			Vector3.new(0.9, 2.2, 1.6),
+			base * Kit.angles(0, k * 90 + 45, 0) * CFrame.new(0, 1.05, -2.1),
+			bark,
+			M.Wood
+		)
+	end
+	for k = 1, 3 do
+		local len = h * rng:NextNumber(0.26, 0.34)
+		local limb = base
+			* CFrame.new(0, trunkH * rng:NextNumber(0.85, 0.98), 0)
+			* Kit.angles(0, k * 120 + rng:NextNumber(-20, 20), rng:NextNumber(22, 38))
+		block(ctx, Vector3.new(h * 0.035, len, h * 0.035), limb * CFrame.new(0, len / 2, 0), bark, M.Wood)
+	end
+	local color = pick(ctx, FOLIAGE)
+	for k = 0, 2 do
+		local a = k / 3 * math.pi * 2 + rng:NextNumber(0, 0.6)
+		local r = if k == 0 then 0 else h * 0.15
+		ball(
+			ctx,
+			h * rng:NextNumber(0.34, 0.42),
+			base * CFrame.new(math.cos(a) * r, trunkH + h * rng:NextNumber(0.2, 0.36), math.sin(a) * r),
+			Kit.shade(color, rng:NextNumber(0.86, 1.08)),
+			M.LeafyGrass
+		)
+	end
+	guard(ctx, 2.9, trunkH, 2.9)
+end
+
+-- A cast-iron drinking fountain put up by the temperance society: a fluted column, a lion's
+-- mask over a basin, the cup on its chain, and a trough for horses behind.
+Builders.DrinkingFountain = function(ctx)
+	local iron = shade(ctx, rgb(40, 54, 50), 0.06) -- painted deep green, gone dark
+	local granite = rgb(110, 106, 102)
+	local turn = ctx.frame * Kit.angles(0, ctx.rng:NextNumber(-6, 6), 0)
+	local function at(x: number, y: number, z: number): CFrame
+		return turn * CFrame.new(x, y, z)
+	end
+	piece(ctx, Vector3.new(3.6, 0.5, 3.6), at(0, 0.22, 0), granite, M.Granite)
+	piece(ctx, Vector3.new(2.2, 3.2, 2.2), at(0, 2.05, 0), iron, M.Metal)
+	piece(ctx, Vector3.new(2.9, 0.5, 2.9), at(0, 3.85, -0.2), iron, M.Metal)
+	piece(ctx, Vector3.new(2.5, 0.35, 2.5), at(0, 4.1, -0.2), C.water, M.Slate)
+	piece(ctx, Vector3.new(0.6, 0.6, 0.3), at(0, 5.6, -0.5), C.brass, M.Metal) -- the lion's mask, worn bright
+	post(ctx, 7.0, 0.9, at(0, 8.4, 0), iron, M.Metal)
+	for _, y in { 5.2, 8.4, 11.6 } do
+		piece(ctx, Vector3.new(1.1, 0.3, 1.1), at(0, y, 0), Kit.shade(iron, 0.8), M.Metal)
+	end
+	piece(ctx, Vector3.new(1.6, 0.4, 1.6), at(0, 12.05, 0), iron, M.Metal)
+	piece(ctx, Vector3.new(0.6, 0.9, 0.6), at(0, 12.7, 0), C.brass, M.Metal)
+	piece(ctx, Vector3.new(0.12, 0.9, 0.12), at(0.7, 4.6, -1.12), C.iron, M.Metal)
+	piece(ctx, Vector3.new(0.35, 0.4, 0.35), at(0.7, 4.0, -1.12), C.brass, M.Metal)
+	local sign = piece(ctx, Vector3.new(1.6, 0.7, 0.08), at(0, 2.7, -1.15), C.paint, M.SmoothPlastic)
+	letter(
+		sign,
+		Enum.NormalId.Front,
+		"TEMPERANCE\nSOCIETY 1868",
+		rgb(30, 30, 30),
+		GARAMOND,
+		Vector2.new(160, 70)
+	)
+	-- the horse trough, low, behind it
+	piece(ctx, Vector3.new(4.4, 1.6, 1.6), at(0, 0.8, 2.0), granite, M.Granite)
+	piece(ctx, Vector3.new(4.0, 0.1, 1.2), at(0, 1.62, 2.0), C.water, M.Slate)
+	guard(ctx, 2.2, 12, 2.2)
+	guard(ctx, 4.4, GUARD, 1.6, 2.0)
+end
+
+-- The parish notice board: a gabled board on two posts, papered over and over. The notices
+-- suggest; none explains.
+local NOTICES = {
+	{
+		"MISSING",
+		"Ellen Venn, aged 9.\nLast seen in Church Lane\non Tuesday evening.\nApply W. Venn, Butcher.",
+	},
+	{
+		"ST. MICHAEL'S",
+		"Evensong at Six.\nSermon: On the Thinning.\nAll are earnestly\nentreated to attend.",
+	},
+	{ "NOTICE", "The 9.40 up train\nwill not run until\nfurther notice.\nBy Order." },
+	{ "LOST", "A grey mare, from\nthe Upper Field.\nShe would not\ncome to the bridle." },
+	{ "NOTICE", "Persons are requested\nnot to walk the line\nafter dark.\nBy Order." },
+}
+
+Builders.NoticeBoard = function(ctx)
+	local wood = shade(ctx, C.woodDark, 0.1)
+	local paper = rgb(206, 190, 150) -- buff
+	local turn = ctx.frame * Kit.angles(0, ctx.rng:NextNumber(-8, 8), 0)
+	local function at(x: number, y: number, z: number): CFrame
+		return turn * CFrame.new(x, y, z)
+	end
+	for _, x in { -2.1, 2.1 } do
+		piece(ctx, Vector3.new(0.5, 9.2, 0.5), at(x, 4.6, 0), wood, M.Wood)
+	end
+	piece(ctx, Vector3.new(3.8, 3.4, 0.25), at(0, 6.0, 0.02), Kit.shade(wood, 1.2), M.WoodPlanks)
+	for g = -1, 1, 2 do -- a little gabled roof
+		piece(
+			ctx,
+			Vector3.new(2.6, 0.14, 1.1),
+			at(g * 1.1, 8.55 + g * 0.02, -0.1) * Kit.angles(0, 0, -g * 24),
+			C.slate,
+			M.Slate
+		)
+	end
+	local first = ctx.rng:NextInteger(1, #NOTICES)
+	for k = 0, 1 do
+		local notice = NOTICES[(first + k * 2 - 1) % #NOTICES + 1]
+		local sheet = piece(
+			ctx,
+			Vector3.new(1.55, 2.3, 0.04),
+			at(-0.85 + k * 1.7, 6.1 - k * 0.15, -0.14 - k * 0.03)
+				* Kit.angles(0, 0, ctx.rng:NextNumber(-5, 5)),
+			Kit.shade(paper, ctx.rng:NextNumber(0.75, 0.95)),
+			M.SmoothPlastic
+		)
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = Enum.NormalId.Front
+		gui.CanvasSize = Vector2.new(155, 230)
+		gui.LightInfluence = 1
+		gui.Parent = sheet
+		for i, line in { { text = notice[1], y = 0.04, h = 0.2 }, { text = notice[2], y = 0.27, h = 0.66 } } do
+			local label = Instance.new("TextLabel")
+			label.BackgroundTransparency = 1
+			label.Position = UDim2.fromScale(0.07, line.y)
+			label.Size = UDim2.fromScale(0.86, line.h)
+			label.FontFace = if i == 1 then OSWALD else GARAMOND
+			label.Text = line.text
+			label.TextColor3 = rgb(36, 30, 26)
+			label.TextScaled = true
+			label.TextWrapped = true
+			label.TextTransparency = if i == 1 then 0.05 else 0.15
+			label.Parent = gui
+		end
+	end
+	guard(ctx, 4.6, 9.2, 0.6)
+end
+
 -- The sinkhole edge ---------------------------------------------------------------------------
 --[[
 	EdgeMark: one tile of the edge, the frame on the rail's line, -Z toward the train. An unseen
