@@ -7,6 +7,7 @@
 	    replicated hazard parameters, so it needs no network traffic, and the things
 	    that live in it
 	  * searched containers darken so the crew can read the station at a glance
+	  * snow on the roofs and yard of a station in snowy country (Scenery/StationSnow)
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,6 +21,7 @@ local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local StationFog = require(script.Parent.Parent.Scenery.StationFog)
+local StationSnow = require(script.Parent.Parent.Scenery.StationSnow)
 
 type Telegraph = {
 	part: BasePart,
@@ -102,6 +104,7 @@ end
 
 local function watchStation(model: Model)
 	station = model
+	StationSnow.dress(model, string.sub(model.Name, 9), model)
 	for _, descendant in model:GetDescendants() do
 		if descendant:IsA("BasePart") and descendant.Name == "Top" and descendant:GetAttribute("SlabId") then
 			descendant:GetAttributeChangedSignal("CollapseAt"):Connect(function()
