@@ -729,5 +729,9 @@ function Heavens.update(rig: Rig, state: Sky.State, info: Info)
 end
 
 Heavens.Distance = DISTANCE
+-- the TallOne's shape, for anything else that must show the same figure (Controllers/LobbyStorm)
+Heavens.TallOneShape = FIGURE
+Heavens.TallOneAspect = FIGURE_ASPECT
+Heavens.TallOneColor = FIGURE_COLOR
 
 return Heavens
