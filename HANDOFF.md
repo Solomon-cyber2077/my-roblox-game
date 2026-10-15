@@ -35,10 +35,14 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   shadowed flash lights, thunder 0.35-2.4 s later (new cues LobbyRain 9112855439, LobbyThunder 9116282646,
   LobbyThunderFar 9113218938, all ProSoundEffects). Performance setting: no rain, no bolt, no flash lights (verified).
   New script: run rbxmap `refresh` after merging.
+- T9 ticket stalls: west office (x=-36) removed. The east one (x=36) is now an open booth no wider or taller than
+  the old office (16 x 11), 6.5 deep: panelled sides, turned corner posts, fascia with the TICKETS board, panelled
+  counter with marble top, brass edge and grille rail, and room behind for the clerk (Edmondson card rack, date press,
+  ledger, stool, oil lamp).
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T9 ticket stalls).
+- Continue the lobby list (T10 sittable chairs).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
