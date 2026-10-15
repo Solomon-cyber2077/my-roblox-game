@@ -68,8 +68,10 @@ describe("Station layouts", function()
 		for _, id in laidOut() do
 			local arch = Stations.List[id]
 			local kinds = {}
-			for _, kind in arch.layout.cover do
-				kinds[kind] = true
+			for _, list in { arch.layout.cover, arch.layout.sights or {} } do
+				for _, kind in list do
+					kinds[kind] = true
+				end
 			end
 			for seed = 1, 6 do
 				local plan = LayoutGen.generate(id, seed * 37, 1)

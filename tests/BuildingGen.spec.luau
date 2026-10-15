@@ -258,4 +258,40 @@ describe("BuildingGen", function()
 			expect(sleeper.y).toBe(0)
 		end
 	end)
+	it("dresses the walls clear of doors and windows, a few pieces a room, one clock", function()
+		local D = Buildings.Decor
+		for _, kind in KINDS do
+			for seed = 1, 4 do
+				local plan = BuildingGen.generate(kind, seed * 101)
+				local decor = BuildingGen.decor(plan, seed)
+				local a = BuildingGen.decor(plan, seed)
+				expect(#a).toBe(#decor)
+				local perRoom, clocks = {}, 0
+				for _, d in decor do
+					perRoom[d.room] = (perRoom[d.room] or 0) + 1
+					if d.kind == "WallClock" then
+						clocks += 1
+					end
+					local half = D.Kinds[d.kind].w / 2
+					for _, list in { plan.doors, plan.windows } do
+						for _, o in list do
+							local alongX = o.axis == "X"
+							local sameLine = if alongX
+								then math.abs(o.z - d.z) < 1.5
+								else math.abs(o.x - d.x) < 1.5
+							local at, mine = if alongX then o.x else o.z, if alongX then d.x else d.z
+							if sameLine and (d.rot % 180 == 0) == alongX then
+								expect(math.abs(at - mine) >= o.width / 2 + half).toBe(true)
+							end
+						end
+					end
+				end
+				for _, n in perRoom do
+					expect(n).toBeAtMost(D.MaxPerRoom)
+				end
+				expect(clocks).toBeAtMost(1)
+				expect(#decor).toBeGreaterThan(0)
+			end
+		end
+	end)
 end)

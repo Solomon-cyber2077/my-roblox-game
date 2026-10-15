@@ -16,6 +16,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Buildings = require(Shared.Config.Buildings)
 local ItemModel = require(Shared.Visual.ItemModel)
+local BuildingGen = require(Shared.Logic.BuildingGen)
 local Kit = require(Shared.Visual.Kit)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Loot = require(Shared.Config.Loot)
@@ -23,6 +24,7 @@ local Stations = require(Shared.Config.Stations)
 
 local BuildingBuilder = require(script.Parent.BuildingBuilder)
 local FurnitureKit = require(script.Parent.FurnitureKit)
+local RoomDecor = require(script.Parent.RoomDecor)
 local StructureKit = require(script.Parent.StructureKit)
 local StationKit = require(script.Parent.StationKit)
 
@@ -356,6 +358,17 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			palette.accent,
 			plan.seed + building.id * 7919
 		)
+		-- the stop's main building (its first landmark) has its walls dressed
+		if building.id == 1 then
+			local seed = plan.seed + building.id * 7919
+			RoomDecor.build(
+				piece,
+				L(building.x, 0, building.z),
+				building.plan,
+				BuildingGen.decor(building.plan, seed),
+				seed
+			)
+		end
 		-- a ledge of land outside the ways out that open over the island's edge, one per wall
 		local spans: { [string]: { alongZ: boolean, outward: number, at: number, lo: number, hi: number } } =
 			{}

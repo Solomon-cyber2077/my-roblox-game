@@ -28,6 +28,7 @@ export type Layout = {
 	centre: string?, -- Plaza: the structure standing in the middle of the square
 	sidings: number?, -- Sidings: how many tracks
 	cover: { string }, -- the tall solid things stood across the yard (StationDressing Cover)
+	sights: { string }?, -- rarer cover worth a look (a statue, a fountain), Cover.SightMax of each
 	ground: { string }, -- Rubble, BrokenRoad (on the routes), Trench
 	groundCount: number,
 }
@@ -129,7 +130,8 @@ local Archetypes: { [string]: Archetype } = {
 		layout = {
 			style = "Street",
 			lane = 1,
-			cover = { "Elm", "GatePier", "Elm", "NoticeBoard", "Obelisk" },
+			cover = { "Elm", "GatePier", "Elm" },
+			sights = { "NoticeBoard", "Obelisk" },
 			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
@@ -187,7 +189,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Sidings",
 			lane = 1,
 			sidings = 3,
-			cover = { "Chimney", "GatePier", "Chimney", "NoticeBoard" },
+			cover = { "Chimney", "GatePier", "Chimney" },
+			sights = { "NoticeBoard" },
 			ground = { "Rubble", "BrokenRoad" },
 			groundCount = 9,
 		},
@@ -245,7 +248,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Sidings",
 			lane = 1,
 			sidings = 3,
-			cover = { "GatePier", "Chimney", "Obelisk", "NoticeBoard" },
+			cover = { "GatePier", "Chimney" },
+			sights = { "Obelisk", "NoticeBoard" },
 			ground = { "Rubble", "BrokenRoad" },
 			groundCount = 9,
 		},
@@ -303,7 +307,8 @@ local Archetypes: { [string]: Archetype } = {
 			lane = 2,
 			square = { 8, 5 },
 			centre = "Fountain",
-			cover = { "Statue", "GatePier", "DrinkingFountain", "NoticeBoard", "Chimney" },
+			cover = { "GatePier", "Chimney" },
+			sights = { "Statue", "DrinkingFountain", "NoticeBoard" },
 			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
@@ -358,7 +363,8 @@ local Archetypes: { [string]: Archetype } = {
 		layout = {
 			style = "Street",
 			lane = 1,
-			cover = { "GatePier", "Elm", "Obelisk", "Chimney" },
+			cover = { "GatePier", "Elm", "Chimney" },
+			sights = { "Obelisk" },
 			ground = { "Rubble", "Trench", "BrokenRoad" },
 			groundCount = 8,
 		},
@@ -417,7 +423,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Yard",
 			lane = 1,
 			square = { 8, 4 },
-			cover = { "Chimney", "GatePier", "Elm", "NoticeBoard" },
+			cover = { "Chimney", "GatePier", "Elm" },
+			sights = { "NoticeBoard" },
 			ground = { "Trench", "Rubble" },
 			groundCount = 10,
 		},
@@ -471,7 +478,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Yard",
 			lane = 1,
 			square = { 8, 4 },
-			cover = { "Elm", "GatePier", "NoticeBoard", "Obelisk" },
+			cover = { "Elm", "GatePier" },
+			sights = { "NoticeBoard", "Obelisk" },
 			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
@@ -526,7 +534,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Yard",
 			lane = 1,
 			square = { 7, 4 },
-			cover = { "GatePier", "Statue", "Elm", "DrinkingFountain" },
+			cover = { "GatePier", "Elm" },
+			sights = { "Statue", "DrinkingFountain" },
 			ground = { "Trench", "Rubble" },
 			groundCount = 8,
 		},
@@ -584,7 +593,8 @@ local Archetypes: { [string]: Archetype } = {
 			lane = 1,
 			square = { 7, 5 },
 			centre = "Bandstand",
-			cover = { "Statue", "Elm", "GatePier", "DrinkingFountain" },
+			cover = { "Elm", "GatePier" },
+			sights = { "Statue", "DrinkingFountain" },
 			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
@@ -639,7 +649,8 @@ local Archetypes: { [string]: Archetype } = {
 		layout = {
 			style = "Street",
 			lane = 2,
-			cover = { "Statue", "GatePier", "DrinkingFountain", "NoticeBoard", "Chimney" },
+			cover = { "GatePier", "Chimney" },
+			sights = { "Statue", "DrinkingFountain", "NoticeBoard" },
 			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
@@ -814,7 +825,9 @@ return table.freeze({
 	}),
 	-- The tall solid things stood across the yard: how far a piece may sit off its tile's
 	-- centre, and how far a threshold gate pier stands in from its tile's edge.
-	Cover = table.freeze({ Jitter = 0.8, PierInset = 2.2 }),
+	-- Cover tiles stand at least Spacing tiles apart (Chebyshev); each sight kind is placed at
+	-- most SightMax times, one in SightEvery of the cover.
+	Cover = table.freeze({ Jitter = 0.8, PierInset = 2.2, Spacing = 2, SightMax = 2, SightEvery = 4 }),
 	-- The spot kept clear at the very back for the payroll crate: the middle tile of the last
 	-- row inside the edge and this many either side.
 	Payroll = table.freeze({ HalfTiles = 1 }),

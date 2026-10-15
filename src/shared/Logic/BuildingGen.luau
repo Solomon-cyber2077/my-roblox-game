@@ -972,6 +972,109 @@ function BuildingGen.roomAt(plan: Plan, x: number, z: number): Room?
 	return nil
 end
 
+--[[
+	The wall dressing of a station's main building: clocks, pictures, framed texts, gas
+	brackets, hat pegs and shelves on every room's walls, only where a stretch of wall is
+	clear of doors, windows, the stairs and anything standing against it. The front room
+	gets the clock. Same plan and seed, same dressing. y is over the room's floor.
+]]
+export type Decor = { kind: string, x: number, z: number, y: number, rot: number, room: number }
+
+function BuildingGen.decor(plan: Plan, seed: number): { Decor }
+	local D = B.Decor
+	local rng = Rng.new(Rng.derive(seed, "decor", plan.kind))
+	local out: { Decor } = {}
+	local rooms: { Room } = table.clone(plan.rooms)
+	if plan.upper then
+		for _, r in plan.upper.rooms do
+			table.insert(rooms, r)
+		end
+	end
+	local clock = false
+	for index, r in rooms do
+		if r.kind == "Corridor" then
+			continue
+		end
+		local rect = r.rect
+		local placed = 0
+		for _, side in { "N", "E", "W", "S" } do
+			local alongX = side == "N" or side == "S"
+			local line = if side == "N"
+				then rect.z1
+				elseif side == "S" then rect.z0
+				elseif side == "E" then rect.x1
+				else rect.x0
+			local a0 = if alongX then rect.x0 else rect.z0
+			local a1 = if alongX then rect.x1 else rect.z1
+			-- stretches of this wall taken by something
+			local taken: { { number } } = {}
+			local function take(lo: number, hi: number)
+				table.insert(taken, { lo - D.Clear, hi + D.Clear })
+			end
+			for _, list in { plan.doors :: { any }, plan.windows :: { any } } do
+				for _, o in list do
+					local onLine = (o.axis == (if alongX then "X" else "Z"))
+						and math.abs((if alongX then o.z else o.x) - line) < 1.5
+					if onLine then
+						local at = if alongX then o.x else o.z
+						take(at - o.width / 2, at + o.width / 2)
+					end
+				end
+			end
+			local function rectNear(box: Rect)
+				local near = if side == "N"
+					then box.z1 > line - 1.5
+					elseif side == "S" then box.z0 < line + 1.5
+					elseif side == "E" then box.x1 > line - 1.5
+					else box.x0 < line + 1.5
+				local inside = box.x1 > rect.x0 and box.x0 < rect.x1 and box.z1 > rect.z0 and box.z0 < rect.z1
+				if near and inside then
+					take(if alongX then box.x0 else box.z0, if alongX then box.x1 else box.z1)
+				end
+			end
+			for _, item in plan.items do
+				if item.room == r.id then
+					rectNear(footprint(item.kind, item.x, item.z, item.rot))
+				end
+			end
+			for _, stair in plan.stairs do
+				rectNear({ x0 = stair.x0, z0 = stair.z0, x1 = stair.x1, z1 = stair.z1 })
+			end
+			-- slots along the wall, each kept if nothing takes it
+			local slot = 4.4
+			local n = math.floor((a1 - a0 - 1) / slot)
+			for i = 1, n do
+				if placed >= D.MaxPerRoom then
+					break
+				end
+				local kind = if not clock and index == 1 then "WallClock" else rng:pick(D.Mix)
+				local half = D.Kinds[kind].w / 2
+				local at = a0 + (a1 - a0 - n * slot) / 2 + (i - 0.5) * slot
+				local free = at - half > a0 + 0.6 and at + half < a1 - 0.6
+				for _, t in taken do
+					if at + half > t[1] and at - half < t[2] then
+						free = false
+						break
+					end
+				end
+				if free and D.Kinds[kind].y + 1.2 < r.top - r.y then
+					clock = clock or kind == "WallClock"
+					placed += 1
+					table.insert(out, {
+						kind = kind,
+						x = if alongX then at else line,
+						z = if alongX then line else at,
+						y = D.Kinds[kind].y,
+						rot = FACE_ROT[side],
+						room = r.id,
+					})
+				end
+			end
+		end
+	end
+	return out
+end
+
 -- Building tiles an archetype's landmarks cover (bigger stops last longer and hold more).
 function BuildingGen.tiles(landmarks: { Stations.LandmarkRule }?): number
 	if landmarks == nil then
