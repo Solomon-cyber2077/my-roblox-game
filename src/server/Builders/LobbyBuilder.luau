@@ -1880,6 +1880,17 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	)
 	-- firelight, kept to the piano corner: no shadows so the far side of the stand is lit alike
 	Kit.pointLight(flame, Color3.fromRGB(255, 147, 60), 2.4, 13, false)
+	-- a soft pool over the floor before the piano, high and wide so its falloff fades out evenly into
+	-- the dark and into the candle's glow, in the hall lamps' warm colour
+	local pool = block(
+		Vector3.one,
+		pianoAt * CFrame.new(0, 13, -9),
+		C.fill,
+		nil,
+		{ transparency = 1, collide = false, shadow = false }
+	)
+	pool.Name = "PianoPool"
+	Kit.pointLight(pool, Color3.fromRGB(255, 178, 98), 0.7, 24, false)
 	-- Gnossienne No. 3 plays from inside the case; PianoNotes floats notes off the same spot
 	local voice = block(
 		Vector3.new(0.4, 0.4, 0.4),
