@@ -98,6 +98,37 @@ function LobbyService.Init()
 	local b = built :: LobbyBuilder.Built
 	prompt(b.outfitter, "Outfitter", "Outfitter", "Browse")
 	prompt(b.ledger, "Ledger", "Line Mastery", "Read")
+	-- every chair and bench in the hall: a Sit prompt, hidden while someone sits there (jump to stand)
+	for _, seat in b.seats do
+		local p = Instance.new("ProximityPrompt")
+		p.ActionText = "Sit"
+		p.ObjectText = (seat:GetAttribute("SeatName") :: string?) or "Seat"
+		p.HoldDuration = 0
+		p.MaxActivationDistance = 5.5
+		p.RequiresLineOfSight = false
+		p.Style = Enum.ProximityPromptStyle.Custom
+		p:SetAttribute("Action", "Sit")
+		p.Parent = seat
+		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+			p.Enabled = seat.Occupant == nil
+		end)
+		p.Triggered:Connect(function(player)
+			local character = player.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if
+				humanoid
+				and root
+				and humanoid.Health > 0
+				and seat.Occupant == nil
+				and not humanoid.Sit
+				and not root.Anchored
+				and (root.Position - seat.Position).Magnitude < 9
+			then
+				seat:Sit(humanoid)
+			end
+		end)
+	end
 	StateService.Set({ "lobby" }, { ready = {}, origin = origin })
 	publishTier()
 end
