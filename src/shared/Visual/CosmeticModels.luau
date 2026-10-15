@@ -69,8 +69,11 @@ function CosmeticModels.lantern(look: { [string]: any }, frame: CFrame): Model
 		{ material = Enum.Material.Metal }
 	)
 
-	local light = Kit.pointLight(lens, Kit.rgb(look.light), 1.6, 16, false)
+	-- brightest at the lamp and falling away: a strong short light over a soft wide one
+	local glow = if typeof(look.glow) == "number" then look.glow else 1
+	local light = Kit.pointLight(lens, Kit.rgb(look.light), 3 * glow, 6, false)
 	light.Name = "Glow"
+	Kit.pointLight(lens, Kit.rgb(look.light), 0.55 * glow, 18, false).Name = "Glow"
 	if look.light2 then
 		lens:SetAttribute("CycleA", Kit.rgb(look.light))
 		lens:SetAttribute("CycleB", Kit.rgb(look.light2))
@@ -236,7 +239,7 @@ function CosmeticModels.trail(look: { [string]: any }): ParticleEmitter?
 		emitter.Speed = NumberRange.new(2, 5)
 		emitter.SpreadAngle = Vector2.new(35, 35)
 		emitter.Size =
-			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 0) })
+			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(1, 0) })
 		emitter.Acceleration = Vector3.new(0, -8, 0)
 	elseif style == "Steam" then
 		emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
@@ -246,14 +249,14 @@ function CosmeticModels.trail(look: { [string]: any }): ParticleEmitter?
 		emitter.Size =
 			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 2.2) })
 		emitter.Transparency =
-			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 1) })
+			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
 	elseif style == "Sparks" then
 		emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 		emitter.Lifetime = NumberRange.new(0.3, 0.6)
 		emitter.Speed = NumberRange.new(3, 6)
 		emitter.SpreadAngle = Vector2.new(60, 60)
 		emitter.Size =
-			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0) })
+			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 0) })
 		emitter.Acceleration = Vector3.new(0, -14, 0)
 	else -- Mist
 		emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
@@ -263,7 +266,7 @@ function CosmeticModels.trail(look: { [string]: any }): ParticleEmitter?
 		emitter.Size =
 			NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 3) })
 		emitter.Transparency =
-			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1) })
+			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(1, 1) })
 	end
 	emitter:SetAttribute("Style", style)
 	return emitter
