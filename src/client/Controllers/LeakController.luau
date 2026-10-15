@@ -2,11 +2,13 @@
 --[[
 	The leak alert, with Broken Things Markers on (UI/BrokenThingMarkers.visible): a plate in the
 	HUD's leak slot (UI/Hud: it yields to every modal and full-screen UI and never draws over
-	anything) naming the nearest leak's car and distance, a world arrow over your head
-	pointing to it with the distance, and a small red "!" at every leak (seen from anywhere
-	aboard, and from outside the train only when you are near it; the Last Light's too). All come
-	from the leak objects (anchors TrainService tags Leak) through Logic/LeakAlert, so the
-	moment the last leak is patched they are gone.
+	anything) naming the nearest leak's car and distance, a small red "!" at every leak (seen
+	from anywhere aboard, and from outside the train only when you are near it; the Last
+	Light's too), and chevrons painted flat on the floor (Logic/LeakRoute): aboard, down the
+	aisle car to car to the nearest leak and curving to the wall at it; on the platform while
+	the train stands at a station, to the Last Light's door when it is leaking. All come from
+	the leak objects (anchors TrainService tags Leak), so the moment the last leak is patched
+	they are gone.
 
 	With markers off there is neither: the leaks' own steam and hiss carry it, stronger
 	(TrainVisualsController), along with the hull's effects (HullController).
@@ -20,6 +22,8 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local LeakAlert = require(Shared.Logic.LeakAlert)
+local LeakRoute = require(Shared.Logic.LeakRoute)
+local Tuning = require(Shared.Config.Tuning)
 local Safe = require(Shared.Util.Safe)
 
 local Session = require(script.Parent.Parent.Session)
@@ -31,16 +35,15 @@ local Ui = require(script.Parent.Parent.UI.Ui)
 local LeakController = {}
 
 local TAG = "Leak"
-local ARROW_HEIGHT = 4.2 -- studs over your root
-local ARROW_NEAR = 7 -- closer than this to the leak, the arrow is not needed
+local A = Tuning.LeakArrows
 local MARK_NEAR = 20 -- off the train, a leak's "!" shows only this close (studs)
 
 local marks: { [BasePart]: BillboardGui } = {}
 
 local plate: Frame? = nil
 local label: TextLabel? = nil
-local arrow: Model? = nil
-local arrowText: TextLabel? = nil
+local chevronFolder: Folder? = nil
+local chevronParts: { BasePart } = {} -- two arms a chevron
 
 local function buildPlate(slot: Frame)
 	local panel = Ui.new("Frame", {
@@ -69,60 +72,36 @@ local function buildPlate(slot: Frame)
 	label = text
 end
 
-local function piece(model: Model, size: Vector3, offset: CFrame): BasePart
+-- A chevron painted flat on the floor, its point along -Z: two thin amber arms in a V.
+local ARMS = {
+	CFrame.new(0.3, 0, -0.05) * CFrame.Angles(0, math.rad(40), 0),
+	CFrame.new(-0.3, 0, -0.05) * CFrame.Angles(0, math.rad(-40), 0),
+}
+
+local function chevronPart(): BasePart
 	local part = Instance.new("Part")
-	part.Size = size
-	part.Color = Theme.Color.caution
+	part.Name = "LeakChevron"
+	part.Size = Vector3.new(0.24, 0.05, 0.95)
+	part.Color = Theme.Color.amber
 	part.Material = Enum.Material.Neon
 	part.Anchored = true
 	part.CanCollide = false
 	part.CanQuery = false
 	part.CanTouch = false
 	part.CastShadow = false
-	part:SetAttribute("Offset", offset)
-	part.Parent = model
 	return part
 end
 
--- A chevron arrow (pointing along its -Z) with a distance tag, local to this client.
-local function buildArrow()
-	local model = Instance.new("Model")
-	model.Name = "LeakArrow"
-	piece(model, Vector3.new(0.3, 0.3, 1.8), CFrame.new(0, 0, 0.5))
-	piece(model, Vector3.new(0.3, 0.3, 1.1), CFrame.new(0.32, 0, -0.55) * CFrame.Angles(0, math.rad(-40), 0))
-	piece(model, Vector3.new(0.3, 0.3, 1.1), CFrame.new(-0.32, 0, -0.55) * CFrame.Angles(0, math.rad(40), 0))
-	local anchor = piece(model, Vector3.new(0.1, 0.1, 0.1), CFrame.new())
-	anchor.Transparency = 1
-	local tag = Instance.new("BillboardGui")
-	tag.Size = UDim2.fromOffset(70, 22)
-	tag.StudsOffsetWorldSpace = Vector3.new(0, 0.9, 0)
-	tag.AlwaysOnTop = true
-	tag.Adornee = anchor
-	tag.Parent = model
-	local text = Ui.text({
-		Text = "",
-		Font = Theme.Font.displayMedium,
-		TextSize = 14,
-		Color = Theme.Color.caution,
-		Size = UDim2.fromScale(1, 1),
-		XAlign = Enum.TextXAlignment.Center,
-	})
-	text.TextStrokeTransparency = 0.4
-	text.Parent = tag
-	model.Parent = nil
-	arrow = model
-	arrowText = text
-end
-
-local function placeArrow(model: Model, at: Vector3, toward: Vector3)
-	local flat = Vector3.new(toward.X - at.X, 0, toward.Z - at.Z)
-	local look = if flat.Magnitude > 0.1 then flat.Unit else Vector3.zAxis
-	local base = CFrame.lookAt(at, at + look)
-	for _, part in model:GetChildren() do
-		if part:IsA("BasePart") then
-			part.CFrame = base * ((part:GetAttribute("Offset") :: CFrame?) or CFrame.new())
-		end
+local function buildChevrons()
+	local folder = Instance.new("Folder")
+	folder.Name = "LeakArrows"
+	for _ = 1, A.Count * #ARMS do
+		local part = chevronPart()
+		part.Parent = folder
+		table.insert(chevronParts, part)
 	end
+	folder.Parent = nil
+	chevronFolder = folder
 end
 
 -- A small red exclamation mark at the leak: a painted "!" with a soot outline, no plate.
@@ -184,6 +163,95 @@ local function leaks(): { LeakAlert.Leak }
 	return out
 end
 
+-- The path the chevrons follow now, in train-local studs, and the train's frame; nil for none.
+local function route(root: BasePart): ({ LeakRoute.Point }?, CFrame?, Model?)
+	local train: Model? = nil
+	local origin: CFrame? = nil
+	local here: Vector3 = Vector3.zero
+	local best: Vector3? = nil
+	local cabLeak = false
+	for _, anchor in CollectionService:GetTagged(TAG) do
+		if anchor:IsA("BasePart") and anchor:IsDescendantOf(Workspace) then
+			if origin == nil then
+				train = anchor:FindFirstAncestorOfClass("Model")
+				local value = train and train:GetAttribute("Origin")
+				if typeof(value) ~= "CFrame" then
+					return nil
+				end
+				origin = value
+				here = value:PointToObjectSpace(root.Position)
+			end
+			local at = (origin :: CFrame):PointToObjectSpace(anchor.Position)
+			if anchor:GetAttribute("BreachAnchor") == A.CabAnchor then
+				cabLeak = true
+			elseif best == nil or math.abs(at.X - here.X) < math.abs(best.X - here.X) then
+				best = at
+			end
+		end
+	end
+	if origin == nil then
+		return nil
+	end
+	local from = { x = here.X, z = here.Z }
+	local aboard = Session.status() == "Aboard"
+	local phase = Session.phase()
+	local docked = phase == "Dwell" or phase == "LastCall"
+	-- inside the Last Light itself there is nowhere further to lead
+	local inCab = math.abs(here.X - A.CabDoorX) < 7 and math.abs(here.Z) < A.CabDoorZ
+	if aboard and best and not inCab then
+		return LeakRoute.inside(from, { x = best.X, z = best.Z }), origin, train
+	elseif not aboard and docked and cabLeak then
+		local dx, dz = here.X - A.CabDoorX, here.Z - A.CabDoorZ
+		if math.sqrt(dx * dx + dz * dz) <= A.PlatformReach then
+			return LeakRoute.platform(from), origin, train
+		end
+	end
+	return nil
+end
+
+local FEET = 3 -- an R6 root stands this far over the floor
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+local function updateChevrons(on: boolean, root: BasePart?)
+	local folder = chevronFolder
+	if folder == nil then
+		return
+	end
+	local path, origin = nil, nil
+	if on and root then
+		path, origin = route(root)
+	end
+	if path == nil or origin == nil or root == nil then
+		folder.Parent = nil
+		return
+	end
+	local placed = LeakRoute.place(path, os.clock() * A.Scroll)
+	rayParams.FilterDescendantsInstances = { folder, root.Parent :: Instance }
+	local rootY = origin:PointToObjectSpace(root.Position).Y
+	for index = 1, A.Count do
+		local chevron = placed[index]
+		for arm = 1, #ARMS do
+			local part = chevronParts[(index - 1) * #ARMS + arm]
+			if chevron == nil then
+				part.Transparency = 1
+			else
+				-- painted on whatever floor is under it: carriage boards or the platform
+				-- (never on a seat or a crate: anything above your feet is passed under)
+				local feet = origin * Vector3.new(chevron.x, rootY - FEET, chevron.z)
+				local hit = Workspace:Raycast(feet + origin.UpVector * 0.5, -origin.UpVector * 6, rayParams)
+				local at = if hit then hit.Position else feet
+				local look = origin:VectorToWorldSpace(Vector3.new(chevron.dx, 0, chevron.dz))
+				part.CFrame = CFrame.lookAt(at + origin.UpVector * 0.04, at + origin.UpVector * 0.04 + look)
+					* ARMS[arm]
+				-- the farther ones fade
+				part.Transparency = 0.2 + 0.6 * (index - 1) / A.Count
+			end
+		end
+	end
+	folder.Parent = Workspace.CurrentCamera
+end
+
 local function step()
 	local character = Players.LocalPlayer.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -198,19 +266,7 @@ local function step()
 			label.Text = view.text
 		end
 	end
-	local model = arrow
-	if model then
-		if view and root and view.distance > ARROW_NEAR then
-			local target = Vector3.new(view.nearest.x, view.nearest.y, view.nearest.z)
-			placeArrow(model, root.Position + Vector3.yAxis * ARROW_HEIGHT, target)
-			if arrowText then
-				arrowText.Text = `{view.metres} m`
-			end
-			model.Parent = Workspace.CurrentCamera
-		else
-			model.Parent = nil
-		end
-	end
+	updateChevrons(view ~= nil, root)
 end
 
 function LeakController.Init() end
@@ -222,7 +278,7 @@ function LeakController.Start()
 	else
 		warn("LeakController: the HUD has no leak slot")
 	end
-	buildArrow()
+	buildChevrons()
 	RunService.RenderStepped:Connect(function()
 		Safe.call("LeakController.step", step)
 	end)

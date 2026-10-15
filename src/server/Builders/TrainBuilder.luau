@@ -139,6 +139,8 @@ end
 
 function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	local model = Kit.model("Train")
+	-- the build's frame, for clients that work in train-local studs (Controllers/LeakController)
+	model:SetAttribute("Origin", origin)
 	local function at(x: number, y: number, z: number): CFrame
 		return origin * CFrame.new(x, y, z)
 	end
