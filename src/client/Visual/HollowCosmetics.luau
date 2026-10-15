@@ -25,6 +25,7 @@ export type Handle = {
 	effects: { Effect },
 	light: PointLight?,
 	eyes: { BasePart },
+	sheds: { { part: BasePart, origin: CFrame, cycle: number } },
 	built: boolean,
 	destroyed: boolean,
 	near: boolean,
@@ -241,6 +242,17 @@ local function build(h: Handle)
 		)
 	end
 	if kind == "Crawler" then
+		-- Three reusable local flakes: no replicated debris or accumulating physics parts.
+		for _ = 1, C.ShedCount do
+			local flake = part(h, chest, Vector3.new(0.28, 0.45, 0.12), I, jaw.Color, v.scale, true)
+			local weld = flake:FindFirstChildOfClass("WeldConstraint")
+			if weld then
+				weld:Destroy()
+			end
+			flake.Anchored = true
+			flake.Transparency = 1
+			table.insert(h.sheds, { part = flake, origin = chest.CFrame, cycle = -1 })
+		end
 		-- Local head coordinates follow its existing inverted neck; no joint edits.
 		for i = 1, 6 do
 			part(
@@ -377,6 +389,7 @@ function Cosmetics.attach(model: Model, root: BasePart): Handle
 		stains = {},
 		effects = {},
 		eyes = {},
+		sheds = {},
 		light = nil,
 		built = false,
 		destroyed = false,
@@ -406,6 +419,19 @@ function Cosmetics.update(h: Handle, position: Vector3?, grime: number, state: s
 			s.part.Color = s.color:Lerp(Color3.new(0, 0, 0), grime * 0.25)
 			s.part.Transparency = if grime < s.threshold then 1 else 0.8 - grime * 0.65
 		end
+	end
+	local now = os.clock()
+	for i, shed in h.sheds do
+		local t = now + i * C.ShedPeriod / C.ShedCount + h.seed % 7
+		local cycle = math.floor(t / C.ShedPeriod)
+		local age = t % C.ShedPeriod
+		if cycle ~= shed.cycle then
+			shed.cycle = cycle
+			shed.origin = h.root.CFrame * CFrame.new((i - 2) * 0.6, 0.8, 0)
+		end
+		shed.part.Transparency = if near and age < C.ShedFall then age / C.ShedFall else 1
+		shed.part.CFrame = (shed.origin + Vector3.new(0, -C.ShedDrop * (age / C.ShedFall) ^ 2, 0))
+			* CFrame.Angles(age * 2, age, 0)
 	end
 	local alert = state == "Hunt" or state == "Windup" or state == "Grab" or state == "Recover"
 	if h.light then
@@ -441,9 +467,8 @@ function Cosmetics.offsets(
 	if not h.built or not h.near or state ~= "Prowl" or speed > C.IdleSpeed or stunned then
 		return I, I
 	end
-	local step = math.floor(clock / C.StepTime) + h.seed
-	-- Held, small offsets, always composed onto the animator's fresh base pose.
-	local pulse = if step % 19 < 3 then math.sin(step * 2.7) else 0
+	local step = (clock / C.StepTime + h.seed) % 19
+	local pulse = if step < 3 then math.sin(math.pi * step / 3) else 0
 	return CFrame.Angles(pulse * C.NeckAngle, pulse * C.NeckAngle, 0),
 		CFrame.Angles(math.abs(pulse) * C.JawAngle, 0, 0)
 end

@@ -52,6 +52,26 @@ Every task play-tested in Studio (stop 1 docked, console clean apart from the ex
 3. Next logical step
 - Audition the footstep/breath ids by ear and swap any that do not fit; Prompt 6 (chase lighting); decide on the pylons.
 
+## 2026-10-15: FLUID HOLLOW MOVEMENT (Astra task 4)
+1. Completed: eased gait speed/cadence, smooth waking and neck transitions, smaller eased twitches and continuous cosmetic pulses. Existing monster designs preserved.
+2. Verification: Full `lune run check` passed again on resume, including fresh Rojo sourcemap, strict types, tests and visual audit. No Studio opened or changed during this resume, per owner instruction. Movement feel and crawler shedding still need owner playtesting.
+3. Next: tasks 5-8 (bounded obstacle pursuit, roster encounters, sound-before-sight, shared run-seeded variation) remain outstanding. Owner now authorizes merging completed work with Claude's stable lobby branch.
+
+
+## 2026-10-15: EARLY MONSTER PROGRESSION (Codex task 3)
+1. Completed: progression starts at 30% at stop 1 and reaches 100% at stop 10; Stalker torso/neck and Crawler spine/head contort progressively. Brute pose/model unchanged. Photo rig accepts stop number; compared stops 1/3/6/10 in Blender at half resolution, all eight poses have IK shortfall 0.
+2. Verification/limits: full `lune run check` passed. Isolated Studio reached stop 1 and teleported to the station route without game-script errors; known local DataStore/font/UIBlox warnings only. The four-stop comparison is photo-rig evidence, not four live runs. Comparison saved outside repository as monster-progression.png.
+3. Next: eased motion, obstacle handling, encounter opportunities and sound-led seeded variation. Do not merge until owner confirms Claude has finished.
+
+## 2026-10-15: CRAWLER DESIGN (Codex task 2)
+1. Completed: longer uneven matted hair, three hanging skin strips and three pooled local shedding flakes. No new crawler clothing/blood changes; Brute unchanged. Blender photo: 110 visible parts, IK shortfall 0.
+2. Verification/limits: full `lune run check` passed. Isolated HollowDesignTest.rbxl reached stop 1; no game-script errors, Roblox UIBlox/font and local DataStore warnings. Dev crawler spawn/grab both returned false, so in-engine shedding remains unverified; photo confirms static model only.
+3. Next: stronger early progression and stop 1/3/6/10 comparisons; verify shedding in a roster encounter. Do not merge until owner confirms Claude has finished.
+## 2026-10-15: TALL HOLLOW DESIGN (Codex task 1)
+1. Completed: gaunt long-armed Stalker, hunched face-cradling gait, dark wool-inspired ragged coat and bloody hands; 60 visible parts. Period clothing/palette sources recorded in LORE. Prompt 3 amended; reusable Blender photo rig added.
+2. Verification/limits: full `lune run check` passed; Blender pose IK shortfall 0. Isolated `HollowDesignTest.rbxl` played to stop 1 and a tall Hollow was visible; no gameplay script errors, local DataStore/font warnings. Dev extra spawn returned false; controlled roster/stop comparisons remain pending.
+3. Next: crawler hair/shedding flesh, then progression, motion and encounters. Branch codex/hollow-design; do not merge until owner confirms Claude is finished.
+
 ## 2026-10-14: SLIDING GRAB ZONE
 `lune run check` passes (354 specs). Play-tested: `grab Stalker` at a dock, zone moves ~100 px/s, console clean.
 1. Features completed
