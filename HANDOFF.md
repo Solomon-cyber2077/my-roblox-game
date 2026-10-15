@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-15: TALL HOLLOW DESIGN (Codex task 1)
+1. Completed: gaunt long-armed Stalker, hunched face-cradling gait, dark wool-inspired ragged coat and bloody hands; 60 visible parts. Period clothing/palette sources recorded in LORE. Prompt 3 amended; reusable Blender photo rig added.
+2. Verification/limits: full `lune run check` passed; Blender pose IK shortfall 0. Isolated `HollowDesignTest.rbxl` played to stop 1 and a tall Hollow was visible; no gameplay script errors, local DataStore/font warnings. Dev extra spawn returned false; controlled roster/stop comparisons remain pending.
+3. Next: crawler hair/shedding flesh, then progression, motion and encounters. Branch codex/hollow-design; do not merge until owner confirms Claude is finished.
+
 ## 2026-10-14: SLIDING GRAB ZONE
 `lune run check` passes (354 specs). Play-tested: `grab Stalker` at a dock, zone moves ~100 px/s, console clean.
 1. Features completed
