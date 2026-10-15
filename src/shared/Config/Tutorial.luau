@@ -30,6 +30,7 @@ export type PostGrab = { immunity: number, stagger: boolean }
 	  Leak        a steam leak opens aboard
 	  Exhausted   you sprint your breath out
 	  Junction    the vote for the next stop opens
+	  Carrying    your backpack holds something
 ]]
 export type Prompt = { id: string, tier: number, when: string, text: string }
 
@@ -110,6 +111,12 @@ return table.freeze({
 			tier = 1,
 			when = "OffTrain",
 			text = "Search crates and bags with E. Carry coal and parts back aboard.",
+		},
+		{
+			id = "Drop",
+			tier = 1,
+			when = "Carrying",
+			text = "Right-click an item in your backpack to drop it.",
 		},
 		{
 			id = "Light",

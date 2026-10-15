@@ -130,6 +130,9 @@ local function happening(when: string, run: any): boolean
 		return Registry.MovementController.IsExhausted()
 	elseif when == "Junction" then
 		return phase == "Junction"
+	elseif when == "Carrying" then
+		local inv = Registry.StateController.GetPrivate({ "inventory" })
+		return inv ~= nil and inv.items ~= nil and #inv.items > 0
 	end
 	return false
 end

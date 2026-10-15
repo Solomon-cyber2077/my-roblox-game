@@ -1024,9 +1024,6 @@ function Hud.mount(gui: ScreenGui)
 				`Heavy load: {math.floor((1 - Inventory.speedMultiplier(state :: any)) * 100 + 0.5)}% slower`
 			)
 		end
-		if #state.items > 0 then
-			table.insert(hints, "right-click drops")
-		end
 		backpackHint.Text = table.concat(hints, "  ·  ")
 	end
 

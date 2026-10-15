@@ -142,6 +142,7 @@ describe("Part 2 config (Config/Difficulty)", function()
 			Cruise = true,
 			Leak = true,
 			Exhausted = true,
+			Carrying = true,
 			Junction = true,
 		}
 		local ids = {}
