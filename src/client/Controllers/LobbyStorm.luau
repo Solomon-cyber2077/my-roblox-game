@@ -31,7 +31,6 @@ local FLASH_GAP = { 7, 16 } -- seconds between strikes
 local THUNDER_DELAY = { 0.35, 2.4 } -- seconds from flash to thunder
 local INK = Color3.fromRGB(10, 10, 14) -- the skyline, black against the cloud
 local CLOUD = Color3.fromRGB(40, 44, 62)
-local HORIZON = Color3.fromRGB(70, 66, 88) -- a bruised band low down, so the skyline stands out
 local CLOUD_LIT = Color3.fromRGB(168, 176, 214)
 local BOLT = Color3.fromRGB(214, 222, 255)
 
@@ -40,7 +39,6 @@ local LobbyStorm = {}
 local rng = Random.new()
 local folder: Folder? = nil
 local sky: BasePart? = nil
-local horizon: BasePart? = nil
 local flashLights: { PointLight } = {}
 local rainEmitters: { ParticleEmitter } = {}
 local centre = Vector3.zero
@@ -68,19 +66,14 @@ end
 
 local function buildSkyline(parent: Instance)
 	-- the cloud deck: a dark sheet far behind the skyline that the lightning lights from inside
-	local cloud = Kit.block(parent, Vector3.new(600, 200, 2), facing(spot(0, 110, 80)), CLOUD, {
+	-- wide and deep enough that its edges never show through the windows
+	local cloud = Kit.block(parent, Vector3.new(1400, 500, 2), facing(spot(0, 110, 40)), CLOUD, {
 		material = Enum.Material.Neon,
 		collide = false,
 	})
 	cloud.Transparency = 0.05
 	cloud.Name = "CloudDeck"
 	sky = cloud
-	local band = Kit.block(parent, Vector3.new(600, 36, 2), facing(spot(0, 106, 22)), HORIZON, {
-		material = Enum.Material.Neon,
-		collide = false,
-	})
-	band.Transparency = 0.25
-	horizon = band
 end
 
 local function buildRain(parent: Instance, panes: { BasePart })
@@ -156,10 +149,6 @@ local function setFlash(amount: number, lights: boolean)
 	local cloud = sky
 	if cloud then
 		cloud.Color = CLOUD:Lerp(CLOUD_LIT, amount)
-	end
-	local band = horizon
-	if band then
-		band.Color = HORIZON:Lerp(CLOUD_LIT, amount)
 	end
 	for _, light in flashLights do
 		light.Brightness = if lights then amount * 6 else 0

@@ -160,7 +160,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	-- Platform floor: stone flags laid in bays between granite joints under the columns, a slate
 	-- border along the walls and an oxblood quarry-tile walk down the hall with the rosette in it
 	local WALK0, WALK1 = 20, 28
-	local floorX0, floorX1 = -HALF_X + 1, HALF_X - 1
+	local floorX0, floorX1 = -HALF_X, HALF_X
 	local BORDER = 3
 	block(
 		Vector3.new(floorX1 - floorX0, 1, BORDER),
@@ -171,7 +171,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	for _, side in { -1, 1 } do
 		block(
 			Vector3.new(BORDER, 1, BACK_Z - BORDER - EDGE_Z),
-			at(side * (HALF_X - 1 - BORDER / 2), -0.5, (EDGE_Z + BACK_Z - BORDER) / 2),
+			at(side * (HALF_X - BORDER / 2), -0.5, (EDGE_Z + BACK_Z - BORDER) / 2),
 			C.slateDark,
 			Enum.Material.Slate
 		)
@@ -300,6 +300,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.Material.Metal
 		)
 	end
+
+	-- black ground far under the hall, so no gap or opening shows the grey void
+	decor(Vector3.new(2 * HALF_X + 400, 1, 600), at(0, -20, 0), C.void, Enum.Material.SmoothPlastic)
 
 	-- Platform edge: coping, the whitewashed line (a cool white, so the lamps leave it white) and the brick face
 	block(Vector3.new(2 * HALF_X, 0.3, 1.4), at(0, 0.15, EDGE_Z + 0.7), C.stone, Enum.Material.Concrete)
@@ -1231,9 +1234,21 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			x += w + (if lean > 0 then 0.25 else 0)
 		end
 	end
-	local function bookcase(x: number, width: number, seed: number)
-		local frame = at(x, 0, BACK_Z - 1.2)
+	-- A bookcase standing on `frame` (its doors face the frame's -Z), with one unseen solid box
+	local function bookcase(frame: CFrame, width: number, seed: number)
 		local height, depth = 8.4, 1.6
+		local solid = Kit.block(
+			model,
+			Vector3.new(width, height, depth),
+			frame * CFrame.new(0, height / 2, 0),
+			Color3.new(),
+			{
+				transparency = 1,
+				shadow = false,
+			}
+		)
+		solid.Name = "BookcaseCollider"
+		solid.CanQuery = false
 		local wood = Kit.shade(C.wood, 0.85)
 		block(
 			Vector3.new(width + 0.2, 0.6, depth + 0.2),
@@ -1300,20 +1315,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			collide = false,
 		})
 	end
-	for _, x in { -90, 66, 90 } do
-		local solid = block(
-			Vector3.new(9, 8.4, 1.6),
-			at(x, 4.2, BACK_Z - 1.2),
-			Color3.new(),
-			nil,
-			{ transparency = 1, shadow = false }
-		)
-		solid.Name = "BookcaseCollider"
-		solid.CanQuery = false
-	end
-	bookcase(-90, 9, 3)
-	bookcase(66, 9, 41)
-	bookcase(90, 9, 77)
+	bookcase(at(-90, 0, BACK_Z - 1.2), 9, 3)
+	bookcase(at(66, 0, BACK_Z - 1.2), 9, 41)
+	bookcase(at(90, 0, BACK_Z - 1.2), 9, 77)
 
 	-- the bookstall: back shelves of books and yellowbacks, a sloped counter of papers and periodicals
 	do
@@ -1506,37 +1510,67 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		{ material = Enum.Material.SmoothPlastic, collide = false }
 	)
 	-- a bookcase against the end wall and a palm by the stove
-	local caseAt = at(-HALF_X + 1.1, 0, wz + 13) * Kit.angles(0, -90, 0)
-	block(Vector3.new(8, 9, 2), caseAt * CFrame.new(0, 4.5, 0), C.wood, Enum.Material.Wood)
-	for row = 0, 3 do
-		decor(
-			Vector3.new(7 - (row % 2) * 0.6, 1.5, 1.2),
-			caseAt * CFrame.new(0, 1.4 + row * 2.1, -0.5),
-			Color3.fromHSV((row * 0.23) % 1, 0.45, 0.45),
-			Enum.Material.SmoothPlastic
+	bookcase(at(-HALF_X + 1.2, 0, wz + 13) * Kit.angles(0, -90, 0), 9, 59)
+	-- the palm: a glazed pot with a rolled rim and soil, a ringed trunk and fronds arching out and down
+	local potAt = at(wx - 10, 0, wz + 10)
+	local LEAF = Color3.fromRGB(56, 92, 52)
+	Kit.post(model, 2.2, 2.4, potAt * CFrame.new(0, 1.1, 0), Color3.fromRGB(150, 84, 58), {
+		material = Enum.Material.Plastic,
+	})
+	Kit.cylinder(
+		model,
+		0.4,
+		2.8,
+		potAt * CFrame.new(0, 2.2, 0) * Kit.angles(0, 0, 90),
+		Color3.fromRGB(128, 70, 48),
+		{
+			material = Enum.Material.Plastic,
+		}
+	)
+	Kit.cylinder(
+		model,
+		0.1,
+		2.3,
+		potAt * CFrame.new(0, 2.37, 0) * Kit.angles(0, 0, 90),
+		Color3.fromRGB(44, 32, 24),
+		{
+			material = Enum.Material.Ground,
+			collide = false,
+		}
+	)
+	for k = 0, 3 do
+		Kit.post(
+			model,
+			0.9,
+			0.5 - k * 0.05,
+			potAt * CFrame.new(0, 2.8 + k * 0.85, 0),
+			Color3.fromRGB(96, 74, 50),
+			{
+				material = Enum.Material.Wood,
+				collide = false,
+			}
 		)
 	end
-	local potAt = at(wx - 10, 0, wz + 10)
-	Kit.post(
-		model,
-		2.4,
-		2.6,
-		potAt * CFrame.new(0, 1.2, 0),
-		Color3.fromRGB(150, 80, 56),
-		{ material = Enum.Material.Brick }
-	)
-	for k = 0, 6 do
-		Kit.wedge(
-			model,
-			Vector3.new(0.4, 0.6, 4.2),
-			potAt
-				* CFrame.new(0, 3.4, 0)
-				* Kit.angles(0, k * 51, 0)
-				* Kit.angles(-28 - (k % 3) * 9, 0, 0)
-				* CFrame.new(0, 0, -2.1),
-			Color3.fromRGB(60, 104, 60),
-			{ material = Enum.Material.LeafyGrass, collide = false }
-		)
+	local crown = potAt * CFrame.new(0, 6.0, 0)
+	for f = 0, 7 do
+		-- each frond: four lengths, narrowing and drooping further at each joint
+		local cf = crown * Kit.angles(0, f * 45 + (f % 2) * 20, 0) * Kit.angles(-(35 - (f % 2) * 12), 0, 0)
+		for seg = 0, 3 do
+			local length = 1.3 - seg * 0.12
+			local width = 1.3 - seg * 0.25
+			Kit.block(
+				model,
+				Vector3.new(width, 0.08, length),
+				cf * CFrame.new(0, 0, -length / 2),
+				Kit.shade(LEAF, 1 - seg * 0.06),
+				{
+					material = Enum.Material.SmoothPlastic,
+					collide = false,
+					shadow = false,
+				}
+			)
+			cf = cf * CFrame.new(0, 0, -length) * Kit.angles(-14, 0, 0)
+		end
 	end
 
 	-- The tea room at the east end: soup on the stove, nobody leaves hungry -----------------------------
