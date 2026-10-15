@@ -318,7 +318,7 @@ function Lobby.mount(gui: ScreenGui)
 		Font = Theme.Font.display,
 		TextSize = 20,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(0, 24),
+		Position = UDim2.fromOffset(0, 30),
 		Size = UDim2.new(1, 0, 0, 22),
 		XAlign = Enum.TextXAlignment.Center,
 	})
@@ -328,36 +328,11 @@ function Lobby.mount(gui: ScreenGui)
 		Font = Theme.Font.body,
 		TextSize = 14,
 		Color = Theme.Color.boneDim,
-		Position = UDim2.fromOffset(12, 46),
+		Position = UDim2.fromOffset(12, 56),
 		Size = UDim2.new(1, -24, 0, 16),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	detail.Parent = panel
-	-- one signal lamp per crewmate the departure needs: lit when they are ready
-	local lampRow = Ui.new("Frame", {
-		Name = "Lamps",
-		Size = UDim2.new(1, 0, 0, 16),
-		Position = UDim2.fromOffset(0, 64),
-		BackgroundTransparency = 1,
-		Parent = panel,
-	})
-	Ui.list(Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Center).Parent = lampRow
-	local lamps: { ImageLabel } = {}
-	for i = 1, 4 do
-		lamps[i] = Ui.new("ImageLabel", {
-			Size = UDim2.fromOffset(16, 16),
-			BackgroundTransparency = 1,
-			Image = Theme.Image.lampDark,
-			LayoutOrder = i,
-			Parent = lampRow,
-		}) :: ImageLabel
-	end
-	local function setLamps(ready: number, needed: number)
-		for i, lamp in lamps do
-			lamp.Visible = i <= math.max(needed, ready)
-			lamp.Image = if i <= ready then Theme.Image.lampLit else Theme.Image.lampDark
-		end
-	end
 	local readyButton = Ui.button("READY", "Primary", nil, {
 		Size = UDim2.new(1, -24, 0, 34),
 		Position = UDim2.new(0.5, 0, 1, -10),
@@ -376,6 +351,46 @@ function Lobby.mount(gui: ScreenGui)
 			child.PaddingBottom = UDim.new(0, 0)
 		end
 	end
+	-- raised: a shaded lip along the bottom and right edges; hover sinks it halfway, a press pushes it flush
+	local READY_AT, LIP = readyButton.Position, 5
+	local lipColor = Color3.fromRGB(138, 100, 44)
+	local lipBottom = Ui.new("Frame", {
+		Name = "LipBottom",
+		BackgroundColor3 = lipColor,
+		BorderSizePixel = 0,
+		Parent = readyButton,
+	})
+	local lipRight = Ui.new("Frame", {
+		Name = "LipRight",
+		BackgroundColor3 = lipColor:Lerp(Color3.new(0, 0, 0), 0.25),
+		BorderSizePixel = 0,
+		Parent = readyButton,
+	})
+	local function raise(depth: number)
+		readyButton.Position = READY_AT + UDim2.fromOffset(LIP - depth, LIP - depth)
+		lipBottom.Position = UDim2.new(0, depth, 1, 0)
+		lipBottom.Size = UDim2.new(1, 0, 0, depth)
+		lipRight.Position = UDim2.new(1, 0, 0, depth)
+		lipRight.Size = UDim2.new(0, depth, 1, 0)
+		lipBottom.Visible, lipRight.Visible = depth > 0, depth > 0
+	end
+	READY_AT -= UDim2.fromOffset(LIP, LIP)
+	raise(LIP)
+	local readyHover = false
+	readyButton.MouseEnter:Connect(function()
+		readyHover = true
+		raise(LIP // 2)
+	end)
+	readyButton.MouseLeave:Connect(function()
+		readyHover = false
+		raise(LIP)
+	end)
+	readyButton.MouseButton1Down:Connect(function()
+		raise(0)
+	end)
+	readyButton.MouseButton1Up:Connect(function()
+		raise(if readyHover then LIP // 2 else LIP)
+	end)
 	readyButton.Activated:Connect(function()
 		if readyButton:GetAttribute("Disabled") then
 			return
@@ -430,14 +445,14 @@ function Lobby.mount(gui: ScreenGui)
 		Net.Fire("SetRunTier", (tier.selected or 1) % maxTier + 1)
 	end)
 
-	-- Shortcuts: two plates under the pass -----------------------------------------------------
+	-- Shortcut: a plate under the pass (the Outfitter is the stand in the hall) -------------------
 	local shortcuts = Ui.new("Frame", {
 		Size = UDim2.fromOffset(330, 44),
 		Position = UDim2.fromOffset(14, 186),
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
-	for i, shortcut in { { "OUTFITTER", "Outfitter" }, { "LINE MASTERY", "Ledger" } } do
+	for i, shortcut in { { "LINE MASTERY", "Ledger" } } do
 		local button = Ui.button(shortcut[1], "Secondary", function()
 			Registry.UIController.Open(shortcut[2])
 		end, {
@@ -562,22 +577,19 @@ function Lobby.mount(gui: ScreenGui)
 				else "Too far down the line. Next departure after this run."
 			readyButton.Text = "JOIN AT NEXT STOP"
 			Ui.setButtonEnabled(readyButton, joinable)
-			setLamps(0, 0)
 			rows = `EN ROUTE  ·  STOP {stop} OF {Tuning.Run.StationCount}\nNEXT DEPARTURE AFTER THIS RUN`
 		elseif phase == "Countdown" then
 			local remaining = math.max((run.phaseEndsAt or now) - now, 0)
 			status.Text = `DEPARTING IN {Format.clock(remaining)}`
-			detail.Text = `{readyCount} ready  ·  everyone in the hall boards`
+			detail.Text = `{readyCount} ready to depart`
 			readyButton.Text = if mine then "READY ✓" else "READY"
 			Ui.setButtonEnabled(readyButton, true)
-			setLamps(readyCount, readyCount)
 			rows = `BOARDING NOW  ·  DEPARTS {Format.clock(remaining)}\n{readyCount} CREW READY`
 		else
 			status.Text = "WAITING FOR CREW"
 			detail.Text = `{readyCount}/{needed} ready to depart`
 			readyButton.Text = if mine then "READY ✓" else "READY"
 			Ui.setButtonEnabled(readyButton, true)
-			setLamps(readyCount, needed)
 			rows = `STATUS  ·  WAITING FOR CREW\n{readyCount} OF {needed} READY`
 		end
 		if boardHead and boardRows and boardGui then

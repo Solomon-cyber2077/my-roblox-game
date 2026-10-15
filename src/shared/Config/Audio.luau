@@ -98,6 +98,24 @@ local Cues: { [string]: Cue } = {
 
 	-- weather
 	Rain = { id = 9116496074, volume = 0.34, loop = true, pitch = 0.55 }, -- the steam hiss slowed into rain
+	-- the storm outside the Depot Hall's back windows (Controllers/LobbyStorm); ProSoundEffects library
+	LobbyRain = { id = 9112855439, volume = 0.5, loop = true, spatial = true, rollOff = 170, pitch = 0.92 },
+	LobbyThunder = {
+		id = 9116282646,
+		volume = 0.8,
+		spatial = true,
+		rollOff = 420,
+		maxSeconds = 10,
+		pitch = 0.82,
+	},
+	LobbyThunderFar = {
+		id = 9113218938,
+		volume = 0.7,
+		spatial = true,
+		rollOff = 420,
+		maxSeconds = 5,
+		pitch = 0.5,
+	},
 
 	-- the fog: a scream slowed until it is many voices whispering, out where the fog lies
 	FogWhisper = { id = 9125475729, volume = 0.5, loop = true, spatial = true, pitch = 0.36 },
