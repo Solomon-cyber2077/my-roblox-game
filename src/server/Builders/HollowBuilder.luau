@@ -439,6 +439,19 @@ local function crawler(model: Model, root: BasePart)
 	joint("Neck", chest, head, CFrame.new(0, 1.9, -0.1) * Kit.angles(70, 0, 180), CFrame.new(0, -0.7, 0))
 	joint("Jaw", head, jaw, CFrame.new(0, -0.66, 0.36), CFrame.new(0, 0.12, 0.5))
 
+	-- Loose skin peels away from the exposed spine; the body keeps moving beneath it.
+	for i = 1, 3 do
+		local slough = decoWedge(
+			model,
+			chest,
+			Vector3.new(0.38, 0.85 + i * 0.17, 0.15),
+			CFrame.new((if i % 2 == 0 then -1 else 1) * 0.65, 1.1 - i * 0.7, 0.85)
+				* Kit.angles(25, i * 17, (i - 2) * 22),
+			SKIN_DARK,
+			skin
+		)
+		slough.Name = "LooseFlesh"
+	end
 	-- the gown: torn open down the back over a spine that shows, stained at the front
 	for i = 0, 5 do
 		decoBall(model, chest, 0.42 - i * 0.02, CFrame.new(0, 1.35 - i * 0.55, 0.62), SKIN_DARK, skin)
@@ -536,13 +549,13 @@ local function crawler(model: Model, root: BasePart)
 	end
 	-- hair from the crown: the head is upside down, so it hangs to the ground
 	for i = -3, 4 do
-		local long = 2.2 + ((i * 7) % 5) * 0.2
+		local long = 2.5 + ((i * 7) % 5) * 0.24
 		deco(
 			model,
 			head,
-			Vector3.new(0.16 + (i % 2) * 0.05, long, 0.1),
-			CFrame.new(i * 0.15 - 0.07, 0.7 + long / 2, 0.15 + (i % 3) * 0.12)
-				* Kit.angles(-6 + (i % 3) * 5, 0, i * 2),
+			Vector3.new(0.19 + (i % 2) * 0.05, long, 0.12),
+			CFrame.new(i * 0.15 - 0.07 + (i % 3) * 0.04, 0.7 + long / 2, 0.25 + (i % 3) * 0.14)
+				* Kit.angles(-10 + (i % 3) * 8, (i % 2) * 5, i * 5),
 			HAIR,
 			cloth
 		)
