@@ -1890,7 +1890,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		{ transparency = 1, collide = false, shadow = false }
 	)
 	pool.Name = "PianoPool"
-	Kit.pointLight(pool, Color3.fromRGB(255, 178, 98), 11, 25, false)
+	Kit.pointLight(pool, Color3.fromRGB(255, 178, 98), 10, 24, false)
 	-- Gnossienne No. 3 plays from inside the case; PianoNotes floats notes off the same spot
 	local voice = block(
 		Vector3.new(0.4, 0.4, 0.4),
