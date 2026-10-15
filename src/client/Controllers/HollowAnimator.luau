@@ -46,6 +46,7 @@ type Rig = {
 	motors: { [string]: Motor6D },
 	pose: Pose,
 	phase: number,
+	smoothedSpeed: number,
 	seed: number,
 	state: string,
 	stateAt: number,
@@ -282,28 +283,30 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 
 	local velocity = rig.root.AssemblyLinearVelocity
 	local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+	rig.smoothedSpeed += (speed - rig.smoothedSpeed) * (1 - math.exp(-Tuning.HollowMotion.SpeedResponse * dt))
+	local animationSpeed = rig.smoothedSpeed
 	local dressing = cosmetics[model]
 	local neckOffset, jawOffset = I, I
 	if dressing then
-		HollowCosmetics.update(dressing, position, grime, state, speed)
-		neckOffset, jawOffset = HollowCosmetics.offsets(dressing, clock, state, speed, stunned)
+		HollowCosmetics.update(dressing, position, grime, state, animationSpeed)
+		neckOffset, jawOffset = HollowCosmetics.offsets(dressing, clock, state, animationSpeed, stunned)
 	end
 	local before = rig.phase
-	rig.phase += dt * HollowPoses.cadence(rig.kind, speed)
+	rig.phase += dt * HollowPoses.cadence(rig.kind, animationSpeed)
 	-- a footfall every half turn: the Brute shakes the ground
-	if math.floor(before / math.pi) ~= math.floor(rig.phase / math.pi) and speed > 4 then
+	if math.floor(before / math.pi) ~= math.floor(rig.phase / math.pi) and animationSpeed > 4 then
 		if rig.kind == "Brute" then
 			audio("HollowStep", rig.root.Position, 1, 0.9 + rig.stepSide * 0.08)
 			shakeNear(rig.root.Position, 16, 0.25)
 			rig.stepSide = -rig.stepSide
-		elseif rig.kind == "Crawler" and speed > 10 then
+		elseif rig.kind == "Crawler" and animationSpeed > 10 then
 			audio("HollowScrabble", rig.root.Position, 0.25, 1.9)
 		end
 	end
 	if rig.kind == "Crawler" and not dressing then
 		local dust = rig.root:FindFirstChild("Dust") :: ParticleEmitter?
 		if dust then
-			dust.Rate = if speed > 6 then 14 else 0
+			dust.Rate = if animationSpeed > 6 then 14 else 0
 		end
 	end
 
@@ -324,7 +327,12 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 
 	-- random head twitches: snap, hold, release
 	if not dressing and clock >= rig.twitchNext then
-		rig.twitch = A((math.random() - 0.5) * 0.9, (math.random() - 0.5) * 1.4, (math.random() - 0.5) * 1.2)
+		local twitchAngle = Tuning.HollowMotion.TwitchAngle
+		rig.twitch = A(
+			(math.random() - 0.5) * twitchAngle,
+			(math.random() - 0.5) * twitchAngle * 1.4,
+			(math.random() - 0.5) * twitchAngle * 1.2
+		)
 		rig.twitchUntil = clock + 0.15 + math.random() * 0.45
 		rig.twitchNext = clock + (if state == "Dormant" then 3 else 1.2) + math.random() * 3
 	end
@@ -334,7 +342,7 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	local target = HollowPoses.pose(rig.skeleton, {
 		state = state,
 		elapsed = elapsed,
-		speed = speed,
+		speed = animationSpeed,
 		phase = rig.phase,
 		now = now,
 		seed = rig.seed,
@@ -374,7 +382,7 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	for name, motor in rig.motors do
 		local goal = target[name] or I
 		local current = rig.pose[name] or I
-		local value = if twitching and name == "Neck" then goal else current:Lerp(goal, alpha)
+		local value = current:Lerp(goal, alpha)
 		rig.pose[name] = value
 		motor.Transform = value
 			* (if name == "Neck" then neckOffset elseif name == "Jaw" then jawOffset else I)
@@ -406,6 +414,7 @@ local function register(model: Instance)
 		motors = motors,
 		pose = {},
 		phase = seed % 7,
+		smoothedSpeed = 0,
 		seed = seed % 1000,
 		state = "",
 		stateAt = 0,
