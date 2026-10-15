@@ -58,6 +58,8 @@ Theme.Font = table.freeze({
 	bodyBold = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold),
 	type = Font.new("rbxasset://fonts/families/SpecialElite.json"),
 	hand = Font.new("rbxasset://fonts/families/Fondamento.json"),
+	-- a classical serif for engraved and enamelled figures (the pocket watch's numerals)
+	dial = Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold),
 	sign = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold),
 	chalk = Font.new("rbxasset://fonts/families/PatrickHand.json"),
 })
