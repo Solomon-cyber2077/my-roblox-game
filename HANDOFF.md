@@ -71,7 +71,7 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
 - Storm: strikes verified by sampling (flash, bolt, flash lights) and one frame on screen; the new rain/thunder ids
   (ProSoundEffects 9112855439, 9116282646) were not auditioned by ear.
 - Mabel's new lines were not read through the dialogue UI in play (specs cover the picking).
-- Period checklist #2: \`LobbyBuilder.label\` (TICKETS, BOOKS · NEWSPAPERS, OUTFITTER, DEPARTURES) still uses
+- Period checklist #2: `LobbyBuilder.label` (TICKETS, BOOKS · NEWSPAPERS, OUTFITTER, DEPARTURES) still uses
   HighwayGothic; not changed here (shared helper, older than this pass).
 - The display train's own seats (bunks, saloon) have no Sit prompts; only the hall's chairs were asked for.
 - New scripts (Controllers/LobbyStorm, Builders/OutfitKit, Config/Outfits) are not in the rbxmap index yet.
