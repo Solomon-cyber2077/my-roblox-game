@@ -27,6 +27,7 @@ local Spectate = require(UI.Spectate)
 local TicketBook = require(UI.TicketBook)
 local Unseal = require(UI.Unseal)
 local Workshop = require(UI.Workshop)
+local CrewChest = require(UI.CrewChest)
 
 local Registry = require(script.Parent.Parent.Registry)
 
@@ -128,6 +129,7 @@ function UIController.Start()
 	CarBoarding.mount(gui)
 	Spectate.mount(gui)
 	Workshop.mount(gui)
+	CrewChest.mount(gui)
 	Outfitter.mount(gui)
 	Ledger.mount(gui)
 	TicketBook.mount(gui)
@@ -156,6 +158,8 @@ function UIController.Open(name: string)
 		Outfitter.open()
 	elseif name == "Ledger" then
 		Ledger.open()
+	elseif name == "Chest" then
+		CrewChest.open()
 	end
 end
 

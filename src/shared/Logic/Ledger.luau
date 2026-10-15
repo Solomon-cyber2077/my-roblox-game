@@ -45,6 +45,7 @@ local function copy(train: Train): Train
 		upgrades = table.clone(train.upgrades),
 		breaches = table.clone(train.breaches),
 		starving = train.starving,
+		chest = table.clone(train.chest),
 	}
 end
 
@@ -63,6 +64,7 @@ function Ledger.newTrain(): Train
 		upgrades = {},
 		breaches = {},
 		starving = false,
+		chest = {},
 	}
 end
 

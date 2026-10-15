@@ -41,6 +41,9 @@ local Remotes: { [string]: RemoteDef } = {
 	JoinInProgress = { direction = "ToServer", args = {}, rate = 1, burst = 1 },
 	-- one press for a skill check while a Hollow holds you; the server judges and rate-limits it
 	SkillCheck = { direction = "ToServer", args = { "check" }, rate = 10, burst = 10 },
+	-- the crew chest in the stores car: stow a backpack slot's consumable, or take one by item id
+	ChestStow = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
+	ChestTake = { direction = "ToServer", args = { "id" }, rate = 6, burst = 6 },
 
 	-- Server to client
 	Snapshot = { direction = "ToClient", args = {}, rate = 0, burst = 0 },

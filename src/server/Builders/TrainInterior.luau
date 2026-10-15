@@ -37,6 +37,7 @@ export type Dims = {
 
 export type Furnished = {
 	seats: { Seat },
+	chest: BasePart, -- the crew chest's prompt volume (Services/TrainService)
 }
 
 local TrainInterior = {}
@@ -1047,6 +1048,36 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	doorSign(Vector3.new(6.25, SIDE_SIGN_Y, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
 	nameboard(-15.0, "WORKSHOP")
 	nameboard(13.0, "STORES")
+	-- the crew chest: a steamer trunk against the far wall, facing whoever comes in at the
+	-- platform door, for the consumables the crew shares (Logic/CrewChest)
+	local chestCf = at(6.25, 0, -4.75)
+	solid(Vector3.new(3.0, 1.4, 1.5), chestCf * CFrame.new(0, 0.72, 0), C.woodDark, M.WoodPlanks)
+	solid(Vector3.new(3.1, 0.3, 1.6), chestCf * CFrame.new(0, 1.57, 0), C.wood, M.Wood)
+	for _, dx in { -0.85, 0.85 } do
+		-- iron bands round the body and over the lid
+		decor(Vector3.new(0.16, 1.46, 1.56), chestCf * CFrame.new(dx, 0.72, 0), C.iron, M.Metal)
+		decor(Vector3.new(0.16, 0.34, 1.66), chestCf * CFrame.new(dx, 1.57, 0), C.iron, M.Metal)
+	end
+	for _, dx in { -1.47, 1.47 } do
+		for _, dz in { -0.72, 0.72 } do
+			-- brass corner caps on the lid
+			decor(Vector3.new(0.24, 0.38, 0.24), chestCf * CFrame.new(dx, 1.57, dz), C.brass, M.Metal)
+		end
+	end
+	-- the hasp, and a painted board naming it
+	decor(Vector3.new(0.3, 0.42, 0.08), chestCf * CFrame.new(0, 1.38, 0.8), C.brass, M.Metal)
+	local chestLabel =
+		decor(Vector3.new(1.2, 0.34, 0.05), chestCf * CFrame.new(0, 0.7, 0.785), C.board, M.Wood)
+	chestLabel.Name = "ChestLabel"
+	letter(chestLabel, Enum.NormalId.Back, "CREW STORES", C.gilt, PLATE_FONT, Vector2.new(240, 68), 1)
+	local chest = Kit.block(
+		model,
+		Vector3.new(3.1, 1.8, 1.7),
+		chestCf * CFrame.new(0, 0.9, 0),
+		Color3.new(),
+		{ transparency = 1, collide = false, shadow = false }
+	)
+	chest.Name = "CrewChest"
 	-- a map of the line on the blind front wall
 	picture(19.38, 3.0, -1, 2)
 	plate(
@@ -1318,7 +1349,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		namePlate.Name = "Nameplate"
 	end
 
-	return { seats = seats }
+	return { seats = seats, chest = chest }
 end
 
 return TrainInterior
