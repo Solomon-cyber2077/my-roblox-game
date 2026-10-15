@@ -96,6 +96,11 @@ local Tuning = {
 		CabDoorZ = 7,
 		PlatformApproach = 3.5, -- the platform line runs this far out from the cab door
 		PlatformReach = 140, -- farther than this from the cab door, no platform arrows
+		-- the notice at the top of the screen when the Last Light starts leaking
+		NoticeText = "Steam leak in the Last Light car",
+		NoticeIn = 0.25, -- seconds to fade in
+		NoticeHold = 1.6, -- seconds fully shown
+		NoticeOut = 0.9, -- seconds to fade out
 	},
 
 	Crew = {

@@ -30,7 +30,7 @@ LeakAlert.Cars = table.freeze({
 	CR2 = "crew car",
 	WS1 = "workshop",
 	WS2 = "workshop",
-	CAB = "cab",
+	CAB = "Last Light", -- the locomotive (its cab plates read LAST LIGHT)
 } :: { [string]: string })
 
 function LeakAlert.car(anchor: string?): string
