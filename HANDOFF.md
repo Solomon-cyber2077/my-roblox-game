@@ -19,10 +19,13 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   brass sconces with candles, photo and music books on the lid, brass pedals. Buttoned velvet piano chair with turned
   legs, H-stretcher, balloon back. Candle stand at its left (+x, the bass end): round base, slim turned post ~4.3 tall,
   small round top, one lit candle (neon flame only; the hall is at its 48-light audit budget).
+- T6 lighting: the two back-wall lamps nearest the piano (x=+-30) replaced by gas lamp standards at x=+-24, z=66
+  (plinth, fluted cast-iron shaft, ladder bar, square glazed amber lantern, gabled cap). Truss pendants now amber
+  globes (236,150,72) with warmer light (255,178,98, brightness 1). Lights stay at 48/48.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T6 lamp posts, warm hanging lights).
+- Continue the lobby list (T7 floor emblem).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran

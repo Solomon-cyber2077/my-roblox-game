@@ -567,9 +567,15 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			C.brass,
 			{ material = Enum.Material.Metal, collide = false }
 		)
-		local lamp =
-			Kit.neon(model, Vector3.new(1.4, 1.4, 1.4), at(x, 18.4, pendantZ), C.warm, Enum.PartType.Ball)
-		Kit.pointLight(lamp, C.warm, 0.9, 38, (x + 99) % 44 == 0)
+		-- a warm amber globe (gas behind tinted glass), not a cream one
+		local lamp = Kit.neon(
+			model,
+			Vector3.new(1.4, 1.4, 1.4),
+			at(x, 18.4, pendantZ),
+			Color3.fromRGB(236, 150, 72),
+			Enum.PartType.Ball
+		)
+		Kit.pointLight(lamp, Color3.fromRGB(255, 178, 98), 1, 38, (x + 99) % 44 == 0)
 	end
 	-- purlins along the hall at every rib joint, carrying the roof
 	for i = 2, SEGMENTS do
@@ -1600,8 +1606,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		lightBrightness = 1.5,
 		lightRange = 48,
 	}
-	-- Eight lamps at 24-stud spacing, with the central departure board kept clear.
-	for _, x in { -102, -78, -54, -30, 30, 54, 78, 102 } do
+	-- Six lamps at 24-stud spacing, with the central departure board kept clear; by the piano the
+	-- wall lamps give way to two gas lamp standards like the ones along the platform edge
+	for _, x in { -102, -78, -54, 54, 78, 102 } do
 		Kit.block(
 			model,
 			Vector3.new(2.4, 3.2, rearLamp.backplateDepth),
@@ -1632,6 +1639,70 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.PartType.Cylinder
 		)
 		Kit.pointLight(diffuser, C.warm, rearLamp.lightBrightness, rearLamp.lightRange, false)
+	end
+
+	-- gas lamp standards flanking the board: plinth, fluted cast-iron shaft, ladder bar, square glazed lantern
+	for _, x in { -24, 24 } do
+		local foot = at(x, 0, 66)
+		Kit.block(model, Vector3.new(1.3, 0.8, 1.3), foot * CFrame.new(0, 0.4, 0), C.iron, {
+			material = Enum.Material.Metal,
+		})
+		Kit.post(model, 1.2, 0.95, foot * CFrame.new(0, 1.4, 0), C.iron, { material = Enum.Material.Metal })
+		Kit.post(model, 8.6, 0.5, foot * CFrame.new(0, 6.3, 0), C.iron, { material = Enum.Material.Metal })
+		for k = 0, 3 do
+			local angle = k * 90 + 45
+			Kit.block(
+				model,
+				Vector3.new(0.08, 8, 0.08),
+				foot * Kit.angles(0, angle, 0) * CFrame.new(0, 6.3, 0.27),
+				C.ironLight,
+				{ material = Enum.Material.Metal, collide = false }
+			)
+		end
+		Kit.ball(
+			model,
+			0.7,
+			foot * CFrame.new(0, 10.6, 0),
+			C.iron,
+			{ material = Enum.Material.Metal, collide = false }
+		)
+		Kit.block(model, Vector3.new(1.6, 0.14, 0.14), foot * CFrame.new(0, 10.1, 0), C.iron, {
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+		Kit.block(model, Vector3.new(1.2, 0.25, 1.2), foot * CFrame.new(0, 11, 0), C.iron, {
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+		local glass = Kit.neon(model, Vector3.new(1, 1.5, 1), foot * CFrame.new(0, 11.88, 0), C.flame)
+		glass.Transparency = 0.15
+		for _, cx in { -0.5, 0.5 } do
+			for _, cz in { -0.5, 0.5 } do
+				Kit.block(model, Vector3.new(0.1, 1.5, 0.1), foot * CFrame.new(cx, 11.88, cz), C.iron, {
+					material = Enum.Material.Metal,
+					collide = false,
+				})
+			end
+		end
+		Kit.wedge(model, Vector3.new(1.5, 0.5, 0.75), foot * CFrame.new(0, 12.88, -0.375), C.iron, {
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+		Kit.wedge(
+			model,
+			Vector3.new(1.5, 0.5, 0.75),
+			foot * Kit.angles(0, 180, 0) * CFrame.new(0, 12.88, -0.375),
+			C.iron,
+			{ material = Enum.Material.Metal, collide = false }
+		)
+		Kit.ball(
+			model,
+			0.3,
+			foot * CFrame.new(0, 13.2, 0),
+			C.brass,
+			{ material = Enum.Material.Metal, collide = false }
+		)
+		Kit.pointLight(glass, C.warm, 1.1, 30, false)
 	end
 
 	local spawnPoints: { CFrame } = {}
