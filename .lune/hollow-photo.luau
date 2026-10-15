@@ -7,11 +7,13 @@ require("./lib/Shim").install()
 local builder = Loader.requireNode(Loader.roots.Server.Builders.HollowBuilder)
 local poses = Loader.requireNode(Loader.roots.Client.Animation.HollowPoses)
 local kind = process.args[1] or "Stalker"
+local stop = tonumber(process.args[3]) or 1
+local grime = Loader.requireNode(Loader.roots.Shared.Logic.GrimeLevel).forStop(stop, 10, false)
 local model = builder.build(roblox.CFrame.new(), kind)
 local rig = poses.rigOf(model)
 local pose = poses.pose(
 	rig,
-	{ state = "Prowl", speed = 4, phase = 0.8, now = 2, seed = 17, elapsed = 2, grabTime = 0 }
+	{ state = "Prowl", speed = 4, phase = 0.8, now = 2, seed = 17, elapsed = 2, grabTime = 0, grime = grime }
 )
 local root = model:FindFirstChild("HumanoidRootPart")
 local frames, links = { [root] = root.CFrame }, {}
@@ -62,6 +64,6 @@ for _, part in model:GetDescendants() do
 end
 fs.writeFile(
 	process.args[2] or "hollow-photo.json",
-	serde.encode("json", { kind = kind, parts = parts }, true)
+	serde.encode("json", { kind = kind, stop = stop, grime = grime, parts = parts }, true)
 )
 print(kind, #parts, "parts; IK shortfall", poses.shortfall())
