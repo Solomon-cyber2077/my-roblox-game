@@ -7,8 +7,10 @@
 	station centre), z runs away from the platform edge (0 is the edge).
 
 	Each archetype's layout (Config/Stations) carves routes first, so buildings line a street,
-	a square, a yard or a goods yard's sidings; barriers pinch the zone boundaries into
-	chokepoints and broken ground lies beside the routes.
+	a square, a yard or a goods yard's sidings. Loot is laid out by depth: coal near the
+	platform, scrap and stores toward the back, the best at the very back; the middle is cover
+	(tall solid things stood in a rhythm, never two tiles apart) and route. The very back
+	keeps a clear spot for the payroll crate.
 
 	Collapse works on slabs: the safe strip is one slab that never falls, each
 	building stands on one foundation slab that falls as a unit, and every other
@@ -107,11 +109,14 @@ export type Plan = {
 	-- tiles nobody walks through (structures and barriers), keyed gz * cols + gx; enterable
 	-- buildings are not in it (their doors let you through)
 	blocked: { [number]: boolean },
+	-- the clear spot at the very back kept for the payroll crate (nil at the Terminus and the
+	-- Emergency Village)
+	payroll: { x: number, z: number, slab: number }?,
 }
 
 local CONTAINER_ORDER = { "Crate", "Locker", "CoalBin", "ToolChest", "Vault" }
 local LANDMARK = 1000 -- occupancy ids at and above this are enterable buildings
-local BARRIER = -1 -- the occupancy of a tile a barrier closes off
+local BARRIER = -1 -- the occupancy of a tile closed off (none today; the boundary fence reads it)
 local EDGE_CLEAR = 2.2 -- a barrier stops this far in from the station's side, clear of its fence
 local COAL_NEIGHBOURS = { CoalHeap = true, Hopper = true, CoalTower = true }
 local TOOL_NEIGHBOURS = { Workshop = true, Shed = true, SignalBox = true, Headframe = true }
@@ -304,6 +309,18 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		end
 	end
 
+	-- The very back stays clear for the payroll crate: the middle tiles of the last row inside
+	-- the edge. Nothing is built, dropped or stood there.
+	local keepClear: { [number]: boolean } = {}
+	local payrollCell: { number }? = nil
+	if not arch.terminus and not arch.emergency then
+		local mid = cols // 2
+		payrollCell = { mid, rows - 2 }
+		for gx = mid - Stations.Payroll.HalfTiles, mid + Stations.Payroll.HalfTiles do
+			keepClear[index(gx, rows - 2)] = true
+		end
+	end
+
 	-- Lots: every free footprint in the rows `rowOk` allows, weighted by the route it fronts.
 	local function lots(w: number, d: number, rowOk: (number) -> boolean): { Rng.Weighted<{ number }> }
 		local out: { Rng.Weighted<{ number }> } = {}
@@ -317,7 +334,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 								local inside = x >= gx and x < gx + w and z >= gz and z < gz + d
 								if x >= 0 and x < cols and z >= 0 and z < rows then
 									local weight = route[index(x, z)]
-									if weight and inside then
+									if inside and (weight or keepClear[index(x, z)]) then
 										free = false
 									elseif weight then
 										front = math.max(front, weight)
@@ -483,68 +500,6 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		end
 	end
 
-	-- Barriers -----------------------------------------------------------------------------
-	--[[
-		Each zone boundary is closed off a few tiles at a time (more of the far one), with the
-		routes left open through it, so the crew funnel through gaps and the far zone is a
-		pocket behind the last line. A tile is only closed if all ground stays reachable.
-	]]
-	local barrierAt: { [number]: string } = {}
-	local barrierRows: { number } = {}
-	if layout then
-		local boundaries: { string } = { "Mid", "Far" }
-		if village then
-			table.insert(boundaries, "Village")
-		end
-		for b, zone in boundaries do
-			local first: number? = nil
-			for gz = safeRows, rows - 2 do
-				if first == nil and zoneOf(gz) == zone then
-					first = gz
-				end
-			end
-			local chosen: number? = nil
-			if first then
-				for _, gz in { first, first + 1, first - 1 } do
-					local open = 0
-					for gx = 0, cols - 1 do
-						if route[index(gx, gz)] then
-							open += 1
-						end
-					end
-					if chosen == nil and gz > safeRows and gz < rows - 1 and open <= layout.lane + 2 then
-						chosen = gz
-					end
-				end
-			end
-			if chosen then
-				local gz = chosen
-				table.insert(barrierRows, gz)
-				local gx = 0
-				while gx < cols do
-					local span = rng:int(2, 4)
-					if rng:chance(layout.fill[b] or Stations.VillageFill) then
-						local kind = rng:pick(layout.barriers)
-						for x = gx, math.min(gx + span - 1, cols - 1) do
-							local i = index(x, gz)
-							if occupancy[i] == 0 and route[i] == nil then
-								occupancy[i] = BARRIER
-								if connected() then
-									barrierAt[i] = kind
-								else
-									occupancy[i] = 0
-								end
-							end
-						end
-						gx += span
-					else
-						gx += rng:int(1, 2)
-					end
-				end
-			end
-		end
-	end
-
 	-- Slabs -------------------------------------------------------------------------
 	local slabs: { Slab } = {}
 	local slabOfTile: { number } = table.create(cols * rows, 0)
@@ -643,7 +598,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		end
 	end
 
-	-- The sidings' track and the barriers, one tile each ----------------------------------
+	-- The sidings' track, one tile each ---------------------------------------------------
 	local claimed: { [number]: boolean } = {}
 	local groundProps: { Prop } = {}
 	-- One tile of something that runs along x: joined end to end with its neighbours where
@@ -677,20 +632,40 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			end
 		end
 	end
-	for _, gz in barrierRows do
-		for gx = 0, cols - 1 do
-			local kind = barrierAt[index(gx, gz)]
-			if kind then
-				along(gx, gz, kind, function(x: number): boolean
-					return x >= 0 and x < cols and barrierAt[index(x, gz)] == kind
-				end)
-				-- the gaps either side stay clear
-				for _, x in { gx - 1, gx + 1 } do
-					if x >= 0 and x < cols and occupancy[index(x, gz)] == 0 then
-						claimed[index(x, gz)] = true
+	-- The threshold: a pair of gate piers at the mouth of every route off the platform, so
+	-- stepping off it is going in through a gateway. Each stands in the tile beside the
+	-- route, against it, and claims that tile.
+	if layout then
+		local gz = safeRows
+		local gx = 0
+		while gx < cols do
+			if route[index(gx, gz)] then
+				local first = gx
+				while gx + 1 < cols and route[index(gx + 1, gz)] do
+					gx += 1
+				end
+				for _, side in { { first - 1, 1 }, { gx + 1, -1 } } do
+					local x, s = side[1], side[2]
+					local i = index(x, gz)
+					if
+						x > 0
+						and x < cols - 1
+						and occupancy[i] == 0
+						and route[i] == nil
+						and not claimed[i]
+					then
+						claimed[i] = true
+						table.insert(groundProps, {
+							kind = "GatePier",
+							slab = slabOfTile[i],
+							x = tileX(x) + s * (tile / 2 - Stations.Cover.PierInset),
+							z = tileZ(gz) - tile / 2 + Stations.Cover.PierInset + 0.6,
+							rot = 0,
+						})
 					end
 				end
 			end
+			gx += 1
 		end
 	end
 
@@ -702,7 +677,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			if zone == nil or zoneOf(gz) == zone then
 				for gx = 0, cols - 1 do
 					local i = index(gx, gz)
-					if occupancy[i] == 0 and not claimed[i] and not onEdge(gx, gz) then
+					if occupancy[i] == 0 and not claimed[i] and not keepClear[i] and not onEdge(gx, gz) then
 						table.insert(out, { gx, gz })
 					end
 				end
@@ -724,6 +699,18 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		return false
 	end
 
+	-- Depth: rank 0 stands near the platform (the nearer the likelier), rank n at the back,
+	-- weighted by how deep the tile is to the power n, so the best things lie deepest.
+	local function depthWeight(gz: number, rank: number): number
+		if rank == 0 then
+			return (rows - gz) ^ 2
+		end
+		return (gz - safeRows + 1) ^ rank
+	end
+	local function band(rank: number): string
+		return if rank == 0 then "Near" else "Far"
+	end
+
 	local containers: { Container } = {}
 	-- the stop's own containers, then the village's extra ones in the village
 	local passes: { { counts: { [string]: number }, zone: string? } } = { { counts = arch.containers } }
@@ -737,19 +724,8 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			if base > 0 and def then
 				local count = math.max(1, math.floor(base * lootMul + 0.5))
 				for _ = 1, count do
-					local zone: string
-					if pass.zone then
-						zone = pass.zone
-					elseif def.farOnly then
-						zone = "Far"
-					else
-						zone = rng:weighted({
-							{ weight = def.zoneWeights.Near, value = "Near" },
-							{ weight = def.zoneWeights.Mid, value = "Mid" },
-							{ weight = def.zoneWeights.Far * (Stations.FarLoot[kind] or 1), value = "Far" },
-						})
-					end
-					local candidates = freeTiles(zone)
+					local rank = Stations.Depth[kind] or 1
+					local candidates = freeTiles(pass.zone or band(rank))
 					if #candidates == 0 and not def.farOnly and pass.zone == nil then
 						candidates = freeTiles(nil)
 					end
@@ -760,7 +736,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 					for _, cell in candidates do
 						local favoured = (kind == "CoalBin" and nextToKind(cell[1], cell[2], COAL_NEIGHBOURS))
 							or (kind == "ToolChest" and nextToKind(cell[1], cell[2], TOOL_NEIGHBOURS))
-						local weight = if favoured then 4 else 1
+						local weight = (if favoured then 4 else 1) * depthWeight(cell[2], rank)
 						table.insert(weighted, { weight = weight, value = cell })
 					end
 					local cell = rng:weighted(weighted)
@@ -818,23 +794,28 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	-- Loose pickups -------------------------------------------------------------------
 	local loose: { Loose } = {}
 	for _ = 1, arch.looseItems do
-		local zone = if rng:chance(0.6) then "Near" else "Mid"
-		local candidates = freeTiles(zone)
+		local item = rng:weighted({
+			{ weight = 3 * arch.loot.coal, value = "CoalLump" },
+			{ weight = 2 * arch.loot.parts, value = "Scrap" },
+		})
+		local rank = Stations.Depth[item] or 1
+		local candidates = freeTiles(band(rank))
 		if #candidates == 0 then
 			candidates = freeTiles(nil)
 		end
 		if #candidates == 0 then
 			break
 		end
-		local cell = rng:pick(candidates)
+		local weighted: { Rng.Weighted<{ number }> } = {}
+		for _, cell in candidates do
+			table.insert(weighted, { weight = depthWeight(cell[2], rank), value = cell })
+		end
+		local cell = rng:weighted(weighted)
 		local i = index(cell[1], cell[2])
 		claimed[i] = true
 		table.insert(loose, {
 			id = #loose + 1,
-			item = rng:weighted({
-				{ weight = 3 * arch.loot.coal, value = "CoalLump" },
-				{ weight = 2 * arch.loot.parts, value = "Scrap" },
-			}),
+			item = item,
 			slab = slabOfTile[i],
 			x = tileX(cell[1]) + rng:range(-3, 3),
 			z = tileZ(cell[2]) + rng:range(-3, 3),
@@ -1121,8 +1102,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		end
 	end
 
-	-- Broken ground: rubble, raised decks, dug-in lines and wrecks beside the routes (deeper
-	-- in, more of it), and the road itself breaking up on them.
+	-- Broken ground: rubble and dug-in lines beside the routes (deeper in, more of it), and the road itself breaking up on them.
 	if layout then
 		local function nextToRoute(gx: number, gz: number): boolean
 			for _, dir in DIRECTIONS do
@@ -1155,6 +1135,56 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 					x = tileX(cell[1]) + rng:range(-0.6, 0.6),
 					z = tileZ(cell[2]) + rng:range(-0.6, 0.6),
 					rot = rng:int(0, 3) * 90 + rng:range(-5, 5),
+				})
+			end
+		end
+	end
+
+	-- Cover: the rhythm of the crossing. Tall solid things (Config/Stations layout.cover)
+	-- stand on open tiles until no stretch of yard is more than a tile from something to run
+	-- to. A cover tile's four neighbours are open ground and no two cover tiles touch, so a
+	-- Hollow can always go round. The first yard row is left to the threshold.
+	if layout and not arch.terminus then
+		local function feature(gx: number, gz: number): boolean
+			if gx < 0 or gx >= cols or gz < 0 or gz >= rows then
+				return false
+			end
+			local i = index(gx, gz)
+			return occupancy[i] ~= 0 or claimed[i] == true or keepClear[i] == true
+		end
+		local function openAround(gx: number, gz: number): boolean
+			for _, dir in DIRECTIONS do
+				local i = index(gx + dir[1], gz + dir[2])
+				if occupancy[i] ~= 0 or keepClear[i] then
+					return false
+				end
+			end
+			return true
+		end
+		local function lonely(gx: number, gz: number): boolean
+			for dx = -1, 1 do
+				for dz = -1, 1 do
+					if (dx ~= 0 or dz ~= 0) and feature(gx + dx, gz + dz) then
+						return false
+					end
+				end
+			end
+			return true
+		end
+		local cells = innerTiles(false)
+		rng:shuffle(cells)
+		for _, cell in cells do
+			local gx, gz = cell[1], cell[2]
+			local i = index(gx, gz)
+			if gz > safeRows and not claimed[i] and openAround(gx, gz) and lonely(gx, gz) then
+				claimed[i] = true
+				local j = Stations.Cover.Jitter
+				table.insert(props, {
+					kind = rng:pick(layout.cover),
+					slab = slabOfTile[i],
+					x = tileX(gx) + rng:range(-j, j),
+					z = tileZ(gz) + rng:range(-j, j),
+					rot = rng:int(0, 3) * 90,
 				})
 			end
 		end
@@ -1194,6 +1224,13 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		sleepers = sleepers,
 		spawnLanes = lanes,
 		blocked = blocked,
+		payroll = if payrollCell
+			then {
+				x = tileX(payrollCell[1]),
+				z = tileZ(payrollCell[2]),
+				slab = slabOfTile[index(payrollCell[1], payrollCell[2])],
+			}
+			else nil,
 	}
 end
 

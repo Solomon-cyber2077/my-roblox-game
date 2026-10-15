@@ -13,8 +13,8 @@
 	dressing:   what the yard is littered with, the things that say what this place was
 	            (StationDressing builds them all)
 	layout:     how the stop is laid out (LayoutGen): the routes carved before anything is
-	            placed, the barriers that pinch each zone boundary into chokepoints, and the
-	            broken ground beside the routes. A stop without one is scattered at random.
+	            placed, the cover stood across the yard in a rhythm, and the broken ground
+	            beside the routes. A stop without one is scattered at random.
 ]]
 
 -- Street: a lane from the platform to the far edge and a cross street, lined with lots.
@@ -27,9 +27,8 @@ export type Layout = {
 	square: { number }?, -- Plaza and Yard: the open ground, in tiles
 	centre: string?, -- Plaza: the structure standing in the middle of the square
 	sidings: number?, -- Sidings: how many tracks
-	barriers: { string }, -- what closes off the zone boundaries, a few tiles at a time
-	fill: { number }, -- the share closed at the Near/Mid and the Mid/Far boundary
-	ground: { string }, -- Rubble, BrokenRoad (on the routes), Deck, Trench, Wreck
+	cover: { string }, -- the tall solid things stood across the yard (StationDressing Cover)
+	ground: { string }, -- Rubble, BrokenRoad (on the routes), Trench
 	groundCount: number,
 }
 
@@ -130,9 +129,8 @@ local Archetypes: { [string]: Archetype } = {
 		layout = {
 			style = "Street",
 			lane = 1,
-			barriers = { "FencePicket", "Wreck" },
-			fill = { 0.4, 0.6 },
-			ground = { "BrokenRoad", "Rubble", "Wreck" },
+			cover = { "Elm", "GatePier", "Elm", "NoticeBoard", "Obelisk" },
+			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
 		-- the hamlet up the lane: an inn and the cottages round the green
@@ -189,9 +187,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Sidings",
 			lane = 1,
 			sidings = 3,
-			barriers = { "Wreck", "FenceRail" },
-			fill = { 0.4, 0.6 },
-			ground = { "Rubble", "BrokenRoad", "Wreck" },
+			cover = { "Chimney", "GatePier", "Chimney", "NoticeBoard" },
+			ground = { "Rubble", "BrokenRoad" },
 			groundCount = 9,
 		},
 		-- the railwaymen's row behind the depot, and their chapel
@@ -248,9 +245,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Sidings",
 			lane = 1,
 			sidings = 3,
-			barriers = { "FenceIron", "Wreck" },
-			fill = { 0.35, 0.55 },
-			ground = { "Deck", "Rubble", "Wreck" },
+			cover = { "GatePier", "Chimney", "Obelisk", "NoticeBoard" },
+			ground = { "Rubble", "BrokenRoad" },
 			groundCount = 9,
 		},
 		-- the linemen's cottages and the shop that served them
@@ -307,8 +303,7 @@ local Archetypes: { [string]: Archetype } = {
 			lane = 2,
 			square = { 8, 5 },
 			centre = "Fountain",
-			barriers = { "WallStone", "Wreck" },
-			fill = { 0.4, 0.6 },
+			cover = { "Statue", "GatePier", "DrinkingFountain", "NoticeBoard", "Chimney" },
 			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
@@ -363,8 +358,7 @@ local Archetypes: { [string]: Archetype } = {
 		layout = {
 			style = "Street",
 			lane = 1,
-			barriers = { "WallStone" },
-			fill = { 0.4, 0.6 },
+			cover = { "GatePier", "Elm", "Obelisk", "Chimney" },
 			ground = { "Rubble", "Trench", "BrokenRoad" },
 			groundCount = 8,
 		},
@@ -423,9 +417,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Yard",
 			lane = 1,
 			square = { 8, 4 },
-			barriers = { "FenceRail", "Wreck" },
-			fill = { 0.4, 0.6 },
-			ground = { "Trench", "Rubble", "Deck" },
+			cover = { "Chimney", "GatePier", "Elm", "NoticeBoard" },
+			ground = { "Trench", "Rubble" },
 			groundCount = 10,
 		},
 		-- the top of the village: the chapel and the last rows
@@ -478,9 +471,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Yard",
 			lane = 1,
 			square = { 8, 4 },
-			barriers = { "Hedge", "FencePicket" },
-			fill = { 0.35, 0.55 },
-			ground = { "BrokenRoad", "Deck", "Rubble" },
+			cover = { "Elm", "GatePier", "NoticeBoard", "Obelisk" },
+			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
 		-- the village the school served: a row, the inn, cottages
@@ -534,9 +526,8 @@ local Archetypes: { [string]: Archetype } = {
 			style = "Yard",
 			lane = 1,
 			square = { 7, 4 },
-			barriers = { "FenceIron", "Wreck" },
-			fill = { 0.35, 0.55 },
-			ground = { "Trench", "Rubble", "Wreck" },
+			cover = { "GatePier", "Statue", "Elm", "DrinkingFountain" },
+			ground = { "Trench", "Rubble" },
 			groundCount = 8,
 		},
 		-- the edge of the town: a row, a shop, cottages
@@ -593,8 +584,7 @@ local Archetypes: { [string]: Archetype } = {
 			lane = 1,
 			square = { 7, 5 },
 			centre = "Bandstand",
-			barriers = { "Hedge" },
-			fill = { 0.4, 0.6 },
+			cover = { "Statue", "Elm", "GatePier", "DrinkingFountain" },
 			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
@@ -649,9 +639,8 @@ local Archetypes: { [string]: Archetype } = {
 		layout = {
 			style = "Street",
 			lane = 2,
-			barriers = { "WallStone", "Wreck" },
-			fill = { 0.4, 0.6 },
-			ground = { "BrokenRoad", "Rubble", "Wreck" },
+			cover = { "Statue", "GatePier", "DrinkingFountain", "NoticeBoard", "Chimney" },
+			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 8,
 		},
 		-- the terraces down both streets
@@ -708,9 +697,8 @@ local Archetypes: { [string]: Archetype } = {
 		layout = {
 			style = "Street",
 			lane = 1,
-			barriers = { "FenceRail", "Wreck" },
-			fill = { 0.35, 0.5 },
-			ground = { "BrokenRoad", "Rubble", "Wreck" },
+			cover = { "Chimney", "Elm", "GatePier" },
+			ground = { "BrokenRoad", "Rubble" },
 			groundCount = 6,
 		},
 		emergency = true,
@@ -813,8 +801,23 @@ return table.freeze({
 	-- from the edge; TapeBack is the margin HollowService keeps its teaching Crawler inside.
 	Edge = table.freeze({ RailBack = 4.5, TapeBack = 6.6 }),
 	DressingCount = 6, -- things scattered round the yard
-	-- How much likelier the better containers are to stand in the far zone, behind the last barrier
-	FarLoot = table.freeze({ ToolChest = 2.5, Crate = 1.3 }),
+	-- Where loot lies by depth (LayoutGen): 0 near the platform, the nearer the likelier; n at
+	-- the back, weighted by depth to the power n. Containers by kind, loose pickups by item.
+	Depth = table.freeze({
+		CoalBin = 0,
+		CoalLump = 0,
+		Crate = 1,
+		Scrap = 1,
+		Locker = 1,
+		ToolChest = 2,
+		Vault = 3,
+	}),
+	-- The tall solid things stood across the yard: how far a piece may sit off its tile's
+	-- centre, and how far a threshold gate pier stands in from its tile's edge.
+	Cover = table.freeze({ Jitter = 0.8, PierInset = 2.2 }),
+	-- The spot kept clear at the very back for the payroll crate: the middle tile of the last
+	-- row inside the edge and this many either side.
+	Payroll = table.freeze({ HalfTiles = 1 }),
 	Order = table.freeze({
 		"Halt",
 		"CoalYard",
