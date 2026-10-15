@@ -1,7 +1,7 @@
 # HANDOFF
 
 ## 2026-10-14: HUD, LEAKS, GRAB BAR, TRAIN INTERIOR PASS (16 tasks, one commit each, pushed)
-`lune run check` passes (355 specs incl. new LeakRoute, CrewChest, SkillCheck press-time). Each task play-tested in Studio, console clean.
+`lune run check` passes (352 specs incl. new LeakRoute, CrewChest, SkillCheck press-time). Each task play-tested in Studio, console clean.
 1. Features completed
 - HUD: backpack "right-click drops" hint gone; tutorial run 1 has a "Drop" prompt on a new `Carrying` moment. Operators panel has no
   toggle/setting (key removed from Config/Settings) and no longer fades out (idle 0.2). Leak notice moved top right, riding under the
