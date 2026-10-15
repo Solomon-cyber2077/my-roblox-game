@@ -445,14 +445,14 @@ function Lobby.mount(gui: ScreenGui)
 		Net.Fire("SetRunTier", (tier.selected or 1) % maxTier + 1)
 	end)
 
-	-- Shortcuts: two plates under the pass -----------------------------------------------------
+	-- Shortcut: a plate under the pass (the Outfitter is the stand in the hall) -------------------
 	local shortcuts = Ui.new("Frame", {
 		Size = UDim2.fromOffset(330, 44),
 		Position = UDim2.fromOffset(14, 186),
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
-	for i, shortcut in { { "OUTFITTER", "Outfitter" }, { "LINE MASTERY", "Ledger" } } do
+	for i, shortcut in { { "LINE MASTERY", "Ledger" } } do
 		local button = Ui.button(shortcut[1], "Secondary", function()
 			Registry.UIController.Open(shortcut[2])
 		end, {

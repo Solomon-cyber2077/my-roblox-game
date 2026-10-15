@@ -747,9 +747,12 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local kx, kz = 54, 36
 	block(Vector3.new(14, 4, 4), at(kx, 2, kz), C.wood, Enum.Material.WoodPlanks)
 	block(Vector3.new(14.6, 0.4, 4.6), at(kx, 4.2, kz), C.brass, Enum.Material.Metal)
-	block(Vector3.new(14, 9, 1), at(kx, 4.5, kz + 6), C.wood, Enum.Material.WoodPlanks)
+	-- the back wall stands as high as the counter, so the stand reads as one low booth
+	block(Vector3.new(14, 4.4, 1), at(kx, 2.2, kz + 6), C.wood, Enum.Material.WoodPlanks)
 	for _, x in { -6.5, 6.5 } do
 		Kit.post(model, 11, 0.6, at(kx + x, 5.5, kz - 1.5), C.iron, { material = Enum.Material.Metal })
+		-- the awning's back edge rests on a slim post standing on the low back wall
+		Kit.post(model, 7.6, 0.4, at(kx + x, 8.2, kz + 5.6), C.iron, { material = Enum.Material.Metal })
 	end
 	for i = 0, 6 do
 		decor(
@@ -774,7 +777,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			model,
 			0.8,
 			1.2,
-			at(kx - 6 + i * 2.4, 6.4, kz + 5.2),
+			at(kx - 6 + i * 2.4, 5, kz + 6),
 			Color3.fromHSV(i / 5, 0.45, 0.7),
 			{ collide = false }
 		)

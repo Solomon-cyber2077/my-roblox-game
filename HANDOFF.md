@@ -8,10 +8,12 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
 - T2 ready button (UI/Lobby): flat brass face with a 5 px darker brass lip on the bottom and right; hover sinks it
   halfway, mouse-down pushes it flush. Signal lamps (the green circle) removed; status and detail lines moved down
   into the gap.
+- T3 outfitter: OUTFITTER shortcut button gone (the stand's prompt opens it); LINE MASTERY stays. Kiosk back wall
+  lowered from 9 to 4.4 studs (counter height), swatches moved onto it, two slim rear posts carry the awning.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T3 outfitter).
+- Continue the lobby list (T4 cosmetics).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
