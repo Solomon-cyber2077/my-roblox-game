@@ -1,5 +1,37 @@
 # HANDOFF
 
+## 2026-10-15: PROMPT 2 PASS (stations, scenery, signs, audio; tasks 1-4, 6-12; item 5 moved to Prompt 6)
+`lune run check` passes (360 specs, 49 files); `AUDIT_SEEDS=6 lune run audit Station` and `AUDIT_SEEDS=6 lune run audit Scenery` clean.
+Every task play-tested in Studio (stop 1 docked, console clean apart from the existing DataStore/Arvo lines).
+1. Features completed
+- T1 (436bbf1): edge hazard rail, tape, red neon lip and red edge lights gone; an unseen EdgeRail stop (tagged SinkholeEdge) keeps the crew out.
+- T11 (ba3c8b5): fuse boxes and their power-up removed (prompt, lamp switch-on, window glow, Breaker cue, PowerCost/Hold). `BuildingService.IsLitAt` kept (HollowService calls it), always false. Ceiling lamps stay as ambient light.
+- T2/T3/T12 (012e776, tuned in 8a4ac9d): no barrier fences/wrecks/decks; tall solid cover (GatePier, Chimney, Elm) stood `Stations.Cover.Spacing` tiles apart until no yard tile is far from something; sights (Statue, Jubilee Obelisk, temperance DrinkingFountain, parish NoticeBoard with open-ended notices) max 2 each (`layout.sights`). Each piece collides only through an unseen block taller than a jump; cover tiles keep open ground all round (PathfindingService radius 2.2 checked). Gate piers flank every route where it leaves the platform. Loot by depth (`Stations.Depth`): coal bins/lumps by the platform, crates/scrap at the back, tool chests deeper, safes deepest, no ground containers in Mid. `plan.payroll` = the clear spot (middle 3 tiles of the last inner row) for the payroll crate. Specs in tests/StationLayout.
+- T4 (babb820): past every sinkhole a treeline, rolling hills and a low massif (`Features.backdrop`, `Tuning.Journey.Backdrop`, `World.backdrop` keeps the land clear). **Found: the Atmosphere now fogs BillboardGuis**, so the moon/glows/TallOnes/bolts at 16000 studs were invisible; Heavens anchor now 750 studs, moon x2.6 bright. Early moon higher/larger, first night's cloud thinned.
+- T6 (ef43475): `Scenery/StationSnow`: snow sheets on yard Floor slabs and pitched roof wedges at snowcap-biome stops (Minehead, Viaduct, Infirmary); none under the Performance setting (verified 0 sheets).
+- T7 (ddbadff): platform clock: iron band, brass bezel, enamel dials (radial Roman IIII, minute track, S. & W. C. R., "E. Tozer, Bristol"), blued hands stopped at 9.40, crest, scrolled drop rods, pendant.
+- T8 (8a4ac9d): `BuildingGen.decor` + `Builders/RoomDecor`: each stop's main building (first landmark) dressed per room on clear wall: drop-dial clock, gilt pictures, framed texts/By Order notices, unlit gas brackets, hat pegs with bowler and coat, book shelves.
+- T9 (7c10539): running-in boards white Oswald on ultramarine enamel, timber frame, mustard-pot posts, soot, chips; other station lettering off modern faces (Bodoni cast-iron notice, Oswald FIRE, Garamond timetable, Fondamento notes/chalk). Station names to LORE: Ashcombe Halt, Coldharbour Siding, Culverhay, Brendon Cross, Exmoor Gate, Brannoc Road. Ashgrove Board School: date stone A.D. 1876, bell-cote; wooden cloak presses instead of steel lockers. LORE.md spot-checked, sources added.
+- T10: footsteps by surface (`Logic/Footsteps` + spec, `Controllers/FootstepController`, `Tuning.Footsteps`), every crew member, spatial; heavy breathing loop while stamina is spent (verified swelling in and dying away).
+  Audio to audition (all free Creator Store, loaded in Studio 2026-10-15; uploader origins NOT verified, check licensing before publishing):
+  | Cue | Asset id | Store name / uploader |
+  | --- | --- | --- |
+  | StepPlank1 / StepTrain1 (pitch 0.8) | 136507037003210 | "Black Laboratory wood plank footstep 1" / Diman_x86 |
+  | StepPlank2 / StepTrain2 (pitch 0.76) | 137526436035209 | "Black Laboratory wood footstep 5" / Diman_x86 |
+  | StepGravel1 | 131788428206726 | "Black Laboratory gravel footstep 5" / Diman_x86 |
+  | StepGravel2 | 132387836053582 | "Black Laboratory gravel footstep 6" / Diman_x86 |
+  | StepSnow1-3 | 103816422099881, 135918121539048, 103079968724414 | "Footstep - Snow 1/2/3" / zefyras74 |
+  | Breath | 100147087354736 | "shortness-of-breath" / dfddfghrty |
+  Store pages: https://create.roblox.com/store/asset/<id>. Rejected: Half-Life 2 and CS:GO rips (TheAngelMGR, "Old csgo ..."). Alternatives found: gravel 9083852561 (nebulimity, a walking loop), breath 78661511671754, 134336321560595.
+2. Known bugs/regressions
+- Lobby files (not mine) still list "Coaling Yard", "Signal Works" (LobbyBuilder departure board); station display names changed.
+- NpcService (not mine) hides errand items beside Far *or Mid* containers; Mid ground is now empty, but Mid buildings' containers still qualify. For errands strictly at the back, make its pool Far only.
+- Coal bins now sit in Near, so they roll Near (1x) loot: less coal per run than before. Retune if runs starve.
+- Not changed, against LORE: the Mid landscape's electric power-line pylons (checklist 1); TrainInterior's HighwayGothic signs (last pass's file); UI Arvo font fails to load in Studio.
+- BrokenThingMarkers (HUD file) still looks for Power prompts; none exist now (harmless).
+3. Next logical step
+- Audition the footstep/breath ids by ear and swap any that do not fit; Prompt 6 (chase lighting); decide on the pylons.
+
 ## 2026-10-14: SLIDING GRAB ZONE
 `lune run check` passes (354 specs). Play-tested: `grab Stalker` at a dock, zone moves ~100 px/s, console clean.
 1. Features completed
