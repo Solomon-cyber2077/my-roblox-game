@@ -172,11 +172,12 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		Enum.Material.CeramicTiles
 	)
 	local rosette = Vector3.new(0, 0, 24)
+	-- the line's roundel, wordless: rails running away into a tunnel mouth, the red tail lamp of the
+	-- last train going out inside it. Each layer's top sits at its own height (top = 0.04 * ring).
 	local rings = {
 		{ diameter = 30, color = C.slateDark, material = Enum.Material.Slate },
-		{ diameter = 26, color = C.glazed, material = Enum.Material.Slate },
-		{ diameter = 20, color = C.brass, material = Enum.Material.Metal },
-		{ diameter = 18, color = C.slateDark, material = Enum.Material.Slate },
+		{ diameter = 26, color = C.brass, material = Enum.Material.Metal },
+		{ diameter = 24.6, color = C.slateDark, material = Enum.Material.Slate },
 	}
 	for _, z in { WALK0 + 0.25, WALK1 - 0.25 } do
 		local halfWidth = 0.15
@@ -236,12 +237,54 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 		disc.Name = "Rosette"
 	end
-	for k = 0, 3 do
-		local length = if k % 2 == 0 then 17 else 11
+	-- v runs away from the hall toward the train (-Z); every piece is a flat inlay at its own height
+	local function inlay(u: number, v: number): CFrame
+		return at(rosette.X + u, 0, rosette.Z - v)
+	end
+	local function roundel(
+		diameter: number,
+		top: number,
+		u: number,
+		v: number,
+		color: Color3,
+		material: Enum.Material
+	)
+		Kit.cylinder(
+			model,
+			top,
+			diameter,
+			inlay(u, v) * CFrame.new(0, top / 2, 0) * Kit.angles(0, 0, 90),
+			color,
+			{ material = material, collide = false, shadow = false }
+		).Name =
+			"Emblem"
+	end
+	local BORE_V = 4.6
+	roundel(9.4, 0.16, 0, BORE_V, C.brass, Enum.Material.Metal) -- the portal's dressed ring
+	roundel(8.4, 0.2, 0, BORE_V, C.void, Enum.Material.Slate) -- the dark bore
+	roundel(2.9, 0.24, 0, BORE_V + 0.6, C.brass, Enum.Material.Metal) -- the tail lamp's rim
+	roundel(2.3, 0.28, 0, BORE_V + 0.6, Color3.fromRGB(150, 30, 34), Enum.Material.Glass)
+	-- sleepers, closing up as they recede, then the two rails converging into the bore
+	local RAIL_FAR, RAIL_NEAR = 1.4, 5.8
+	local V_NEAR, V_FAR = -10.6, 2.4
+	for k = 0, 5 do
+		local t = 1 - (1 - k / 6) ^ 1.6
+		local v = V_NEAR + 0.6 + t * (V_FAR - V_NEAR - 1.4)
+		local half = RAIL_NEAR + (RAIL_FAR - RAIL_NEAR) * (v - V_NEAR) / (V_FAR - V_NEAR)
 		decor(
-			Vector3.new(length, 0.2 + 0.02 * k, 1.1),
-			at(rosette.X, 0.1 + 0.01 * k, rosette.Z) * Kit.angles(0, k * 45, 0) * Kit.angles(0, 0, 0),
-			if k % 2 == 0 then C.brass else C.glazed,
+			Vector3.new(2 * half + 1.6 - k * 0.2, 0.12, 0.9 - k * 0.09),
+			inlay(0, v) * CFrame.new(0, 0.16, 0),
+			C.wood,
+			Enum.Material.Wood
+		)
+	end
+	for _, side in { -1, 1 } do
+		local near = Vector3.new(rosette.X + side * RAIL_NEAR, 0.16, rosette.Z - V_NEAR)
+		local far = Vector3.new(rosette.X + side * RAIL_FAR, 0.16, rosette.Z - V_FAR)
+		decor(
+			Vector3.new(0.5, 0.2, (far - near).Magnitude),
+			origin * Kit.between(near, far),
+			C.brass,
 			Enum.Material.Metal
 		)
 	end
