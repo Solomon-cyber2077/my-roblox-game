@@ -102,6 +102,7 @@ export type Built = {
 	mast: BasePart,
 	mastLamp: BasePart,
 	seats: { Seat },
+	chest: BasePart, -- the crew chest in the stores car (its prompt's part)
 	cabins: { Cabin },
 }
 
@@ -1751,6 +1752,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		mast = mast,
 		mastLamp = mastLamp,
 		seats = furnished.seats,
+		chest = furnished.chest,
 		cabins = cabins,
 	}
 end

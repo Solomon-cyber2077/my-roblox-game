@@ -99,6 +99,8 @@ export type TrainState = {
 	-- open steam leaks; age is the seconds of travel each has been left open (Logic/Leaks)
 	breaches: { [string]: { anchor: string, openedAt: number, age: number? } },
 	starving: boolean,
+	-- the crew chest in the stores car: shared consumables, by item id (Logic/CrewChest)
+	chest: { string },
 }
 
 export type InventoryState = {

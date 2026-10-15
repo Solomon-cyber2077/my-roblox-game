@@ -48,6 +48,11 @@ function InventoryService.Start()
 	end)
 end
 
+-- Replaces a backpack outright (the crew chest's stow and take, Services/TrainService).
+function InventoryService.Set(player: Player, inv: InventoryState)
+	set(player, inv)
+end
+
 function InventoryService.Get(player: Player): InventoryState
 	return inventories[player] or Inventory.new()
 end

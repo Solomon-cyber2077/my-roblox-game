@@ -82,6 +82,12 @@ local Tuning = {
 		TickSeconds = 0.25,
 	},
 
+	-- The crew chest in the stores car (Logic/CrewChest): consumables the whole crew shares.
+	CrewChest = {
+		Capacity = 12, -- items it holds
+		Reach = 10, -- studs from the chest a player may stow or take
+	},
+
 	-- The floor arrows to a leak (Logic/LeakRoute, Controllers/LeakController), in train-local
 	-- studs (x along the train, z across it, the aisle at z = 0, TrainBuilder's layout).
 	LeakArrows = {

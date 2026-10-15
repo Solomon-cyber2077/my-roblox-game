@@ -14,6 +14,7 @@ local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local UpgradesConfig = require(Shared.Config.Upgrades)
 local LeakAlert = require(Shared.Logic.LeakAlert)
+local CrewChest = require(Shared.Logic.CrewChest)
 local Leaks = require(Shared.Logic.Leaks)
 local Ledger = require(Shared.Logic.Ledger)
 local RunRules = require(Shared.Logic.RunRules)
@@ -58,7 +59,7 @@ local function publish(force: boolean?)
 	local signature =
 		`{train.coal}|{train.parts}|{math.floor(train.integrity * 10)}|{train.coalMax}|{train.starving}|{Ledger.breachCount(
 			train
-		)}`
+		)}|{table.concat(train.chest, ",")}`
 	if force or signature ~= lastPublished then
 		lastPublished = signature
 		StateService.Set({ "train" }, train)
@@ -284,6 +285,8 @@ function TrainService.Init()
 	seatPrompts()
 	safeLights()
 	makePrompt(built.workbench, "Workshop", "Workbench", "Upgrades", 0)
+	-- the crew chest: E opens it (UI/CrewChest); stowing and taking go through ChestStow/ChestTake
+	makePrompt(built.chest, "Chest", "Crew chest", "Open", 0)
 	local mastPrompt = makePrompt(built.mast, "Flare", "Signal mast", "Fire Signal Flare", 0.6)
 	mastPrompt.Triggered:Connect(function(player)
 		TrainService.FireFlare(player)
@@ -295,6 +298,12 @@ end
 function TrainService.Start()
 	NetService.Handle("BuyUpgrade", function(player, upgradeId: string)
 		TrainService.BuyUpgrade(player, upgradeId)
+	end, isAboard)
+	NetService.Handle("ChestStow", function(player, slot: number)
+		TrainService.ChestStow(player, slot)
+	end, isAboard)
+	NetService.Handle("ChestTake", function(player, itemId: string)
+		TrainService.ChestTake(player, itemId)
 	end, isAboard)
 	NetService.Handle("RepairHull", function(player)
 		TrainService.RepairHull(player)
@@ -467,6 +476,57 @@ function TrainService.BuyUpgrade(player: Player, upgradeId: string)
 		`{player.DisplayName} fitted {def.name}{if #def.costs > 1 then " " .. string.rep("I", level) else ""}.`
 	)
 	TrainService.UpgradeBought:Fire(upgradeId, level)
+end
+
+-- The crew chest (Logic/CrewChest): only in a run, aboard and within reach of it.
+local function nearChest(player: Player): boolean
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	return RunRules.isRunPhase(Registry.RunDirector.Phase())
+		and root ~= nil
+		and (root.Position - built.chest.Position).Magnitude <= Tuning.CrewChest.Reach
+end
+
+local CHEST_REFUSALS: { [string]: string } = {
+	NotStorable = "Only flares, tonics and flashbulbs go in the crew chest.",
+	Full = "The crew chest is full.",
+	NoRoom = "No room in your backpack.",
+}
+
+function TrainService.ChestStow(player: Player, slot: number)
+	if not nearChest(player) then
+		return
+	end
+	local chest, inv, reason = CrewChest.stow(train.chest, Registry.InventoryService.Get(player), slot)
+	if reason then
+		if CHEST_REFUSALS[reason] then
+			NetService.Fire("Notify", player, "Warning", CHEST_REFUSALS[reason])
+		end
+		return
+	end
+	local nextTrain = table.clone(train)
+	nextTrain.chest = chest
+	train = nextTrain
+	Registry.InventoryService.Set(player, inv)
+	publish(true)
+end
+
+function TrainService.ChestTake(player: Player, itemId: string)
+	if not nearChest(player) then
+		return
+	end
+	local chest, inv, reason = CrewChest.take(train.chest, Registry.InventoryService.Get(player), itemId)
+	if reason then
+		if CHEST_REFUSALS[reason] then
+			NetService.Fire("Notify", player, "Warning", CHEST_REFUSALS[reason])
+		end
+		return
+	end
+	local nextTrain = table.clone(train)
+	nextTrain.chest = chest
+	train = nextTrain
+	Registry.InventoryService.Set(player, inv)
+	publish(true)
 end
 
 -- Workbench "Repair hull": the server checks the run, the parts and the hull (Ledger.repairHull).

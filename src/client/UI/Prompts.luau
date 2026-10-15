@@ -261,6 +261,8 @@ function Prompts.mount(gui: ScreenGui)
 			Registry.UIController.Open("Outfitter")
 		elseif action == "Ledger" then
 			Registry.UIController.Open("Ledger")
+		elseif action == "Chest" then
+			Registry.UIController.Open("Chest")
 		end
 	end)
 
