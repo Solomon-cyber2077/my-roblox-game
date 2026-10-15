@@ -98,32 +98,30 @@ function LobbyService.Init()
 	local b = built :: LobbyBuilder.Built
 	prompt(b.outfitter, "Outfitter", "Outfitter", "Browse")
 	prompt(b.ledger, "Ledger", "Line Mastery", "Read")
-	-- every chair and bench in the hall: a Sit prompt, hidden while someone sits there (jump to stand)
+	-- every chair and bench in the hall: walk into it and you sit (jump to stand); after standing
+	-- the seat waits a moment before it takes anyone, so jumping off does not drop you straight back
 	for _, seat in b.seats do
-		local p = Instance.new("ProximityPrompt")
-		p.ActionText = "Sit"
-		p.ObjectText = (seat:GetAttribute("SeatName") :: string?) or "Seat"
-		p.HoldDuration = 0
-		p.MaxActivationDistance = 5.5
-		p.RequiresLineOfSight = false
-		p.Style = Enum.ProximityPromptStyle.Custom
-		p:SetAttribute("Action", "Sit")
-		p.Parent = seat
+		seat.CanTouch = true
+		local freeAt = 0
 		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
-			p.Enabled = seat.Occupant == nil
+			if seat.Occupant == nil then
+				freeAt = os.clock() + Tuning.Lobby.SeatRetouchDelay
+			end
 		end)
-		p.Triggered:Connect(function(player)
-			local character = player.Character
+		seat.Touched:Connect(function(hit)
+			if seat.Occupant ~= nil or os.clock() < freeAt then
+				return
+			end
+			local character = hit.Parent
 			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 			if
 				humanoid
 				and root
+				and Players:GetPlayerFromCharacter(character)
 				and humanoid.Health > 0
-				and seat.Occupant == nil
 				and not humanoid.Sit
 				and not root.Anchored
-				and (root.Position - seat.Position).Magnitude < 9
 			then
 				seat:Sit(humanoid)
 			end
