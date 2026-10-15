@@ -61,10 +61,15 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   card within 18 studs saying what Line Mastery is, and the Guard lying over the display train's guard's van end
   balustrade, looking down the line (no dialogue yet). Counter staff stand on a 1-stud step. New scripts: run rbxmap
   `refresh` after merging.
+- T14 Mabel: dressed from the same kit (Npcs.Look is now Outfits.Look; NpcFigure is a thin wrapper over
+  OutfitKit): navy bodice with brass buttons, plain navy skirt, bun, clerk's eyeshade, ticket punch. Her 15 lines
+  rewritten short and plain (what to do, friendly, no puzzle talk); every line id, topic and condition kept, so
+  Logic/NpcDialogue and its specs are unchanged. Seen aboard in Studio with her Talk prompt; the new lines themselves
+  were not read through the dialogue UI in play (specs cover which line is picked).
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Mabel (T14): same kit, simpler dialogue.
+- Owner: check Claude Code is finished, then merge claude/lobby-npc-pass into claude/last-train-out and run rbxmap refresh.
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
