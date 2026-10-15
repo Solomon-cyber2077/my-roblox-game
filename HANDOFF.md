@@ -1014,3 +1014,5 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 2. Known: the playtest screen capture came back dark, so the look still needs checking by eye. Count the hall's lights against the audit budget if it complains.
 3. Next: walk the lobby, try every seat and check the booth opening from both sides.
 - Follow-up: floor now meets the end walls (the corner gap is gone), black ground under the hall, the waiting-corner bookcase replaced with a glazed one, a new palm, the window backdrop widened and lowered with no horizon band.
+
+- Lobby storm flash: hidden PointLights (range 34) replaced by SpotLights aimed through each pane at the floor strip under it; amber hall lamps no longer washed white. Lobby audit light budget failure predates this.
