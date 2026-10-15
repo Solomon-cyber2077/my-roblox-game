@@ -430,12 +430,12 @@ local FLASH = rgb(206, 204, 255)
 local TUNNEL_OUTDOOR = rgb(40, 38, 44)
 local DREAD = { saturation = 0.5, contrast = 0.2, tint = 0.5, density = 0.16, haze = 0.8, exposure = 0.05 }
 local BLOOM = { intensity = 0.55, threshold = 1.3, size = 24 }
--- dimmed to ~55% (was 0.7, -0.14, 108/96/88, 114/100/92); the lamps still light the floor
+-- night depot: almost no ambient, so the lamps are the light (was 0.3, -0.6, 54/55/58, 58/58/62)
 local LOBBY = {
-	brightness = 0.3, -- the low sun through the glazing
-	exposure = -0.6,
-	ambient = rgb(54, 55, 58), -- same light as before, less amber, so whites and greys stay true
-	outdoor = rgb(58, 58, 62),
+	brightness = 0,
+	exposure = -0.1,
+	ambient = rgb(10, 10, 12),
+	outdoor = rgb(12, 12, 15),
 	bloom = 0.25,
 	bloomThreshold = 1.8,
 	bloomSize = 16,

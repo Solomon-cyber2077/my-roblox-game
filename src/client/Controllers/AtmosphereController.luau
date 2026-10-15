@@ -386,6 +386,8 @@ local function apply(state: Sky.State)
 	Lighting.ExposureCompensation = state.exposure
 	Lighting.Ambient = state.ambient
 	Lighting.OutdoorAmbient = state.outdoor
+	-- in the lobby the sky must not light the hall: only the lamps do
+	Lighting.EnvironmentDiffuseScale = if state.hidden then 0 else 0.45
 	Lighting.ColorShift_Top = state.shift
 	atmosphere.Density = state.density + warningFog
 	atmosphere.Haze = state.haze

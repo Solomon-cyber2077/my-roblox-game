@@ -738,19 +738,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 	end
 
-	-- Fill: soft lights high between the trusses wash the whole hall evenly, so the lamps below
-	-- only warm it and no corner or poster sits in a hot spot
-	for _, x in { -66, -22, 22, 66 } do
-		local fill = block(
-			Vector3.one,
-			at(x, 30, 13),
-			C.fill,
-			nil,
-			{ transparency = 1, collide = false, shadow = false }
-		)
-		fill.Name = "FillLight"
-		Kit.pointLight(fill, C.fill, 0.85, 60, false)
-	end
+	-- no fill lights: the hall is lit only by its lamps, pools of warm light in the dark
 	-- Roof: slate over the eaves, dirty glass over the middle on glazing bars --------------------------
 	for i = 1, SEGMENTS do
 		local a, b = points[i], points[i + 1]
@@ -783,47 +771,48 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		Enum.Material.Metal,
 		{ collide = false }
 	)
-	-- glazed gables above the end walls, framed by an end truss
+	-- brick gables close the end walls right up under the roof, so no sky shows round the arch,
+	-- framed by an end truss
 	for _, side in { -1, 1 } do
 		local x = side * (HALF_X - 0.4)
+		local wallX = side * (HALF_X + 1)
 		for i = 1, SEGMENTS do
 			local a, b = points[i], points[i + 1]
-			local lo = math.min(a.Y, b.Y)
-			if lo > WALL_TOP then
-				local width = b.Z - a.Z
-				local zc = (a.Z + b.Z) / 2
-				block(
-					Vector3.new(0.3, lo - WALL_TOP, width),
-					at(x, (lo + WALL_TOP) / 2, zc),
-					C.glass,
-					Enum.Material.Glass,
-					{ collide = false, shadow = false, transparency = 0.45 }
-				)
-				local rise = math.abs(b.Y - a.Y)
-				if rise > 0.05 then
+			local lo, hi = math.min(a.Y, b.Y), math.max(a.Y, b.Y)
+			if hi > WALL_TOP then
+				-- where the bay crosses the wall top, only the part above it needs filling
+				local z0, z1, base = a.Z, b.Z, lo
+				if lo <= WALL_TOP then
+					local cross = a.Z + (b.Z - a.Z) * (WALL_TOP - a.Y) / (b.Y - a.Y)
+					if b.Y > a.Y then
+						z0 = cross
+					else
+						z1 = cross
+					end
+					base = WALL_TOP
+				end
+				local width, zc = z1 - z0, (z0 + z1) / 2
+				if base > WALL_TOP + 0.05 then
+					block(
+						Vector3.new(2, base - WALL_TOP, width),
+						at(wallX, (base + WALL_TOP) / 2, zc),
+						C.brick,
+						Enum.Material.Brick,
+						{ collide = false }
+					)
+				end
+				local rise = hi - base
+				if rise > 0.05 and width > 0.05 then
 					-- the sloped top of the bay: a wedge whose tall side faces the higher end
 					local yaw = if b.Y > a.Y then 0 else 180
 					Kit.wedge(
 						model,
-						Vector3.new(0.3, rise, width),
-						at(x, lo + rise / 2, zc) * Kit.angles(0, yaw, 0),
-						C.glass,
-						{
-							material = Enum.Material.Glass,
-							collide = false,
-							shadow = false,
-							transparency = 0.45,
-						}
+						Vector3.new(2, rise, width),
+						at(wallX, base + rise / 2, zc) * Kit.angles(0, yaw, 0),
+						C.brick,
+						{ material = Enum.Material.Brick, collide = false }
 					)
 				end
-				-- the mullion stands proud of the glass on both faces and runs up into the truss
-				member(
-					Vector3.new(x, WALL_TOP, zc),
-					Vector3.new(x, (a.Y + b.Y) / 2, zc),
-					0.4,
-					0.26,
-					C.ironLight
-				)
 			end
 		end
 		for i = 1, SEGMENTS do
