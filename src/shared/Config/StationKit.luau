@@ -36,7 +36,7 @@ local Pieces: { [string]: Piece } = {
 		size = { 12, 3.6, 0.44 },
 		centre = { 0, 1.8, 0 },
 		tris = 180,
-		dresses = { "EdgeMark" },
+		dresses = {}, -- the edge rail went 2026-10-14; the edge stop is unseen
 		stretch = true,
 	},
 	FencePicket = {
