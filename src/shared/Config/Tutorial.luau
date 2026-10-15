@@ -135,7 +135,7 @@ return table.freeze({
 			id = "SkillCheck",
 			tier = 2,
 			when = "Grabbed",
-			text = "Press {KEY} when the needle is in the zone.",
+			text = "Press {KEY} when the marker is on the white.",
 		},
 		-- run 3: the hull, leaks, stamina, voting
 		{

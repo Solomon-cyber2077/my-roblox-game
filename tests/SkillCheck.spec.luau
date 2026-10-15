@@ -35,8 +35,11 @@ describe("SkillCheck", function()
 	it("judges a press in the great zone, the zone, early and late", function()
 		local check = SkillCheck.new(7, 50, 60, fixed(0.5))
 		local lo = check.zoneStart
-		expect(SkillCheck.judge(check, timeAt(check, lo + check.greatWidth / 2), 0)).toBe("Great")
-		expect(SkillCheck.judge(check, timeAt(check, lo + check.zoneWidth * 0.8), 0)).toBe("Good")
+		-- the white block is the middle of the zone; the grey either side is a good press
+		expect(SkillCheck.judge(check, timeAt(check, lo + check.zoneWidth / 2), 0)).toBe("Great")
+		expect(SkillCheck.judge(check, timeAt(check, lo + check.zoneWidth * 0.1), 0)).toBe("Good")
+		expect(SkillCheck.judge(check, timeAt(check, lo + check.zoneWidth * 0.9), 0)).toBe("Good")
+		expect(SkillCheck.greatStart(check)).toBeCloseTo(lo + (check.zoneWidth - check.greatWidth) / 2)
 		-- early: the needle had not reached the zone
 		expect(SkillCheck.judge(check, timeAt(check, lo - 10), 0)).toBe("Miss")
 		-- late: it had passed it, and the tolerance does not reach back far enough
@@ -49,13 +52,34 @@ describe("SkillCheck", function()
 		local check = SkillCheck.new(1, 0, 40, fixed(0))
 		local justAfter = timeAt(check, check.zoneStart + check.zoneWidth) + 0.06
 		expect(SkillCheck.judge(check, justAfter, 0)).toBe("Miss")
-		expect(SkillCheck.judge(check, justAfter, SkillCheck.tolerance(0.2))).toBe("Good")
+		expect(SkillCheck.judge(check, justAfter, SkillCheck.tolerance(0.05))).toBe("Good")
 		expect(SkillCheck.tolerance(5)).toBe(C.LatencyMax)
 		expect(SkillCheck.tolerance(nil)).toBe(C.LatencyBase)
 		expect(SkillCheck.tolerance(0 / 0)).toBe(C.LatencyBase)
 		-- a client claiming a huge tolerance is clamped by judge itself
 		local wayLate = timeAt(check, check.zoneStart + check.zoneWidth) + 1
 		expect(SkillCheck.judge(check, wayLate, 10)).toBe("Miss")
+	end)
+
+	it("judges the instant the client pressed, trusted only within the tolerance", function()
+		local check = SkillCheck.new(3, 0, 60, fixed(0.5))
+		local tol = SkillCheck.tolerance(0.1)
+		local centre = timeAt(check, check.zoneStart + check.zoneWidth / 2)
+		-- pressed dead centre, arrived 0.08 s later: still Great (the marker moved on meanwhile)
+		expect(SkillCheck.judgePress(check, centre, centre + 0.08, tol)).toBe("Great")
+		-- pressed on the grey: Good, however the window would have looked back
+		local edge = timeAt(check, check.zoneStart + check.zoneWidth * 0.1)
+		expect(SkillCheck.judgePress(check, edge, edge + 0.05, tol)).toBe("Good")
+		-- a claim from the future is held to the arrival; one from long ago to arrival - tolerance
+		expect(SkillCheck.pressTime(centre + 5, centre, tol)).toBe(centre)
+		expect(SkillCheck.pressTime(centre - 5, centre, tol)).toBeCloseTo(centre - tol)
+		expect(SkillCheck.judgePress(check, centre - 5, centre + 1, tol)).toBe("Miss")
+		-- no usable claim: judged on arrival with the window
+		expect(SkillCheck.pressTime(nil, 1, tol)).toBe(nil)
+		expect(SkillCheck.pressTime(0 / 0, 1, tol)).toBe(nil)
+		expect(SkillCheck.judgePress(check, "x", centre, tol)).toBe(SkillCheck.judge(check, centre, tol))
+		-- the white block is smaller than the old great zone (a quarter of the zone)
+		expect(check.greatWidth).toBeLessThan(check.zoneWidth * 0.25)
 	end)
 
 	it("judges each check once: replays, stale ids and rapid presses are refused", function()

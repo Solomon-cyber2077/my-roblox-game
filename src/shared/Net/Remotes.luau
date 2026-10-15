@@ -12,6 +12,7 @@
 	  id        string of 1..48 letters, digits or underscores
 	  tier      integer 1..Difficulty.RunTier.Max
 	  check     integer 1..1e6, a skill check's id (Logic/SkillCheck)
+	  time      a finite number of seconds 0..1e10 (a server-clock instant the client claims)
 ]]
 
 local Difficulty = require(script.Parent.Parent.Config.Difficulty)
@@ -39,8 +40,9 @@ local Remotes: { [string]: RemoteDef } = {
 	SetSetting = { direction = "ToServer", args = { "id", "id" }, rate = 4, burst = 4 },
 	ShopEquip = { direction = "ToServer", args = { "id" }, rate = 4, burst = 4 },
 	JoinInProgress = { direction = "ToServer", args = {}, rate = 1, burst = 1 },
-	-- one press for a skill check while a Hollow holds you; the server judges and rate-limits it
-	SkillCheck = { direction = "ToServer", args = { "check" }, rate = 10, burst = 10 },
+	-- one press for a skill check while a Hollow holds you, with the server time the client saw
+	-- when the key went down; the server judges (within a latency tolerance) and rate-limits it
+	SkillCheck = { direction = "ToServer", args = { "check", "time" }, rate = 10, burst = 10 },
 	-- the crew chest in the stores car: stow a backpack slot's consumable, or take one by item id
 	ChestStow = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
 	ChestTake = { direction = "ToServer", args = { "id" }, rate = 6, burst = 6 },
@@ -72,6 +74,9 @@ local Checks: { [ArgKind]: (any) -> boolean } = {
 	end,
 	check = function(value)
 		return isInteger(value, 1, 1e6)
+	end,
+	time = function(value)
+		return type(value) == "number" and value == value and value >= 0 and value <= 1e10
 	end,
 	id = function(value)
 		return type(value) == "string"

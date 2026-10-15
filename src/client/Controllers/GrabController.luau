@@ -6,9 +6,11 @@
 	  * the struggle plate (UI/Struggle) names what it is doing to you, shows the hold
 	    weakening as you win skill checks (GrabEscape) and its clock running down
 	    (GrabFinishAt), both from the server
-	  * the server sends each skill check (Fx SkillCheck: Logic/SkillCheck); its needle
-	    sweeps the ring on the server clock. Space, gamepad A or a tap on the keycap is your
-	    one press for it: a SkillCheck remote the server judges, the keycap punching down, a
+	  * the server sends each skill check (Fx SkillCheck: Logic/SkillCheck); its marker
+	    crosses the bar on the server clock. Space, gamepad A or a tap on the keycap is your
+	    one press for it, read the moment the key goes down: that server time goes with the
+	    SkillCheck remote (the server judges that instant, within a latency tolerance), the
+	    verdict shows at once by the same rule (the server's replaces it), the keycap punching down, a
 	    jolt of the camera, and your body thrashing harder (CharacterAnimator reads
 	    Struggle()). Space and A never jump while it has you (this binding sinks them and
 	    MovementController zeroes the jump; both give it back when the hold ends)
@@ -99,7 +101,10 @@ local function press()
 		return
 	end
 	pressed = true
-	Net.Fire("SkillCheck", current.id)
+	-- the instant the key went down, on the clock that draws the marker
+	local at = Workspace:GetServerTimeNow()
+	Net.Fire("SkillCheck", current.id, at)
+	Struggle.result(SkillCheck.judge(current, at, 0))
 	struggle = math.min(struggle + 0.3, 1)
 	Struggle.punch()
 	Registry.CameraController.Shake(0.12)

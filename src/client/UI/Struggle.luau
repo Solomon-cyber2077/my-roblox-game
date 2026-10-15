@@ -1,9 +1,10 @@
 --!strict
 --[[
 	The struggle plate, shown while a Hollow has you: what it is doing to you, the skill-check
-	ring (a needle sweeps it once; press when it is in the zone, the bright head of the zone
-	is a great hit), the key to press for your input device (a keycap that punches down; touch
-	players tap it), and how close you are to tearing free. The meter runs red to green as
+	bar (a marker crosses it once, left to right; press while it is over the grey zone, and the
+	small white block in the zone's middle is a great hit), the key to press for your input
+	device (a keycap that punches down; touch players tap it), and how close you are to tearing
+	free. The meter runs red to green as
 	the hold weakens; the red rule along the top is the grab's clock running down.
 ]]
 
@@ -16,10 +17,11 @@ local Struggle = {}
 
 local root: Frame
 local rule: Frame
-local ring: Frame
+local bar: Frame
 local needle: Frame
 local verdict: TextLabel
-local segments: { Frame } = {}
+local zoneFrame: Frame
+local greatFrame: Frame
 local title: TextLabel
 local subtitle: TextLabel
 local keyLabel: TextLabel
@@ -31,13 +33,13 @@ local helpers: TextLabel
 local onPress: (() -> ())? = nil
 local verdictUntil = 0
 
-local RING = 50 -- the ring's radius, px
-local TRACK = 7 -- its thickness
-local RING_X, RING_Y = 112, 142 -- its centre on the plate
-local KEY_X = 318 -- the keycap's centre
-local SEG_STEP = 3 -- degrees per zone segment
-local SEG_W = 6
-local SEGMENTS = math.ceil(340 / SEG_STEP)
+local BAR_X, BAR_Y = 24, 82 -- the bar's top left on the plate
+local BAR_W, BAR_H = 412, 24
+local KEY_X, KEY_Y = 230, 146 -- the keycap's centre
+local GREY = Color3.fromRGB(128, 122, 114) -- the zone: a good press
+local WHITE = Color3.fromRGB(246, 242, 232) -- its middle: a great one
+
+local BRASS_RIM = Color3.fromRGB(112, 84, 38)
 
 local KIND_TEXT: { [string]: string } = {
 	Stalker = "A STALKER HAS YOU",
@@ -110,71 +112,68 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	subtitle.ZIndex = 21
 	subtitle.Parent = plate
 
-	-- the skill-check ring: a dark track, the zone (great zone brighter) and the needle
-	ring = Ui.new("Frame", {
-		Name = "Ring",
-		Size = UDim2.fromOffset(RING * 2, RING * 2),
-		Position = UDim2.fromOffset(RING_X, RING_Y),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundTransparency = 1,
+	-- the skill-check bar: a dark track, the grey zone with its white block, and the marker
+	bar = Ui.new("Frame", {
+		Name = "Bar",
+		Size = UDim2.fromOffset(BAR_W, BAR_H),
+		Position = UDim2.fromOffset(BAR_X, BAR_Y),
+		BackgroundColor3 = Theme.Color.black,
+		BackgroundTransparency = 0.25,
+		BorderSizePixel = 0,
 		ZIndex = 21,
 		Parent = plate,
 	})
-	Ui.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = ring })
-	Ui.stroke(Theme.Color.black, TRACK, 0.25).Parent = ring
-	for i = 1, SEGMENTS do
-		local spoke = Ui.new("Frame", {
-			Name = "Zone",
-			Size = UDim2.fromOffset(SEG_W, RING * 2 + TRACK),
-			Position = UDim2.fromScale(0.5, 0.5),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			BackgroundTransparency = 1,
-			Visible = false,
-			ZIndex = 22,
-			Parent = ring,
-		})
-		Ui.new("Frame", {
-			Size = UDim2.new(1, 0, 0, TRACK + 2),
-			BackgroundColor3 = Theme.Color.white,
-			BorderSizePixel = 0,
-			ZIndex = 22,
-			Parent = spoke,
-		})
-		segments[i] = spoke
-	end
-	needle = Ui.new("Frame", {
-		Name = "Needle",
-		Size = UDim2.fromOffset(4, RING * 2 + TRACK + 6),
-		Position = UDim2.fromScale(0.5, 0.5),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundTransparency = 1,
+	Ui.corner(3).Parent = bar
+	Ui.stroke(BRASS_RIM, 1, 0.2).Parent = bar
+	zoneFrame = Ui.new("Frame", {
+		Name = "Zone",
+		BackgroundColor3 = GREY,
+		BorderSizePixel = 0,
+		Size = UDim2.new(0, 0, 1, -6),
+		Position = UDim2.fromOffset(0, 3),
 		Visible = false,
-		ZIndex = 24,
-		Parent = ring,
+		ZIndex = 22,
+		Parent = bar,
 	})
-	Ui.new("Frame", {
-		Size = UDim2.fromScale(1, 0.5),
+	greatFrame = Ui.new("Frame", {
+		Name = "Great",
+		BackgroundColor3 = WHITE,
+		BorderSizePixel = 0,
+		Size = UDim2.new(0, 0, 1, -6),
+		Position = UDim2.fromOffset(0, 3),
+		Visible = false,
+		ZIndex = 23,
+		Parent = bar,
+	})
+	needle = Ui.new("Frame", {
+		Name = "Marker",
+		Size = UDim2.new(0, 4, 1, 10),
+		Position = UDim2.fromOffset(0, -5),
+		AnchorPoint = Vector2.new(0.5, 0),
 		BackgroundColor3 = Theme.Color.signal,
 		BorderSizePixel = 0,
+		Visible = false,
 		ZIndex = 24,
-		Parent = needle,
+		Parent = bar,
 	})
 	verdict = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
 		TextSize = 18,
 		Color = Theme.Color.white,
-		Size = UDim2.fromScale(1, 1),
+		Position = UDim2.fromOffset(BAR_X, BAR_Y + BAR_H + 2),
+		Size = UDim2.fromOffset(BAR_W, 22),
 		XAlign = Enum.TextXAlignment.Center,
 	})
+	verdict.TextStrokeTransparency = 0.4
 	verdict.ZIndex = 25
-	verdict.Parent = ring
+	verdict.Parent = plate
 
 	-- the key to press, and the button touch players tap
 	local keycap = Ui.new("TextButton", {
 		Name = "Key",
-		Size = UDim2.fromOffset(176, 52),
-		Position = UDim2.fromOffset(KEY_X, RING_Y - 18),
+		Size = UDim2.fromOffset(176, 44),
+		Position = UDim2.fromOffset(KEY_X, KEY_Y),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundColor3 = Theme.Color.brass, -- an enamel keycap, as on the prompts
 		AutoButtonColor = false,
@@ -202,11 +201,11 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 		end
 	end)
 	hint = Ui.text({
-		Text = "WHEN THE NEEDLE HITS THE ZONE",
+		Text = "WHEN THE MARKER IS ON THE WHITE",
 		Font = Theme.Font.bodyBold,
 		TextSize = 13,
 		Color = Theme.Color.white,
-		Position = UDim2.fromOffset(KEY_X - 110, RING_Y + 14),
+		Position = UDim2.fromOffset(KEY_X - 110, KEY_Y + 26),
 		Size = UDim2.fromOffset(220, 18),
 		XAlign = Enum.TextXAlignment.Center,
 	})
@@ -282,36 +281,33 @@ function Struggle.clock(left: number)
 	rule.Size = UDim2.new(math.clamp(left, 0, 1), -24, 0, 3)
 end
 
--- Shows a check's zone: `start` and `width` in degrees clockwise from the top, the leading
--- `great` degrees brighter.
+-- Shows a check's zone on the bar: `start` and `width` in degrees (0 the left end, 360 the
+-- right), with the `great` degrees in its middle drawn as the white block.
 function Struggle.zone(start: number, width: number, great: number)
-	for i, spoke in segments do
-		local at = (i - 1) * SEG_STEP
-		spoke.Visible = at <= width
-		if at <= width then
-			spoke.Rotation = start + math.min(at, width)
-			local bar = spoke:FindFirstChildOfClass("Frame") :: Frame
-			bar.BackgroundColor3 = if at <= great then Theme.Color.go else Theme.Color.white
-		end
-	end
+	local px = BAR_W / 360
+	zoneFrame.Position = UDim2.fromOffset(start * px, 3)
+	zoneFrame.Size = UDim2.new(0, width * px, 1, -6)
+	greatFrame.Position = UDim2.fromOffset((start + (width - great) / 2) * px, 3)
+	greatFrame.Size = UDim2.new(0, math.max(great * px, 2), 1, -6)
+	zoneFrame.Visible = true
+	greatFrame.Visible = true
 end
 
--- Points the needle (degrees clockwise from the top); nil hides it.
+-- Puts the marker at `angle` degrees along the bar (0 left, 360 right); nil hides it.
 function Struggle.needle(angle: number?)
 	needle.Visible = angle ~= nil
 	if angle then
-		needle.Rotation = angle
+		needle.Position = UDim2.fromOffset(math.clamp(angle, 0, 360) / 360 * BAR_W, -5)
 	end
 end
 
 function Struggle.clearCheck()
-	for _, spoke in segments do
-		spoke.Visible = false
-	end
+	zoneFrame.Visible = false
+	greatFrame.Visible = false
 	needle.Visible = false
 end
 
--- A check's verdict flashes in the ring.
+-- A check's verdict flashes under the bar.
 function Struggle.result(result: string)
 	verdictUntil = os.clock() + 0.6
 	verdict.Text = string.upper(result)
