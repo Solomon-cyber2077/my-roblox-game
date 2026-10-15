@@ -1826,60 +1826,68 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	chairPiece(Vector3.new(1.6, 0.12, 0.12), CFrame.new(0, 0.5, 0), roseDark)
 	seatAt(chairAt * CFrame.new(0, 2.05, 0) * Kit.angles(0, 180, 0), 1.8, "Piano chair")
 
-	-- a candle stand at the piano's left: round base, slim turned post, a top just big enough for one candle
-	local standAt = pianoAt * CFrame.new(4.2, 0, -0.4) -- the bass end, left as you face the keys
-	local function disc(thick: number, diameter: number, y: number, color: Color3, material: Enum.Material)
-		Kit.cylinder(
-			model,
-			thick,
-			diameter,
-			standAt * CFrame.new(0, y, 0) * Kit.angles(0, 0, 90),
-			color,
-			{ material = material, collide = false }
+	-- a candle stand at each end of the piano: round base, slim turned post, a top just big enough for one candle
+	for _, sx in { 4.2, -4.2 } do
+		local standAt = pianoAt * CFrame.new(sx, 0, -0.4)
+		local function disc(
+			thick: number,
+			diameter: number,
+			y: number,
+			color: Color3,
+			material: Enum.Material
 		)
+			Kit.cylinder(
+				model,
+				thick,
+				diameter,
+				standAt * CFrame.new(0, y, 0) * Kit.angles(0, 0, 90),
+				color,
+				{ material = material, collide = false }
+			)
+		end
+		disc(0.18, 1.7, 0.09, roseDark, Enum.Material.Wood)
+		disc(0.16, 1.1, 0.26, ROSE, Enum.Material.Wood)
+		Kit.post(model, 3.9, 0.18, standAt * CFrame.new(0, 2.3, 0), ROSE, { material = Enum.Material.Wood })
+		for _, y in { 0.5, 2.2, 4.15 } do
+			Kit.ball(model, 0.32, standAt * CFrame.new(0, y, 0), roseLight, WOOD)
+		end
+		disc(0.12, 1.0, 4.31, ROSE, Enum.Material.Wood)
+		disc(0.05, 0.5, 4.4, C.brass, Enum.Material.Metal)
+		Kit.post(
+			model,
+			0.7,
+			0.18,
+			standAt * CFrame.new(0, 4.77, 0),
+			PAPER,
+			{ material = Enum.Material.SmoothPlastic, collide = false }
+		)
+		-- the flame: a tall amber teardrop round a short white-gold core, with a dark wick at its foot
+		Kit.post(
+			model,
+			0.12,
+			0.04,
+			standAt * CFrame.new(0, 5.17, 0),
+			Color3.fromRGB(30, 22, 16),
+			{ collide = false }
+		)
+		local flame = Kit.neon(
+			model,
+			Vector3.new(0.2, 0.55, 0.2),
+			standAt * CFrame.new(0, 5.47, 0),
+			Color3.fromRGB(255, 150, 50),
+			Enum.PartType.Ball
+		)
+		flame.Transparency = 0.25
+		Kit.neon(
+			model,
+			Vector3.new(0.09, 0.22, 0.09),
+			standAt * CFrame.new(0, 5.36, 0),
+			Color3.fromRGB(255, 226, 160),
+			Enum.PartType.Ball
+		)
+		-- firelight, kept to the piano corner: no shadows so the far side of the stand is lit alike
+		Kit.pointLight(flame, Color3.fromRGB(255, 147, 60), 1, 13, false)
 	end
-	disc(0.18, 1.7, 0.09, roseDark, Enum.Material.Wood)
-	disc(0.16, 1.1, 0.26, ROSE, Enum.Material.Wood)
-	Kit.post(model, 3.9, 0.18, standAt * CFrame.new(0, 2.3, 0), ROSE, { material = Enum.Material.Wood })
-	for _, y in { 0.5, 2.2, 4.15 } do
-		Kit.ball(model, 0.32, standAt * CFrame.new(0, y, 0), roseLight, WOOD)
-	end
-	disc(0.12, 1.0, 4.31, ROSE, Enum.Material.Wood)
-	disc(0.05, 0.5, 4.4, C.brass, Enum.Material.Metal)
-	Kit.post(
-		model,
-		0.7,
-		0.18,
-		standAt * CFrame.new(0, 4.77, 0),
-		PAPER,
-		{ material = Enum.Material.SmoothPlastic, collide = false }
-	)
-	-- the flame: a tall amber teardrop round a short white-gold core, with a dark wick at its foot
-	Kit.post(
-		model,
-		0.12,
-		0.04,
-		standAt * CFrame.new(0, 5.17, 0),
-		Color3.fromRGB(30, 22, 16),
-		{ collide = false }
-	)
-	local flame = Kit.neon(
-		model,
-		Vector3.new(0.2, 0.55, 0.2),
-		standAt * CFrame.new(0, 5.47, 0),
-		Color3.fromRGB(255, 150, 50),
-		Enum.PartType.Ball
-	)
-	flame.Transparency = 0.25
-	Kit.neon(
-		model,
-		Vector3.new(0.09, 0.22, 0.09),
-		standAt * CFrame.new(0, 5.36, 0),
-		Color3.fromRGB(255, 226, 160),
-		Enum.PartType.Ball
-	)
-	-- firelight, kept to the piano corner: no shadows so the far side of the stand is lit alike
-	Kit.pointLight(flame, Color3.fromRGB(255, 147, 60), 2.4, 13, false)
 	-- a soft pool over the floor before the piano, high and wide so its falloff fades out evenly into
 	-- the dark and into the candle's glow, in the hall lamps' warm colour
 	local pool = block(
