@@ -1188,6 +1188,22 @@ local Buildings = {
 	BackLoot = { ToolChest = true, Vault = true } :: { [string]: boolean }, -- what makes a back room worth the trip
 	ForceCost = 1, -- parts to force a locked door
 	ForceHold = 2,
+	-- What hangs on the walls of each station's main building (BuildingGen.decor,
+	-- Builders/RoomDecor): pieces `w` wide along the wall, centred `y` over the floor, on
+	-- stretches of wall clear of doors, windows and furniture by `Clear`.
+	Decor = {
+		MaxPerRoom = 4,
+		Clear = 0.8,
+		Kinds = {
+			WallClock = { w = 2.0, y = 7.6 },
+			Picture = { w = 2.6, y = 6.9 },
+			Text = { w = 2.2, y = 6.7 },
+			GasBracket = { w = 1.0, y = 6.4 },
+			HatPegs = { w = 2.8, y = 5.9 },
+			WallShelf = { w = 3.2, y = 6.0 },
+		} :: { [string]: { w: number, y: number } },
+		Mix = { "Picture", "Text", "GasBracket", "HatPegs", "WallShelf", "Picture", "GasBracket" },
+	},
 }
 
 return table.freeze(Buildings)

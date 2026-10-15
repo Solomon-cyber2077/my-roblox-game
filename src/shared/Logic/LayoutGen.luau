@@ -1140,9 +1140,9 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		end
 	end
 
-	-- Cover: the rhythm of the crossing. Tall solid things (Config/Stations layout.cover)
-	-- stand on open tiles until no stretch of yard is more than a tile from something to run
-	-- to. A cover tile's four neighbours are open ground and no two cover tiles touch, so a
+	-- Cover: the rhythm of the crossing. Tall solid things (Config/Stations layout.cover, now
+	-- and then a sight) stand on open tiles, Cover.Spacing apart, until no stretch of yard is
+	-- far from something to run to. A cover tile's four neighbours are open ground and no two cover tiles touch, so a
 	-- Hollow can always go round. The first yard row is left to the threshold.
 	if layout and not arch.terminus then
 		local function feature(gx: number, gz: number): boolean
@@ -1161,15 +1161,34 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			end
 			return true
 		end
+		local coverAt: { [number]: boolean } = {}
+		local spacing = Stations.Cover.Spacing
 		local function lonely(gx: number, gz: number): boolean
-			for dx = -1, 1 do
-				for dz = -1, 1 do
-					if (dx ~= 0 or dz ~= 0) and feature(gx + dx, gz + dz) then
-						return false
+			for dx = -spacing, spacing do
+				for dz = -spacing, spacing do
+					local near = math.abs(dx) <= 1 and math.abs(dz) <= 1
+					local x, z = gx + dx, gz + dz
+					if (dx ~= 0 or dz ~= 0) and x >= 0 and x < cols and z >= 0 and z < rows then
+						if coverAt[index(x, z)] or (near and feature(x, z)) then
+							return false
+						end
 					end
 				end
 			end
 			return true
+		end
+		local sights: { [string]: number } = {}
+		local placedCover = 0
+		local function coverKind(): string
+			placedCover += 1
+			if layout.sights and placedCover % Stations.Cover.SightEvery == 0 then
+				local kind = rng:pick(layout.sights)
+				if (sights[kind] or 0) < Stations.Cover.SightMax then
+					sights[kind] = (sights[kind] or 0) + 1
+					return kind
+				end
+			end
+			return rng:pick(layout.cover)
 		end
 		local cells = innerTiles(false)
 		rng:shuffle(cells)
@@ -1178,9 +1197,10 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			local i = index(gx, gz)
 			if gz > safeRows and not claimed[i] and openAround(gx, gz) and lonely(gx, gz) then
 				claimed[i] = true
+				coverAt[i] = true
 				local j = Stations.Cover.Jitter
 				table.insert(props, {
-					kind = rng:pick(layout.cover),
+					kind = coverKind(),
 					slab = slabOfTile[i],
 					x = tileX(gx) + rng:range(-j, j),
 					z = tileZ(gz) + rng:range(-j, j),

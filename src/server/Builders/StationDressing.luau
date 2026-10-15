@@ -1283,10 +1283,6 @@ Builders.GatePier = function(ctx)
 	piece(ctx, Vector3.new(1.0, 0.4, 1.0), at(11.62), dark, M.Limestone)
 	piece(ctx, Vector3.new(1.5, 1.1, 1.5), at(12.3), stone, M.Limestone)
 	piece(ctx, Vector3.new(0.8, 0.3, 0.8), at(13.0), dark, M.Limestone)
-	-- the gate's hinge pins, the iron long gone
-	for _, y in { 2.2, 8.2 } do
-		piece(ctx, Vector3.new(0.3, 0.3, 0.5), at(y) * CFrame.new(1.8, 0, 0), C.iron, M.CorrodedMetal)
-	end
 	guard(ctx, 3.4, 13, 3.4)
 end
 
@@ -1301,12 +1297,6 @@ Builders.Chimney = function(ctx)
 	end
 	piece(ctx, Vector3.new(5.6, 0.5, 4.4), at(0, 0.2, -0.3), rgb(60, 54, 48), M.Slate)
 	piece(ctx, Vector3.new(4.2, h, 3.0), at(0, h / 2, 0), brick, M.Brick)
-	-- soot licked up the front from the hearth
-	Kit.block(ctx.parent, Vector3.new(2.6, h * 0.55, 0.1), at(0, h * 0.3, -1.53), soot, {
-		material = M.Brick,
-		transparency = 0.35,
-		collide = false,
-	})
 	piece(ctx, Vector3.new(2.0, 2.4, 0.4), at(0, 1.45, -1.42), soot, M.Slate)
 	piece(ctx, Vector3.new(2.8, 0.35, 0.6), at(0, 2.8, -1.6), rgb(84, 76, 66), M.Wood)
 	piece(ctx, Vector3.new(4.6, 0.45, 3.4), at(0, h - 0.6, 0), Kit.shade(brick, 0.8), M.Brick)
@@ -1423,9 +1413,9 @@ Builders.Elm = function(ctx)
 		block(ctx, Vector3.new(h * 0.035, len, h * 0.035), limb * CFrame.new(0, len / 2, 0), bark, M.Wood)
 	end
 	local color = pick(ctx, FOLIAGE)
-	for k = 0, 2 do
-		local a = k / 3 * math.pi * 2 + rng:NextNumber(0, 0.6)
-		local r = if k == 0 then 0 else h * 0.15
+	for k = 0, 1 do -- two broad clumps: balls are dear (432 tris each)
+		local a = rng:NextNumber(0, math.pi * 2)
+		local r = if k == 0 then 0 else h * 0.14
 		ball(
 			ctx,
 			h * rng:NextNumber(0.34, 0.42),
@@ -1802,5 +1792,8 @@ function StationDressing.build(kind: string, ctx: Context): boolean
 	builder(ctx)
 	return true
 end
+
+-- The platform clock's dial, for the clocks indoors (Builders/RoomDecor).
+StationDressing.clockDial = dial
 
 return StationDressing
