@@ -47,20 +47,20 @@ local WAKE_SECONDS = 5
 local FADE_RATE = 2.5
 local WATCH_IDLE = 0.2 -- settled, but the stop ticket must stay legible over bright scenery
 local BACKPACK_IDLE = 0.5
-local HIDDEN = 1
+local ROSTER_IDLE = 0.2 -- the Operators panel never fades out
 -- Stamina bar above the hotbar: size, its gap above the slots (the hint line sits higher), and
 -- how faint it is when full.
 local STAMINA_W, STAMINA_H, STAMINA_GAP = 200, 8, 10
 local STAMINA_REST = 0.7
--- The leak alert's slot in the left column, directly under the gauge case (14, 12, 236x136);
--- the Settings button sits below it in a run (UI/Settings).
-local LEAK_SLOT = { x = 14, y = 152, w = 236, h = 40 }
+-- The leak alert's slot, top right under the Operators panel (it follows the panel's height;
+-- `y` is the gap below it). The Settings button sits under the gauge case in a run (UI/Settings).
+local LEAK_SLOT = { x = 14, y = 8, w = 236, h = 40 }
 -- Full-screen UI the leak slot hides behind (direct children of the HUD ScreenGui).
 local FULL_SCREEN = { "RouteVote", "RunCard", "Unseal", "CarBoarding", "Eliminated" }
 local leakSlot: Frame? = nil
 -- The tutorial prompt's slot (Controllers/TutorialController): the left column, under the in-run
--- Settings button (14, 200, 160x40). It yields exactly like the leak slot.
-local TUTORIAL_SLOT = { x = 14, y = 250, w = 236, h = 84 }
+-- Settings button (14, 146, 160x40). It yields exactly like the leak slot.
+local TUTORIAL_SLOT = { x = 14, y = 196, w = 236, h = 84 }
 local tutorialSlot: Frame? = nil
 
 local function tierStamps(tier: number): string
@@ -588,7 +588,8 @@ function Hud.mount(gui: ScreenGui)
 	local leakFrame = Ui.new("Frame", {
 		Name = "LeakSlot",
 		Size = UDim2.fromOffset(LEAK_SLOT.w, LEAK_SLOT.h),
-		Position = UDim2.fromOffset(LEAK_SLOT.x, LEAK_SLOT.y),
+		Position = UDim2.new(1, -LEAK_SLOT.x, 0, 12 + 40 + LEAK_SLOT.y),
+		AnchorPoint = Vector2.new(1, 0),
 		BackgroundTransparency = 1,
 		ClipsDescendants = true,
 		ZIndex = 1,
@@ -701,7 +702,7 @@ function Hud.mount(gui: ScreenGui)
 
 	-- Crew roster ------------------------------------------------------------------------------
 	-- Operators go by call signs, not names: a letter by seat on the run, a digit from the key.
-	local rosterFade = fader("CrewCase", HIDDEN, {
+	local rosterFade = fader("CrewCase", ROSTER_IDLE, {
 		Size = UDim2.fromOffset(142, 40),
 		Position = UDim2.new(1, -14, 0, 12),
 		AnchorPoint = Vector2.new(1, 0),
@@ -1293,6 +1294,11 @@ function Hud.mount(gui: ScreenGui)
 		end
 
 		leakFrame.Visible = not slotBlocked()
+		-- the leak slot rides under the Operators panel, whatever its height (crew size)
+		local uiScale = gui:FindFirstChildOfClass("UIScale")
+		local rosterHeight = rosterFade.group.AbsoluteSize.Y
+			/ (if uiScale and uiScale.Scale > 0 then uiScale.Scale else 1)
+		leakFrame.Position = UDim2.new(1, -LEAK_SLOT.x, 0, 12 + rosterHeight + LEAK_SLOT.y)
 		tutorialFrame.Visible = leakFrame.Visible
 
 		local clock = os.clock()
@@ -1304,7 +1310,7 @@ function Hud.mount(gui: ScreenGui)
 	end)
 end
 
--- The leak alert's layout slot under the gauges (nil before mount). Parent the alert into it;
+-- The leak alert's layout slot under the Operators panel (nil before mount). Parent the alert into it;
 -- the slot hides itself whenever a modal or full-screen UI is open.
 function Hud.leakSlot(): Frame?
 	return leakSlot
