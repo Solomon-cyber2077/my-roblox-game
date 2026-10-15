@@ -1,5 +1,18 @@
 # HANDOFF
 
+## 2026-10-14: SLIDING GRAB ZONE
+`lune run check` passes (354 specs). Play-tested: `grab Stalker` at a dock, zone moves ~100 px/s, console clean.
+1. Features completed
+- Grab check zone (grey + white block) slides along the bar at `Difficulty.SkillCheck.ZoneDrift` = 85 deg/s, bouncing off
+  the ends; odd check ids go left, even right (`SkillCheck.drift`, `zoneStartAt`; `Check.drift` rides the Fx). `judge`
+  follows the moving zone (look-back window in 12 slices); `minimumSeconds` counts a full turn per check. GrabController
+  redraws the zone each frame. Audit harness (`.lune/lib/HollowLifecycle`) presses on the moving zone.
+2. Known bugs/regressions
+- Last Light cab: the two long rods beside the door are brass grab irons baked into the locomotive mesh
+  (`tools/trainshell/engine2.py` 372-377, x 53.55/62.45). Removing them needs a re-export and re-upload of that mesh; not done.
+3. Next logical step
+- Decide on the grab irons (re-export the locomotive brass mesh without them); tune ZoneDrift after real play.
+
 ## 2026-10-14: HUD, LEAKS, GRAB BAR, TRAIN INTERIOR PASS (16 tasks, one commit each, pushed)
 `lune run check` passes (352 specs incl. new LeakRoute, CrewChest, SkillCheck press-time). Each task play-tested in Studio, console clean.
 1. Features completed

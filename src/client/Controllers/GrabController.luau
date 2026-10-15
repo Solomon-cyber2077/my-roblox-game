@@ -379,6 +379,9 @@ function GrabController.Start()
 		local current = check
 		local angle = if current then SkillCheck.angleAt(current, now) else nil
 		Struggle.needle(if angle and angle >= 0 and angle <= 360 then angle else nil)
+		if current then
+			Struggle.zone(SkillCheck.zoneStartAt(current, now), current.zoneWidth, current.greatWidth)
+		end
 		-- your heart, quickening as the hold wears you down
 		local humanoid = model:FindFirstChildOfClass("Humanoid")
 		local life = if humanoid then humanoid.Health / math.max(humanoid.MaxHealth, 1) else 1

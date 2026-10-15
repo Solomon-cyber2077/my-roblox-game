@@ -9,6 +9,7 @@ local function run(): string
 	local difficulty = Loader.requireNode(shared.Logic.DifficultyModel)
 	local stations = Loader.requireNode(shared.Config.Stations)
 	local layout = Loader.requireNode(shared.Logic.LayoutGen)
+	local skillCheck = Loader.requireNode(shared.Logic.SkillCheck)
 	local params = difficulty.params(0.3, stations.List.Halt, 2, nil)
 	local plan = layout.generate("Halt", 21, 1)
 	local clock = 100
@@ -288,7 +289,16 @@ local function run(): string
 			local latest = latestCheck()
 			if latest then
 				used[latest] = true
-				clock = latest.startsAt + (latest.zoneStart + latest.greatWidth / 2) / 360 * latest.sweep
+				-- press as the marker meets the middle of the (sliding) zone
+				local at = latest.startsAt
+				while
+					at < latest.startsAt + latest.sweep
+					and skillCheck.angleAt(latest, at)
+						< skillCheck.zoneStartAt(latest, at) + latest.zoneWidth / 2
+				do
+					at += 0.002
+				end
+				clock = at
 				callbacks.SkillCheck(victim, latest.id)
 			end
 		end

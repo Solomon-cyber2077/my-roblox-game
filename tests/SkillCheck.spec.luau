@@ -16,6 +16,12 @@ local function timeAt(check: SkillCheck.Check, degrees: number): number
 	return check.startsAt + degrees / 360 * check.sweep
 end
 
+-- The same check with its zone held still (the judging specs below measure a fixed zone).
+local function still(check: SkillCheck.Check): SkillCheck.Check
+	check.drift = 0
+	return check
+end
+
 describe("SkillCheck", function()
 	it("puts a random zone ahead of the needle, inside one turn", function()
 		for _, u in { 0, 0.3, 0.7, 1 } do
@@ -33,7 +39,7 @@ describe("SkillCheck", function()
 	end)
 
 	it("judges a press in the great zone, the zone, early and late", function()
-		local check = SkillCheck.new(7, 50, 60, fixed(0.5))
+		local check = still(SkillCheck.new(7, 50, 60, fixed(0.5)))
 		local lo = check.zoneStart
 		-- the white block is the middle of the zone; the grey either side is a good press
 		expect(SkillCheck.judge(check, timeAt(check, lo + check.zoneWidth / 2), 0)).toBe("Great")
@@ -49,7 +55,7 @@ describe("SkillCheck", function()
 	end)
 
 	it("forgives the time a press spent on the wire, but never more than LatencyMax", function()
-		local check = SkillCheck.new(1, 0, 40, fixed(0))
+		local check = still(SkillCheck.new(1, 0, 40, fixed(0)))
 		local justAfter = timeAt(check, check.zoneStart + check.zoneWidth) + 0.06
 		expect(SkillCheck.judge(check, justAfter, 0)).toBe("Miss")
 		expect(SkillCheck.judge(check, justAfter, SkillCheck.tolerance(0.05))).toBe("Good")
@@ -62,7 +68,7 @@ describe("SkillCheck", function()
 	end)
 
 	it("judges the instant the client pressed, trusted only within the tolerance", function()
-		local check = SkillCheck.new(3, 0, 60, fixed(0.5))
+		local check = still(SkillCheck.new(3, 0, 60, fixed(0.5)))
 		local tol = SkillCheck.tolerance(0.1)
 		local centre = timeAt(check, check.zoneStart + check.zoneWidth / 2)
 		-- pressed dead centre, arrived 0.08 s later: still Great (the marker moved on meanwhile)
@@ -80,6 +86,31 @@ describe("SkillCheck", function()
 		expect(SkillCheck.judgePress(check, "x", centre, tol)).toBe(SkillCheck.judge(check, centre, tol))
 		-- the white block is smaller than the old great zone (a quarter of the zone)
 		expect(check.greatWidth).toBeLessThan(check.zoneWidth * 0.25)
+	end)
+
+	it("slides the zone along the bar, bouncing off its ends, and judges where it is", function()
+		local right = SkillCheck.new(2, 0, 60, fixed(0.5))
+		local left = SkillCheck.new(3, 0, 60, fixed(0.5))
+		expect(right.drift).toBe(C.ZoneDrift)
+		expect(left.drift).toBe(-C.ZoneDrift)
+		expect(SkillCheck.zoneStartAt(right, 0)).toBe(right.zoneStart)
+		expect(SkillCheck.zoneStartAt(right, 0.5)).toBeCloseTo(right.zoneStart + C.ZoneDrift * 0.5)
+		for t = 0, 10, 0.05 do
+			for _, check in { right, left } do
+				local z = SkillCheck.zoneStartAt(check, t)
+				expect(z).toBeAtLeast(-1e-9)
+				expect(z + check.zoneWidth).toBeLessThan(360 + 1e-9)
+			end
+		end
+		-- find the instant the needle sits on the moving white block's centre: a Great there
+		local t = 0
+		while SkillCheck.angleAt(right, t) < SkillCheck.zoneStartAt(right, t) + right.zoneWidth / 2 do
+			t += 0.001
+		end
+		expect(SkillCheck.judge(right, t, 0)).toBe("Great")
+		-- where the zone started is no longer where it is
+		local stale = (right.zoneStart + right.zoneWidth / 2) / 360 * right.sweep
+		expect(SkillCheck.judge(right, stale, 0)).toBe("Miss")
 	end)
 
 	it("judges each check once: replays, stale ids and rapid presses are refused", function()

@@ -130,7 +130,7 @@ return table.freeze({
 		StaggerPush = 16, -- studs per second the staggered Hollow is shoved back at first, easing off
 	}),
 
-	-- Breaking a hold (Logic/SkillCheck): a needle sweeps a ring; Space (gamepad A, or the
+	-- Breaking a hold (Logic/SkillCheck): a marker crosses a bar past a sliding zone; Space (gamepad A, or the
 	-- on-screen button) with the needle in the zone is a hit. The server picks every check
 	-- and judges every press.
 	SkillCheck = table.freeze({
@@ -143,6 +143,7 @@ return table.freeze({
 		SweepSeconds = 1.25, -- one turn of the needle; a check nobody presses ends after one turn
 		LeadDegrees = table.freeze({ 110, 230 }), -- the zone starts this far ahead of the needle
 		ZoneByStop = table.freeze({ 70, 64, 58, 52, 47, 42, 38 }), -- zone width by stop, the last for later stops
+		ZoneDrift = 85, -- degrees a second the zone slides along the bar (bouncing off its ends)
 		GreatShare = 0.2, -- the great zone (the white block): this share of the zone, at its centre
 		LatencyBase = 0.05, -- seconds of press tolerance on top of half the player's round-trip ping
 		LatencyMax = 0.2, -- never more tolerance than this
