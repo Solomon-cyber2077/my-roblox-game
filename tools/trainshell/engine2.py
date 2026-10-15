@@ -369,8 +369,8 @@ def locomotive(spec):
         out.append(np_)
         labels.append({"piece": np_.name, "label": "nameplate", "side": s, "rect": [56.5, 7.75, 59.5, 8.65], "z": 6.66})
         feat["ledges"].append({"side": s, "x": [56.5, 59.5], "y": 7.75})
-        # grab irons clear of the door leaves' slide (53.95..62.05)
-        for xx in ((53.55, 62.45) if s > 0 else (c0 + 0.5, c1 - 0.5)):
+        # grab irons on the far side only: on the door side they stood off the skin beside the open leaves
+        for xx in (() if s > 0 else (c0 + 0.5, c1 - 0.5)):
             brass.cylinder((xx, 3.0, s * 6.82), "y", 0.05, 4.6, 8)
             for y in (0.9, 5.1):
                 fit.cylinder((xx, y, s * 6.7), "z", 0.035, 0.26, 6)
