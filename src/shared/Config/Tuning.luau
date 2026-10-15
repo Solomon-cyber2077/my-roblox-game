@@ -158,6 +158,17 @@ local Tuning = {
 		DockTolerance = 30, -- re-cut the sinkhole when the station lands further than this from the prediction
 		SinkholeMarginX = 70, -- void past each end of the station
 		SinkholeMarginZ = 60, -- void past the station's far edge
+		-- Past a sinkhole's far rim (Scenery/Features backdrop): a treeline, rolling hills and a
+		-- mountain massif, on ground the landscape leaves to it. Reaches in studs past the rim;
+		-- Margin past each end.
+		Backdrop = {
+			Margin = 160,
+			Reach = 1300,
+			TreeLine = { 30, 130 },
+			Hills = { 280, 620 },
+			Peaks = { 800, 1150 },
+			PeakHeight = { 170, 290 }, -- under the moon's path seen from the platform
+		},
 		GorgeHalfWidth = 1100, -- a gorge's void reaches this far out on both sides of the track
 		TunnelCutting = 70, -- open rock cutting before each tunnel portal
 		TypicalLeg = 6000, -- leg length the sky assumes before the route is chosen

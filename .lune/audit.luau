@@ -770,7 +770,7 @@ local SINK_AT = 1900
 local LAND_BUDGET = 6000 -- parts in the landscape window
 local SCENE_BUDGET: Budget = { parts = 7000, lights = 64, shadows = 0, emitters = 240, particles = 8000 }
 local PIECE_BUDGET: Budget = { parts = 600, lights = 10, shadows = 0, emitters = 45 }
-local SINK_BUDGET: Budget = { parts = 120, lights = 3, shadows = 0, emitters = 4 }
+local SINK_BUDGET: Budget = { parts = 420, lights = 3, shadows = 0, emitters = 4 } -- with its backdrop
 
 -- AUDIT_SEEDS=n sweeps n world seeds per biome (each with its own set pieces) instead of one.
 local SEEDS = tonumber(process.env.AUDIT_SEEDS) or 1

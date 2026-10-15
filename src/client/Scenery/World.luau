@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Journey = require(Shared.Logic.Journey)
 local Rng = require(Shared.Util.Rng)
+local Tuning = require(Shared.Config.Tuning)
 
 local Biomes = require(script.Parent.Biomes)
 
@@ -96,8 +97,23 @@ function World.blocked(x: number, z: number, radius: number): boolean
 		if Journey.contains(sinkhole.rect, x, z, radius + 6) then
 			return true
 		end
+		local back = World.backdrop(sinkhole)
+		if back and Journey.contains(back, x, z, radius) then
+			return true
+		end
 	end
 	return false
+end
+
+-- The ground past a sinkhole's far rim that its backdrop (Features) stands on; nil at the
+-- Terminus, which opens onto the harbour.
+function World.backdrop(sinkhole: Journey.Sinkhole): Journey.Rect?
+	if sinkhole.terminus then
+		return nil
+	end
+	local B = Tuning.Journey.Backdrop
+	local r = sinkhole.rect
+	return { x0 = r.x0 - B.Margin, x1 = r.x1 + B.Margin, z0 = r.z1, z1 = r.z1 + B.Reach }
 end
 
 --[[
