@@ -14,10 +14,15 @@
 	In a tunnel every shot gives way to a tight one inside the bore. Your character stays
 	in their seat (or where they stand) and cannot walk away while you watch; C again
 	brings you back, and it closes by itself when you leave the train.
+	Hold the right mouse button (or push the right stick) on any shot but Orbit to look
+	around from where the camera stands; a cut starts the next shot looking ahead again.
+	While you watch, interact prompts and the in-train markers (leak marks, floor arrows,
+	broken-thing plates) are hidden: nothing out there can be used from here.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -25,6 +30,7 @@ local Workspace = game:GetService("Workspace")
 
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
+local BrokenThingMarkers = require(script.Parent.Parent.UI.BrokenThingMarkers)
 local Theme = require(script.Parent.Parent.UI.Theme)
 local Ui = require(script.Parent.Parent.UI.Ui)
 local TrainFraming = require(script.Parent.Parent.Camera.TrainFraming)
@@ -64,6 +70,10 @@ local yaw, pitch, distance = math.rad(35), math.rad(16), 125
 local current: CFrame? = nil
 local currentFov = 62
 local dragging = false
+-- free look on the fixed shots: the right button held turns the lens about where it stands
+local looking = false
+local lookYaw, lookPitch = 0, 0
+local LOOK_PITCH = math.rad(70)
 local chip: TextButton
 local bar: ImageLabel
 local barLabel: TextLabel
@@ -117,6 +127,7 @@ end
 local function nextShot()
 	shotIndex = shotIndex % #SHOTS + 1
 	current = nil -- a cut must not sweep the lens through the carriage or station walls
+	lookYaw, lookPitch = 0, 0
 	label()
 end
 
@@ -127,8 +138,12 @@ local function setActive(on: boolean)
 	active = on
 	local camera = Workspace.CurrentCamera
 	local movement = Registry.MovementController
+	-- nothing can be used from out here: no prompts, no markers
+	ProximityPromptService.Enabled = not on
+	BrokenThingMarkers.setSuppressed(on)
 	if on then
 		current = nil
+		lookYaw, lookPitch = 0, 0
 		currentFov = camera.FieldOfView
 		savedFov = camera.FieldOfView
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
@@ -150,6 +165,7 @@ local function setActive(on: boolean)
 		ContextActionService:UnbindAction("LTO_TrainCamNext")
 		bar.Visible = false
 		dragging = false
+		looking = false
 		touch = nil
 		-- Never restore a snapshot of the mouse: if shift lock changed while we watched, the old
 		-- LockCenter stuck the cursor in the middle of the screen. Default and a visible cursor let
@@ -240,7 +256,12 @@ local function frame(dt: number)
 		eye = hit.Position + (from - eye).Unit * 2
 	end
 	local want = CFrame.lookAt(eye, focus)
-	local blend = 1 - math.exp(-dt * (if shot.name == "Orbit" and tunnel <= 0.4 then 12 else 3.2))
+	if shot.name ~= "Orbit" then
+		-- the free look: turn about the world's up, then tilt about the lens's own side
+		want = CFrame.new(eye) * CFrame.Angles(0, lookYaw, 0) * want.Rotation * CFrame.Angles(lookPitch, 0, 0)
+	end
+	local quick = (shot.name == "Orbit" and tunnel <= 0.4) or looking
+	local blend = 1 - math.exp(-dt * (if quick then 12 else 3.2))
 	current = if current then (current :: CFrame):Lerp(want, blend) else want
 	camera.CFrame = current :: CFrame
 	camera.Focus = CFrame.new(focus)
@@ -341,6 +362,10 @@ function TrainCamController.Start()
 				touch = input
 			end
 		end
+		if kind == Enum.UserInputType.MouseButton2 and SHOTS[shotIndex].name ~= "Orbit" then
+			looking = true
+			UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+		end
 	end)
 	UserInputService.InputEnded:Connect(function(input: InputObject)
 		local kind = input.UserInputType
@@ -357,9 +382,20 @@ function TrainCamController.Start()
 				touch = nil
 			end
 		end
+		if kind == Enum.UserInputType.MouseButton2 and looking then
+			looking = false
+			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		end
 	end)
 	UserInputService.InputChanged:Connect(function(input: InputObject)
-		if not active or SHOTS[shotIndex].name ~= "Orbit" then
+		if not active then
+			return
+		end
+		if SHOTS[shotIndex].name ~= "Orbit" then
+			if looking and input.UserInputType == Enum.UserInputType.MouseMovement then
+				lookYaw -= input.Delta.X * 0.005
+				lookPitch = math.clamp(lookPitch - input.Delta.Y * 0.005, -LOOK_PITCH, LOOK_PITCH)
+			end
 			return
 		end
 		local kind = input.UserInputType
@@ -373,6 +409,22 @@ function TrainCamController.Start()
 
 	-- after the player camera and CameraController's feel, so the shot is what is drawn
 	RunService:BindToRenderStep("LTO_TrainCam", Enum.RenderPriority.Camera.Value + 2, function(dt: number)
+		if active and SHOTS[shotIndex].name ~= "Orbit" and UserInputService.GamepadEnabled then
+			-- the right stick looks around on the fixed shots
+			for _, state in UserInputService:GetGamepadState(Enum.UserInputType.Gamepad1) do
+				if
+					state.KeyCode == Enum.KeyCode.Thumbstick2
+					and state.Position.Magnitude > C.GamepadDeadzone
+				then
+					lookYaw -= state.Position.X * C.GamepadYaw * dt
+					lookPitch = math.clamp(
+						lookPitch + state.Position.Y * C.GamepadPitch * dt,
+						-LOOK_PITCH,
+						LOOK_PITCH
+					)
+				end
+			end
+		end
 		if active and SHOTS[shotIndex].name == "Orbit" and UserInputService.GamepadEnabled then
 			local gamepad = UserInputService:GetGamepadState(Enum.UserInputType.Gamepad1)
 			for _, state in gamepad do

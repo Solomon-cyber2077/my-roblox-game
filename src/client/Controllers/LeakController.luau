@@ -309,15 +309,17 @@ local function step()
 	local me = if root then { x = root.Position.X, y = root.Position.Y, z = root.Position.Z } else nil
 	local show = Session.isRunActive() and Session.isMember() and Session.isAlive()
 	local markersOn = BrokenThingMarkers.visible()
+	-- the marks and arrows in the world hide while the train camera looks out
+	local inWorld = markersOn and not BrokenThingMarkers.suppressed()
 	local view = if show then LeakAlert.view(leaks(), me, markersOn) else nil
-	updateMarks(show and markersOn, root)
+	updateMarks(show and inWorld, root)
 	if plate and label then
 		plate.Visible = view ~= nil
 		if view then
 			label.Text = view.text
 		end
 	end
-	updateChevrons(view ~= nil, root)
+	updateChevrons(view ~= nil and inWorld, root)
 	updateNotice(show and markersOn, Hud.leakSlot())
 end
 
