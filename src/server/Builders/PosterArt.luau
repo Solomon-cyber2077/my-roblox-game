@@ -4,17 +4,17 @@
 	Each is a different kind of printed thing the line would put up, laid out the way that
 	kind of thing is laid out:
 
-	  coast    a railway travel lithograph: banded dusk sky, the sun half under the sea,
-	           a headland with a lighthouse and the train on its viaduct, a company footer
+	  coast    a railway travel lithograph for Wyvern Sands: banded dusk sky, the sun half under
+	           the sea, a headland with a lighthouse and the train on its viaduct, the company footer
 	  fog      a bye-law notice on grey-green card: ruled border, NOTICE, the warning in
 	           blackletter, telegraph poles walking off into a fog bank, by order of
-	  coal     a propaganda bill: red ground, a black diagonal, a shovel and coal lumps
-	  counted  a typed regulation on a blue form, ruled, with a red COUNTED stamp
-	  brother  a handwritten appeal on torn ruled notebook paper, a photograph clipped on
-	  moon     a night warning: the blood moon and its halo over black hills, three of the
+	  coal     a letterpress bill on buff paper, many faces on one sheet: STOKERS WANTED for the
+	           night services, a woodcut of a shovel in a heap of coal, by order
+	  moon     a printed night notice: the blood moon and its halo over black hills, three of the
 	           TallOnes standing on the horizon, one lamp post still lit
 
-	No cream anywhere: paper is the line's grey-green card, a blue form or blue-ruled pad.
+	Every sheet has been up a while: a torn corner, damp stains, soot gathered along the foot.
+	No cream: paper is the line's grey-green card or a dark buff the lamps cannot turn cream.
 	PosterArt.draw(gui, kind) fills the gui; PosterArt.paper(kind) is the part's colour.
 ]]
 
@@ -36,17 +36,13 @@ local OSWALD = font("Oswald", Enum.FontWeight.Bold)
 local SERIF = font("Merriweather")
 local SERIF_ITALIC = font("Merriweather", Enum.FontWeight.Regular, Enum.FontStyle.Italic)
 local SERIF_BOLD = font("Merriweather", Enum.FontWeight.Bold)
-local TYPE = font("SpecialElite")
 local GOTHIC = font("GrenzeGotisch", Enum.FontWeight.Bold)
-local HAND = font("Kalam")
-local HAND_BOLD = font("Kalam", Enum.FontWeight.Bold)
+local BODONI = Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold)
 
 local PAPER: { [string]: Color3 } = {
 	coast = rgb(22, 52, 64),
 	fog = rgb(166, 192, 182),
-	coal = rgb(150, 44, 40),
-	counted = rgb(150, 178, 204), -- a blue form, so the lanterns cannot warm it to cream
-	brother = rgb(186, 206, 224),
+	coal = rgb(164, 136, 96), -- dark buff
 	moon = rgb(18, 20, 36),
 }
 
@@ -137,6 +133,18 @@ local function fade(frame: Frame, rotation: number, keys: { { number } })
 	g.Parent = frame
 end
 
+-- Wear on a sheet that has hung a while: a torn corner showing the brick, damp stains, soot at the foot.
+local function worn(g: Instance, corner: number)
+	for i, stain in { { 470, 120, 120 }, { 90, 560, 90 }, { 380, 470, 60 } } do
+		local d = disc(g, rgb(70, 52, 34), stain[1], stain[2], stain[3])
+		d.BackgroundTransparency = 0.82 + i * 0.03
+	end
+	local soot = box(g, rgb(14, 12, 12), 0, H - 120, W, 120)
+	fade(soot, 90, { { 0, 1 }, { 1, 0.45 } })
+	local x = if corner > 0 then W - 46 else -46
+	box(g, rgb(80, 46, 38), x, -46, 92, 92, 45)
+end
+
 local DRAW: { [string]: (Instance) -> () } = {}
 
 function DRAW.coast(g: Instance)
@@ -180,12 +188,12 @@ function DRAW.coast(g: Instance)
 		box(g, rgb(255, 214, 140), 132 + i * 20 + (if i > 1 then 22 else 0), 366, 8, 6)
 	end
 	-- the title across the top of the sky
-	words(g, "SEE THE COAST", OSWALD, rgb(214, 234, 230), 30, 26, 500, 82)
-	words(g, "AT DAWN", OSWALD, rgb(244, 156, 98), 30, 110, 500, 76)
+	words(g, "WYVERN SANDS", OSWALD, rgb(214, 234, 230), 30, 26, 500, 82)
+	words(g, "BY THE NIGHT EXPRESS", BODONI, rgb(244, 156, 98), 30, 112, 500, 56)
 	-- the company's footer
 	box(g, rgb(12, 16, 20), 0, 610, W, 110)
 	rule(g, rgb(206, 168, 92), 0, 610, W, 4)
-	words(g, "LAST TRAIN OUT", OSWALD, rgb(206, 168, 92), 30, 622, 300, 40, Enum.TextXAlignment.Left)
+	words(g, "S. & W. C. R.", OSWALD, rgb(206, 168, 92), 30, 622, 300, 40, Enum.TextXAlignment.Left)
 	words(
 		g,
 		"ALL STOPS TO THE TERMINUS",
@@ -208,6 +216,7 @@ function DRAW.coast(g: Instance)
 		30,
 		Enum.TextXAlignment.Left
 	)
+	worn(g, 1)
 end
 
 function DRAW.fog(g: Instance)
@@ -262,28 +271,24 @@ function DRAW.fog(g: Instance)
 end
 
 function DRAW.coal(g: Instance)
-	local black = rgb(18, 16, 16)
-	local white = rgb(230, 236, 238)
-	-- a black diagonal across the red ground
-	box(g, black, -120, 330, 820, 150, -24)
-	-- the shovel: a long handle with a grip, the blade biting into the lumps
-	box(g, rgb(150, 44, 40), 120, 300, 340, 22, -38)
-	box(g, white, 128, 316, 330, 14, -38)
-	box(g, white, 386, 190, 52, 16, -38)
-	box(g, white, 70, 470, 120, 110, -38)
-	-- coal lumps heaped at the foot, sharp-edged
-	for i, l in
-		{
-			{ 70, 600, 70, 10 },
-			{ 150, 586, 92, 30 },
-			{ 260, 604, 64, 52 },
-			{ 330, 576, 104, 18 },
-			{ 450, 600, 76, 40 },
-		}
-	do
+	local ink = rgb(26, 22, 20)
+	local red = rgb(132, 34, 30)
+	outline(g, ink, 16, 16, W - 32, H - 32, 4)
+	words(g, "SEVERN & WESTERN COUNTIES RAILWAY", SERIF_BOLD, ink, 40, 34, 480, 26)
+	rule(g, ink, 40, 68, 480, 2)
+	words(g, "WANTED", OSWALD, red, 40, 76, 480, 108)
+	words(g, "S T O K E R S", BODONI, ink, 40, 188, 480, 62)
+	words(g, "for the Night Services", SERIF_ITALIC, ink, 80, 252, 400, 36)
+	-- the woodcut: a shovel driven into a heap of coal
+	local woodcut = box(g, rgb(150, 122, 84), 140, 304, 280, 170)
+	woodcut.BackgroundTransparency = 0.4
+	box(g, ink, 236, 320, 12, 150, -28)
+	box(g, ink, 262, 306, 40, 12, -28)
+	box(g, ink, 180, 420, 70, 52, -28)
+	for i, l in { { 200, 452, 40, 12 }, { 260, 446, 54, 38 }, { 330, 450, 44, 20 }, { 380, 456, 34, 60 } } do
 		box(
 			g,
-			if i % 2 == 0 then black else rgb(40, 36, 36),
+			if i % 2 == 0 then ink else rgb(54, 46, 40),
 			l[1] - l[3] / 2,
 			l[2] - l[3] / 2,
 			l[3],
@@ -291,91 +296,13 @@ function DRAW.coal(g: Instance)
 			l[4]
 		)
 	end
-	words(g, "COAL IS", OSWALD, white, 34, 30, 380, 104, Enum.TextXAlignment.Left)
-	words(g, "COURAGE", OSWALD, black, 34, 128, 492, 120, Enum.TextXAlignment.Left)
-	box(g, black, 0, 660, W, 60)
-	words(
-		g,
-		"Every sack you carry is a mile someone else gets to live.",
-		SERIF_ITALIC,
-		white,
-		24,
-		670,
-		512,
-		40
-	)
-end
-
-function DRAW.counted(g: Instance)
-	local ink = rgb(36, 40, 46)
-	local blue = rgb(104, 130, 160)
-	-- a typed sheet: a header block, ruled lines, the regulation, the guard's initials
-	words(g, "LAST TRAIN OUT · PLATFORM 1", TYPE, ink, 40, 34, 480, 26, Enum.TextXAlignment.Left)
-	words(g, "REGULATION 14", TYPE, ink, 40, 70, 480, 50, Enum.TextXAlignment.Left)
-	rule(g, ink, 40, 128, 480, 3)
-	for y = 170, 620, 38 do
-		rule(g, blue, 40, y, 480, 1)
-	end
-	words(g, "PASSENGERS ARE REMINDED", TYPE, ink, 40, 140, 480, 28, Enum.TextXAlignment.Left)
-	words(
-		g,
-		"1. Count your friends at every stop.\n\n2. If the number goes up,\n    do not get back on.\n\n3. If the number goes down,\n    count again.",
-		TYPE,
-		ink,
-		44,
-		182,
-		470,
-		296,
-		Enum.TextXAlignment.Left
-	)
-	words(g, "— the Guard", TYPE, ink, 300, 560, 220, 30, Enum.TextXAlignment.Right)
-	-- the stamp: red, crooked, a little worn
-	local red = rgb(176, 36, 34)
-	local stamp = box(g, red, 70, 500, 250, 92, -12)
-	stamp.BackgroundTransparency = 1
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = red
-	stroke.Thickness = 6
-	stroke.Transparency = 0.15
-	stroke.Parent = stamp
-	local inner = words(stamp, "COUNTED", OSWALD, red, 12, 8, 226, 76)
-	inner.TextTransparency = 0.15
-	rule(g, ink, 40, 650, 480, 1)
-	words(g, "Form G.14 · Retain in the hall", TYPE, ink, 40, 660, 480, 22, Enum.TextXAlignment.Left)
-end
-
-function DRAW.brother(g: Instance)
-	local ink = rgb(40, 52, 98)
-	-- ruled notebook paper and a red margin
-	for y = 120, 700, 36 do
-		rule(g, rgb(140, 172, 206), 0, y, W, 2)
-	end
-	box(g, rgb(196, 86, 92), 74, 0, 3, H)
-	-- holes along the top where it tore off the pad's wire
-	for i = 0, 12 do
-		disc(g, rgb(40, 34, 30), 24 + i * 42, 22, 14)
-	end
-	-- the photograph, clipped on at an angle
-	local photo = box(g, rgb(222, 228, 230), 330, 70, 180, 214, 6)
-	box(photo, rgb(60, 66, 70), 12, 12, 156, 160)
-	disc(photo, rgb(110, 118, 122), 90, 70, 58)
-	box(photo, rgb(110, 118, 122), 46, 104, 88, 70)
-	words(photo, "Tom, 14", HAND, rgb(60, 66, 70), 12, 178, 156, 28)
-	box(g, rgb(150, 156, 160), 404, 56, 34, 40, 6)
-	words(g, "Lost: one brother", HAND_BOLD, ink, 96, 116, 230, 104, Enum.TextXAlignment.Left)
-	words(
-		g,
-		"Tom. Got off at Ashgrove for a lark.\nIf you see him, tell him I kept the lamp lit.",
-		HAND,
-		ink,
-		96,
-		300,
-		430,
-		208,
-		Enum.TextXAlignment.Left
-	)
-	words(g, "— Ellie", HAND_BOLD, ink, 300, 528, 220, 60, Enum.TextXAlignment.Right)
-	words(g, "(ask at the tea room)", HAND, ink, 96, 612, 300, 40, Enum.TextXAlignment.Left)
+	rule(g, ink, 40, 496, 480, 2)
+	words(g, "Strong arms. A steady nerve.\nNo questions asked about the fog.", SERIF, ink, 60, 508, 440, 70)
+	words(g, "Every sack carried is a mile kept.", SERIF_ITALIC, red, 60, 584, 440, 30)
+	rule(g, ink, 40, 626, 480, 1)
+	words(g, "Apply to the Locomotive Foreman, Platform 1.", SERIF, ink, 40, 636, 480, 24)
+	words(g, "BY ORDER · 1889", SERIF_BOLD, ink, 40, 664, 480, 22)
+	worn(g, 1)
 end
 
 function DRAW.moon(g: Instance)
@@ -407,21 +334,24 @@ function DRAW.moon(g: Instance)
 	box(g, hill, 88, 516, 8, 170)
 	box(g, rgb(255, 206, 140), 80, 500, 24, 26)
 	box(g, hill, 76, 494, 32, 8)
-	words(g, "THE MOON IS NOT", OSWALD, rgb(220, 228, 236), 30, 28, 500, 64)
-	words(g, "YOUR FRIEND", OSWALD, rgb(214, 70, 58), 30, 90, 500, 70)
+	words(g, "NOTICE TO PASSENGERS", SERIF_BOLD, rgb(196, 206, 214), 30, 24, 500, 30)
+	rule(g, rgb(196, 206, 214), 160, 60, 240, 2)
+	words(g, "WHEN THE MOON IS RED", BODONI, rgb(214, 70, 58), 30, 70, 500, 70)
 	words(
 		g,
-		"Keep to the lamplight. Wave at nothing that waves back.",
+		"Keep to the lamplight.\nWave at nothing that waves back.",
 		SERIF_ITALIC,
 		rgb(196, 206, 214),
 		40,
-		640,
+		616,
 		480,
-		52
+		56
 	)
+	words(g, "By Order · S. & W. C. R.", SERIF, rgb(150, 160, 170), 40, 676, 480, 22)
+	worn(g, -1)
 end
 
-PosterArt.Kinds = table.freeze({ "coast", "fog", "coal", "counted", "brother", "moon" })
+PosterArt.Kinds = table.freeze({ "coast", "fog", "coal", "moon" })
 
 function PosterArt.paper(kind: string): Color3
 	return PAPER[kind]

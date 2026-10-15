@@ -78,6 +78,8 @@ flag it rather than drift. The design source of truth for mechanics is still the
   rules and borders, small woodcut engravings. Pasted on boards, overlapping, torn, damp-stained.
 - **Palette:** Brunswick green, chocolate and cream (stock and buildings), Indian red, deep ultramarine (enamel),
   black, buff, brass/gilt for lettering on company property. Signs are faded, sooted and chipped, never neon-clean.
+  Caution: Brunswick-green engines with chocolate-and-cream coaches is the Great Western's own livery. Use those
+  colours on buildings and fittings, but never together on S&WCR rolling stock (checklist 5).
 - **Materials:** enamel on steel, painted timber, cast iron, gilt transfers on glass, brass plates, chalk on blackboard.
 
 ## 6. Clothing (only what existed 1884-1892)
@@ -85,15 +87,22 @@ flag it rather than drift. The design source of truth for mechanics is still the
 - **Working-class men:** collarless or banded shirts, waistcoat, corduroy or moleskin trousers, braces, hobnail boots,
   flat cap or bowler, neckerchief, fustian jacket, oilskin for weather, leather apron for trades.
 - **Working-class women:** plain wool or cotton bodice and skirt, apron or pinafore, shawl, straw or felt bonnet,
-  button boots; maids in print dresses with white cap and apron.
+  button boots; maids in print dresses with white cap and apron. Waitresses and refreshment-room women: a dark dress,
+  white collar and cuffs (often lace-edged), a white apron that gains a bib in the 1880s, a small cap.
+  No woman worked as a railway booking clerk in Britain before 1915; women on the railway were cleaners, waiting-room
+  attendants and refreshment staff. (Mabel Orrin, "ticket clerk", predates this check and contradicts it; the owner
+  decides whether she stays a clerk. Do not add more.)
 - **Railway staff:** frock or reefer coat in dark blue/black with brass buttons, peaked cap with company badge,
-  waistcoat with watch chain; porters in sleeved waistcoats and corduroy; guards with whistle, flags and oil lamp;
+  waistcoat with watch chain; porters in sleeved waistcoats and corduroy; guards (1870s-90s) in a double-breasted
+  frock coat, waistcoat, trousers, peaked cap (kepi) and a patent-leather shoulder belt carrying the timekeeper, with
+  whistle and flags (a hand lamp is likely but was not confirmed by the sources checked);
   stationmaster in frock coat and top hat or peaked cap with gold braid; drivers/firemen in blue cotton jackets and
   caps, soot-stained.
 - **Shopkeepers:** sack suits, waistcoats, celluloid or detachable collars, sleeve garters, aprons, bowlers;
-  women in tailored bodices with bustles (mid-1880s) or the slimmer early-1890s line, lace collars.
+  women in tailored bodices with bustles (1883-c.1889) or the slimmer early-1890s line, lace collars.
 - **Gentry (elegant options):** men in frock coats, morning coats, Inverness capes, ulsters, top hats, kid gloves,
-  walking canes, pocket watches; women in bustled walking dresses (to c.1889), then leg-o'-mutton sleeves (from c.1891),
+  walking canes, pocket watches; women in bustled walking dresses (1883 to c.1889; only a small pad by 1891), then
+  a modest puff at the sleeve head (from c.1889-90; the full leg-o'-mutton is mid-1890s, after our years),
   fitted jackets, mantles, fur tippets, veiled hats, parasols, muffs.
 - **Tall Hollow art direction (source-checked):** a dark wool coat and waistcoat with trousers, over a white cotton or
   linen shirt, are period-compatible choices. LACMA's 1875-1885 English coat and vest are wool, and the V&A's 1866/1890
@@ -109,8 +118,10 @@ flag it rather than drift. The design source of truth for mechanics is still the
 - **Luggage:** domed and flat-top steamer trunks with wooden slats and brass corners, leather portmanteaus, Gladstone
   bags, hat boxes, carpet bags, wicker hampers, milk churns, parcels in brown paper and string, porters' barrows.
 - **Rooms:** waiting rooms with fireplaces, wall clocks, benches with cast-iron ends (often a company monogram),
-  bookshelves of cloth-bound books, ticket windows with brass grilles, Edmondson card tickets, ticket racks, ledgers,
-  telegraph instruments, notice boards, leather fire buckets.
+  bookshelves of cloth-bound books, ticket windows with brass grilles, Edmondson card tickets (in racks or a locked
+  cupboard by destination and class, colour-coded, dated in a press bolted to the counter), ledgers, telegraph
+  instruments, notice boards, leather fire buckets. Bookstalls selling papers and cheap "yellowback" novels stood on
+  stations from 1848 (never use a real firm's name). Uprights carried brass swing-arm candle sconces on the front.
 - **Tea room:** marble-topped counter, glass bell cake stands, brown Betty and silver-plate teapots, china cups with
   saucers, urn, sandwiches under glass, Bath buns, enamel advertisements for tea and cocoa.
 - **Canopies:** cast-iron columns with decorative brackets, timber valance boards with sawtooth or "dagger" edge,
@@ -138,5 +149,19 @@ Sources: [Minehead railway station](https://en.wikipedia.org/wiki/Minehead_railw
 [Tintern station name board listing (cast-iron posts, "mustard pot" caps, raised letters)](https://britishlistedbuildings.co.uk/300024045-name-board-at-tintern-station-wye-valley),
 [Bell Terrace Schools 1880](https://www.archiseek.com/1880-bell-terrace-schools-newcastle-upon-tyne/),
 [Langley School, Luton 1880](https://cms.historicengland.org.uk/services-skills/education/educational-images/langley-school-russell-street-4906).
+[The 1870s-90s guard's uniform (EXARC Journal)](https://exarc.net/ark:/88735/10770),
+[Female firsts on London's transport (TfL)](https://madeby.tfl.gov.uk/2023/05/18/female-firsts-at-tfl/),
+[Women on the railways, Cumbria archive](https://cumbria.gov.uk/WW1/warathome/women.asp),
+[The decline of the bustle](https://www.freeukgenealogy.org.uk/news/2021/11/01/dating-photos-1880s/),
+[Vintage Fashion Guild 1890-1900](https://vintagefashionguild.org/timeline/1890-to-1900/),
+[Maids' uniforms](https://www.thegenealogist.co.uk/featuredarticles/discover-your-ancestors/periodical/76/history-in-the-details-maids-uniforms-6624/),
+[Edmondson tickets (Hope Town Darlington)](https://hopetowndarlington.co.uk/stories/edmondson-ticket/),
+[Edmondson dating press, Science Museum](https://collection.sciencemuseum.org.uk/objects/co27540/edmondson-ticket-dating-press-ticket-dating-press),
+[The first railway bookstall, 1848 (History Today)](https://www.historytoday.com/archive/months-past/first-wh-smith-railway-bookstall),
+[Piano candle sconce c.1880](https://eronjohnsonantiques.com/products/w-79-0717-french-brass-adjustable-two-arm-wall-piano-sconce),
+[GWR liveries summary](https://solarspell-dls.sfis.asu.edu/mea/wikipedia/wp/g/Great_Western_Railway.htm).
+Spot-checked 2026-10-15 (second pass): the guard, women's work on the railway, bustle and sleeve dates, service dress,
+Edmondson tickets, bookstalls, piano sconces and the GWR livery caution above. Not yet checked: luggage, canopies,
+the rest of the palette.
 Spot-checked 2026-10-15: section 5's board styles (painted, then white-on-blue enamel in timber frames, or cast
 letters on boards) and section 7's board schools (slate roofs, gables, bell turrets, date stones) match these.

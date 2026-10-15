@@ -98,6 +98,35 @@ function LobbyService.Init()
 	local b = built :: LobbyBuilder.Built
 	prompt(b.outfitter, "Outfitter", "Outfitter", "Browse")
 	prompt(b.ledger, "Ledger", "Line Mastery", "Read")
+	-- every chair and bench in the hall: walk into it and you sit (jump to stand); after standing
+	-- the seat waits a moment before it takes anyone, so jumping off does not drop you straight back
+	for _, seat in b.seats do
+		seat.CanTouch = true
+		local freeAt = 0
+		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+			if seat.Occupant == nil then
+				freeAt = os.clock() + Tuning.Lobby.SeatRetouchDelay
+			end
+		end)
+		seat.Touched:Connect(function(hit)
+			if seat.Occupant ~= nil or os.clock() < freeAt then
+				return
+			end
+			local character = hit.Parent
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if
+				humanoid
+				and root
+				and Players:GetPlayerFromCharacter(character)
+				and humanoid.Health > 0
+				and not humanoid.Sit
+				and not root.Anchored
+			then
+				seat:Sit(humanoid)
+			end
+		end)
+	end
 	StateService.Set({ "lobby" }, { ready = {}, origin = origin })
 	publishTier()
 end

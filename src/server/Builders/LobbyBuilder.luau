@@ -21,6 +21,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Audio = require(ReplicatedStorage.Shared.Config.Audio)
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local Outfits = require(ReplicatedStorage.Shared.Config.Outfits)
+local OutfitKit = require(script.Parent.OutfitKit)
 local PosterArt = require(script.Parent.PosterArt)
 local TrainBuilder = require(script.Parent.TrainBuilder)
 
@@ -30,6 +32,7 @@ export type Built = {
 	board: BasePart,
 	outfitter: BasePart,
 	ledger: BasePart,
+	seats: { Seat },
 	displayTrain: Model,
 	displayCabins: { Cabin },
 }
@@ -127,6 +130,15 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local function decor(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?): BasePart
 		return block(size, cf, color, material, { collide = false, shadow = false })
 	end
+	-- Every chair and bench gets unseen Seats (the sitter faces the frame's -Z); LobbyService puts a
+	-- Sit prompt on each, as TrainService does aboard
+	local seats: { Seat } = {}
+	local function seatAt(cf: CFrame, width: number, name: string)
+		local seat =
+			Kit.seat(model, Vector3.new(width, 0.3, 1.6), cf, C.wood, { collide = false, transparency = 1 })
+		seat:SetAttribute("SeatName", name)
+		table.insert(seats, seat)
+	end
 	-- A straight member between two points in hall space.
 	local function member(
 		a: Vector3,
@@ -148,7 +160,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	-- Platform floor: stone flags laid in bays between granite joints under the columns, a slate
 	-- border along the walls and an oxblood quarry-tile walk down the hall with the rosette in it
 	local WALK0, WALK1 = 20, 28
-	local floorX0, floorX1 = -HALF_X + 1, HALF_X - 1
+	local floorX0, floorX1 = -HALF_X, HALF_X
 	local BORDER = 3
 	block(
 		Vector3.new(floorX1 - floorX0, 1, BORDER),
@@ -159,7 +171,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	for _, side in { -1, 1 } do
 		block(
 			Vector3.new(BORDER, 1, BACK_Z - BORDER - EDGE_Z),
-			at(side * (HALF_X - 1 - BORDER / 2), -0.5, (EDGE_Z + BACK_Z - BORDER) / 2),
+			at(side * (HALF_X - BORDER / 2), -0.5, (EDGE_Z + BACK_Z - BORDER) / 2),
 			C.slateDark,
 			Enum.Material.Slate
 		)
@@ -172,11 +184,12 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		Enum.Material.CeramicTiles
 	)
 	local rosette = Vector3.new(0, 0, 24)
+	-- the line's roundel, wordless: rails running away into a tunnel mouth, the red tail lamp of the
+	-- last train going out inside it. Each layer's top sits at its own height (top = 0.04 * ring).
 	local rings = {
 		{ diameter = 30, color = C.slateDark, material = Enum.Material.Slate },
-		{ diameter = 26, color = C.glazed, material = Enum.Material.Slate },
-		{ diameter = 20, color = C.brass, material = Enum.Material.Metal },
-		{ diameter = 18, color = C.slateDark, material = Enum.Material.Slate },
+		{ diameter = 26, color = C.brass, material = Enum.Material.Metal },
+		{ diameter = 24.6, color = C.slateDark, material = Enum.Material.Slate },
 	}
 	for _, z in { WALK0 + 0.25, WALK1 - 0.25 } do
 		local halfWidth = 0.15
@@ -236,15 +249,60 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 		disc.Name = "Rosette"
 	end
-	for k = 0, 3 do
-		local length = if k % 2 == 0 then 17 else 11
+	-- v runs away from the hall toward the train (-Z); every piece is a flat inlay at its own height
+	local function inlay(u: number, v: number): CFrame
+		return at(rosette.X + u, 0, rosette.Z - v)
+	end
+	local function roundel(
+		diameter: number,
+		top: number,
+		u: number,
+		v: number,
+		color: Color3,
+		material: Enum.Material
+	)
+		Kit.cylinder(
+			model,
+			top,
+			diameter,
+			inlay(u, v) * CFrame.new(0, top / 2, 0) * Kit.angles(0, 0, 90),
+			color,
+			{ material = material, collide = false, shadow = false }
+		).Name =
+			"Emblem"
+	end
+	local BORE_V = 4.6
+	roundel(9.4, 0.16, 0, BORE_V, C.brass, Enum.Material.Metal) -- the portal's dressed ring
+	roundel(8.4, 0.2, 0, BORE_V, C.void, Enum.Material.Slate) -- the dark bore
+	roundel(2.9, 0.24, 0, BORE_V + 0.6, C.brass, Enum.Material.Metal) -- the tail lamp's rim
+	roundel(2.3, 0.28, 0, BORE_V + 0.6, Color3.fromRGB(150, 30, 34), Enum.Material.Glass)
+	-- sleepers, closing up as they recede, then the two rails converging into the bore
+	local RAIL_FAR, RAIL_NEAR = 1.4, 5.8
+	local V_NEAR, V_FAR = -10.6, 2.4
+	for k = 0, 5 do
+		local t = 1 - (1 - k / 6) ^ 1.6
+		local v = V_NEAR + 0.6 + t * (V_FAR - V_NEAR - 1.4)
+		local half = RAIL_NEAR + (RAIL_FAR - RAIL_NEAR) * (v - V_NEAR) / (V_FAR - V_NEAR)
 		decor(
-			Vector3.new(length, 0.2 + 0.02 * k, 1.1),
-			at(rosette.X, 0.1 + 0.01 * k, rosette.Z) * Kit.angles(0, k * 45, 0) * Kit.angles(0, 0, 0),
-			if k % 2 == 0 then C.brass else C.glazed,
+			Vector3.new(2 * half + 1.6 - k * 0.2, 0.12, 0.9 - k * 0.09),
+			inlay(0, v) * CFrame.new(0, 0.16, 0),
+			C.wood,
+			Enum.Material.Wood
+		)
+	end
+	for _, side in { -1, 1 } do
+		local near = Vector3.new(rosette.X + side * RAIL_NEAR, 0.16, rosette.Z - V_NEAR)
+		local far = Vector3.new(rosette.X + side * RAIL_FAR, 0.16, rosette.Z - V_FAR)
+		decor(
+			Vector3.new(0.5, 0.2, (far - near).Magnitude),
+			origin * Kit.between(near, far),
+			C.brass,
 			Enum.Material.Metal
 		)
 	end
+
+	-- black ground far under the hall, so no gap or opening shows the grey void
+	decor(Vector3.new(2 * HALF_X + 400, 1, 600), at(0, -20, 0), C.void, Enum.Material.SmoothPlastic)
 
 	-- Platform edge: coping, the whitewashed line (a cool white, so the lamps leave it white) and the brick face
 	block(Vector3.new(2 * HALF_X, 0.3, 1.4), at(0, 0.15, EDGE_Z + 0.7), C.stone, Enum.Material.Concrete)
@@ -316,30 +374,78 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	gapBarrier(-90.6, -90, -2.5, 2.5)
 
 	-- Walls ----------------------------------------------------------------------------------------
-	-- back wall with tall lit windows, the ticket office and the departure board
-	block(
-		Vector3.new(2 * HALF_X + 4, WALL_TOP + 8, 2),
-		at(0, (WALL_TOP + 8) / 2 - 8, BACK_Z + 1),
-		C.brick,
-		Enum.Material.Brick
-	)
-	block(Vector3.new(2 * HALF_X, 1.2, 0.6), at(0, 0.6, BACK_Z - 0.3), C.stone, Enum.Material.Concrete)
+	-- back wall with four glazed windows looking out on the storm (LobbyStorm draws it), the ticket
+	-- office and the departure board; the wall is laid in courses around the openings, whose lintels
+	-- stay under the roof's spring
+	local WALL_LOW, WALL_HIGH = -8, WALL_TOP
+	local WIN_XS, WIN_W, WIN_LOW, WIN_HIGH = { -90, -66, 66, 90 }, 10, 10.6, 20
+	-- the ticket booth is set into the wall: an opening at its x span, floor to just over its roof
+	local BOOTH_X0, BOOTH_X1, BOOTH_TOP = 36 - 8, 36 + 8, 11.5
+	local function wallPiece(x0: number, x1: number, y0: number, y1: number)
+		if x0 < BOOTH_X1 and x1 > BOOTH_X0 and y0 < BOOTH_TOP and y1 > 0 then
+			-- split round the opening: below, above, left and right of it
+			if y0 < 0 then
+				wallPiece(x0, x1, y0, 0)
+			end
+			if y1 > BOOTH_TOP then
+				wallPiece(x0, x1, BOOTH_TOP, y1)
+			end
+			local ya, yb = math.max(y0, 0), math.min(y1, BOOTH_TOP)
+			if x0 < BOOTH_X0 then
+				wallPiece(x0, BOOTH_X0, ya, yb)
+			end
+			if x1 > BOOTH_X1 then
+				wallPiece(BOOTH_X1, x1, ya, yb)
+			end
+			return
+		end
+		block(
+			Vector3.new(x1 - x0, y1 - y0, 2),
+			at((x0 + x1) / 2, (y0 + y1) / 2, BACK_Z + 1),
+			C.brick,
+			Enum.Material.Brick
+		)
+	end
+	local wallX0, wallX1 = -HALF_X - 2, HALF_X + 2
+	wallPiece(wallX0, wallX1, WALL_LOW, WIN_LOW)
+	wallPiece(wallX0, wallX1, WIN_HIGH, WALL_HIGH)
+	local pierFrom = wallX0
+	for _, x in WIN_XS do
+		wallPiece(pierFrom, x - WIN_W / 2, WIN_LOW, WIN_HIGH)
+		pierFrom = x + WIN_W / 2
+	end
+	wallPiece(pierFrom, wallX1, WIN_LOW, WIN_HIGH)
+	-- a strip along the back wall, either side of the booth's opening
+	local function backStrip(fn: (number, number) -> ())
+		fn(-HALF_X, BOOTH_X0)
+		fn(BOOTH_X1, HALF_X)
+	end
+	backStrip(function(x0, x1)
+		block(
+			Vector3.new(x1 - x0, 1.2, 0.6),
+			at((x0 + x1) / 2, 0.6, BACK_Z - 0.3),
+			C.stone,
+			Enum.Material.Concrete
+		)
+	end)
 	-- a dado of green glazed tiles above the plinth, capped by a row of oxblood bullnose, on the back
 	-- wall and along both end walls of the platform (a hair off the brick, so nothing set against
 	-- the wall shares its plane)
 	local DADO_LOW, DADO_TOP = 1.2, 5.2
-	decor(
-		Vector3.new(2 * HALF_X, DADO_TOP - DADO_LOW, 0.15),
-		at(0, (DADO_LOW + DADO_TOP) / 2, BACK_Z - 0.095),
-		C.glazed,
-		Enum.Material.CeramicTiles
-	)
-	decor(
-		Vector3.new(2 * HALF_X, 0.4, 0.3),
-		at(0, DADO_TOP + 0.2, BACK_Z - 0.17),
-		C.bullnose,
-		Enum.Material.Glass
-	)
+	backStrip(function(x0, x1)
+		decor(
+			Vector3.new(x1 - x0, DADO_TOP - DADO_LOW, 0.15),
+			at((x0 + x1) / 2, (DADO_LOW + DADO_TOP) / 2, BACK_Z - 0.095),
+			C.glazed,
+			Enum.Material.CeramicTiles
+		)
+		decor(
+			Vector3.new(x1 - x0, 0.4, 0.3),
+			at((x0 + x1) / 2, DADO_TOP + 0.2, BACK_Z - 0.17),
+			C.bullnose,
+			Enum.Material.Glass
+		)
+	end)
 	for _, side in { -1, 1 } do
 		decor(
 			Vector3.new(0.15, DADO_TOP - DADO_LOW, BACK_Z - 0.17 - EDGE_Z),
@@ -354,14 +460,57 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.Material.Glass
 		)
 	end
-	for _, x in { -90, -66, 66, 90 } do
-		decor(Vector3.new(11, 15, 0.3), at(x, 18, BACK_Z - 0.15), C.iron, Enum.Material.Metal)
-		decor(Vector3.new(10, 14, 0.3), at(x, 18, BACK_Z - 0.4), C.dusk, Enum.Material.Neon).Transparency =
-			0.62
-		for k = -1, 1 do
-			decor(Vector3.new(0.25, 14, 0.2), at(x + k * 2.6, 18, BACK_Z - 0.62), C.iron, Enum.Material.Metal)
+	for _, x in WIN_XS do
+		local midY, height = (WIN_LOW + WIN_HIGH) / 2, WIN_HIGH - WIN_LOW
+		-- iron casement lining the opening, a pane of old glass, glazing bars in three by three lights
+		for _, side in { -1, 1 } do
+			decor(
+				Vector3.new(0.4, height, 0.5),
+				at(x + side * (WIN_W / 2 - 0.2), midY, BACK_Z + 0.45),
+				C.iron,
+				Enum.Material.Metal
+			)
 		end
-		decor(Vector3.new(12, 1.2, 0.8), at(x, 25.8, BACK_Z - 0.4), C.stone, Enum.Material.Limestone)
+		for _, y in { WIN_LOW + 0.2, WIN_HIGH - 0.2 } do
+			decor(Vector3.new(WIN_W - 0.8, 0.4, 0.5), at(x, y, BACK_Z + 0.45), C.iron, Enum.Material.Metal)
+		end
+		local pane = decor(
+			Vector3.new(WIN_W - 0.8, height - 0.8, 0.1),
+			at(x, midY, BACK_Z + 0.6),
+			Color3.fromRGB(96, 106, 124),
+			Enum.Material.SmoothPlastic -- not Glass: the engine hides particles (the rain) behind Glass
+		)
+		pane.Transparency = 0.82
+		pane.Reflectance = 0.06
+		pane.Name = "StormWindow"
+		pane:AddTag("StormWindow")
+		for k = -1, 1, 2 do
+			decor(
+				Vector3.new(0.18, height - 0.8, 0.2),
+				at(x + k * (WIN_W - 0.8) / 6, midY, BACK_Z + 0.42),
+				C.iron,
+				Enum.Material.Metal
+			)
+			decor(
+				Vector3.new(WIN_W - 0.8, 0.18, 0.22),
+				at(x, midY + k * (height - 0.8) / 6, BACK_Z + 0.4),
+				C.iron,
+				Enum.Material.Metal
+			)
+		end
+		-- a stone sill and a lintel below the spring of the roof
+		decor(
+			Vector3.new(WIN_W + 1.6, 0.7, 1.2),
+			at(x, WIN_LOW - 0.25, BACK_Z - 0.1),
+			C.stone,
+			Enum.Material.Limestone
+		)
+		decor(
+			Vector3.new(WIN_W + 2, 1, 0.8),
+			at(x, WIN_HIGH + 0.4, BACK_Z - 0.3),
+			C.stone,
+			Enum.Material.Limestone
+		)
 	end
 	-- the far wall across the road, its windows showing the night outside
 	local farHeight = WALL_TOP + 12
@@ -567,9 +716,15 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			C.brass,
 			{ material = Enum.Material.Metal, collide = false }
 		)
-		local lamp =
-			Kit.neon(model, Vector3.new(1.4, 1.4, 1.4), at(x, 18.4, pendantZ), C.warm, Enum.PartType.Ball)
-		Kit.pointLight(lamp, C.warm, 0.9, 38, (x + 99) % 44 == 0)
+		-- a warm amber globe (gas behind tinted glass), not a cream one
+		local lamp = Kit.neon(
+			model,
+			Vector3.new(1.4, 1.4, 1.4),
+			at(x, 18.4, pendantZ),
+			Color3.fromRGB(236, 150, 72),
+			Enum.PartType.Ball
+		)
+		Kit.pointLight(lamp, Color3.fromRGB(255, 178, 98), 1, 38, (x + 99) % 44 == 0)
 	end
 	-- purlins along the hall at every rib joint, carrying the roof
 	for i = 2, SEGMENTS do
@@ -733,23 +888,114 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		C.iron,
 		Enum.Material.Metal
 	)
-	-- ticket office windows either side of the board
-	for _, x in { -36, 36 } do
-		block(Vector3.new(16, 11, 1.4), at(x, 5.5, BACK_Z - 0.7), C.wood, Enum.Material.WoodPlanks)
-		decor(Vector3.new(12, 5, 0.3), at(x, 6.8, BACK_Z - 1.5), C.dusk, Enum.Material.Neon).Transparency =
-			0.55
-		decor(Vector3.new(14, 0.5, 1.2), at(x, 4.1, BACK_Z - 1.8), C.brass, Enum.Material.Metal)
-		local sign = decor(Vector3.new(12, 1.8, 0.3), at(x, 10.2, BACK_Z - 1.55), C.board)
+	-- the ticket office: one booth east of the board, as wide and tall as the old office front, open at
+	-- the front over a brass-topped counter, with room behind it for the clerk: a ticket rack of
+	-- Edmondson cards, a date press, a stool and an oil lamp
+	do
+		local tx, W, H, D = 36, 16, 11, 6.5
+		-- the booth sits back in the wall: its open front is flush with the wall face
+		local BZ = BACK_Z + D
+		local front = BZ - D
+		local panel = Kit.shade(C.wood, 0.9)
+		-- back boarding, side walls and the roof, each panelled
+		block(Vector3.new(W - 1.2, H, 0.7), at(tx, H / 2, BZ - 0.35), C.wood, Enum.Material.WoodPlanks)
+		for _, side in { -1, 1 } do
+			local x = tx + side * (W / 2 - 0.3)
+			block(Vector3.new(0.6, H, D), at(x, H / 2, front + D / 2), C.wood, Enum.Material.WoodPlanks)
+			decor(
+				Vector3.new(0.08, 3.4, D - 2),
+				at(x - side * 0.34, 2.2, front + D / 2 - 0.3),
+				panel,
+				Enum.Material.Wood
+			)
+			decor(
+				Vector3.new(0.08, 4.6, D - 2),
+				at(x - side * 0.34, 7.6, front + D / 2 - 0.3),
+				panel,
+				Enum.Material.Wood
+			)
+			-- a turned post at each front corner
+			Kit.post(
+				model,
+				H,
+				0.7,
+				at(tx + side * (W / 2 - 0.35), H / 2, front + 0.35),
+				Kit.shade(C.wood, 0.8),
+				{
+					material = Enum.Material.Wood,
+				}
+			)
+		end
+		block(
+			Vector3.new(W + 0.6, 0.5, D + 0.4),
+			at(tx, H + 0.25, front + D / 2 - 0.2),
+			Kit.shade(C.wood, 0.8),
+			Enum.Material.Wood
+		)
+		-- the fascia over the opening with the board on it
+		decor(
+			Vector3.new(W - 1.4, 1.8, 0.4),
+			at(tx, H - 0.9, front + 0.2),
+			Kit.shade(C.wood, 0.85),
+			Enum.Material.Wood
+		)
+		local sign = decor(Vector3.new(11, 1.5, 0.2), at(tx, H - 0.9, front - 0.1), C.board)
 		label(sign, Enum.NormalId.Front, "TICKETS", C.gilt)
+		-- counter: panelled front, marble-grey top with a brass edge, a brass grille rail on short posts
+		block(Vector3.new(W - 1.4, 3.6, 1.2), at(tx, 1.8, front + 0.6), C.wood, Enum.Material.WoodPlanks)
+		for k = -2, 2 do
+			decor(Vector3.new(2.2, 2.2, 0.06), at(tx + k * 2.7, 1.9, front - 0.03), panel, Enum.Material.Wood)
+		end
+		block(Vector3.new(W - 1.2, 0.25, 1.6), at(tx, 3.725, front + 0.6), C.marble, Enum.Material.Marble)
+		decor(Vector3.new(W - 1.2, 0.14, 0.14), at(tx, 3.62, front - 0.22), C.brass, Enum.Material.Metal)
+		for k = -3, 3 do
+			Kit.post(model, 1.3, 0.1, at(tx + k * 2, 4.5, front + 1.2), C.brass, {
+				material = Enum.Material.Metal,
+				collide = false,
+			})
+		end
+		decor(Vector3.new(W - 2, 0.12, 0.12), at(tx, 5.2, front + 1.2), C.brass, Enum.Material.Metal)
+		-- the clerk's side: the ticket rack (pigeonholes of card tickets), a date press, a stool, a lamp
+		local rackAt = at(tx - 3, 6.4, BZ - 0.75)
+		decor(Vector3.new(6, 3.6, 0.3), rackAt, Kit.shade(C.wood, 0.75), Enum.Material.Wood)
+		local CARDS =
+			{ Color3.fromRGB(196, 176, 120), Color3.fromRGB(150, 168, 186), Color3.fromRGB(176, 120, 110) }
+		for row = 0, 3 do
+			for col = 0, 7 do
+				decor(
+					Vector3.new(0.5, 0.55, 0.1),
+					rackAt * CFrame.new(-2.45 + col * 0.7, -1.2 + row * 0.8, -0.2),
+					CARDS[(row + col) % 3 + 1],
+					Enum.Material.SmoothPlastic
+				)
+			end
+		end
+		decor(Vector3.new(1, 0.9, 0.8), at(tx + 4, 4.3, front + 0.8), C.iron, Enum.Material.Metal) -- date press
+		decor(Vector3.new(0.3, 0.6, 0.3), at(tx + 4, 5.0, front + 0.8), C.brass, Enum.Material.Metal)
+		decor(
+			Vector3.new(1.6, 0.12, 1.1),
+			at(tx - 4.5, 3.91, front + 0.7),
+			Color3.fromRGB(62, 40, 34),
+			Enum.Material.Leather
+		) -- ledger
+		Kit.cylinder(model, 0.2, 1.4, at(tx + 1.5, 2.6, BZ - 3) * Kit.angles(0, 0, 90), C.wood, {
+			material = Enum.Material.Wood,
+		})
+		Kit.post(model, 2.5, 0.2, at(tx + 1.5, 1.25, BZ - 3), C.iron, { material = Enum.Material.Metal })
+		seatAt(at(tx + 1.5, 2.6, BZ - 3), 1.2, "Stool")
+		local lampGlass = Kit.neon(model, Vector3.new(0.5, 0.7, 0.5), at(tx + 6, 4.3, front + 1.1), C.flame)
+		lampGlass.Transparency = 0.2
+		decor(Vector3.new(0.7, 0.2, 0.7), at(tx + 6, 3.95, front + 1.1), C.brass, Enum.Material.Metal)
 	end
 
 	-- Outfitter kiosk -------------------------------------------------------------------------------------
 	local kx, kz = 54, 36
 	block(Vector3.new(14, 4, 4), at(kx, 2, kz), C.wood, Enum.Material.WoodPlanks)
 	block(Vector3.new(14.6, 0.4, 4.6), at(kx, 4.2, kz), C.brass, Enum.Material.Metal)
-	block(Vector3.new(14, 9, 1), at(kx, 4.5, kz + 6), C.wood, Enum.Material.WoodPlanks)
 	for _, x in { -6.5, 6.5 } do
 		Kit.post(model, 11, 0.6, at(kx + x, 5.5, kz - 1.5), C.iron, { material = Enum.Material.Metal })
+		-- the awning's back edge rests on a slim post standing on the low back wall
+		Kit.post(model, 7.6, 0.4, at(kx + x, 8.2, kz + 5.6), C.iron, { material = Enum.Material.Metal })
 	end
 	for i = 0, 6 do
 		decor(
@@ -769,16 +1015,6 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		{ transparency = 1, collide = false, shadow = false }
 	)
 	outfitter.Name = "OutfitterPrompt"
-	for i = 1, 4 do
-		Kit.post(
-			model,
-			0.8,
-			1.2,
-			at(kx - 6 + i * 2.4, 6.4, kz + 5.2),
-			Color3.fromHSV(i / 5, 0.45, 0.7),
-			{ collide = false }
-		)
-	end
 	local kioskLamp = Kit.neon(model, Vector3.new(1, 1, 1), at(kx, 10, kz), C.warm, Enum.PartType.Ball)
 	Kit.pointLight(kioskLamp, C.warm, 0.75, 22, false)
 
@@ -958,68 +1194,210 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				Enum.Material.WoodPlanks
 			)
 		end
+		for _, sx in { -3, 0, 3 } do
+			seatAt(frame * CFrame.new(sx, 1.6, 0), 2.6, "Bench")
+		end
 	end
 	for _, x in { -80, -30, 30, 80 } do
 		bench(x, 8, 1)
 		bench(x, 52, -1)
 	end
 
-	-- Luggage and trolleys ---------------------------------------------------------------------------------
-	for i, x in { -18, 20 } do
-		block(Vector3.new(6, 1, 3), at(x, 1.4, 58), C.iron, Enum.Material.Metal)
-		for _, wx in { -2.4, 2.4 } do
-			Kit.cylinder(
-				model,
-				2.4,
-				1.2,
-				at(x + wx, 0.6, 58) * Kit.angles(0, 90, 0),
-				C.iron,
-				{ material = Enum.Material.Metal, collide = false }
+	-- Books against the back wall: glazed-door bookcases of cloth-bound volumes under three of the
+	-- windows, a railway bookstall where the second ticket office stood, a rack of fire buckets ----------
+	local CLOTH = {
+		Color3.fromRGB(92, 34, 32), -- oxblood
+		Color3.fromRGB(38, 56, 44), -- bottle green
+		Color3.fromRGB(34, 40, 62), -- navy
+		Color3.fromRGB(96, 72, 44), -- tan calf
+		Color3.fromRGB(58, 40, 52), -- plum
+		Color3.fromRGB(124, 104, 70), -- worn buckram
+	}
+	-- A shelf of books standing between x0 and x1 (local to `frame`), each its own height and width.
+	local function bookRow(frame: CFrame, x0: number, x1: number, y: number, depth: number, seed: number)
+		local x, k = x0, seed
+		while x < x1 - 0.3 do
+			k += 1
+			local w = 0.22 + (k * 7 % 5) * 0.05
+			local h = 0.95 + (k * 11 % 7) * 0.06
+			if x + w > x1 then
+				break
+			end
+			-- now and then a book leans on its neighbour
+			local lean = if k % 9 == 0 then 12 else 0
+			decor(
+				Vector3.new(w - 0.03, h, depth - (k % 3) * 0.08),
+				frame * CFrame.new(x + w / 2, y + h / 2, 0) * Kit.angles(0, 0, lean),
+				CLOTH[k % #CLOTH + 1],
+				Enum.Material.Fabric
+			)
+			x += w + (if lean > 0 then 0.25 else 0)
+		end
+	end
+	-- A bookcase standing on `frame` (its doors face the frame's -Z), with one unseen solid box
+	local function bookcase(frame: CFrame, width: number, seed: number)
+		local height, depth = 8.4, 1.6
+		local solid = Kit.block(
+			model,
+			Vector3.new(width, height, depth),
+			frame * CFrame.new(0, height / 2, 0),
+			Color3.new(),
+			{
+				transparency = 1,
+				shadow = false,
+			}
+		)
+		solid.Name = "BookcaseCollider"
+		solid.CanQuery = false
+		local wood = Kit.shade(C.wood, 0.85)
+		block(
+			Vector3.new(width + 0.2, 0.6, depth + 0.2),
+			frame * CFrame.new(0, 0.3, 0),
+			wood,
+			Enum.Material.Wood
+		)
+		for _, side in { -1, 1 } do
+			block(
+				Vector3.new(0.3, height, depth),
+				frame * CFrame.new(side * (width / 2 - 0.15), height / 2, 0),
+				wood,
+				Enum.Material.Wood
 			)
 		end
-		for j = 0, 2 do
-			block(
-				Vector3.new(2.2 - j * 0.1, 1.6 - j * 0.12, 1.8 - j * 0.08),
-				at(x - 2 + j * 2, 2.7 - j * 0.06 + j * 0.0, 58) * Kit.angles(0, (i + j) * 9, 0),
-				Color3.fromHSV((i * 3 + j) / 9, 0.4, 0.45),
-				Enum.Material.Leather
+		decor(
+			Vector3.new(width - 0.6, height - 0.6, 0.12),
+			frame * CFrame.new(0, height / 2 + 0.3, depth / 2 - 0.06),
+			Kit.shade(wood, 0.8),
+			Enum.Material.Wood
+		)
+		block(
+			Vector3.new(width + 0.5, 0.4, depth + 0.4),
+			frame * CFrame.new(0, height + 0.2, 0),
+			wood,
+			Enum.Material.Wood
+		)
+		decor(
+			Vector3.new(width + 0.7, 0.2, depth + 0.55),
+			frame * CFrame.new(0, height + 0.5, 0),
+			Kit.shade(wood, 1.2),
+			Enum.Material.Wood
+		)
+		for shelf = 0, 3 do
+			local y = 0.6 + shelf * 1.95
+			if shelf > 0 then
+				decor(
+					Vector3.new(width - 0.6, 0.14, depth - 0.15),
+					frame * CFrame.new(0, y - 0.07, 0.07),
+					wood,
+					Enum.Material.Wood
+				)
+			end
+			bookRow(frame, -width / 2 + 0.4, width / 2 - 0.4, y, depth - 0.45, seed + shelf * 13)
+		end
+		-- glazed doors on the upper half, a brass knob between them
+		for _, side in { -1, 1 } do
+			local door = decor(
+				Vector3.new(width / 2 - 0.4, height / 2 - 0.3, 0.06),
+				frame * CFrame.new(side * (width / 4 - 0.05), height * 0.73, -depth / 2 - 0.06),
+				Color3.fromRGB(150, 170, 168),
+				Enum.Material.SmoothPlastic
+			)
+			door.Transparency = 0.85
+			decor(
+				Vector3.new(0.12, height / 2 - 0.3, 0.1),
+				frame * CFrame.new(side * (width / 2 - 0.42), height * 0.73, -depth / 2 - 0.12),
+				wood,
+				Enum.Material.Wood
+			)
+		end
+		Kit.ball(model, 0.2, frame * CFrame.new(0, height * 0.6, -depth / 2 - 0.16), C.brass, {
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+	end
+	bookcase(at(-90, 0, BACK_Z - 1.2), 9, 3)
+	bookcase(at(66, 0, BACK_Z - 1.2), 9, 41)
+	bookcase(at(90, 0, BACK_Z - 1.2), 9, 77)
+
+	-- the bookstall: back shelves of books and yellowbacks, a sloped counter of papers and periodicals
+	do
+		local bx = -36
+		local frame = at(bx, 0, BACK_Z - 1.3)
+		local wood = Kit.shade(C.wood, 0.95)
+		block(Vector3.new(14, 9, 1.4), frame * CFrame.new(0, 4.5, 0.5), wood, Enum.Material.WoodPlanks)
+		for row = 0, 3 do
+			local y = 1.2 + row * 1.9
+			decor(
+				Vector3.new(13, 0.14, 1.1),
+				frame * CFrame.new(0, y - 0.07, -0.65),
+				Kit.shade(wood, 0.8),
+				Enum.Material.Wood
+			)
+			bookRow(frame * CFrame.new(0, 0, -0.65), -6.3, 6.3, y, 0.9, 101 + row * 17)
+		end
+		local stallBoard = decor(Vector3.new(12, 1.4, 0.3), frame * CFrame.new(0, 9.9, 0.4), C.board)
+		label(stallBoard, Enum.NormalId.Front, "BOOKS · NEWSPAPERS", C.gilt)
+		block(Vector3.new(13, 2.6, 1.4), frame * CFrame.new(0, 1.3, -2.6), wood, Enum.Material.WoodPlanks)
+		local slope = frame * CFrame.new(0, 2.85, -2.6) * Kit.angles(-18, 0, 0)
+		block(Vector3.new(13.2, 0.2, 1.8), slope, Kit.shade(wood, 1.15), Enum.Material.Wood)
+		local PAPERS =
+			{ Color3.fromRGB(196, 186, 160), Color3.fromRGB(170, 160, 134), Color3.fromRGB(150, 160, 152) }
+		for i = 0, 9 do
+			decor(
+				Vector3.new(1.1, 0.06, 1.4),
+				slope * CFrame.new(-5.8 + i * 1.28, 0.13, 0) * Kit.angles(0, (i * 5 % 9) - 4, 0),
+				PAPERS[i % 3 + 1],
+				Enum.Material.SmoothPlastic
 			)
 		end
 	end
 
-	-- Posters on the end walls, above the dado: a travel bill, a bye-law, a propaganda bill, a typed
-	-- regulation, a lost-brother appeal and a night warning (PosterArt draws each one). Framed
-	-- prints sit in iron frames; the appeal is a notebook page pinned straight to the tiles' cap.
-	local slots = { { -1, -4 }, { -1, 12 }, { -1, 40 }, { 1, -4 }, { 1, 12 }, { 1, 40 } }
+	-- leather fire buckets on an iron rail, by the bookstall
+	do
+		local rail = at(-50, 6.6, BACK_Z - 0.45)
+		decor(Vector3.new(6.6, 0.25, 0.25), rail, C.iron, Enum.Material.Metal)
+		for i = 0, 3 do
+			local hook = rail * CFrame.new(-2.4 + i * 1.6, 0, 0)
+			decor(
+				Vector3.new(0.12, 0.5, 0.12),
+				hook * CFrame.new(0, -0.3, -0.25),
+				C.iron,
+				Enum.Material.Metal
+			)
+			Kit.post(model, 1.5, 1.1, hook * CFrame.new(0, -1.4, -0.7), Color3.fromRGB(122, 36, 30), {
+				material = Enum.Material.Leather,
+				collide = false,
+			})
+			Kit.cylinder(
+				model,
+				0.12,
+				1.2,
+				hook * CFrame.new(0, -0.62, -0.7) * Kit.angles(0, 0, 90),
+				C.brass,
+				{
+					material = Enum.Material.Metal,
+					collide = false,
+				}
+			)
+		end
+	end
+
+	-- Posters on the end walls, above the dado, in iron frames (PosterArt draws each one): the
+	-- Wyvern Sands lithograph and the fog bye-law on the west wall, the stokers' bill and the red
+	-- moon notice on the east
+	local slots = { { -1, -4 }, { -1, 12 }, { 1, 12 }, { 1, 40 } }
 	for i, kind in PosterArt.Kinds do
 		local side, z = slots[i][1], slots[i][2]
 		local x = side * (HALF_X - 0.3)
 		local posterFace = if side > 0 then Enum.NormalId.Left else Enum.NormalId.Right
-		local paper
-		if kind == "brother" then
-			paper = decor(
-				Vector3.new(0.06, 6.6, 5.1),
-				at(side * (HALF_X - 0.05), 9.6, z),
-				PosterArt.paper(kind),
-				Enum.Material.SmoothPlastic
-			)
-			Kit.ball(
-				model,
-				0.32,
-				at(side * (HALF_X - 0.16), 12.5, z),
-				C.canvas,
-				{ material = Enum.Material.SmoothPlastic, collide = false, shadow = false }
-			)
-		else
-			local framePart = decor(Vector3.new(0.3, 9.4, 7.4), at(x, 10.6, z), C.iron, Enum.Material.Metal)
-			framePart.Name = "PosterFrame"
-			paper = decor(
-				Vector3.new(0.2, 9, 7),
-				at(x - side * 0.2, 10.6, z),
-				PosterArt.paper(kind),
-				Enum.Material.SmoothPlastic
-			)
-		end
+		local framePart = decor(Vector3.new(0.3, 9.4, 7.4), at(x, 10.6, z), C.iron, Enum.Material.Metal)
+		framePart.Name = "PosterFrame"
+		local paper = decor(
+			Vector3.new(0.2, 9, 7),
+			at(x - side * 0.2, 10.6, z),
+			PosterArt.paper(kind),
+			Enum.Material.SmoothPlastic
+		)
 		paper.Name = "Poster"
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = posterFace
@@ -1091,6 +1469,12 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	armchair(wx - 3, wz - 5, 90, 3)
 	armchair(wx - 3, wz + 5, 90, 3)
 	armchair(wx + 4, wz, 90, 7)
+	for _, dz in { -5, 5 } do
+		seatAt(at(wx - 3, 0, wz + dz) * Kit.angles(0, 90, 0) * CFrame.new(0, 1.75, -0.1), 2.2, "Armchair")
+	end
+	for _, sx in { -1.6, 1.6 } do
+		seatAt(at(wx + 4, 0, wz) * Kit.angles(0, 90, 0) * CFrame.new(sx, 1.75, -0.1), 3, "Settee")
+	end
 	-- a side table with a lamp between the chairs, and a pot of tea gone cold
 	Kit.post(model, 2.4, 0.4, at(wx - 3, 1.2, wz), C.wood, { material = Enum.Material.Wood })
 	Kit.cylinder(
@@ -1126,37 +1510,67 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		{ material = Enum.Material.SmoothPlastic, collide = false }
 	)
 	-- a bookcase against the end wall and a palm by the stove
-	local caseAt = at(-HALF_X + 1.1, 0, wz + 13) * Kit.angles(0, -90, 0)
-	block(Vector3.new(8, 9, 2), caseAt * CFrame.new(0, 4.5, 0), C.wood, Enum.Material.Wood)
-	for row = 0, 3 do
-		decor(
-			Vector3.new(7 - (row % 2) * 0.6, 1.5, 1.2),
-			caseAt * CFrame.new(0, 1.4 + row * 2.1, -0.5),
-			Color3.fromHSV((row * 0.23) % 1, 0.45, 0.45),
-			Enum.Material.SmoothPlastic
+	bookcase(at(-HALF_X + 1.2, 0, wz + 13) * Kit.angles(0, -90, 0), 9, 59)
+	-- the palm: a glazed pot with a rolled rim and soil, a ringed trunk and fronds arching out and down
+	local potAt = at(wx - 10, 0, wz + 10)
+	local LEAF = Color3.fromRGB(56, 92, 52)
+	Kit.post(model, 2.2, 2.4, potAt * CFrame.new(0, 1.1, 0), Color3.fromRGB(150, 84, 58), {
+		material = Enum.Material.Plastic,
+	})
+	Kit.cylinder(
+		model,
+		0.4,
+		2.8,
+		potAt * CFrame.new(0, 2.2, 0) * Kit.angles(0, 0, 90),
+		Color3.fromRGB(128, 70, 48),
+		{
+			material = Enum.Material.Plastic,
+		}
+	)
+	Kit.cylinder(
+		model,
+		0.1,
+		2.3,
+		potAt * CFrame.new(0, 2.37, 0) * Kit.angles(0, 0, 90),
+		Color3.fromRGB(44, 32, 24),
+		{
+			material = Enum.Material.Ground,
+			collide = false,
+		}
+	)
+	for k = 0, 3 do
+		Kit.post(
+			model,
+			0.9,
+			0.5 - k * 0.05,
+			potAt * CFrame.new(0, 2.8 + k * 0.85, 0),
+			Color3.fromRGB(96, 74, 50),
+			{
+				material = Enum.Material.Wood,
+				collide = false,
+			}
 		)
 	end
-	local potAt = at(wx - 10, 0, wz + 10)
-	Kit.post(
-		model,
-		2.4,
-		2.6,
-		potAt * CFrame.new(0, 1.2, 0),
-		Color3.fromRGB(150, 80, 56),
-		{ material = Enum.Material.Brick }
-	)
-	for k = 0, 6 do
-		Kit.wedge(
-			model,
-			Vector3.new(0.4, 0.6, 4.2),
-			potAt
-				* CFrame.new(0, 3.4, 0)
-				* Kit.angles(0, k * 51, 0)
-				* Kit.angles(-28 - (k % 3) * 9, 0, 0)
-				* CFrame.new(0, 0, -2.1),
-			Color3.fromRGB(60, 104, 60),
-			{ material = Enum.Material.LeafyGrass, collide = false }
-		)
+	local crown = potAt * CFrame.new(0, 6.0, 0)
+	for f = 0, 7 do
+		-- each frond: four lengths, narrowing and drooping further at each joint
+		local cf = crown * Kit.angles(0, f * 45 + (f % 2) * 20, 0) * Kit.angles(-(35 - (f % 2) * 12), 0, 0)
+		for seg = 0, 3 do
+			local length = 1.3 - seg * 0.12
+			local width = 1.3 - seg * 0.25
+			Kit.block(
+				model,
+				Vector3.new(width, 0.08, length),
+				cf * CFrame.new(0, 0, -length / 2),
+				Kit.shade(LEAF, 1 - seg * 0.06),
+				{
+					material = Enum.Material.SmoothPlastic,
+					collide = false,
+					shadow = false,
+				}
+			)
+			cf = cf * CFrame.new(0, 0, -length) * Kit.angles(-14, 0, 0)
+		end
 	end
 
 	-- The tea room at the east end: soup on the stove, nobody leaves hungry -----------------------------
@@ -1287,57 +1701,196 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				Enum.Material.Wood,
 				{ collide = false }
 			)
+			seatAt(seat * CFrame.new(0, 2.05, 0) * Kit.angles(0, s * 90, 0), 1.4, "Chair")
 		end
 	end
 
-	-- An upright piano by the trolleys, its lid up as though someone just stopped playing -----------
-	local pianoAt = at(-4, 0, 66)
-	block(
-		Vector3.new(6, 4.6, 2.2),
-		pianoAt * CFrame.new(0, 2.3, 0.4),
-		Color3.fromRGB(46, 30, 24),
-		Enum.Material.Wood
-	)
-	block(
-		Vector3.new(5.6, 0.35, 1.2),
-		pianoAt * CFrame.new(0, 2.65, -1.25),
-		Color3.fromRGB(46, 30, 24),
-		Enum.Material.Wood
-	)
-	decor(
-		Vector3.new(5.2, 0.12, 0.8),
-		pianoAt * CFrame.new(0, 2.88, -1.35),
-		C.porcelain,
-		Enum.Material.SmoothPlastic
-	)
-	decor(
-		Vector3.new(4.8, 0.1, 0.38),
-		pianoAt * CFrame.new(0, 2.98, -1.15),
-		Color3.fromRGB(20, 18, 18),
-		Enum.Material.SmoothPlastic
-	)
-	block(
-		Vector3.new(4, 0.3, 1.4),
-		pianoAt * CFrame.new(0, 1.8, -3.2),
-		Color3.fromRGB(46, 30, 24),
-		Enum.Material.Wood
-	)
+	-- An upright piano under the departure board, its fallboard up as though someone just stopped
+	-- playing: rosewood case on a toe plinth, panelled knee board, turned consoles under the key bed,
+	-- red silk behind the fretwork, brass candle sconces, music on the desk; a buttoned piano chair
+	-- before it and a candle stand at its left
+	local pianoAt = at(0, 0, 67)
+	local ROSE = Color3.fromRGB(46, 30, 24)
+	local roseLight, roseDark = Kit.shade(ROSE, 1.3), Kit.shade(ROSE, 0.75)
+	local SILK = Color3.fromRGB(110, 36, 34)
+	local PAPER = Color3.fromRGB(214, 200, 168)
+	local WOOD = { material = Enum.Material.Wood, collide = false }
+	local function piece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?)
+		return decor(size, pianoAt * cf, color, material or Enum.Material.Wood)
+	end
+	block(Vector3.new(6.2, 0.35, 2.5), pianoAt * CFrame.new(0, 0.175, 0.4), roseDark, Enum.Material.Wood)
+	block(Vector3.new(5.4, 1.9, 2.0), pianoAt * CFrame.new(0, 1.3, 0.5), ROSE, Enum.Material.Wood)
 	for _, s in { -1, 1 } do
-		decor(
-			Vector3.new(0.3, 1.65, 0.3),
-			pianoAt * CFrame.new(s * 1.7, 0.83, -3.2),
-			C.iron,
-			Enum.Material.Metal
-		)
-		Kit.post(
+		-- knee-board panels, each with a sunk moulding
+		piece(Vector3.new(2.3, 1.3, 0.06), CFrame.new(s * 1.3, 1.3, -0.53), roseLight)
+		piece(Vector3.new(1.9, 0.95, 0.05), CFrame.new(s * 1.3, 1.3, -0.585), ROSE)
+		-- case sides, the key bed's cheek blocks and the turned consoles under it
+		block(Vector3.new(0.3, 4.4, 2.3), pianoAt * CFrame.new(s * 2.85, 2.55, 0.4), ROSE, Enum.Material.Wood)
+		piece(Vector3.new(0.34, 0.6, 1.3), CFrame.new(s * 2.67, 2.75, -1.15), roseLight)
+		Kit.post(model, 1.9, 0.36, pianoAt * CFrame.new(s * 2.62, 1.3, -1.55), ROSE, WOOD)
+		for _, y in { 0.45, 1.3, 2.18 } do
+			Kit.ball(model, 0.48, pianoAt * CFrame.new(s * 2.62, y, -1.55), roseLight, WOOD)
+		end
+		-- a swing-arm brass sconce with an unlit candle either side of the music desk
+		piece(Vector3.new(0.12, 0.12, 0.7), CFrame.new(s * 2.45, 3.9, -0.45), C.brass, Enum.Material.Metal)
+		Kit.cylinder(
 			model,
-			1,
-			0.25,
-			pianoAt * CFrame.new(s * 2.4, 5.1, 0.6),
+			0.06,
+			0.5,
+			pianoAt * CFrame.new(s * 2.45, 3.98, -0.8) * Kit.angles(0, 0, 90),
 			C.brass,
 			{ material = Enum.Material.Metal, collide = false }
 		)
+		Kit.post(
+			model,
+			0.6,
+			0.16,
+			pianoAt * CFrame.new(s * 2.45, 4.31, -0.8),
+			PAPER,
+			{ material = Enum.Material.SmoothPlastic, collide = false }
+		)
+		-- brass pedals on the plinth
+		piece(Vector3.new(0.26, 0.08, 0.6), CFrame.new(s * 0.32, 0.4, -0.95), C.brass, Enum.Material.Metal)
 	end
+	-- upper case: red silk behind fretwork, a carved rail top and bottom
+	block(Vector3.new(5.4, 2.1, 1.6), pianoAt * CFrame.new(0, 3.8, 0.7), ROSE, Enum.Material.Wood)
+	piece(Vector3.new(4.6, 1.5, 0.06), CFrame.new(0, 3.95, -0.13), SILK, Enum.Material.Fabric)
+	for k = -4, 4 do
+		piece(Vector3.new(0.09, 1.5, 0.06), CFrame.new(k * 0.52, 3.95, -0.19), roseLight)
+	end
+	for _, y in { 3.15, 4.75 } do
+		piece(Vector3.new(5.0, 0.16, 0.12), CFrame.new(0, y, -0.2), roseLight)
+	end
+	Kit.ball(model, 0.42, pianoAt * CFrame.new(0, 3.95, -0.26), C.brass, {
+		material = Enum.Material.Metal,
+		collide = false,
+	})
+	-- lid with a moulded edge
+	block(Vector3.new(6.0, 0.25, 2.6), pianoAt * CFrame.new(0, 4.92, 0.4), ROSE, Enum.Material.Wood)
+	piece(Vector3.new(6.12, 0.1, 2.7), CFrame.new(0, 4.74, 0.4), roseDark)
+	-- key bed, keyslip, the keys (52 white, 36 black) and the fallboard folded up
+	block(Vector3.new(5.0, 0.35, 1.3), pianoAt * CFrame.new(0, 2.4, -1.15), ROSE, Enum.Material.Wood)
+	piece(Vector3.new(5.0, 0.3, 0.1), CFrame.new(0, 2.35, -1.84), roseLight)
+	piece(Vector3.new(4.96, 0.12, 0.9), CFrame.new(0, 2.635, -1.3), C.porcelain, Enum.Material.SmoothPlastic)
+	local whiteW = 4.96 / 52
+	local hasBlack = { true, false, true, true, false, true, true } -- after A B C D E F G
+	for i = 0, 50 do
+		if hasBlack[i % 7 + 1] then
+			piece(
+				Vector3.new(whiteW * 0.55, 0.1, 0.55),
+				CFrame.new(-2.48 + (i + 1) * whiteW, 2.74, -1.05),
+				Color3.fromRGB(20, 18, 18),
+				Enum.Material.SmoothPlastic
+			)
+		end
+	end
+	piece(Vector3.new(5.0, 0.62, 0.08), CFrame.new(0, 3.0, -0.5), roseLight)
+	piece(Vector3.new(0.3, 0.14, 0.03), CFrame.new(0, 2.95, -0.555), C.brass, Enum.Material.Metal)
+	-- the music desk with an open book of music on it
+	piece(Vector3.new(3.2, 0.9, 0.08), CFrame.new(0, 3.55, -0.32) * Kit.angles(-12, 0, 0), roseDark)
+	for _, s in { -1, 1 } do
+		piece(
+			Vector3.new(0.78, 1.0, 0.03),
+			CFrame.new(s * 0.41, 3.62, -0.4) * Kit.angles(-12, s * 6, 0),
+			PAPER,
+			Enum.Material.SmoothPlastic
+		)
+	end
+	-- on the lid: a framed photograph and two volumes of music
+	local photo = CFrame.new(1.7, 5.55, 0.9) * Kit.angles(-10, -15, 0)
+	piece(Vector3.new(0.8, 1.0, 0.1), photo, C.brass, Enum.Material.Metal)
+	piece(Vector3.new(0.6, 0.78, 0.04), photo * CFrame.new(0, 0, -0.06), Color3.fromRGB(122, 100, 74))
+	piece(
+		Vector3.new(1.3, 0.2, 1.0),
+		CFrame.new(-1.6, 5.15, 0.6) * Kit.angles(0, 8, 0),
+		Color3.fromRGB(62, 40, 34),
+		Enum.Material.Leather
+	)
+	piece(
+		Vector3.new(1.2, 0.18, 0.92),
+		CFrame.new(-1.55, 5.34, 0.6) * Kit.angles(0, -5, 0),
+		Color3.fromRGB(40, 50, 44),
+		Enum.Material.Leather
+	)
+
+	-- the piano chair: turned legs on an H-stretcher, a buttoned velvet seat, a balloon back with a splat
+	local chairAt = pianoAt * CFrame.new(0, 0, -3.4)
+	local function chairPiece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?)
+		return decor(size, chairAt * cf, color, material or Enum.Material.Wood)
+	end
+	block(Vector3.new(2.2, 0.25, 1.9), chairAt * CFrame.new(0, 1.72, 0), ROSE, Enum.Material.Wood)
+	chairPiece(Vector3.new(2.0, 0.3, 1.7), CFrame.new(0, 1.99, 0), SILK, Enum.Material.Fabric)
+	Kit.ball(
+		model,
+		0.16,
+		chairAt * CFrame.new(0, 2.15, 0),
+		C.brass,
+		{ material = Enum.Material.Metal, collide = false }
+	)
+	for _, sx in { -0.9, 0.9 } do
+		for _, sz in { -0.75, 0.75 } do
+			Kit.post(model, 1.6, 0.22, chairAt * CFrame.new(sx, 0.8, sz), ROSE, WOOD)
+			Kit.ball(model, 0.32, chairAt * CFrame.new(sx, 1.25, sz), roseLight, WOOD)
+		end
+		chairPiece(Vector3.new(0.12, 0.12, 1.5), CFrame.new(sx, 0.5, 0), roseDark)
+	end
+	chairPiece(Vector3.new(1.6, 0.12, 0.12), CFrame.new(0, 0.5, 0), roseDark)
+	seatAt(chairAt * CFrame.new(0, 2.05, 0) * Kit.angles(0, 180, 0), 1.8, "Piano chair")
+
+	-- a candle stand at the piano's left: round base, slim turned post, a top just big enough for one candle
+	local standAt = pianoAt * CFrame.new(4.2, 0, -0.4) -- the bass end, left as you face the keys
+	local function disc(thick: number, diameter: number, y: number, color: Color3, material: Enum.Material)
+		Kit.cylinder(
+			model,
+			thick,
+			diameter,
+			standAt * CFrame.new(0, y, 0) * Kit.angles(0, 0, 90),
+			color,
+			{ material = material, collide = false }
+		)
+	end
+	disc(0.18, 1.7, 0.09, roseDark, Enum.Material.Wood)
+	disc(0.16, 1.1, 0.26, ROSE, Enum.Material.Wood)
+	Kit.post(model, 3.9, 0.18, standAt * CFrame.new(0, 2.3, 0), ROSE, { material = Enum.Material.Wood })
+	for _, y in { 0.5, 2.2, 4.15 } do
+		Kit.ball(model, 0.32, standAt * CFrame.new(0, y, 0), roseLight, WOOD)
+	end
+	disc(0.12, 1.0, 4.31, ROSE, Enum.Material.Wood)
+	disc(0.05, 0.5, 4.4, C.brass, Enum.Material.Metal)
+	Kit.post(
+		model,
+		0.7,
+		0.18,
+		standAt * CFrame.new(0, 4.77, 0),
+		PAPER,
+		{ material = Enum.Material.SmoothPlastic, collide = false }
+	)
+	-- the flame: a tall amber teardrop round a short white-gold core, with a dark wick at its foot
+	Kit.post(
+		model,
+		0.12,
+		0.04,
+		standAt * CFrame.new(0, 5.17, 0),
+		Color3.fromRGB(30, 22, 16),
+		{ collide = false }
+	)
+	local flame = Kit.neon(
+		model,
+		Vector3.new(0.2, 0.55, 0.2),
+		standAt * CFrame.new(0, 5.47, 0),
+		Color3.fromRGB(255, 150, 50),
+		Enum.PartType.Ball
+	)
+	flame.Transparency = 0.25
+	Kit.neon(
+		model,
+		Vector3.new(0.09, 0.22, 0.09),
+		standAt * CFrame.new(0, 5.36, 0),
+		Color3.fromRGB(255, 226, 160),
+		Enum.PartType.Ball
+	)
+	-- firelight, kept to the piano corner: no shadows so the far side of the stand is lit alike
+	Kit.pointLight(flame, Color3.fromRGB(255, 147, 60), 2.4, 13, false)
 	-- Gnossienne No. 3 plays from inside the case; PianoNotes floats notes off the same spot
 	local voice = block(
 		Vector3.new(0.4, 0.4, 0.4),
@@ -1362,15 +1915,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	music.Playing = true
 	music.Parent = voice
 
-	-- The crew's notice board on the back wall: notes left by the ones who came before, on whatever
-	-- paper was to hand (the line's grey-green card, blue-ruled pad, pink carbon, brown wrapping) --
-	local NOTE_PAPERS = {
-		Color3.fromRGB(166, 192, 182),
-		Color3.fromRGB(184, 204, 222),
-		Color3.fromRGB(206, 170, 182),
-		Color3.fromRGB(140, 108, 78),
-		Color3.fromRGB(190, 206, 218),
-	}
+	-- The crew's notice board on the back wall, left bare --
 	local nbx = -66
 	block(
 		Vector3.new(9, 6, 0.4),
@@ -1379,49 +1924,6 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		Enum.Material.Fabric
 	)
 	block(Vector3.new(9.6, 6.6, 0.25), at(nbx, 6.5, BACK_Z - 0.125 + 0.02), C.wood, Enum.Material.Wood)
-	local notes = {
-		{ "Whoever keeps leaving the lamp on in the guard's van: thank you. - R.", "PatrickHand" },
-		{ "Crew wanted. Must run fast, carry coal and not ask what is in the fog.", "SpecialElite" },
-		{ "Mrs. Pell's soup: Tuesdays.\nIt is always Tuesday now.", "IndieFlower" },
-		{
-			"If you hear knocking under the floor it's the pipes. It's the pipes. IT'S THE PIPES.",
-			"PermanentMarker",
-		},
-		{ "Bring back one thing that isn't coal. A flower. A book. Anything.", "Kalam" },
-		{ "Scrap opens doors. Literally. Pry the locks, mind what's behind them.", "PatrickHand" },
-	}
-	for i, note in notes do
-		local col, row = (i - 1) % 3, (i - 1) // 3
-		local paper = decor(
-			Vector3.new(2.6, 2.4, 0.06),
-			at(nbx - 2.9 + col * 2.9, 5.2 + row * 2.7, BACK_Z - 0.45 - i * 0.02)
-				* Kit.angles(0, 0, (((i * 37) % 11) - 5) * 1.5),
-			NOTE_PAPERS[(i - 1) % #NOTE_PAPERS + 1],
-			Enum.Material.SmoothPlastic
-		)
-		Kit.ball(
-			model,
-			0.22,
-			paper.CFrame * CFrame.new(0, 0.95, -0.08),
-			C.canvas,
-			{ material = Enum.Material.SmoothPlastic, collide = false, shadow = false }
-		)
-		local gui = Instance.new("SurfaceGui")
-		gui.Face = Enum.NormalId.Front
-		gui.CanvasSize = Vector2.new(260, 240)
-		gui.LightInfluence = 1
-		gui.Parent = paper
-		local t = Instance.new("TextLabel")
-		t.BackgroundTransparency = 1
-		t.Size = UDim2.fromScale(0.88, 0.88)
-		t.Position = UDim2.fromScale(0.06, 0.06)
-		t.FontFace = Font.new(`rbxasset://fonts/families/{note[2]}.json`)
-		t.Text = note[1]
-		t.TextColor3 = if i == 4 then Color3.fromRGB(22, 20, 22) else Color3.fromRGB(34, 40, 70)
-		t.TextScaled = true
-		t.TextWrapped = true
-		t.Parent = gui
-	end
 
 	-- Lamplight: lanterns hung from the platform-edge columns and sconces on the back wall ---------------
 	-- each column carries two, one either side on an iron arm that turns down at its tip, so the
@@ -1463,48 +1965,122 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Kit.pointLight(lantern, C.warm, 0.75, 22, false)
 		end
 	end
-	local rearLamp = {
-		height = 14,
-		backplateDepth = 0.25,
-		armDepth = 2.2,
-		shadeDepth = 3.1,
-		color = Color3.fromRGB(255, 214, 165),
-		lightBrightness = 1.5,
-		lightRange = 48,
-	}
-	-- Eight lamps at 24-stud spacing, with the central departure board kept clear.
-	for _, x in { -102, -78, -54, -30, 30, 54, 78, 102 } do
-		Kit.block(
+	-- gas lamp standards flanking the board and along the back wall where the sconces were: plinth,
+	-- fluted cast-iron shaft, ladder bar, square glazed lantern
+	for _, x in { -102, -78, -54, -24, 24, 54, 78, 102 } do
+		local foot = at(x, 0, 66)
+		Kit.block(model, Vector3.new(1.3, 0.8, 1.3), foot * CFrame.new(0, 0.4, 0), C.iron, {
+			material = Enum.Material.Metal,
+		})
+		Kit.post(model, 1.2, 0.95, foot * CFrame.new(0, 1.4, 0), C.iron, { material = Enum.Material.Metal })
+		Kit.post(model, 8.6, 0.5, foot * CFrame.new(0, 6.3, 0), C.iron, { material = Enum.Material.Metal })
+		for k = 0, 3 do
+			local angle = k * 90 + 45
+			Kit.block(
+				model,
+				Vector3.new(0.08, 8, 0.08),
+				foot * Kit.angles(0, angle, 0) * CFrame.new(0, 6.3, 0.27),
+				C.ironLight,
+				{ material = Enum.Material.Metal, collide = false }
+			)
+		end
+		Kit.ball(
 			model,
-			Vector3.new(2.4, 3.2, rearLamp.backplateDepth),
-			at(x, rearLamp.height, BACK_Z - 0.15),
+			0.7,
+			foot * CFrame.new(0, 10.6, 0),
 			C.iron,
-			{ material = Enum.Material.Metal, collide = false, shadow = false }
+			{ material = Enum.Material.Metal, collide = false }
 		)
-		Kit.block(
+		Kit.block(model, Vector3.new(1.6, 0.14, 0.14), foot * CFrame.new(0, 10.1, 0), C.iron, {
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+		Kit.block(model, Vector3.new(1.2, 0.25, 1.2), foot * CFrame.new(0, 11, 0), C.iron, {
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+		local glass = Kit.neon(model, Vector3.new(1, 1.5, 1), foot * CFrame.new(0, 11.88, 0), C.flame)
+		glass.Transparency = 0.15
+		for _, cx in { -0.5, 0.5 } do
+			for _, cz in { -0.5, 0.5 } do
+				Kit.block(model, Vector3.new(0.1, 1.5, 0.1), foot * CFrame.new(cx, 11.88, cz), C.iron, {
+					material = Enum.Material.Metal,
+					collide = false,
+				})
+			end
+		end
+		Kit.wedge(model, Vector3.new(1.5, 0.5, 0.75), foot * CFrame.new(0, 12.88, -0.375), C.iron, {
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+		Kit.wedge(
 			model,
-			Vector3.new(0.35, 0.35, rearLamp.armDepth),
-			at(x, rearLamp.height - 0.1, BACK_Z - 1.25),
+			Vector3.new(1.5, 0.5, 0.75),
+			foot * Kit.angles(0, 180, 0) * CFrame.new(0, 12.88, -0.375),
+			C.iron,
+			{ material = Enum.Material.Metal, collide = false }
+		)
+		Kit.ball(
+			model,
+			0.3,
+			foot * CFrame.new(0, 13.2, 0),
 			C.brass,
-			{ material = Enum.Material.Metal, collide = false, shadow = false }
+			{ material = Enum.Material.Metal, collide = false }
 		)
-		Kit.cylinder(
-			model,
-			0.45,
-			3.6,
-			at(x, rearLamp.height - 0.1, BACK_Z - rearLamp.shadeDepth) * Kit.angles(0, 0, 90),
-			C.brass,
-			{ material = Enum.Material.Metal, collide = false, shadow = false }
-		)
-		local diffuser = Kit.neon(
-			model,
-			Vector3.new(0.5, 2.8, 2.8),
-			at(x, rearLamp.height - 0.65, BACK_Z - rearLamp.shadeDepth) * Kit.angles(0, 0, 90),
-			rearLamp.color,
-			Enum.PartType.Cylinder
-		)
-		Kit.pointLight(diffuser, C.warm, rearLamp.lightBrightness, rearLamp.lightRange, false)
+		Kit.pointLight(glass, C.warm, 1.1, 31.5, false)
 	end
+
+	-- The hall's people, dressed from one kit (Config/Outfits): Mrs. Pell behind the tea-room counter,
+	-- Mr. Pyle in the outfitter's booth, the booking clerk at his counter, the Line Superintendent
+	-- by the honours board, and the guard lying over his van's veranda rail on the display train
+	local people = Kit.model("People", model)
+	-- staff behind a counter stand on a step, as behind any shop counter
+	local function resident(id: string, x: number, z: number, yaw: number, step: number?): OutfitKit.Figure
+		local who = Outfits.Lobby[id]
+		local lift = step or 0
+		if lift > 0 then
+			block(
+				Vector3.new(2.8, lift, 2.2),
+				at(x, lift / 2, z) * Kit.angles(0, yaw, 0),
+				Kit.shade(C.wood, 0.7),
+				Enum.Material.WoodPlanks
+			)
+		end
+		local figure = OutfitKit.figure(people, at(x, lift, z) * Kit.angles(0, yaw, 0), who.look, who.pose)
+		figure.model.Name = who.id
+		return figure
+	end
+	resident("TeaRoom", 109.5, 50, 90, 1)
+	resident("Outfitter", 52, 39.6, 0, 1)
+	resident("TicketClerk", 34, 68.2 + 6.5, 0, 1)
+	resident("Guard", -96 + 2.4, TRACK_Z + 1.5, 90) -- over the end balustrade, looking down the line
+	local superintendent = resident("LineMastery", -44.5, 37, 18)
+	-- he says what the board is to anyone who comes close
+	local card = Instance.new("BillboardGui")
+	card.Name = "Speech"
+	card.Size = UDim2.fromScale(9, 2.6)
+	card.StudsOffsetWorldSpace = Vector3.new(0, 4, 0)
+	card.MaxDistance = 18
+	card.LightInfluence = 0
+	card.Adornee = superintendent.head
+	card.Parent = superintendent.head
+	local paper = Instance.new("Frame")
+	paper.Size = UDim2.fromScale(1, 1)
+	paper.BackgroundColor3 = Color3.fromRGB(186, 168, 128)
+	paper.BackgroundTransparency = 0.08
+	paper.BorderSizePixel = 0
+	paper.Parent = card
+	local line = Instance.new("TextLabel")
+	line.BackgroundTransparency = 1
+	line.Position = UDim2.fromScale(0.05, 0.08)
+	line.Size = UDim2.fromScale(0.9, 0.84)
+	line.FontFace = Font.new("rbxasset://fonts/families/Merriweather.json")
+	line.TextScaled = true
+	line.TextWrapped = true
+	line.TextColor3 = Color3.fromRGB(30, 26, 22)
+	line.Text = "That is Line Mastery, the line's honours board. Every run, every stop cleared and every "
+		.. "crewmate pulled free is painted up there in gilt. Step up and read yours."
+	line.Parent = paper
 
 	local spawnPoints: { CFrame } = {}
 	for i = 0, 11 do
@@ -1522,6 +2098,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		board = board,
 		outfitter = outfitter,
 		ledger = ledger,
+		seats = seats,
 		displayTrain = display.model,
 		displayCabins = display.cabins,
 	}

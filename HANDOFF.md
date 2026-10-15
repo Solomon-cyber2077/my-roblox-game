@@ -1,5 +1,117 @@
 # HANDOFF
 
+## 2026-10-15: LOBBY + NPC PASS, REVISION (items 4 and 8 rewritten, LORE spot-check)
+`lune run check`: format, lint, types and 360 specs pass; the audit fails only on Lobby lights 49 > 48, caused by the
+owner's uncommitted candle firelight in LobbyBuilder (left as is; the owner decides: drop one light or raise the budget).
+1. Features completed
+- Item 4: the carried lantern's gameplay light is one shared constant, `Tuning.CarriedLantern` (LightRange 16, the
+  original reach; LightBrightness 0.55), the same for every cosmetic. A look's `glow` now only brightens the close
+  pool (CoreRange 6). Cosmetics change colour, glow style and flicker only. Verified in play: lights r6 and r16.
+- Item 8 (Controllers/LobbyStorm, owner's wide cloud deck and no horizon band kept): natural silhouettes only, no
+  buildings: eight mountain peaks, eleven hills on one dark ground, nine bare trees, 500 studs either way; a distant
+  veiled moon; churning black cloud (smoke particles in two layers, lit by the flash); heavier rain (320/s per window);
+  the interior flash cut to 1.8 x amount over 34 studs so the hall stays amber; resting sky lightened (58,62,84) so the
+  silhouettes read. Once per session at a random time (60-480 s) one strike shows 1-2 TallOnes on the hill line out
+  beyond a window, drawn from the sky's own shape (`Heavens.TallOneShape`, new export); they never move and vanish
+  with the light. Studio-only hook: player attribute `DevStormGlimpse` calls it on the next strike. Verified: glimpse
+  seen through a window, nothing shown again in the next 35 s, 13 flickers, no errors. Performance: no rain, bolt or
+  flash lights; thinner churn.
+- Guard re-dressed from the sources: `StaffFrock` cut (double-breasted frock coat buttoned to the neck) and a
+  patent-leather shoulder belt with pouch (`belt`), peaked cap.
+- LORE.md spot-checked against web sources (listed there): guard's uniform, women's railway work (no women booking
+  clerks before 1915, so Mabel is flagged), bustle/sleeve dates, service dress, Edmondson tickets, bookstalls, piano
+  sconces, and a caution that green engines with chocolate-and-cream coaches is the GWR livery.
+- Owner's manual changes noticed and left untouched: commits 806b57d and f2aa492 (town/church skyline and horizon
+  band removed, wider cloud deck, booth set into the back wall with the clerk moved in, lamp standards replacing all
+  sconces, touch-to-sit seats with `Tuning.Lobby.SeatRetouchDelay`, piano chair back removed, outfitter posts and back
+  board removed, end-wall floor gap closed, black underlay, new corner bookcase and palm); uncommitted: lobby stamina
+  never drains (MovementController), the candle stand's flame, wick and firelight, the notice board left bare
+  (LobbyBuilder). None of them were staged in my commits.
+2. Known bugs/regressions
+- Lobby audit over its light budget by one (see above).
+- Mabel as a woman ticket clerk is an anachronism for 1884-92 (LORE.md 6); her role is unchanged pending the owner.
+- The new thunder/rain sounds still not auditioned by ear.
+3. Next logical step
+- Owner: decide the light budget and Mabel's role, then merge after Claude Code is finished.
+
+## 2026-10-15: LOBBY + NPC PASS (branch claude/lobby-npc-pass, own worktree ../LTO-lobby, Rojo 34874, ../lobby.rbxl)
+Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/train/station work is done).
+1. Features completed
+- T1 solo ready: already fixed server-side (one Ready starts the Countdown, `LobbyService.TakeCrew` takes only readied
+  players). Removed "everyone in the hall boards"; the Countdown line reads "N ready to depart". Play-tested solo.
+- T2 ready button (UI/Lobby): flat brass face with a 5 px darker brass lip on the bottom and right; hover sinks it
+  halfway, mouse-down pushes it flush. Signal lamps (the green circle) removed; status and detail lines moved down
+  into the gap.
+- T3 outfitter: OUTFITTER shortcut button gone (the stand's prompt opens it); LINE MASTERY stays. Kiosk back wall
+  lowered from 9 to 4.4 studs (counter height), swatches moved onto it, two slim rear posts carry the awning.
+- T4 cosmetics: Ember crimson (196,22,40 glass), Signal a deep signal green, Founder's gilt body and gold light,
+  Curio warmer and brighter, Aurora more saturated teal/violet (cycle kept); optional `look.glow` multiplier.
+  Every lantern now lights with two PointLights (strong range 6 + soft range 18) so it is brightest at the lamp.
+  Trails 9-11 particles/s per foot (was 4-6), slightly larger, steam/mist a bit denser. Checked in Studio per lantern.
+- T5 piano (LobbyBuilder): rebuilt at x=0 under the departure board: toe plinth, panelled knee board, turned
+  consoles, cheek blocks, 52 white/36 black keys, fallboard up, music desk with open music, red silk behind fretwork,
+  brass sconces with candles, photo and music books on the lid, brass pedals. Buttoned velvet piano chair with turned
+  legs, H-stretcher, balloon back. Candle stand at its left (+x, the bass end): round base, slim turned post ~4.3 tall,
+  small round top, one lit candle (neon flame only; the hall is at its 48-light audit budget).
+- T6 lighting: the two back-wall lamps nearest the piano (x=+-30) replaced by gas lamp standards at x=+-24, z=66
+  (plinth, fluted cast-iron shaft, ladder bar, square glazed amber lantern, gabled cap). Truss pendants now amber
+  globes (236,150,72) with warmer light (255,178,98, brightness 1). Lights stay at 48/48.
+- T7 floor emblem: green rosette and its axe-and-cross bars replaced by a wordless roundel: slate field in a brass
+  ring, brass rails and closing-up sleepers running away (toward the train) into a round tunnel mouth, with the red
+  tail lamp of the last train inside the bore. Layer tops at distinct heights (audit: 0 z-fights).
+- T8 windows + storm: back wall now laid in courses around four real openings (x=+-66,+-90), lowered to y 10.6-20
+  with the lintel under the roof spring (22); iron casement, 3x3 glazing bars, faint pane (SmoothPlastic 0.82, not
+  Glass: Glass hides particles behind it), stone sill and lintel. Back area not expanded. New client controller
+  `Controllers/LobbyStorm` (in init ORDER after PianoNotes) builds, outside the panes tagged StormWindow: a black
+  Gothic skyline (needle-spired church, ruined chapel lancet gable, gabled houses with stacks, bare trees, hills)
+  within 15-110 studs (the hall Atmosphere hazes anything further), a cloud deck and a bruised horizon band, rain
+  sheets past each window, a muffled rain loop, and a strike every 7-16 s: 2-3 flickers, a forked neon bolt, four
+  shadowed flash lights, thunder 0.35-2.4 s later (new cues LobbyRain 9112855439, LobbyThunder 9116282646,
+  LobbyThunderFar 9113218938, all ProSoundEffects). Performance setting: no rain, no bolt, no flash lights (verified).
+  New script: run rbxmap `refresh` after merging.
+- T9 ticket stalls: west office (x=-36) removed. The east one (x=36) is now an open booth no wider or taller than
+  the old office (16 x 11), 6.5 deep: panelled sides, turned corner posts, fascia with the TICKETS board, panelled
+  counter with marble top, brass edge and grille rail, and room behind for the clerk (Edmondson card rack, date press,
+  ledger, stool, oil lamp).
+- T10 sittable chairs: LobbyBuilder adds unseen Seats (Kit.seat, SeatName attribute, returned as `Built.seats`) on
+  every bench (3 places each), both armchairs, the settee (2), the tea-room chairs, the piano chair and the booth
+  stool (34 in all); LobbyService puts a Sit prompt on each, hidden while occupied, same checks as TrainService.
+  Verified in Studio: every seat seats a player; piano chair faces the keys.
+- T11 posters (PosterArt, LobbyBuilder): the pale-blue regulation (COUNTED) and the notebook appeal (lost brother)
+  removed. Mind the Fog untouched (same slot). Reworked: coast is now WYVERN SANDS / BY THE NIGHT EXPRESS with an
+  S. & W. C. R. footer; coal is a buff letterpress bill (SEVERN & WESTERN COUNTIES RAILWAY / WANTED / STOKERS for the
+  Night Services, shovel woodcut, By Order 1889); moon is NOTICE TO PASSENGERS / WHEN THE MOON IS RED. All three
+  carry wear (torn corner, damp stains, soot at the foot). Layout: coast + fog west, stokers + moon east.
+- T12 floor boxes and life: the two luggage trolleys with their leather boxes removed. Added glazed-door
+  bookcases of cloth-bound books under the windows at x=-90, 66 and 90, a railway bookstall (BOOKS · NEWSPAPERS,
+  shelves of books, a sloped counter of papers) where the west ticket office stood, and a rack of four leather fire
+  buckets at x=-50. Lobby now 2048 parts (budget 3200), lights unchanged at 48.
+- T13 NPCs: one reusable kit. `Config/Outfits` (pure data: Look = cut Frock/Sack/Reefer/Bodice, trousers or
+  Plain/Bustle skirt, waistcoat, cravat/neckerchief, apron, hat Top/Bowler/Peaked/Lace/Bonnet/Visor, prop; Pose = lean,
+  armL, armR, head) and `Builders/OutfitKit.figure` (R6-proportioned part body, dressed and posed; body/skirt collide).
+  Placed by LobbyBuilder (audited, 0 z-fights): Mrs. Pell at the tea-room counter (bodice, apron, lace cap), Mr. Pyle
+  in the outfitter booth (frock coat, crimson waistcoat, tailor's tape), Mr. Lethbridge the booking clerk (navy reefer,
+  peaked cap, ticket punch), the Line Superintendent by the honours board (frock coat, top hat, pointer) with a speech
+  card within 18 studs saying what Line Mastery is, and the Guard lying over the display train's guard's van end
+  balustrade, looking down the line (no dialogue yet). Counter staff stand on a 1-stud step. New scripts: run rbxmap
+  `refresh` after merging.
+- T14 Mabel: dressed from the same kit (Npcs.Look is now Outfits.Look; NpcFigure is a thin wrapper over
+  OutfitKit): navy bodice with brass buttons, plain navy skirt, bun, clerk's eyeshade, ticket punch. Her 15 lines
+  rewritten short and plain (what to do, friendly, no puzzle talk); every line id, topic and condition kept, so
+  Logic/NpcDialogue and its specs are unchanged. Seen aboard in Studio with her Talk prompt; the new lines themselves
+  were not read through the dialogue UI in play (specs cover which line is picked).
+2. Known bugs/regressions
+- Multi-player boarding (two in the hall, one ready) checked by reading TakeCrew, not in a Local Server.
+- Storm: strikes verified by sampling (flash, bolt, flash lights) and one frame on screen; the new rain/thunder ids
+  (ProSoundEffects 9112855439, 9116282646) were not auditioned by ear.
+- Mabel's new lines were not read through the dialogue UI in play (specs cover the picking).
+- Period checklist #2: `LobbyBuilder.label` (TICKETS, BOOKS · NEWSPAPERS, OUTFITTER, DEPARTURES) still uses
+  HighwayGothic; not changed here (shared helper, older than this pass).
+- The display train's own seats (bunks, saloon) have no Sit prompts; only the hall's chairs were asked for.
+- New scripts (Controllers/LobbyStorm, Builders/OutfitKit, Config/Outfits) are not in the rbxmap index yet.
+3. Next logical step
+- Owner: check Claude Code is finished, then merge claude/lobby-npc-pass into claude/last-train-out and run rbxmap refresh.
+
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
 the older sources), and the laptop screen was covered, so the plugin could not be reconnected.
@@ -916,3 +1028,11 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Settings HUD = Hide now also hides the lobby's crew pass, Outfitter/Line Mastery, tier bar and waiting box; the Settings button moves to the top left (14,14) and returns when HUD is shown.
 2. Hidden state not playtested by tool (needs a click in the Settings menu); shown state verified, no console errors.
 3. Next: confirm in Studio by toggling HUD in the lobby and in a run.
+
+## Lobby pass (2026-10-15)
+1. Done: storm skyline removed from the back windows; bookcases solid; ticket booth set into the back wall (wall opening cut); outfitter colour posts and back board removed; back-wall sconces replaced by gas lamp standards (range 30 -> 31.5 on all eight); piano chair back removed; lobby seats sit on touch (no prompt), 1.5 s retouch delay.
+2. Known: the playtest screen capture came back dark, so the look still needs checking by eye. Count the hall's lights against the audit budget if it complains.
+3. Next: walk the lobby, try every seat and check the booth opening from both sides.
+- Follow-up: floor now meets the end walls (the corner gap is gone), black ground under the hall, the waiting-corner bookcase replaced with a glazed one, a new palm, the window backdrop widened and lowered with no horizon band.
+
+- Lobby storm flash: hidden PointLights (range 34) replaced by SpotLights aimed through each pane at the floor strip under it; amber hall lamps no longer washed white. Lobby audit light budget failure predates this.

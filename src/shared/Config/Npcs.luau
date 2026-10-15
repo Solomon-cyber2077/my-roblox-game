@@ -15,6 +15,7 @@
 ]]
 
 local Dialogue = script.Parent.NpcDialogue
+local Outfits = require(script.Parent.Outfits)
 
 export type Line = {
 	id: string,
@@ -23,14 +24,8 @@ export type Line = {
 	when: { [string]: any }?,
 }
 
-export type Look = {
-	skin: { number },
-	hair: { number },
-	coat: { number },
-	trim: { number },
-	legs: { number },
-	hat: string, -- "Visor" (more styles with later NPCs)
-}
+-- Dressed from the shared period kit (Config/Outfits, built by Builders/OutfitKit).
+export type Look = Outfits.Look
 
 export type NpcDef = {
 	id: string,
@@ -57,13 +52,18 @@ local List: { [string]: NpcDef } = {
 		post = { x = -25.4, z = -3.5, yaw = 90 },
 		chain = { "MabelLuggage", "MabelNames", "MabelManifest" },
 		cosmetic = "hat_clerk",
+		-- the company's navy in a fitted bodice and plain skirt, a clerk's eyeshade, her punch
 		look = {
 			skin = { 234, 196, 168 },
 			hair = { 128, 112, 104 },
+			hairStyle = "Bun",
+			cut = "Bodice",
 			coat = { 40, 50, 78 },
 			trim = { 201, 160, 82 },
-			legs = { 52, 44, 52 },
+			lower = { 40, 46, 70 },
+			skirt = "Plain",
 			hat = "Visor",
+			prop = "Punch",
 		},
 		lines = require(Dialogue.Mabel) :: any,
 	},
