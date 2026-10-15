@@ -4,11 +4,14 @@
 	the horizon, the TallOnes and the lightning. Each is a BillboardGui of plain
 	Frames, rounded with UICorner and shaded with UIGradient, so nothing is uploaded.
 
-	They hang on attachments of one invisible anchor that follows the camera, set far
-	beyond the furthest mountain, so they sit at infinity: the train never gets any
-	closer, while hills, trees and tunnel mouths pass in front of them. BillboardGuis
-	are depth tested but never fogged, which keeps the moon sharp through the haze;
-	Scenery/Sky veils it where the air or the cloud should.
+	They hang on attachments of one invisible anchor that follows the camera, so they
+	sit at infinity: the train never gets any closer, while hills, trees and tunnel
+	mouths pass in front of them. BillboardGuis are depth tested and the Atmosphere
+	fogs them like any part (seen 2026-10-14: at the night's density nothing past about
+	a thousand studs shows), so the anchor stands at DISTANCE, inside the haze, and the
+	moon burns HAZE_BOOST brighter to come through it. Whatever lies further out is
+	lost in the haze anyway. Scenery/Sky veils the moon where the air or the cloud
+	should.
 
 	  moon     a halo built up from soft rings, a 22-degree ring, a shaded disc with
 	           dark maria, the eclipse shadow, an eye that is usually not there, a lid
@@ -81,7 +84,8 @@ export type Info = {
 
 local Heavens = {}
 
-local DISTANCE = 16000 -- studs: past the furthest range, inside the camera's reach
+local DISTANCE = 750 -- studs: inside the Atmosphere's reach, past the station and its treeline
+local HAZE_BOOST = 2.6 -- the moon's brightness against the haze at DISTANCE
 local SPAN = 4 -- the moon's billboard is this many discs across (room for the halo)
 local DISC = 1 / SPAN
 local CLOUD_BASE = 1100 -- studs: where bolts come down from
@@ -508,7 +512,7 @@ local function poseMoon(m: MoonRig, state: Sky.State, info: Info)
 		m.gui.Size = UDim2.fromScale(side, side)
 	end
 	-- a throb swells the light (one property) rather than the halo's steps
-	m.gui.Brightness = moon.brightness * (1 + 0.5 * moon.throb)
+	m.gui.Brightness = moon.brightness * HAZE_BOOST * (1 + 0.5 * moon.throb)
 
 	-- behind cloud the disc fades and the glow spreads; a shut lid takes the glow with it
 	local glow = visible * (0.75 + 0.5 * moon.veil) * (1 - 0.75 * moon.lid) * (1 + 0.25 * moon.throb)

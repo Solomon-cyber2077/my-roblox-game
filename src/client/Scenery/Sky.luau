@@ -273,7 +273,8 @@ local KEYS: { Key } = {
 
 --[[
 	The moon's night. A full moon rises as the sun sets, so it is already climbing,
-	huge and amber, when the train makes its first stop. It rides over the stations'
+	huge and amber, when the train makes its first stop: the first night shows it as
+	plainly as the later ones. It rides over the stations'
 	side of the line (+Z) and stands high enough to clear their roofs and the trees on
 	their far edge. It turns copper as it climbs; from midnight the eclipse creeps across
 	it until at two it hangs blood red in its ring; then it pales and sinks into the dawn.
@@ -282,40 +283,40 @@ local KEYS: { Key } = {
 local MOON: { MoonKey } = {
 	{
 		hour = 18.2,
-		elevation = -2,
+		elevation = 6,
 		azimuth = 62,
-		size = 11.5,
+		size = 14,
 		color = rgb(244, 160, 84),
 		glow = rgb(206, 110, 58),
-		brightness = 1.45,
+		brightness = 1.6,
 		umbra = 0,
 		ring = 0,
 	},
 	{
-		hour = 18.9, -- the first stop: just over the trees
-		elevation = 11,
+		hour = 18.9, -- the first stop: already well clear of the roofs and trees, huge
+		elevation = 22,
 		azimuth = 68,
-		size = 11,
+		size = 13.5,
 		color = rgb(240, 148, 76),
 		glow = rgb(200, 100, 54),
-		brightness = 1.5,
+		brightness = 1.75,
 		umbra = 0,
 		ring = 0,
 	},
 	{
 		hour = 19.6, -- the second stop
-		elevation = 16,
+		elevation = 25,
 		azimuth = 72,
-		size = 10.5,
+		size = 12.2,
 		color = rgb(236, 136, 70),
 		glow = rgb(196, 92, 50),
-		brightness = 1.5,
+		brightness = 1.65,
 		umbra = 0,
 		ring = 0,
 	},
 	{
 		hour = 21.4,
-		elevation = 22,
+		elevation = 27,
 		azimuth = 78,
 		size = 9.8,
 		color = rgb(226, 112, 58),
@@ -326,7 +327,7 @@ local MOON: { MoonKey } = {
 	},
 	{
 		hour = 23,
-		elevation = 26,
+		elevation = 28,
 		azimuth = 84,
 		size = 9.2,
 		color = rgb(210, 90, 56),
@@ -568,6 +569,8 @@ function Sky.compose(i: Inputs): State
 	moon.brightness *= 1 - 0.5 * hush
 
 	local cover = math.clamp(lerp(a.cloudCover, b.cloudCover, w) + key.cover, 0, 0.97)
+	-- the first night opens clear, so its moon is the first thing seen; the cloud comes later
+	cover *= 0.4 + 0.6 * MathX.smoothstep(20, 21.5, i.hour)
 	moon.veil = MathX.saturate((cover - 0.55) / 0.4)
 	-- how strongly the moon colours the night: up, clear of cloud, and deep in it
 	local moonlight = moon.visible * (1 - 0.5 * moon.veil) * dark

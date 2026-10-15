@@ -14,7 +14,8 @@
 	  HollowField  a field of still Hollows with glowing eyes
 	  Graveyard, Lake, Crossing
 	  Sinkhole     the void a station docks over: rim cliffs, an ember-lit abyss
-	               and mist layers (a harbour at the Terminus)
+	               and mist layers, and past its far rim a treeline, hills and a
+	               mountain massif (a harbour at the Terminus)
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1155,6 +1156,100 @@ local function harbour(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 	Props.lighthouse(model, CFrame.new(len + 30, -12, r.z1 + 30), { rng = rng, biome = coast, shadow = true })
 end
 
+--[[
+	Past a sinkhole's far rim (World.backdrop): a treeline of tall trees along the lip, rolling
+	hills behind it and a mountain massif behind them, so the dark beyond a station has a
+	shape against the sky. The hills and peaks are ground (Earth); the trees stand clear of
+	one another. All of it stands in the near or mid slab under it.
+]]
+local function groundAt(z: number): number
+	return if z < Bands.NearZ then GROUND else Bands.MidTop
+end
+
+local function backdrop(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
+	local B = Tuning.Journey.Backdrop
+	local r = sinkhole.rect
+	local len = r.x1 - r.x0
+	local def = World.dominant(sinkhole.center)
+	local ctx: Props.Ctx = { rng = rng, biome = def, shadow = false, lights = false, far = true }
+	local conifers = def.snowcap or def.belt == "Pine" or def.id == "Highland" or def.id == "Coalfield"
+
+	-- the treeline: tall trees in a loose double row along the rim
+	local taken: Taken = {}
+	local x0, x1 = -B.Margin, len + B.Margin
+	scatter(taken, math.floor((x1 - x0) / 15), 9, function()
+		return rng:range(x0, x1), r.z1 + rng:range(B.TreeLine[1], B.TreeLine[2])
+	end, function(x, z)
+		local cf = CFrame.new(x, groundAt(z) - 0.3, z)
+		if conifers then
+			if def.snowcap then
+				Props.snowPine(model, cf, ctx, rng:range(1.2, 1.7))
+			else
+				Props.pine(model, cf, ctx, rng:range(1.2, 1.7))
+			end
+		else
+			Props.tree(model, cf, ctx, rng:range(1.5, 2.1))
+		end
+	end)
+
+	-- rolling hills: broad domes, most of them under the ground
+	local hill = Kit.shade(def.hill, 0.85)
+	for i = 1, rng:int(4, 6) do
+		local w = rng:range(260, 420)
+		local h = rng:range(90, 170)
+		local x = x0 + (x1 - x0) * (i - 0.5) / 6 + rng:range(-60, 60)
+		local z = r.z1 + rng:range(B.Hills[1], B.Hills[2])
+		local dome = part(
+			model,
+			Vector3.new(w, h, w * rng:range(0.55, 0.8)),
+			CFrame.new(x, Bands.MidTop - h * 0.22 - rng:range(0, 0.3), z)
+				* Kit.angles(0, rng:range(-20, 20), 0),
+			Kit.jitter(hill, 0.06, rng:next()),
+			def.groundMaterial
+		)
+		local round = dome :: Part
+		round.Shape = Enum.PartType.Ball
+		earth(dome)
+	end
+
+	-- the massif: a few peaks in a ragged line, snow on the tall ones where the biome has it.
+	-- Kept under the moon: from the platform they stand below its path (Sky), so it rides
+	-- clear above them from the first stop.
+	local rock = Kit.shade(def.mountain, 0.9)
+	local peaks = rng:int(3, 5)
+	for i = 1, peaks do
+		local h = rng:range(B.PeakHeight[1], B.PeakHeight[2]) * (if i == (peaks + 1) // 2 then 1.15 else 1)
+		local width = h * rng:range(1.4, 1.8)
+		local at = CFrame.new(
+			x0 + (x1 - x0) * (i - 0.5) / peaks + rng:range(-80, 80),
+			Bands.MidTop - 0.5 - rng:range(0, 0.35),
+			r.z1 + rng:range(B.Peaks[1], B.Peaks[2])
+		) * Kit.angles(0, rng:range(0, 90), 0)
+		local before = #model:GetChildren()
+		Props.spire(model, at, h, width, Kit.jitter(rock, 0.08, rng:next()), M.Rock, false, width * 0.18)
+		if def.snowcap and h > B.PeakHeight[1] * 1.3 then
+			local cap = h * 0.3
+			Props.spire(
+				model,
+				at * CFrame.new(0, h - cap, 0),
+				cap,
+				width * 0.3 * 1.04,
+				rgb(232, 236, 244),
+				M.Snow,
+				false,
+				width * 0.18 * 1.04
+			)
+		end
+		local children = model:GetChildren()
+		for k = before + 1, #children do
+			local child = children[k]
+			if child:IsA("BasePart") then
+				earth(child)
+			end
+		end
+	end
+end
+
 local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 	local r = sinkhole.rect
 	local len = r.x1 - r.x0
@@ -1295,6 +1390,7 @@ local function abyss(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
 	local smoke = Props.smoke(model, CFrame.new(len / 2, -90, (r.z0 + r.z1) / 2), 6, rgb(70, 62, 60))
 	smoke.Rate = 4
 	smoke.Speed = NumberRange.new(1, 3)
+	backdrop(model, sinkhole, rng)
 end
 
 -- Dispatch ----------------------------------------------------------------------------------------------------------
