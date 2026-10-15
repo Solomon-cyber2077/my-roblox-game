@@ -6,7 +6,8 @@
 	A check is a marker crossing a bar once, left to right (UI/Struggle): "angle" 0 at the left
 	end at `startsAt` (server time), 360 at the right end one SweepSeconds later. The zone (the
 	grey) covers [zoneStart, zoneStart + zoneWidth]; the great zone (the white block) is its
-	middle GreatShare. The server picks every check at random the moment it appears, sends it
+	middle GreatShare. The zone does not sit still: it slides along the bar at ZoneDrift degrees a
+	second (left or right by the check's id), bouncing off the ends (zoneStartAt). The server picks every check at random the moment it appears, sends it
 	to the victim, and judges the one press it accepts for it:
 
 	  good   the marker was in the zone when the press was made
@@ -38,6 +39,7 @@ export type Check = {
 	zoneStart: number, -- degrees clockwise from the top
 	zoneWidth: number,
 	greatWidth: number,
+	drift: number?, -- degrees a second the zone slides (sign is the direction); nil or 0 sits still
 }
 
 export type Result = "Great" | "Good" | "Miss"
@@ -66,6 +68,11 @@ function SkillCheck.finishSeconds(stop: number, zoneWidth: number): number
 	return math.max(pick(C.FinishByStop, stop), SkillCheck.minimumSeconds(zoneWidth) + C.FinishMargin)
 end
 
+-- The zone's speed for check `id`: odd ids slide left, even ones right.
+function SkillCheck.drift(id: number): number
+	return if id % 2 == 0 then C.ZoneDrift else -C.ZoneDrift
+end
+
 -- The furthest ahead of the needle a zone of this width may start (it must end inside the turn).
 function SkillCheck.maxLead(zoneWidth: number): number
 	return math.max(math.min(C.LeadDegrees[2], 350 - zoneWidth), C.LeadDegrees[1])
@@ -74,10 +81,13 @@ end
 --[[
 	The longest it can take to win the minimum checks, hitting every one at the zone's last
 	moment: the first check's delay, then each check's turn up to its zone's end, with the
-	longest gap between them.
+	longest gap between them. A sliding zone always stays on the bar, so the needle still
+	crosses it within one turn.
 ]]
 function SkillCheck.minimumSeconds(zoneWidth: number): number
-	local perCheck = (SkillCheck.maxLead(zoneWidth) + zoneWidth) / 360 * C.SweepSeconds
+	local perCheck = if C.ZoneDrift > 0
+		then C.SweepSeconds
+		else (SkillCheck.maxLead(zoneWidth) + zoneWidth) / 360 * C.SweepSeconds
 	return C.FirstDelay + C.Required * perCheck + (C.Required - 1) * C.Gap[2]
 end
 
@@ -91,6 +101,7 @@ function SkillCheck.new(id: number, now: number, zoneWidth: number, roll: Roll):
 		zoneStart = roll(C.LeadDegrees[1], SkillCheck.maxLead(width)),
 		zoneWidth = width,
 		greatWidth = width * C.GreatShare,
+		drift = SkillCheck.drift(id),
 	}
 end
 
@@ -104,6 +115,18 @@ function SkillCheck.angleAt(check: Check, t: number): number
 	return (t - check.startsAt) / check.sweep * 360
 end
 
+-- Where the zone starts at server time `t`: it slides from zoneStart at its drift and bounces
+-- off both ends of the bar, so it always covers [0, 360].
+function SkillCheck.zoneStartAt(check: Check, t: number): number
+	local range = math.max(360 - check.zoneWidth, 0)
+	local drift = check.drift or 0
+	if drift == 0 or range == 0 then
+		return check.zoneStart
+	end
+	local p = (check.zoneStart + drift * math.max(t - check.startsAt, 0)) % (2 * range)
+	return if p > range then 2 * range - p else p
+end
+
 -- Server time the turn ends: with no press by then (plus the largest tolerance), it is a miss.
 function SkillCheck.endsAt(check: Check): number
 	return check.startsAt + check.sweep + C.LatencyMax
@@ -114,10 +137,17 @@ function SkillCheck.tolerance(ping: number?): number
 	return math.min(C.LatencyBase + p / 2, C.LatencyMax)
 end
 
--- Does the needle's path over [from, to] degrees cross [lo, hi]?
+-- Does [from, to] (in either order) cross [lo, hi]?
 local function overlaps(from: number, to: number, lo: number, hi: number): boolean
-	return to >= lo and from <= hi
+	return math.max(from, to) >= lo and math.min(from, to) <= hi
 end
+
+-- The needle's place relative to the zone's start at server time `t`.
+local function relative(check: Check, t: number): number
+	return SkillCheck.angleAt(check, t) - SkillCheck.zoneStartAt(check, t)
+end
+
+local WINDOW_STEPS = 12 -- the look-back window is checked in this many slices (the zone moves)
 
 -- Where the great zone (the white block, centred in the zone) starts.
 function SkillCheck.greatStart(check: Check): number
@@ -128,16 +158,19 @@ end
 -- (0 judges the exact instant `at`).
 function SkillCheck.judge(check: Check, at: number, tolerance: number): Result
 	local tol = math.clamp(tolerance, 0, C.LatencyMax)
-	local from = SkillCheck.angleAt(check, at - tol)
-	local to = SkillCheck.angleAt(check, at)
-	local lo = check.zoneStart
-	local great = SkillCheck.greatStart(check)
-	if overlaps(from, to, great, great + check.greatWidth) then
-		return "Great"
-	elseif overlaps(from, to, lo, lo + check.zoneWidth) then
-		return "Good"
+	local great = (check.zoneWidth - check.greatWidth) / 2
+	local steps = if tol > 0 then WINDOW_STEPS else 1
+	local good = false
+	local prev = relative(check, at - tol)
+	for i = 1, steps do
+		local r = relative(check, at - tol + tol * i / steps)
+		if overlaps(prev, r, great, great + check.greatWidth) then
+			return "Great"
+		end
+		good = good or overlaps(prev, r, 0, check.zoneWidth)
+		prev = r
 	end
-	return "Miss"
+	return if good then "Good" else "Miss"
 end
 
 -- The instant to judge a press the client says it made at `claimed` (server time) that
