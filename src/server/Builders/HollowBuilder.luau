@@ -230,14 +230,15 @@ end
 local function stalker(model: Model, root: BasePart)
 	local SKIN = rgb(150, 156, 146)
 	local SKIN_DARK = rgb(118, 124, 114)
-	local COAT = rgb(44, 58, 50)
-	local LAPEL = rgb(30, 40, 34)
+	local COAT = rgb(43, 40, 38)
+	local LAPEL = rgb(27, 25, 24)
+	local BLOOD = rgb(104, 22, 24)
 	local TROUSER = rgb(40, 40, 44)
 	local cloth = Enum.Material.Fabric
 	local skin = Enum.Material.SmoothPlastic
 
-	local pelvis = block(model, "Pelvis", Vector3.new(1.7, 0.9, 0.95), COAT, cloth)
-	local chest = block(model, "Chest", Vector3.new(1.9, 2.8, 1.05), COAT, cloth)
+	local pelvis = block(model, "Pelvis", Vector3.new(1.5, 0.9, 0.95), COAT, cloth)
+	local chest = block(model, "Chest", Vector3.new(1.65, 2.8, 1.05), COAT, cloth)
 	local head = block(model, "Head", Vector3.new(0.95, 1.25, 1.05), SKIN, skin)
 	local jaw = block(model, "Jaw", Vector3.new(0.78, 0.32, 0.9), SKIN_DARK, skin)
 	joint("RootJoint", root, pelvis, CFrame.new(0, -0.65, 0), CFrame.new())
@@ -263,7 +264,7 @@ local function stalker(model: Model, root: BasePart)
 	end
 	-- coat tails in tatters, hanging past the knees
 	for i, x in { -0.62, 0.05, 0.6 } do
-		deco(
+		decoWedge(
 			model,
 			pelvis,
 			Vector3.new(0.5 + (i % 2) * 0.12, 2.5 + i * 0.25, 0.08 + i * 0.01),
@@ -323,15 +324,15 @@ local function stalker(model: Model, root: BasePart)
 			{ "Shoulder", "Elbow", "Wrist" },
 			chest,
 			CFrame.new(s * 1.12, 1.12, 0),
-			2.5,
-			2.35,
-			0.4,
+			2.9,
+			2.75,
+			0.32,
 			COAT,
 			SKIN,
 			cloth,
 			skin,
 			Vector3.new(0.42, 0.5, 0.22),
-			SKIN_DARK
+			BLOOD
 		)
 		for f = -1, 1 do
 			local finger = deco(
@@ -339,7 +340,7 @@ local function stalker(model: Model, root: BasePart)
 				hand,
 				Vector3.new(0.07, 1.05 - math.abs(f) * 0.15, 0.07),
 				CFrame.new(f * 0.13, -0.72 + math.abs(f) * 0.07, 0) * Kit.angles(0, 0, f * 6),
-				SKIN,
+				BLOOD,
 				skin
 			)
 			decoWedge(

@@ -669,8 +669,16 @@ end
 
 -- The bipeds (the Stalker and the Brute) --------------------------------------------------------------
 
-local function stalkerGait(out: Pose, p: number, stride: number, hunt: boolean, now: number, seed: number)
-	local lean = if hunt then -0.5 else -0.1
+local function stalkerGait(
+	rig: Rig,
+	out: Pose,
+	p: number,
+	stride: number,
+	hunt: boolean,
+	now: number,
+	seed: number
+)
+	local lean = if hunt then -0.65 else -0.45
 	local l, r = math.sin(p), math.sin(p + math.pi)
 	-- the left leg strides, the right drags: a limp
 	out.LHip = A(l * 0.62 * stride, 0, -0.04)
@@ -684,23 +692,29 @@ local function stalkerGait(out: Pose, p: number, stride: number, hunt: boolean, 
 		* A(lean * 0.4, l * 0.08 * stride, l * 0.1 * stride + 0.06)
 	out.Waist = A(lean * 0.6 + math.sin(p * 2) * 0.03, l * 0.12 * stride, 0)
 	if hunt then
-		local reach = l * 0.8 * stride
-		out.LShoulder = A(-0.6 + reach, 0, -0.25)
-		out.RShoulder = A(-0.6 - reach, 0, 0.25)
-		out.LElbow = A(0.55, 0, 0)
-		out.RElbow = A(0.55, 0, 0)
 		out.Neck = A(0.55, 0, 0)
 		out.Jaw = A(-0.25 - 0.1 * math.sin(now * 9 + seed), 0, 0)
 	else
-		out.LShoulder = A(-r * 0.25 * stride + 0.05, 0, -0.06 - 0.04 * math.sin(p * 0.5))
-		out.RShoulder = A(-l * 0.25 * stride + 0.05, 0, 0.06 + 0.04 * math.sin(p * 0.5))
-		out.LElbow = A(0.15 + 0.1 * math.max(0, l), 0, 0)
-		out.RElbow = A(0.15 + 0.1 * math.max(0, r), 0, 0)
-		out.Neck = A(-0.1, 0.25 * math.sin(now * 0.7 + seed), 0.38)
+		out.Neck = A(0.15, 0.18 * math.sin(now * 0.7 + seed), 0.28)
 		out.Jaw = A(-0.12, 0, 0)
 	end
-	out.LWrist = A(0.2, 0, 0)
-	out.RWrist = A(0.2, 0, 0)
+	-- An uneven protective cradle: one stained hand at the mouth, one at the temple.
+	-- Solve from the actual long bones so the hands follow the face through the limp.
+	local face = HollowPoses.frameOf(rig, out, "Head")
+	for _, side in { "L", "R" } do
+		local sign = if side == "L" then -1 else 1
+		local breath = math.sin(now * 1.8 + seed + sign) * 0.04
+		local hand = face * Vector3.new(sign * 0.5, (if side == "L" then -0.45 else 0.1) + breath, -0.78)
+		HollowPoses.reach(
+			rig,
+			out,
+			side,
+			"Arm",
+			hand,
+			Vector3.new(sign, -0.7, -0.3),
+			face.Rotation * A(math.pi, 0, 0)
+		)
+	end
 end
 
 local function bruteGait(out: Pose, p: number, stride: number, hunt: boolean, now: number, seed: number)
@@ -892,6 +906,7 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 			)
 		else
 			stalkerGait(
+				rig,
 				target,
 				input.phase,
 				if speedOverride then 0 else stride,
