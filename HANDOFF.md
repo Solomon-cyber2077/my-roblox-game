@@ -67,7 +67,14 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   Logic/NpcDialogue and its specs are unchanged. Seen aboard in Studio with her Talk prompt; the new lines themselves
   were not read through the dialogue UI in play (specs cover which line is picked).
 2. Known bugs/regressions
-- Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
+- Multi-player boarding (two in the hall, one ready) checked by reading TakeCrew, not in a Local Server.
+- Storm: strikes verified by sampling (flash, bolt, flash lights) and one frame on screen; the new rain/thunder ids
+  (ProSoundEffects 9112855439, 9116282646) were not auditioned by ear.
+- Mabel's new lines were not read through the dialogue UI in play (specs cover the picking).
+- Period checklist #2: \`LobbyBuilder.label\` (TICKETS, BOOKS · NEWSPAPERS, OUTFITTER, DEPARTURES) still uses
+  HighwayGothic; not changed here (shared helper, older than this pass).
+- The display train's own seats (bunks, saloon) have no Sit prompts; only the hall's chairs were asked for.
+- New scripts (Controllers/LobbyStorm, Builders/OutfitKit, Config/Outfits) are not in the rbxmap index yet.
 3. Next logical step
 - Owner: check Claude Code is finished, then merge claude/lobby-npc-pass into claude/last-train-out and run rbxmap refresh.
 
