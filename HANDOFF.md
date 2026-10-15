@@ -48,10 +48,14 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   S. & W. C. R. footer; coal is a buff letterpress bill (SEVERN & WESTERN COUNTIES RAILWAY / WANTED / STOKERS for the
   Night Services, shovel woodcut, By Order 1889); moon is NOTICE TO PASSENGERS / WHEN THE MOON IS RED. All three
   carry wear (torn corner, damp stains, soot at the foot). Layout: coast + fog west, stokers + moon east.
+- T12 floor boxes and life: the two luggage trolleys with their leather boxes removed. Added glazed-door
+  bookcases of cloth-bound books under the windows at x=-90, 66 and 90, a railway bookstall (BOOKS · NEWSPAPERS,
+  shelves of books, a sloped counter of papers) where the west ticket office stood, and a rack of four leather fire
+  buckets at x=-50. Lobby now 2048 parts (budget 3200), lights unchanged at 48.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T12 floor boxes, bookshelves).
+- NPC list (T13 Victorian outfit kit + lobby NPCs).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran

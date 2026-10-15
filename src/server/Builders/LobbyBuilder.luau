@@ -1175,25 +1175,164 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		bench(x, 52, -1)
 	end
 
-	-- Luggage and trolleys ---------------------------------------------------------------------------------
-	for i, x in { -18, 20 } do
-		block(Vector3.new(6, 1, 3), at(x, 1.4, 58), C.iron, Enum.Material.Metal)
-		for _, wx in { -2.4, 2.4 } do
-			Kit.cylinder(
-				model,
-				2.4,
-				1.2,
-				at(x + wx, 0.6, 58) * Kit.angles(0, 90, 0),
-				C.iron,
-				{ material = Enum.Material.Metal, collide = false }
+	-- Books against the back wall: glazed-door bookcases of cloth-bound volumes under three of the
+	-- windows, a railway bookstall where the second ticket office stood, a rack of fire buckets ----------
+	local CLOTH = {
+		Color3.fromRGB(92, 34, 32), -- oxblood
+		Color3.fromRGB(38, 56, 44), -- bottle green
+		Color3.fromRGB(34, 40, 62), -- navy
+		Color3.fromRGB(96, 72, 44), -- tan calf
+		Color3.fromRGB(58, 40, 52), -- plum
+		Color3.fromRGB(124, 104, 70), -- worn buckram
+	}
+	-- A shelf of books standing between x0 and x1 (local to `frame`), each its own height and width.
+	local function bookRow(frame: CFrame, x0: number, x1: number, y: number, depth: number, seed: number)
+		local x, k = x0, seed
+		while x < x1 - 0.3 do
+			k += 1
+			local w = 0.22 + (k * 7 % 5) * 0.05
+			local h = 0.95 + (k * 11 % 7) * 0.06
+			if x + w > x1 then
+				break
+			end
+			-- now and then a book leans on its neighbour
+			local lean = if k % 9 == 0 then 12 else 0
+			decor(
+				Vector3.new(w - 0.03, h, depth - (k % 3) * 0.08),
+				frame * CFrame.new(x + w / 2, y + h / 2, 0) * Kit.angles(0, 0, lean),
+				CLOTH[k % #CLOTH + 1],
+				Enum.Material.Fabric
+			)
+			x += w + (if lean > 0 then 0.25 else 0)
+		end
+	end
+	local function bookcase(x: number, width: number, seed: number)
+		local frame = at(x, 0, BACK_Z - 1.2)
+		local height, depth = 8.4, 1.6
+		local wood = Kit.shade(C.wood, 0.85)
+		block(Vector3.new(width + 0.2, 0.6, depth + 0.2), frame * CFrame.new(0, 0.3, 0), wood, Enum.Material.Wood)
+		for _, side in { -1, 1 } do
+			block(
+				Vector3.new(0.3, height, depth),
+				frame * CFrame.new(side * (width / 2 - 0.15), height / 2, 0),
+				wood,
+				Enum.Material.Wood
 			)
 		end
-		for j = 0, 2 do
-			block(
-				Vector3.new(2.2 - j * 0.1, 1.6 - j * 0.12, 1.8 - j * 0.08),
-				at(x - 2 + j * 2, 2.7 - j * 0.06 + j * 0.0, 58) * Kit.angles(0, (i + j) * 9, 0),
-				Color3.fromHSV((i * 3 + j) / 9, 0.4, 0.45),
-				Enum.Material.Leather
+		decor(
+			Vector3.new(width - 0.6, height - 0.6, 0.12),
+			frame * CFrame.new(0, height / 2 + 0.3, depth / 2 - 0.06),
+			Kit.shade(wood, 0.8),
+			Enum.Material.Wood
+		)
+		block(
+			Vector3.new(width + 0.5, 0.4, depth + 0.4),
+			frame * CFrame.new(0, height + 0.2, 0),
+			wood,
+			Enum.Material.Wood
+		)
+		decor(
+			Vector3.new(width + 0.7, 0.2, depth + 0.55),
+			frame * CFrame.new(0, height + 0.5, 0),
+			Kit.shade(wood, 1.2),
+			Enum.Material.Wood
+		)
+		for shelf = 0, 3 do
+			local y = 0.6 + shelf * 1.95
+			if shelf > 0 then
+				decor(
+					Vector3.new(width - 0.6, 0.14, depth - 0.15),
+					frame * CFrame.new(0, y - 0.07, 0.07),
+					wood,
+					Enum.Material.Wood
+				)
+			end
+			bookRow(frame, -width / 2 + 0.4, width / 2 - 0.4, y, depth - 0.45, seed + shelf * 13)
+		end
+		-- glazed doors on the upper half, a brass knob between them
+		for _, side in { -1, 1 } do
+			local door = decor(
+				Vector3.new(width / 2 - 0.4, height / 2 - 0.3, 0.06),
+				frame * CFrame.new(side * (width / 4 - 0.05), height * 0.73, -depth / 2 - 0.06),
+				Color3.fromRGB(150, 170, 168),
+				Enum.Material.SmoothPlastic
+			)
+			door.Transparency = 0.85
+			decor(
+				Vector3.new(0.12, height / 2 - 0.3, 0.1),
+				frame * CFrame.new(side * (width / 2 - 0.42), height * 0.73, -depth / 2 - 0.12),
+				wood,
+				Enum.Material.Wood
+			)
+		end
+		Kit.ball(model, 0.2, frame * CFrame.new(0, height * 0.6, -depth / 2 - 0.16), C.brass, {
+			material = Enum.Material.Metal,
+			collide = false,
+		})
+	end
+	bookcase(-90, 9, 3)
+	bookcase(66, 9, 41)
+	bookcase(90, 9, 77)
+
+	-- the bookstall: back shelves of books and yellowbacks, a sloped counter of papers and periodicals
+	do
+		local bx = -36
+		local frame = at(bx, 0, BACK_Z - 1.3)
+		local wood = Kit.shade(C.wood, 0.95)
+		block(Vector3.new(14, 9, 1.4), frame * CFrame.new(0, 4.5, 0.5), wood, Enum.Material.WoodPlanks)
+		for row = 0, 3 do
+			local y = 1.2 + row * 1.9
+			decor(
+				Vector3.new(13, 0.14, 1.1),
+				frame * CFrame.new(0, y - 0.07, -0.65),
+				Kit.shade(wood, 0.8),
+				Enum.Material.Wood
+			)
+			bookRow(frame * CFrame.new(0, 0, -0.65), -6.3, 6.3, y, 0.9, 101 + row * 17)
+		end
+		local stallBoard = decor(Vector3.new(12, 1.4, 0.3), frame * CFrame.new(0, 9.9, 0.4), C.board)
+		label(stallBoard, Enum.NormalId.Front, "BOOKS · NEWSPAPERS", C.gilt)
+		block(Vector3.new(13, 2.6, 1.4), frame * CFrame.new(0, 1.3, -2.6), wood, Enum.Material.WoodPlanks)
+		local slope = frame * CFrame.new(0, 2.85, -2.6) * Kit.angles(-18, 0, 0)
+		block(Vector3.new(13.2, 0.2, 1.8), slope, Kit.shade(wood, 1.15), Enum.Material.Wood)
+		local PAPERS =
+			{ Color3.fromRGB(196, 186, 160), Color3.fromRGB(170, 160, 134), Color3.fromRGB(150, 160, 152) }
+		for i = 0, 9 do
+			decor(
+				Vector3.new(1.1, 0.06, 1.4),
+				slope * CFrame.new(-5.8 + i * 1.28, 0.13, 0) * Kit.angles(0, (i * 5 % 9) - 4, 0),
+				PAPERS[i % 3 + 1],
+				Enum.Material.SmoothPlastic
+			)
+		end
+	end
+
+	-- leather fire buckets on an iron rail, by the bookstall
+	do
+		local rail = at(-50, 6.6, BACK_Z - 0.45)
+		decor(Vector3.new(6.6, 0.25, 0.25), rail, C.iron, Enum.Material.Metal)
+		for i = 0, 3 do
+			local hook = rail * CFrame.new(-2.4 + i * 1.6, 0, 0)
+			decor(
+				Vector3.new(0.12, 0.5, 0.12),
+				hook * CFrame.new(0, -0.3, -0.25),
+				C.iron,
+				Enum.Material.Metal
+			)
+			Kit.post(model, 1.5, 1.1, hook * CFrame.new(0, -1.4, -0.7), Color3.fromRGB(122, 36, 30), {
+				material = Enum.Material.Leather,
+				collide = false,
+			})
+			Kit.cylinder(
+				model,
+				0.12,
+				1.2,
+				hook * CFrame.new(0, -0.62, -0.7) * Kit.angles(0, 0, 90),
+				C.brass,
+				{
+					material = Enum.Material.Metal,
+					collide = false,
+				}
 			)
 		end
 	end
