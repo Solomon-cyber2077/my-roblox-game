@@ -974,3 +974,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Settings HUD = Hide now also hides the lobby's crew pass, Outfitter/Line Mastery, tier bar and waiting box; the Settings button moves to the top left (14,14) and returns when HUD is shown.
 2. Hidden state not playtested by tool (needs a click in the Settings menu); shown state verified, no console errors.
 3. Next: confirm in Studio by toggling HUD in the lobby and in a run.
+
+## Lobby pass (2026-10-15)
+1. Done: storm skyline removed from the back windows; bookcases solid; ticket booth set into the back wall (wall opening cut); outfitter colour posts and back board removed; back-wall sconces replaced by gas lamp standards (range 30 -> 31.5 on all eight); piano chair back removed; lobby seats sit on touch (no prompt), 1.5 s retouch delay.
+2. Known: the playtest screen capture came back dark, so the look still needs checking by eye. Count the hall's lights against the audit budget if it complains.
+3. Next: walk the lobby, try every seat and check the booth opening from both sides.

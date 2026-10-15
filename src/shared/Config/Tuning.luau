@@ -482,6 +482,9 @@ local Tuning = {
 		ItemOffset = 3, -- studs from the container the errand item is left beside
 		ScanSeconds = 1, -- how often the crew's backpacks are checked for errand items
 	},
+	Lobby = {
+		SeatRetouchDelay = 1.5, -- seconds a lobby seat ignores touches after someone stands up
+	},
 }
 
 return table.freeze(Tuning)
