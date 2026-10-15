@@ -89,7 +89,14 @@ function MovementController.Start()
 			and not exhausted
 			and not immobilized
 			and not humanoid.Sit
-		if sprinting then
+		local inLobby = Registry.StateController
+			and Registry.StateController.Get({ "run", "phase" }) == "Lobby"
+		if inLobby then
+			-- the lobby is for stretching your legs: stamina never runs down there
+			stamina = crew.StaminaMax
+			exhausted = false
+			lastSprintAt = clock
+		elseif sprinting then
 			stamina = math.max(stamina - crew.StaminaDrainPerSecond * dt, 0)
 			lastSprintAt = clock
 			if stamina <= 0 then
