@@ -343,6 +343,7 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 		windup = H.WindupSeconds * (if kindDef then kindDef.windup else 1),
 		grab = grabId,
 		grabTime = grabTime,
+		grime = grime,
 	})
 	if
 		state == "Recover"

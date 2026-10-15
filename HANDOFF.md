@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-15: EARLY MONSTER PROGRESSION (Codex task 3)
+1. Completed: progression starts at 30% at stop 1 and reaches 100% at stop 10; Stalker torso/neck and Crawler spine/head contort progressively. Brute pose/model unchanged. Photo rig accepts stop number; compared stops 1/3/6/10 in Blender at half resolution, all eight poses have IK shortfall 0.
+2. Verification/limits: full `lune run check` passed. Isolated Studio reached stop 1 and teleported to the station route without game-script errors; known local DataStore/font/UIBlox warnings only. The four-stop comparison is photo-rig evidence, not four live runs. Comparison saved outside repository as monster-progression.png.
+3. Next: eased motion, obstacle handling, encounter opportunities and sound-led seeded variation. Do not merge until owner confirms Claude has finished.
+
 ## 2026-10-15: CRAWLER DESIGN (Codex task 2)
 1. Completed: longer uneven matted hair, three hanging skin strips and three pooled local shedding flakes. No new crawler clothing/blood changes; Brute unchanged. Blender photo: 110 visible parts, IK shortfall 0.
 2. Verification/limits: full `lune run check` passed. Isolated HollowDesignTest.rbxl reached stop 1; no game-script errors, Roblox UIBlox/font and local DataStore warnings. Dev crawler spawn/grab both returned false, so in-engine shedding remains unverified; photo confirms static model only.

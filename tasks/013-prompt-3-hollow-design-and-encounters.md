@@ -1,5 +1,5 @@
 # 013: Prompt 3: Hollow design and encounters
-<!-- rbxmap:meta {"id":"013","created":"2026-10-14","query":"hollow monster cosmetics","hashes":{"src/client/Visual/HollowCosmetics.luau":"2494f196b5045aeb","src/shared/Logic/GrimeLevel.luau":"390dfee7ccd268c5","src/client/Controllers/HollowAnimator.luau":"3c9f933efaf63921","src/server/Builders/HollowBuilder.luau":"e2356c9136ab276f","src/client/Animation/HollowPoses.luau":"1e232e4c0365dae1","src/shared/Config/Tuning.luau":"6399db96d5820032","src/server/Services/HollowService.luau":"b454460bbc10e76b"}} -->
+<!-- rbxmap:meta {"id":"013","created":"2026-10-14","query":"hollow monster cosmetics","hashes":{"src/client/Visual/HollowCosmetics.luau":"2494f196b5045aeb","src/shared/Logic/GrimeLevel.luau":"7fd1d2392133e9c5","src/client/Controllers/HollowAnimator.luau":"f7f53015614a6a31","src/server/Builders/HollowBuilder.luau":"e2356c9136ab276f","src/client/Animation/HollowPoses.luau":"8ea432120a311e87","src/shared/Config/Tuning.luau":"8bf0f73a8cd64506","src/server/Services/HollowService.luau":"b454460bbc10e76b"}} -->
 Status: in-progress
 
 ## Goal
@@ -19,6 +19,7 @@ keep all changes within the monster systems.
 - `src/client/Controllers/HollowAnimator.luau`
 - `src/shared/Config/Tuning.luau`
 - `src/shared/Logic/GrimeLevel.luau`
+- `tests/GrimeLevel.spec.luau`
 - `src/server/Services/HollowService.luau`
 - `LORE.md`
 - `HANDOFF.md`
