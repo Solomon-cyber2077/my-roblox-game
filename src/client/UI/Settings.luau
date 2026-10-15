@@ -79,14 +79,6 @@ function SettingsUi.mount(gui: ScreenGui)
 			).FirstFewRuns} runs. Choose to keep them always or turn them off.`,
 		},
 		{
-			key = "OperatorsPanel",
-			title = "OPERATORS PANEL",
-			-- one button that flips between the two
-			values = { "Show", "Hide" },
-			toggle = true,
-			note = "The crew panel in the top-right corner.",
-		},
-		{
 			key = "Hud",
 			title = "HUD",
 			values = { "Show", "Hide" },

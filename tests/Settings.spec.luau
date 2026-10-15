@@ -3,13 +3,12 @@ local Settings = require(Shared.Logic.Settings)
 describe("Settings", function()
 	it("defaults old profiles and malformed preferences safely", function()
 		expect(Settings.read(nil)).toEqual(Settings.Defaults)
-		expect(Settings.read({ GraphicsQuality = 5, OperatorsPanel = "bad" })).toEqual(Settings.Defaults)
+		expect(Settings.read({ GraphicsQuality = 5, Hud = "bad" })).toEqual(Settings.Defaults)
 	end)
 	it("retains supported saved choices", function()
 		local saved = {
 			GraphicsQuality = "Performance",
 			BrokenThingMarkers = "Off",
-			OperatorsPanel = "Hide",
 			Hud = "Hide",
 		}
 		expect(Settings.read(saved)).toEqual(saved)
@@ -17,7 +16,7 @@ describe("Settings", function()
 	it("rejects unknown settings and values without changing the save", function()
 		expect(Settings.valid("RunsStarted", "999")).toBe(false)
 		expect(Settings.valid("GraphicsQuality", {})).toBe(false)
-		expect(Settings.valid("OperatorsPanel", "Always")).toBe(false)
+		expect(Settings.valid("Hud", "Always")).toBe(false)
 		local saved = { GraphicsQuality = "bad", unrelated = true }
 		Settings.read(saved)
 		expect(saved.GraphicsQuality).toBe("bad")
