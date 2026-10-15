@@ -74,9 +74,9 @@ function SettingsUi.mount(gui: ScreenGui)
 			-- first few runs is the default, not a choice
 			values = { "Always", "Off" },
 			toggle = false,
-			note = `Markers show during your first {require(
+			note = `Leak marks, floor arrows and notices show during your first {require(
 				game:GetService("ReplicatedStorage").Shared.Config.Settings
-			).FirstFewRuns} runs. Choose to keep them always or turn them off.`,
+			).FirstFewRuns} runs. Keep them always or turn them off.`,
 		},
 		{
 			key = "Hud",
