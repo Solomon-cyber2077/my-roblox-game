@@ -87,7 +87,8 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		Kit.block(model, Vector3.new(2, 2, 1), torso, coat, { material = M.Fabric, name = "Body" })
 	local body = skirtPart or torsoPart
 	local cut = look.cut
-	if look.waistcoat and cut ~= "Reefer" then
+	local buttoned = cut == "Reefer" or cut == "StaffFrock" -- two rows of brass, closed to the neck
+	if look.waistcoat and not buttoned then
 		part(Vector3.new(1.1, 1.4, 0.06), torso * CFrame.new(0, 0.05, -0.53), Kit.rgb(look.waistcoat))
 		for i = 0, 3 do
 			ball(0.12, torso * CFrame.new(0, 0.55 - i * 0.3, -0.57), trim, M.Metal)
@@ -109,7 +110,7 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 			)
 		end
 	end
-	if cut == "Frock" then
+	if cut == "Frock" or cut == "StaffFrock" then
 		-- tails to the knee, open at the front
 		part(Vector3.new(2.04, 1.7, 0.1), hip * CFrame.new(0, -0.85, 0.52), coat)
 		for _, side in { -1, 1 } do
@@ -118,7 +119,7 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 	elseif cut == "Sack" or cut == "Reefer" then
 		part(Vector3.new(2.04, 0.5, 1.04), hip * CFrame.new(0, -0.25, 0), coat)
 	end
-	if cut == "Reefer" then
+	if buttoned then
 		part(Vector3.new(0.08, 1.9, 0.06), torso * CFrame.new(0, -0.05, -0.53), Kit.shade(coat, 0.7))
 		for _, x in { -0.42, 0.42 } do
 			for i = 0, 2 do
@@ -129,6 +130,19 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		for i = 0, 5 do
 			ball(0.1, torso * CFrame.new(0, 0.75 - i * 0.28, -0.53), trim, M.Metal)
 		end
+	end
+	-- a guard's patent-leather shoulder belt, right shoulder to left hip, with its pouch
+	if look.belt then
+		local leather = Color3.fromRGB(20, 18, 18)
+		for _, z in { -0.6, 0.6 } do
+			part(
+				Vector3.new(0.22, 2.5, 0.08),
+				torso * CFrame.new(0, 0, z) * Kit.angles(0, 0, 38),
+				leather,
+				M.Leather
+			)
+		end
+		part(Vector3.new(0.34, 0.55, 0.7), hip * CFrame.new(-1.12, 0.05, 0), leather, M.Leather)
 	end
 	-- the collar (lace on a bodice), and a cravat or neckerchief
 	part(
