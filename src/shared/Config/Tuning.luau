@@ -112,6 +112,17 @@ local Tuning = {
 		NoticeOut = 0.9, -- seconds to fade out
 	},
 
+	-- Footsteps (Logic/Footsteps): one step every Stride studs walked, never faster than
+	-- MinInterval nor slower than MaxInterval; none below MinSpeed. Takes per surface.
+	Footsteps = {
+		Stride = 5.6,
+		MinInterval = 0.2,
+		MaxInterval = 0.7,
+		MinSpeed = 2,
+		PitchJitter = 0.08,
+		Takes = { Plank = 2, TrainFloor = 2, Gravel = 2, Snow = 3 },
+		BreathFade = 1.5, -- seconds the breathing takes to swell or die away
+	},
 	Crew = {
 		MaxHealth = 100,
 		WalkSpeed = 20, -- a jog: Hollows on the hunt are a little faster

@@ -113,6 +113,36 @@ local Cues: { [string]: Cue } = {
 	-- building interactions
 	DoorForce = { id = 9118582680, volume = 0.75, spatial = true, pitch = 1.25, maxSeconds = 1.5 },
 	Winded = { id = 9113570506, volume = 0.45, maxSeconds = 0.8, pitch = 0.5 },
+
+	-- Footsteps by surface (Logic/Footsteps, Controllers/FootstepController): Creator Store
+	-- uploads, free, chosen 2026-10-15 for audition (HANDOFF.md lists them with their sources).
+	-- Two or three takes a surface; the controller picks one and nudges the pitch per step.
+	StepPlank1 = { id = 136507037003210, volume = 0.5, spatial = true, rollOff = 70, maxSeconds = 0.8 },
+	StepPlank2 = { id = 137526436035209, volume = 0.5, spatial = true, rollOff = 70, maxSeconds = 0.8 },
+	-- the carriage floor: the same boards, lower, hollow over the underframe
+	StepTrain1 = {
+		id = 136507037003210,
+		volume = 0.45,
+		spatial = true,
+		rollOff = 50,
+		maxSeconds = 0.9,
+		pitch = 0.8,
+	},
+	StepTrain2 = {
+		id = 137526436035209,
+		volume = 0.45,
+		spatial = true,
+		rollOff = 50,
+		maxSeconds = 0.9,
+		pitch = 0.76,
+	},
+	StepGravel1 = { id = 131788428206726, volume = 0.5, spatial = true, rollOff = 70, maxSeconds = 0.8 },
+	StepGravel2 = { id = 132387836053582, volume = 0.5, spatial = true, rollOff = 70, maxSeconds = 0.8 },
+	StepSnow1 = { id = 103816422099881, volume = 0.55, spatial = true, rollOff = 60, maxSeconds = 0.7 },
+	StepSnow2 = { id = 135918121539048, volume = 0.55, spatial = true, rollOff = 60, maxSeconds = 0.7 },
+	StepSnow3 = { id = 103079968724414, volume = 0.55, spatial = true, rollOff = 60, maxSeconds = 0.7 },
+	-- heavy breathing while stamina is spent (MovementController.IsExhausted), not tied to combat
+	Breath = { id = 100147087354736, volume = 0.5, loop = true },
 }
 
 for _, cue in Cues do

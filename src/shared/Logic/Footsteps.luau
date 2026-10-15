@@ -1,0 +1,58 @@
+--!strict
+--[[
+	Footsteps as pure rules: which surface a foot comes down on, how often a step falls at a
+	speed, and which recording plays (Config/Audio Step<Surface><n>). Controllers/
+	FootstepController feeds it what it finds under each crew member.
+
+	  TrainFloor  anything that is part of the train
+	  Snow        snow or ice, or a yard slab at a stop in snowy country (its sheet of snow
+	              does not collide, so the slab under it is what the foot finds)
+	  Plank       the platform's boards and anything wooden: floors, decks, stairs
+	  Gravel      the rest: the yard's ground, cobbles, cinders, stone
+]]
+
+local Tuning = require(script.Parent.Parent.Config.Tuning)
+
+export type Surface = "TrainFloor" | "Snow" | "Plank" | "Gravel"
+export type Ground = {
+	material: string, -- Enum.Material name
+	onTrain: boolean,
+	slabKind: string?, -- Safe (the platform), Floor or Foundation, when it is a station slab top
+	snowy: boolean, -- the docked stop is in snowy country
+}
+
+local Footsteps = {}
+
+local WOOD = { Wood = true, WoodPlanks = true }
+local SNOW = { Snow = true, Glacier = true, Ice = true }
+
+function Footsteps.surface(ground: Ground): Surface
+	if ground.onTrain then
+		return "TrainFloor"
+	end
+	if SNOW[ground.material] or (ground.snowy and ground.slabKind == "Floor") then
+		return "Snow"
+	end
+	if ground.slabKind == "Safe" or WOOD[ground.material] then
+		return "Plank"
+	end
+	return "Gravel"
+end
+
+-- Seconds between steps at `speed` studs a second, or nil when standing still.
+function Footsteps.interval(speed: number): number?
+	local T = Tuning.Footsteps
+	if speed < T.MinSpeed then
+		return nil
+	end
+	return math.clamp(T.Stride / speed, T.MinInterval, T.MaxInterval)
+end
+
+-- The cue for the `count`th step on `surface`: the takes in turn, so no take plays twice running.
+function Footsteps.cue(surface: string, count: number): string
+	local takes = Tuning.Footsteps.Takes[surface] or 1
+	local prefix = if surface == "TrainFloor" then "StepTrain" else "Step" .. surface
+	return prefix .. tostring(count % takes + 1)
+end
+
+return table.freeze(Footsteps)
