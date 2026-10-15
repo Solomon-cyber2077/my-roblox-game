@@ -82,6 +82,22 @@ local Tuning = {
 		TickSeconds = 0.25,
 	},
 
+	-- The floor arrows to a leak (Logic/LeakRoute, Controllers/LeakController), in train-local
+	-- studs (x along the train, z across it, the aisle at z = 0, TrainBuilder's layout).
+	LeakArrows = {
+		Spacing = 2.4, -- studs between chevrons
+		Count = 24, -- at most this many ahead of you
+		Lead = 2, -- the first one this far ahead of your feet
+		Scroll = 1.6, -- studs per second the chevrons creep toward the leak
+		CurveIn = 4.5, -- the aisle line turns toward the wall this far before the leak
+		WallInset = 4.2, -- and ends this far from the train's middle (the wall is at 6.5)
+		CabAnchor = "CAB", -- the Last Light's leak anchor: reached from the platform, not the cars
+		CabDoorX = 58, -- the Last Light's door, on the platform (+z) side
+		CabDoorZ = 7,
+		PlatformApproach = 3.5, -- the platform line runs this far out from the cab door
+		PlatformReach = 140, -- farther than this from the cab door, no platform arrows
+	},
+
 	Crew = {
 		MaxHealth = 100,
 		WalkSpeed = 20, -- a jog: Hollows on the hunt are a little faster
