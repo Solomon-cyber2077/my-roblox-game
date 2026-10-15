@@ -28,6 +28,7 @@ local ORDER = {
 	"FxController",
 	"DepartureClock",
 	"PianoNotes",
+	"LobbyStorm",
 	"FootstepController",
 }
 
