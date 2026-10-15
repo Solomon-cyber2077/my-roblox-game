@@ -5,10 +5,13 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
 1. Features completed
 - T1 solo ready: already fixed server-side (one Ready starts the Countdown, `LobbyService.TakeCrew` takes only readied
   players). Removed "everyone in the hall boards"; the Countdown line reads "N ready to depart". Play-tested solo.
+- T2 ready button (UI/Lobby): flat brass face with a 5 px darker brass lip on the bottom and right; hover sinks it
+  halfway, mouse-down pushes it flush. Signal lamps (the green circle) removed; status and detail lines moved down
+  into the gap.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T2 ready button).
+- Continue the lobby list (T3 outfitter).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
