@@ -1865,14 +1865,32 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		PAPER,
 		{ material = Enum.Material.SmoothPlastic, collide = false }
 	)
-	-- the flame is neon only: the hall is at its light budget
-	Kit.neon(
+	-- the flame: a tall amber teardrop round a short white-gold core, with a dark wick at its foot
+	Kit.post(
 		model,
-		Vector3.new(0.1, 0.22, 0.1),
-		standAt * CFrame.new(0, 5.25, 0),
-		C.flame,
+		0.12,
+		0.04,
+		standAt * CFrame.new(0, 5.17, 0),
+		Color3.fromRGB(30, 22, 16),
+		{ collide = false }
+	)
+	local flame = Kit.neon(
+		model,
+		Vector3.new(0.2, 0.55, 0.2),
+		standAt * CFrame.new(0, 5.47, 0),
+		Color3.fromRGB(255, 150, 50),
 		Enum.PartType.Ball
 	)
+	flame.Transparency = 0.25
+	Kit.neon(
+		model,
+		Vector3.new(0.09, 0.22, 0.09),
+		standAt * CFrame.new(0, 5.36, 0),
+		Color3.fromRGB(255, 226, 160),
+		Enum.PartType.Ball
+	)
+	-- firelight, kept to the piano corner: no shadows so the far side of the stand is lit alike
+	Kit.pointLight(flame, Color3.fromRGB(255, 147, 60), 2.4, 13, false)
 	-- Gnossienne No. 3 plays from inside the case; PianoNotes floats notes off the same spot
 	local voice = block(
 		Vector3.new(0.4, 0.4, 0.4),
@@ -1897,15 +1915,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	music.Playing = true
 	music.Parent = voice
 
-	-- The crew's notice board on the back wall: notes left by the ones who came before, on whatever
-	-- paper was to hand (the line's grey-green card, blue-ruled pad, pink carbon, brown wrapping) --
-	local NOTE_PAPERS = {
-		Color3.fromRGB(166, 192, 182),
-		Color3.fromRGB(184, 204, 222),
-		Color3.fromRGB(206, 170, 182),
-		Color3.fromRGB(140, 108, 78),
-		Color3.fromRGB(190, 206, 218),
-	}
+	-- The crew's notice board on the back wall, left bare --
 	local nbx = -66
 	block(
 		Vector3.new(9, 6, 0.4),
@@ -1914,49 +1924,6 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		Enum.Material.Fabric
 	)
 	block(Vector3.new(9.6, 6.6, 0.25), at(nbx, 6.5, BACK_Z - 0.125 + 0.02), C.wood, Enum.Material.Wood)
-	local notes = {
-		{ "Whoever keeps leaving the lamp on in the guard's van: thank you. - R.", "PatrickHand" },
-		{ "Crew wanted. Must run fast, carry coal and not ask what is in the fog.", "SpecialElite" },
-		{ "Mrs. Pell's soup: Tuesdays.\nIt is always Tuesday now.", "IndieFlower" },
-		{
-			"If you hear knocking under the floor it's the pipes. It's the pipes. IT'S THE PIPES.",
-			"PermanentMarker",
-		},
-		{ "Bring back one thing that isn't coal. A flower. A book. Anything.", "Kalam" },
-		{ "Scrap opens doors. Literally. Pry the locks, mind what's behind them.", "PatrickHand" },
-	}
-	for i, note in notes do
-		local col, row = (i - 1) % 3, (i - 1) // 3
-		local paper = decor(
-			Vector3.new(2.6, 2.4, 0.06),
-			at(nbx - 2.9 + col * 2.9, 5.2 + row * 2.7, BACK_Z - 0.45 - i * 0.02)
-				* Kit.angles(0, 0, (((i * 37) % 11) - 5) * 1.5),
-			NOTE_PAPERS[(i - 1) % #NOTE_PAPERS + 1],
-			Enum.Material.SmoothPlastic
-		)
-		Kit.ball(
-			model,
-			0.22,
-			paper.CFrame * CFrame.new(0, 0.95, -0.08),
-			C.canvas,
-			{ material = Enum.Material.SmoothPlastic, collide = false, shadow = false }
-		)
-		local gui = Instance.new("SurfaceGui")
-		gui.Face = Enum.NormalId.Front
-		gui.CanvasSize = Vector2.new(260, 240)
-		gui.LightInfluence = 1
-		gui.Parent = paper
-		local t = Instance.new("TextLabel")
-		t.BackgroundTransparency = 1
-		t.Size = UDim2.fromScale(0.88, 0.88)
-		t.Position = UDim2.fromScale(0.06, 0.06)
-		t.FontFace = Font.new(`rbxasset://fonts/families/{note[2]}.json`)
-		t.Text = note[1]
-		t.TextColor3 = if i == 4 then Color3.fromRGB(22, 20, 22) else Color3.fromRGB(34, 40, 70)
-		t.TextScaled = true
-		t.TextWrapped = true
-		t.Parent = gui
-	end
 
 	-- Lamplight: lanterns hung from the platform-edge columns and sconces on the back wall ---------------
 	-- each column carries two, one either side on an iron arm that turns down at its tip, so the
