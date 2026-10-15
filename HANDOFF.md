@@ -1,5 +1,9 @@
 # HANDOFF
 
+## 2026-10-15: CRAWLER DESIGN (Codex task 2)
+1. Completed: longer uneven matted hair, three hanging skin strips and three pooled local shedding flakes. No new crawler clothing/blood changes; Brute unchanged. Blender photo: 110 visible parts, IK shortfall 0.
+2. Verification/limits: full `lune run check` passed. Isolated HollowDesignTest.rbxl reached stop 1; no game-script errors, Roblox UIBlox/font and local DataStore warnings. Dev crawler spawn/grab both returned false, so in-engine shedding remains unverified; photo confirms static model only.
+3. Next: stronger early progression and stop 1/3/6/10 comparisons; verify shedding in a roster encounter. Do not merge until owner confirms Claude has finished.
 ## 2026-10-15: TALL HOLLOW DESIGN (Codex task 1)
 1. Completed: gaunt long-armed Stalker, hunched face-cradling gait, dark wool-inspired ragged coat and bloody hands; 60 visible parts. Period clothing/palette sources recorded in LORE. Prompt 3 amended; reusable Blender photo rig added.
 2. Verification/limits: full `lune run check` passed; Blender pose IK shortfall 0. Isolated `HollowDesignTest.rbxl` played to stop 1 and a tall Hollow was visible; no gameplay script errors, local DataStore/font warnings. Dev extra spawn returned false; controlled roster/stop comparisons remain pending.

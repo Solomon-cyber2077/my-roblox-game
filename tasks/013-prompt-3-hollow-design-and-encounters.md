@@ -1,5 +1,5 @@
 # 013: Prompt 3: Hollow design and encounters
-<!-- rbxmap:meta {"id":"013","created":"2026-10-14","query":"hollow monster cosmetics","hashes":{"src/client/Visual/HollowCosmetics.luau":"07f9463acef27c47","src/shared/Logic/GrimeLevel.luau":"390dfee7ccd268c5","src/client/Controllers/HollowAnimator.luau":"3c9f933efaf63921","src/server/Builders/HollowBuilder.luau":"724fd25a2cd116ce","src/client/Animation/HollowPoses.luau":"1e232e4c0365dae1","src/server/Services/HollowService.luau":"b454460bbc10e76b"}} -->
+<!-- rbxmap:meta {"id":"013","created":"2026-10-14","query":"hollow monster cosmetics","hashes":{"src/client/Visual/HollowCosmetics.luau":"2494f196b5045aeb","src/shared/Logic/GrimeLevel.luau":"390dfee7ccd268c5","src/client/Controllers/HollowAnimator.luau":"3c9f933efaf63921","src/server/Builders/HollowBuilder.luau":"e2356c9136ab276f","src/client/Animation/HollowPoses.luau":"1e232e4c0365dae1","src/shared/Config/Tuning.luau":"6399db96d5820032","src/server/Services/HollowService.luau":"b454460bbc10e76b"}} -->
 Status: in-progress
 
 ## Goal
@@ -17,6 +17,7 @@ keep all changes within the monster systems.
 - `src/server/Builders/HollowBuilder.luau`
 - `src/client/Animation/HollowPoses.luau`
 - `src/client/Controllers/HollowAnimator.luau`
+- `src/shared/Config/Tuning.luau`
 - `src/shared/Logic/GrimeLevel.luau`
 - `src/server/Services/HollowService.luau`
 - `LORE.md`
@@ -37,7 +38,7 @@ keep all changes within the monster systems.
 
 ## Acceptance checks
 - [x] Task 1: Tall Stalker has ragged period clothing, bloody hands, long limbs, gaunt hunched silhouette, hands near face, and low-poly geometry.
-- [ ] Task 2: Crawler has long matted hair and shedding flesh; ragged clothing and bloody hands remain Stalker-only; Brute is unchanged.
+- [x] Task 2: Crawler has long matted hair and shedding flesh; ragged clothing and bloody hands remain Stalker-only; Brute is unchanged.
 - [ ] Task 3: Cosmetic milestones begin early and contortion increases visibly at stops 1, 3, 6, and 10 via half-scale captures or photo rig.
 - [ ] Task 4: Hollow movement uses eased transitions, natural gait, and subtle twitches.
 - [ ] Task 5: Hollows do not climb or hop; they route around solid cover and drop obstructed chases after bounded persistence.
