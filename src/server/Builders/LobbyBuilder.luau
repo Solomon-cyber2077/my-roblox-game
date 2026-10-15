@@ -1210,7 +1210,12 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		local frame = at(x, 0, BACK_Z - 1.2)
 		local height, depth = 8.4, 1.6
 		local wood = Kit.shade(C.wood, 0.85)
-		block(Vector3.new(width + 0.2, 0.6, depth + 0.2), frame * CFrame.new(0, 0.3, 0), wood, Enum.Material.Wood)
+		block(
+			Vector3.new(width + 0.2, 0.6, depth + 0.2),
+			frame * CFrame.new(0, 0.3, 0),
+			wood,
+			Enum.Material.Wood
+		)
 		for _, side in { -1, 1 } do
 			block(
 				Vector3.new(0.3, height, depth),
