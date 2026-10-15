@@ -467,9 +467,8 @@ function Cosmetics.offsets(
 	if not h.built or not h.near or state ~= "Prowl" or speed > C.IdleSpeed or stunned then
 		return I, I
 	end
-	local step = math.floor(clock / C.StepTime) + h.seed
-	-- Held, small offsets, always composed onto the animator's fresh base pose.
-	local pulse = if step % 19 < 3 then math.sin(step * 2.7) else 0
+	local step = (clock / C.StepTime + h.seed) % 19
+	local pulse = if step < 3 then math.sin(math.pi * step / 3) else 0
 	return CFrame.Angles(pulse * C.NeckAngle, pulse * C.NeckAngle, 0),
 		CFrame.Angles(math.abs(pulse) * C.JawAngle, 0, 0)
 end

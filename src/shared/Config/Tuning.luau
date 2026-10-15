@@ -386,6 +386,10 @@ local Tuning = {
 			Mist = { 176, 180, 186 },
 		},
 	},
+	HollowMotion = {
+		SpeedResponse = 8,
+		TwitchAngle = 0.12,
+	},
 	HollowContortion = {
 		StalkerLean = 0.5,
 		StalkerTwist = 0.45,

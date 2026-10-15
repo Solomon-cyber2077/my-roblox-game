@@ -950,9 +950,9 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		return bipedDormant(kind, input.now, input.seed)
 	end
 	if state == "Emerge" and input.emerge == "Wake" then
-		-- it unfolds in jerks, not smoothly
+		-- Ease the unfolding; small idle twitches carry the unease.
 		local t = clamp01(input.elapsed / Tuning.Hollow.EmergeSeconds)
-		local jerk = math.floor(t * 5) / 5 + (t * 5 % 1) ^ 6 / 5
+		local unfold = smooth(t)
 		local asleep: Pose = {}
 		local standing: Pose = {}
 		if crawler then
@@ -962,16 +962,14 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		end
 		gait(standing, true, 0)
 		for name, value in asleep do
-			out[name] = value:Lerp(standing[name] or I, jerk)
+			out[name] = value:Lerp(standing[name] or I, unfold)
 		end
 		for name, value in standing do
 			if (out[name] :: CFrame?) == nil then
-				out[name] = I:Lerp(value, jerk)
+				out[name] = I:Lerp(value, unfold)
 			end
 		end
-		if t < 0.25 then
-			out.Neck = A(0.35, 0, 0) -- the head comes up first
-		end
+		out.Neck = A(0.35, 0, 0):Lerp(out.Neck or I, smooth(t / 0.25))
 		out.Jaw = A(-0.9 * clamp01((t - 0.7) / 0.15), 0, 0)
 		return out
 	end
