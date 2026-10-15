@@ -1293,54 +1293,179 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		end
 	end
 
-	-- An upright piano by the trolleys, its lid up as though someone just stopped playing -----------
-	local pianoAt = at(-4, 0, 66)
-	block(
-		Vector3.new(6, 4.6, 2.2),
-		pianoAt * CFrame.new(0, 2.3, 0.4),
-		Color3.fromRGB(46, 30, 24),
-		Enum.Material.Wood
-	)
-	block(
-		Vector3.new(5.6, 0.35, 1.2),
-		pianoAt * CFrame.new(0, 2.65, -1.25),
-		Color3.fromRGB(46, 30, 24),
-		Enum.Material.Wood
-	)
-	decor(
-		Vector3.new(5.2, 0.12, 0.8),
-		pianoAt * CFrame.new(0, 2.88, -1.35),
-		C.porcelain,
-		Enum.Material.SmoothPlastic
-	)
-	decor(
-		Vector3.new(4.8, 0.1, 0.38),
-		pianoAt * CFrame.new(0, 2.98, -1.15),
-		Color3.fromRGB(20, 18, 18),
-		Enum.Material.SmoothPlastic
-	)
-	block(
-		Vector3.new(4, 0.3, 1.4),
-		pianoAt * CFrame.new(0, 1.8, -3.2),
-		Color3.fromRGB(46, 30, 24),
-		Enum.Material.Wood
-	)
+	-- An upright piano under the departure board, its fallboard up as though someone just stopped
+	-- playing: rosewood case on a toe plinth, panelled knee board, turned consoles under the key bed,
+	-- red silk behind the fretwork, brass candle sconces, music on the desk; a buttoned piano chair
+	-- before it and a candle stand at its left
+	local pianoAt = at(0, 0, 67)
+	local ROSE = Color3.fromRGB(46, 30, 24)
+	local roseLight, roseDark = Kit.shade(ROSE, 1.3), Kit.shade(ROSE, 0.75)
+	local SILK = Color3.fromRGB(110, 36, 34)
+	local PAPER = Color3.fromRGB(214, 200, 168)
+	local WOOD = { material = Enum.Material.Wood, collide = false }
+	local function piece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?)
+		return decor(size, pianoAt * cf, color, material or Enum.Material.Wood)
+	end
+	block(Vector3.new(6.2, 0.35, 2.5), pianoAt * CFrame.new(0, 0.175, 0.4), roseDark, Enum.Material.Wood)
+	block(Vector3.new(5.4, 1.9, 2.0), pianoAt * CFrame.new(0, 1.3, 0.5), ROSE, Enum.Material.Wood)
 	for _, s in { -1, 1 } do
-		decor(
-			Vector3.new(0.3, 1.65, 0.3),
-			pianoAt * CFrame.new(s * 1.7, 0.83, -3.2),
-			C.iron,
-			Enum.Material.Metal
-		)
-		Kit.post(
+		-- knee-board panels, each with a sunk moulding
+		piece(Vector3.new(2.3, 1.3, 0.06), CFrame.new(s * 1.3, 1.3, -0.53), roseLight)
+		piece(Vector3.new(1.9, 0.95, 0.05), CFrame.new(s * 1.3, 1.3, -0.585), ROSE)
+		-- case sides, the key bed's cheek blocks and the turned consoles under it
+		block(Vector3.new(0.3, 4.4, 2.3), pianoAt * CFrame.new(s * 2.85, 2.55, 0.4), ROSE, Enum.Material.Wood)
+		piece(Vector3.new(0.34, 0.6, 1.3), CFrame.new(s * 2.67, 2.75, -1.15), roseLight)
+		Kit.post(model, 1.9, 0.36, pianoAt * CFrame.new(s * 2.62, 1.3, -1.55), ROSE, WOOD)
+		for _, y in { 0.45, 1.3, 2.18 } do
+			Kit.ball(model, 0.48, pianoAt * CFrame.new(s * 2.62, y, -1.55), roseLight, WOOD)
+		end
+		-- a swing-arm brass sconce with an unlit candle either side of the music desk
+		piece(Vector3.new(0.12, 0.12, 0.7), CFrame.new(s * 2.45, 3.9, -0.45), C.brass, Enum.Material.Metal)
+		Kit.cylinder(
 			model,
-			1,
-			0.25,
-			pianoAt * CFrame.new(s * 2.4, 5.1, 0.6),
+			0.06,
+			0.5,
+			pianoAt * CFrame.new(s * 2.45, 3.98, -0.8) * Kit.angles(0, 0, 90),
 			C.brass,
 			{ material = Enum.Material.Metal, collide = false }
 		)
+		Kit.post(
+			model,
+			0.6,
+			0.16,
+			pianoAt * CFrame.new(s * 2.45, 4.31, -0.8),
+			PAPER,
+			{ material = Enum.Material.SmoothPlastic, collide = false }
+		)
+		-- brass pedals on the plinth
+		piece(Vector3.new(0.26, 0.08, 0.6), CFrame.new(s * 0.32, 0.4, -0.95), C.brass, Enum.Material.Metal)
 	end
+	-- upper case: red silk behind fretwork, a carved rail top and bottom
+	block(Vector3.new(5.4, 2.1, 1.6), pianoAt * CFrame.new(0, 3.8, 0.7), ROSE, Enum.Material.Wood)
+	piece(Vector3.new(4.6, 1.5, 0.06), CFrame.new(0, 3.95, -0.13), SILK, Enum.Material.Fabric)
+	for k = -4, 4 do
+		piece(Vector3.new(0.09, 1.5, 0.06), CFrame.new(k * 0.52, 3.95, -0.19), roseLight)
+	end
+	for _, y in { 3.15, 4.75 } do
+		piece(Vector3.new(5.0, 0.16, 0.12), CFrame.new(0, y, -0.2), roseLight)
+	end
+	Kit.ball(model, 0.42, pianoAt * CFrame.new(0, 3.95, -0.26), C.brass, {
+		material = Enum.Material.Metal,
+		collide = false,
+	})
+	-- lid with a moulded edge
+	block(Vector3.new(6.0, 0.25, 2.6), pianoAt * CFrame.new(0, 4.92, 0.4), ROSE, Enum.Material.Wood)
+	piece(Vector3.new(6.12, 0.1, 2.7), CFrame.new(0, 4.74, 0.4), roseDark)
+	-- key bed, keyslip, the keys (52 white, 36 black) and the fallboard folded up
+	block(Vector3.new(5.0, 0.35, 1.3), pianoAt * CFrame.new(0, 2.4, -1.15), ROSE, Enum.Material.Wood)
+	piece(Vector3.new(5.0, 0.3, 0.1), CFrame.new(0, 2.35, -1.84), roseLight)
+	piece(Vector3.new(4.96, 0.12, 0.9), CFrame.new(0, 2.635, -1.3), C.porcelain, Enum.Material.SmoothPlastic)
+	local whiteW = 4.96 / 52
+	local hasBlack = { true, false, true, true, false, true, true } -- after A B C D E F G
+	for i = 0, 50 do
+		if hasBlack[i % 7 + 1] then
+			piece(
+				Vector3.new(whiteW * 0.55, 0.1, 0.55),
+				CFrame.new(-2.48 + (i + 1) * whiteW, 2.74, -1.05),
+				Color3.fromRGB(20, 18, 18),
+				Enum.Material.SmoothPlastic
+			)
+		end
+	end
+	piece(Vector3.new(5.0, 0.62, 0.08), CFrame.new(0, 3.0, -0.5), roseLight)
+	piece(Vector3.new(0.3, 0.14, 0.03), CFrame.new(0, 2.95, -0.555), C.brass, Enum.Material.Metal)
+	-- the music desk with an open book of music on it
+	piece(Vector3.new(3.2, 0.9, 0.08), CFrame.new(0, 3.55, -0.32) * Kit.angles(-12, 0, 0), roseDark)
+	for _, s in { -1, 1 } do
+		piece(
+			Vector3.new(0.78, 1.0, 0.03),
+			CFrame.new(s * 0.41, 3.62, -0.4) * Kit.angles(-12, s * 6, 0),
+			PAPER,
+			Enum.Material.SmoothPlastic
+		)
+	end
+	-- on the lid: a framed photograph and two volumes of music
+	local photo = CFrame.new(1.7, 5.55, 0.9) * Kit.angles(-10, -15, 0)
+	piece(Vector3.new(0.8, 1.0, 0.1), photo, C.brass, Enum.Material.Metal)
+	piece(Vector3.new(0.6, 0.78, 0.04), photo * CFrame.new(0, 0, -0.06), Color3.fromRGB(122, 100, 74))
+	piece(
+		Vector3.new(1.3, 0.2, 1.0),
+		CFrame.new(-1.6, 5.15, 0.6) * Kit.angles(0, 8, 0),
+		Color3.fromRGB(62, 40, 34),
+		Enum.Material.Leather
+	)
+	piece(
+		Vector3.new(1.2, 0.18, 0.92),
+		CFrame.new(-1.55, 5.34, 0.6) * Kit.angles(0, -5, 0),
+		Color3.fromRGB(40, 50, 44),
+		Enum.Material.Leather
+	)
+
+	-- the piano chair: turned legs on an H-stretcher, a buttoned velvet seat, a balloon back with a splat
+	local chairAt = pianoAt * CFrame.new(0, 0, -3.4)
+	local function chairPiece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?)
+		return decor(size, chairAt * cf, color, material or Enum.Material.Wood)
+	end
+	block(Vector3.new(2.2, 0.25, 1.9), chairAt * CFrame.new(0, 1.72, 0), ROSE, Enum.Material.Wood)
+	chairPiece(Vector3.new(2.0, 0.3, 1.7), CFrame.new(0, 1.99, 0), SILK, Enum.Material.Fabric)
+	Kit.ball(
+		model,
+		0.16,
+		chairAt * CFrame.new(0, 2.15, 0),
+		C.brass,
+		{ material = Enum.Material.Metal, collide = false }
+	)
+	for _, sx in { -0.9, 0.9 } do
+		for _, sz in { -0.75, 0.75 } do
+			Kit.post(model, 1.6, 0.22, chairAt * CFrame.new(sx, 0.8, sz), ROSE, WOOD)
+			Kit.ball(model, 0.32, chairAt * CFrame.new(sx, 1.25, sz), roseLight, WOOD)
+		end
+		chairPiece(Vector3.new(0.12, 0.12, 1.5), CFrame.new(sx, 0.5, 0), roseDark)
+		-- back posts with finials (the back faces away from the piano)
+		Kit.post(model, 2.5, 0.2, chairAt * CFrame.new(sx, 3.1, -0.85), ROSE, WOOD)
+		Kit.ball(model, 0.3, chairAt * CFrame.new(sx, 4.42, -0.85), roseLight, WOOD)
+	end
+	chairPiece(Vector3.new(1.6, 0.12, 0.12), CFrame.new(0, 0.5, 0), roseDark)
+	chairPiece(Vector3.new(1.95, 0.36, 0.2), CFrame.new(0, 4.2, -0.86), roseLight)
+	chairPiece(Vector3.new(1.7, 0.15, 0.16), CFrame.new(0, 2.45, -0.86), ROSE)
+	chairPiece(Vector3.new(0.62, 1.6, 0.1), CFrame.new(0, 3.25, -0.88), roseLight)
+
+	-- a candle stand at the piano's left: round base, slim turned post, a top just big enough for one candle
+	local standAt = pianoAt * CFrame.new(4.2, 0, -0.4) -- the bass end, left as you face the keys
+	local function disc(thick: number, diameter: number, y: number, color: Color3, material: Enum.Material)
+		Kit.cylinder(
+			model,
+			thick,
+			diameter,
+			standAt * CFrame.new(0, y, 0) * Kit.angles(0, 0, 90),
+			color,
+			{ material = material, collide = false }
+		)
+	end
+	disc(0.18, 1.7, 0.09, roseDark, Enum.Material.Wood)
+	disc(0.16, 1.1, 0.26, ROSE, Enum.Material.Wood)
+	Kit.post(model, 3.9, 0.18, standAt * CFrame.new(0, 2.3, 0), ROSE, { material = Enum.Material.Wood })
+	for _, y in { 0.5, 2.2, 4.15 } do
+		Kit.ball(model, 0.32, standAt * CFrame.new(0, y, 0), roseLight, WOOD)
+	end
+	disc(0.12, 1.0, 4.31, ROSE, Enum.Material.Wood)
+	disc(0.05, 0.5, 4.4, C.brass, Enum.Material.Metal)
+	Kit.post(
+		model,
+		0.7,
+		0.18,
+		standAt * CFrame.new(0, 4.77, 0),
+		PAPER,
+		{ material = Enum.Material.SmoothPlastic, collide = false }
+	)
+	-- the flame is neon only: the hall is at its light budget
+	Kit.neon(
+		model,
+		Vector3.new(0.1, 0.22, 0.1),
+		standAt * CFrame.new(0, 5.25, 0),
+		C.flame,
+		Enum.PartType.Ball
+	)
 	-- Gnossienne No. 3 plays from inside the case; PianoNotes floats notes off the same spot
 	local voice = block(
 		Vector3.new(0.4, 0.4, 0.4),

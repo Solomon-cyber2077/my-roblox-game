@@ -14,10 +14,15 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   Curio warmer and brighter, Aurora more saturated teal/violet (cycle kept); optional `look.glow` multiplier.
   Every lantern now lights with two PointLights (strong range 6 + soft range 18) so it is brightest at the lamp.
   Trails 9-11 particles/s per foot (was 4-6), slightly larger, steam/mist a bit denser. Checked in Studio per lantern.
+- T5 piano (LobbyBuilder): rebuilt at x=0 under the departure board: toe plinth, panelled knee board, turned
+  consoles, cheek blocks, 52 white/36 black keys, fallboard up, music desk with open music, red silk behind fretwork,
+  brass sconces with candles, photo and music books on the lid, brass pedals. Buttoned velvet piano chair with turned
+  legs, H-stretcher, balloon back. Candle stand at its left (+x, the bass end): round base, slim turned post ~4.3 tall,
+  small round top, one lit candle (neon flame only; the hall is at its 48-light audit budget).
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T5 piano).
+- Continue the lobby list (T6 lamp posts, warm hanging lights).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
