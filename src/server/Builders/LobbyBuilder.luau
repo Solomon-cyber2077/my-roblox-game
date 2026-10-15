@@ -21,6 +21,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Audio = require(ReplicatedStorage.Shared.Config.Audio)
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local Outfits = require(ReplicatedStorage.Shared.Config.Outfits)
+local OutfitKit = require(script.Parent.OutfitKit)
 local PosterArt = require(script.Parent.PosterArt)
 local TrainBuilder = require(script.Parent.TrainBuilder)
 
@@ -2041,6 +2043,58 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 		Kit.pointLight(glass, C.warm, 1.1, 30, false)
 	end
+
+	-- The hall's people, dressed from one kit (Config/Outfits): Mrs. Pell behind the tea-room counter,
+	-- Mr. Pyle in the outfitter's booth, the booking clerk at his counter, the Line Superintendent
+	-- by the honours board, and the guard lying over his van's veranda rail on the display train
+	local people = Kit.model("People", model)
+	-- staff behind a counter stand on a step, as behind any shop counter
+	local function resident(id: string, x: number, z: number, yaw: number, step: number?): OutfitKit.Figure
+		local who = Outfits.Lobby[id]
+		local lift = step or 0
+		if lift > 0 then
+			block(
+				Vector3.new(2.8, lift, 2.2),
+				at(x, lift / 2, z) * Kit.angles(0, yaw, 0),
+				Kit.shade(C.wood, 0.7),
+				Enum.Material.WoodPlanks
+			)
+		end
+		local figure = OutfitKit.figure(people, at(x, lift, z) * Kit.angles(0, yaw, 0), who.look, who.pose)
+		figure.model.Name = who.id
+		return figure
+	end
+	resident("TeaRoom", 109.5, 50, 90, 1)
+	resident("Outfitter", 52, 39.6, 0, 1)
+	resident("TicketClerk", 34, 68.2, 0, 1)
+	resident("Guard", -96 + 2.4, TRACK_Z + 1.5, 90) -- over the end balustrade, looking down the line
+	local superintendent = resident("LineMastery", -44.5, 37, 18)
+	-- he says what the board is to anyone who comes close
+	local card = Instance.new("BillboardGui")
+	card.Name = "Speech"
+	card.Size = UDim2.fromScale(9, 2.6)
+	card.StudsOffsetWorldSpace = Vector3.new(0, 4, 0)
+	card.MaxDistance = 18
+	card.LightInfluence = 0
+	card.Adornee = superintendent.head
+	card.Parent = superintendent.head
+	local paper = Instance.new("Frame")
+	paper.Size = UDim2.fromScale(1, 1)
+	paper.BackgroundColor3 = Color3.fromRGB(186, 168, 128)
+	paper.BackgroundTransparency = 0.08
+	paper.BorderSizePixel = 0
+	paper.Parent = card
+	local line = Instance.new("TextLabel")
+	line.BackgroundTransparency = 1
+	line.Position = UDim2.fromScale(0.05, 0.08)
+	line.Size = UDim2.fromScale(0.9, 0.84)
+	line.FontFace = Font.new("rbxasset://fonts/families/Merriweather.json")
+	line.TextScaled = true
+	line.TextWrapped = true
+	line.TextColor3 = Color3.fromRGB(30, 26, 22)
+	line.Text = "That is Line Mastery, the line's honours board. Every run, every stop cleared and every "
+		.. "crewmate pulled free is painted up there in gilt. Step up and read yours."
+	line.Parent = paper
 
 	local spawnPoints: { CFrame } = {}
 	for i = 0, 11 do

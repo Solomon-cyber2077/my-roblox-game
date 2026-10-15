@@ -52,10 +52,19 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   bookcases of cloth-bound books under the windows at x=-90, 66 and 90, a railway bookstall (BOOKS · NEWSPAPERS,
   shelves of books, a sloped counter of papers) where the west ticket office stood, and a rack of four leather fire
   buckets at x=-50. Lobby now 2048 parts (budget 3200), lights unchanged at 48.
+- T13 NPCs: one reusable kit. `Config/Outfits` (pure data: Look = cut Frock/Sack/Reefer/Bodice, trousers or
+  Plain/Bustle skirt, waistcoat, cravat/neckerchief, apron, hat Top/Bowler/Peaked/Lace/Bonnet/Visor, prop; Pose = lean,
+  armL, armR, head) and `Builders/OutfitKit.figure` (R6-proportioned part body, dressed and posed; body/skirt collide).
+  Placed by LobbyBuilder (audited, 0 z-fights): Mrs. Pell at the tea-room counter (bodice, apron, lace cap), Mr. Pyle
+  in the outfitter booth (frock coat, crimson waistcoat, tailor's tape), Mr. Lethbridge the booking clerk (navy reefer,
+  peaked cap, ticket punch), the Line Superintendent by the honours board (frock coat, top hat, pointer) with a speech
+  card within 18 studs saying what Line Mastery is, and the Guard lying over the display train's guard's van end
+  balustrade, looking down the line (no dialogue yet). Counter staff stand on a 1-stud step. New scripts: run rbxmap
+  `refresh` after merging.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- NPC list (T13 Victorian outfit kit + lobby NPCs).
+- Mabel (T14): same kit, simpler dialogue.
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
