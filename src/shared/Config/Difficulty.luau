@@ -143,7 +143,7 @@ return table.freeze({
 		SweepSeconds = 1.25, -- one turn of the needle; a check nobody presses ends after one turn
 		LeadDegrees = table.freeze({ 110, 230 }), -- the zone starts this far ahead of the needle
 		ZoneByStop = table.freeze({ 70, 64, 58, 52, 47, 42, 38 }), -- zone width by stop, the last for later stops
-		GreatShare = 0.25, -- the great zone: this leading share of the zone
+		GreatShare = 0.2, -- the great zone (the white block): this share of the zone, at its centre
 		LatencyBase = 0.05, -- seconds of press tolerance on top of half the player's round-trip ping
 		LatencyMax = 0.2, -- never more tolerance than this
 		MinPressGap = 0.12, -- presses closer together than this are ignored
