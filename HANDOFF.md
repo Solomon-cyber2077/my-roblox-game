@@ -1,5 +1,17 @@
 # HANDOFF
 
+## 2026-10-15: ASTRA RESUME + BOTH BRANCHES MERGED
+- Finished the pending movement task in dc0705d: eased waking transitions, smoothed gait/cadence and subtle continuous twitches. Earlier tall/crawler/progression commits retained; third monster design unchanged. Pushed codex/hollow-design.
+- Claude's lobby worktree was stable across two status/mtime checks over 20 seconds apart. Reviewed and committed his remaining lobby stamina, candle and bare noticeboard edits as 660290c, then pushed claude/lobby-npc-pass (including its prior unpushed storm fix).
+- Integration: 022162b merged Hollow work; bdafb78f2e93ae686a841b059836f899c7008e70 merged the lobby pass into claude/last-train-out. Both are normal --no-ff merges. This documentation commit follows that final integration hash; use git rev-parse HEAD for the branch's final documentation-inclusive hash.
+- Preservation: all three original tips are ancestors. Parent comparisons verified all files changed on only one side exactly (46 in the first merge, 26 in the second). Shared files: HANDOFF kept both note sets (the sole conflict); LORE kept both source corrections; Tuning kept Hollow motion/progression and lobby/lantern constants. Lobby/NPC/cosmetics retained; both settings files unchanged. Pre-existing unstaged MAP.md left byte-for-byte untouched.
+- Checks: own branch full gate passed. Merged gate passed formatting, lint, fresh Rojo sourcemap, strict types and 361 tests / 49 spec files. Audit has exactly one existing failure: Lobby lights 49 > 48. Preserved Claude's candle light; no budget increase. Windows Application Control did not block this run.
+- No Studio opened, connected or changed. Movement, merged lobby storm/audio and integration still require manual Studio verification. Earlier photo-rig progression comparison at stops 1/3/6/10 is recorded below; runtime movement has not been validated here.
+- Backups retained: backup/pre-lobby-merge-2026-10-15-{hollow,lobby,main}, respectively dc0705d30e4c4d0fbdb24939f45dae6f0f5162ea, 660290cb8493c16edde9a2dd296f9c9194a0271c, 1129148fab6cc4c29f2648298bc47139c2d7af6e. LTO-lobby and its Rojo 34874 remain intact.
+- Merged source folder: C:/Users/tameg/Documents/Roblox/my-roblox-game; serve with rojo serve --port 34872. Existing Rojo listeners 34872/34873/34874 were left running.
+- Cleanup: removed only our motion-check.log, astra-lobby-check.log, astra-merged-check.log and temporary monster-progression.png contact sheet; reusable photo tools and individual design renders retained.
+- Next: manually verify movement and lobby integration, resolve the one-light budget overage and Mabel period-role question with the owner. Prompt 3 tasks 5-8 (obstacle pursuit, guaranteed encounters, sound foreshadowing and per-run variation) remain outstanding; this resume finished task 4 rather than starting them.
+
 ## 2026-10-15: LOBBY + NPC PASS, REVISION (items 4 and 8 rewritten, LORE spot-check)
 `lune run check`: format, lint, types and 360 specs pass; the audit fails only on Lobby lights 49 > 48, caused by the
 owner's uncommitted candle firelight in LobbyBuilder (left as is; the owner decides: drop one light or raise the budget).
