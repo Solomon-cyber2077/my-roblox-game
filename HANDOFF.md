@@ -1,5 +1,36 @@
 # HANDOFF
 
+## 2026-10-14: HUD, LEAKS, GRAB BAR, TRAIN INTERIOR PASS (16 tasks, one commit each, pushed)
+`lune run check` passes (355 specs incl. new LeakRoute, CrewChest, SkillCheck press-time). Each task play-tested in Studio, console clean.
+1. Features completed
+- HUD: backpack "right-click drops" hint gone; tutorial run 1 has a "Drop" prompt on a new `Carrying` moment. Operators panel has no
+  toggle/setting (key removed from Config/Settings) and no longer fades out (idle 0.2). Leak notice moved top right, riding under the
+  Operators panel's live height; Settings button now 14,146 under the gauges (tutorial slot 14,196). Pocket watch 2% smaller (UIScale),
+  Victorian enamel dial: railroad minute track, 12 radial Roman hours (IIII) in Bodoni (`Theme.Font.dial`), blued spade hands.
+- Leaks (LeakController): small red "!" per leak (BillboardGui; aboard always, off-train within 20 studs; Last Light included);
+  BrokenThingMarkers now plates only Power. Overhead arrow replaced by amber floor chevrons (`Logic/LeakRoute`, `Tuning.LeakArrows`):
+  aboard down the aisle to the nearest non-cab leak, curving to its wall; on the platform while Dwell/LastCall to the Last Light door
+  when the cab leaks. TrainBuilder publishes `Origin` on the Train model. "Steam leak in the Last Light car" fades at top centre when
+  the cab starts leaking; leak texts call CAB "Last Light". Patch prompt: iron plate, brass rim, pressure gauge needle that climbs
+  with the hold. All of it follows Broken Things Markers (verified Off hides all three).
+- Grab check: horizontal bar, grey zone + centred white block (GreatShare 0.2, was 0.25). Client sends the server time at key-down
+  and shows the verdict at once; server judges that instant within the ping tolerance (`SkillCheck.judgePress`). HollowService:
+  only the SkillCheck handler changed (owner approved).
+- Train: saloon seats lose L·T·O, benches 3.2 wide with the sitter at z 3.42 (arm clears wall: 5.42 vs 5.62). Train camera hides
+  prompts (ProximityPromptService.Enabled) and in-train markers; RMB/right stick free-look on fixed shots. Last Light door leaves
+  flush (TrainShell config z 6.66, were 6.77 floating). Crew chest in the stores car facing the platform door (E opens UI/CrewChest;
+  flares/tonics/flashbulbs; `train.chest` in state, empties per run). Backpack 6 slots.
+- Coal: `Tuning.Train.CoalGaugePerCoal = 2` (deposit only; items/stacks unchanged). Values it shifts, none retuned: BurnPerKm 2.0
+  (leg cost + HUD LegCost marker), StartCoal 40, CoalMax 100 (+25/CoalBunker level), bunker spill (coalWasted), Hull
+  StarvingPerSecond 3 (empty firebox now reached later), Economy BrassPerTenCoal 2 (coal brass doubles), coalDelivered stats and
+  milestones, LowCoalFraction 0.25. Leak hull drain (Difficulty.Leaks) is not affected.
+2. Known bugs/regressions
+- RMB free-look not driven in test: MCP/computer-use mouse gives zero deltas; logic mirrors Orbit drag. Check by hand: C, F to
+  Lineside, hold RMB and move. Server press-time judging verified by specs + error-free presses, not by a timed hit.
+- Carriage door leaves likely float the same ~0.12 off their sides (not asked; Locomotive only fixed).
+3. Next logical step
+- Hand-check free-look and a few grab presses for feel; decide whether the coal doubling needs BurnPerKm/BrassPerTenCoal retuned.
+
 ## 2026-10-14: LORE BIBLE
 1. Features completed: `LORE.md` at repo root (era 1884-1892, tone, vague Hollows, names, signage, clothing, props, period checklist). No game code changed.
 2. Known bugs/regressions: none; existing in-game names/fonts not yet audited against LORE.md. No Blender sheet made.
