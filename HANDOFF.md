@@ -22,10 +22,13 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
 - T6 lighting: the two back-wall lamps nearest the piano (x=+-30) replaced by gas lamp standards at x=+-24, z=66
   (plinth, fluted cast-iron shaft, ladder bar, square glazed amber lantern, gabled cap). Truss pendants now amber
   globes (236,150,72) with warmer light (255,178,98, brightness 1). Lights stay at 48/48.
+- T7 floor emblem: green rosette and its axe-and-cross bars replaced by a wordless roundel: slate field in a brass
+  ring, brass rails and closing-up sleepers running away (toward the train) into a round tunnel mouth, with the red
+  tail lamp of the last train inside the bore. Layer tops at distinct heights (audit: 0 z-fights).
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T7 floor emblem).
+- Continue the lobby list (T8 back-wall windows and storm).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
