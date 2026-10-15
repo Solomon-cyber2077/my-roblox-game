@@ -95,6 +95,10 @@ flag it rather than drift. The design source of truth for mechanics is still the
 - **Gentry (elegant options):** men in frock coats, morning coats, Inverness capes, ulsters, top hats, kid gloves,
   walking canes, pocket watches; women in bustled walking dresses (to c.1889), then leg-o'-mutton sleeves (from c.1891),
   fitted jackets, mantles, fur tippets, veiled hats, parasols, muffs.
+- **Tall Hollow art direction (source-checked):** a dark wool coat and waistcoat with trousers, over a white cotton or
+  linen shirt, are period-compatible choices. LACMA's 1875-1885 English coat and vest are wool, and the V&A's 1866/1890
+  shirt is starched cotton; use weathered, desaturated versions for the Hollow's fictional palette. This muted treatment
+  is art direction, not a claim that saturated Victorian dyes did not exist.
 - **Never:** zips, wristwatches, trench coats, trilbies/fedoras, sunglasses, trainers, hoodies, jeans with modern cut,
   shorts on adults, plastic, bright synthetic colours.
 

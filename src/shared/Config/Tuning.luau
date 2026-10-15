@@ -372,6 +372,7 @@ local Tuning = {
 	]]
 	-- Client-only dressing; never feeds Hollow pace, damage or rig dimensions.
 	HollowCosmetics = {
+		ProgressStart = 0.3,
 		Distance = 120,
 		DustSpeed = 6,
 		IdleSpeed = 0.5,
@@ -379,6 +380,10 @@ local Tuning = {
 		NeckAngle = 0.035,
 		JawAngle = 0.045,
 		MaxParts = 40,
+		ShedCount = 3,
+		ShedPeriod = 3.2,
+		ShedFall = 0.8,
+		ShedDrop = 1.8,
 		LightRange = 5,
 		EyeDim = 0.12,
 		EyeAlert = 0.8,
@@ -402,6 +407,21 @@ local Tuning = {
 			Eye = { 188, 191, 137 },
 			Mist = { 176, 180, 186 },
 		},
+	},
+	HollowMotion = {
+		SpeedResponse = 8,
+		TwitchAngle = 0.12,
+	},
+	HollowContortion = {
+		StalkerLean = 0.5,
+		StalkerTwist = 0.45,
+		StalkerRoll = 0.42,
+		StalkerNeck = 0.65,
+		CrawlerDrop = 0.35,
+		CrawlerTwist = 0.32,
+		CrawlerRoll = 0.3,
+		CrawlerNeck = 0.75,
+		Jaw = 0.35,
 	},
 	HollowKinds = {
 		Stalker = { walk = 1, chase = 1, reach = 1, windup = 1, radius = 1.6, grip = 1, crush = 1 },

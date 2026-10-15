@@ -3,6 +3,7 @@
 -- Pure cosmetic progression and per-spawn variation for Hollow decorations.
 
 local Rng = require(script.Parent.Parent.Util.Rng)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local GrimeLevel = {}
 
@@ -10,8 +11,11 @@ function GrimeLevel.forStop(stopIndex: number, stopCount: number, isTerminus: bo
 	if isTerminus then
 		return 1
 	end
-	local count = math.max(1, stopCount)
-	return math.clamp((stopIndex - 1) / count, 0, 1)
+	if stopIndex <= 0 then
+		return 0
+	end
+	local count = math.max(1, stopCount - 1)
+	return math.clamp(Tuning.HollowCosmetics.ProgressStart + 0.7 * (stopIndex - 1) / count, 0, 1)
 end
 
 export type Variation = {

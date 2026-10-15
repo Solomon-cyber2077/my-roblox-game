@@ -49,6 +49,7 @@ export type Input = {
 	windup: number, -- seconds the windup takes for this kind
 	grab: string?, -- the grab's id while holding someone
 	grabTime: number, -- seconds into the hold
+	grime: number?, -- shared stop progression; original Brute silhouette stays unchanged
 }
 
 local HollowPoses = {}
@@ -450,13 +451,18 @@ local function crawlerGait(rig: Rig, out: Pose, input: Input, hunt: boolean)
 	local stride = math.min(speed / 12, 1.4)
 	local step = crawlStep(speed)
 	local now, seed = input.now, input.seed
+	local g = math.clamp(input.grime or 0, 0, 1)
+	local c = Tuning.HollowContortion
 	local a = math.sin(p)
 	-- low and long when it hunts; the spine rolls with the gait, the head scans
-	out.RootJoint = CFrame.new(0, math.abs(a) * 0.22 * stride - (if hunt then 0.45 else 0), 0)
-		* A(0, a * 0.08 * stride, a * 0.06 * stride)
-	out.Waist = A(if hunt then -0.12 else 0, -a * 0.1 * stride, 0)
-	out.Neck = A(if hunt then -0.2 else 0, math.sin(now * 1.7 + seed) * 0.45, 0)
-	out.Jaw = A(if hunt then -0.4 - 0.3 * math.abs(math.sin(now * 17)) else -0.12, 0, 0)
+	out.RootJoint = CFrame.new(
+		0,
+		math.abs(a) * 0.22 * stride - (if hunt then 0.45 else 0) - g * c.CrawlerDrop,
+		0
+	) * A(0, a * 0.08 * stride, a * 0.06 * stride)
+	out.Waist = A(if hunt then -0.12 else 0, -a * 0.1 * stride + g * c.CrawlerTwist, g * c.CrawlerRoll)
+	out.Neck = A(if hunt then -0.2 else 0, math.sin(now * 1.7 + seed) * 0.45, -g * c.CrawlerNeck)
+	out.Jaw = A((if hunt then -0.4 - 0.3 * math.abs(math.sin(now * 17)) else -0.12) - g * c.Jaw, 0, 0)
 	for i, spot in CRAWL do
 		if speed < 0.8 then
 			-- still: one long finger after another lifts and taps the ground
@@ -669,8 +675,18 @@ end
 
 -- The bipeds (the Stalker and the Brute) --------------------------------------------------------------
 
-local function stalkerGait(out: Pose, p: number, stride: number, hunt: boolean, now: number, seed: number)
-	local lean = if hunt then -0.5 else -0.1
+local function stalkerGait(
+	rig: Rig,
+	out: Pose,
+	p: number,
+	stride: number,
+	hunt: boolean,
+	now: number,
+	seed: number,
+	g: number
+)
+	local c = Tuning.HollowContortion
+	local lean = (if hunt then -0.65 else -0.45) - g * c.StalkerLean
 	local l, r = math.sin(p), math.sin(p + math.pi)
 	-- the left leg strides, the right drags: a limp
 	out.LHip = A(l * 0.62 * stride, 0, -0.04)
@@ -682,25 +698,34 @@ local function stalkerGait(out: Pose, p: number, stride: number, hunt: boolean, 
 	local bob = math.abs(l) * 0.22 * stride
 	out.RootJoint = CFrame.new(0, bob - 0.1 * stride, 0)
 		* A(lean * 0.4, l * 0.08 * stride, l * 0.1 * stride + 0.06)
-	out.Waist = A(lean * 0.6 + math.sin(p * 2) * 0.03, l * 0.12 * stride, 0)
+	out.Waist =
+		A(lean * 0.6 + math.sin(p * 2) * 0.03, l * 0.12 * stride + g * c.StalkerTwist, g * c.StalkerRoll)
 	if hunt then
-		local reach = l * 0.8 * stride
-		out.LShoulder = A(-0.6 + reach, 0, -0.25)
-		out.RShoulder = A(-0.6 - reach, 0, 0.25)
-		out.LElbow = A(0.55, 0, 0)
-		out.RElbow = A(0.55, 0, 0)
 		out.Neck = A(0.55, 0, 0)
 		out.Jaw = A(-0.25 - 0.1 * math.sin(now * 9 + seed), 0, 0)
 	else
-		out.LShoulder = A(-r * 0.25 * stride + 0.05, 0, -0.06 - 0.04 * math.sin(p * 0.5))
-		out.RShoulder = A(-l * 0.25 * stride + 0.05, 0, 0.06 + 0.04 * math.sin(p * 0.5))
-		out.LElbow = A(0.15 + 0.1 * math.max(0, l), 0, 0)
-		out.RElbow = A(0.15 + 0.1 * math.max(0, r), 0, 0)
-		out.Neck = A(-0.1, 0.25 * math.sin(now * 0.7 + seed), 0.38)
+		out.Neck = A(0.15, 0.18 * math.sin(now * 0.7 + seed), 0.28)
 		out.Jaw = A(-0.12, 0, 0)
 	end
-	out.LWrist = A(0.2, 0, 0)
-	out.RWrist = A(0.2, 0, 0)
+	out.Neck *= A(0, -g * c.StalkerTwist, -g * c.StalkerNeck)
+	out.Jaw *= A(-g * c.Jaw, 0, 0)
+	-- An uneven protective cradle: one stained hand at the mouth, one at the temple.
+	-- Solve from the actual long bones so the hands follow the face through the limp.
+	local face = HollowPoses.frameOf(rig, out, "Head")
+	for _, side in { "L", "R" } do
+		local sign = if side == "L" then -1 else 1
+		local breath = math.sin(now * 1.8 + seed + sign) * 0.04
+		local hand = face * Vector3.new(sign * 0.5, (if side == "L" then -0.45 else 0.1) + breath, -0.78)
+		HollowPoses.reach(
+			rig,
+			out,
+			side,
+			"Arm",
+			hand,
+			Vector3.new(sign, -0.7, -0.3),
+			face.Rotation * A(math.pi, 0, 0)
+		)
+	end
 end
 
 local function bruteGait(out: Pose, p: number, stride: number, hunt: boolean, now: number, seed: number)
@@ -892,12 +917,14 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 			)
 		else
 			stalkerGait(
+				rig,
 				target,
 				input.phase,
 				if speedOverride then 0 else stride,
 				isHunting,
 				input.now,
-				input.seed
+				input.seed,
+				math.clamp(input.grime or 0, 0, 1)
 			)
 		end
 	end
@@ -923,9 +950,9 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		return bipedDormant(kind, input.now, input.seed)
 	end
 	if state == "Emerge" and input.emerge == "Wake" then
-		-- it unfolds in jerks, not smoothly
+		-- Ease the unfolding; small idle twitches carry the unease.
 		local t = clamp01(input.elapsed / Tuning.Hollow.EmergeSeconds)
-		local jerk = math.floor(t * 5) / 5 + (t * 5 % 1) ^ 6 / 5
+		local unfold = smooth(t)
 		local asleep: Pose = {}
 		local standing: Pose = {}
 		if crawler then
@@ -935,16 +962,14 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		end
 		gait(standing, true, 0)
 		for name, value in asleep do
-			out[name] = value:Lerp(standing[name] or I, jerk)
+			out[name] = value:Lerp(standing[name] or I, unfold)
 		end
 		for name, value in standing do
 			if (out[name] :: CFrame?) == nil then
-				out[name] = I:Lerp(value, jerk)
+				out[name] = I:Lerp(value, unfold)
 			end
 		end
-		if t < 0.25 then
-			out.Neck = A(0.35, 0, 0) -- the head comes up first
-		end
+		out.Neck = A(0.35, 0, 0):Lerp(out.Neck or I, smooth(t / 0.25))
 		out.Jaw = A(-0.9 * clamp01((t - 0.7) / 0.15), 0, 0)
 		return out
 	end

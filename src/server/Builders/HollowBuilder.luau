@@ -230,14 +230,15 @@ end
 local function stalker(model: Model, root: BasePart)
 	local SKIN = rgb(150, 156, 146)
 	local SKIN_DARK = rgb(118, 124, 114)
-	local COAT = rgb(44, 58, 50)
-	local LAPEL = rgb(30, 40, 34)
+	local COAT = rgb(43, 40, 38)
+	local LAPEL = rgb(27, 25, 24)
+	local BLOOD = rgb(104, 22, 24)
 	local TROUSER = rgb(40, 40, 44)
 	local cloth = Enum.Material.Fabric
 	local skin = Enum.Material.SmoothPlastic
 
-	local pelvis = block(model, "Pelvis", Vector3.new(1.7, 0.9, 0.95), COAT, cloth)
-	local chest = block(model, "Chest", Vector3.new(1.9, 2.8, 1.05), COAT, cloth)
+	local pelvis = block(model, "Pelvis", Vector3.new(1.5, 0.9, 0.95), COAT, cloth)
+	local chest = block(model, "Chest", Vector3.new(1.65, 2.8, 1.05), COAT, cloth)
 	local head = block(model, "Head", Vector3.new(0.95, 1.25, 1.05), SKIN, skin)
 	local jaw = block(model, "Jaw", Vector3.new(0.78, 0.32, 0.9), SKIN_DARK, skin)
 	joint("RootJoint", root, pelvis, CFrame.new(0, -0.65, 0), CFrame.new())
@@ -263,7 +264,7 @@ local function stalker(model: Model, root: BasePart)
 	end
 	-- coat tails in tatters, hanging past the knees
 	for i, x in { -0.62, 0.05, 0.6 } do
-		deco(
+		decoWedge(
 			model,
 			pelvis,
 			Vector3.new(0.5 + (i % 2) * 0.12, 2.5 + i * 0.25, 0.08 + i * 0.01),
@@ -323,15 +324,15 @@ local function stalker(model: Model, root: BasePart)
 			{ "Shoulder", "Elbow", "Wrist" },
 			chest,
 			CFrame.new(s * 1.12, 1.12, 0),
-			2.5,
-			2.35,
-			0.4,
+			2.9,
+			2.75,
+			0.32,
 			COAT,
 			SKIN,
 			cloth,
 			skin,
 			Vector3.new(0.42, 0.5, 0.22),
-			SKIN_DARK
+			BLOOD
 		)
 		for f = -1, 1 do
 			local finger = deco(
@@ -339,7 +340,7 @@ local function stalker(model: Model, root: BasePart)
 				hand,
 				Vector3.new(0.07, 1.05 - math.abs(f) * 0.15, 0.07),
 				CFrame.new(f * 0.13, -0.72 + math.abs(f) * 0.07, 0) * Kit.angles(0, 0, f * 6),
-				SKIN,
+				BLOOD,
 				skin
 			)
 			decoWedge(
@@ -438,6 +439,19 @@ local function crawler(model: Model, root: BasePart)
 	joint("Neck", chest, head, CFrame.new(0, 1.9, -0.1) * Kit.angles(70, 0, 180), CFrame.new(0, -0.7, 0))
 	joint("Jaw", head, jaw, CFrame.new(0, -0.66, 0.36), CFrame.new(0, 0.12, 0.5))
 
+	-- Loose skin peels away from the exposed spine; the body keeps moving beneath it.
+	for i = 1, 3 do
+		local slough = decoWedge(
+			model,
+			chest,
+			Vector3.new(0.38, 0.85 + i * 0.17, 0.15),
+			CFrame.new((if i % 2 == 0 then -1 else 1) * 0.65, 1.1 - i * 0.7, 0.85)
+				* Kit.angles(25, i * 17, (i - 2) * 22),
+			SKIN_DARK,
+			skin
+		)
+		slough.Name = "LooseFlesh"
+	end
 	-- the gown: torn open down the back over a spine that shows, stained at the front
 	for i = 0, 5 do
 		decoBall(model, chest, 0.42 - i * 0.02, CFrame.new(0, 1.35 - i * 0.55, 0.62), SKIN_DARK, skin)
@@ -535,13 +549,13 @@ local function crawler(model: Model, root: BasePart)
 	end
 	-- hair from the crown: the head is upside down, so it hangs to the ground
 	for i = -3, 4 do
-		local long = 2.2 + ((i * 7) % 5) * 0.2
+		local long = 2.5 + ((i * 7) % 5) * 0.24
 		deco(
 			model,
 			head,
-			Vector3.new(0.16 + (i % 2) * 0.05, long, 0.1),
-			CFrame.new(i * 0.15 - 0.07, 0.7 + long / 2, 0.15 + (i % 3) * 0.12)
-				* Kit.angles(-6 + (i % 3) * 5, 0, i * 2),
+			Vector3.new(0.19 + (i % 2) * 0.05, long, 0.12),
+			CFrame.new(i * 0.15 - 0.07 + (i % 3) * 0.04, 0.7 + long / 2, 0.25 + (i % 3) * 0.14)
+				* Kit.angles(-10 + (i % 3) * 8, (i % 2) * 5, i * 5),
 			HAIR,
 			cloth
 		)
