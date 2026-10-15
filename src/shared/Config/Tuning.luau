@@ -78,6 +78,9 @@ local Tuning = {
 		StartParts = 4,
 		IntegrityMax = 100,
 		BurnPerKm = 2.0,
+		-- each coal an item carries (Config/Items `coal`) fills this many units of the bunker and
+		-- its gauge when loaded (Logic/Ledger.deposit); the items and their stacks are unchanged
+		CoalGaugePerCoal = 2,
 		-- leaks, hull drain and repair: Config/Difficulty Leaks and Hull
 		TickSeconds = 0.25,
 	},
@@ -121,7 +124,7 @@ local Tuning = {
 		WindedSeconds = 1.6, -- running dry leaves you winded: slower for this long
 		WindedMultiplier = 0.85,
 		SprintFov = 9, -- degrees the camera widens at full sprint
-		BackpackSlots = 4,
+		BackpackSlots = 6,
 		HeavySpeedMultiplier = 0.86, -- per heavy item, stacking
 		JumpHeight = 7.2,
 		HeavyJumpHeight = 5.0,

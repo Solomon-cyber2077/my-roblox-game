@@ -97,11 +97,12 @@ function Ledger.deposit(train: Train, cargo: { string }): (Train, Receipt)
 		local def = Items[id]
 		if def then
 			if def.coal then
+				local worth = def.coal * Tuning.Train.CoalGaugePerCoal
 				local room = math.max(nextTrain.coalMax - nextTrain.coal, 0)
-				local added = math.min(def.coal, room)
+				local added = math.min(worth, room)
 				nextTrain.coal = round1(nextTrain.coal + added)
 				receipt.coal += added
-				receipt.coalWasted += def.coal - added
+				receipt.coalWasted += worth - added
 			end
 			if def.parts then
 				nextTrain.parts += def.parts
