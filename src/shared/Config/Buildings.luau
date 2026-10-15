@@ -76,6 +76,8 @@ export type Building = {
 	rooms: { string }, -- the others, in order (repeated when there are more spaces)
 	corridor: { Placement }?,
 	upper: Upper?,
+	dateStone: string?, -- carved over the name board (a board school's founding year)
+	bellcote: boolean?, -- a bell in a little open turret on the ridge (pitched roofs)
 }
 
 export type Furniture = { w: number, d: number, name: string }
@@ -657,6 +659,8 @@ local Corridors: { [string]: { Placement } } = {
 local Defs: { [string]: Building } = {
 	School = {
 		name = "Ashgrove Board School",
+		dateStone = "ASHGROVE SCHOOL BOARD\nA.D. 1876", -- board schools came after the 1870 Act
+		bellcote = true,
 		size = { 7, 4 },
 		layout = "Spine",
 		height = 13,

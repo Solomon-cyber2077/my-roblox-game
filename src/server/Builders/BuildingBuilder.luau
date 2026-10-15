@@ -156,6 +156,42 @@ function BuildingBuilder.build(
 			roofColor,
 			{ material = roofMaterial }
 		)
+		if def.bellcote then
+			-- the school bell in an open timber turret astride the ridge, a slate spirelet over it
+			local y = top + rise
+			block(Vector3.new(3.0, 1.6, 3.0), at(0, y + 0.3, ridge), trim, wallMaterial, false)
+			for _, cx in { -1.2, 1.2 } do
+				for _, cz in { -1.2, 1.2 } do
+					block(
+						Vector3.new(0.4, 2.8, 0.4),
+						at(cx, y + 2.5, ridge + cz),
+						Kit.shade(trim, 0.9),
+						M.Wood,
+						false
+					)
+				end
+			end
+			block(Vector3.new(3.2, 0.4, 3.2), at(0, y + 4.05, ridge), Kit.shade(trim, 0.8), M.Wood, false)
+			Kit.cylinder(parent, 0.3, 0.4, at(0, y + 3.6, ridge) * Kit.angles(0, 0, 90), rgb(40, 40, 42), {
+				material = M.Metal,
+				collide = false,
+			})
+			block(Vector3.new(1.1, 1.2, 1.1), at(0, y + 2.9, ridge), rgb(150, 118, 60), M.Metal, false) -- the bell
+			for g = 0, 1 do
+				local cf = at(0, y + 5.25 + g * 0.03, ridge) * Kit.angles(0, g * 90, 0)
+				Kit.wedge(parent, Vector3.new(1.0, 2.0, 1.6), cf * CFrame.new(0, 0, -0.8), roofColor, {
+					material = roofMaterial,
+					collide = false,
+				})
+				Kit.wedge(
+					parent,
+					Vector3.new(1.0, 1.97, 1.6),
+					cf * CFrame.new(0, -0.015, 0.8) * Kit.angles(0, 180, 0),
+					roofColor,
+					{ material = roofMaterial, collide = false }
+				)
+			end
+		end
 		for _, x in { -ox * 0.55, ox * 0.6 } do
 			if rng:NextNumber() < 0.8 then
 				block(
@@ -209,6 +245,38 @@ function BuildingBuilder.build(
 	label.TextColor3 = rgb(236, 220, 180)
 	label.TextScaled = true
 	label.Parent = gui
+	if def.dateStone then
+		-- a dressed stone tablet beside the board, its lettering cut and darkened by the weather
+		local tx = math.min(2 * ox - 4, 26) / 2 + 4.5
+		local tablet = block(
+			Vector3.new(6.4, 2.4, 0.4),
+			at(tx, Buildings.DoorHeight + 1.9, -oz - 0.2),
+			rgb(176, 166, 146),
+			M.Limestone,
+			false
+		)
+		block(
+			Vector3.new(6.9, 0.3, 0.6),
+			at(tx, Buildings.DoorHeight + 3.25, -oz - 0.25),
+			rgb(150, 142, 126),
+			M.Limestone,
+			false
+		)
+		local cut = Instance.new("SurfaceGui")
+		cut.Face = Enum.NormalId.Front
+		cut.CanvasSize = Vector2.new(350, 110)
+		cut.LightInfluence = 1
+		cut.Parent = tablet
+		local words = Instance.new("TextLabel")
+		words.BackgroundTransparency = 1
+		words.Size = UDim2.fromScale(0.9, 0.8)
+		words.Position = UDim2.fromScale(0.05, 0.1)
+		words.FontFace = Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold)
+		words.Text = def.dateStone
+		words.TextColor3 = rgb(70, 62, 54)
+		words.TextScaled = true
+		words.Parent = cut
+	end
 
 	-- doors ------------------------------------------------------------------------------------
 	local locks: { Lock } = {}

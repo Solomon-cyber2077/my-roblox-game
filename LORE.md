@@ -129,4 +129,10 @@ flag it rather than drift. The design source of truth for mechanics is still the
 Sources: [Minehead railway station](https://en.wikipedia.org/wiki/Minehead_railway_station),
 [Historic England listing](https://britishlistedbuildings.co.uk/101207950-railway-station-minehead),
 [Chasewater Railway Museum on station signs](https://chasewaterrailwaymuseum.blog/tag/old-railway-lines/page/22/),
-[Science Museum Group station signs](https://collection.sciencemuseumgroup.org.uk/search/object_type/station-sign).
+[Science Museum Group station signs](https://collection.sciencemuseumgroup.org.uk/search/object_type/station-sign),
+[Didcot Railway Centre on name boards](https://didcotrailwaycentre.org.uk/article.php/575/tuesday-treasures-september-2023),
+[Tintern station name board listing (cast-iron posts, "mustard pot" caps, raised letters)](https://britishlistedbuildings.co.uk/300024045-name-board-at-tintern-station-wye-valley),
+[Bell Terrace Schools 1880](https://www.archiseek.com/1880-bell-terrace-schools-newcastle-upon-tyne/),
+[Langley School, Luton 1880](https://cms.historicengland.org.uk/services-skills/education/educational-images/langley-school-russell-street-4906).
+Spot-checked 2026-10-15: section 5's board styles (painted, then white-on-blue enamel in timber frames, or cast
+letters on boards) and section 7's board schools (slate roofs, gables, bell turrets, date stones) match these.
