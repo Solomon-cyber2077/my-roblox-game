@@ -8,10 +8,11 @@
   follows the moving zone (look-back window in 12 slices); `minimumSeconds` counts a full turn per check. GrabController
   redraws the zone each frame. Audit harness (`.lune/lib/HollowLifecycle`) presses on the moving zone.
 2. Known bugs/regressions
-- Last Light cab: the two long rods beside the door are brass grab irons baked into the locomotive mesh
-  (`tools/trainshell/engine2.py` 372-377, x 53.55/62.45). Removing them needs a re-export and re-upload of that mesh; not done.
+- Last Light cab: the door-side grab irons (2 rods, 4 standoffs) are cut from Locomotive_FittingsP (baked .blend edited
+  in place, UVs kept; re-imported as 83128914590753, bounds updated by hand in asset_ids.json and Config/TrainShell).
+  engine2.py no longer makes them. Do not run gen_config.py blind: it rewrites the hand-tuned cab leaf z (6.66 -> 6.77).
 3. Next logical step
-- Decide on the grab irons (re-export the locomotive brass mesh without them); tune ZoneDrift after real play.
+- Tune ZoneDrift after real play.
 
 ## 2026-10-14: HUD, LEAKS, GRAB BAR, TRAIN INTERIOR PASS (16 tasks, one commit each, pushed)
 `lune run check` passes (352 specs incl. new LeakRoute, CrewChest, SkillCheck press-time). Each task play-tested in Studio, console clean.

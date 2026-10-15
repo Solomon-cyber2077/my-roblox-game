@@ -953,9 +953,9 @@ local TrainShell: {
 						shadow = false,
 					},
 					FittingsP = {
-						mesh = 131566820695781,
-						center = { 74.04, 1.672, 6.345 },
-						size = { 44.28, 7.255, 1.05 },
+						mesh = 83128914590753, -- door-side grab irons removed
+						center = { 74.04, 0.797, 6.34 },
+						size = { 44.28, 5.505, 1.04 },
 						look = "Locomotive_P",
 						shadow = true,
 					},
