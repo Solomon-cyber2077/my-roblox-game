@@ -1255,8 +1255,9 @@ end
 
 function HollowService.Start()
 	StationService.Cleared:Connect(HollowService.Clear)
-	-- One press for skill check `id`: judged on arrival, with the victim's ping as tolerance.
-	NetService.Handle("SkillCheck", function(player, id: number)
+	-- One press for skill check `id`, made at server time `pressedAt` on the victim's screen:
+	-- judged at that instant, trusted within the ping tolerance of its arrival (judgePress).
+	NetService.Handle("SkillCheck", function(player, id: number, pressedAt: number)
 		local hollow = holderOf(player)
 		if hollow == nil or params == nil then
 			return
@@ -1275,7 +1276,10 @@ function HollowService.Start()
 		pcall(function()
 			ping = player:GetNetworkPing()
 		end)
-		judgeCheck(hollow, SkillCheck.judge(hold.check :: SkillCheck.Check, now, SkillCheck.tolerance(ping)))
+		judgeCheck(
+			hollow,
+			SkillCheck.judgePress(hold.check :: SkillCheck.Check, pressedAt, now, SkillCheck.tolerance(ping))
+		)
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		graceUntil[player] = nil
