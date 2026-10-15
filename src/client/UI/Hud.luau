@@ -37,6 +37,8 @@ local Hud = {}
 local CELL = 58
 local GAP = 6
 local WATCH = 168 -- the pocket watch's case, in pixels
+local WATCH_SCALE = 0.98 -- the case is drawn this much smaller (the ticket keeps its size)
+local BLUED = Color3.fromRGB(30, 38, 70) -- heat-blued steel, the hands of a good watch
 local TOUCH_GAP = 10 -- px between the watch and the touch buttons below it
 local COMPACT_WATCH = 0.8 -- the watch's size on a phone, so the lifted watch stays under the crew roster
 local TOUCH_GUIS = { "TouchGui", "ContextActionGui" } -- the jump button, and RUN and other action buttons
@@ -323,7 +325,7 @@ function Hud.mount(gui: ScreenGui)
 		Parent = case,
 	})
 	sheen(bezel, 0.72)
-	local watchScale = Ui.new("UIScale", { Parent = case })
+	local watchScale = Ui.new("UIScale", { Scale = WATCH_SCALE, Parent = case })
 	-- the bow and crown it hangs from
 	local bow = Ui.new("Frame", {
 		Name = "Bow",
@@ -398,27 +400,37 @@ function Hud.mount(gui: ScreenGui)
 		}),
 		Parent = face,
 	})
-	for m = 0, 59 do
-		if m % 5 == 0 then
-			bar(spindle(face, m * 6), 2, if m % 15 == 0 then 7 else 5, Theme.Color.ink, 3)
-		else
-			bar(spindle(face, m * 6), 1, 3, Theme.Color.inkSoft, 3).BackgroundTransparency = 0.35
-		end
+	-- A Victorian enamel dial: a railroad minute track (two fine rings with the minutes ruled
+	-- between them, the fives heavier) round twelve Roman hours set radially, the four as IIII.
+	local dial = WATCH - 34
+	for _, inset in { 3, 9 } do
+		local track = circle("Track", dial - 2 * inset, Theme.Color.ink, face)
+		track.BackgroundTransparency = 1
+		Ui.stroke(Theme.Color.ink, 1, 0.15).Parent = track
 	end
-	local radius = (WATCH - 34) / 2 - 18
-	for h, numeral in { [0] = "XII", [3] = "III", [6] = "VI", [9] = "IX" } do
-		local angle = math.rad(h * 30)
-		Ui.text({
+	for m = 0, 59 do
+		local five = m % 5 == 0
+		bar(spindle(face, m * 6), if five then 2 else 1, 6, Theme.Color.ink, 3).BackgroundTransparency = if five
+			then 0
+			else 0.25
+	end
+	local radius = dial / 2 - 17
+	local numerals = { "XII", "I", "II", "III", "IIII", "V", "VI", "VII", "VIII", "IX", "X", "XI" }
+	for h, numeral in numerals do
+		local angle = math.rad((h - 1) * 30)
+		local label = Ui.text({
 			Text = numeral,
-			Font = Theme.Font.display,
-			TextSize = 12,
+			Font = Theme.Font.dial,
+			TextSize = 13,
 			Color = Theme.Color.ink,
-			Size = UDim2.fromOffset(26, 14),
+			Size = UDim2.fromOffset(30, 14),
 			Position = UDim2.new(0.5, math.sin(angle) * radius, 0.5, -math.cos(angle) * radius),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			XAlign = Enum.TextXAlignment.Center,
-		}).Parent =
-			face
+		})
+		-- each figure stands on the centre, so the VI is read upside down, as on the real thing
+		label.Rotation = (h - 1) * 30
+		label.Parent = face
 	end
 
 	-- the moon in its aperture under the twelve
@@ -448,19 +460,35 @@ function Hud.mount(gui: ScreenGui)
 	bar(needle, 2, 12, Theme.Color.signal, 4)
 	bar(needle, 2, 9, Theme.Color.ink, 16)
 
-	-- tapered hands, each with a short tail and a round counterweight past the cap
+	-- blued-steel spade hands: a tapered shaft with a pierced spade toward the tip, a short tail
+	-- and a round counterweight past the cap
 	local centre = (WATCH - 34) / 2
-	local function hand(length: number, width: number, tail: number): Frame
+	local function hand(length: number, width: number, tail: number, spade: number): Frame
 		local spin = spindle(face, 0, 3)
 		local base = math.floor(length * 0.4)
-		bar(spin, math.max(width - 2, 1), length - base, Theme.Color.ink, centre - length)
-		bar(spin, width, base, Theme.Color.ink, centre - base)
-		bar(spin, math.max(width - 1, 1), tail, Theme.Color.ink, centre)
-		circle("Weight", width + 2, Theme.Color.ink, spin, tail)
+		bar(spin, math.max(width - 2, 1), length - base, BLUED, centre - length)
+		bar(spin, width, base, BLUED, centre - base)
+		bar(spin, math.max(width - 1, 1), tail, BLUED, centre)
+		circle("Weight", width + 2, BLUED, spin, tail)
+		local at = centre - math.floor(length * 0.72)
+		local function diamond(size: number, color: Color3)
+			Ui.new("Frame", {
+				Name = "Spade",
+				Size = UDim2.fromOffset(size, size),
+				Position = UDim2.new(0.5, 0, 0, at),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Rotation = 45,
+				BackgroundColor3 = color,
+				BorderSizePixel = 0,
+				Parent = spin,
+			})
+		end
+		diamond(spade, BLUED)
+		diamond(math.max(spade - 4, 1), Theme.Color.paper) -- pierced
 		return spin
 	end
-	local hourHand = hand(30, 4, 8)
-	local minuteHand = hand(46, 3, 10)
+	local hourHand = hand(32, 4, 8, 9)
+	local minuteHand = hand(54, 3, 10, 7)
 	local cap = circle("Cap", 8, BRASS_DARK, face)
 	cap.ZIndex = 4
 	-- the departure hand: from T-30 it points at the seconds left on the ring, a twitch a tick
@@ -1214,7 +1242,7 @@ function Hud.mount(gui: ScreenGui)
 		tagDanger.Text = danger
 		tagMoon.Size = if danger == "" then UDim2.new(1, -50, 0, 16) else UDim2.fromOffset(110, 16)
 		local hurry = phase == "LastCall" or phase == "Departure"
-		watchScale.Scale = if hurry then 1 + 0.03 * math.sin(now * 10) else 1
+		watchScale.Scale = WATCH_SCALE * (if hurry then 1 + 0.03 * math.sin(now * 10) else 1)
 		if hurry or (phase == "Dwell" and timerValue < 30) then
 			wake(watchFade, 0.5)
 		end
