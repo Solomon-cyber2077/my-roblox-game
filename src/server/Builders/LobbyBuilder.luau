@@ -359,13 +359,28 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	gapBarrier(-90.6, -90, -2.5, 2.5)
 
 	-- Walls ----------------------------------------------------------------------------------------
-	-- back wall with tall lit windows, the ticket office and the departure board
-	block(
-		Vector3.new(2 * HALF_X + 4, WALL_TOP + 8, 2),
-		at(0, (WALL_TOP + 8) / 2 - 8, BACK_Z + 1),
-		C.brick,
-		Enum.Material.Brick
-	)
+	-- back wall with four glazed windows looking out on the storm (LobbyStorm draws it), the ticket
+	-- office and the departure board; the wall is laid in courses around the openings, whose lintels
+	-- stay under the roof's spring
+	local WALL_LOW, WALL_HIGH = -8, WALL_TOP
+	local WIN_XS, WIN_W, WIN_LOW, WIN_HIGH = { -90, -66, 66, 90 }, 10, 10.6, 20
+	local function wallPiece(x0: number, x1: number, y0: number, y1: number)
+		block(
+			Vector3.new(x1 - x0, y1 - y0, 2),
+			at((x0 + x1) / 2, (y0 + y1) / 2, BACK_Z + 1),
+			C.brick,
+			Enum.Material.Brick
+		)
+	end
+	local wallX0, wallX1 = -HALF_X - 2, HALF_X + 2
+	wallPiece(wallX0, wallX1, WALL_LOW, WIN_LOW)
+	wallPiece(wallX0, wallX1, WIN_HIGH, WALL_HIGH)
+	local pierFrom = wallX0
+	for _, x in WIN_XS do
+		wallPiece(pierFrom, x - WIN_W / 2, WIN_LOW, WIN_HIGH)
+		pierFrom = x + WIN_W / 2
+	end
+	wallPiece(pierFrom, wallX1, WIN_LOW, WIN_HIGH)
 	block(Vector3.new(2 * HALF_X, 1.2, 0.6), at(0, 0.6, BACK_Z - 0.3), C.stone, Enum.Material.Concrete)
 	-- a dado of green glazed tiles above the plinth, capped by a row of oxblood bullnose, on the back
 	-- wall and along both end walls of the platform (a hair off the brick, so nothing set against
@@ -397,14 +412,57 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.Material.Glass
 		)
 	end
-	for _, x in { -90, -66, 66, 90 } do
-		decor(Vector3.new(11, 15, 0.3), at(x, 18, BACK_Z - 0.15), C.iron, Enum.Material.Metal)
-		decor(Vector3.new(10, 14, 0.3), at(x, 18, BACK_Z - 0.4), C.dusk, Enum.Material.Neon).Transparency =
-			0.62
-		for k = -1, 1 do
-			decor(Vector3.new(0.25, 14, 0.2), at(x + k * 2.6, 18, BACK_Z - 0.62), C.iron, Enum.Material.Metal)
+	for _, x in WIN_XS do
+		local midY, height = (WIN_LOW + WIN_HIGH) / 2, WIN_HIGH - WIN_LOW
+		-- iron casement lining the opening, a pane of old glass, glazing bars in three by three lights
+		for _, side in { -1, 1 } do
+			decor(
+				Vector3.new(0.4, height, 0.5),
+				at(x + side * (WIN_W / 2 - 0.2), midY, BACK_Z + 0.45),
+				C.iron,
+				Enum.Material.Metal
+			)
 		end
-		decor(Vector3.new(12, 1.2, 0.8), at(x, 25.8, BACK_Z - 0.4), C.stone, Enum.Material.Limestone)
+		for _, y in { WIN_LOW + 0.2, WIN_HIGH - 0.2 } do
+			decor(Vector3.new(WIN_W - 0.8, 0.4, 0.5), at(x, y, BACK_Z + 0.45), C.iron, Enum.Material.Metal)
+		end
+		local pane = decor(
+			Vector3.new(WIN_W - 0.8, height - 0.8, 0.1),
+			at(x, midY, BACK_Z + 0.6),
+			Color3.fromRGB(96, 106, 124),
+			Enum.Material.SmoothPlastic -- not Glass: the engine hides particles (the rain) behind Glass
+		)
+		pane.Transparency = 0.82
+		pane.Reflectance = 0.06
+		pane.Name = "StormWindow"
+		pane:AddTag("StormWindow")
+		for k = -1, 1, 2 do
+			decor(
+				Vector3.new(0.18, height - 0.8, 0.2),
+				at(x + k * (WIN_W - 0.8) / 6, midY, BACK_Z + 0.42),
+				C.iron,
+				Enum.Material.Metal
+			)
+			decor(
+				Vector3.new(WIN_W - 0.8, 0.18, 0.22),
+				at(x, midY + k * (height - 0.8) / 6, BACK_Z + 0.4),
+				C.iron,
+				Enum.Material.Metal
+			)
+		end
+		-- a stone sill and a lintel below the spring of the roof
+		decor(
+			Vector3.new(WIN_W + 1.6, 0.7, 1.2),
+			at(x, WIN_LOW - 0.25, BACK_Z - 0.1),
+			C.stone,
+			Enum.Material.Limestone
+		)
+		decor(
+			Vector3.new(WIN_W + 2, 1, 0.8),
+			at(x, WIN_HIGH + 0.4, BACK_Z - 0.3),
+			C.stone,
+			Enum.Material.Limestone
+		)
 	end
 	-- the far wall across the road, its windows showing the night outside
 	local farHeight = WALL_TOP + 12

@@ -25,10 +25,20 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
 - T7 floor emblem: green rosette and its axe-and-cross bars replaced by a wordless roundel: slate field in a brass
   ring, brass rails and closing-up sleepers running away (toward the train) into a round tunnel mouth, with the red
   tail lamp of the last train inside the bore. Layer tops at distinct heights (audit: 0 z-fights).
+- T8 windows + storm: back wall now laid in courses around four real openings (x=+-66,+-90), lowered to y 10.6-20
+  with the lintel under the roof spring (22); iron casement, 3x3 glazing bars, faint pane (SmoothPlastic 0.82, not
+  Glass: Glass hides particles behind it), stone sill and lintel. Back area not expanded. New client controller
+  `Controllers/LobbyStorm` (in init ORDER after PianoNotes) builds, outside the panes tagged StormWindow: a black
+  Gothic skyline (needle-spired church, ruined chapel lancet gable, gabled houses with stacks, bare trees, hills)
+  within 15-110 studs (the hall Atmosphere hazes anything further), a cloud deck and a bruised horizon band, rain
+  sheets past each window, a muffled rain loop, and a strike every 7-16 s: 2-3 flickers, a forked neon bolt, four
+  shadowed flash lights, thunder 0.35-2.4 s later (new cues LobbyRain 9112855439, LobbyThunder 9116282646,
+  LobbyThunderFar 9113218938, all ProSoundEffects). Performance setting: no rain, no bolt, no flash lights (verified).
+  New script: run rbxmap `refresh` after merging.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T8 back-wall windows and storm).
+- Continue the lobby list (T9 ticket stalls).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
