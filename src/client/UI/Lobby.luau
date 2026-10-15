@@ -567,7 +567,7 @@ function Lobby.mount(gui: ScreenGui)
 		elseif phase == "Countdown" then
 			local remaining = math.max((run.phaseEndsAt or now) - now, 0)
 			status.Text = `DEPARTING IN {Format.clock(remaining)}`
-			detail.Text = `{readyCount} ready  ·  everyone in the hall boards`
+			detail.Text = `{readyCount} ready to depart`
 			readyButton.Text = if mine then "READY ✓" else "READY"
 			Ui.setButtonEnabled(readyButton, true)
 			setLamps(readyCount, readyCount)

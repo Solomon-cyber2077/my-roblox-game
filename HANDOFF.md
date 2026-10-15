@@ -1,5 +1,15 @@
 # HANDOFF
 
+## 2026-10-15: LOBBY + NPC PASS (branch claude/lobby-npc-pass, own worktree ../LTO-lobby, Rojo 34874, ../lobby.rbxl)
+Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/train/station work is done).
+1. Features completed
+- T1 solo ready: already fixed server-side (one Ready starts the Countdown, `LobbyService.TakeCrew` takes only readied
+  players). Removed "everyone in the hall boards"; the Countdown line reads "N ready to depart". Play-tested solo.
+2. Known bugs/regressions
+- Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
+3. Next logical step
+- Continue the lobby list (T2 ready button).
+
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
 the older sources), and the laptop screen was covered, so the plugin could not be reconnected.
