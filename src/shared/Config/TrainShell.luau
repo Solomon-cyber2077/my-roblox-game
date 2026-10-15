@@ -968,7 +968,8 @@ local TrainShell: {
 					},
 					DoorLeafL = {
 						mesh = 110848679965588,
-						center = { 57, 3.5, 6.77 },
+						-- flush on the cab side (its skin at z 6.5): at 6.77 the open leaves hung off it
+						center = { 57, 3.5, 6.66 },
 						size = { 2, 7, 0.3 },
 						livery = "Accent",
 						look = "Locomotive_P",
@@ -976,7 +977,8 @@ local TrainShell: {
 					},
 					DoorLeafR = {
 						mesh = 90406609274531,
-						center = { 59, 3.5, 6.77 },
+						-- flush on the cab side (its skin at z 6.5): at 6.77 the open leaves hung off it
+						center = { 59, 3.5, 6.66 },
 						size = { 2, 7, 0.3 },
 						livery = "Accent",
 						look = "Locomotive_P",
