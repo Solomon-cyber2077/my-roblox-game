@@ -14,7 +14,7 @@ local Ui = require(script.Parent.Ui)
 
 local Unseal = {}
 
-local HEAD = Font.new("rbxasset://fonts/families/Arvo.json", Enum.FontWeight.Bold)
+local HEAD = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
 local SOOT = Color3.fromRGB(58, 52, 48)
 local INK_RED = Color3.fromRGB(146, 26, 30)
 local W, H = 300, 116

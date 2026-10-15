@@ -1,5 +1,25 @@
 # HANDOFF
 
+## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
+`lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
+the older sources), and the laptop screen was covered, so the plugin could not be reconnected.
+1. Features completed
+- NpcService `hideItems`: errand items go only beside Far ground containers (Mid dropped; falls back to any non-Safe).
+- Pylons off in every biome (`Scenery/Biomes` `pylons = false`; the code stays, flag-driven).
+- Arvo: not a Roblox font (no `Enum.Font.Arvo`, no Arvo.json in Studio's fonts) — that was the "Arvo.json failed to load"
+  line. Ticket, RunTicket, Stamp, Unseal heads now use Merriweather (ships with Studio). TrainInterior signs untouched.
+- Last Light cab door: the leaves' teak glazing sills were baked into the static `Locomotive_FittingsP` mesh
+  (engine2.py line ~615 adds them to `teak`, not the leaf), so they hung in the doorway when the doors opened.
+  `TrainVisualsController.cutCabSills` cuts them from a client EditableMesh copy and rebuilds them as parts with the
+  leaves' `DoorSlide`. Also on disk: `Locomotive_P_baked.blend` and `Locomotive_FittingsP.fbx` with the 24 sill tris cut.
+2. Known bugs/regressions
+- The cab cut needs **Game Settings > Security > Allow Mesh / Image APIs** on. Until then the client warns once
+  ("EditableMesh is not accessible") and the cab looks as before. If the cut FBX is re-imported instead, the runtime cut
+  finds nothing and adds no sills: then add the two sills to the leaves elsewhere (and fix engine2.py line ~615).
+- Lobby departure board names (LobbyBuilder) still unchanged.
+3. Next logical step
+- Reconnect Rojo, enable the Security toggle, play: open the cab doors (dock) and check the sills slide with the leaves.
+
 ## 2026-10-15: PROMPT 2 PASS (stations, scenery, signs, audio; tasks 1-4, 6-12; item 5 moved to Prompt 6)
 `lune run check` passes (360 specs, 49 files); `AUDIT_SEEDS=6 lune run audit Station` and `AUDIT_SEEDS=6 lune run audit Scenery` clean.
 Every task play-tested in Studio (stop 1 docked, console clean apart from the existing DataStore/Arvo lines).

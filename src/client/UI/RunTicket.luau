@@ -25,7 +25,7 @@ local RunTicket = {}
 RunTicket.W, RunTicket.H = 520, 340
 RunTicket.FOOT = 58 -- the strip along the bottom kept free for the host's CLOSE button
 
-local HEAD = Font.new("rbxasset://fonts/families/Arvo.json", Enum.FontWeight.Bold)
+local HEAD = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
 local PAD = 28
 local STUB = 44
 local INK = Theme.Color.ink

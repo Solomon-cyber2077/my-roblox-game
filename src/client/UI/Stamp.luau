@@ -89,7 +89,7 @@ function Stamp.new(props: Props): Frame
 	local letters = Ui.text({
 		Name = "Initials",
 		Text = TicketModel.initials(props.name, props.fallback),
-		Font = Font.new("rbxasset://fonts/families/Arvo.json", Enum.FontWeight.Bold),
+		Font = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold),
 		TextSize = if props.mine then 16 else 13,
 		Color = INK,
 		Size = UDim2.fromScale(1, 1),
@@ -164,7 +164,7 @@ function Stamp.word(props: WordProps): Frame
 	local letters = Ui.text({
 		Name = "Word",
 		Text = props.text,
-		Font = Font.new("rbxasset://fonts/families/Arvo.json", Enum.FontWeight.Bold),
+		Font = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold),
 		TextSize = size,
 		Color = color,
 		Size = UDim2.fromScale(0, 1),
