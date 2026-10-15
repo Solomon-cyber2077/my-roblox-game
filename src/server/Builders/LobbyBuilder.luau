@@ -1198,39 +1198,22 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		end
 	end
 
-	-- Posters on the end walls, above the dado: a travel bill, a bye-law, a propaganda bill, a typed
-	-- regulation, a lost-brother appeal and a night warning (PosterArt draws each one). Framed
-	-- prints sit in iron frames; the appeal is a notebook page pinned straight to the tiles' cap.
-	local slots = { { -1, -4 }, { -1, 12 }, { -1, 40 }, { 1, -4 }, { 1, 12 }, { 1, 40 } }
+	-- Posters on the end walls, above the dado, in iron frames (PosterArt draws each one): the
+	-- Wyvern Sands lithograph and the fog bye-law on the west wall, the stokers' bill and the red
+	-- moon notice on the east
+	local slots = { { -1, -4 }, { -1, 12 }, { 1, 12 }, { 1, 40 } }
 	for i, kind in PosterArt.Kinds do
 		local side, z = slots[i][1], slots[i][2]
 		local x = side * (HALF_X - 0.3)
 		local posterFace = if side > 0 then Enum.NormalId.Left else Enum.NormalId.Right
-		local paper
-		if kind == "brother" then
-			paper = decor(
-				Vector3.new(0.06, 6.6, 5.1),
-				at(side * (HALF_X - 0.05), 9.6, z),
-				PosterArt.paper(kind),
-				Enum.Material.SmoothPlastic
-			)
-			Kit.ball(
-				model,
-				0.32,
-				at(side * (HALF_X - 0.16), 12.5, z),
-				C.canvas,
-				{ material = Enum.Material.SmoothPlastic, collide = false, shadow = false }
-			)
-		else
-			local framePart = decor(Vector3.new(0.3, 9.4, 7.4), at(x, 10.6, z), C.iron, Enum.Material.Metal)
-			framePart.Name = "PosterFrame"
-			paper = decor(
-				Vector3.new(0.2, 9, 7),
-				at(x - side * 0.2, 10.6, z),
-				PosterArt.paper(kind),
-				Enum.Material.SmoothPlastic
-			)
-		end
+		local framePart = decor(Vector3.new(0.3, 9.4, 7.4), at(x, 10.6, z), C.iron, Enum.Material.Metal)
+		framePart.Name = "PosterFrame"
+		local paper = decor(
+			Vector3.new(0.2, 9, 7),
+			at(x - side * 0.2, 10.6, z),
+			PosterArt.paper(kind),
+			Enum.Material.SmoothPlastic
+		)
 		paper.Name = "Poster"
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = posterFace

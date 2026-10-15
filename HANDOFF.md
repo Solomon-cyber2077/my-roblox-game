@@ -43,10 +43,15 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   every bench (3 places each), both armchairs, the settee (2), the tea-room chairs, the piano chair and the booth
   stool (34 in all); LobbyService puts a Sit prompt on each, hidden while occupied, same checks as TrainService.
   Verified in Studio: every seat seats a player; piano chair faces the keys.
+- T11 posters (PosterArt, LobbyBuilder): the pale-blue regulation (COUNTED) and the notebook appeal (lost brother)
+  removed. Mind the Fog untouched (same slot). Reworked: coast is now WYVERN SANDS / BY THE NIGHT EXPRESS with an
+  S. & W. C. R. footer; coal is a buff letterpress bill (SEVERN & WESTERN COUNTIES RAILWAY / WANTED / STOKERS for the
+  Night Services, shovel woodcut, By Order 1889); moon is NOTICE TO PASSENGERS / WHEN THE MOON IS RED. All three
+  carry wear (torn corner, damp stains, soot at the foot). Layout: coast + fog west, stokers + moon east.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T11 posters).
+- Continue the lobby list (T12 floor boxes, bookshelves).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran
