@@ -809,9 +809,9 @@ return table.freeze({
 	-- room bulbs (a building's power wakes them) past it, whatever the seed.
 	Lamps = table.freeze({ PoolGap = 4.5, YardMax = 14, LitMax = 64 }),
 	VillageFill = 0.55, -- the share of the Far/Village boundary closed off
-	-- The sinkhole edge (props EdgeMark on every open edge tile): a hazard rail this far in from
-	-- the edge, tape on the ground in front of it and a glow strip along the lip.
-	Edge = table.freeze({ RailBack = 4.5, TapeBack = 6.6, GlowLights = 4 }),
+	-- The sinkhole edge (props EdgeMark on every open edge tile): an unseen stop RailBack in
+	-- from the edge; TapeBack is the margin HollowService keeps its teaching Crawler inside.
+	Edge = table.freeze({ RailBack = 4.5, TapeBack = 6.6 }),
 	DressingCount = 6, -- things scattered round the yard
 	-- How much likelier the better containers are to stand in the far zone, behind the last barrier
 	FarLoot = table.freeze({ ToolChest = 2.5, Crate = 1.3 }),

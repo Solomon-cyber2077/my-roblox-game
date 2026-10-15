@@ -983,9 +983,8 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	end
 
 	--[[
-		The sinkhole edge: on every open edge tile a hazard rail RailBack in from the edge, tape
-		in front of it and a glowing lip behind it (StationDressing EdgeMark), and a few red
-		lights low on the rail line (EdgeGlow). The far rail stops short of the side rails.
+		The sinkhole edge: on every open edge tile an unseen stop RailBack in from the edge
+		(StationDressing EdgeMark). The far stop ends short of the side ones.
 	]]
 	if not arch.terminus then
 		local E = Stations.Edge
@@ -1024,19 +1023,8 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 				end
 			end
 		end
-		local every = math.max(1, #marks // E.GlowLights)
-		for k, mark in marks do
+		for _, mark in marks do
 			table.insert(props, mark)
-			if k % every == every // 2 and (mark.size or 0) > 8 then
-				local alongX = mark.rot == 0
-				table.insert(props, {
-					kind = "EdgeGlow",
-					slab = mark.slab,
-					x = mark.x + (if alongX then 3 else 0),
-					z = mark.z + (if alongX then 0 else 3),
-					rot = mark.rot,
-				})
-			end
 		end
 	end
 

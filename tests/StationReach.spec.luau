@@ -96,7 +96,7 @@ describe("Station reach", function()
 		end)
 	end)
 
-	it("marks every open edge tile with a hazard rail, and lights the lip", function()
+	it("marks every open edge tile with an edge stop, and draws no glow", function()
 		eachPlan(function(id, arch, plan)
 			local marked: { [number]: boolean } = {}
 			local glows = 0
@@ -124,12 +124,11 @@ describe("Station reach", function()
 						and not plan.blocked[key]
 						and not marked[key]
 					then
-						error(`{id}: open edge tile {gx},{gz} has no hazard rail`)
+						error(`{id}: open edge tile {gx},{gz} has no edge stop`)
 					end
 				end
 			end
-			expect(glows).toBeAtLeast(3)
-			expect(glows).toBeAtMost(Stations.Edge.GlowLights + 1)
+			expect(glows).toBe(0)
 			local _ = arch
 		end)
 	end)
