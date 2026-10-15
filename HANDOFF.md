@@ -39,10 +39,14 @@ Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/
   the old office (16 x 11), 6.5 deep: panelled sides, turned corner posts, fascia with the TICKETS board, panelled
   counter with marble top, brass edge and grille rail, and room behind for the clerk (Edmondson card rack, date press,
   ledger, stool, oil lamp).
+- T10 sittable chairs: LobbyBuilder adds unseen Seats (Kit.seat, SeatName attribute, returned as `Built.seats`) on
+  every bench (3 places each), both armchairs, the settee (2), the tea-room chairs, the piano chair and the booth
+  stool (34 in all); LobbyService puts a Sit prompt on each, hidden while occupied, same checks as TrainService.
+  Verified in Studio: every seat seats a player; piano chair faces the keys.
 2. Known bugs/regressions
 - Multi-player boarding (two in hall, one ready) checked by reading TakeCrew, not in a Local Server.
 3. Next logical step
-- Continue the lobby list (T10 sittable chairs).
+- Continue the lobby list (T11 posters).
 
 ## 2026-10-15: ERRANDS, PYLONS, ARVO FONT, CAB DOOR SILLS
 `lune run check` passes (360 specs). **Not play-verified:** Rojo was disconnected from the reopened Studio (Studio still ran

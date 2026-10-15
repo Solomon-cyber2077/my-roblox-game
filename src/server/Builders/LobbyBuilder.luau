@@ -30,6 +30,7 @@ export type Built = {
 	board: BasePart,
 	outfitter: BasePart,
 	ledger: BasePart,
+	seats: { Seat },
 	displayTrain: Model,
 	displayCabins: { Cabin },
 }
@@ -126,6 +127,15 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	end
 	local function decor(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?): BasePart
 		return block(size, cf, color, material, { collide = false, shadow = false })
+	end
+	-- Every chair and bench gets unseen Seats (the sitter faces the frame's -Z); LobbyService puts a
+	-- Sit prompt on each, as TrainService does aboard
+	local seats: { Seat } = {}
+	local function seatAt(cf: CFrame, width: number, name: string)
+		local seat =
+			Kit.seat(model, Vector3.new(width, 0.3, 1.6), cf, C.wood, { collide = false, transparency = 1 })
+		seat:SetAttribute("SeatName", name)
+		table.insert(seats, seat)
 	end
 	-- A straight member between two points in hall space.
 	local function member(
@@ -932,6 +942,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			material = Enum.Material.Wood,
 		})
 		Kit.post(model, 2.5, 0.2, at(tx + 1.5, 1.25, BACK_Z - 3), C.iron, { material = Enum.Material.Metal })
+		seatAt(at(tx + 1.5, 2.6, BACK_Z - 3), 1.2, "Stool")
 		local lampGlass = Kit.neon(model, Vector3.new(0.5, 0.7, 0.5), at(tx + 6, 4.3, front + 1.1), C.flame)
 		lampGlass.Transparency = 0.2
 		decor(Vector3.new(0.7, 0.2, 0.7), at(tx + 6, 3.95, front + 1.1), C.brass, Enum.Material.Metal)
@@ -1155,6 +1166,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				Enum.Material.WoodPlanks
 			)
 		end
+		for _, sx in { -3, 0, 3 } do
+			seatAt(frame * CFrame.new(sx, 1.6, 0), 2.6, "Bench")
+		end
 	end
 	for _, x in { -80, -30, 30, 80 } do
 		bench(x, 8, 1)
@@ -1288,6 +1302,12 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	armchair(wx - 3, wz - 5, 90, 3)
 	armchair(wx - 3, wz + 5, 90, 3)
 	armchair(wx + 4, wz, 90, 7)
+	for _, dz in { -5, 5 } do
+		seatAt(at(wx - 3, 0, wz + dz) * Kit.angles(0, 90, 0) * CFrame.new(0, 1.75, -0.1), 2.2, "Armchair")
+	end
+	for _, sx in { -1.6, 1.6 } do
+		seatAt(at(wx + 4, 0, wz) * Kit.angles(0, 90, 0) * CFrame.new(sx, 1.75, -0.1), 3, "Settee")
+	end
 	-- a side table with a lamp between the chairs, and a pot of tea gone cold
 	Kit.post(model, 2.4, 0.4, at(wx - 3, 1.2, wz), C.wood, { material = Enum.Material.Wood })
 	Kit.cylinder(
@@ -1484,6 +1504,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				Enum.Material.Wood,
 				{ collide = false }
 			)
+			seatAt(seat * CFrame.new(0, 2.05, 0) * Kit.angles(0, s * 90, 0), 1.4, "Chair")
 		end
 	end
 
@@ -1623,6 +1644,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	chairPiece(Vector3.new(1.95, 0.36, 0.2), CFrame.new(0, 4.2, -0.86), roseLight)
 	chairPiece(Vector3.new(1.7, 0.15, 0.16), CFrame.new(0, 2.45, -0.86), ROSE)
 	chairPiece(Vector3.new(0.62, 1.6, 0.1), CFrame.new(0, 3.25, -0.88), roseLight)
+	seatAt(chairAt * CFrame.new(0, 2.05, 0) * Kit.angles(0, 180, 0), 1.8, "Piano chair")
 
 	-- a candle stand at the piano's left: round base, slim turned post, a top just big enough for one candle
 	local standAt = pianoAt * CFrame.new(4.2, 0, -0.4) -- the bass end, left as you face the keys
@@ -1909,6 +1931,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		board = board,
 		outfitter = outfitter,
 		ledger = ledger,
+		seats = seats,
 		displayTrain = display.model,
 		displayCabins = display.cabins,
 	}
