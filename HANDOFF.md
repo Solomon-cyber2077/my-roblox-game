@@ -1048,3 +1048,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 - Follow-up: floor now meets the end walls (the corner gap is gone), black ground under the hall, the waiting-corner bookcase replaced with a glazed one, a new palm, the window backdrop widened and lowered with no horizon band.
 
 - Lobby storm flash: hidden PointLights (range 34) replaced by SpotLights aimed through each pane at the floor strip under it; amber hall lamps no longer washed white. Lobby audit light budget failure predates this.
+
+## 2026-10-15 lobby night lighting
+1. Lobby lit only by its lamps: LOBBY ambient/outdoor near black, sun off, sky diffuse 0 in lobby, hall FillLights removed. End gables are brick right up to the roof (no sky gaps).
+2. Known: none seen; lobby is intentionally dark, tune LOBBY.exposure in Scenery/Sky if too dark.
+3. Next: add lamps to any corner that reads too dark.
