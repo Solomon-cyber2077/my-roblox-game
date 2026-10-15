@@ -2,9 +2,11 @@
 --[[
 	The leak alert, with Broken Things Markers on (UI/BrokenThingMarkers.visible): a plate in the
 	HUD's leak slot (UI/Hud: it yields to every modal and full-screen UI and never draws over
-	anything) naming the nearest leak's car and distance, and a world arrow over your head
-	pointing to it with the distance. Both come from the leak objects (anchors TrainService tags
-	Leak) through Logic/LeakAlert, so the moment the last leak is patched they are gone.
+	anything) naming the nearest leak's car and distance, a world arrow over your head
+	pointing to it with the distance, and a small red "!" at every leak (seen from anywhere
+	aboard, and from outside the train only when you are near it; the Last Light's too). All come
+	from the leak objects (anchors TrainService tags Leak) through Logic/LeakAlert, so the
+	moment the last leak is patched they are gone.
 
 	With markers off there is neither: the leaks' own steam and hiss carry it, stronger
 	(TrainVisualsController), along with the hull's effects (HullController).
@@ -31,6 +33,9 @@ local LeakController = {}
 local TAG = "Leak"
 local ARROW_HEIGHT = 4.2 -- studs over your root
 local ARROW_NEAR = 7 -- closer than this to the leak, the arrow is not needed
+local MARK_NEAR = 20 -- off the train, a leak's "!" shows only this close (studs)
+
+local marks: { [BasePart]: BillboardGui } = {}
 
 local plate: Frame? = nil
 local label: TextLabel? = nil
@@ -120,6 +125,48 @@ local function placeArrow(model: Model, at: Vector3, toward: Vector3)
 	end
 end
 
+-- A small red exclamation mark at the leak: a painted "!" with a soot outline, no plate.
+local function buildMark(anchor: BasePart): BillboardGui
+	local mark = Instance.new("BillboardGui")
+	mark.Name = "LeakMark"
+	mark.Size = UDim2.fromOffset(24, 44)
+	mark.AlwaysOnTop = true
+	mark.LightInfluence = 0
+	mark.Adornee = anchor
+	mark.Enabled = false
+	local text = Ui.text({
+		Text = "!",
+		Font = Theme.Font.display,
+		TextSize = 42,
+		Color = Theme.Color.dangerText,
+		Size = UDim2.fromScale(1, 1),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	text.TextStrokeColor3 = Theme.Color.ink
+	text.TextStrokeTransparency = 0
+	text.Parent = mark
+	mark.Parent = Players.LocalPlayer:FindFirstChildOfClass("PlayerGui")
+	return mark
+end
+
+local function updateMarks(show: boolean, root: BasePart?)
+	local aboard = Session.status() == "Aboard"
+	for anchor, mark in marks do
+		if not anchor:HasTag(TAG) or not anchor:IsDescendantOf(Workspace) then
+			mark:Destroy()
+			marks[anchor] = nil
+		end
+	end
+	for _, anchor in CollectionService:GetTagged(TAG) do
+		if anchor:IsA("BasePart") and anchor:IsDescendantOf(Workspace) then
+			local mark = marks[anchor] or buildMark(anchor)
+			marks[anchor] = mark
+			local near = root ~= nil and (root.Position - anchor.Position).Magnitude <= MARK_NEAR
+			mark.Enabled = show and (aboard or near)
+		end
+	end
+end
+
 local function leaks(): { LeakAlert.Leak }
 	local out: { LeakAlert.Leak } = {}
 	for _, part in CollectionService:GetTagged(TAG) do
@@ -142,7 +189,9 @@ local function step()
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	local me = if root then { x = root.Position.X, y = root.Position.Y, z = root.Position.Z } else nil
 	local show = Session.isRunActive() and Session.isMember() and Session.isAlive()
-	local view = if show then LeakAlert.view(leaks(), me, BrokenThingMarkers.visible()) else nil
+	local markersOn = BrokenThingMarkers.visible()
+	local view = if show then LeakAlert.view(leaks(), me, markersOn) else nil
+	updateMarks(show and markersOn, root)
 	if plate and label then
 		plate.Visible = view ~= nil
 		if view then
