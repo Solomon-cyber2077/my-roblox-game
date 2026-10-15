@@ -2,15 +2,15 @@
 --[[
 	Builds one enterable building from its LayoutGen entry: walls split around their
 	doors and windows, the ceiling and roof, the front door under a painted name board,
-	windows glazed, broken or boarded, ceiling lamps (most of them dead), the fuse box,
+	windows glazed, broken or boarded, ceiling lamps (most of them dead),
 	locked doors and every piece of furniture that is not a container (StationBuilder
 	builds those, so the search prompts hang from them). A building with an upper floor
 	gets its slab, the stairwell ramp, a lean-to roof over the front and a pitched roof
 	over the upper storey; moonlight comes in through some of the broken windows.
 
 	The frame is the building's origin on the floor; local -Z faces the platform.
-	Returns a handle BuildingService uses at run time: the lamps, the glass that lights
-	up with the power, the fuse box and the locked doors.
+	Returns a handle BuildingService uses at run time: the lamps, the glass and the locked
+	doors.
 ]]
 
 local CollectionService = game:GetService("CollectionService")
@@ -28,7 +28,6 @@ export type Lock = { leaf: BasePart, door: BuildingGen.Door, open: CFrame }
 export type Handle = {
 	lamps: { Lamp },
 	glass: { BasePart },
-	fuse: BasePart,
 	locks: { Lock },
 }
 
@@ -405,37 +404,6 @@ function BuildingBuilder.build(
 		table.insert(lamps, { light = light, bulb = bulb, works = lamp.works })
 	end
 
-	-- the fuse box, by the front door
-	local fuse = block(
-		Vector3.new(2, 2.6, 0.6),
-		at(plan.fuse.x, 5, plan.fuse.z - 0.05),
-		rgb(70, 84, 76),
-		M.Metal,
-		true
-	)
-	fuse.Name = "FuseBox"
-	block(
-		Vector3.new(0.3, 1.0, 0.35),
-		at(plan.fuse.x + 0.5, 5.2, plan.fuse.z + 0.37),
-		rgb(140, 36, 30),
-		M.Metal,
-		false
-	)
-	block(
-		Vector3.new(1.2, 0.5, 0.05),
-		at(plan.fuse.x - 0.2, 5.75, plan.fuse.z + 0.275),
-		rgb(220, 180, 40),
-		M.SmoothPlastic,
-		false
-	)
-	block(
-		Vector3.new(0.3, H - 6.3, 0.3),
-		at(plan.fuse.x - 0.6, 6.3 + (H - 6.3) / 2, plan.fuse.z - 0.2),
-		rgb(40, 40, 40),
-		M.Metal,
-		false
-	)
-
 	-- the stairwell's ramp: one solid wedge, nothing to get caught under ------------------------
 	for _, stair in plan.stairs do
 		Kit.wedge(
@@ -481,7 +449,7 @@ function BuildingBuilder.build(
 		end
 	end
 
-	return { lamps = lamps, glass = glass, fuse = fuse, locks = locks }
+	return { lamps = lamps, glass = glass, locks = locks }
 end
 
 return BuildingBuilder

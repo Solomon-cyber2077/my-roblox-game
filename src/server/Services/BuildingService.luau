@@ -2,9 +2,6 @@
 --[[
 	The stop's enterable buildings while its doors are open.
 
-	  Fuse box     spend a part to bring the power back: every lamp comes on, the windows
-	               glow, and Hollows will not stand in a lit building. Whatever sleeps
-	               inside wakes and flees; nothing follows the crew in.
 	  Locked door  spend a part to force it. Behind it is the good stuff (a coal cellar, a
 	               strongroom, a dispensary), and the noise wakes whatever sleeps nearby.
 
@@ -31,7 +28,6 @@ type Active = {
 	building: LayoutGen.Building,
 	handle: BuildingBuilder.Handle,
 	slab: BasePart,
-	powered: boolean,
 	fallen: boolean,
 	prompts: { ProximityPrompt },
 }
@@ -39,8 +35,6 @@ type Active = {
 local BuildingService = {}
 
 local active: { [number]: Active } = {}
-local LIT = Color3.fromRGB(255, 214, 160)
-local WINDOW_LIT = Color3.fromRGB(216, 156, 96) -- warm, but too dim to glare across the yard
 
 local function canInteract(player: Player): boolean
 	return RunRules.isStationOpen(Registry.RunDirector.Phase())
@@ -93,36 +87,6 @@ local function origin(state: Active): CFrame
 	return state.slab.CFrame * CFrame.new(0, 1, 0)
 end
 
-local function powerUp(player: Player, state: Active, fuse: ProximityPrompt)
-	if state.powered or state.fallen or not canInteract(player) then
-		return
-	end
-	local def = Buildings.Defs[state.building.kind]
-	if not takeParts(player, Buildings.PowerCost) then
-		NetService.Fire("Notify", player, "Warning", "The fuse box needs a part. Bring scrap from the yard.")
-		return
-	end
-	state.powered = true
-	fuse.Enabled = false
-	for _, lamp in state.handle.lamps do
-		lamp.light.Enabled = true
-		lamp.light.Brightness = 1.5
-		lamp.light:SetAttribute("Base", 1.5)
-		lamp.light:SetAttribute("Flicker", false)
-		lamp.bulb.Material = Enum.Material.Neon
-		lamp.bulb.Color = LIT
-	end
-	for _, pane in state.handle.glass do
-		pane.Material = Enum.Material.Neon
-		pane.Color = WINDOW_LIT
-		pane.Transparency = 0.5
-	end
-	NetService.FireAll("Fx", "Sound", { cue = "Breaker", position = state.handle.fuse.Position })
-	NetService.FireAll("Notify", "Station", `{player.DisplayName} got the lights on in the {def.name}.`)
-	local plan = state.building.plan
-	Registry.HollowService.Disturb(origin(state).Position, math.max(plan.outerX, plan.outerZ) + 4)
-end
-
 local function force(player: Player, state: Active, lock: BuildingBuilder.Lock, p: ProximityPrompt)
 	if state.fallen or not canInteract(player) or not p.Enabled then
 		return
@@ -164,7 +128,7 @@ function BuildingService.Start()
 	end)
 end
 
--- Arms the fuse boxes and locked doors of the station that just opened its doors.
+-- Arms the locked doors of the station that just opened its doors.
 function BuildingService.Activate(built: StationBuilder.Built, plan: LayoutGen.Plan)
 	table.clear(active)
 	for _, building in plan.buildings do
@@ -175,17 +139,10 @@ function BuildingService.Activate(built: StationBuilder.Built, plan: LayoutGen.P
 				building = building,
 				handle = handle,
 				slab = slab,
-				powered = false,
 				fallen = false,
 				prompts = {},
 			}
 			active[building.id] = state
-			local fuse =
-				prompt(handle.fuse, "Power", "Fuse Box", "Restore power · 1 part", Buildings.PowerHold)
-			table.insert(state.prompts, fuse)
-			fuse.Triggered:Connect(function(player)
-				powerUp(player, state, fuse)
-			end)
 			for _, lock in handle.locks do
 				local p =
 					prompt(lock.leaf, "Force", "Locked Door", "Force the lock · 1 part", Buildings.ForceHold)
@@ -198,24 +155,9 @@ function BuildingService.Activate(built: StationBuilder.Built, plan: LayoutGen.P
 	end
 end
 
--- True inside a building whose power is back on (Hollows will not stand there).
-function BuildingService.IsLitAt(position: Vector3): boolean
-	if next(active) == nil then
-		return false
-	end
-	local localPos = StationService.ToLocal(position)
-	for _, state in active do
-		if state.powered and not state.fallen then
-			local plan = state.building.plan
-			if
-				math.abs(localPos.X - state.building.x) <= plan.outerX
-				and math.abs(localPos.Z - state.building.z) <= plan.outerZ
-				and localPos.Y < (if plan.upper then plan.upper.top + 2 else plan.height + 2)
-			then
-				return true
-			end
-		end
-	end
+-- Buildings no longer have power to restore (the fuse boxes went 2026-10-14), so none is a
+-- lit refuge; kept for HollowService, which asks.
+function BuildingService.IsLitAt(_position: Vector3): boolean
 	return false
 end
 

@@ -79,7 +79,7 @@ export type Item = {
 	container: string?,
 	y: number,
 }
--- Ceiling lamps follow the fuse box; a Lantern always burns; Moon is the night through a broken window.
+-- Ceiling lamps work or are dead by the seed; a Lantern always burns; Moon is the night through a broken window.
 export type Lamp = { x: number, z: number, room: number, works: boolean, y: number, kind: string }
 export type Spot = { x: number, z: number, rot: number, kind: string, room: number, y: number }
 export type Stair = { x0: number, x1: number, z0: number, z1: number, rise: number } -- climbs toward +x
@@ -105,7 +105,6 @@ export type Plan = {
 	items: { Item },
 	lamps: { Lamp },
 	sleepers: { Spot },
-	fuse: { x: number, z: number, rot: number },
 	exits: { { x: number, z: number } },
 	stairs: { Stair },
 	upper: Upper?,
@@ -614,7 +613,6 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 	local items: { Item } = {}
 	local lamps: { Lamp } = {}
 	local sleepers: { Spot } = {}
-	local fuse = { x = 0, z = 0, rot = 180 }
 	local moons = 0
 
 	for _, r in rooms do
@@ -674,15 +672,6 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 				room = r.id,
 				y = 0,
 			})
-		end
-
-		if r == frontRoom then
-			-- the fuse box, on the front wall beside the door
-			local front = r.doors[1]
-			local side = if rng:chance(0.5) then 1 else -1
-			local x = front.at + side * (front.width / 2 + 2.2)
-			fuse = { x = x, z = rect.z0 + 0.35, rot = 180 }
-			table.insert(occupied, { x0 = x - 1.2, z0 = rect.z0, x1 = x + 1.2, z1 = rect.z0 + 2 })
 		end
 
 		local placements: { Buildings.Placement } = if r.kind == "Corridor"
@@ -949,7 +938,6 @@ function BuildingGen.generate(kind: string, seed: number): Plan
 		items = items,
 		lamps = lamps,
 		sleepers = sleepers,
-		fuse = fuse,
 		exits = exits,
 		stairs = stairs,
 		upper = upperInfo,
