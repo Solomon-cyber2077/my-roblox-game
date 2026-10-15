@@ -485,6 +485,14 @@ local Tuning = {
 	Lobby = {
 		SeatRetouchDelay = 1.5, -- seconds a lobby seat ignores touches after someone stands up
 	},
+	-- The crew's carried lantern. One reach and one brightness for every cosmetic: a lantern's
+	-- look changes only its colour, glow style and flicker (Config/Cosmetics, Visual/CosmeticModels)
+	CarriedLantern = {
+		LightRange = 16, -- studs the lantern lights (gameplay)
+		LightBrightness = 0.55,
+		CoreRange = 6, -- the bright pool close round the lamp (glow style only)
+		CoreBrightness = 3,
+	},
 }
 
 return table.freeze(Tuning)
