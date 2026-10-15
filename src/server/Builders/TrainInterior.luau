@@ -50,7 +50,7 @@ local C = {
 	polish = rgb(96, 58, 36),
 	velvet = rgb(86, 24, 30), -- oxblood moquette
 	velvetGreen = rgb(54, 86, 66),
-	linen = rgb(36, 74, 70), -- teal antimacassars, the company's monogram embroidered in gilt
+	linen = rgb(36, 74, 70), -- teal antimacassars, plain
 	brass = rgb(164, 130, 74), -- aged, matching the carriage trim
 	iron = rgb(44, 44, 48),
 	ironLight = rgb(70, 70, 74),
@@ -656,26 +656,30 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 
 	-- A velvet window seat for one against wall `side` (1 platform, -1 far), its sitter facing
 	-- `facing` (1 = +X). The aisle side is left open for the runner and the crew walking it.
-	local BENCH_W = 2.3
-	local BENCH_Z = 5.62 - BENCH_W / 2 -- the seat's middle, its outer end a hand off the lining
+	-- The bench runs from a hand off the lining; its cushion sits toward the aisle end, so a
+	-- seated R6's outer arm (2 studs from its middle) stays clear of the wall.
+	local BENCH_W = 3.2
+	local BENCH_Z = 5.62 - BENCH_W / 2 -- the bench's middle, its outer end a hand off the lining
+	local SIT_Z = 3.42 -- the sitter's middle
 	local function bench(x: number, side: number, facing: number)
 		local yaw = if facing > 0 then -90 else 90
 		local zc = side * BENCH_Z
+		local sitOffset = side * (SIT_Z - BENCH_Z)
 		solid(Vector3.new(2.3, 1.25, BENCH_W), at(x - facing * 0.25, 0.625, zc), C.woodDark, M.Wood)
-		seat(Vector3.new(1.75, 0.45, 1.8), at(x, 1.475, zc) * Kit.angles(0, yaw, 0), C.velvet, "Saloon seat")
+		seat(
+			Vector3.new(1.75, 0.45, 1.8),
+			at(x, 1.475, side * SIT_Z) * Kit.angles(0, yaw, 0),
+			C.velvet,
+			"Saloon seat"
+		)
 		local back = at(x - facing * 1.15, 2.7, zc) * Kit.angles(0, 0, facing * 8)
 		solid(Vector3.new(0.5, 2.9, BENCH_W), back, C.velvet, M.Fabric)
 		decor(Vector3.new(0.55, 0.15, BENCH_W + 0.08), back * CFrame.new(0, 1.5, 0), C.woodDark, M.Wood)
-		local cloth =
-			decor(Vector3.new(0.06, 0.78, 1.25), back * CFrame.new(facing * 0.28, 0.9, 0), C.linen, M.Fabric)
-		letter(
-			cloth,
-			if facing > 0 then Enum.NormalId.Right else Enum.NormalId.Left,
-			"L·T·O",
-			C.gilt,
-			BOARD_FONT,
-			Vector2.new(125, 78),
-			1
+		decor(
+			Vector3.new(0.06, 0.78, 1.25),
+			back * CFrame.new(facing * 0.28, 0.9, sitOffset),
+			C.linen,
+			M.Fabric
 		)
 		-- the armrest at the aisle end, on a turned leg
 		local az = side * (BENCH_Z - BENCH_W / 2 + 0.15)
