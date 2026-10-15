@@ -28,8 +28,8 @@ local Ui = require(script.Parent.Ui)
 
 local Ticket = {}
 
-local HEAD = Font.new("rbxasset://fonts/families/Arvo.json", Enum.FontWeight.Bold)
-local HEAD_LIGHT = Font.new("rbxasset://fonts/families/Arvo.json")
+local HEAD = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
+local HEAD_LIGHT = Font.new("rbxasset://fonts/families/Merriweather.json")
 local BODY = Theme.Font.type
 
 local PAPER = Theme.Color.paper

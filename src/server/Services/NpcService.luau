@@ -177,7 +177,7 @@ local function hideItems()
 			for _, handle in built.containers do
 				if handle.def.y == nil and handle.def.zone ~= "Safe" then
 					table.insert(any, handle)
-					if handle.def.zone == "Far" or handle.def.zone == "Mid" then
+					if handle.def.zone == "Far" then
 						table.insert(far, handle)
 					end
 				end
