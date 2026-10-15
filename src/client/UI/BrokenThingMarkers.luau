@@ -15,6 +15,7 @@ local root: Instance? = nil
 local markerByPrompt: { [ProximityPrompt]: BillboardGui? } = {}
 local watchers: { [ProximityPrompt]: { RBXScriptConnection } } = {}
 local mounted = false
+local suppressed = false -- the train camera is open (Controllers/TrainCamController)
 
 local function destroyMarker(prompt: ProximityPrompt)
 	local marker = markerByPrompt[prompt]
@@ -63,6 +64,7 @@ local function refresh(prompt: ProximityPrompt)
 		or prompt.Parent == nil
 		or not prompt:IsDescendantOf(Workspace)
 		or not visible()
+		or suppressed
 	then
 		destroyMarker(prompt)
 		return
@@ -136,6 +138,22 @@ local function watch(prompt: ProximityPrompt)
 		end),
 	}
 	refresh(prompt)
+end
+
+-- Hides every marker while the train camera looks out (nothing can be used from there).
+function Markers.setSuppressed(on: boolean)
+	if on == suppressed then
+		return
+	end
+	suppressed = on
+	for prompt in watchers do
+		refresh(prompt)
+	end
+end
+
+-- True while the train camera has the markers hidden (the leak marks follow it too).
+function Markers.suppressed(): boolean
+	return suppressed
 end
 
 function Markers.mount(gui: ScreenGui)
