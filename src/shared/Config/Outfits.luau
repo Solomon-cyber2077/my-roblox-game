@@ -4,8 +4,10 @@
 	Builders/OutfitKit turns into a figure. One look describes a whole person:
 
 	  cut      the upper garment: "Frock" (knee-length frock coat over a waistcoat),
+	           "StaffFrock" (a railway guard's double-breasted frock coat, buttoned to the neck),
 	           "Sack" (a shopkeeper's lounge coat), "Reefer" (railway staff jacket, two rows of
 	           brass buttons) or "Bodice" (a fitted bodice with a lace collar)
+	  belt     a guard's patent-leather shoulder belt and pouch
 	  skirt    nil for trousers and boots; "Plain" or "Bustle" for a long skirt
 	  hat      "Top", "Bowler", "Peaked" (company cap with a badge), "Lace" (a cap), "Bonnet"
 	           or "Visor" (a clerk's eyeshade); nil for bare-headed indoors
@@ -31,6 +33,7 @@ export type Look = {
 	hat: string?,
 	hatColor: { number }?,
 	prop: string?,
+	belt: boolean?,
 }
 
 export type Pose = { lean: number?, armL: number?, armR: number?, head: number? }
@@ -132,7 +135,9 @@ local Lobby: { [string]: Resident } = {
 			skin = { 210, 168, 140 },
 			hair = { 70, 60, 54 },
 			whiskers = true,
-			cut = "Reefer",
+			-- 1870s-90s guards: double-breasted frock coat, peaked cap, shoulder belt (LORE.md 6)
+			cut = "StaffFrock",
+			belt = true,
 			coat = { 24, 30, 44 },
 			trim = BRASS,
 			waistcoat = { 24, 30, 44 },

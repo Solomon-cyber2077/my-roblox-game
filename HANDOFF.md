@@ -1,5 +1,39 @@
 # HANDOFF
 
+## 2026-10-15: LOBBY + NPC PASS, REVISION (items 4 and 8 rewritten, LORE spot-check)
+`lune run check`: format, lint, types and 360 specs pass; the audit fails only on Lobby lights 49 > 48, caused by the
+owner's uncommitted candle firelight in LobbyBuilder (left as is; the owner decides: drop one light or raise the budget).
+1. Features completed
+- Item 4: the carried lantern's gameplay light is one shared constant, `Tuning.CarriedLantern` (LightRange 16, the
+  original reach; LightBrightness 0.55), the same for every cosmetic. A look's `glow` now only brightens the close
+  pool (CoreRange 6). Cosmetics change colour, glow style and flicker only. Verified in play: lights r6 and r16.
+- Item 8 (Controllers/LobbyStorm, owner's wide cloud deck and no horizon band kept): natural silhouettes only, no
+  buildings: eight mountain peaks, eleven hills on one dark ground, nine bare trees, 500 studs either way; a distant
+  veiled moon; churning black cloud (smoke particles in two layers, lit by the flash); heavier rain (320/s per window);
+  the interior flash cut to 1.8 x amount over 34 studs so the hall stays amber; resting sky lightened (58,62,84) so the
+  silhouettes read. Once per session at a random time (60-480 s) one strike shows 1-2 TallOnes on the hill line out
+  beyond a window, drawn from the sky's own shape (`Heavens.TallOneShape`, new export); they never move and vanish
+  with the light. Studio-only hook: player attribute `DevStormGlimpse` calls it on the next strike. Verified: glimpse
+  seen through a window, nothing shown again in the next 35 s, 13 flickers, no errors. Performance: no rain, bolt or
+  flash lights; thinner churn.
+- Guard re-dressed from the sources: `StaffFrock` cut (double-breasted frock coat buttoned to the neck) and a
+  patent-leather shoulder belt with pouch (`belt`), peaked cap.
+- LORE.md spot-checked against web sources (listed there): guard's uniform, women's railway work (no women booking
+  clerks before 1915, so Mabel is flagged), bustle/sleeve dates, service dress, Edmondson tickets, bookstalls, piano
+  sconces, and a caution that green engines with chocolate-and-cream coaches is the GWR livery.
+- Owner's manual changes noticed and left untouched: commits 806b57d and f2aa492 (town/church skyline and horizon
+  band removed, wider cloud deck, booth set into the back wall with the clerk moved in, lamp standards replacing all
+  sconces, touch-to-sit seats with `Tuning.Lobby.SeatRetouchDelay`, piano chair back removed, outfitter posts and back
+  board removed, end-wall floor gap closed, black underlay, new corner bookcase and palm); uncommitted: lobby stamina
+  never drains (MovementController), the candle stand's flame, wick and firelight, the notice board left bare
+  (LobbyBuilder). None of them were staged in my commits.
+2. Known bugs/regressions
+- Lobby audit over its light budget by one (see above).
+- Mabel as a woman ticket clerk is an anachronism for 1884-92 (LORE.md 6); her role is unchanged pending the owner.
+- The new thunder/rain sounds still not auditioned by ear.
+3. Next logical step
+- Owner: decide the light budget and Mabel's role, then merge after Claude Code is finished.
+
 ## 2026-10-15: LOBBY + NPC PASS (branch claude/lobby-npc-pass, own worktree ../LTO-lobby, Rojo 34874, ../lobby.rbxl)
 Not merged into claude/last-train-out yet (owner merges after Claude Code's HUD/train/station work is done).
 1. Features completed
