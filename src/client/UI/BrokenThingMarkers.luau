@@ -40,9 +40,9 @@ function Markers.visible(): boolean
 	return visible()
 end
 
+-- Leaks have their own mark (Controllers/LeakController: a red "!" at the leak).
 local function target(prompt: ProximityPrompt): boolean
-	local action = prompt:GetAttribute("Action")
-	return action == "Breach" or action == "Power"
+	return prompt:GetAttribute("Action") == "Power"
 end
 
 local function remove(prompt: ProximityPrompt)
@@ -79,7 +79,7 @@ local function refresh(prompt: ProximityPrompt)
 		local plate = marker:FindFirstChildOfClass("Frame")
 		local label = plate and plate:FindFirstChildOfClass("TextLabel")
 		if label then
-			label.Text = if prompt:GetAttribute("Action") == "Power" then "POWER" else "LEAK"
+			label.Text = "POWER"
 		end
 		marker.Enabled = visible()
 		return
@@ -103,7 +103,7 @@ local function refresh(prompt: ProximityPrompt)
 	Ui.corner(2).Parent = plate
 	Ui.stroke(Theme.Color.brass, 1, 0.1).Parent = plate
 	local label = Ui.text({
-		Text = if prompt:GetAttribute("Action") == "Power" then "POWER" else "LEAK",
+		Text = "POWER",
 		Font = Theme.Font.displayMedium,
 		TextSize = 13,
 		Color = Theme.Color.brassLight,
