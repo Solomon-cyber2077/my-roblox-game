@@ -9,6 +9,7 @@
 
 local Kit = require(script.Parent.Kit)
 local Details = require(script.Parent.CosmeticDetails)
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local CosmeticModels = {}
 
@@ -69,11 +70,14 @@ function CosmeticModels.lantern(look: { [string]: any }, frame: CFrame): Model
 		{ material = Enum.Material.Metal }
 	)
 
-	-- brightest at the lamp and falling away: a strong short light over a soft wide one
+	-- brightest at the lamp and falling away: a strong short pool over a soft wide light. The wide
+	-- light's reach and strength are the same for every lantern (Tuning.CarriedLantern); a look's
+	-- `glow` only brightens the pool round the lamp
+	local lamp = Tuning.CarriedLantern
 	local glow = if typeof(look.glow) == "number" then look.glow else 1
-	local light = Kit.pointLight(lens, Kit.rgb(look.light), 3 * glow, 6, false)
+	local light = Kit.pointLight(lens, Kit.rgb(look.light), lamp.CoreBrightness * glow, lamp.CoreRange, false)
 	light.Name = "Glow"
-	Kit.pointLight(lens, Kit.rgb(look.light), 0.55 * glow, 18, false).Name = "Glow"
+	Kit.pointLight(lens, Kit.rgb(look.light), lamp.LightBrightness, lamp.LightRange, false).Name = "Glow"
 	if look.light2 then
 		lens:SetAttribute("CycleA", Kit.rgb(look.light))
 		lens:SetAttribute("CycleB", Kit.rgb(look.light2))
