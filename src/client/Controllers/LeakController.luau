@@ -8,7 +8,8 @@
 	aisle car to car to the nearest leak and curving to the wall at it; on the platform while
 	the train stands at a station, to the Last Light's door when it is leaking. All come from
 	the leak objects (anchors TrainService tags Leak), so the moment the last leak is patched
-	they are gone.
+	they are gone. When the Last Light starts leaking, a line fades in and out at the top of
+	the screen.
 
 	With markers off there is neither: the leaks' own steam and hiss carry it, stronger
 	(TrainVisualsController), along with the hull's effects (HullController).
@@ -42,6 +43,8 @@ local marks: { [BasePart]: BillboardGui } = {}
 
 local plate: Frame? = nil
 local label: TextLabel? = nil
+local notice: TextLabel? = nil
+local noticeAt = -math.huge -- os.clock() the Last Light notice started
 local chevronFolder: Folder? = nil
 local chevronParts: { BasePart } = {} -- two arms a chevron
 
@@ -252,6 +255,54 @@ local function updateChevrons(on: boolean, root: BasePart?)
 	folder.Parent = Workspace.CurrentCamera
 end
 
+local function buildNotice(slot: Frame)
+	local text = Ui.text({
+		Name = "LastLightLeak",
+		Text = A.NoticeText,
+		Font = Theme.Font.displayMedium,
+		TextSize = 24,
+		Color = Theme.Color.brassLight,
+		Position = UDim2.new(0.5, 0, 0, 58),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Size = UDim2.fromOffset(520, 30),
+		XAlign = Enum.TextXAlignment.Center,
+		Transparency = 1,
+	})
+	text.TextStrokeColor3 = Theme.Color.ink
+	text.TextStrokeTransparency = 1
+	text.Visible = false
+	text.Parent = slot:FindFirstAncestorOfClass("ScreenGui")
+	notice = text
+end
+
+-- 0 fully shown, 1 gone
+local function noticeFade(): number
+	local t = os.clock() - noticeAt
+	if t < 0 or t > A.NoticeIn + A.NoticeHold + A.NoticeOut then
+		return 1
+	elseif t < A.NoticeIn then
+		return 1 - t / A.NoticeIn
+	elseif t < A.NoticeIn + A.NoticeHold then
+		return 0
+	end
+	return (t - A.NoticeIn - A.NoticeHold) / A.NoticeOut
+end
+
+local function updateNotice(on: boolean, slot: Frame?)
+	local text = notice
+	if text == nil then
+		return
+	end
+	local fade = noticeFade()
+	-- it yields like the leak slot: never over a modal or a full-screen screen
+	local visible = on and fade < 1 and slot ~= nil and slot.Visible
+	text.Visible = visible
+	if visible then
+		text.TextTransparency = fade
+		text.TextStrokeTransparency = 0.3 + 0.7 * fade
+	end
+end
+
 local function step()
 	local character = Players.LocalPlayer.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -267,6 +318,7 @@ local function step()
 		end
 	end
 	updateChevrons(view ~= nil, root)
+	updateNotice(show and markersOn, Hud.leakSlot())
 end
 
 function LeakController.Init() end
@@ -275,12 +327,19 @@ function LeakController.Start()
 	local slot = Hud.leakSlot()
 	if slot then
 		buildPlate(slot)
+		buildNotice(slot)
 	else
 		warn("LeakController: the HUD has no leak slot")
 	end
 	buildChevrons()
 	RunService.RenderStepped:Connect(function()
 		Safe.call("LeakController.step", step)
+	end)
+	-- the Last Light starts leaking: its notice (step hides it with markers off)
+	CollectionService:GetInstanceAddedSignal(TAG):Connect(function(anchor)
+		if anchor:GetAttribute("BreachAnchor") == A.CabAnchor then
+			noticeAt = os.clock()
+		end
 	end)
 	-- the last leak patched: gone this frame, not the next
 	CollectionService:GetInstanceRemovedSignal(TAG):Connect(function()
