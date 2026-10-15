@@ -840,14 +840,101 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		C.iron,
 		Enum.Material.Metal
 	)
-	-- ticket office windows either side of the board
-	for _, x in { -36, 36 } do
-		block(Vector3.new(16, 11, 1.4), at(x, 5.5, BACK_Z - 0.7), C.wood, Enum.Material.WoodPlanks)
-		decor(Vector3.new(12, 5, 0.3), at(x, 6.8, BACK_Z - 1.5), C.dusk, Enum.Material.Neon).Transparency =
-			0.55
-		decor(Vector3.new(14, 0.5, 1.2), at(x, 4.1, BACK_Z - 1.8), C.brass, Enum.Material.Metal)
-		local sign = decor(Vector3.new(12, 1.8, 0.3), at(x, 10.2, BACK_Z - 1.55), C.board)
+	-- the ticket office: one booth east of the board, as wide and tall as the old office front, open at
+	-- the front over a brass-topped counter, with room behind it for the clerk: a ticket rack of
+	-- Edmondson cards, a date press, a stool and an oil lamp
+	do
+		local tx, W, H, D = 36, 16, 11, 6.5
+		local front = BACK_Z - D
+		local panel = Kit.shade(C.wood, 0.9)
+		-- back boarding, side walls and the roof, each panelled
+		block(Vector3.new(W - 1.2, H, 0.7), at(tx, H / 2, BACK_Z - 0.35), C.wood, Enum.Material.WoodPlanks)
+		for _, side in { -1, 1 } do
+			local x = tx + side * (W / 2 - 0.3)
+			block(Vector3.new(0.6, H, D), at(x, H / 2, front + D / 2), C.wood, Enum.Material.WoodPlanks)
+			decor(
+				Vector3.new(0.08, 3.4, D - 2),
+				at(x - side * 0.34, 2.2, front + D / 2 - 0.3),
+				panel,
+				Enum.Material.Wood
+			)
+			decor(
+				Vector3.new(0.08, 4.6, D - 2),
+				at(x - side * 0.34, 7.6, front + D / 2 - 0.3),
+				panel,
+				Enum.Material.Wood
+			)
+			-- a turned post at each front corner
+			Kit.post(
+				model,
+				H,
+				0.7,
+				at(tx + side * (W / 2 - 0.35), H / 2, front + 0.35),
+				Kit.shade(C.wood, 0.8),
+				{
+					material = Enum.Material.Wood,
+				}
+			)
+		end
+		block(
+			Vector3.new(W + 0.6, 0.5, D + 0.4),
+			at(tx, H + 0.25, front + D / 2 - 0.2),
+			Kit.shade(C.wood, 0.8),
+			Enum.Material.Wood
+		)
+		-- the fascia over the opening with the board on it
+		decor(
+			Vector3.new(W - 1.4, 1.8, 0.4),
+			at(tx, H - 0.9, front + 0.2),
+			Kit.shade(C.wood, 0.85),
+			Enum.Material.Wood
+		)
+		local sign = decor(Vector3.new(11, 1.5, 0.2), at(tx, H - 0.9, front - 0.1), C.board)
 		label(sign, Enum.NormalId.Front, "TICKETS", C.gilt)
+		-- counter: panelled front, marble-grey top with a brass edge, a brass grille rail on short posts
+		block(Vector3.new(W - 1.4, 3.6, 1.2), at(tx, 1.8, front + 0.6), C.wood, Enum.Material.WoodPlanks)
+		for k = -2, 2 do
+			decor(Vector3.new(2.2, 2.2, 0.06), at(tx + k * 2.7, 1.9, front - 0.03), panel, Enum.Material.Wood)
+		end
+		block(Vector3.new(W - 1.2, 0.25, 1.6), at(tx, 3.725, front + 0.6), C.marble, Enum.Material.Marble)
+		decor(Vector3.new(W - 1.2, 0.14, 0.14), at(tx, 3.62, front - 0.22), C.brass, Enum.Material.Metal)
+		for k = -3, 3 do
+			Kit.post(model, 1.3, 0.1, at(tx + k * 2, 4.5, front + 1.2), C.brass, {
+				material = Enum.Material.Metal,
+				collide = false,
+			})
+		end
+		decor(Vector3.new(W - 2, 0.12, 0.12), at(tx, 5.2, front + 1.2), C.brass, Enum.Material.Metal)
+		-- the clerk's side: the ticket rack (pigeonholes of card tickets), a date press, a stool, a lamp
+		local rackAt = at(tx - 3, 6.4, BACK_Z - 0.75)
+		decor(Vector3.new(6, 3.6, 0.3), rackAt, Kit.shade(C.wood, 0.75), Enum.Material.Wood)
+		local CARDS =
+			{ Color3.fromRGB(196, 176, 120), Color3.fromRGB(150, 168, 186), Color3.fromRGB(176, 120, 110) }
+		for row = 0, 3 do
+			for col = 0, 7 do
+				decor(
+					Vector3.new(0.5, 0.55, 0.1),
+					rackAt * CFrame.new(-2.45 + col * 0.7, -1.2 + row * 0.8, -0.2),
+					CARDS[(row + col) % 3 + 1],
+					Enum.Material.SmoothPlastic
+				)
+			end
+		end
+		decor(Vector3.new(1, 0.9, 0.8), at(tx + 4, 4.3, front + 0.8), C.iron, Enum.Material.Metal) -- date press
+		decor(Vector3.new(0.3, 0.6, 0.3), at(tx + 4, 5.0, front + 0.8), C.brass, Enum.Material.Metal)
+		decor(
+			Vector3.new(1.6, 0.12, 1.1),
+			at(tx - 4.5, 3.91, front + 0.7),
+			Color3.fromRGB(62, 40, 34),
+			Enum.Material.Leather
+		) -- ledger
+		Kit.cylinder(model, 0.2, 1.4, at(tx + 1.5, 2.6, BACK_Z - 3) * Kit.angles(0, 0, 90), C.wood, {
+			material = Enum.Material.Wood,
+		})
+		Kit.post(model, 2.5, 0.2, at(tx + 1.5, 1.25, BACK_Z - 3), C.iron, { material = Enum.Material.Metal })
+		local lampGlass = Kit.neon(model, Vector3.new(0.5, 0.7, 0.5), at(tx + 6, 4.3, front + 1.1), C.flame)
+		lampGlass.Transparency = 0.2
+		decor(Vector3.new(0.7, 0.2, 0.7), at(tx + 6, 3.95, front + 1.1), C.brass, Enum.Material.Metal)
 	end
 
 	-- Outfitter kiosk -------------------------------------------------------------------------------------
