@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-14: LORE BIBLE
+1. Features completed: `LORE.md` at repo root (era 1884-1892, tone, vague Hollows, names, signage, clothing, props, period checklist). No game code changed.
+2. Known bugs/regressions: none; existing in-game names/fonts not yet audited against LORE.md. No Blender sheet made.
+3. Next logical step: audit station names, sign fonts and crew outfits against the LORE.md checklist.
+
 ## 2026-10-14: FOLLOW-UP PASS (multi-player checks, rally grace, fence mesh, sounds, initials) -- READ THIS FIRST
 Shots (0.5 scale) in `docs/checks/P_*`. `lune run check` passes (343 specs).
 **Methods that worked (reuse them):** read run state from any client by firing `Remotes.ClientReady` and catching one
