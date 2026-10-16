@@ -42,6 +42,12 @@ export type Cabin = TrainBuilder.Cabin
 local LobbyBuilder = {}
 
 local C = {
+	-- Lobby shell palette: warm timber and stone are kept separate from protected fixture colours.
+	SHELL_MAHOGANY = Color3.fromRGB(68, 35, 25),
+	SHELL_MAHOGANY_DARK = Color3.fromRGB(42, 24, 19),
+	SHELL_CREAM = Color3.fromRGB(214, 198, 164),
+	SHELL_STONE = Color3.fromRGB(126, 120, 108),
+	SHELL_GREEN = Color3.fromRGB(28, 68, 54),
 	marble = Color3.fromRGB(176, 182, 184), -- grey-veined counter tops
 	paving = Color3.fromRGB(94, 101, 110), -- the platform's blue-grey stone flags (cool, so the lamps cannot turn them buff)
 	slateDark = Color3.fromRGB(38, 40, 44), -- borders, joints and the rosette's rings
@@ -92,7 +98,7 @@ local function label(part: BasePart, face: Enum.NormalId, text: string, color: C
 	local textLabel = Instance.new("TextLabel")
 	textLabel.BackgroundTransparency = 1
 	textLabel.Size = UDim2.fromScale(1, 1)
-	textLabel.FontFace = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold)
+	textLabel.FontFace = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold)
 	textLabel.Text = text
 	textLabel.TextColor3 = color
 	textLabel.TextScaled = true
@@ -162,12 +168,13 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local WALK0, WALK1 = 20, 28
 	local floorX0, floorX1 = -HALF_X, HALF_X
 	local BORDER = 3
-	block(
+	local backFloor = block(
 		Vector3.new(floorX1 - floorX0, 1, BORDER),
 		at(0, -0.5, BACK_Z - BORDER / 2),
 		C.slateDark,
 		Enum.Material.Slate
 	)
+	backFloor:SetAttribute("LobbySurface", "Stone")
 	for _, side in { -1, 1 } do
 		block(
 			Vector3.new(BORDER, 1, BACK_Z - BORDER - EDGE_Z),
@@ -217,12 +224,13 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		local from = fx0
 		for k = 1, #joints + 1 do
 			local to = if k <= #joints then joints[k] - JOINT / 2 else fx1
-			block(
+			local flag = block(
 				Vector3.new(to - from, 1, zb - za),
 				at((from + to) / 2, -0.5, (za + zb) / 2),
-				Kit.jitter(C.paving, 0.05, ((k * 7) % 10) / 10),
+				Kit.jitter(C.SHELL_STONE, 0.05, ((k * 7) % 10) / 10),
 				Enum.Material.Slate
 			)
+			flag:SetAttribute("LobbySurface", "Stone")
 			if k <= #joints then
 				block(
 					Vector3.new(JOINT, 1, zb - za),
@@ -373,6 +381,13 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	end
 	gapBarrier(-90.6, -90, -2.5, 2.5)
 
+	local function wallBlock(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material): BasePart
+		local part = block(size, cf, color, material)
+		if material == Enum.Material.Brick then
+			part:SetAttribute("LobbySurface", "Brick")
+		end
+		return part
+	end
 	-- Walls ----------------------------------------------------------------------------------------
 	-- back wall with four glazed windows looking out on the storm (LobbyStorm draws it), the ticket
 	-- office and the departure board; the wall is laid in courses around the openings, whose lintels
@@ -399,12 +414,13 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			end
 			return
 		end
-		block(
+		local wall = wallBlock(
 			Vector3.new(x1 - x0, y1 - y0, 2),
 			at((x0 + x1) / 2, (y0 + y1) / 2, BACK_Z + 1),
 			C.brick,
 			Enum.Material.Brick
 		)
+		wall:SetAttribute("LobbySurface", "Brick")
 	end
 	local wallX0, wallX1 = -HALF_X - 2, HALF_X + 2
 	wallPiece(wallX0, wallX1, WALL_LOW, WIN_LOW)
@@ -421,44 +437,49 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		fn(BOOTH_X1, HALF_X)
 	end
 	backStrip(function(x0, x1)
-		block(
+		local plinth = wallBlock(
 			Vector3.new(x1 - x0, 1.2, 0.6),
 			at((x0 + x1) / 2, 0.6, BACK_Z - 0.3),
 			C.stone,
 			Enum.Material.Concrete
 		)
+		plinth:SetAttribute("LobbySurface", "Stone")
 	end)
-	-- a dado of green glazed tiles above the plinth, capped by a row of oxblood bullnose, on the back
+	-- a dado of green glazed tiles above the plinth, capped by a row of cream bullnose, on the back
 	-- wall and along both end walls of the platform (a hair off the brick, so nothing set against
 	-- the wall shares its plane)
 	local DADO_LOW, DADO_TOP = 1.2, 5.2
 	backStrip(function(x0, x1)
-		decor(
+		local dado = decor(
 			Vector3.new(x1 - x0, DADO_TOP - DADO_LOW, 0.15),
 			at((x0 + x1) / 2, (DADO_LOW + DADO_TOP) / 2, BACK_Z - 0.095),
-			C.glazed,
+			C.SHELL_GREEN,
 			Enum.Material.CeramicTiles
 		)
-		decor(
+		dado:SetAttribute("LobbySurface", "Tile")
+		local cap = decor(
 			Vector3.new(x1 - x0, 0.4, 0.3),
 			at((x0 + x1) / 2, DADO_TOP + 0.2, BACK_Z - 0.17),
-			C.bullnose,
-			Enum.Material.Glass
-		)
-	end)
-	for _, side in { -1, 1 } do
-		decor(
-			Vector3.new(0.15, DADO_TOP - DADO_LOW, BACK_Z - 0.17 - EDGE_Z),
-			at(side * (HALF_X - 0.095), (DADO_LOW + DADO_TOP) / 2, (EDGE_Z + BACK_Z - 0.17) / 2),
-			C.glazed,
+			C.SHELL_CREAM,
 			Enum.Material.CeramicTiles
 		)
-		decor(
+		cap:SetAttribute("LobbySurface", "Tile")
+	end)
+	for _, side in { -1, 1 } do
+		local dado = decor(
+			Vector3.new(0.15, DADO_TOP - DADO_LOW, BACK_Z - 0.17 - EDGE_Z),
+			at(side * (HALF_X - 0.095), (DADO_LOW + DADO_TOP) / 2, (EDGE_Z + BACK_Z - 0.17) / 2),
+			C.SHELL_GREEN,
+			Enum.Material.CeramicTiles
+		)
+		dado:SetAttribute("LobbySurface", "Tile")
+		local cap = decor(
 			Vector3.new(0.3, 0.4, BACK_Z - 0.32 - EDGE_Z),
 			at(side * (HALF_X - 0.17), DADO_TOP + 0.2, (EDGE_Z + BACK_Z - 0.32) / 2),
-			C.bullnose,
-			Enum.Material.Glass
+			C.SHELL_CREAM,
+			Enum.Material.CeramicTiles
 		)
+		cap:SetAttribute("LobbySurface", "Tile")
 	end
 	for _, x in WIN_XS do
 		local midY, height = (WIN_LOW + WIN_HIGH) / 2, WIN_HIGH - WIN_LOW
@@ -512,9 +533,54 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.Material.Limestone
 		)
 	end
+	-- High plaster panels, a stone string course and cornice leave all signs and windows clear.
+	decor(
+		Vector3.new(2 * HALF_X, 0.65, 0.55),
+		at(0, 21.75, BACK_Z - 0.3),
+		C.SHELL_CREAM,
+		Enum.Material.Limestone
+	)
+	for _, side in { -1, 1 } do
+		decor(
+			Vector3.new(86, 0.45, 0.4),
+			at(side * 68, 21.0, BACK_Z - 0.23),
+			C.SHELL_CREAM,
+			Enum.Material.Limestone
+		)
+		decor(
+			Vector3.new(15, 6.4, 0.12),
+			at(side * 45, 16.2, BACK_Z - 0.08),
+			C.SHELL_CREAM,
+			Enum.Material.Plaster
+		)
+		for _, x in { 37, 53, 78 } do
+			decor(
+				Vector3.new(0.65, 8, 0.35),
+				at(side * x, 16.2, BACK_Z - 0.2),
+				C.SHELL_MAHOGANY_DARK,
+				Enum.Material.Wood
+			)
+		end
+		-- Wordless company badge: a brass diamond containing two converging rails.
+		local crest = decor(
+			Vector3.new(1.7, 1.7, 0.1),
+			at(side * 45, 16.2, BACK_Z - 0.2) * Kit.angles(0, 0, 45),
+			C.brass,
+			Enum.Material.Metal
+		)
+		crest.Name = "CompanyCrest"
+		for _, dx in { -0.3, 0.3 } do
+			decor(
+				Vector3.new(0.13, 1.2, 0.08),
+				at(side * 45 + dx, 16.2, BACK_Z - 0.31) * Kit.angles(0, 0, dx * 30),
+				C.SHELL_MAHOGANY_DARK,
+				Enum.Material.Wood
+			)
+		end
+	end
 	-- the far wall across the road, its windows showing the night outside
 	local farHeight = WALL_TOP + 12
-	block(
+	wallBlock(
 		Vector3.new(2 * HALF_X + 4, farHeight, 2),
 		at(0, farHeight / 2 - 12, FRONT_Z - 1),
 		C.brick,
@@ -540,32 +606,32 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	for _, side in { -1, 1 } do
 		local x = side * (HALF_X + 1)
 		-- platform part of the wall
-		block(
+		wallBlock(
 			Vector3.new(2, WALL_TOP, BACK_Z - EDGE_Z),
 			at(x, WALL_TOP / 2, (BACK_Z + EDGE_Z) / 2),
 			C.brick,
 			Enum.Material.Brick
 		)
 		-- road part: either side of the portal and over it
-		block(
+		wallBlock(
 			Vector3.new(2, WALL_TOP + 12, portalZ0 - FRONT_Z),
 			at(x, (WALL_TOP + 12) / 2 - 12, (portalZ0 + FRONT_Z) / 2),
 			C.brick,
 			Enum.Material.Brick
 		)
-		block(
+		wallBlock(
 			Vector3.new(2, 12 - 7.25, EDGE_Z - portalZ1),
 			at(x, -12 + (12 - 7.25) / 2, (EDGE_Z + portalZ1) / 2),
 			C.brick,
 			Enum.Material.Brick
 		)
-		block(
+		wallBlock(
 			Vector3.new(2, 7.25 + WALL_TOP, EDGE_Z - portalZ1),
 			at(x, (WALL_TOP - 7.25) / 2, (EDGE_Z + portalZ1) / 2),
 			C.brick,
 			Enum.Material.Brick
 		)
-		block(
+		wallBlock(
 			Vector3.new(2, WALL_TOP - portalHigh, portalZ1 - portalZ0),
 			at(x, (WALL_TOP + portalHigh) / 2, (portalZ0 + portalZ1) / 2),
 			C.brick,
@@ -640,7 +706,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		-- cast-iron columns on the platform: plinth, fluted shaft, collar and capital
 		for _, z in { -14, 44 } do
 			block(Vector3.new(2.6, 1.4, 2.6), at(x, 0.7, z), C.iron, Enum.Material.Metal)
-			Kit.post(
+			local shaft = Kit.post(
 				model,
 				SPRING - 2.6,
 				1.3,
@@ -648,6 +714,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				C.iron,
 				{ material = Enum.Material.Metal }
 			)
+			shaft:SetAttribute("LobbyMesh", "FlutedCastIronShaft")
+			shaft:SetAttribute("LobbyMeshSize", Vector3.new(1, SPRING - 2.6, 1))
+			shaft:SetAttribute("LobbyMeshCFrame", at(x, 1.4 + (SPRING - 2.6) / 2, z))
 			Kit.post(
 				model,
 				0.5,
@@ -656,7 +725,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				C.brass,
 				{ material = Enum.Material.Metal, collide = false }
 			)
-			Kit.post(
+			local capital = Kit.post(
 				model,
 				1.2,
 				2.2,
@@ -664,6 +733,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				C.ironLight,
 				{ material = Enum.Material.Metal, collide = false }
 			)
+			capital:SetAttribute("LobbyMesh", "OrnateCastIronCapital")
+			capital:SetAttribute("LobbyMeshSize", Vector3.new(1.7, 1.2, 1.7))
+			capital:SetAttribute("LobbyMeshCFrame", at(x, SPRING - 0.6, z))
 			-- curved brackets up into the truss
 			for _, dz in { -1, 1 } do
 				member(
@@ -830,7 +902,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	end
 
 	-- Departure board, clock and ticket office -----------------------------------------------------------
-	block(Vector3.new(44, 17, 1), at(0, 17, BACK_Z - 0.5), C.iron, Enum.Material.Metal)
+	block(Vector3.new(44, 17, 1), at(0, 17, BACK_Z - 0.5), C.SHELL_MAHOGANY_DARK, Enum.Material.Wood)
 	local board = block(Vector3.new(42, 15, 0.6), at(0, 17, BACK_Z - 1.3), C.board, nil, { collide = false })
 	board.Name = "DepartureBoard"
 	block(
@@ -1009,12 +1081,29 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 
 	-- Line Mastery: an honours board in a carved frame, the line painted on it in gilt -----------------
 	local lx, lz = -54, 36
-	block(Vector3.new(18, 13, 1.2), at(lx, 8.5, lz + 4.2), C.wood, Enum.Material.Wood)
-	block(Vector3.new(19.4, 1, 1.6), at(lx, 15.5, lz + 4.2), Kit.shade(C.wood, 0.8), Enum.Material.Wood)
-	block(Vector3.new(12, 1.4, 1.4), at(lx, 16.7, lz + 4.2), Kit.shade(C.wood, 0.8), Enum.Material.Wood)
+	block(Vector3.new(18, 13, 1.2), at(lx, 8.5, lz + 4.2), C.SHELL_MAHOGANY, Enum.Material.Wood)
+	block(
+		Vector3.new(19.4, 1, 1.6),
+		at(lx, 15.5, lz + 4.2),
+		Kit.shade(C.SHELL_MAHOGANY, 0.8),
+		Enum.Material.Wood
+	)
+	block(
+		Vector3.new(12, 1.4, 1.4),
+		at(lx, 16.7, lz + 4.2),
+		Kit.shade(C.SHELL_MAHOGANY, 0.8),
+		Enum.Material.Wood
+	)
 	Kit.ball(model, 1.2, at(lx, 18, lz + 4.2), C.brass, { material = Enum.Material.Metal, collide = false })
 	for _, x in { -8.4, 8.4 } do
-		Kit.post(model, 15, 0.7, at(lx + x, 7.5, lz + 4.4), C.iron, { material = Enum.Material.Metal })
+		Kit.post(
+			model,
+			15,
+			0.7,
+			at(lx + x, 7.5, lz + 4.4),
+			C.SHELL_MAHOGANY_DARK,
+			{ material = Enum.Material.Wood }
+		)
 	end
 	local ledgerFace = decor(
 		Vector3.new(16.6, 11.4, 0.3),
@@ -1055,71 +1144,21 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			UDim2.fromScale(0.08, 0.04),
 			UDim2.fromScale(0.84, 0.17)
 		)
-		text(
-			"Every stop you master is painted here in gold",
-			Font.new(
-				"rbxasset://fonts/families/Merriweather.json",
-				Enum.FontWeight.Regular,
-				Enum.FontStyle.Italic
-			),
-			pale,
-			UDim2.fromScale(0.15, 0.22),
-			UDim2.fromScale(0.7, 0.07)
-		)
-		-- the line itself, wandering across the board from the depot to the sea
-		local stops = { "Depot", "Halt", "Coaling Yard", "Ashgrove", "Signal Works", "Brannoc", "Market" }
-		table.insert(stops, "Viaduct")
-		table.insert(stops, "Gallowmere")
-		table.insert(stops, "Minehead")
-		table.insert(stops, "Terminus")
-		local route: { Vector2 } = {}
-		for i = 1, #stops do
-			local u = (i - 1) / (#stops - 1)
-			table.insert(route, Vector2.new(80 + u * 840, 430 + math.sin(u * math.pi * 2.6) * 95))
-		end
-		for i = 1, #route - 1 do
-			local a, b = route[i], route[i + 1]
-			local mid = (a + b) / 2
-			local seg = Instance.new("Frame")
-			seg.AnchorPoint = Vector2.new(0.5, 0.5)
-			seg.Position = UDim2.fromOffset(mid.X, mid.Y)
-			seg.Size = UDim2.fromOffset((b - a).Magnitude + 4, 8)
-			seg.Rotation = math.deg(math.atan2(b.Y - a.Y, b.X - a.X))
-			seg.BackgroundColor3 = pale
-			seg.BorderSizePixel = 0
-			seg.Parent = gui
-		end
-		for i, p in route do
-			local last = i == #route
-			local dot = Instance.new("Frame")
-			dot.AnchorPoint = Vector2.new(0.5, 0.5)
-			dot.Position = UDim2.fromOffset(p.X, p.Y)
-			dot.Size = UDim2.fromOffset(if last then 44 else 28, if last then 44 else 28)
-			dot.BackgroundColor3 = if last or i == 1 then gold else Color3.fromRGB(28, 50, 42)
-			dot.Parent = gui
-			local corner = Instance.new("UICorner")
-			corner.CornerRadius = UDim.new(1, 0)
-			corner.Parent = dot
-			local ring = Instance.new("UIStroke")
-			ring.Color = pale
-			ring.Thickness = 5
-			ring.Parent = dot
-			local below = i % 2 == 0
+		for i, line in
+			{
+				"Earn XP to raise your Crew Rank",
+				"Record stops cleared and crew rescued",
+				"Open the Ledger for your milestones",
+			}
+		do
 			text(
-				string.upper(stops[i]),
-				Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Medium),
-				if last then gold else pale,
-				UDim2.fromOffset(p.X - 70, p.Y + (if below then 26 else -62)),
-				UDim2.fromOffset(140, 34)
+				line,
+				Font.new("rbxasset://fonts/families/Oswald.json"),
+				pale,
+				UDim2.fromScale(0.07, 0.29 + (i - 1) * 0.22),
+				UDim2.fromScale(0.86, 0.16)
 			)
 		end
-		text(
-			"Ask the Ledger at the desk below",
-			Font.new("rbxasset://fonts/families/SpecialElite.json"),
-			Color3.fromRGB(150, 164, 170),
-			UDim2.fromScale(0.25, 0.9),
-			UDim2.fromScale(0.5, 0.06)
-		)
 	end
 	-- two gooseneck lamps lean over the board
 	for _, x in { -5, 5 } do
@@ -1170,7 +1209,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			part(
 				Vector3.new(9.2, 0.15, 0.48),
 				CFrame.new(0, 1.665, k * 0.56),
-				Kit.shade(C.slats, 1 + k * 0.04),
+				Kit.shade(C.SHELL_MAHOGANY, 1 + k * 0.04),
 				Enum.Material.WoodPlanks
 			)
 		end
@@ -1179,7 +1218,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			part(
 				Vector3.new(9.2, 0.42, 0.14),
 				CFrame.new(0, y, 1.08 + (y - 1.75) * math.tan(math.rad(12))) * Kit.angles(-12, 0, 0),
-				Kit.shade(C.slats, 0.96 + k * 0.04),
+				Kit.shade(C.SHELL_MAHOGANY, 0.96 + k * 0.04),
 				Enum.Material.WoodPlanks
 			)
 		end
@@ -1643,7 +1682,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		t.BackgroundTransparency = 1
 		t.Size = UDim2.fromScale(0.9, 0.9)
 		t.Position = UDim2.fromScale(0.05, 0.05)
-		t.FontFace = Font.new("rbxasset://fonts/families/Kalam.json", Enum.FontWeight.Bold)
+		t.FontFace = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
 		t.Text =
 			"TEA ROOM\nTea ............ 1d\nHot soup ........ 2d\nA kind word ..... free\nCourage .. ask Mrs. Pell"
 		t.TextColor3 = Color3.fromRGB(226, 232, 234)
@@ -1680,16 +1719,19 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				0.25,
 				1.6,
 				seat * CFrame.new(0, 2.0, 0) * Kit.angles(0, 0, 90),
-				C.wood,
+				C.SHELL_MAHOGANY,
 				{ material = Enum.Material.Wood }
 			)
-			block(
+			local back = block(
 				Vector3.new(0.25, 2.2, 1.4),
 				seat * CFrame.new(s * 0.75, 3.2, 0),
-				C.wood,
+				C.SHELL_MAHOGANY,
 				Enum.Material.Wood,
 				{ collide = false }
 			)
+			back:SetAttribute("LobbyMesh", "BentwoodChairBack")
+			back:SetAttribute("LobbyMeshSize", Vector3.new(1.4, 2.2, 0.25))
+			back:SetAttribute("LobbyMeshCFrame", seat * CFrame.new(s * 0.75, 3.2, 0) * Kit.angles(0, 90, 0))
 			seatAt(seat * CFrame.new(0, 2.05, 0) * Kit.angles(0, s * 90, 0), 1.4, "Chair")
 		end
 	end

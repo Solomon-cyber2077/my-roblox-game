@@ -292,7 +292,7 @@ function Lobby.mount(gui: ScreenGui)
 		Size = UDim2.fromOffset(20, 20),
 		BackgroundColor3 = Theme.Color.brass,
 		BorderSizePixel = 0,
-		FontFace = Theme.Font.sign,
+		FontFace = Theme.Font.display,
 		TextSize = 14,
 		TextColor3 = Theme.Color.ink,
 		Text = "1",
@@ -487,7 +487,7 @@ function Lobby.mount(gui: ScreenGui)
 		})
 		boardHead = Ui.text({
 			Text = "",
-			Font = Theme.Font.sign,
+			Font = Theme.Font.display,
 			TextSize = 64,
 			Color = Theme.Color.brassLight,
 			Position = UDim2.fromOffset(40, 24),
@@ -496,7 +496,7 @@ function Lobby.mount(gui: ScreenGui)
 		(boardHead :: TextLabel).Parent = surface
 		boardRows = Ui.text({
 			Text = "",
-			Font = Theme.Font.sign,
+			Font = Theme.Font.display,
 			TextSize = 40,
 			Color = Theme.Color.white,
 			Position = UDim2.fromOffset(40, 110),

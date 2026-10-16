@@ -29,6 +29,7 @@ local ORDER = {
 	"DepartureClock",
 	"PianoNotes",
 	"LobbyStorm",
+	"LobbyShellController",
 	"FootstepController",
 }
 
