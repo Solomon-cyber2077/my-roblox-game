@@ -1,0 +1,29 @@
+[
+  {
+    "name": "FlutedCastIronShaft",
+    "dimensions": [
+      1.0,
+      3.62,
+      1.0
+    ],
+    "triangleCount": 796
+  },
+  {
+    "name": "OrnateCastIronCapital",
+    "dimensions": [
+      1.924,
+      0.7,
+      1.72261
+    ],
+    "triangleCount": 732
+  },
+  {
+    "name": "BentwoodChairBack",
+    "dimensions": [
+      1.64999,
+      1.96559,
+      0.15588
+    ],
+    "triangleCount": 216
+  }
+]

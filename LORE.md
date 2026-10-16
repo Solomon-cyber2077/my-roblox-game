@@ -78,6 +78,10 @@ flag it rather than drift. The design source of truth for mechanics is still the
   rules and borders, small woodcut engravings. Pasted on boards, overlapping, torn, damp-stained.
 - **Palette:** Brunswick green, chocolate and cream (stock and buildings), Indian red, deep ultramarine (enamel),
   black, buff, brass/gilt for lettering on company property. Signs are faded, sooted and chipped, never neon-clean.
+  This muted, worn treatment is the game's art direction, not a claim that Victorian interiors lacked vivid colour.
+  For the lobby safe zone, include dark mahogany timber, aged brass and soft warm amber tones with brick,
+  bottle green and cream. These are fictional design choices, not a documented West Country railway livery;
+  achieve the warmth through surfaces while preserving the existing light fixtures.
   Caution: Brunswick-green engines with chocolate-and-cream coaches is the Great Western's own livery. Use those
   colours on buildings and fittings, but never together on S&WCR rolling stock (checklist 5).
 - **Materials:** enamel on steel, painted timber, cast iron, gilt transfers on glass, brass plates, chalk on blackboard.
@@ -133,7 +137,7 @@ flag it rather than drift. The design source of truth for mechanics is still the
 
 1. Nothing invented after 1892 (no electric street lights, cars, phones, zips, plastics, wristwatches).
 2. World text uses an approved period font; no modern UI faces on signs, posters or props.
-3. Colours come from the palette in section 5; no neon, no clean saturated modern tones.
+3. Colours follow the game's palette in section 5; no neon. Muted wear is an art-direction choice, not a historical ban on saturated colours.
 4. Materials read as wood, iron, brick, stone, brass, enamel, glass, paper, wool, leather.
 5. Names follow section 4 and do not use a real railway company's name or livery.
 6. Clothing items appear in section 6 (or are clearly of the same period).
@@ -165,3 +169,26 @@ Edmondson tickets, bookstalls, piano sconces and the GWR livery caution above. N
 the rest of the palette.
 Spot-checked 2026-10-15: section 5's board styles (painted, then white-on-blue enamel in timber frames, or cast
 letters on boards) and section 7's board schools (slate roofs, gables, bell turrets, date stones) match these.
+
+### Prompt 5 source checks (2026-10-15)
+- [V&A refreshment rooms](https://www.vam.ac.uk/articles/a-first-of-its-kind-history-of-the-refreshment-rooms):
+  the 1860s rooms include colourful glazed ceramics and deep green oak panelling. Supports the material vocabulary;
+  does not establish bottle-green tile as a standard branch-line finish. This corrects the implication that muted
+  colours alone are historically valid. Exact lobby colours remain a fictional scheme.
+- [NGV's 1880-81 exhibition furniture study](https://www.ngv.vic.gov.au/essay/a-souvenir-of-marvellous-melbourne-w-h-rockes-1880-81-exhibition-cabinet/):
+  contemporary descriptions include mahogany furniture and oak furniture with brass fittings. Supports period
+  materials, not a claim that this fictional station had mahogany panelling or a particular brass patina.
+- [Historic England railway architecture survey](https://historicengland.org.uk/research/results/reports/7008/HistoricRailwayBuildingsandStructuresoverviewofdevelopmentpressureandreviewofsignificanceVol2):
+  nineteenth-century examples include fluted columns, capitals and decorative iron arcading. Use for column detail
+  only in Prompt 5: the existing roof, ceiling and light fixtures are protected.
+- [Museum Boijmans Van Beuningen, Thonet chair](https://www.boijmans.nl/en/collection/artworks/108066/chair):
+  No. 14 designed in 1859; steam-bent wood and a woven seat are appropriate furniture references before 1892.
+- [Science Museum Group station seat](https://collection.sciencemuseumgroup.org.uk/objects/co217718/station-seat):
+  documents wood with cast-iron arms/supports, but explicitly has no provenance. It is a construction reference,
+  not proof of this bench design's use on an 1884-92 West Country line.
+- [Illinois State Museum table, 1870-1880](https://exhibits.museum.state.il.us/exhibits/athome/1850/objects/centertable.htm):
+  walnut with a marble top establishes period use of the combination, not British station tea-room provenance.
+- Clothing is outside Prompt 5: preserve NPC outfits. These checks do not validate all remaining clothing,
+  luggage or prop claims. Before selecting any additional detail, check a source for that specific detail.
+
+- [British Brick Society Information 136, p. 22 (2017)](https://britishbricksoc.co.uk/wp-content/uploads/2017/06/BBS_136_2017_Jun_.pdf) records English-bond London-stock walls at St James Street station (opened 1870). This supports the bond; the lobby's red-brown colour is an artistic choice.
