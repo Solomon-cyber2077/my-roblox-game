@@ -1,5 +1,20 @@
 # HANDOFF
 
+## 2026-10-17: AUDIO + THRESHOLD PASS (Prompt 7, branch claude/last-train-out)
+Monster, lobby and NPC files untouched; footsteps and breathing unchanged (only their mix group, task 4).
+Rojo: the plugin failed only because no `rojo serve` was running; started it and accepted the sync. No WDAC block.
+1. Features completed
+- T1 relief: `Logic/Threshold` (+ spec) and `Controllers/ThresholdController` check the local character against the
+  carriage/cab boxes (TrainService publishes `ReplicatedStorage.TrainVolumes`, the same boxes as `IsInside`), with a
+  0.6-stud sill margin. AudioController: outdoor cues sit in an `Outdoor` SoundGroup (inside `Ambience`) whose
+  `Walls` EQ (mids -10 dB, highs -30 dB) shuts within 0.08 s of stepping aboard; the outside beds dip 45% and the hall
+  room tone rises. Studio: walls read -30 dB on the first sample after stepping in; stepping out they open over ~1.2 s.
+  Frost on the windows: skipped (would mean per-window parts or decals across the consist for a cosmetic).
+2. Known bugs / not verified
+- Nothing heard by ear (MCP cannot hear audio); levels need an ear in Studio.
+3. Next logical step
+- Audition in Studio: Play, skip to a stop, walk in and out of a door.
+
 ## 2026-10-17: VISIBILITY PART 3: SURFACE FIX + RE-PROOF AT 45% (branch claude/last-train-out), STOPPED: GATES FAIL
 No Studio session. All gate numbers are headless Blender renders (`tools/visibility`, approximations in its README,
 items 11-16 new); the luminance floors are Lune logic. Monster, NPC, lobby files and MAP.md untouched. No
