@@ -63,6 +63,11 @@ contrast at the floor's own distance gets easier as the floor shrinks (threshold
     (normal and roughness maps) are not modelled, only the part's colour. No specular: brass
     "catching the flame" is not credited (the gate holds on albedo alone).
 14. The monster stand-in is a 7-stud block figure in a dark hide, not the game's Hollow.
+15. The train's platform side (every Tier B train part on that side, and its lining) is judged as
+    ONE object: TrainBuilder parents each panel to the train on its own, and judged one by one a
+    panel only meets the panel beside it (part 2's "Train/Part" readings were that artefact).
+16. The surface limit (`--ceiling` + sheet.py) relies on direct light only: an object's luminance
+    in the white what-if is exactly what white paint would give it there. It ignores textures.
 
 ## Sources
 - WCAG 2.1 SC 1.4.11 Non-text Contrast (3:1), relative luminance and contrast ratio.

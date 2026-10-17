@@ -117,8 +117,32 @@ if SMOOTH:
     lines += gate_rows("Other falloff curve (1-(d/R)^2)^2: must-see", SMOOTH,
                        "Same shots, lights windowed by the brighter of the two common game curves.")
 if CEIL:
-    lines += gate_rows("What-if (not the game): every Tier A/B surface pure white", CEIL,
-                       "The most albedo alone can do on the real ground and light: a FAIL here cannot be fixed by surfaces.")
+    # Direct light only (no bounce), so an object's luminance in the white what-if is exactly
+    # what pure white paint would give it in place. With the real frame's surround, that sets
+    # the most any surface could reach there: max(white on the real surround, black on it).
+    ceil = {(c["label"], c["shot"][5:]): c for c in CEIL}
+    out = ["", "## The surface limit (white what-if + the real surround)", "",
+           "Per calm/chase Quality shot: every Tier A/B reading still under the bar, and the best any paint could do "
+           "there (pure white, or pure black, against the surround as built). Under 3.0 = no surface can pass it.", "",
+           "| station | shot | object (band) | now | surface limit |", "|---|---|---|---|---|"]
+    beyond_reach = total = 0
+    for s in shots:
+        c = ceil.get((s["label"], s["shot"]))
+        if not c:
+            continue
+        white = {(m["id"], m["band"]): m["L"] for m in c[DIM]["must"]}
+        for m in s[DIM]["must"]:
+            if m["contrast"] >= T.MUST_SEE_CONTRAST or (m["id"], m["band"]) not in white:
+                continue
+            lw, lb = white[(m["id"], m["band"])], m["Lbg"]
+            limit = max((lw + T.FLARE) / (lb + T.FLARE), (lb + T.FLARE) / T.FLARE)
+            total += 1
+            beyond_reach += limit < T.MUST_SEE_CONTRAST
+            out.append(f"| {s['label']} {s['station']} | {s['shot']} | {m['name']} ({m['band']}) | "
+                       f"{m['contrast']:.2f} | {limit:.2f} |")
+    out.insert(3, f"{beyond_reach} of {total} failing readings are beyond any surface (limit < 3.0).")
+    out.insert(4, "")
+    lines += out
 
 # report only: does the fix leak past the pool? Tier A/B objects beyond 2x the floor still at 3:1
 beyond = [b for s in shots if s["radius"] == run["shots"][0]["radius"] for b in s[DIM].get("beyond", [])]
