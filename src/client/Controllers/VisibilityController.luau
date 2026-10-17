@@ -12,6 +12,10 @@
 	    (Visibility.Rim): a fixed pool of Highlights whose Adornee moves to whatever is nearest,
 	    so silhouettes read in the dark without a light of their own
 
+	  * the return beacon: the train's warm lamp glow over its roof, seen from anywhere on the
+	    station while it is docked (Visibility.Beacon). A billboard, not a light: soft and cheap,
+	    a fixed size on screen, faded out close to the train so it never dazzles
+
 	The lobby keeps its own lamp-lit look: no cone there.
 ]]
 
@@ -25,6 +29,8 @@ local Buildings = require(Shared.Config.Buildings)
 local Safe = require(Shared.Util.Safe)
 local Tuning = require(Shared.Config.Tuning)
 local Visibility = require(Shared.Logic.Visibility)
+
+local Session = require(script.Parent.Parent.Session)
 
 local VisibilityController = {}
 
@@ -41,6 +47,14 @@ for _, kind in RIM.Kinds do
 	RIM_KINDS[kind] = true
 end
 
+local BEACON = Tuning.Visibility.Beacon
+local BEACON_PHASES = { Dwell = true, LastCall = true, Departure = true }
+local BEACON_EVERY = 5 -- seconds between re-reading where the train's roof is (it streams in)
+
+local beaconPart: Part
+local beaconGui: BillboardGui
+local beaconRings: { Frame } = {}
+local beaconAt = 0
 local cone: SpotLight? = nil
 local rims: { Highlight } = {}
 local rimStation: Model? = nil
@@ -153,7 +167,68 @@ local function updateRims(around: Vector3, active: boolean)
 	end
 end
 
+local function buildBeacon()
+	beaconPart = Instance.new("Part")
+	beaconPart.Name = "TrainBeacon"
+	beaconPart.Anchored = true
+	beaconPart.CanCollide = false
+	beaconPart.CanQuery = false
+	beaconPart.CanTouch = false
+	beaconPart.CastShadow = false
+	beaconPart.Transparency = 1
+	beaconPart.Size = Vector3.new(0.2, 0.2, 0.2)
+	beaconPart.Parent = Workspace
+	beaconGui = Instance.new("BillboardGui")
+	beaconGui.Name = "Glow"
+	beaconGui.Size = UDim2.fromOffset(BEACON.Pixels, BEACON.Pixels)
+	beaconGui.AlwaysOnTop = true
+	beaconGui.LightInfluence = 0
+	beaconGui.MaxDistance = math.huge
+	beaconGui.Enabled = false
+	beaconGui.Adornee = beaconPart
+	beaconGui.Parent = beaconPart
+	local color = Color3.fromRGB(BEACON.Color[1], BEACON.Color[2], BEACON.Color[3])
+	for i, transparency in BEACON.Rings do
+		local share = 1 - (i - 1) / (#BEACON.Rings + 0.5)
+		local ring = Instance.new("Frame")
+		ring.AnchorPoint = Vector2.new(0.5, 0.5)
+		ring.Position = UDim2.fromScale(0.5, 0.5)
+		ring.Size = UDim2.fromScale(share, share)
+		ring.BackgroundColor3 = color
+		ring.BorderSizePixel = 0
+		ring:SetAttribute("Base", transparency)
+		ring.BackgroundTransparency = transparency
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0.5, 0)
+		corner.Parent = ring
+		ring.Parent = beaconGui
+		table.insert(beaconRings, ring)
+	end
+end
+
+local function updateBeacon(around: Vector3, active: boolean)
+	local train = Workspace:FindFirstChild("Train")
+	local on = active and train ~= nil and train:IsA("Model") and BEACON_PHASES[Session.phase()] == true
+	if on and os.clock() >= beaconAt then
+		beaconAt = os.clock() + BEACON_EVERY
+		local frame, size = (train :: Model):GetBoundingBox()
+		beaconPart.CFrame = CFrame.new(frame.Position + Vector3.new(0, size.Y / 2 + BEACON.Height, 0))
+	end
+	local distance = (beaconPart.Position - around).Magnitude
+	local strength = math.clamp((distance - BEACON.Near) / (BEACON.Far - BEACON.Near), 0, 1)
+	beaconGui.Enabled = on and strength > 0.01
+	if beaconGui.Enabled then
+		local simple = performance()
+		for i, ring in beaconRings do
+			local base = ring:GetAttribute("Base") :: number
+			local shown = not simple or i == #beaconRings
+			ring.BackgroundTransparency = if shown then 1 - (1 - base) * strength else 1
+		end
+	end
+end
+
 function VisibilityController.Init()
+	buildBeacon()
 	local folder = Instance.new("Folder")
 	folder.Name = "Rims"
 	folder.Parent = Workspace
@@ -205,6 +280,7 @@ function VisibilityController.Start()
 			nextRim = clock + RIM.Every
 			updateRims(if root then root.Position else Workspace.CurrentCamera.CFrame.Position, not inLobby)
 		end
+		updateBeacon(Workspace.CurrentCamera.CFrame.Position, not inLobby)
 	end
 	RunService.RenderStepped:Connect(function()
 		Safe.call("Visibility", frame)

@@ -551,6 +551,16 @@ local Tuning = {
 			Fill = 0.94, -- fill transparency: the faintest cold wash
 			Every = 0.75, -- seconds between choosing the nearest
 		},
+		-- the train's warm lamp glow, seen from anywhere on the station: a soft billboard (no
+		-- light), a fixed size on screen, fading out as you come close
+		Beacon = {
+			Color = { 255, 178, 96 }, -- the carriages' lamp amber
+			Pixels = 84, -- the glow's size on screen
+			Rings = { 0.86, 0.76, 0.62 }, -- transparency of each ring, outer to inner (Performance: the inner)
+			Height = 4, -- studs above the train's roof
+			Near = 40, -- studs from the train where it has faded out
+			Far = 90, -- and where it is full
+		},
 	},
 }
 
