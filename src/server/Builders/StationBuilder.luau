@@ -28,6 +28,7 @@ local FurnitureKit = require(script.Parent.FurnitureKit)
 local RoomDecor = require(script.Parent.RoomDecor)
 local StructureKit = require(script.Parent.StructureKit)
 local StationKit = require(script.Parent.StationKit)
+local Limewash = require(script.Parent.Limewash)
 
 type Plan = LayoutGen.Plan
 
@@ -515,6 +516,9 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			lit -= 1
 		end
 	end
+
+	-- lime-washed bands low on the obstacles (Config/Surfaces), before the assembly unanchors
+	Limewash.station(model, plan.archetype, plan.seed)
 
 	-- Everything except Root moves with physics; Root holds the assembly when anchored.
 	for _, part in model:GetDescendants() do
