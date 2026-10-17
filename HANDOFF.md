@@ -10,6 +10,10 @@ Rojo: the plugin failed only because no `rojo serve` was running; started it and
   `Walls` EQ (mids -10 dB, highs -30 dB) shuts within 0.08 s of stepping aboard; the outside beds dip 45% and the hall
   room tone rises. Studio: walls read -30 dB on the first sample after stepping in; stepping out they open over ~1.2 s.
   Frost on the windows: skipped (would mean per-window parts or decals across the consist for a cosmetic).
+- T2 station crossfade: the station's cold grade (AtmosphereController) now follows `ThresholdController.Out()`,
+  a 1.2 s eased crossfade off the train and 0.9 s back (was a spatial 8-stud ramp); brightness and exposure are not
+  touched, controls never blocked. `DoorThud` (ProSoundEffects "Door Bang Rattle 8", 9114129572, pitch 0.78, highs
+  -32 dB) plays on each crossing during a run, not on teleports. Studio: tint R 0.999 -> 0.844 in ~1.5 s, back in ~1.3 s.
 2. Known bugs / not verified
 - Nothing heard by ear (MCP cannot hear audio); levels need an ear in Studio.
 3. Next logical step

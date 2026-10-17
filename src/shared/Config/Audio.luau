@@ -31,6 +31,9 @@ local Cues: { [string]: Cue } = {
 	Departure = { id = 9119628064, volume = 0.75, maxSeconds = 5 },
 	Brakes = { id = 9114659986, volume = 0.6 },
 	DoorsOpen = { id = 9120301474, volume = 0.5 },
+	-- crossing the carriage door (Controllers/ThresholdController): a heavy door, muffled (ProSoundEffects
+	-- "Door Bang Rattle 8", heavy double doors, Creator Store)
+	DoorThud = { id = 9114129572, volume = 0.5, maxSeconds = 1.2, pitch = 0.78 },
 	Alarm = { id = 9113085203, volume = 0.45, maxSeconds = 2.5 },
 	Deposit = { id = 9113849492, volume = 0.6 },
 	Loot = { id = 17208319162, volume = 0.6 },

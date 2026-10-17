@@ -118,6 +118,9 @@ local SHAPES: { [string]: (Sound) -> () } = {
 		equalize(sound, 0, -6, -20)
 		reverb(sound, 6, -2, -12)
 	end,
+	DoorThud = function(sound)
+		equalize(sound, 5, -9, -32)
+	end,
 	Heartbeat = function(sound)
 		equalize(sound, 6, -18, -45)
 	end,
@@ -240,6 +243,10 @@ function AudioController.Start()
 		AudioController.Play("Whistle")
 	end)
 	local ambientReverb = Enum.ReverbType.NoReverb
+	-- the carriage door, heard through the walls as you cross it either way
+	Registry.ThresholdController.Crossed:Connect(function(inside: boolean)
+		AudioController.Play("DoorThud", nil, if inside then 1 else 0.8, if inside then 1 else 1.06)
+	end)
 
 	for _, name in { "TrainRun", "Wind", "StationEerie", "DepotHall", "Drone", "Howl" } do
 		local sound = makeSound(name, SoundService)
