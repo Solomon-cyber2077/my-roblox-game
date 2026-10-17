@@ -580,6 +580,13 @@ local Tuning = {
 			Terminus = { tint = { 224, 232, 236 }, saturation = 0.1 }, -- dawn coming
 		},
 		GradeRamp = 8, -- studs past the platform edge over which the grade comes in
+		-- what all this may cost: one light per player (their lantern), one shadow-casting
+		-- light (your own cone, Quality only), and under Performance simpler variants
+		Budget = {
+			Shadows = 1, -- shadow-casting lights this adds (Performance: none)
+			LanternCull = 90, -- Performance: crewmates' lanterns further than this switch off
+			ConeRangePerformance = 26, -- Performance: the forward cone's shorter reach
+		},
 		--[[
 			The chase (the only chase effect; Logic/Visibility.chaseStep): a Hollow on the hunt
 			whose nearest crew member is you, within Detect. A sudden black flicker, then the dark
