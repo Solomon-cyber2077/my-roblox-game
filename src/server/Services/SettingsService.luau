@@ -74,7 +74,7 @@ function SettingsService.Start()
 			return
 		end
 		Registry.DataService.Update(player, function(profile)
-			profile.settings[key] = value
+			profile.settings[key] = Settings.clamp(key, value) or value
 		end)
 	end)
 end

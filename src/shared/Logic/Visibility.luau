@@ -19,10 +19,12 @@ local V = Tuning.Visibility
 local Visibility = {}
 
 function Visibility.radius(setting: any): number
-	if type(setting) ~= "number" or setting ~= setting then
+	-- Settings save it as a whole-number string ("24"); the slider sets a number
+	local studs = if type(setting) == "string" then tonumber(setting) else setting
+	if type(studs) ~= "number" or studs ~= studs then
 		return V.Radius
 	end
-	return math.clamp(setting, V.RadiusMin, V.RadiusMax)
+	return math.clamp(studs, V.RadiusMin, V.RadiusMax)
 end
 
 -- 1 at the default reach, rising to 1.35 at the slider's top: more reach, more ambient.
