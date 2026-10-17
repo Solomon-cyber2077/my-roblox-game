@@ -12,7 +12,7 @@ Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, di
   glow (>= 1) only brightens it, CosmeticMotion still flickers brightness only. New `Controllers/VisibilityController`
   (after AtmosphereController in ORDER) keeps every crew lantern on the floor's radius and gives the local player a
   forward SpotLight cone (`CarriedLantern.Cone*`, 34 studs, 62 deg) in their lantern's colour; no cone in the lobby.
-  New script: run rbxmap `refresh`.
+  rbxmap index refreshed (CLI) after T8.
 - T3 rim + edges: a fixed pool of 8 Highlights (4 under Performance; `Tuning.Visibility.Rim`) outlines the
   nearest canopy, gate piers, chimneys, elms, statues, obelisks, fountains, notice boards and station buildings within
   90 studs in moonlight blue (outline 0.55, fill 0.94), re-chosen every 0.75 s; Adornee changes only when the pick does.
@@ -52,7 +52,6 @@ Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, di
 - Rim, limewash and coping not seen in Studio; there is no headless station renderer to preview them.
 - Beacon is AlwaysOnTop by design (seen through buildings); if it reads as UI, set AlwaysOnTop false in VisibilityController.
 - Chase detection approximates the Hollow's target (nearest crew member); two crew equally close may both or neither get it.
-- rbxmap index not refreshed if the CLI step below failed (see final report).
 3. Next logical step
 - Owner: play a stop at low screen brightness (lantern pool + cone, rims, beacon, limewash/coping), then trigger a
   chase (dev console Hollow spawn) and escape it; tune `Tuning.Visibility` / `.Chase`. Then add the Settings
