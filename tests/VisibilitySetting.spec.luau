@@ -69,6 +69,22 @@ describe("Visibility setting", function()
 		expect(string.find(source, "Registry.VisibilityController.Radius()", 1, true) ~= nil).toBe(true)
 	end)
 
+	it(
+		"is fair at the slider's lowest reach: the Quality cone covers a sprint's reaction distance",
+		function()
+			-- tools/visibility/thresholds.py: perception-response 0.75 s (Green 2000, expected hazard),
+			-- stopping 0.1 s, input and network latency 0.15 s, at Tuning.Crew.SprintSpeed
+			local reaction = Tuning.Crew.SprintSpeed * (0.75 + 0.1 + 0.15)
+			local lowest = Visibility.radius(RANGE.min)
+			expect(math.max(Tuning.CarriedLantern.ConeRange, lowest)).toBeAtLeast(reaction)
+			-- Performance's cone (Budget.ConeRangePerformance) falls short of it: a Tuning decision left
+			-- to the owner (docs/visibility/gates_45_fix1.md); it must at least clear the floor
+			expect(V.Budget.ConeRangePerformance).toBeAtLeast(lowest)
+			-- the slider never goes under the default floor, which the gates were run at
+			expect(RANGE.min).toBe(V.Radius)
+		end
+	)
+
 	it("is visual only: no detection, aggro, damage or loot code reads it", function()
 		-- every file allowed to read the setting: the floor, the sky, the lanterns, the save
 		local allowed = {
