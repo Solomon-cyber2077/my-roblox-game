@@ -537,6 +537,10 @@ local Tuning = {
 		Setting = "Visibility", -- the player attribute a Settings slider writes (studs; nil = Radius)
 		RadiusMin = 18,
 		RadiusMax = 30,
+		-- the slider's starting point, tuned for a dim phone: the top of the measured-safe range, the
+		-- nearest it comes to the 31-stud sprint reaction distance and under the 38-stud mood
+		-- ceiling (tools/visibility, HANDOFF visibility parts 2-3). Bright screens can turn it down.
+		Default = 30,
 		AmbientFloor = { 54, 58, 66 }, -- Lighting.Ambient never darker than this (per channel)
 		OutdoorFloor = { 88, 96, 110 }, -- Lighting.OutdoorAmbient never darker than this
 		ExposureFloor = 0.26, -- Lighting.ExposureCompensation never lower

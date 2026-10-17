@@ -85,6 +85,14 @@ function SettingsUi.mount(gui: ScreenGui)
 			toggle = true,
 			note = "The pocket watch, gauges, backpack and crew roster during a run.",
 		},
+		{
+			key = "Ambience",
+			title = "DRONE & AMBIENCE",
+			values = { "Full", "Half", "Low", "Off" },
+			toggle = false,
+			buttonWidth = 116,
+			note = "The drone, wind and station sounds. Warnings, footsteps and the Hollows stay at full.",
+		},
 	}
 
 	local labels = {} :: { [string]: string }
@@ -132,6 +140,7 @@ function SettingsUi.mount(gui: ScreenGui)
 		state.Parent = row
 		local buttons: { [string]: TextButton } = {}
 		local options: { string } = if choice.toggle then { choice.values[1] } else choice.values
+		local width: number = (choice :: any).buttonWidth or 170
 		for optionIndex, option in options do
 			local button = Ui.button(labels[option] or option, "Secondary", function()
 				if player:GetAttribute("SettingsReady") ~= true then
@@ -144,8 +153,8 @@ function SettingsUi.mount(gui: ScreenGui)
 					Net.Fire("SetSetting", choice.key, option)
 				end
 			end, {
-				Size = UDim2.fromOffset(170, 42),
-				Position = UDim2.new(1, -((#options - optionIndex + 1) * 180), 0, 96),
+				Size = UDim2.fromOffset(width, 42),
+				Position = UDim2.new(1, -((#options - optionIndex + 1) * (width + 8) + 2), 0, 96),
 				TextSize = 24,
 				Selectable = true,
 			})

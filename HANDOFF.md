@@ -25,6 +25,13 @@ Rojo: the plugin failed only because no `rojo serve` was running; started it and
   main. Three sidechain CompressorSoundEffects on `Ambience` (`DuckCues`, `DuckWarnings`: -30 dB, 8:1, 0.5 s release;
   `DuckSteps`: -26 dB, 2.5:1, 0.18 s) so the drone and beds make way. Footstep and breath sounds themselves unchanged.
   Studio: tree and sidechains verified; the duck depth itself cannot be measured (legacy Sounds are not analysable).
+- T5 settings: new "DRONE & AMBIENCE" row (Full / Half / Low / Off = Ambience group 1 / 0.6 / 0.3 / 0; warnings, cues,
+  footsteps outside it), saved through the existing SetSetting path (`Config/Settings` Choices/Defaults). The
+  Visibility ("LANTERN") slider already existed (UI/LanternSlider, Prompt 6 part 2) and keeps its 18..30 range and
+  its floor; its default is now `Tuning.Visibility.Default = 30` (was 18, the darkest end): the top of the
+  measured-safe range, nearest the 31-stud reaction rule, under the 38-stud mood ceiling. Graphics, Broken Thing
+  Markers and HUD rows unchanged. Studio: Off -> 0, Half -> 0.6, a bad value rejected; button click works; layout
+  checked at half scale. Saving across sessions not testable in Studio (DataStore 403); same path as the other rows.
 2. Known bugs / not verified
 - Nothing heard by ear (MCP cannot hear audio); levels need an ear in Studio.
 3. Next logical step

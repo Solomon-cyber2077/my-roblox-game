@@ -34,6 +34,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Audio = require(Shared.Config.Audio)
+local SettingsConfig = require(Shared.Config.Settings)
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local MathX = require(Shared.Util.MathX)
@@ -403,6 +404,10 @@ function AudioController.Start()
 		local sway = 1 + DRONE_DEPTH.body * math.sin(cycle / DRONE_SWAY.body)
 		local swayHigh = 1 + DRONE_DEPTH.harmonic * math.sin(cycle / DRONE_SWAY.harmonic + 1.7)
 		local drift = 1 + DRONE_DEPTH.pitch * math.sin(cycle / DRONE_SWAY.pitch)
+
+		-- the Settings drone and ambience volume
+		local level = SettingsConfig.AmbienceLevels[Players.LocalPlayer:GetAttribute("Ambience") :: any]
+		mixes.Ambience.Volume = if type(level) == "number" then level else 1
 
 		local duck = if os.clock() < duckUntil then 1 - Tuning.Departure.DuckShare else 1
 		group.Volume = (1 - (1 - HUSH_FLOOR) * hush) * duck

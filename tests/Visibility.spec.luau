@@ -5,9 +5,9 @@ local V = Tuning.Visibility
 
 describe("Visibility", function()
 	it("keeps the floor's reach inside the slider's range", function()
-		expect(Visibility.radius(nil)).toBe(V.Radius)
-		expect(Visibility.radius("far")).toBe(V.Radius)
-		expect(Visibility.radius(0 / 0)).toBe(V.Radius)
+		expect(Visibility.radius(nil)).toBe(V.Default)
+		expect(Visibility.radius("far")).toBe(V.Default)
+		expect(Visibility.radius(0 / 0)).toBe(V.Default)
 		expect(Visibility.radius(1)).toBe(V.RadiusMin)
 		expect(Visibility.radius(999)).toBe(V.RadiusMax)
 		expect(Visibility.radius(24)).toBe(24)
