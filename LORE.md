@@ -199,3 +199,20 @@ letters on boards) and section 7's board schools (slate roofs, gables, bell turr
   forum accounts cite pre-1914 examples and a 1913 notice to whiten platform edges with whitewash in fog; the practice
   spread widely in the 1939 blackout. No source found for 1884-92, so the white coping and lime-washed pillar feet are
   a readability choice (fog-season whitening), not a documented feature of our years. Secondary sources only.
+
+### Visibility part 3 source check (2026-10-17): coping, blue brick, limewash, livery
+- [SLHA: Withcall station platform edging](https://slha.org.uk/?p=65303): 19th-century platform edges were usually
+  hard blue coping bricks (Withcall, 1876). So the period default is a DARK edge; our whitewashed coping stays the
+  fog-season whitening noted above (a readability choice, pre-1914 at best), and the dark course behind it is the
+  period's blue engineering brick.
+- [Northamptonshire HER ENN109370 (Charwelton, Catesby trial trench)](https://her.northamptonshire.gov.uk/Event/ENN109370):
+  Staffordshire blue engineering brick at the outer edges of a station platform. Supports the blue-brick margin.
+- [RMweb: platform edging white lines](https://www.rmweb.co.uk/forums/topic/141607-platform-edging-white-lines/)
+  (forum, secondary): whitening with whitewash, which "did not wear at all well"; a 1949 WR instruction for a ~5 in
+  line. Our edge is whiter than any 1880s practice: flagged as the readability compromise.
+- [Warwickshire Railways: GWR carriage livery](https://warwickshirerailways.com/gwr/gwrag1068.htm) (local history):
+  GWR chocolate lower and cream upper panels from about 1871 to September 1908. Not used (the brief asked for lining
+  and brass only); noted as the period-true option if the train side ever needs to be paler.
+- Lime-washed tree trunks and posts: no railway source found; this rests on general rural limewash practice.
+  Treat the trunk bands as an artistic choice.
+- Unchecked: the exact Ember/Signal/Aurora glass colours are game cosmetics, not period claims.
