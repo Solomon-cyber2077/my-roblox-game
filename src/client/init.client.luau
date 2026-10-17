@@ -20,6 +20,7 @@ local ORDER = {
 	"HollowAnimator",
 	"BuildingVisuals",
 	"AtmosphereController",
+	"VisibilityController",
 	"UIController",
 	"GrabController",
 	"TutorialController",

@@ -8,8 +8,14 @@ Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, di
   Atmosphere density cap 0.62) and pure `Logic/Visibility` (+ spec). `Sky.floor` clamps the drawn sky last every frame
   (AtmosphereController; the departure fog is capped too). The lobby keeps its own look. The normal night already sits
   above the floor; it bites in tunnels, the fog bank and the chase. `lune run preview ... --floor=0` shows the sky without it.
+- T2 lantern: one PointLight per lantern (was two), reach `Tuning.Visibility.Radius` for every cosmetic; a look's
+  glow (>= 1) only brightens it, CosmeticMotion still flickers brightness only. New `Controllers/VisibilityController`
+  (after AtmosphereController in ORDER) keeps every crew lantern on the floor's radius and gives the local player a
+  forward SpotLight cone (`CarriedLantern.Cone*`, 34 studs, 62 deg) in their lantern's colour; no cone in the lobby.
+  New script: run rbxmap `refresh`.
 2. Known bugs/regressions
 - Not verified in Studio (Studio closed). Density cap 0.62 thins the station fog bank a little.
+- Coloured lanterns (Signal green, Ember crimson) light the same reach but read darker than amber.
 3. Next logical step
 - Owner: play a stop at low screen brightness and tune `Tuning.Visibility`.
 
