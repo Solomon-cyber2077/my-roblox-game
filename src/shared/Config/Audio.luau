@@ -10,6 +10,7 @@
 	loop       for beds and machinery
 	group      a SoundGroup of its own (beside the main one, so ducking the mix leaves it alone)
 	rollOff    studs a spatial cue carries before it falls silent (default 220)
+	with       another cue played together with this one (a layered sound)
 	mix        where it sits in the mix (AudioController): "Ambience" (the beds the Settings
 	           volume turns down), "Outdoor" (ambience out in the night, muffled by the carriage walls),
 	           "Cues" (danger you must hear: the ambience ducks hard under them), "Steps" (footsteps:
@@ -26,6 +27,7 @@ export type Cue = {
 	group: string?,
 	rollOff: number?,
 	mix: string?,
+	with: string?,
 }
 
 local Cues: { [string]: Cue } = {
@@ -56,8 +58,13 @@ local Cues: { [string]: Cue } = {
 	Purchase = { id = 9113728042, volume = 0.6 },
 	Clutch = { id = 9125573009, volume = 0.6, maxSeconds = 2 },
 	Click = { id = 15675059323, volume = 0.4 },
-	TicketStamp = { id = 15675059323, volume = 0.35, maxSeconds = 0.4, pitch = 0.6 }, -- the click, heavier
-	TicketPunch = { id = 15675059323, volume = 0.6, maxSeconds = 0.5, pitch = 0.8 },
+	-- UI sounds, Creator Store (ProSoundEffects), chosen 2026-10-17 for audition (HANDOFF.md lists them)
+	MenuClick = { id = 9120300134, volume = 0.3, maxSeconds = 0.25, pitch = 0.9 }, -- "Typewriter Key 2"
+	-- a vote lands: heavy paper, then the brass clip ("Paper Tear Heavy Paper Bag Slow Rustle 5")
+	TicketStamp = { id = 9125725195, volume = 0.45, maxSeconds = 0.7, with = "BrassClick" },
+	BrassClick = { id = 9117028601, volume = 0.35, maxSeconds = 0.3, pitch = 0.85 }, -- "Moviola Toggle Switch 6"
+	-- the ticket's stamp coming down ("Table Hit Hand Smacks On Wood Table 14")
+	TicketPunch = { id = 9119909448, volume = 0.6, maxSeconds = 0.6, pitch = 0.8 },
 
 	-- Departure warnings (Controllers/DepartureClock), from the recordings above
 	WarnTick = { id = 15675059323, volume = 0.1, maxSeconds = 0.4, pitch = 1.7, group = "Warnings" },

@@ -136,6 +136,9 @@ local SHAPES: { [string]: (Sound) -> () } = {
 		equalize(sound, 0, -6, -20)
 		reverb(sound, 6, -2, -12)
 	end,
+	TicketPunch = function(sound)
+		equalize(sound, 4, -2, -10) -- a stamp's weight, not a slap
+	end,
 	DoorThud = function(sound)
 		equalize(sound, 5, -9, -32)
 	end,
@@ -521,6 +524,9 @@ function AudioController.Play(cueName: string, position: Vector3?, gain: number?
 	sound.Volume = cue.volume * (gain or 1)
 	sound.PlaybackSpeed = (cue.pitch or 1) * (pitch or 1)
 	sound:Play()
+	if cue.with then
+		AudioController.Play(cue.with, position, gain)
+	end
 	local lifetime = cue.maxSeconds or 12
 	task.delay(lifetime, function()
 		if cue.maxSeconds and sound.IsPlaying then

@@ -32,10 +32,30 @@ Rojo: the plugin failed only because no `rojo serve` was running; started it and
   measured-safe range, nearest the 31-stud reaction rule, under the 38-stud mood ceiling. Graphics, Broken Thing
   Markers and HUD rows unchanged. Studio: Off -> 0, Half -> 0.6, a bad value rejected; button click works; layout
   checked at half scale. Saving across sessions not testable in Studio (DataStore 403); same path as the other rows.
+- T6 UI sounds: every `Ui.button` press plays `MenuClick`; a vote landing (`TicketStamp`, RouteVote) is a heavy paper
+  rustle layered with a brass click (new cue field `with`); the ticket stamp (`TicketPunch`, run card, unseal, route
+  chosen) is a wooden thud. Config only for the tickets: RouteVote/RunCard untouched. Studio: all ids load; a menu
+  press played MenuClick; a Junction vote played TicketStamp + BrassClick together, then TicketPunch.
+  Audio to audition (all free Creator Store, ProSoundEffects = Roblox-licensed; store page
+  https://create.roblox.com/store/asset/<id>):
+  | Cue | Id | Source | Settings |
+  |---|---|---|---|
+  | MenuClick | 9120300134 | "Typewriter Key 2 (SFX)" / ProSoundEffects | vol 0.3, pitch 0.9, cut 0.25 s |
+  | TicketStamp | 9125725195 | "Paper Tear Heavy Paper Bag Slow Rustle 5 (SFX)" / ProSoundEffects | vol 0.45, cut 0.7 s |
+  | BrassClick | 9117028601 | "Moviola Toggle Switch Single Clicks Sharp 6 (SFX)" / ProSoundEffects | vol 0.35, pitch 0.85 |
+  | TicketPunch | 9119909448 | "Table Hit Hand Smacks On Wood Table 14 (SFX)" / ProSoundEffects | vol 0.6, pitch 0.8, lows +4 |
+  | DoorThud | 9114129572 | "Door Bang Rattle 8 (SFX)" / ProSoundEffects | vol 0.5, pitch 0.78, highs -32 |
+  | Drone / DroneHarmonic | 9112795295 | "Hollow Rumble 1 (SFX)" / ProSoundEffects | 0.42 at 1x / 0.14 at 4x |
+  Alternatives found: brass 9125921369 (seat-belt latch), thud 9114129501 (Door Bang Rattle 7), drone 9112795571
+  (Hollow Rumble 2: 39% under 60 Hz, rejected), rustle 125259363733255 (ballersman155, origin unverified).
 2. Known bugs / not verified
-- Nothing heard by ear (MCP cannot hear audio); levels need an ear in Studio.
+- Nothing heard by ear (MCP cannot hear audio): levels, duck depth and the UI sounds need an ear in Studio.
+- The Visibility default moved 18 -> 30; old saves that already stored "18" keep 18 (game unpublished, so none real).
+- Studio's own warnings remain (EditableMesh/Image access, DataStore 403, UIBlox FoundationProvider, asset 203785492).
+- Window frost skipped (cost); MAP.md has an uncommitted edit from before this session, left alone.
 3. Next logical step
-- Audition in Studio: Play, skip to a stop, walk in and out of a door.
+- Audition in Studio with headphones and a phone speaker: skip to a stop, walk in and out of a door, let a Hollow
+  close in, open Settings and try the Ambience row; swap any id in `Config/Audio` that does not fit.
 
 ## 2026-10-17: VISIBILITY PART 3: SURFACE FIX + RE-PROOF AT 45% (branch claude/last-train-out), STOPPED: GATES FAIL
 No Studio session. All gate numbers are headless Blender renders (`tools/visibility`, approximations in its README,
