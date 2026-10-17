@@ -505,13 +505,16 @@ local Tuning = {
 	Lobby = {
 		SeatRetouchDelay = 1.5, -- seconds a lobby seat ignores touches after someone stands up
 	},
-	-- The crew's carried lantern. One reach and one brightness for every cosmetic: a lantern's
-	-- look changes only its colour, glow style and flicker (Config/Cosmetics, Visual/CosmeticModels)
+	-- The crew's carried lantern: one PointLight whose reach is the readability floor
+	-- (Visibility.Radius) for every cosmetic, plus the bearer's own forward cone (client only).
+	-- A lantern's look changes only its colour, glow style and flicker (Config/Cosmetics,
+	-- Visual/CosmeticModels)
 	CarriedLantern = {
-		LightRange = 16, -- studs the lantern lights (gameplay)
-		LightBrightness = 0.55,
-		CoreRange = 6, -- the bright pool close round the lamp (glow style only)
-		CoreBrightness = 3,
+		LightBrightness = 1.1, -- the pool's strength; a look's glow (>= 1) only adds to it
+		ConeRange = 34, -- studs the forward cone reaches ahead of the bearer
+		ConeAngle = 62, -- degrees across the cone
+		ConeBrightness = 1.6,
+		ConeHeight = 1.2, -- studs above the root it shines from
 	},
 	--[[
 		The readability floor (Logic/Visibility): however dark the night, the fog or a chase gets,

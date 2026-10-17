@@ -70,14 +70,15 @@ function CosmeticModels.lantern(look: { [string]: any }, frame: CFrame): Model
 		{ material = Enum.Material.Metal }
 	)
 
-	-- brightest at the lamp and falling away: a strong short pool over a soft wide light. The wide
-	-- light's reach and strength are the same for every lantern (Tuning.CarriedLantern); a look's
-	-- `glow` only brightens the pool round the lamp
+	-- one light per lamp: a warm pool all round the bearer, as far as the readability floor
+	-- (Tuning.Visibility.Radius) for every lantern. A look's `glow` only brightens it; its
+	-- colour, flicker and glow style are all a cosmetic changes, never the reach. The client
+	-- (Controllers/VisibilityController) keeps the reach on the floor and adds the bearer's
+	-- forward cone
 	local lamp = Tuning.CarriedLantern
-	local glow = if typeof(look.glow) == "number" then look.glow else 1
-	local light = Kit.pointLight(lens, Kit.rgb(look.light), lamp.CoreBrightness * glow, lamp.CoreRange, false)
-	light.Name = "Glow"
-	Kit.pointLight(lens, Kit.rgb(look.light), lamp.LightBrightness, lamp.LightRange, false).Name = "Glow"
+	local glow = if typeof(look.glow) == "number" then math.max(look.glow, 1) else 1
+	Kit.pointLight(lens, Kit.rgb(look.light), lamp.LightBrightness * glow, Tuning.Visibility.Radius, false).Name =
+		"Glow"
 	if look.light2 then
 		lens:SetAttribute("CycleA", Kit.rgb(look.light))
 		lens:SetAttribute("CycleB", Kit.rgb(look.light2))
