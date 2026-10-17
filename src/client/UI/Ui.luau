@@ -10,6 +10,7 @@
 local TweenService = game:GetService("TweenService")
 
 local Theme = require(script.Parent.Theme)
+local Registry = require(script.Parent.Parent.Registry)
 
 local Ui = {}
 
@@ -350,6 +351,10 @@ function Ui.button(
 	if onClick then
 		button.Activated:Connect(function()
 			if not button:GetAttribute("Disabled") then
+				-- a tactile key under the finger
+				if Registry.AudioController then
+					Registry.AudioController.Play("MenuClick")
+				end
 				onClick()
 			end
 		end)
