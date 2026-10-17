@@ -1,5 +1,42 @@
 # HANDOFF
 
+## 2026-10-17: VISIBILITY PART 3: SURFACE FIX + RE-PROOF AT 45% (branch claude/last-train-out), STOPPED: GATES FAIL
+No Studio session. All gate numbers are headless Blender renders (`tools/visibility`, approximations in its README,
+items 11-16 new); the luminance floors are Lune logic. Monster, NPC, lobby files and MAP.md untouched. No
+`Tuning.Visibility` number changed. A stale Codex worktree (.codex/worktrees/7b23, detached at 4cfc05b, uncommitted
+since 2026-10-03) also edits StationBuilder/TrainBuilder/TrainService: the train fix lives in `Builders/Limewash`.
+1. Features completed
+- 8c7161a Task 1: `tools/visibility/classify.py` sorts objects mechanically (Tier A hazards near their lip, Tier B
+  obstacles incl. the train side, Tier C counted) -> `tiers.json`; `offenders.py` -> `docs/visibility/offenders_45.md`.
+- 509047e coping: fresh whitewash (250,250,244), 2.35 studs wide (inner half clears the train's overhang), the old
+  yellow strip repainted as a dark blue-brick margin. `Config/Surfaces`, `Logic/Luminance`, `tests/Surfaces.spec`.
+- 641d2b9 obstacles: `Builders/Limewash.station` (called by StationBuilder): hand-varied lime-washed bands low on
+  crates, barrels, churns, benches, lamps, planters, carts, stalls, trunks...; grime per grade held above MinPale.
+  About 230 non-colliding parts per station; audit clean (each band avoids its siblings' planes).
+- 57b4c5c train side: `Limewash.train` (called by TrainService, audit, exporter): pale foot and waist lining, polished
+  brass; 12 parts, one train build for both tiers (there is no separate Performance train).
+- e8099d2 lanterns: `Cosmetics.LanternMinLuminance` (lens 0.50, light 0.30); Ember hot-orange glass over a red pool,
+  Signal glass lit, Aurora violet -> lavender; `tests/LanternLuminance.spec` loops every lantern; slider fairness test.
+- a241311 Task 4 evidence: `gates_45_fix1.md`, `gates_25_fix1.md`, `sheet_r18_45_fix1.jpg`, `offenders_45_fix1.md`.
+2. Gate results (45%, flare 1%) and known gaps
+- Crew PASSES everywhere: min 3.84:1 (Ember worst case; was 1.16-1.56).
+- Must-see FAILS: 2 of 36 state cells pass (Minehead). Coping 2.65-3.22:1 (was 1.66-2.46; calm passes at Halt and
+  Minehead). Train side (now judged as one object) 1.15-2.30 (was 1.08-1.68). Container_10 (Halt), lamp posts and
+  plinth (Market), canopy column (Halt) also under. Other falloff curve: same picture (coping 2.74-4.16).
+- Surface limit: 45 of 81 failing readings stay under 3:1 even if that object were painted pure white (or black):
+  the chase's ambient minimum, not paint, is the ceiling at the floor's distance (the lantern is zero at its Range).
+- Mood ceiling PASSES: APL <= 0.034 vs 0.059, lit <= 0.004 vs 0.083; holds up to a 38-stud floor.
+- Beyond the pool (report only): 3.0% of Tier A/B readings past 2x the floor read at 3:1 (early 6.8%).
+- Monster stand-in at 18 studs: 1.02-1.34:1. Hollow silhouettes vanish at the pool edge too (report only).
+- Performance cone 26 < 31-stud sprint reaction distance (Quality 34 clears it): a Tuning decision, not made.
+3. Next logical step (owner's call; nothing below is done)
+- Decide the light side: raise the chase ambient minimum (`Tuning.Visibility.Chase`/floor), or accept the measured
+  shortfall at the floor's distance; or move the gate's "at the floor" band inside the lantern's reach.
+- Surfaces still in reach (limit > 3): taller bands on canopy columns and lamp posts, Container_10's body.
+- Performance cone: 26 -> 31 studs (~1.4x the cone's lit area, no shadow) or accept 0.84 s of reaction.
+- Slider stays 18..30 (no lower floor passes; mood allows 38): "Dread" shares the end with "Steady", a design question.
+- Studio playtest (checklist in the report).
+
 ## 2026-10-17: VISIBILITY PART 2: DIM-SCREEN PROOF + SLIDER (branch claude/last-train-out), STOPPED FOR A GO
 No Studio session. Everything below comes from headless Blender renders (`tools/visibility`, approximations listed in
 its README) or Lune logic, not in-engine. Monster, NPC and lobby files untouched. Tuning.Visibility unchanged.
