@@ -155,6 +155,8 @@ function SettingsUi.mount(gui: ScreenGui)
 		end
 		rows[choice.key] = { value = state, buttons = buttons }
 	end
+	-- the lantern's reach: one slider, after the choices (UI/LanternSlider)
+	require(script.Parent.LanternSlider).mount(list, #choices + 1)
 
 	repaint = function()
 		local ready = player:GetAttribute("SettingsReady") == true

@@ -10,6 +10,7 @@ describe("Settings", function()
 			GraphicsQuality = "Performance",
 			BrokenThingMarkers = "Off",
 			Hud = "Hide",
+			Visibility = "24",
 		}
 		expect(Settings.read(saved)).toEqual(saved)
 	end)
