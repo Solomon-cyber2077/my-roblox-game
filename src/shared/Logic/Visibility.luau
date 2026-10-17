@@ -22,7 +22,7 @@ function Visibility.radius(setting: any): number
 	-- Settings save it as a whole-number string ("24"); the slider sets a number
 	local studs = if type(setting) == "string" then tonumber(setting) else setting
 	if type(studs) ~= "number" or studs ~= studs then
-		return V.Radius
+		return V.Default
 	end
 	return math.clamp(studs, V.RadiusMin, V.RadiusMax)
 end

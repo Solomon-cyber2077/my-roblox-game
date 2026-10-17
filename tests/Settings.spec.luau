@@ -11,6 +11,7 @@ describe("Settings", function()
 			BrokenThingMarkers = "Off",
 			Hud = "Hide",
 			Visibility = "24",
+			Ambience = "Low",
 		}
 		expect(Settings.read(saved)).toEqual(saved)
 	end)

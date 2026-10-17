@@ -29,7 +29,7 @@ local LanternSlider = {}
 
 local KEY = Tuning.Visibility.Setting
 local RANGE = Config.Ranges[KEY]
-local DEFAULT = Tuning.Visibility.Radius
+local DEFAULT = Tuning.Visibility.Default
 local FLAMES = 9
 local RING_FADE = 1.6 -- seconds the preview ring takes to fade after release
 
