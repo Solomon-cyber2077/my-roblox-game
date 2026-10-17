@@ -359,6 +359,11 @@ HAZARD_BASE = 20000
 hazard_ids = {i: HAZARD_BASE + k for k, i in enumerate(sorted(TIERS["A"]))}
 assert len(group_ids) < HAZARD_BASE and len(hazard_ids) < 11000
 STANDIN_ID = 32000
+# the train's platform side is one object (TrainBuilder parents its panels one by one, so
+# each panel would otherwise be judged against the panel beside it)
+TRAIN_SIDE_ID = 30500
+side_groups = {g for g, fam in TIERS["B"].items() if fam == "train side"}
+side_groups |= {g for g in st["groups"] if g.startswith("Train/Lining")}  # paint on that side
 
 ground_y = 0.0  # platform top (StationBuilder: slab top at y 0)
 targets = {}  # index -> {kind, name, ...}
@@ -385,7 +390,7 @@ for i, p in enumerate(st["parts"]):
     white = CEILING and (i in TIERS["A"] or p["g"] in TIERS["B"])
     ob.color = (1, 1, 1, 1) if white else (*lin(p["c"]), 1)
     ob["alpha"] = 1 - p["t"]
-    ob.pass_index = hazard_ids.get(i) or group_ids.get(p["g"], 0)
+    ob.pass_index = hazard_ids.get(i) or (TRAIN_SIDE_ID if p["g"] in side_groups else group_ids.get(p["g"], 0))
     coll.objects.link(ob)
     ob["kind"] = kind
     lo, hi = aabb(p)
@@ -778,8 +783,10 @@ for name, radius, state, crew, view in shots:
     # lip) and Tier B models, by index
     info["targets"] = {
         str(group_ids[g]): {"kind": "obstacle", "tier": "B", "name": g.split("#")[0], "family": fam}
-        for g, fam in TIERS["B"].items() if g in group_ids
+        for g, fam in TIERS["B"].items() if g in group_ids and g not in side_groups
     }
+    if side_groups:
+        info["targets"][str(TRAIN_SIDE_ID)] = {"kind": "obstacle", "tier": "B", "name": "train side", "family": "train side"}
     for i, idx in hazard_ids.items():
         a = TIERS["A"][i]
         info["targets"][str(idx)] = {"kind": a["kind"], "tier": "A", "name": a["family"], "family": a["family"],
