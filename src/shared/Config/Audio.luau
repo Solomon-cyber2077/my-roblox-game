@@ -10,6 +10,8 @@
 	loop       for beds and machinery
 	group      a SoundGroup of its own (beside the main one, so ducking the mix leaves it alone)
 	rollOff    studs a spatial cue carries before it falls silent (default 220)
+	mix        where it sits in the mix (AudioController): "Ambience" (the beds the Settings
+	           volume turns down), "Outdoor" (ambience out in the night, muffled by the carriage walls)
 ]]
 
 export type Cue = {
@@ -21,6 +23,7 @@ export type Cue = {
 	pitch: number?,
 	group: string?,
 	rollOff: number?,
+	mix: string?,
 }
 
 local Cues: { [string]: Cue } = {
@@ -76,18 +79,32 @@ local Cues: { [string]: Cue } = {
 
 	-- Beds
 	TrainRun = { id = 9120247081, volume = 0.55, loop = true },
-	Wind = { id = 9113286969, volume = 0.4, loop = true },
-	StationEerie = { id = 9125440141, volume = 0.35, loop = true },
-	DepotHall = { id = 9114872503, volume = 0.3, loop = true },
+	Wind = { id = 9113286969, volume = 0.4, loop = true, mix = "Outdoor" },
+	StationEerie = { id = 9125440141, volume = 0.35, loop = true, mix = "Outdoor" },
+	DepotHall = { id = 9114872503, volume = 0.3, loop = true, mix = "Ambience" },
 	-- Satie, Gnossienne No. 3 (APM Music), from the lobby piano (Builders/LobbyBuilder)
 	LobbyPiano = { id = 1837474268, volume = 0.48, loop = true, spatial = true },
 
 	-- The stops' soundscape: the same recordings slowed and shaped (AudioController
 	-- adds the filters and reverb), so nothing new needs clearing.
-	Drone = { id = 9113286969, volume = 0.38, loop = true, pitch = 0.32 }, -- wind, slowed to a moan
-	Howl = { id = 9113286969, volume = 0.2, loop = true, pitch = 0.6 }, -- gusts that come and go
-	DistantBell = { id = 9113804436, volume = 0.26, maxSeconds = 7, pitch = 0.62, spatial = true },
-	DistantCry = { id = 9125475729, volume = 0.24, maxSeconds = 4, pitch = 0.48, spatial = true },
+	Drone = { id = 9113286969, volume = 0.38, loop = true, pitch = 0.32, mix = "Outdoor" }, -- wind, slowed to a moan
+	Howl = { id = 9113286969, volume = 0.2, loop = true, pitch = 0.6, mix = "Outdoor" }, -- gusts that come and go
+	DistantBell = {
+		id = 9113804436,
+		volume = 0.26,
+		maxSeconds = 7,
+		pitch = 0.62,
+		spatial = true,
+		mix = "Outdoor",
+	},
+	DistantCry = {
+		id = 9125475729,
+		volume = 0.24,
+		maxSeconds = 4,
+		pitch = 0.48,
+		spatial = true,
+		mix = "Outdoor",
+	},
 	Heartbeat = { id = 9113570506, volume = 0.65, maxSeconds = 1, pitch = 0.42 },
 	RailClack = { id = 15675059323, volume = 0.14, maxSeconds = 1, pitch = 0.45 },
 
@@ -97,7 +114,7 @@ local Cues: { [string]: Cue } = {
 	SkyHeart = { id = 9113570506, volume = 0.75, maxSeconds = 1.5, pitch = 0.28 }, -- the Eye's pulse
 
 	-- weather
-	Rain = { id = 9116496074, volume = 0.34, loop = true, pitch = 0.55 }, -- the steam hiss slowed into rain
+	Rain = { id = 9116496074, volume = 0.34, loop = true, pitch = 0.55, mix = "Outdoor" }, -- the steam hiss slowed into rain
 	-- the storm outside the Depot Hall's back windows (Controllers/LobbyStorm); ProSoundEffects library
 	LobbyRain = { id = 9112855439, volume = 0.5, loop = true, spatial = true, rollOff = 170, pitch = 0.92 },
 	LobbyThunder = {
@@ -118,7 +135,7 @@ local Cues: { [string]: Cue } = {
 	},
 
 	-- the fog: a scream slowed until it is many voices whispering, out where the fog lies
-	FogWhisper = { id = 9125475729, volume = 0.5, loop = true, spatial = true, pitch = 0.36 },
+	FogWhisper = { id = 9125475729, volume = 0.5, loop = true, spatial = true, pitch = 0.36, mix = "Outdoor" },
 
 	-- the Hollows, layered from the same few recordings at other speeds
 	HollowScream = { id = 9125475729, volume = 1, spatial = true, pitch = 1.3, maxSeconds = 2.2 },

@@ -9,6 +9,7 @@ local Registry = require(script.Registry)
 
 local ORDER = {
 	"StateController",
+	"ThresholdController",
 	"AudioController",
 	"MovementController",
 	"CameraController",

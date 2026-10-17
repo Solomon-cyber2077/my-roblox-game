@@ -40,6 +40,16 @@ local Tuning = {
 		FogDensity = 0.08, -- extra Atmosphere density at full warning
 	},
 
+	-- The train's door threshold, per player (Logic/Threshold, Controllers/ThresholdController).
+	-- Crossing it never blocks controls or darkens the screen: light and sound only crossfade.
+	Threshold = {
+		FadeOut = 1.2, -- seconds for the station's cold light and sound to come in off the train (<= 1.5)
+		FadeIn = 0.9, -- seconds for the train's warmth to come back aboard
+		MuffleIn = 0.08, -- seconds for the walls to close over the outside sound on boarding
+		Margin = 0.6, -- studs either side of the door before a crossing counts (no flicker on the sill)
+		Teleport = 12, -- studs moved in one frame that count as a teleport, not a step (no thud)
+	},
+
 	-- The Last Call grace after T-0 (Logic/RunRules): the whistle blows and the station stays docked this
 	-- long before it actually departs (run.station.lastCallEndsAt). Off: it departs at T-0 as before.
 	LastCallGrace = {
