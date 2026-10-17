@@ -102,6 +102,16 @@ def vignette(display, level, color, h, w):
     return out
 
 
+def near_lips(x, z, lips, reach):
+    """Pixels within `reach` studs (horizontal) of any lip segment [x0, z0, x1, z1]."""
+    out = np.zeros(x.shape, dtype=bool)
+    for x0, z0, x1, z1 in lips:
+        dx = np.maximum(np.maximum(min(x0, x1) - x, 0), x - max(x0, x1))
+        dz = np.maximum(np.maximum(min(z0, z1) - z, 0), z - max(z0, z1))
+        out |= np.hypot(dx, dz) <= reach
+    return out
+
+
 def contrast(a, b, flare):
     hi, lo = max(a, b), min(a, b)
     return (hi + flare) / (lo + flare)
@@ -150,9 +160,12 @@ def measure(path, vis):
     pos = shot["pos"]
     root = info["root"]
     # horizontal distance from the player, Blender (x, y) = Roblox (x, -z)
-    dist = np.hypot(pos[..., 0] - root[0], -pos[..., 1] - root[2])
+    rx, rz = pos[..., 0], -pos[..., 1]
+    dist = np.hypot(rx - root[0], rz - root[2])
     result = {k: info[k] for k in ("shot", "station", "label", "radius", "state", "view", "lantern")}
     result["reach"] = info.get("reach", 1)
+    result["tier"] = info.get("tier", "quality")
+    result["falloff"] = info.get("falloff", "linear")
     result["crewCount"] = len(info["crew"]) + 1
     for dim, tag in ((T.DIM_DEFAULT, "45"), (T.DIM_STRESS, "25")):
         lum = lum_full * dim
@@ -164,21 +177,30 @@ def measure(path, vis):
         o.close()
         # gate 1: must-see, per target, in each band
         radius = info["radius"]
-        must = []
+        must, beyond = [], []
         for key, target in info["targets"].items():
-            obj = index == int(key)
-            if not obj.any():
+            whole = index == int(key)
+            if not whole.any():
                 continue
+            # a hazard is judged where it bites: within its lip distance of the drop or step
+            obj = whole & near_lips(rx, rz, target["lips"], target["lip"]) if target.get("lips") else whole
+            # report only: does it still read far beyond the pool (2x the floor and further)?
+            far = obj & (dist >= 2 * radius)
+            ring_far = dilate(far, T.RING) & ~whole
+            if far.sum() >= T.MIN_PIXELS and ring_far.sum() >= T.MIN_PIXELS:
+                beyond.append({"id": int(key), "family": target.get("family", target["name"]), "tier": target.get("tier"),
+                               "contrast": contrast(float(lum[far].mean()), float(lum[ring_far].mean()), T.FLARE)})
             for band_name, band in (("at", T.BAND_AT), ("inside", T.BAND_INSIDE)):
                 m = obj & (dist >= band[0] * radius) & (dist < band[1] * radius)
                 if m.sum() < T.MIN_PIXELS:
                     continue
-                ring = dilate(m, T.RING) & ~obj
+                ring = dilate(m, T.RING) & ~whole
                 if ring.sum() < T.MIN_PIXELS:
                     continue
                 lo, lb = float(lum[m].mean()), float(lum[ring].mean())
                 must.append({
                     "id": int(key), "name": target["name"], "kind": target["kind"], "band": band_name,
+                    "tier": target.get("tier"), "family": target.get("family", target["name"]),
                     "px": int(m.sum()), "contrast": contrast(lo, lb, T.FLARE),
                     "office": contrast(lo, lb, T.FLARE_OFFICE), "L": lo, "Lbg": lb,
                 })
@@ -197,7 +219,14 @@ def measure(path, vis):
                 row[part] = contrast(float(lum[m].mean()), float(lum[ring].mean()), T.FLARE)
                 row[part + "Px"] = int(m.sum())
             crew.append(row)
-        result[tag] = {"must": must, "crew": crew}
+        standin = None
+        if info.get("standin"):
+            m = index == info["standin"]["id"]
+            ring = dilate(m, T.RING) & ~m
+            if m.sum() >= T.MIN_PIXELS and ring.sum() >= T.MIN_PIXELS:
+                standin = {"distance": info["standin"]["distance"], "px": int(m.sum()),
+                           "contrast": contrast(float(lum[m].mean()), float(lum[ring].mean()), T.FLARE)}
+        result[tag] = {"must": must, "crew": crew, "beyond": beyond, "standin": standin}
     # gate 3: mood, at full brightness (comparable with the reference frames)
     result["apl"] = float(lum_full.mean())
     result["lit"] = float((lum_full > T.LIT_LEVEL).mean())

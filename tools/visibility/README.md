@@ -9,7 +9,19 @@ blender -b --factory-startup --python tools/visibility/render.py  -- <scratch>/v
 blender -b --factory-startup --python tools/visibility/measure.py -- <scratch>/shots <scratch>/refs.json <scratch>/vis.json
 python -I tools/visibility/sheet.py <scratch>/shots --dim=45 --export=<scratch>/vis.json  # --dim=25: report only
 blender -b --factory-startup --python tools/visibility/render.py  -- --calibrate   # light units check
+python -I tools/visibility/classify.py <scratch>/vis.json tools/visibility/tiers.json  # the tiers, as data
+python -I tools/visibility/offenders.py <scratch>/shots <out.md>   # failures ranked by family
 ```
+
+render.py flags: `--tier=perf` (Performance: cone 26, no cone shadow, 4 rims; `<shot>_perf`),
+`--falloff=smooth` (the other curve, `f2_<shot>`), `--ceiling` (what-if: every Tier A/B surface
+white, `ceil_<shot>`: what albedo alone could ever reach), `--reach=k` (what-if lantern range).
+sheet.py `--tag=_fix1` names its outputs `gates_45_fix1.md` / `sheet_45_fix1.jpg`.
+
+Must-see targets are mechanical (`classify.py`, saved as `tiers.json`): Tier A hazards (a
+walk-level top with a lower neighbour: the coping, steps, plinths; judged within 1 stud of the
+lip), Tier B obstacles (collidable, rising more than a step above walk level and starting below
+head height beside it; the train's side included), Tier C everything else (counted only).
 
 - `.lune/visibility.luau` builds the stops the server builds (LayoutGen + StationBuilder, docked;
   TrainBuilder's train beside them) for an early (Halt, stop 1), mid (Market, stop 4) and late
@@ -44,6 +56,13 @@ contrast at the floor's own distance gets easier as the floor shrinks (threshold
 8. Camera: classic third person at StartZoom behind a focus 1.5 studs above the root, 12 deg down.
 9. The landscape around the station (land chunks, sinkhole, fog bank) is not built.
 10. The black flicker (0.36 s) is not rendered: the gates measure the held chase after it.
+11. Tiers come from boxed parts on a 0.5-stud grid; beyond the station's slabs the land is taken
+    as level (the landscape and the sinkhole are not exported), so only the track side has gaps.
+12. Kit-dressed props (YardLamp, FencePicket) are drawn but not judged (no object index).
+13. Surface treatments are plain diffuse colour: Roblox's Plaster/Concrete/Brick textures
+    (normal and roughness maps) are not modelled, only the part's colour. No specular: brass
+    "catching the flame" is not credited (the gate holds on albedo alone).
+14. The monster stand-in is a 7-stud block figure in a dark hide, not the game's Hollow.
 
 ## Sources
 - WCAG 2.1 SC 1.4.11 Non-text Contrast (3:1), relative luminance and contrast ratio.
