@@ -513,7 +513,8 @@ function AtmosphereController.Start()
 			dread * MathX.lerp(1, Tuning.Visibility.Chase.Vignette, math.max(chaseDim, chaseRelief))
 		)
 
-		-- a station's fog bank closing over the camera, and its own cold grade off the train
+		-- a station's fog bank closing over the camera, and its own cold grade off the train,
+		-- crossfaded in time as you cross the door (Controllers/ThresholdController), never a cut
 		local fog = 0
 		local stationGrade: Sky.Grade? = nil
 		if not inLobby then
@@ -530,7 +531,9 @@ function AtmosphereController.Start()
 				stationGrade = {
 					tint = Color3.fromRGB(def.tint[1], def.tint[2], def.tint[3]),
 					saturation = def.saturation,
-					weight = math.clamp(localPos.Z / V.GradeRamp, 0, 1),
+					weight = if Registry.ThresholdController
+						then Registry.ThresholdController.Out()
+						else math.clamp(localPos.Z / V.GradeRamp, 0, 1),
 				}
 			end
 		end
