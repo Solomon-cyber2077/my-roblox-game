@@ -75,6 +75,13 @@ local OUTSIDE: { [string]: boolean } =
 local SHELTER_DIP = 0.45 -- share of the outside beds the walls take away
 local SHELTER_HIGH, SHELTER_MID = -30, -10 -- dB the walls take off the Outdoor group's highs and mids
 local SHELTER_ROOM = 0.5 -- share of the hall's room tone heard aboard
+-- The Ambience group ducks under what must be heard (sidechain compressors keyed by these groups):
+-- hard under danger cues and the departure warnings, a light dip under each footstep.
+local DUCKS = {
+	{ key = "Cues", threshold = -30, ratio = 8, release = 0.5 },
+	{ key = "Warnings", threshold = -30, ratio = 8, release = 0.5 },
+	{ key = "Steps", threshold = -26, ratio = 2.5, release = 0.18 },
+}
 
 local LOBBY =
 	Vector3.new(Tuning.World.LobbyOrigin[1], Tuning.World.LobbyOrigin[2], Tuning.World.LobbyOrigin[3])
@@ -156,6 +163,20 @@ local SHAPES: { [string]: (Sound) -> () } = {
 	end,
 }
 
+-- A SoundGroup of a cue's own, beside the main one, so ducking the mix leaves it alone.
+local function ownGroup(name: string): SoundGroup
+	local own: SoundGroup? = groups[name]
+	if own then
+		return own
+	end
+	local made = Instance.new("SoundGroup")
+	made.Name = name
+	made.Volume = 1
+	made.Parent = SoundService
+	groups[name] = made
+	return made
+end
+
 local function makeSound(cueName: string, parent: Instance): Sound?
 	local cue = Audio[cueName]
 	if cue == nil then
@@ -169,16 +190,7 @@ local function makeSound(cueName: string, parent: Instance): Sound?
 	sound.PlaybackSpeed = cue.pitch or 1
 	sound.SoundGroup = if cue.mix then mixes[cue.mix] or group else group
 	if cue.group then
-		local own: SoundGroup? = groups[cue.group]
-		if not own then
-			local made = Instance.new("SoundGroup")
-			made.Name = cue.group
-			made.Volume = 1
-			made.Parent = SoundService
-			groups[cue.group] = made
-			own = made
-		end
-		sound.SoundGroup = own
+		sound.SoundGroup = ownGroup(cue.group)
 	end
 	if cue.spatial then
 		sound.RollOffMode = Enum.RollOffMode.InverseTapered
@@ -236,6 +248,24 @@ function AudioController.Init()
 	walls.Name = "Walls"
 	walls.LowGain, walls.MidGain, walls.HighGain = 0, 0, 0
 	walls.Parent = outdoor
+	-- what the ambience makes way for, under the main group (so the Hush still drains them)
+	for _, name in { "Cues", "Steps" } do
+		local made = Instance.new("SoundGroup")
+		made.Name = name
+		made.Volume = 1
+		made.Parent = group
+		mixes[name] = made
+	end
+	for _, duck in DUCKS do
+		local compressor = Instance.new("CompressorSoundEffect")
+		compressor.Name = `Duck{duck.key}`
+		compressor.SideChain = mixes[duck.key] or ownGroup(duck.key)
+		compressor.Threshold = duck.threshold
+		compressor.Ratio = duck.ratio
+		compressor.Attack = 0.005
+		compressor.Release = duck.release
+		compressor.Parent = ambience
+	end
 	anchorPart = Instance.new("Part")
 	anchorPart.Name = "AudioAnchor"
 	anchorPart.Anchored = true

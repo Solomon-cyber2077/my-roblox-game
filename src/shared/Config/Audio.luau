@@ -11,7 +11,9 @@
 	group      a SoundGroup of its own (beside the main one, so ducking the mix leaves it alone)
 	rollOff    studs a spatial cue carries before it falls silent (default 220)
 	mix        where it sits in the mix (AudioController): "Ambience" (the beds the Settings
-	           volume turns down), "Outdoor" (ambience out in the night, muffled by the carriage walls)
+	           volume turns down), "Outdoor" (ambience out in the night, muffled by the carriage walls),
+	           "Cues" (danger you must hear: the ambience ducks hard under them), "Steps" (footsteps:
+	           the ambience dips a little under each). The Warnings group ducks the ambience too.
 ]]
 
 export type Cue = {
@@ -34,13 +36,13 @@ local Cues: { [string]: Cue } = {
 	-- crossing the carriage door (Controllers/ThresholdController): a heavy door, muffled (ProSoundEffects
 	-- "Door Bang Rattle 8", heavy double doors, Creator Store)
 	DoorThud = { id = 9114129572, volume = 0.5, maxSeconds = 1.2, pitch = 0.78 },
-	Alarm = { id = 9113085203, volume = 0.45, maxSeconds = 2.5 },
+	Alarm = { id = 9113085203, volume = 0.45, maxSeconds = 2.5, mix = "Cues" },
 	Deposit = { id = 9113849492, volume = 0.6 },
 	Loot = { id = 17208319162, volume = 0.6 },
 	Heal = { id = 9114171855, volume = 0.6 },
 	Hit = { id = 9113570506, volume = 0.8 },
-	HollowSpawn = { id = 9125475729, volume = 0.9, spatial = true },
-	HollowStrike = { id = 9125471724, volume = 0.9, spatial = true },
+	HollowSpawn = { id = 9125475729, volume = 0.9, spatial = true, mix = "Cues" },
+	HollowStrike = { id = 9125471724, volume = 0.9, spatial = true, mix = "Cues" },
 	Flash = { id = 9113024908, volume = 0.8, spatial = true },
 	FlareLaunch = { id = 12222095, volume = 0.8, spatial = true, maxSeconds = 3 },
 	FlareBurst = { id = 9114361763, volume = 0.7, spatial = true, maxSeconds = 3 },
@@ -112,7 +114,7 @@ local Cues: { [string]: Cue } = {
 		spatial = true,
 		mix = "Outdoor",
 	},
-	Heartbeat = { id = 9113570506, volume = 0.65, maxSeconds = 1, pitch = 0.42 },
+	Heartbeat = { id = 9113570506, volume = 0.65, maxSeconds = 1, pitch = 0.42, mix = "Cues" },
 	RailClack = { id = 15675059323, volume = 0.14, maxSeconds = 1, pitch = 0.45 },
 
 	-- The sky's omens (Logic/Omens), from the same recordings again
@@ -145,12 +147,47 @@ local Cues: { [string]: Cue } = {
 	FogWhisper = { id = 9125475729, volume = 0.5, loop = true, spatial = true, pitch = 0.36, mix = "Outdoor" },
 
 	-- the Hollows, layered from the same few recordings at other speeds
-	HollowScream = { id = 9125475729, volume = 1, spatial = true, pitch = 1.3, maxSeconds = 2.2 },
-	HollowWake = { id = 9125475729, volume = 0.85, spatial = true, pitch = 0.72, maxSeconds = 3 },
-	HollowSwipe = { id = 9125471724, volume = 0.85, spatial = true, pitch = 1.35, maxSeconds = 1 },
-	HollowSlam = { id = 9113218938, volume = 1, spatial = true, pitch = 0.8, maxSeconds = 2 },
-	HollowScrabble = { id = 9118582680, volume = 0.55, spatial = true, pitch = 1.7, maxSeconds = 1.2 },
-	HollowStep = { id = 9113218938, volume = 0.35, spatial = true, pitch = 1.6, maxSeconds = 0.5 },
+	HollowScream = {
+		id = 9125475729,
+		volume = 1,
+		spatial = true,
+		pitch = 1.3,
+		maxSeconds = 2.2,
+		mix = "Cues",
+	},
+	HollowWake = {
+		id = 9125475729,
+		volume = 0.85,
+		spatial = true,
+		pitch = 0.72,
+		maxSeconds = 3,
+		mix = "Cues",
+	},
+	HollowSwipe = {
+		id = 9125471724,
+		volume = 0.85,
+		spatial = true,
+		pitch = 1.35,
+		maxSeconds = 1,
+		mix = "Cues",
+	},
+	HollowSlam = { id = 9113218938, volume = 1, spatial = true, pitch = 0.8, maxSeconds = 2, mix = "Cues" },
+	HollowScrabble = {
+		id = 9118582680,
+		volume = 0.55,
+		spatial = true,
+		pitch = 1.7,
+		maxSeconds = 1.2,
+		mix = "Cues",
+	},
+	HollowStep = {
+		id = 9113218938,
+		volume = 0.35,
+		spatial = true,
+		pitch = 1.6,
+		maxSeconds = 0.5,
+		mix = "Steps",
+	},
 
 	-- building interactions
 	DoorForce = { id = 9118582680, volume = 0.75, spatial = true, pitch = 1.25, maxSeconds = 1.5 },
@@ -159,8 +196,22 @@ local Cues: { [string]: Cue } = {
 	-- Footsteps by surface (Logic/Footsteps, Controllers/FootstepController): Creator Store
 	-- uploads, free, chosen 2026-10-15 for audition (HANDOFF.md lists them with their sources).
 	-- Two or three takes a surface; the controller picks one and nudges the pitch per step.
-	StepPlank1 = { id = 136507037003210, volume = 0.5, spatial = true, rollOff = 70, maxSeconds = 0.8 },
-	StepPlank2 = { id = 137526436035209, volume = 0.5, spatial = true, rollOff = 70, maxSeconds = 0.8 },
+	StepPlank1 = {
+		id = 136507037003210,
+		volume = 0.5,
+		spatial = true,
+		rollOff = 70,
+		maxSeconds = 0.8,
+		mix = "Steps",
+	},
+	StepPlank2 = {
+		id = 137526436035209,
+		volume = 0.5,
+		spatial = true,
+		rollOff = 70,
+		maxSeconds = 0.8,
+		mix = "Steps",
+	},
 	-- the carriage floor: the same boards, lower, hollow over the underframe
 	StepTrain1 = {
 		id = 136507037003210,
@@ -169,6 +220,7 @@ local Cues: { [string]: Cue } = {
 		rollOff = 50,
 		maxSeconds = 0.9,
 		pitch = 0.8,
+		mix = "Steps",
 	},
 	StepTrain2 = {
 		id = 137526436035209,
@@ -177,12 +229,48 @@ local Cues: { [string]: Cue } = {
 		rollOff = 50,
 		maxSeconds = 0.9,
 		pitch = 0.76,
+		mix = "Steps",
 	},
-	StepGravel1 = { id = 131788428206726, volume = 0.5, spatial = true, rollOff = 70, maxSeconds = 0.8 },
-	StepGravel2 = { id = 132387836053582, volume = 0.5, spatial = true, rollOff = 70, maxSeconds = 0.8 },
-	StepSnow1 = { id = 103816422099881, volume = 0.55, spatial = true, rollOff = 60, maxSeconds = 0.7 },
-	StepSnow2 = { id = 135918121539048, volume = 0.55, spatial = true, rollOff = 60, maxSeconds = 0.7 },
-	StepSnow3 = { id = 103079968724414, volume = 0.55, spatial = true, rollOff = 60, maxSeconds = 0.7 },
+	StepGravel1 = {
+		id = 131788428206726,
+		volume = 0.5,
+		spatial = true,
+		rollOff = 70,
+		maxSeconds = 0.8,
+		mix = "Steps",
+	},
+	StepGravel2 = {
+		id = 132387836053582,
+		volume = 0.5,
+		spatial = true,
+		rollOff = 70,
+		maxSeconds = 0.8,
+		mix = "Steps",
+	},
+	StepSnow1 = {
+		id = 103816422099881,
+		volume = 0.55,
+		spatial = true,
+		rollOff = 60,
+		maxSeconds = 0.7,
+		mix = "Steps",
+	},
+	StepSnow2 = {
+		id = 135918121539048,
+		volume = 0.55,
+		spatial = true,
+		rollOff = 60,
+		maxSeconds = 0.7,
+		mix = "Steps",
+	},
+	StepSnow3 = {
+		id = 103079968724414,
+		volume = 0.55,
+		spatial = true,
+		rollOff = 60,
+		maxSeconds = 0.7,
+		mix = "Steps",
+	},
 	-- heavy breathing while stamina is spent (MovementController.IsExhausted), not tied to combat
 	Breath = { id = 100147087354736, volume = 0.5, loop = true },
 }

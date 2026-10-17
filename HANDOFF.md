@@ -20,6 +20,11 @@ Rojo: the plugin failed only because no `rojo serve` was running; started it and
   nearness), rising with a 0.6 s half-life and ebbing with 3.5 s; volume sways on 9.5 s / 6.3 s cycles and pitch drifts
   +-1.2% over 17 s, the harmonic locked to the body. Studio at stop 2: calm body 0.13 / harmonic 0.06; a Hollow at
   15 studs took it to ~0.37 / 0.10 within 2 s; after it left it eased back to ~0.18 / 0.06 over ~12 s.
+- T4 mixing: main `LastTrainOut` holds `Ambience` (> `Outdoor`), `Cues` (Alarm/Surge, Heartbeat, Hollow spawn,
+  strike, scream, wake, swipe, slam, scrabble) and `Steps` (every footstep cue, HollowStep); `Warnings` stays beside
+  main. Three sidechain CompressorSoundEffects on `Ambience` (`DuckCues`, `DuckWarnings`: -30 dB, 8:1, 0.5 s release;
+  `DuckSteps`: -26 dB, 2.5:1, 0.18 s) so the drone and beds make way. Footstep and breath sounds themselves unchanged.
+  Studio: tree and sidechains verified; the duck depth itself cannot be measured (legacy Sounds are not analysable).
 2. Known bugs / not verified
 - Nothing heard by ear (MCP cannot hear audio); levels need an ear in Studio.
 3. Next logical step
