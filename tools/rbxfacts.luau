@@ -208,8 +208,9 @@ for _, e in entries do
 		end
 
 		-- requires
-		local expr = line:match("require%((.*)%)")
+		local expr = line:match("require(%b())")
 		if expr then
+			expr = expr:sub(2, -2)
 			local target = requireTarget(expr)
 			if target then
 				local found = byName[target]
