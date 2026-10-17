@@ -1,5 +1,18 @@
 # HANDOFF
 
+## 2026-10-17: VISIBILITY + CHASE LIGHTING PASS (Prompt 6, branch claude/last-train-out)
+Monster, lobby and NPC files untouched (another agent owns them). Studio was not running, so nothing was play-tested in
+Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, dimmed to 45% brightness, at half scale.
+1. Features completed
+- T1 readability floor: `Tuning.Visibility` (Radius 18 studs all round, ambient/outdoor floors, exposure floor 0.2,
+  Atmosphere density cap 0.62) and pure `Logic/Visibility` (+ spec). `Sky.floor` clamps the drawn sky last every frame
+  (AtmosphereController; the departure fog is capped too). The lobby keeps its own look. The normal night already sits
+  above the floor; it bites in tunnels, the fog bank and the chase. `lune run preview ... --floor=0` shows the sky without it.
+2. Known bugs/regressions
+- Not verified in Studio (Studio closed). Density cap 0.62 thins the station fog bank a little.
+3. Next logical step
+- Owner: play a stop at low screen brightness and tune `Tuning.Visibility`.
+
 ## 2026-10-15: Prompt 5 lobby shell (codex/lobby-shell-prompt5)
 - Completed: revised PROMPT5.md; checked the materials/furniture used against museum and heritage sources in LORE.md (clothing unchanged, not globally verified). Added English-bond wear maps, bottle-green/cream dado, warm stone flags, mahogany benches/frames, plaster panels, trim and wordless crests. Reused Blender fluted shafts/capitals and curved bentwood chair backs; Performance restores simple server parts. Large mastery text explains XP/rank, lifetime records and milestones; departure layout unchanged. Lobby signage uses Oswald/Merriweather; shared HUD/Settings untouched.
 - Lighting protected against pre-task 011bf55: reverted the earlier mastery LightInfluence edit to 0.85. Instantiated comparison found all 70 lights (including display train), their parent fixture properties, and 51 Seat transforms identical. Sky, AtmosphereController, project configuration, roof/trusses and existing lamp colour constants unchanged. The active hall audit still counts 47 lights; source colours/materials change surface appearance only.

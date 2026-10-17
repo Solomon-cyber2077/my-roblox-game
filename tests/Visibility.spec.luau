@@ -1,0 +1,32 @@
+local Visibility = require(Shared.Logic.Visibility)
+local Tuning = require(Shared.Config.Tuning)
+
+local V = Tuning.Visibility
+
+describe("Visibility", function()
+	it("keeps the floor's reach inside the slider's range", function()
+		expect(Visibility.radius(nil)).toBe(V.Radius)
+		expect(Visibility.radius("far")).toBe(V.Radius)
+		expect(Visibility.radius(0 / 0)).toBe(V.Radius)
+		expect(Visibility.radius(1)).toBe(V.RadiusMin)
+		expect(Visibility.radius(999)).toBe(V.RadiusMax)
+		expect(Visibility.radius(24)).toBe(24)
+	end)
+
+	it("never lets the floor fall under its default, and lifts it with more reach", function()
+		expect(Visibility.scale(V.Radius)).toBe(1)
+		expect(Visibility.scale(V.RadiusMin)).toBeAtLeast(1)
+		expect(Visibility.scale(V.RadiusMax)).toBeGreaterThan(1)
+		local r = Visibility.floor(V.AmbientFloor, V.Radius)
+		expect(r).toBe(V.AmbientFloor[1])
+		local far = Visibility.floor(V.OutdoorFloor, V.RadiusMax)
+		expect(far).toBeGreaterThan(V.OutdoorFloor[1])
+		expect(far).toBeAtMost(255)
+	end)
+
+	it("covers at least the lantern's old reach", function()
+		expect(V.Radius).toBeAtLeast(16)
+		expect(V.RadiusMin).toBeAtMost(V.Radius)
+		expect(V.DensityCap).toBeLessThan(0.78)
+	end)
+end)

@@ -316,6 +316,10 @@ local function skyAt(now: number, still: boolean, dt: number?): ({ [string]: any
 	-- a ride eases from frame to frame as the game does; a still is the settled look
 	current = if dt then Sky.approach(current, target, dt) else target
 	local drawn = Sky.finish(current, 0, flash, strike ~= nil and strike.red)
+	-- the readability floor, as the client draws it (--floor=0 shows the sky without it)
+	if options.floor ~= "0" then
+		drawn = Sky.floor(drawn, Tuning.Visibility.Radius)
+	end
 	local speed = if rideSeconds > 0 then Tuning.Motion.CruiseSpeed else 0
 	local wind = Sky.wind(speed, now)
 	Heavens.update(rig, drawn, {
