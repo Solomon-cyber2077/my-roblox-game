@@ -25,6 +25,7 @@ local NetService = require(script.Parent.NetService)
 local Registry = require(script.Parent.Parent.Registry)
 local StateService = require(script.Parent.StateService)
 local RailingPilot = require(script.Parent.Parent.Builders.RailingPilot)
+local Limewash = require(script.Parent.Parent.Builders.Limewash)
 local TrainBuilder = require(script.Parent.Parent.Builders.TrainBuilder)
 
 type Train = Types.TrainState
@@ -280,6 +281,7 @@ end
 
 function TrainService.Init()
 	built = TrainBuilder.build(TrainService.Origin(), Workspace)
+	Limewash.train(built.model, TrainService.Origin()) -- the platform side's lining (Config/Surfaces)
 	RailingPilot.build(TrainService.Origin())
 	built.model:SetAttribute("DoorsOpen", false)
 	seatPrompts()
