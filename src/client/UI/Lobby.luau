@@ -1,7 +1,7 @@
 --!strict
 --[[
 	Depot Hall UI: profile card, the ready toggle, join-in-progress, shortcuts to
-	the Outfitter and the Ledger, the run tier picker (host only) and the in-world
+	the Outfitter and the Ledger, and the in-world
 	departure board.
 ]]
 
@@ -25,7 +25,7 @@ local Ui = require(script.Parent.Ui)
 
 local Lobby = {}
 
-local PANEL_W, PANEL_H = 360, 124 -- the departure panel; the tier plate sits on it at its width
+local PANEL_W, PANEL_H = 360, 124 -- the departure panel
 
 function Lobby.mount(gui: ScreenGui)
 	local State = Registry.StateController
@@ -404,47 +404,6 @@ function Lobby.mount(gui: ScreenGui)
 		end
 	end)
 
-	-- Run tier: a plate on top of the panel, as wide as it; everyone sees it, only the host can
-	-- change it (pressing the plate steps to the next tier, wrapping back to the first)
-	local tierRow = Ui.new("Frame", {
-		Name = "RunTier",
-		Size = UDim2.fromOffset(PANEL_W, 32),
-		Position = UDim2.new(0.5, 0, 1, -(20 + PANEL_H + 6)),
-		AnchorPoint = Vector2.new(0.5, 1),
-		BackgroundTransparency = 1,
-		Parent = container,
-	})
-	local tierPlate, tierLabel, tierLight = engravedPlate({
-		Name = "Plate",
-		Size = UDim2.fromScale(1, 1),
-		SliceScale = 0.3,
-	}, 16)
-	tierPlate.Parent = tierRow
-	local tierPick = Ui.new("TextButton", {
-		Name = "Pick",
-		Size = UDim2.fromScale(1, 1),
-		BackgroundTransparency = 1,
-		Text = "",
-		AutoButtonColor = false,
-		Selectable = true,
-		ZIndex = 2,
-		Parent = tierRow,
-	}) :: TextButton
-	tierPick.MouseEnter:Connect(function()
-		tierPlate.ImageColor3 = Color3.fromRGB(255, 236, 200)
-	end)
-	tierPick.MouseLeave:Connect(function()
-		tierPlate.ImageColor3 = Color3.new(1, 1, 1)
-	end)
-	tierPick.Activated:Connect(function()
-		local tier = State.Get({ "lobby", "tier" }) or {}
-		local maxTier = tier.max or 1
-		if tier.host ~= Session.userKey or maxTier <= 1 then
-			return
-		end
-		Net.Fire("SetRunTier", (tier.selected or 1) % maxTier + 1)
-	end)
-
 	-- Shortcut: a plate under the pass (the Outfitter is the stand in the hall) -------------------
 	local shortcuts = Ui.new("Frame", {
 		Size = UDim2.fromOffset(330, 44),
@@ -556,16 +515,6 @@ function Lobby.mount(gui: ScreenGui)
 		local now = Session.now()
 		local readyCount, needed = readyLine()
 		local mine = State.Get({ "lobby", "ready", Session.userKey }) == true
-
-		local tier = State.Get({ "lobby", "tier" }) or {}
-		local selected, maxTier = tier.selected or 1, tier.max or 1
-		local isHost = tier.host == Session.userKey
-		tierRow.Visible = panel.Visible and not RunRules.isRunPhase(phase :: any) and phase ~= "RunEnd"
-		tierLabel.Text = if isHost
-			then `RUN TIER {selected}  ·  UP TO {maxTier}`
-			else `RUN TIER {selected}  ·  HOST PICKS`
-		tierLight.Text = tierLabel.Text
-		tierPick.Active = isHost and maxTier > 1
 
 		local head, rows = "PLATFORM 1  ·  LAST TRAIN OUT", ""
 		if RunRules.isRunPhase(phase :: any) or phase == "RunEnd" then

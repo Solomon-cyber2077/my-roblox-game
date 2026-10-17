@@ -15,3 +15,10 @@
 - Every generated brief must require on-disk edits (never Studio) and the checks `start_stop_play`, `get_console_output`, and `screen_capture`.
 - CLI fallback: `C:\Users\tameg\Documents\rbxmap\.venv\Scripts\python.exe -c "from rbxmap.cli import main; main()" --project "C:\Users\tameg\Documents\Roblox\my-roblox-game" <command>`.
 <!-- rbxmap:end -->
+
+<!-- devtools:start -->
+## Dev tools (run from the game folder)
+- `lune run tools/rbxfacts` - writes `.rbxfacts.md` (remotes, modules, commands). Subcommands: `find <text>`, `remote <text>`, `grep <pattern>`, `check` (exit 1 on unresolved requires). Use before guessing names.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File tools\shot.ps1 -Name <label>` - cheap Studio screenshot (half-size JPEG, prints path + token cost). `-Crop "x,y,w,h"`, `-SkipIfSame`, `-Sheet a.jpg,b.jpg` to merge, `-ReleaseKeys` if Win key sticks. Read the printed path to view it.
+- In a Studio play test, `/photo` in chat (or `Remotes.Dev:FireServer("photo")`) lines up every Hollow kind frozen + labelled in front of the player and prints a text report; `/photo clear` removes it. Code: `src/server/Tools/PhotoCommand.luau`, wired in `DevService`.
+<!-- devtools:end -->

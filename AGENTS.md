@@ -131,8 +131,15 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
 - Lobby brightness, exposure and ambient live in the LOBBY table in `Scenery/Sky.luau` and `AtmosphereController` cannot override them. The lobby floor is mostly lit by the fill and pendant PointLights in `Builders/LobbyBuilder` (about lines 438-482). Changes under 30% to the global values are barely visible. Rojo only updates Studio's edit copy, so stop and restart play to see changes.
 - After adding or renaming scripts, call `refresh`; if MCP is unavailable, use the rbxmap CLI `index`.
 - After changing a brief's file list, run `task rehash <id>`; use `remotes` to inspect remotes.
-- Codex is planner: verify paths with `map`/`find_script`, write briefs, and never edit game code. Claude Code builds from the brief and edits only listed files.
+- Codex and Claude Code have the same project role and permissions: both may plan, edit game code on disk, test, and commit completed work. Both follow all project rules and builder checks. Verify paths with `map`/`find_script`; when using a brief, edit only its listed files and update the list when scope changes.
 - Every generated brief must require on-disk edits (never Studio) and the checks `start_stop_play`, `get_console_output`, and `screen_capture`.
 - Builder reads the brief first, rechecks stale ranges, sets in-progress/done, runs `check`, and reports results plus Studio steps.
 - CLI fallback from the game folder: `C:\Users\tameg\Documents\rbxmap\.venv\Scripts\python.exe -c "from rbxmap.cli import main; main()" --project "C:\Users\tameg\Documents\Roblox\my-roblox-game" <command>`.
 <!-- rbxmap:end -->
+
+<!-- devtools:start -->
+## Dev tools (run from the game folder)
+- `lune run tools/rbxfacts` - writes `.rbxfacts.md` (remotes, modules, commands). Subcommands: `find <text>`, `remote <text>`, `grep <pattern>`, `check` (exit 1 on unresolved requires). Use before guessing names.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File tools\shot.ps1 -Name <label>` - cheap Studio screenshot (half-size JPEG, prints path + token cost). `-Crop "x,y,w,h"`, `-SkipIfSame`, `-Sheet a.jpg,b.jpg` to merge, `-ReleaseKeys` if Win key sticks. Read the printed path to view it.
+- In a Studio play test, `/photo` in chat (or `Remotes.Dev:FireServer("photo")`) lines up every Hollow kind frozen + labelled in front of the player and prints a text report; `/photo clear` removes it. Code: `src/server/Tools/PhotoCommand.luau`, wired in `DevService`.
+<!-- devtools:end -->

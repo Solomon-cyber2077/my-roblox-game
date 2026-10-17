@@ -1060,3 +1060,15 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Lobby lit only by its lamps: LOBBY ambient/outdoor near black, sun off, sky diffuse 0 in lobby, hall FillLights removed. End gables are brick right up to the roof (no sky gaps).
 2. Known: none seen; lobby is intentionally dark, tune LOBBY.exposure in Scenery/Sky if too dark.
 3. Next: add lamps to any corner that reads too dark.
+
+## 2026-10-15 Run Tier button removal
+1. Completed: removed the lobby Run Tier plate, input handlers, and UI refresh references. AGENTS.md now gives Codex and Claude Code the same implementation role and project checks.
+2. Verification: Studio lobby playtest screenshot confirms no Run Tier plate and Ready remains visible. Console reports DataStores unavailable, fixed-size EditableMesh warning, and Roblox FoundationProvider warnings; no Lobby UI errors observed. Ready/Join interaction not exercised. Full check result recorded in task 014.
+3. Next: manually click Ready/Unready and verify Join during a run.
+- Check result: lune run check passed (361 tests, clean visual audit; existing deprecated API warning).
+
+## 2026-10-17 Merge completed Claude work and Prompt 5
+1. Completed: integrated the Run Tier UI removal, Studio photo tool, developer documentation/index updates, and Prompt 5 lobby shell. Lobby lighting files and fixtures were not changed during integration.
+2. Verification: full gate result recorded below. Studio has no connected instances, so this integration was not playtested; prior UI verification is recorded above.
+3. Next: reconnect Rojo in Studio, stop/start Play, check Output, exercise Ready/Unready and Join, and try /photo in an open clearing.
+- Check result: lune run check passed, including formatting, lint, strict type analysis, tests, and clean visual audit. PhotoCommand received strict annotations and formatting fixes before validation.

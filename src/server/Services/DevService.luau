@@ -41,6 +41,15 @@ local Tuning = require(Shared.Config.Tuning)
 
 local Registry = require(script.Parent.Parent.Registry)
 local StateService = require(script.Parent.StateService)
+local HollowBuilder = require(script.Parent.Parent.Builders.HollowBuilder)
+local PhotoCommand = require(script.Parent.Parent.Tools.PhotoCommand)
+
+local PHOTO = {
+	kinds = HollowBuilder.Kinds,
+	spawn = function(kind: string, cframe: CFrame)
+		return (HollowBuilder.build(cframe, kind))
+	end,
+}
 
 local DevService = {}
 
@@ -117,6 +126,16 @@ end
 
 Commands.grab = function(player, args)
 	print(`[Dev] grab: {Registry.HollowService.DevGrab(player, args[1])}`)
+end
+
+-- Lineup of every Hollow kind on open ground, frozen and labelled, for screenshots.
+-- `photo` builds it, `photo clear` removes it; the slash-photo chat command does the same.
+Commands.photo = function(player, args)
+	if args[1] == "clear" then
+		PhotoCommand.clear()
+	else
+		PhotoCommand.run(player, PHOTO)
+	end
 end
 
 -- A steam leak bursts now while the train runs, or as soon as it next does.
@@ -252,6 +271,7 @@ function DevService.Init()
 			print(`[Dev] unknown command {name}`)
 		end
 	end)
+	PhotoCommand.bindChat(PHOTO)
 	print("[Dev] Studio developer console ready: Remotes.Dev:FireServer('state')")
 end
 
