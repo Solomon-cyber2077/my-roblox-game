@@ -299,7 +299,16 @@ local function skyAt(now: number, still: boolean, dt: number?): ({ [string]: any
 				red = omen ~= nil and omen.kind == "Bleed",
 			}
 	end
+	-- --grade=<archetype> draws the sky as seen out on that station's platform
+	local gradeDef = if options.grade then Tuning.Visibility.Grades[options.grade] else nil
 	local target = Sky.compose({
+		grade = if gradeDef
+			then {
+				tint = roblox.Color3.fromRGB(gradeDef.tint[1], gradeDef.tint[2], gradeDef.tint[3]),
+				saturation = gradeDef.saturation,
+				weight = 1,
+			}
+			else nil,
 		hour = hour,
 		a = def,
 		b = def,

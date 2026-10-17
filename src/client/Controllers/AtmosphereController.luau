@@ -507,14 +507,25 @@ function AtmosphereController.Start()
 		dread = MathX.lerp(dread, targetDread, MathX.damp(if targetDread > dread then 0.25 else 2, dt))
 		Overlay.dread(dread)
 
-		-- a station's fog bank closing over the camera
+		-- a station's fog bank closing over the camera, and its own cold grade off the train
 		local fog = 0
+		local stationGrade: Sky.Grade? = nil
 		if not inLobby then
 			local depth = Registry.StationVisualsController and Registry.StationVisualsController.FogDepth()
 			local localPos = Registry.StationVisualsController
 				and Registry.StationVisualsController.ToLocal(around)
 			if depth and localPos then
 				fog = math.clamp((localPos.Z - (depth - 24)) / 30, 0, 1)
+			end
+			local info = Registry.StateController.Get({ "run", "station" })
+			if localPos and info then
+				local V = Tuning.Visibility
+				local def = V.Grades[info.archetype] or V.Grades.Default
+				stationGrade = {
+					tint = Color3.fromRGB(def.tint[1], def.tint[2], def.tint[3]),
+					saturation = def.saturation,
+					weight = math.clamp(localPos.Z / V.GradeRamp, 0, 1),
+				}
 			end
 		end
 
@@ -563,6 +574,7 @@ function AtmosphereController.Start()
 			flare = flare,
 			omen = omen,
 			now = now,
+			grade = stationGrade,
 		})
 		current = Sky.approach(current, target, dt)
 		local drawn = Sky.floor(

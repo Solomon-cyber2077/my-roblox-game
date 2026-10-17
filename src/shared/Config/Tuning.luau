@@ -561,6 +561,25 @@ local Tuning = {
 			Near = 40, -- studs from the train where it has faded out
 			Far = 90, -- and where it is full
 		},
+		-- each station's own cold, desaturated grade (cyan to olive-grey), weighed in as the
+		-- camera steps off the train onto the platform; the train and the lobby stay warm amber.
+		-- tint is the ColorCorrection tint, saturation is taken off on top of the night's
+		Grades = {
+			Default = { tint = { 214, 230, 232 }, saturation = 0.18 },
+			Halt = { tint = { 210, 228, 230 }, saturation = 0.16 }, -- plain cold cyan
+			CoalYard = { tint = { 214, 218, 204 }, saturation = 0.24 }, -- soot olive
+			SignalWorks = { tint = { 204, 226, 234 }, saturation = 0.2 }, -- steel cyan
+			Market = { tint = { 220, 224, 206 }, saturation = 0.16 }, -- olive-grey
+			Viaduct = { tint = { 206, 224, 238 }, saturation = 0.2 }, -- high cold air
+			Minehead = { tint = { 208, 222, 214 }, saturation = 0.22 }, -- damp green-grey
+			Schoolhouse = { tint = { 218, 226, 220 }, saturation = 0.18 }, -- chalk grey
+			Infirmary = { tint = { 212, 232, 230 }, saturation = 0.26 }, -- carbolic cyan
+			RailwayHotel = { tint = { 222, 226, 212 }, saturation = 0.14 }, -- faded olive
+			PostTown = { tint = { 214, 224, 226 }, saturation = 0.18 }, -- slate
+			EmergencyVillage = { tint = { 216, 220, 202 }, saturation = 0.24 }, -- mud olive
+			Terminus = { tint = { 224, 232, 236 }, saturation = 0.1 }, -- dawn coming
+		},
+		GradeRamp = 8, -- studs past the platform edge over which the grade comes in
 	},
 }
 

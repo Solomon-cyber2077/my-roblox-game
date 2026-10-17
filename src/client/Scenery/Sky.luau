@@ -118,6 +118,12 @@ export type State = {
 	hidden: boolean, -- no sky objects (the Depot Hall)
 }
 
+export type Grade = {
+	tint: Color3,
+	saturation: number, -- taken off the night's saturation
+	weight: number, -- 0 aboard the train, 1 out on the station
+}
+
 export type Inputs = {
 	hour: number,
 	a: Biomes.Def,
@@ -131,6 +137,7 @@ export type Inputs = {
 	flare: number, -- 0..1 a flare's flash, fading
 	omen: Omens.Omen?,
 	now: number, -- server time, for pulses
+	grade: Grade?, -- the docked station's own grade, weighed in off the train
 }
 
 local rgb = Color3.fromRGB
@@ -659,6 +666,12 @@ function Sky.compose(i: Inputs): State
 		if i.alarm then
 			state.tint = Color3.new(1, 0.9 - 0.06 * i.alarm, 0.88 - 0.08 * i.alarm)
 			state.contrast = 0.12
+		end
+		-- the station's own cold grade, off the train only: the train stays warm
+		local g = i.grade
+		if g and g.weight > 0 then
+			state.tint = state.tint:Lerp(g.tint, g.weight)
+			state.saturation -= g.saturation * g.weight
 		end
 		-- dread: a Hollow close by drains the colour, hardens the light and closes the air in
 		local d = i.dread
