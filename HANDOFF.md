@@ -18,10 +18,14 @@ Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, di
   90 studs in moonlight blue (outline 0.55, fill 0.94), re-chosen every 0.75 s; Adornee changes only when the pick does.
   Canopy column feet and gate-pier plinths now lime-washed Plaster (`C.limewash`); platform coping whitewashed
   (226,226,218). Colour/material only, no new parts. LORE.md notes the period evidence (fog whitening, pre-1914 at best).
+- T4 return beacon: a billboard over the train's roof (`Tuning.Visibility.Beacon`): three soft amber rings, 84 px on
+  screen, AlwaysOnTop, LightInfluence 0, no light. Shown only while docked (Dwell, LastCall, Departure), outside the
+  lobby; it fades from full at 90 studs to gone at 40 so it never dazzles near the train. Performance: inner ring only.
 2. Known bugs/regressions
 - Not verified in Studio (Studio closed). Density cap 0.62 thins the station fog bank a little.
 - Coloured lanterns (Signal green, Ember crimson) light the same reach but read darker than amber.
 - Rim, limewash and coping not seen in Studio; there is no headless station renderer to preview them.
+- Beacon is AlwaysOnTop by design (seen through buildings); if it reads as UI, set AlwaysOnTop false in VisibilityController.
 3. Next logical step
 - Owner: play a stop at low screen brightness and tune `Tuning.Visibility`.
 
