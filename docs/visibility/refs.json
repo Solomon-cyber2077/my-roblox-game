@@ -1,0 +1,33 @@
+{
+ "apl_ceiling": 0.059106651365309376,
+ "lit_ceiling": 0.08295111189798476,
+ "horror": {
+  "Outlast": {
+   "apl_median": 0.0260970165424716,
+   "lit_median": 0.015822923515231208,
+   "frames": 11
+  },
+  "Darkwood": {
+   "apl_median": 0.019927175041879085,
+   "lit_median": 0.01071992110453649,
+   "frames": 10
+  },
+  "Alan Wake": {
+   "apl_median": 0.06380249195014873,
+   "lit_median": 0.08157270029673591,
+   "frames": 7
+  }
+ },
+ "lobby": [
+  {
+   "file": "before_lobby_hall.jpg",
+   "apl": 0.09172433480830874,
+   "lit": 0.0907609697640118
+  },
+  {
+   "file": "after_lobby_hall.jpg",
+   "apl": 0.1007613352897729,
+   "lit": 0.20203032817109146
+  }
+ ]
+}
