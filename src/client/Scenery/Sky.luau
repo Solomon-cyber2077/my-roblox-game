@@ -31,6 +31,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Journey = require(Shared.Logic.Journey)
 local Omens = require(Shared.Logic.Omens)
+local Visibility = require(Shared.Logic.Visibility)
+local Tuning = require(Shared.Config.Tuning)
 local MathX = require(Shared.Util.MathX)
 
 local Biomes = require(script.Parent.Biomes)
@@ -752,6 +754,30 @@ function Sky.finish(state: State, tunnel: number, flash: number, red: boolean): 
 	out.flash = flash
 	out.flashColor = color
 	out.bloom = state.bloom + 0.4 * flash
+	return out
+end
+
+--[[
+	The readability floor (Logic/Visibility), applied last to the drawn state: the ambient,
+	the outdoor ambient and the exposure never fall below it and the air never thickens past
+	its cap, so ground and obstacles read `radius` studs round a player on a dim screen. The
+	lobby keeps its own lamp-lit look.
+]]
+local function atLeast(color: Color3, channels: { number }, radius: number): Color3
+	local r, g, b = Visibility.floor(channels, radius)
+	return Color3.new(math.max(color.R, r / 255), math.max(color.G, g / 255), math.max(color.B, b / 255))
+end
+
+function Sky.floor(state: State, radius: number): State
+	if state.hidden then
+		return state
+	end
+	local V = Tuning.Visibility
+	local out = table.clone(state)
+	out.ambient = atLeast(state.ambient, V.AmbientFloor, radius)
+	out.outdoor = atLeast(state.outdoor, V.OutdoorFloor, radius)
+	out.exposure = math.max(state.exposure, V.ExposureFloor)
+	out.density = math.min(state.density, V.DensityCap)
 	return out
 end
 

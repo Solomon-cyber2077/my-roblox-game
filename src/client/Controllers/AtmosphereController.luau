@@ -31,6 +31,7 @@ local Omens = require(Shared.Logic.Omens)
 local MathX = require(Shared.Util.MathX)
 local Safe = require(Shared.Util.Safe)
 local Tuning = require(Shared.Config.Tuning)
+local Visibility = require(Shared.Logic.Visibility)
 
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
@@ -389,7 +390,8 @@ local function apply(state: Sky.State)
 	-- in the lobby the sky must not light the hall: only the lamps do
 	Lighting.EnvironmentDiffuseScale = if state.hidden then 0 else 0.45
 	Lighting.ColorShift_Top = state.shift
-	atmosphere.Density = state.density + warningFog
+	-- the departure fog too stays under the readability floor's cap
+	atmosphere.Density = math.min(state.density + warningFog, Tuning.Visibility.DensityCap)
 	atmosphere.Haze = state.haze
 	atmosphere.Glare = state.glare
 	atmosphere.Color = state.air
@@ -563,7 +565,10 @@ function AtmosphereController.Start()
 			now = now,
 		})
 		current = Sky.approach(current, target, dt)
-		local drawn = Sky.finish(current :: Sky.State, darkness, flash, strike ~= nil and strike.red)
+		local drawn = Sky.floor(
+			Sky.finish(current :: Sky.State, darkness, flash, strike ~= nil and strike.red),
+			Visibility.radius(nil)
+		)
 		apply(drawn)
 		moonNow = if drawn.hidden then nil else drawn.moon
 

@@ -513,6 +513,21 @@ local Tuning = {
 		CoreRange = 6, -- the bright pool close round the lamp (glow style only)
 		CoreBrightness = 3,
 	},
+	--[[
+		The readability floor (Logic/Visibility): however dark the night, the fog or a chase gets,
+		ground and obstacles stay readable this far round a player in every direction, on a dim
+		screen in a dark room. Radius is the one value a Settings "Visibility" slider moves
+		(RadiusMin..RadiusMax); the ambient floors scale with it.
+	]]
+	Visibility = {
+		Radius = 18, -- studs readable all round
+		RadiusMin = 18,
+		RadiusMax = 30,
+		AmbientFloor = { 40, 44, 52 }, -- Lighting.Ambient never darker than this (per channel)
+		OutdoorFloor = { 70, 78, 92 }, -- Lighting.OutdoorAmbient never darker than this
+		ExposureFloor = 0.2, -- Lighting.ExposureCompensation never lower
+		DensityCap = 0.62, -- Atmosphere.Density never thicker: 0.78 hid the ground inside 18 studs
+	},
 }
 
 return table.freeze(Tuning)
