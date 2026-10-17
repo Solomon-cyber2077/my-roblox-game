@@ -21,6 +21,11 @@ Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, di
 - T4 return beacon: a billboard over the train's roof (`Tuning.Visibility.Beacon`): three soft amber rings, 84 px on
   screen, AlwaysOnTop, LightInfluence 0, no light. Shown only while docked (Dwell, LastCall, Departure), outside the
   lobby; it fades from full at 90 studs to gone at 40 so it never dazzles near the train. Performance: inner ring only.
+- T5 station grade: `Tuning.Visibility.Grades` gives every archetype its own cold tint and extra desaturation
+  (cyan for Halt/SignalWorks/Viaduct/Infirmary, olive-grey for CoalYard/Market/RailwayHotel/EmergencyVillage, a mild
+  dawn grade at the Terminus; sealed Mystery uses Default). AtmosphereController weighs it in over the first 8 studs
+  past the platform edge (`GradeRamp`), so aboard the train and in the lobby the warm amber is untouched; the floor
+  still clamps it. Preview: `lune run preview <biome> out.json --grade=CoalYard`.
 2. Known bugs/regressions
 - Not verified in Studio (Studio closed). Density cap 0.62 thins the station fog bank a little.
 - Coloured lanterns (Signal green, Ember crimson) light the same reach but read darker than amber.
