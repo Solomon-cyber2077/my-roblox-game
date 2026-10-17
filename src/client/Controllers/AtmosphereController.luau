@@ -589,7 +589,9 @@ function AtmosphereController.Start()
 				chaseDim,
 				chaseRelief
 			),
-			Visibility.radius(nil)
+			if Registry.VisibilityController
+				then Registry.VisibilityController.Radius()
+				else Visibility.radius(nil)
 		)
 		apply(drawn)
 		moonNow = if drawn.hidden then nil else drawn.moon

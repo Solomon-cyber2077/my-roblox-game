@@ -93,9 +93,22 @@ local function performance(): boolean
 	return Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
 end
 
--- The readability floor's reach right now.
+--[[
+	The readability floor's reach right now: the one value a Settings "Visibility" slider moves.
+	It sets the player attribute Tuning.Visibility.Setting (studs, clamped RadiusMin..RadiusMax by
+	Logic/Visibility.radius); the lanterns' reach, the cone's least reach and the sky's ambient
+	floors all follow it.
+]]
 function VisibilityController.Radius(): number
-	return Visibility.radius(nil)
+	return Visibility.radius(Players.LocalPlayer:GetAttribute(Tuning.Visibility.Setting))
+end
+
+-- For the slider: sets the floor's reach (nil restores the default).
+function VisibilityController.SetRadius(studs: number?)
+	Players.LocalPlayer:SetAttribute(
+		Tuning.Visibility.Setting,
+		if studs == nil then nil else Visibility.radius(studs)
+	)
 end
 
 local function lanternLight(character: Model): PointLight?

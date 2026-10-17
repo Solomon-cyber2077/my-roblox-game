@@ -41,14 +41,22 @@ Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, di
   shadows, cone 26 studs (still above the floor), 4 rims, a one-ring beacon, crewmates' lanterns beyond 90 studs
   switched off locally. No new light is ever created per frame; the chase only rescales existing station lights
   when its dim changes.
+- T8 slider hook: the floor is one value, `Tuning.Visibility.Radius` (18), overridden per player by the attribute
+  `Tuning.Visibility.Setting` ("Visibility", studs, clamped 18..30 by `Visibility.radius`). `VisibilityController.Radius()`
+  reads it and `SetRadius(studs?)` writes it; lantern reach, the cone's least reach and the sky's ambient floors
+  (`Visibility.scale`, up to +35% at 30) all follow. Not persisted yet: the Settings slider/SettingsService save is the
+  later task (Settings choices are strings today, so it needs a numeric setting).
 2. Known bugs/regressions
 - Not verified in Studio (Studio closed). Density cap 0.62 thins the station fog bank a little.
 - Coloured lanterns (Signal green, Ember crimson) light the same reach but read darker than amber.
 - Rim, limewash and coping not seen in Studio; there is no headless station renderer to preview them.
 - Beacon is AlwaysOnTop by design (seen through buildings); if it reads as UI, set AlwaysOnTop false in VisibilityController.
 - Chase detection approximates the Hollow's target (nearest crew member); two crew equally close may both or neither get it.
+- rbxmap index not refreshed if the CLI step below failed (see final report).
 3. Next logical step
-- Owner: play a stop at low screen brightness and tune `Tuning.Visibility`.
+- Owner: play a stop at low screen brightness (lantern pool + cone, rims, beacon, limewash/coping), then trigger a
+  chase (dev console Hollow spawn) and escape it; tune `Tuning.Visibility` / `.Chase`. Then add the Settings
+  "Visibility" slider calling `VisibilityController.SetRadius` and persisting it.
 
 ## 2026-10-15: Prompt 5 lobby shell (codex/lobby-shell-prompt5)
 - Completed: revised PROMPT5.md; checked the materials/furniture used against museum and heritage sources in LORE.md (clothing unchanged, not globally verified). Added English-bond wear maps, bottle-green/cream dado, warm stone flags, mahogany benches/frames, plaster panels, trim and wordless crests. Reused Blender fluted shafts/capitals and curved bentwood chair backs; Performance restores simple server parts. Large mastery text explains XP/rank, lifetime records and milestones; departure layout unchanged. Lobby signage uses Oswald/Merriweather; shared HUD/Settings untouched.
