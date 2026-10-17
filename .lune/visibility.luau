@@ -39,6 +39,7 @@ local Biomes = load(Client.Scenery.Biomes)
 local StationKit = load(Server.Builders.StationKit)
 local StationBuilder = load(Server.Builders.StationBuilder)
 local TrainBuilder = load(Server.Builders.TrainBuilder)
+local Limewash = load(Server.Builders.Limewash)
 local SkyExport = require("./lib/SkyExport")
 
 local out = process.args[1] or "visibility.json"
@@ -120,7 +121,7 @@ local FACES = {
 	Right = roblox.Vector3.new(1, 0, 0),
 	Left = roblox.Vector3.new(-1, 0, 0),
 }
-local COPING = { 226, 226, 218 } -- StationBuilder's whitewashed platform coping
+local COPING = load(Shared.Config.Surfaces).Coping.color -- StationBuilder's platform coping
 
 -- the top-level model a part belongs to under the station (Slab_3, a building, a prop kind),
 -- keyed uniquely; VisibilityController rims the listed prop kinds and every building
@@ -267,7 +268,9 @@ for _, spec in STOPS do
 	local model = StationBuilder.build(plan, CFrame.new(0, 0, edgeZ), Stations.List[spec.id].name).model
 	local parts, lights, groups = export(model, "")
 	-- the docked train beside the platform edge, as the audit and the preview place it
-	local trainParts, trainLights, trainGroups = export(TrainBuilder.build(CFrame.new(), nil).model, "Train/")
+	local train = TrainBuilder.build(CFrame.new(), nil).model
+	Limewash.train(train, CFrame.new()) -- as TrainService does
+	local trainParts, trainLights, trainGroups = export(train, "Train/")
 	table.move(trainParts, 1, #trainParts, #parts + 1, parts)
 	table.move(trainLights, 1, #trainLights, #lights + 1, lights)
 	for key, value in trainGroups do

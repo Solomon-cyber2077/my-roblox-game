@@ -52,6 +52,7 @@ local Tuning = load(Shared.Config.Tuning)
 local ItemModel = load(Shared.Visual.ItemModel)
 local CosmeticModels = load(Shared.Visual.CosmeticModels)
 local TrainBuilder = load(Server.Builders.TrainBuilder)
+local Limewash = load(Server.Builders.Limewash)
 local LobbyBuilder = load(Server.Builders.LobbyBuilder)
 local StationBuilder = load(Server.Builders.StationBuilder)
 local HollowBuilder = load(Server.Builders.HollowBuilder)
@@ -297,7 +298,9 @@ table.insert(targets, {
 	name = "Train",
 	budget = { parts = 1800, lights = 34, shadows = 10, emitters = 4 },
 	build = function()
-		return { { instance = TrainBuilder.build(CFrame.new(), nil).model } }
+		local train = TrainBuilder.build(CFrame.new(), nil).model
+		Limewash.train(train, CFrame.new()) -- as TrainService does
+		return { { instance = train } }
 	end,
 })
 
