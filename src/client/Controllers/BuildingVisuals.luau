@@ -1,11 +1,14 @@
 --!strict
 --[[
 	The stops' buildings, client side: the few lamps that still work in a dead building
-	stutter and dip (each on its own rhythm, locally, so nothing goes over the wire).
+	stutter and dip (each on its own rhythm, locally, so nothing goes over the wire). A chase
+	dims them (VisibilityController.LightScale).
 ]]
 
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
+
+local Registry = require(script.Parent.Parent.Registry)
 
 local BuildingVisuals = {}
 
@@ -30,8 +33,9 @@ function BuildingVisuals.Start()
 
 	RunService.RenderStepped:Connect(function()
 		local clock = os.clock()
+		local scale = if Registry.VisibilityController then Registry.VisibilityController.LightScale() else 1
 		for light, seed in lamps do
-			local base = (light:GetAttribute("Base") :: number?) or 0.8
+			local base = ((light:GetAttribute("Base") :: number?) or 0.8) * scale
 			if light:GetAttribute("Flicker") then
 				-- mostly on, with stutters and the odd long dip
 				local hum = math.noise(clock * 7, seed)

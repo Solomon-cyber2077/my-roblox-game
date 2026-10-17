@@ -771,6 +771,26 @@ function Sky.finish(state: State, tunnel: number, flash: number, red: boolean): 
 end
 
 --[[
+	The chase (Logic/Visibility.chaseLook) over the drawn state, before the floor: `dim`
+	darkens the ambient, the sun or moon and the exposure at once; `relief` lifts the exposure
+	a shade above normal and eases away. The lobby is never chased.
+]]
+function Sky.chase(state: State, dim: number, relief: number): State
+	if state.hidden or (dim <= 0 and relief <= 0) then
+		return state
+	end
+	local C = Tuning.Visibility.Chase
+	local out = table.clone(state)
+	local share = MathX.lerp(1, C.Ambient, dim)
+	local black = Color3.new(0, 0, 0)
+	out.ambient = black:Lerp(state.ambient, share)
+	out.outdoor = black:Lerp(state.outdoor, share)
+	out.brightness = state.brightness * MathX.lerp(1, C.Brightness, dim)
+	out.exposure = state.exposure - C.Exposure * dim + C.ReliefExposure * relief
+	return out
+end
+
+--[[
 	The readability floor (Logic/Visibility), applied last to the drawn state: the ambient,
 	the outdoor ambient and the exposure never fall below it and the air never thickens past
 	its cap, so ground and obstacles read `radius` studs round a player on a dim screen. The

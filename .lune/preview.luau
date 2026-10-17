@@ -325,6 +325,8 @@ local function skyAt(now: number, still: boolean, dt: number?): ({ [string]: any
 	-- a ride eases from frame to frame as the game does; a still is the settled look
 	current = if dt then Sky.approach(current, target, dt) else target
 	local drawn = Sky.finish(current, 0, flash, strike ~= nil and strike.red)
+	-- --chase=1 draws the chase's dark, --relief=1 the false relief after it
+	drawn = Sky.chase(drawn, tonumber(options.chase) or 0, tonumber(options.relief) or 0)
 	-- the readability floor, as the client draws it (--floor=0 shows the sky without it)
 	if options.floor ~= "0" then
 		drawn = Sky.floor(drawn, Tuning.Visibility.Radius)

@@ -16,6 +16,14 @@
 	    station while it is docked (Visibility.Beacon). A billboard, not a light: soft and cheap,
 	    a fixed size on screen, faded out close to the train so it never dazzles
 
+	  * the chase (Visibility.Chase, Logic/Visibility.chaseStep), the game's only chase effect.
+	    Read from the Hollows' replicated State (no monster script involved): a Hollow on the
+	    hunt whose nearest crew member is you, within Detect, or a grab on you. A black flicker,
+	    then AtmosphereController dims the sky (Sky.chase) and all but drops the dread
+	    vignette; the station's lamps dim but reach further (building lamps through LightScale,
+	    which BuildingVisuals reads); the lanterns keep the floor and reach further too.
+	    Escaped, the relief, then the night settles back
+
 	The lobby keeps its own lamp-lit look: no cone there.
 ]]
 
@@ -26,6 +34,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Buildings = require(Shared.Config.Buildings)
+local MathX = require(Shared.Util.MathX)
 local Safe = require(Shared.Util.Safe)
 local Tuning = require(Shared.Config.Tuning)
 local Visibility = require(Shared.Logic.Visibility)
@@ -55,6 +64,18 @@ local beaconPart: Part
 local beaconGui: BillboardGui
 local beaconRings: { Frame } = {}
 local beaconAt = 0
+local CHASE = Tuning.Visibility.Chase
+local HUNTING = { Hunt = true, Windup = true, Grab = true, Recover = true }
+local LAMP_TAG = "LTO_BuildingLamp"
+
+type StationLight = { light: Light, brightness: number, range: number, building: boolean }
+
+local chase = Visibility.chaseStart()
+local look: Visibility.ChaseLook = Visibility.chaseLook(chase, 0)
+local blackout: Frame
+local lightStation: Model? = nil
+local stationLights: { StationLight } = {}
+local lightDim = 0
 local cone: SpotLight? = nil
 local rims: { Highlight } = {}
 local rimStation: Model? = nil
@@ -227,7 +248,110 @@ local function updateBeacon(around: Vector3, active: boolean)
 	end
 end
 
+-- Whether a Hollow is chasing the local player right now.
+local function chased(root: BasePart): boolean
+	local character = root.Parent
+	if
+		character
+		and character:GetAttribute("GrabAt") ~= nil
+		and character:GetAttribute("GrabOutcome") == nil
+	then
+		return true
+	end
+	local folder = Workspace:FindFirstChild("Hollows")
+	if folder == nil then
+		return false
+	end
+	for _, hollow in folder:GetChildren() do
+		local state = hollow:GetAttribute("State")
+		local body = if typeof(state) == "string" and HUNTING[state]
+			then hollow:FindFirstChild("HumanoidRootPart") :: BasePart?
+			else nil
+		if body then
+			local mine = (body.Position - root.Position).Magnitude
+			if mine <= CHASE.Detect then
+				-- its prey is whoever is nearest it: me, unless a crewmate is closer
+				local nearest = true
+				for _, player in Players:GetPlayers() do
+					local other = player.Character
+					local otherRoot = other and other:FindFirstChild("HumanoidRootPart") :: BasePart?
+					if
+						player ~= Players.LocalPlayer
+						and otherRoot
+						and (body.Position - otherRoot.Position).Magnitude < mine
+					then
+						nearest = false
+						break
+					end
+				end
+				if nearest then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+-- The docked station's own lights dim and reach further as the chase's dark comes in.
+local function updateStationLights(station: Model?, dim: number)
+	if station ~= lightStation then
+		lightStation = station
+		table.clear(stationLights)
+		lightDim = 0
+		if station then
+			for _, descendant in station:GetDescendants() do
+				if descendant:IsA("Light") then
+					table.insert(stationLights, {
+						light = descendant,
+						brightness = descendant.Brightness,
+						range = (descendant :: any).Range, -- every kind of Light has one
+						building = descendant:HasTag(LAMP_TAG),
+					})
+				end
+			end
+		end
+	end
+	if math.abs(dim - lightDim) < 0.01 then
+		return
+	end
+	lightDim = dim
+	local brightness = MathX.lerp(1, CHASE.LightBrightness, dim)
+	local range = MathX.lerp(1, CHASE.LightRange, dim)
+	for _, entry in stationLights do
+		local light = entry.light :: any
+		if light.Parent then
+			if not entry.building then -- BuildingVisuals sets those, through LightScale
+				light.Brightness = entry.brightness * brightness
+			end
+			light.Range = entry.range * range
+		end
+	end
+end
+
+-- What the chase shows now: dim, relief and the flicker's black (Logic/Visibility).
+function VisibilityController.Chase(): Visibility.ChaseLook
+	return look
+end
+
+-- The share of their brightness the station's lamps keep right now.
+function VisibilityController.LightScale(): number
+	return MathX.lerp(1, CHASE.LightBrightness, look.dim)
+end
+
 function VisibilityController.Init()
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "ChaseFlicker"
+	gui.IgnoreGuiInset = true
+	gui.ResetOnSpawn = false
+	gui.DisplayOrder = 40
+	blackout = Instance.new("Frame")
+	blackout.Size = UDim2.fromScale(1, 1)
+	blackout.BackgroundColor3 = Color3.new(0, 0, 0)
+	blackout.BackgroundTransparency = 1
+	blackout.BorderSizePixel = 0
+	blackout.Parent = gui
+	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 	buildBeacon()
 	local folder = Instance.new("Folder")
 	folder.Name = "Rims"
@@ -256,16 +380,25 @@ function VisibilityController.Start()
 			nextScan = clock + SCAN_SECONDS
 			scan()
 		end
-		local radius = VisibilityController.Radius()
-		for _, light in lanterns do
-			if light.Parent then
-				light.Range = radius
-			end
-		end
-
 		local character = Players.LocalPlayer.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		local inLobby = root == nil or (root.Position - LOBBY).Magnitude < LOBBY_RADIUS
+
+		-- the chase
+		local hunted = root ~= nil and not inLobby and Session.isRunActive() and chased(root :: BasePart)
+		chase = Visibility.chaseStep(chase, hunted, clock)
+		look = Visibility.chaseLook(chase, clock)
+		blackout.BackgroundTransparency = 1 - look.black
+		updateStationLights(if inLobby then nil else dockedStation(), look.dim)
+
+		-- the lanterns hold the floor, and reach a little further in the chase's dark
+		local radius = VisibilityController.Radius()
+		local reach = radius * MathX.lerp(1, CHASE.LightRange, look.dim)
+		for _, light in lanterns do
+			if light.Parent then
+				light.Range = reach
+			end
+		end
 		if root and not inLobby then
 			local light = coneFor(root)
 			light.Enabled = true
