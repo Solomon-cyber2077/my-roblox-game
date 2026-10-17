@@ -1,5 +1,32 @@
 # HANDOFF
 
+## 2026-10-17: VISIBILITY PART 2: DIM-SCREEN PROOF + SLIDER (branch claude/last-train-out), STOPPED FOR A GO
+No Studio session. Everything below comes from headless Blender renders (`tools/visibility`, approximations listed in
+its README) or Lune logic, not in-engine. Monster, NPC and lobby files untouched. Tuning.Visibility unchanged.
+1. Features completed
+- d824c59 harness: `lune run visibility` exports real Halt/Market/Minehead stops + the docked train, grades, sky
+  (compose/chase/floor) per radius; `tools/visibility/render.py` (Blender, StationKit.blend meshes), `measure.py`
+  (exposure, grades, dread vignette, rims, dim x0.45 / x0.25), `sheet.py`, `refs.py`; every threshold in
+  `thresholds.py`. Evidence: `docs/visibility/sheet_r18_45.jpg`, `gates_45.md`, `gates_25.md`, `refs.json`.
+- 7e417d8 slider: `UI/LanternSlider` (brass wick winder, Dread / Steady / Clear, no numbers, local fading ring),
+  mounted once in `UI/Settings`; `Visibility` saved as a whole-number string, clamped on load and on the server
+  (`Logic/Settings.clamp`, `Config/Settings.Ranges`); `tests/VisibilitySetting.spec.luau` (clamp, default, round
+  trip, floor in chase, visual-only scan). Range is Tuning's existing 18..30 (unchanged). `lune run check` green.
+2. Gate results at 18 studs, 45% brightness (flare 1%)
+- Must-see FAILS in every station and every state, calm included: weakest object at the floor 1.00-1.13:1, coping
+  1.66-2.08:1 (need 3:1); only 6-10 of 36-54 targets per state pass. Dark props and the train side sit on dark
+  ground. A what-if with lantern Range = floor x 1.6 barely moves it: light is not the fix, edge contrast is.
+- Crew: Brakeman lanterns 3.3-7.5:1 PASS; the Ember (crimson) cosmetic 1.1-1.3:1 FAILS; silhouettes ~1.0-1.2.
+- Mood ceiling PASSES easily: APL <= 0.038 vs 0.059 ceiling (Outlast/Darkwood/Alan Wake upper quartile; lobby
+  "Walmart" 0.092), lit share <= 0.003 vs 0.083, up to a 38-stud floor.
+- Reaction distance (slider minimum): sprint 31 x (0.75 Green 2000 + 0.10 stop + 0.15 latency) = 31 studs. 18 does
+  not clear it all round; the forward cone does on Quality (34) but not Performance (26).
+3. Next logical step (needs the owner's go; none of it is done)
+- Edge contrast without lifting ambient: extend the rim Highlights (or limewash/edge paint) to obstacles and the
+  coping inside the floor; give the Ember lantern a brighter glass/glow floor; raise ConeRangePerformance to >= 31.
+- Decide the slider minimum: the reaction rule puts it above the default (31 > 18), which would change the default.
+  Until then the slider runs 18..30 and "Dread" shares the Steady end. Then Studio playtest (checklist in report).
+
 ## 2026-10-17: VISIBILITY + CHASE LIGHTING PASS (Prompt 6, branch claude/last-train-out)
 Monster, lobby and NPC files untouched (another agent owns them). Studio was not running, so nothing was play-tested in
 Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, dimmed to 45% brightness, at half scale.
