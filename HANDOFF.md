@@ -20,7 +20,7 @@ since 2026-10-03) also edits StationBuilder/TrainBuilder/TrainService: the train
 - a241311 Task 4 evidence: `gates_45_fix1.md`, `gates_25_fix1.md`, `sheet_r18_45_fix1.jpg`, `offenders_45_fix1.md`.
 2. Gate results (45%, flare 1%) and known gaps
 - Crew PASSES everywhere: min 3.84:1 (Ember worst case; was 1.16-1.56).
-- Must-see FAILS: 2 of 36 state cells pass (Minehead). Coping 2.65-3.22:1 (was 1.66-2.46; calm passes at Halt and
+- Must-see FAILS: 12 of 108 gate shots pass (Minehead, 2 views per state). Coping 2.65-3.22:1 (was 1.66-2.46; calm passes at Halt and
   Minehead). Train side (now judged as one object) 1.15-2.30 (was 1.08-1.68). Container_10 (Halt), lamp posts and
   plinth (Market), canopy column (Halt) also under. Other falloff curve: same picture (coping 2.74-4.16).
 - Surface limit: 45 of 81 failing readings stay under 3:1 even if that object were painted pure white (or black):
