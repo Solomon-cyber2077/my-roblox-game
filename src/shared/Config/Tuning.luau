@@ -524,6 +524,7 @@ local Tuning = {
 	]]
 	Visibility = {
 		Radius = 18, -- studs readable all round
+		Setting = "Visibility", -- the player attribute a Settings slider writes (studs; nil = Radius)
 		RadiusMin = 18,
 		RadiusMax = 30,
 		AmbientFloor = { 54, 58, 66 }, -- Lighting.Ambient never darker than this (per channel)
