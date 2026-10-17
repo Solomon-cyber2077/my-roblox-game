@@ -192,3 +192,10 @@ letters on boards) and section 7's board schools (slate roofs, gables, bell turr
   luggage or prop claims. Before selecting any additional detail, check a source for that specific detail.
 
 - [British Brick Society Information 136, p. 22 (2017)](https://britishbricksoc.co.uk/wp-content/uploads/2017/06/BBS_136_2017_Jun_.pdf) records English-bond London-stock walls at St James Street station (opened 1870). This supports the bond; the lobby's red-brown colour is an artistic choice.
+
+### Prompt 6 source check (2026-10-17): whitened platform edges and lime-washed feet
+- [RMweb: white stripe along platform edge](https://www.rmweb.co.uk/forums/topic/6170-white-stripe-along-platform-edge/) and
+  [railforums: white lines on platform edges](https://www.railforums.co.uk/threads/white-lines-on-platform-edges.255019):
+  forum accounts cite pre-1914 examples and a 1913 notice to whiten platform edges with whitewash in fog; the practice
+  spread widely in the 1939 blackout. No source found for 1884-92, so the white coping and lime-washed pillar feet are
+  a readability choice (fog-season whitening), not a documented feature of our years. Secondary sources only.

@@ -8,6 +8,9 @@
 	  * the local player's own forward cone: one SpotLight ahead of them, in their lantern's
 	    colour, so the way ahead reads further than the pool round their feet. It is local:
 	    every other client sees only that player's one lantern light
+	  * a cold moonlit rim on the nearest obstacles and tall structures of the docked station
+	    (Visibility.Rim): a fixed pool of Highlights whose Adornee moves to whatever is nearest,
+	    so silhouettes read in the dark without a light of their own
 
 	The lobby keeps its own lamp-lit look: no cone there.
 ]]
@@ -15,8 +18,10 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Buildings = require(Shared.Config.Buildings)
 local Safe = require(Shared.Util.Safe)
 local Tuning = require(Shared.Config.Tuning)
 local Visibility = require(Shared.Logic.Visibility)
@@ -30,7 +35,16 @@ local LOBBY_RADIUS = 420 -- the same test as AtmosphereController's
 local SCAN_SECONDS = 0.5 -- how often the crew's lanterns are looked up again
 local WARM = Color3.fromRGB(255, 196, 128)
 
+local RIM = Tuning.Visibility.Rim
+local RIM_KINDS: { [string]: boolean } = {}
+for _, kind in RIM.Kinds do
+	RIM_KINDS[kind] = true
+end
+
 local cone: SpotLight? = nil
+local rims: { Highlight } = {}
+local rimStation: Model? = nil
+local rimTargets: { Model } = {}
 local lanterns: { PointLight } = {}
 local lanternColor = WARM
 
@@ -88,10 +102,79 @@ local function coneFor(root: BasePart): SpotLight
 	return light
 end
 
-function VisibilityController.Init() end
+-- The docked station's rim targets: its listed props and its buildings.
+local function rimTargetsOf(station: Model): { Model }
+	local found: { Model } = {}
+	for _, child in station:GetChildren() do
+		if child:IsA("Model") and (RIM_KINDS[child.Name] or Buildings.Defs[child.Name] ~= nil) then
+			table.insert(found, child)
+		end
+	end
+	return found
+end
+
+local function dockedStation(): Model?
+	for _, child in Workspace:GetChildren() do
+		if child:IsA("Model") and string.sub(child.Name, 1, 8) == "Station_" then
+			return child
+		end
+	end
+	return nil
+end
+
+local function updateRims(around: Vector3, active: boolean)
+	local station = if active then dockedStation() else nil
+	if station ~= rimStation then
+		rimStation = station
+		rimTargets = if station then rimTargetsOf(station) else {}
+	end
+	local candidates: { { model: Model, distance: number } } = {}
+	for _, model in rimTargets do
+		if model.Parent then
+			local pivot = model:GetPivot().Position
+			local distance = (pivot - around).Magnitude
+			if distance <= RIM.Range then
+				table.insert(candidates, { model = model, distance = distance })
+			end
+		end
+	end
+	table.sort(candidates, function(a, b)
+		return a.distance < b.distance
+	end)
+	local max = if performance() then RIM.MaxPerformance else RIM.Max
+	for i, highlight in rims do
+		local pick = if i <= max then candidates[i] else nil
+		local adornee = if pick then pick.model else nil
+		-- only touch what changed: a new Adornee rebuilds the outline
+		if highlight.Adornee ~= adornee then
+			highlight.Adornee = adornee
+		end
+		highlight.Enabled = adornee ~= nil
+	end
+end
+
+function VisibilityController.Init()
+	local folder = Instance.new("Folder")
+	folder.Name = "Rims"
+	folder.Parent = Workspace
+	local color = Color3.fromRGB(RIM.Color[1], RIM.Color[2], RIM.Color[3])
+	for i = 1, RIM.Max do
+		local highlight = Instance.new("Highlight")
+		highlight.Name = `Rim{i}`
+		highlight.DepthMode = Enum.HighlightDepthMode.Occluded
+		highlight.OutlineColor = color
+		highlight.OutlineTransparency = RIM.Outline
+		highlight.FillColor = color
+		highlight.FillTransparency = RIM.Fill
+		highlight.Enabled = false
+		highlight.Parent = folder
+		table.insert(rims, highlight)
+	end
+end
 
 function VisibilityController.Start()
 	local nextScan = 0
+	local nextRim = 0
 	local function frame()
 		local clock = os.clock()
 		if clock >= nextScan then
@@ -117,6 +200,10 @@ function VisibilityController.Start()
 			light.Shadows = not performance()
 		elseif cone then
 			cone.Enabled = false
+		end
+		if clock >= nextRim then
+			nextRim = clock + RIM.Every
+			updateRims(if root then root.Position else Workspace.CurrentCamera.CFrame.Position, not inLobby)
 		end
 	end
 	RunService.RenderStepped:Connect(function()
