@@ -21,6 +21,7 @@ local Kit = require(Shared.Visual.Kit)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Loot = require(Shared.Config.Loot)
 local Stations = require(Shared.Config.Stations)
+local Surfaces = require(Shared.Config.Surfaces)
 
 local BuildingBuilder = require(script.Parent.BuildingBuilder)
 local FurnitureKit = require(script.Parent.FurnitureKit)
@@ -45,9 +46,10 @@ export type Built = {
 local StationBuilder = {}
 
 local ROCK = Color3.fromRGB(58, 50, 44)
--- the edge stones whitewashed, as staff whitened them for fog, so the drop reads in the dark
-local COPING = Color3.fromRGB(226, 226, 218)
-local TACTILE = Color3.fromRGB(226, 182, 58)
+-- the edge stones, whitewashed as staff whitened them for fog, so the drop reads in the dark; a course
+-- of blue brick behind them (Config/Surfaces)
+local COPING = Kit.rgb(Surfaces.Coping.color)
+local MARGIN = Kit.rgb(Surfaces.Margin.color)
 local SLEEPER = Color3.fromRGB(74, 56, 40)
 local RAIL = Color3.fromRGB(120, 116, 112)
 local BALLAST = Color3.fromRGB(70, 66, 62)
@@ -172,19 +174,22 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 				Kit.shade(palette.ground, 1.18),
 				{ material = Enum.Material.Concrete }
 			)
+			-- the outer edge stays at z -0.15; the stones run back past the docked train's overhang
+			local copingWidth = Surfaces.Coping.width
 			local coping = Kit.block(
 				slabModel,
-				Vector3.new(slab.sizeX, 0.3, 1.55),
-				L(slab.x, 0.15, 0.625),
+				Vector3.new(slab.sizeX, 0.3, copingWidth),
+				L(slab.x, 0.15, copingWidth / 2 - 0.15),
 				COPING,
 				{ material = Enum.Material.Concrete }
 			)
-			local tactile = Kit.block(
+			local marginWidth = Surfaces.Margin.width
+			local margin = Kit.block(
 				slabModel,
-				Vector3.new(slab.sizeX, 0.06, 0.7),
-				L(slab.x, 0.03, 2.4),
-				TACTILE,
-				{ collide = false }
+				Vector3.new(slab.sizeX, 0.06, marginWidth),
+				L(slab.x, 0.03, copingWidth - 0.15 + marginWidth / 2),
+				MARGIN,
+				{ material = Enum.Material.Brick, collide = false }
 			)
 			local face = Kit.block(
 				slabModel,
@@ -215,7 +220,7 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 				Kit.shade(DEEP_ROCK, 0.75),
 				{ material = Enum.Material.Slate }
 			)
-			for _, part in { coping, tactile, face, under, keel, root2 } do
+			for _, part in { coping, margin, face, under, keel, root2 } do
 				Kit.weld(part, top)
 			end
 		else
