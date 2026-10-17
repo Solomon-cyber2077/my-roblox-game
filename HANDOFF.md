@@ -14,6 +14,12 @@ Rojo: the plugin failed only because no `rojo serve` was running; started it and
   a 1.2 s eased crossfade off the train and 0.9 s back (was a spatial 8-stud ramp); brightness and exposure are not
   touched, controls never blocked. `DoorThud` (ProSoundEffects "Door Bang Rattle 8", 9114129572, pitch 0.78, highs
   -32 dB) plays on each crossing during a run, not on teleports. Studio: tint R 0.999 -> 0.844 in ~1.5 s, back in ~1.3 s.
+- T3 station drone: `Drone` is now ProSoundEffects "Hollow Rumble 1" (9112795295), measured in Studio with an
+  AudioAnalyzer at 86% of its energy in 60-120 Hz and 6% below 60; `DroneHarmonic` is the same take at 4x (77% in
+  250-500 Hz) so small speakers hear it. No sub boost (EQ low 0). Level follows danger = max(hazard intensity, Hollow
+  nearness), rising with a 0.6 s half-life and ebbing with 3.5 s; volume sways on 9.5 s / 6.3 s cycles and pitch drifts
+  +-1.2% over 17 s, the harmonic locked to the body. Studio at stop 2: calm body 0.13 / harmonic 0.06; a Hollow at
+  15 studs took it to ~0.37 / 0.10 within 2 s; after it left it eased back to ~0.18 / 0.06 over ~12 s.
 2. Known bugs / not verified
 - Nothing heard by ear (MCP cannot hear audio); levels need an ear in Studio.
 3. Next logical step

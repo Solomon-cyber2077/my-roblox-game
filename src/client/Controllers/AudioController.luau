@@ -60,12 +60,18 @@ local NIGHT_EVERY = { 9, 20 } -- between far-off calls on the line, deep in the 
 local NIGHT_RANGE = { 80, 170 } -- studs: spatial cues fall silent past 220, and the wheels are loud
 local NIGHT_DRONE = 0.45 -- share of the drone that hums under the wheels at the darkest hour
 local DREAD_NEAR, DREAD_FAR = 10, 75 -- heartbeat: full at this distance from a Hollow, silent past that one
+-- the drone's danger (the stop's hazard or a Hollow near): it swells quickly, ebbs slowly once
+-- they leave (half-lives), and breathes on slow, unrelated cycles so it never sits still
+local DANGER_RISE, DANGER_FALL = 0.6, 3.5
+local DRONE_SWAY = { body = 9.5, harmonic = 6.3, pitch = 17 } -- seconds per cycle
+local DRONE_DEPTH = { body = 0.2, harmonic = 0.3, pitch = 0.012 }
 local HUSH_FLOOR = 0.08 -- what is left of every sound at the depth of the Hush
 -- Aboard at a stop or on the line, the carriage walls stand between you and the night: the
 -- moment you step in (Controllers/ThresholdController) the whole Outdoor group loses its top
 -- end and the outside beds drop, and the depot hall's room tone (the lobby's own sound) rises,
 -- so the train sounds like the same warm shelter as the hall.
-local OUTSIDE: { [string]: boolean } = { Wind = true, StationEerie = true, Drone = true, Howl = true }
+local OUTSIDE: { [string]: boolean } =
+	{ Wind = true, StationEerie = true, Drone = true, DroneHarmonic = true, Howl = true }
 local SHELTER_DIP = 0.45 -- share of the outside beds the walls take away
 local SHELTER_HIGH, SHELTER_MID = -30, -10 -- dB the walls take off the Outdoor group's highs and mids
 local SHELTER_ROOM = 0.5 -- share of the hall's room tone heard aboard
@@ -102,7 +108,11 @@ end
 
 local SHAPES: { [string]: (Sound) -> () } = {
 	Drone = function(sound)
-		equalize(sound, 4, -10, -40)
+		equalize(sound, 0, -4, -24) -- no sub boost: the body sits at 60-120 Hz
+		reverb(sound, 7, -4, -8)
+	end,
+	DroneHarmonic = function(sound)
+		equalize(sound, -8, 0, -20)
 		reverb(sound, 7, -4, -8)
 	end,
 	Howl = function(sound)
@@ -248,7 +258,7 @@ function AudioController.Start()
 		AudioController.Play("DoorThud", nil, if inside then 1 else 0.8, if inside then 1 else 1.06)
 	end)
 
-	for _, name in { "TrainRun", "Wind", "StationEerie", "DepotHall", "Drone", "Howl" } do
+	for _, name in { "TrainRun", "Wind", "StationEerie", "DepotHall", "Drone", "DroneHarmonic", "Howl" } do
 		local sound = makeSound(name, SoundService)
 		if sound then
 			sound.Volume = 0
@@ -258,6 +268,7 @@ function AudioController.Start()
 	end
 
 	local ambience = 0 -- 0..1: how much the stop's soundscape is playing
+	local danger = 0 -- 0..1: the drone's danger, eased
 	local night = 0 -- 0..1: how much of the night layer is playing on the line
 	local nextDistant = 0
 	local nextNight = 0
@@ -347,6 +358,22 @@ function AudioController.Start()
 				swell = MathX.smoothstep(0, 0.3, p) * (1 - MathX.smoothstep(0.7, 1, p))
 			end
 		end
+		-- how near the nearest Hollow is (the heartbeat and the drone)
+		local nearest = if Registry.HollowAnimator then Registry.HollowAnimator.Nearest(focus) else math.huge
+		local dread = if inLobby
+			then 0
+			else 1 - MathX.saturate((nearest - DREAD_NEAR) / (DREAD_FAR - DREAD_NEAR))
+		local wantDanger = math.max(tension, dread)
+		danger = MathX.lerp(
+			danger,
+			wantDanger,
+			MathX.damp(if wantDanger > danger then DANGER_RISE else DANGER_FALL, dt)
+		)
+		local cycle = os.clock() * 2 * math.pi
+		local sway = 1 + DRONE_DEPTH.body * math.sin(cycle / DRONE_SWAY.body)
+		local swayHigh = 1 + DRONE_DEPTH.harmonic * math.sin(cycle / DRONE_SWAY.harmonic + 1.7)
+		local drift = 1 + DRONE_DEPTH.pitch * math.sin(cycle / DRONE_SWAY.pitch)
+
 		local duck = if os.clock() < duckUntil then 1 - Tuning.Departure.DuckShare else 1
 		group.Volume = (1 - (1 - HUSH_FLOOR) * hush) * duck
 
@@ -357,9 +384,13 @@ function AudioController.Start()
 				else Audio.Wind.volume * (0.35 + 0.65 * pace) * (1 + 1.4 * bridge) * (1 - 0.6 * tunnel),
 			StationEerie = if inLobby then 0 else Audio.StationEerie.volume * (0.3 + tension),
 			DepotHall = Audio.DepotHall.volume * (if inLobby then 1 else SHELTER_ROOM * shelter),
-			-- the stop's drone, the night humming under the wheels, an omen swelling it
+			-- the stop's drone, rising with danger; the night humming under the wheels, an omen swelling it
 			Drone = Audio.Drone.volume
-				* (math.max(ambience * (0.6 + 0.4 * tension), NIGHT_DRONE * night) + 0.6 * swell),
+				* (math.max(ambience * (0.3 + 0.7 * danger), NIGHT_DRONE * night) + 0.6 * swell)
+				* sway,
+			DroneHarmonic = Audio.DroneHarmonic.volume
+				* (math.max(ambience * (0.4 + 0.6 * danger), NIGHT_DRONE * night) + 0.4 * swell)
+				* swayHigh,
 			Howl = Audio.Howl.volume * (ambience * (0.4 + 0.6 * tension) + 0.5 * swell),
 		}
 		walls.MidGain = SHELTER_MID * shelter
@@ -373,6 +404,8 @@ function AudioController.Start()
 				sound.PlaybackSpeed = 0.7 + 0.5 * pace
 			elseif name == "Wind" then
 				sound.PlaybackSpeed = 1 + 0.18 * bridge
+			elseif name == "Drone" or name == "DroneHarmonic" then
+				sound.PlaybackSpeed = (Audio[name].pitch or 1) * drift -- the harmonic stays locked to the body
 			end
 		end
 
@@ -409,10 +442,6 @@ function AudioController.Start()
 
 		-- a heartbeat when a Hollow is near, lub and dub, faster the nearer it is; past
 		-- halfway the camera throbs with it
-		local nearest = if Registry.HollowAnimator then Registry.HollowAnimator.Nearest(focus) else math.huge
-		local dread = if inLobby
-			then 0
-			else 1 - MathX.saturate((nearest - DREAD_NEAR) / (DREAD_FAR - DREAD_NEAR))
 		if dread > 0.12 and clock >= nextBeat then
 			pooled("Heartbeat", dread)
 			task.delay(0.22, pooled, "Heartbeat", 0.7 * dread)

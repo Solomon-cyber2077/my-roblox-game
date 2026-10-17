@@ -90,7 +90,11 @@ local Cues: { [string]: Cue } = {
 
 	-- The stops' soundscape: the same recordings slowed and shaped (AudioController
 	-- adds the filters and reverb), so nothing new needs clearing.
-	Drone = { id = 9113286969, volume = 0.38, loop = true, pitch = 0.32, mix = "Outdoor" }, -- wind, slowed to a moan
+	-- the stop's drone (ProSoundEffects "Hollow Rumble 1", Creator Store): measured in Studio (AudioAnalyzer)
+	-- at 86% of its energy in 60-120 Hz, 6% below. The same recording at 4x is its harmonic layer
+	-- (77% in 250-500 Hz), so phone and laptop speakers that cannot play the body still hear the drone.
+	Drone = { id = 9112795295, volume = 0.42, loop = true, mix = "Outdoor" },
+	DroneHarmonic = { id = 9112795295, volume = 0.14, loop = true, pitch = 4, mix = "Outdoor" },
 	Howl = { id = 9113286969, volume = 0.2, loop = true, pitch = 0.6, mix = "Outdoor" }, -- gusts that come and go
 	DistantBell = {
 		id = 9113804436,
