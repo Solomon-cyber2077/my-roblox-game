@@ -526,9 +526,9 @@ local Tuning = {
 		Radius = 18, -- studs readable all round
 		RadiusMin = 18,
 		RadiusMax = 30,
-		AmbientFloor = { 40, 44, 52 }, -- Lighting.Ambient never darker than this (per channel)
-		OutdoorFloor = { 70, 78, 92 }, -- Lighting.OutdoorAmbient never darker than this
-		ExposureFloor = 0.2, -- Lighting.ExposureCompensation never lower
+		AmbientFloor = { 54, 58, 66 }, -- Lighting.Ambient never darker than this (per channel)
+		OutdoorFloor = { 88, 96, 110 }, -- Lighting.OutdoorAmbient never darker than this
+		ExposureFloor = 0.26, -- Lighting.ExposureCompensation never lower
 		DensityCap = 0.62, -- Atmosphere.Density never thicker: 0.78 hid the ground inside 18 studs
 		-- a cold moonlit edge on the nearest obstacles and tall structures, so silhouettes read
 		-- (Highlights: a fixed pool whose Adornee moves, never created per frame)
@@ -580,6 +580,27 @@ local Tuning = {
 			Terminus = { tint = { 224, 232, 236 }, saturation = 0.1 }, -- dawn coming
 		},
 		GradeRamp = 8, -- studs past the platform edge over which the grade comes in
+		--[[
+			The chase (the only chase effect; Logic/Visibility.chaseStep): a Hollow on the hunt
+			whose nearest crew member is you, within Detect. A sudden black flicker, then the dark
+			stays: the ambient dims, the remaining lights dim but reach a little further, the dread
+			vignette all but goes. Escaped Hold seconds, it snaps back a shade brighter than
+			normal, and the night settles back over ReliefFade. The floor still holds throughout.
+		]]
+		Chase = {
+			Detect = 60, -- studs: a hunting Hollow this close, nearest to you, is chasing you
+			Hold = 4, -- seconds out of detection before the relief
+			ReliefFade = 10, -- seconds the relief takes to settle back to the normal dark
+			Ambient = 0.5, -- the ambient and outdoor ambient's share while chased
+			Brightness = 0.6, -- Lighting.Brightness's share while chased
+			Exposure = 0.18, -- exposure taken off while chased
+			LightBrightness = 0.65, -- the station's own lamps: dimmer
+			LightRange = 1.15, -- but reaching a little further
+			Vignette = 0.08, -- the dread vignette's share while chased
+			ReliefExposure = 0.1, -- exposure added at the relief's start, easing away
+			-- the flicker: black opacity from each time (seconds after it starts) to the next
+			Flicker = { { 0, 0.94 }, { 0.05, 0 }, { 0.11, 0.85 }, { 0.17, 0.1 }, { 0.24, 0.92 }, { 0.36, 0 } },
+		},
 	},
 }
 

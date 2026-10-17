@@ -4,7 +4,7 @@
 Monster, lobby and NPC files untouched (another agent owns them). Studio was not running, so nothing was play-tested in
 Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, dimmed to 45% brightness, at half scale.
 1. Features completed
-- T1 readability floor: `Tuning.Visibility` (Radius 18 studs all round, ambient/outdoor floors, exposure floor 0.2,
+- T1 readability floor: `Tuning.Visibility` (Radius 18 studs all round, ambient/outdoor floors, exposure floor 0.26 (raised in T6),
   Atmosphere density cap 0.62) and pure `Logic/Visibility` (+ spec). `Sky.floor` clamps the drawn sky last every frame
   (AtmosphereController; the departure fog is capped too). The lobby keeps its own look. The normal night already sits
   above the floor; it bites in tunnels, the fog bank and the chase. `lune run preview ... --floor=0` shows the sky without it.
@@ -26,11 +26,22 @@ Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, di
   dawn grade at the Terminus; sealed Mystery uses Default). AtmosphereController weighs it in over the first 8 studs
   past the platform edge (`GradeRamp`), so aboard the train and in the lobby the warm amber is untouched; the floor
   still clamps it. Preview: `lune run preview <biome> out.json --grade=CoalYard`.
+- T6 chase (the only chase effect; Prompt 2's item 5 had been deferred, so no older cue existed to remove):
+  `Logic/Visibility.chaseStep/chaseLook` (+ specs), `Tuning.Visibility.Chase`. VisibilityController reads the Hollows'
+  replicated `State` (Hunt/Windup/Grab/Recover) and calls it a chase when that Hollow is within 60 studs and you are
+  its nearest crew member, or a grab is on you; no monster file touched. Onset: a 0.36 s black flicker (ScreenGui),
+  then the dark stays: `Sky.chase` halves ambient/outdoor, Brightness x0.6, exposure -0.18, all before the floor; the
+  station's lights x0.65 brightness and x1.15 range (building lamps through `LightScale`, a 2-line change in
+  BuildingVisuals); lanterns keep brightness and reach x1.15; the dread vignette drops to 8%. Escaped 4 s: snap
+  back with +0.1 exposure relief that eases away over 10 s. Caught again before the relief: no second flicker. Floor
+  retuned after a dimmed chase preview: ambient (54,58,66), outdoor (88,96,110), exposure 0.26.
+  Preview: `--chase=1`, `--relief=1`.
 2. Known bugs/regressions
 - Not verified in Studio (Studio closed). Density cap 0.62 thins the station fog bank a little.
 - Coloured lanterns (Signal green, Ember crimson) light the same reach but read darker than amber.
 - Rim, limewash and coping not seen in Studio; there is no headless station renderer to preview them.
 - Beacon is AlwaysOnTop by design (seen through buildings); if it reads as UI, set AlwaysOnTop false in VisibilityController.
+- Chase detection approximates the Hollow's target (nearest crew member); two crew equally close may both or neither get it.
 3. Next logical step
 - Owner: play a stop at low screen brightness and tune `Tuning.Visibility`.
 

@@ -505,7 +505,13 @@ function AtmosphereController.Start()
 			then 0
 			else 1 - MathX.saturate((nearest - DREAD_NEAR) / (DREAD_FAR - DREAD_NEAR))
 		dread = MathX.lerp(dread, targetDread, MathX.damp(if targetDread > dread then 0.25 else 2, dt))
-		Overlay.dread(dread)
+		-- the chase (VisibilityController) all but lifts the dread vignette: the dark is the cue
+		local chase = if Registry.VisibilityController then Registry.VisibilityController.Chase() else nil
+		local chaseDim = if chase and not inLobby then chase.dim else 0
+		local chaseRelief = if chase and not inLobby then chase.relief else 0
+		Overlay.dread(
+			dread * MathX.lerp(1, Tuning.Visibility.Chase.Vignette, math.max(chaseDim, chaseRelief))
+		)
 
 		-- a station's fog bank closing over the camera, and its own cold grade off the train
 		local fog = 0
@@ -578,7 +584,11 @@ function AtmosphereController.Start()
 		})
 		current = Sky.approach(current, target, dt)
 		local drawn = Sky.floor(
-			Sky.finish(current :: Sky.State, darkness, flash, strike ~= nil and strike.red),
+			Sky.chase(
+				Sky.finish(current :: Sky.State, darkness, flash, strike ~= nil and strike.red),
+				chaseDim,
+				chaseRelief
+			),
 			Visibility.radius(nil)
 		)
 		apply(drawn)
