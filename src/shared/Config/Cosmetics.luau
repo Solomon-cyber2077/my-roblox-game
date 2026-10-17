@@ -58,7 +58,7 @@ local Catalog: { CosmeticDef } = {
 		brass = 600,
 		look = {
 			body = { 40, 46, 42 },
-			glass = { 46, 196, 92 }, -- signal-lamp green: deep, not mint
+			glass = { 80, 222, 112 }, -- signal-lamp green, lit: deep green read too dark at a distance
 			light = { 40, 220, 96 },
 			style = "Signal",
 		},
@@ -72,11 +72,11 @@ local Catalog: { CosmeticDef } = {
 		milestone = "Stoker",
 		look = {
 			body = { 58, 30, 28 },
-			glass = { 196, 22, 40 },
-			light = { 220, 28, 44 },
+			glass = { 255, 170, 96 }, -- a coal's hot heart: crimson glass vanished on a dim screen
+			light = { 255, 100, 52 }, -- the pool it throws stays ember red
 			glow = 1.4,
 			style = "Squat",
-		}, -- crimson
+		}, -- ember
 	},
 	{
 		id = "lantern_curio",
@@ -105,7 +105,7 @@ local Catalog: { CosmeticDef } = {
 			body = { 36, 34, 48 },
 			glass = { 90, 255, 230 },
 			light = { 40, 235, 215 },
-			light2 = { 176, 84, 255 },
+			light2 = { 216, 176, 255 }, -- the lens takes this too: a lavender violet that still reads
 			glow = 1.6,
 			style = "Prism",
 		},
@@ -359,6 +359,10 @@ end
 return table.freeze({
 	-- One switch: virtual ownership for the developer and Studio; never persisted.
 	DevUnlock = table.freeze({ Enabled = true, UserId = 11744048795 }),
+	-- every lantern's lens (glass, and light2 where the lens cycles to it) and light must clear
+	-- these linear Rec. 709 luminances, so a crewmate's lamp reads at 3:1 on a dim screen
+	-- (docs/visibility/gates_45_fix1.md; tests/LanternLuminance.spec)
+	LanternMinLuminance = table.freeze({ Glass = 0.5, Light = 0.3 }),
 	List = table.freeze(Catalog),
 	ById = table.freeze(ById),
 	Defaults = table.freeze(Defaults),
