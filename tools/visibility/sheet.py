@@ -24,6 +24,7 @@ SHOTS = sys.argv[1]
 DIM = next((a.split("=")[1] for a in sys.argv if a.startswith("--dim=")), "45")
 ONLY = next((a.split("=")[1] for a in sys.argv if a.startswith("--only=")), None)
 EXPORT = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--export=")), None)
+TAG = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--tag=")), "")  # e.g. _fix1
 with open(os.path.join(SHOTS, "results.json"), encoding="utf-8") as fh:
     run = json.load(fh)
 APL, LIT = run["apl_ceiling"], run["lit_ceiling"]
@@ -53,11 +54,14 @@ def fmt(x, nd=2):
 
 
 WHATIF = [s for s in run["shots"] if s.get("reach", 1) != 1]
-run["shots"] = [s for s in run["shots"] if s.get("reach", 1) == 1]  # the game as it is
+CEIL = [s for s in run["shots"] if s["shot"].startswith("ceil_")]
+SMOOTH = [s for s in run["shots"] if s.get("falloff") == "smooth"]
+run["shots"] = [s for s in run["shots"] if s.get("reach", 1) == 1 and s not in CEIL and s not in SMOOTH]  # the game
 shots = [s for s in run["shots"] if ONLY is None or s["shot"].startswith(ONLY)]
 lines = [f"# Dim-screen gates ({DIM}% brightness, flare {T.FLARE:.0%}; office 5% in brackets)", "",
          f"Must-see >= {T.MUST_SEE_CONTRAST}:1, crew lantern >= {T.CREW_CONTRAST}:1, "
          f"APL <= {APL:.4f}, lit share <= {LIT:.3f} (horror upper quartile, refs.json).", "",
+         "Must-see judges Tier A (hazards, near their lip) and Tier B (obstacles) from classify.py.", "",
          "| station | shot | weakest at floor | weakest inside | crew lantern min | APL | lit | must | crew | mood |",
          "|---|---|---|---|---|---|---|---|---|---|"]
 for s in shots:
@@ -98,6 +102,42 @@ if DIM == "45" and EXPORT:
               f"- mood ceiling holds (calm, brightest lantern, crew of 4, every view) up to: {high} "
               f"(swept {radii[0]}..{radii[-1]})"]
 
+def gate_rows(title, rows, note):
+    out = ["", f"## {title}", "", note, "",
+           "| station | shot | weakest at floor | weakest inside | must |", "|---|---|---|---|---|"]
+    for s in rows:
+        at, ins = weakest(s, DIM, "at"), weakest(s, DIM, "inside")
+        cell = lambda m: "-" if m is None else f"{m['contrast']:.2f} {m['name']}"  # noqa: E731
+        out.append(f"| {s['label']} {s['station']} | {s['shot']} | {cell(at)} | {cell(ins)} | "
+                   f"{'PASS' if verdict(s, DIM)[0] else 'FAIL'} |")
+    return out
+
+
+if SMOOTH:
+    lines += gate_rows("Other falloff curve (1-(d/R)^2)^2: must-see", SMOOTH,
+                       "Same shots, lights windowed by the brighter of the two common game curves.")
+if CEIL:
+    lines += gate_rows("What-if (not the game): every Tier A/B surface pure white", CEIL,
+                       "The most albedo alone can do on the real ground and light: a FAIL here cannot be fixed by surfaces.")
+
+# report only: does the fix leak past the pool? Tier A/B objects beyond 2x the floor still at 3:1
+beyond = [b for s in shots if s["radius"] == run["shots"][0]["radius"] for b in s[DIM].get("beyond", [])]
+if beyond:
+    share = sum(b["contrast"] >= T.MUST_SEE_CONTRAST for b in beyond) / len(beyond)
+    lines += ["", "## Dark beyond the pool (report only, no threshold)", "",
+              f"- Tier A/B readings beyond 2x the floor at {T.MUST_SEE_CONTRAST}:1 or better: "
+              f"{share:.1%} of {len(beyond)}"]
+    for label in sorted({s["label"] for s in shots}):
+        rows = [b for s in shots if s["label"] == label for b in s[DIM].get("beyond", [])]
+        if rows:
+            lines.append(f"  - {label}: {sum(b['contrast'] >= T.MUST_SEE_CONTRAST for b in rows) / len(rows):.1%} of {len(rows)}")
+stand = [(s, s[DIM]["standin"]) for s in shots if s[DIM].get("standin")]
+if stand:
+    lines += ["", "## Monster stand-in at the floor's distance (report only)", "",
+              "A 7-stud dark figure (not the game's Hollow) ahead at the floor radius, crew of 1, forward view.", ""]
+    for s, m in stand:
+        lines.append(f"- {s['label']} {s['shot']}: {m['contrast']:.2f}:1 at {m['distance']:.0f} studs ({m['px']} px)")
+
 if WHATIF:
     lines += ["", "## What-if (not the game): lantern Range = floor x k, default floor", "",
               "| station | shot | weakest at floor | weakest inside | crew lantern min | APL | lit | must | crew | mood |",
@@ -110,13 +150,16 @@ if WHATIF:
                      f"{s['apl']:.4f} | {s['lit']:.3f} | {'PASS' if must else 'FAIL'} | {'PASS' if crew else 'FAIL'} | "
                      f"{'PASS' if mood else 'FAIL'} |")
 
-with open(os.path.join(SHOTS, f"gates_{DIM}.md"), "w", encoding="utf-8") as fh:
+with open(os.path.join(SHOTS, f"gates_{DIM}{TAG}.md"), "w", encoding="utf-8") as fh:
     fh.write("\n".join(lines) + "\n")
 
 # contact sheet: one row per (station, state, crew), three views across
 groups = {}
 for s in shots:
-    groups.setdefault((s["label"], s["radius"], s["state"], s["crewCount"]), {})[s["view"]] = s
+    if s["state"] == "bright" and s["radius"] != shots[0]["radius"]:
+        continue  # the mood sweep is in the table, not on the sheet
+    groups.setdefault((s["label"], s["radius"], s["state"] + ("/perf" if s.get("tier") == "perf" else ""),
+                       s["crewCount"]), {})[s["view"]] = s
 cols = ["fwd", "side", "back"]
 w, h = T.WIDTH, T.HEIGHT
 label_w = 150
@@ -134,5 +177,5 @@ for row, (key, views) in enumerate(sorted(groups.items(), key=lambda kv: (kv[0][
         must, crew_ok, mood = verdict(s, DIM)
         tag = f"{view} M{'+' if must else 'x'} C{'+' if crew_ok else 'x'} W{'+' if mood else 'x'}"
         draw.text((label_w + c * w + 6, row * h + 4), tag, fill=(255, 255, 255) if must and mood else (255, 90, 90))
-sheet.save(os.path.join(SHOTS, f"sheet_{DIM}.jpg"), quality=70)
-print(os.path.join(SHOTS, f"sheet_{DIM}.jpg"))
+sheet.save(os.path.join(SHOTS, f"sheet_{DIM}{TAG}.jpg"), quality=70)
+print(os.path.join(SHOTS, f"sheet_{DIM}{TAG}.jpg"))

@@ -28,11 +28,14 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import thresholds as T  # noqa: E402
+from classify import LIP, classify  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 KIT = os.path.join(ROOT, "assets", "stationkit", "StationKit.blend")
 argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
 CALIBRATE = "--calibrate" in argv
+# --falloff=smooth: the other common curve, (1 - (d/R)^2)^2, instead of thresholds.FALLOFF
+SMOOTH = "--falloff=smooth" in argv
 
 # Light strength that makes Brightness 1 light a white surface facing it to white
 # (measured by --calibrate: a Cycles point light, constant falloff, 1 W).
@@ -192,17 +195,24 @@ def roblox_light(name, color, brightness, rng, at, direction=None, angle=None, s
     em = nt.nodes.new("ShaderNodeEmission")
     fall = nt.nodes.new("ShaderNodeLightFalloff")
     path = nt.nodes.new("ShaderNodeLightPath")
-    # window = clamp(1 - d / Range, 0, 1)^2 (thresholds.FALLOFF)
+    # window = clamp(1 - d / Range, 0, 1)^2 (thresholds.FALLOFF), or (1 - (d/R)^2)^2 (SMOOTH)
     div = nt.nodes.new("ShaderNodeMath")
     div.name = "range"
     div.operation = "DIVIDE"
     nt.links.new(path.outputs["Ray Length"], div.inputs[0])
     div.inputs[1].default_value = max(rng, 0.01)
+    ratio = div.outputs[0]
+    if SMOOTH:
+        sq_r = nt.nodes.new("ShaderNodeMath")
+        sq_r.operation = "MULTIPLY"
+        nt.links.new(div.outputs[0], sq_r.inputs[0])
+        nt.links.new(div.outputs[0], sq_r.inputs[1])
+        ratio = sq_r.outputs[0]
     sub = nt.nodes.new("ShaderNodeMath")
     sub.operation = "SUBTRACT"
     sub.use_clamp = True
     sub.inputs[0].default_value = 1.0
-    nt.links.new(div.outputs[0], sub.inputs[1])
+    nt.links.new(ratio, sub.inputs[1])
     sq = nt.nodes.new("ShaderNodeMath")
     sq.operation = "MULTIPLY"
     nt.links.new(sub.outputs[0], sq.inputs[0])
@@ -321,6 +331,12 @@ SRC, OUT, STATION = argv[0], argv[1], int(argv[2])
 ONLY = next((a.split("=", 1)[1] for a in argv if a.startswith("--only=")), None)
 # what-if only (not the game): lantern Range = floor x REACH; shots are named x<REACH>_...
 REACH = float(next((a.split("=", 1)[1] for a in argv if a.startswith("--reach=")), "1"))
+# --tier=perf: the Performance graphics tier (Tuning.Visibility.Budget / Rim): the cone's
+# shorter reach and no cone shadow, 4 rims; shots are named <shot>_perf
+PERF = "--tier=perf" in argv
+# --ceiling (what-if, not the game): every Tier A part and Tier B model painted pure white,
+# everything else as built: the most albedo alone could give; shots are named ceil_<shot>
+CEILING = "--ceiling" in argv
 with open(SRC, encoding="utf-8") as fh:
     data = json.load(fh)
 st = data["stations"][STATION]
@@ -333,12 +349,16 @@ meshes = unit_meshes()
 MATS = {k: surface_material(k, k) for k in ("solid", "neon", "glass", "kit")}
 
 # object indices (Blender caps pass_index at 32767): 0 nothing, 1.. groups (station/train
-# models), the coping 30000, crew from 31000
+# models), Tier A hazard parts from 20000 (each its own index), crew from 31000, the
+# monster stand-in 32000
 group_ids = {}
 for key in sorted(st["groups"]):
     group_ids[key] = len(group_ids) + 1
-EDGE_ID = 30000  # the platform coping (StationBuilder), split from its slab
-assert len(group_ids) < EDGE_ID
+TIERS = classify(st, data["edgeZ"])  # tools/visibility/classify.py: mechanical, not by hand
+HAZARD_BASE = 20000
+hazard_ids = {i: HAZARD_BASE + k for k, i in enumerate(sorted(TIERS["A"]))}
+assert len(group_ids) < HAZARD_BASE and len(hazard_ids) < 11000
+STANDIN_ID = 32000
 
 ground_y = 0.0  # platform top (StationBuilder: slab top at y 0)
 targets = {}  # index -> {kind, name, ...}
@@ -362,9 +382,10 @@ for i, p in enumerate(st["parts"]):
         d = min(size)
         size = [d, d, d]
     ob.matrix_world = frame_matrix(p["p"], p["r"], size)
-    ob.color = (*lin(p["c"]), 1)
+    white = CEILING and (i in TIERS["A"] or p["g"] in TIERS["B"])
+    ob.color = (1, 1, 1, 1) if white else (*lin(p["c"]), 1)
     ob["alpha"] = 1 - p["t"]
-    ob.pass_index = EDGE_ID if p.get("edge") else group_ids.get(p["g"], 0)
+    ob.pass_index = hazard_ids.get(i) or group_ids.get(p["g"], 0)
     coll.objects.link(ob)
     ob["kind"] = kind
     lo, hi = aabb(p)
@@ -485,15 +506,45 @@ def place_person(index, root, yaw, lantern, radius, chase, cone):
     light.data.use_shadow = False  # Budget: lantern shadows forced off
     obs.append(light)
     if cone:
+        cone_range = data["visibility"]["budget"]["ConeRangePerformance"] if PERF else lamp["ConeRange"]
         look = (-back[0], 0, -back[2])
         at = [root[0] - back[0] * 0.8, root[1] + lamp["ConeHeight"], root[2] - back[2] * 0.8]
         c = roblox_light(
-            f"c{index}cone", lantern["light"], lamp["ConeBrightness"], max(lamp["ConeRange"], radius), at,
-            direction=(look[0], -0.0, look[2]), angle=lamp["ConeAngle"], shadows=True,
+            f"c{index}cone", lantern["light"], lamp["ConeBrightness"], max(cone_range, radius), at,
+            direction=(look[0], -0.0, look[2]), angle=lamp["ConeAngle"], shadows=not PERF,
         )
         obs.append(c)
     people.append(obs)
     return {"body": body_id, "lens": body_id + 1, "root": root, "lensAt": lens_at}
+
+
+STANDIN = [  # a Hollow-sized stand-in (not the game's Hollow): 7 studs tall, dark hide
+    ("legL", (1.1, 3, 1.1), (-0.6, -2.5, 0)),
+    ("legR", (1.1, 3, 1.1), (0.6, -2.5, 0)),
+    ("torso", (2.4, 2.8, 1.2), (0, 0.4, 0)),
+    ("armL", (0.9, 3.4, 0.9), (-1.7, 0.1, 0)),
+    ("armR", (0.9, 3.4, 0.9), (1.7, 0.1, 0)),
+    ("head", (1.2, 1.2, 1.2), (0, 2.4, 0)),
+]
+STANDIN_COLOR = (44, 40, 38)
+
+
+def place_standin(root, yaw):
+    right, up, back = yaw_frame(yaw)
+    rot = list(right) + list(up) + list(back)
+    obs = []
+    for name, size, off in STANDIN:
+        centre = [root[i] + right[i] * off[0] + up[i] * off[1] + back[i] * off[2] for i in range(3)]
+        ob = bpy.data.objects.new(f"m{name}", meshes["B"])
+        ob.matrix_world = frame_matrix(centre, rot, size)
+        ob.color = (*lin(STANDIN_COLOR), 1)
+        ob.pass_index = STANDIN_ID
+        scene.collection.objects.link(ob)
+        slot = ob.material_slots[0]
+        slot.link = "OBJECT"
+        slot.material = MATS["solid"]
+        obs.append(ob)
+    people.append(obs)
 
 
 def clear_people():
@@ -508,7 +559,7 @@ def lantern(id_):
     return next(l for l in data["lanterns"] if l["id"] == id_)
 
 
-EDGE_Z = data["edgeZ"] + 0.625  # the coping's centre line (StationBuilder: L(x, 0.15, 0.625))
+EDGE_Z = next(p for p in st["parts"] if p.get("edge"))["p"][2]  # the coping's centre line
 
 
 def obstacle_distance(group, x, z):
@@ -653,6 +704,12 @@ for r in [R0] + SWEEP_HIGH:
         shots.append((f"r{r}_bright_c4_{view}", r, "bright", 4, view))
 if REACH != 1:
     shots = [(f"x{REACH:g}_{s[0]}", *s[1:]) for s in shots if s[2] in ("worst", "bright") and s[1] == R0]
+if PERF:  # the Performance tier: the gate matrix only (the mood sweep is Quality's)
+    shots = [(s[0] + "_perf", *s[1:]) for s in shots if s[2] != "bright" or s[1] == R0]
+if SMOOTH:
+    shots = [("f2_" + s[0], *s[1:]) for s in shots if s[2] != "bright" or s[1] == R0]
+if CEILING:
+    shots = [("ceil_" + s[0], *s[1:]) for s in shots if s[2] in ("calm", "chase")]
 if ONLY:
     shots = [s for s in shots if s[0].startswith(ONLY)]
 
@@ -680,7 +737,7 @@ for name, radius, state, crew, view in shots:
     yaw = VIEWS[view]
     info = {"shot": name, "station": st["id"], "label": st["label"], "radius": radius, "state": state,
             "crew": [], "view": view, "root": root, "yaw": yaw, "sky": sky, "lantern": s["own"]["id"],
-            "reach": REACH}
+            "reach": REACH, "tier": "perf" if PERF else "quality", "falloff": "smooth" if SMOOTH else "linear"}
     # the camera and the crew's spots are found against the station alone (no bodies yet)
     bpy.context.view_layer.update()
     depsgraph = bpy.context.evaluated_depsgraph_get()
@@ -707,13 +764,26 @@ for name, radius, state, crew, view in shots:
         p = place_person(k + 1, list(placed), yaw + math.pi, s["crew"], radius, s["chase"], cone=False)
         p["distance"] = dist
         info["crew"].append(p)
+    # the stand-in (report only): ahead at the floor's distance, on the platform, crew of 1
+    if crew == 1 and view == "fwd":
+        for share in (1.0, 0.95, 1.05, 0.9):
+            sx, sz = root[0] + 2.0, root[2] + radius * share
+            gy = ground_at(sx, sz)
+            if gy is not None and abs(gy - ground_y) < 1.5:
+                place_standin([sx, gy + 4, sz], yaw + math.pi)
+                info["standin"] = {"id": STANDIN_ID, "distance": radius * share}
+                break
     info["camera"] = list(cam_at)
-    # must-see targets: obstacle groups and the coping, by index, with their distances
+    # must-see targets: tools/visibility/classify.py's Tier A parts (each judged near its
+    # lip) and Tier B models, by index
     info["targets"] = {
-        str(group_ids[g]): {"kind": "obstacle", "name": g.split("#")[0], "distance": obstacle_distance(g, x, z)}
-        for g in obstacle_boxes if g in group_ids
+        str(group_ids[g]): {"kind": "obstacle", "tier": "B", "name": g.split("#")[0], "family": fam}
+        for g, fam in TIERS["B"].items() if g in group_ids
     }
-    info["targets"][str(EDGE_ID)] = {"kind": "edge", "name": "coping", "distance": abs(z - EDGE_Z)}
+    for i, idx in hazard_ids.items():
+        a = TIERS["A"][i]
+        info["targets"][str(idx)] = {"kind": a["kind"], "tier": "A", "name": a["family"], "family": a["family"],
+                                     "lips": a["lips"], "lip": LIP}
     info["rims"] = sorted(
         (
             (math.dist(st["groups"][g]["pivot"], root), group_ids[g])
@@ -722,6 +792,8 @@ for name, radius, state, crew, view in shots:
         )
     )[: data["visibility"]["rim"]["Max"]]
     info["rims"] = [i for d, i in info["rims"] if d <= data["visibility"]["rim"]["Range"]]
+    if PERF:
+        info["rims"] = info["rims"][: data["visibility"]["rim"]["MaxPerformance"]]
     render_shot(os.path.join(OUT, name))
     with open(os.path.join(OUT, name + ".json"), "w", encoding="utf-8") as fh:
         json.dump(info, fh)

@@ -1,0 +1,3837 @@
+{
+ "seed": 424242,
+ "cell": 0.5,
+ "walk": [
+  -0.75,
+  0.6
+ ],
+ "stepLip": 0.25,
+ "lip": 1.0,
+ "step": 0.6,
+ "head": 5.0,
+ "stations": {
+  "Halt": {
+   "A": {
+    "153": {
+     "family": "platform face",
+     "kind": "drop",
+     "lips": [
+      [
+       -216.05,
+       6.95,
+       -216.05,
+       7.55
+      ],
+      [
+       216.05,
+       6.95,
+       216.05,
+       7.55
+      ],
+      [
+       -216.05,
+       6.95,
+       216.05,
+       6.95
+      ]
+     ]
+    },
+    "155": {
+     "family": "coping",
+     "kind": "step",
+     "lips": [
+      [
+       -216.0,
+       6.85,
+       -216.0,
+       8.4
+      ],
+      [
+       216.0,
+       6.85,
+       216.0,
+       8.4
+      ],
+      [
+       -216.0,
+       6.85,
+       216.0,
+       6.85
+      ],
+      [
+       -216.0,
+       8.4,
+       216.0,
+       8.4
+      ]
+     ]
+    },
+    "156": {
+     "family": "platform face",
+     "kind": "drop",
+     "lips": [
+      [
+       -216.0,
+       7.0,
+       -216.0,
+       31.0
+      ],
+      [
+       216.0,
+       7.0,
+       216.0,
+       31.0
+      ],
+      [
+       -216.0,
+       7.0,
+       216.0,
+       7.0
+      ]
+     ]
+    },
+    "279": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -215.94,
+       43.06,
+       -215.94,
+       54.94
+      ]
+     ]
+    },
+    "341": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -215.94,
+       55.06,
+       -215.94,
+       66.94
+      ]
+     ]
+    },
+    "932": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -215.94,
+       151.06,
+       -215.94,
+       162.94
+      ]
+     ]
+    },
+    "1086": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -215.94,
+       175.06,
+       -215.94,
+       186.94
+      ]
+     ]
+    },
+    "1288": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -215.94,
+       211.06,
+       -215.94,
+       222.94
+      ]
+     ]
+    },
+    "1499": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       215.94,
+       235.06,
+       215.94,
+       246.94
+      ]
+     ]
+    },
+    "2067": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -155.94,
+       354.94,
+       -144.06,
+       354.94
+      ]
+     ]
+    },
+    "2144": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       12.06,
+       354.94,
+       23.94,
+       354.94
+      ]
+     ]
+    },
+    "2167": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       60.06,
+       354.94,
+       71.94,
+       354.94
+      ]
+     ]
+    },
+    "2171": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       72.06,
+       354.94,
+       83.94,
+       354.94
+      ]
+     ]
+    },
+    "2191": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       108.06,
+       354.94,
+       119.94,
+       354.94
+      ]
+     ]
+    },
+    "2197": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       120.06,
+       354.94,
+       131.94,
+       354.94
+      ]
+     ]
+    },
+    "2203": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       132.06,
+       354.94,
+       143.94,
+       354.94
+      ]
+     ]
+    },
+    "2214": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       156.06,
+       354.94,
+       167.94,
+       354.94
+      ]
+     ]
+    },
+    "3356": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -54.49,
+       32.51,
+       -54.49,
+       37.06
+      ],
+      [
+       -51.09,
+       32.51,
+       -51.09,
+       37.06
+      ],
+      [
+       -54.49,
+       32.51,
+       -51.09,
+       32.51
+      ],
+      [
+       -54.49,
+       37.06,
+       -51.09,
+       37.06
+      ]
+     ]
+    },
+    "3366": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -106.06,
+       83.97,
+       -106.06,
+       87.18
+      ],
+      [
+       -101.66,
+       83.97,
+       -101.66,
+       87.18
+      ],
+      [
+       -106.06,
+       83.97,
+       -101.66,
+       83.97
+      ],
+      [
+       -106.06,
+       87.18,
+       -101.66,
+       87.18
+      ]
+     ]
+    },
+    "3376": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -7.22,
+       96.96,
+       -7.22,
+       101.45
+      ],
+      [
+       -3.91,
+       96.96,
+       -3.91,
+       101.45
+      ],
+      [
+       -7.22,
+       96.96,
+       -3.91,
+       96.96
+      ],
+      [
+       -7.22,
+       101.45,
+       -3.91,
+       101.45
+      ]
+     ]
+    },
+    "3416": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -52.44,
+       44.7,
+       -52.44,
+       47.4
+      ],
+      [
+       -49.54,
+       44.7,
+       -49.54,
+       47.4
+      ],
+      [
+       -52.44,
+       44.7,
+       -49.54,
+       44.7
+      ],
+      [
+       -52.44,
+       47.4,
+       -49.54,
+       47.4
+      ]
+     ]
+    },
+    "3467": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       134.65,
+       69.3,
+       134.65,
+       72.0
+      ],
+      [
+       137.55,
+       69.3,
+       137.55,
+       72.0
+      ],
+      [
+       134.65,
+       69.3,
+       137.55,
+       69.3
+      ],
+      [
+       134.65,
+       72.0,
+       137.55,
+       72.0
+      ]
+     ]
+    },
+    "3693": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       31.05,
+       285.3,
+       31.05,
+       288.0
+      ],
+      [
+       33.95,
+       285.3,
+       33.95,
+       288.0
+      ],
+      [
+       31.05,
+       285.3,
+       33.95,
+       285.3
+      ],
+      [
+       31.05,
+       288.0,
+       33.95,
+       288.0
+      ]
+     ]
+    },
+    "3920": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -198.6,
+       27.4,
+       -198.6,
+       28.6
+      ],
+      [
+       -197.4,
+       27.4,
+       -197.4,
+       28.6
+      ],
+      [
+       -198.6,
+       27.4,
+       -197.4,
+       27.4
+      ],
+      [
+       -198.6,
+       28.6,
+       -197.4,
+       28.6
+      ]
+     ]
+    },
+    "3929": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -162.6,
+       27.4,
+       -162.6,
+       28.6
+      ],
+      [
+       -161.4,
+       27.4,
+       -161.4,
+       28.6
+      ],
+      [
+       -162.6,
+       27.4,
+       -161.4,
+       27.4
+      ],
+      [
+       -162.6,
+       28.6,
+       -161.4,
+       28.6
+      ]
+     ]
+    },
+    "3934": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -126.6,
+       27.4,
+       -126.6,
+       28.6
+      ],
+      [
+       -125.4,
+       27.4,
+       -125.4,
+       28.6
+      ],
+      [
+       -126.6,
+       27.4,
+       -125.4,
+       27.4
+      ],
+      [
+       -126.6,
+       28.6,
+       -125.4,
+       28.6
+      ]
+     ]
+    },
+    "3943": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -90.6,
+       27.4,
+       -90.6,
+       28.6
+      ],
+      [
+       -89.4,
+       27.4,
+       -89.4,
+       28.6
+      ],
+      [
+       -90.6,
+       27.4,
+       -89.4,
+       27.4
+      ],
+      [
+       -90.6,
+       28.6,
+       -89.4,
+       28.6
+      ]
+     ]
+    },
+    "3956": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       89.4,
+       27.4,
+       89.4,
+       28.6
+      ],
+      [
+       90.6,
+       27.4,
+       90.6,
+       28.6
+      ],
+      [
+       89.4,
+       27.4,
+       90.6,
+       27.4
+      ],
+      [
+       89.4,
+       28.6,
+       90.6,
+       28.6
+      ]
+     ]
+    },
+    "3965": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       125.4,
+       27.4,
+       125.4,
+       28.6
+      ],
+      [
+       126.6,
+       27.4,
+       126.6,
+       28.6
+      ],
+      [
+       125.4,
+       27.4,
+       126.6,
+       27.4
+      ],
+      [
+       125.4,
+       28.6,
+       126.6,
+       28.6
+      ]
+     ]
+    },
+    "3970": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       161.4,
+       27.4,
+       161.4,
+       28.6
+      ],
+      [
+       162.6,
+       27.4,
+       162.6,
+       28.6
+      ],
+      [
+       161.4,
+       27.4,
+       162.6,
+       27.4
+      ],
+      [
+       161.4,
+       28.6,
+       162.6,
+       28.6
+      ]
+     ]
+    },
+    "3979": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       197.4,
+       27.4,
+       197.4,
+       28.6
+      ],
+      [
+       198.6,
+       27.4,
+       198.6,
+       28.6
+      ],
+      [
+       197.4,
+       27.4,
+       198.6,
+       27.4
+      ],
+      [
+       197.4,
+       28.6,
+       198.6,
+       28.6
+      ]
+     ]
+    }
+   },
+   "B": {
+    "Barrels#1250": "Barrels",
+    "Barrels#1259": "Barrels",
+    "Bench#980": "Bench",
+    "Bench#983": "Bench",
+    "Bench#985": "Bench",
+    "Bench#986": "Bench",
+    "Bench#988": "Bench",
+    "Bench#991": "Bench",
+    "BookingHall#888": "BookingHall",
+    "BrokenRoad#1268": "BrokenRoad",
+    "BrokenRoad#1270": "BrokenRoad",
+    "BrokenRoad#1272": "BrokenRoad",
+    "BrokenRoad#1274": "BrokenRoad",
+    "Canopy#978": "Canopy",
+    "Cart#1246": "Cart",
+    "Cart#1255": "Cart",
+    "CattleDock#883": "CattleDock",
+    "Churns#997": "Churns",
+    "Container_1#896": "Container",
+    "Container_10#905": "Container",
+    "Container_11#906": "Container",
+    "Container_12#907": "Container",
+    "Container_13#908": "Container",
+    "Container_14#909": "Container",
+    "Container_15#910": "Container",
+    "Container_16#911": "Container",
+    "Container_17#912": "Container",
+    "Container_18#913": "Container",
+    "Container_19#914": "Container",
+    "Container_2#897": "Container",
+    "Container_20#915": "Container",
+    "Container_21#916": "Container",
+    "Container_22#917": "Container",
+    "Container_23#918": "Container",
+    "Container_24#919": "Container",
+    "Container_25#920": "Container",
+    "Container_26#921": "Container",
+    "Container_27#922": "Container",
+    "Container_28#923": "Container",
+    "Container_29#924": "Container",
+    "Container_3#898": "Container",
+    "Container_30#925": "Container",
+    "Container_31#926": "Container",
+    "Container_32#927": "Container",
+    "Container_33#928": "Container",
+    "Container_34#929": "Container",
+    "Container_37#932": "Container",
+    "Container_38#933": "Container",
+    "Container_39#934": "Container",
+    "Container_4#899": "Container",
+    "Container_40#935": "Container",
+    "Container_41#936": "Container",
+    "Container_42#937": "Container",
+    "Container_43#938": "Container",
+    "Container_44#939": "Container",
+    "Container_45#940": "Container",
+    "Container_46#941": "Container",
+    "Container_47#942": "Container",
+    "Container_48#943": "Container",
+    "Container_49#944": "Container",
+    "Container_5#900": "Container",
+    "Container_50#945": "Container",
+    "Container_51#946": "Container",
+    "Container_52#947": "Container",
+    "Container_53#948": "Container",
+    "Container_54#949": "Container",
+    "Container_55#950": "Container",
+    "Container_56#951": "Container",
+    "Container_57#952": "Container",
+    "Container_58#953": "Container",
+    "Container_59#954": "Container",
+    "Container_6#901": "Container",
+    "Container_60#955": "Container",
+    "Container_61#956": "Container",
+    "Container_66#961": "Container",
+    "Container_67#962": "Container",
+    "Container_68#963": "Container",
+    "Container_69#964": "Container",
+    "Container_7#902": "Container",
+    "Container_70#965": "Container",
+    "Container_71#966": "Container",
+    "Container_8#903": "Container",
+    "Container_9#904": "Container",
+    "DecorCrates#1236": "DecorCrates",
+    "DecorCrates#1237": "DecorCrates",
+    "DecorCrates#1238": "DecorCrates",
+    "DecorCrates#1239": "DecorCrates",
+    "DecorCrates#1240": "DecorCrates",
+    "DecorCrates#1241": "DecorCrates",
+    "DecorCrates#1242": "DecorCrates",
+    "DecorCrates#1243": "DecorCrates",
+    "DecorCrates#1244": "DecorCrates",
+    "FireBuckets#998": "FireBuckets",
+    "GoodsShed#890": "GoodsShed",
+    "Haystack#1245": "Haystack",
+    "Haystack#1253": "Haystack",
+    "Haystack#1254": "Haystack",
+    "House#891": "House",
+    "House#893": "House",
+    "House#894": "House",
+    "House#895": "House",
+    "Inn#892": "Inn",
+    "Lamp#979": "Lamp",
+    "Lamp#981": "Lamp",
+    "Lamp#982": "Lamp",
+    "Lamp#984": "Lamp",
+    "Lamp#987": "Lamp",
+    "Lamp#989": "Lamp",
+    "Lamp#990": "Lamp",
+    "Lamp#992": "Lamp",
+    "Oak#1007": "Oak",
+    "Oak#1009": "Oak",
+    "Oak#1011": "Oak",
+    "Oak#1013": "Oak",
+    "Oak#1015": "Oak",
+    "Oak#1018": "Oak",
+    "Oak#1020": "Oak",
+    "Oak#1022": "Oak",
+    "Oak#1028": "Oak",
+    "Oak#1033": "Oak",
+    "Oak#1035": "Oak",
+    "Oak#1037": "Oak",
+    "Oak#1039": "Oak",
+    "Oak#1041": "Oak",
+    "Oak#1047": "Oak",
+    "Oak#1049": "Oak",
+    "Oak#1052": "Oak",
+    "Oak#1055": "Oak",
+    "Oak#1059": "Oak",
+    "Oak#1061": "Oak",
+    "Oak#1063": "Oak",
+    "Oak#1067": "Oak",
+    "Oak#1070": "Oak",
+    "Oak#1073": "Oak",
+    "Oak#1076": "Oak",
+    "Oak#1087": "Oak",
+    "Oak#1095": "Oak",
+    "Oak#1101": "Oak",
+    "Oak#1104": "Oak",
+    "Oak#1109": "Oak",
+    "Oak#1121": "Oak",
+    "Oak#1124": "Oak",
+    "Oak#1127": "Oak",
+    "Oak#1130": "Oak",
+    "Oak#1133": "Oak",
+    "Oak#1136": "Oak",
+    "Oak#1262": "Oak",
+    "Oak#1263": "Oak",
+    "Oak#1266": "Oak",
+    "Planter#1000": "Planter",
+    "Planter#1001": "Planter",
+    "PlatformEnd#1002": "PlatformEnd",
+    "PlatformEnd#1003": "PlatformEnd",
+    "Poplar#1005": "Poplar",
+    "Poplar#1024": "Poplar",
+    "Poplar#1026": "Poplar",
+    "Poplar#1030": "Poplar",
+    "Poplar#1043": "Poplar",
+    "Poplar#1045": "Poplar",
+    "Poplar#1057": "Poplar",
+    "Poplar#1079": "Poplar",
+    "Poplar#1082": "Poplar",
+    "Poplar#1092": "Poplar",
+    "Poplar#1112": "Poplar",
+    "Poplar#1115": "Poplar",
+    "Poplar#1118": "Poplar",
+    "Poplar#1264": "Poplar",
+    "Poplar#1265": "Poplar",
+    "Poplar#1267": "Poplar",
+    "Pump#1247": "Pump",
+    "Pump#1256": "Pump",
+    "Rubble#1269": "Rubble",
+    "Rubble#1271": "Rubble",
+    "Rubble#1273": "Rubble",
+    "Rubble#1275": "Rubble",
+    "Scarecrow#1251": "Scarecrow",
+    "Scarecrow#1260": "Scarecrow",
+    "Shed#885": "Shed",
+    "Shed#886": "Shed",
+    "Shed#887": "Shed",
+    "Sign#993": "Sign",
+    "Sign#994": "Sign",
+    "Sign#995": "Sign",
+    "StationmasterHouse#889": "StationmasterHouse",
+    "Timetable#999": "Timetable",
+    "Train/Boiler#1309": "train interior",
+    "Train/Bunk#1558": "train interior",
+    "Train/FireDoor#1667": "train interior",
+    "Train/FireDoor#1669": "train interior",
+    "Train/Part#1011": "train interior",
+    "Train/Part#1016": "train interior",
+    "Train/Part#102": "train interior",
+    "Train/Part#1022": "train interior",
+    "Train/Part#1028": "train interior",
+    "Train/Part#1038": "train interior",
+    "Train/Part#1039": "train interior",
+    "Train/Part#1040": "train interior",
+    "Train/Part#1041": "train interior",
+    "Train/Part#1065": "train interior",
+    "Train/Part#1066": "train side",
+    "Train/Part#1078": "train side",
+    "Train/Part#108": "train interior",
+    "Train/Part#1139": "train interior",
+    "Train/Part#114": "train interior",
+    "Train/Part#1140": "train interior",
+    "Train/Part#1141": "train interior",
+    "Train/Part#1142": "train interior",
+    "Train/Part#1151": "train interior",
+    "Train/Part#1152": "train interior",
+    "Train/Part#1183": "train interior",
+    "Train/Part#1186": "train side",
+    "Train/Part#1189": "train side",
+    "Train/Part#1190": "train side",
+    "Train/Part#1220": "train side",
+    "Train/Part#1221": "train side",
+    "Train/Part#1228": "train side",
+    "Train/Part#1229": "train side",
+    "Train/Part#1235": "train interior",
+    "Train/Part#1240": "train interior",
+    "Train/Part#1248": "train interior",
+    "Train/Part#1249": "train interior",
+    "Train/Part#125": "train interior",
+    "Train/Part#1250": "train side",
+    "Train/Part#1254": "train side",
+    "Train/Part#1256": "train interior",
+    "Train/Part#126": "train interior",
+    "Train/Part#127": "train interior",
+    "Train/Part#1278": "train side",
+    "Train/Part#128": "train interior",
+    "Train/Part#129": "train interior",
+    "Train/Part#1354": "train side",
+    "Train/Part#1356": "train side",
+    "Train/Part#1359": "train interior",
+    "Train/Part#1361": "train side",
+    "Train/Part#1363": "train side",
+    "Train/Part#1366": "train interior",
+    "Train/Part#1368": "train side",
+    "Train/Part#1369": "train interior",
+    "Train/Part#1376": "train interior",
+    "Train/Part#1378": "train interior",
+    "Train/Part#1381": "train interior",
+    "Train/Part#1383": "train interior",
+    "Train/Part#1385": "train interior",
+    "Train/Part#1388": "train interior",
+    "Train/Part#1390": "train interior",
+    "Train/Part#1391": "train interior",
+    "Train/Part#1398": "train interior",
+    "Train/Part#1400": "train interior",
+    "Train/Part#1403": "train interior",
+    "Train/Part#1405": "train interior",
+    "Train/Part#1407": "train interior",
+    "Train/Part#1410": "train interior",
+    "Train/Part#1412": "train interior",
+    "Train/Part#1413": "train interior",
+    "Train/Part#1420": "train interior",
+    "Train/Part#1422": "train interior",
+    "Train/Part#1425": "train interior",
+    "Train/Part#1427": "train interior",
+    "Train/Part#1429": "train interior",
+    "Train/Part#1432": "train interior",
+    "Train/Part#1434": "train interior",
+    "Train/Part#1435": "train interior",
+    "Train/Part#1442": "train interior",
+    "Train/Part#1444": "train interior",
+    "Train/Part#1447": "train interior",
+    "Train/Part#1449": "train interior",
+    "Train/Part#1451": "train interior",
+    "Train/Part#1454": "train interior",
+    "Train/Part#1456": "train interior",
+    "Train/Part#1457": "train interior",
+    "Train/Part#1520": "train interior",
+    "Train/Part#1528": "train interior",
+    "Train/Part#1535": "train interior",
+    "Train/Part#1541": "train interior",
+    "Train/Part#1543": "train interior",
+    "Train/Part#1544": "train interior",
+    "Train/Part#1545": "train interior",
+    "Train/Part#1546": "train interior",
+    "Train/Part#1547": "train interior",
+    "Train/Part#1559": "train side",
+    "Train/Part#1560": "train side",
+    "Train/Part#1561": "train interior",
+    "Train/Part#1567": "train interior",
+    "Train/Part#1594": "train interior",
+    "Train/Part#1595": "train interior",
+    "Train/Part#1596": "train interior",
+    "Train/Part#1597": "train interior",
+    "Train/Part#1600": "train interior",
+    "Train/Part#1603": "train interior",
+    "Train/Part#1622": "train interior",
+    "Train/Part#1623": "train interior",
+    "Train/Part#1640": "train interior",
+    "Train/Part#1641": "train interior",
+    "Train/Part#1642": "train interior",
+    "Train/Part#1643": "train interior",
+    "Train/Part#167": "train interior",
+    "Train/Part#1673": "train interior",
+    "Train/Part#168": "train side",
+    "Train/Part#1698": "train interior",
+    "Train/Part#1705": "train interior",
+    "Train/Part#1707": "train side",
+    "Train/Part#180": "train interior",
+    "Train/Part#181": "train side",
+    "Train/Part#25": "train side",
+    "Train/Part#26": "train side",
+    "Train/Part#264": "train interior",
+    "Train/Part#265": "train side",
+    "Train/Part#266": "train side",
+    "Train/Part#267": "train interior",
+    "Train/Part#268": "train interior",
+    "Train/Part#273": "train interior",
+    "Train/Part#280": "train interior",
+    "Train/Part#281": "train interior",
+    "Train/Part#307": "train side",
+    "Train/Part#308": "train side",
+    "Train/Part#318": "train side",
+    "Train/Part#326": "train side",
+    "Train/Part#327": "train side",
+    "Train/Part#328": "train side",
+    "Train/Part#356": "train interior",
+    "Train/Part#36": "train side",
+    "Train/Part#361": "train interior",
+    "Train/Part#367": "train interior",
+    "Train/Part#373": "train interior",
+    "Train/Part#383": "train interior",
+    "Train/Part#384": "train interior",
+    "Train/Part#385": "train interior",
+    "Train/Part#386": "train interior",
+    "Train/Part#416": "train interior",
+    "Train/Part#417": "train side",
+    "Train/Part#42": "train side",
+    "Train/Part#429": "train interior",
+    "Train/Part#430": "train side",
+    "Train/Part#503": "train interior",
+    "Train/Part#504": "train interior",
+    "Train/Part#52": "train side",
+    "Train/Part#53": "train side",
+    "Train/Part#530": "train side",
+    "Train/Part#531": "train side",
+    "Train/Part#54": "train side",
+    "Train/Part#541": "train side",
+    "Train/Part#549": "train side",
+    "Train/Part#55": "train side",
+    "Train/Part#550": "train side",
+    "Train/Part#551": "train side",
+    "Train/Part#579": "train interior",
+    "Train/Part#584": "train interior",
+    "Train/Part#590": "train interior",
+    "Train/Part#596": "train interior",
+    "Train/Part#606": "train interior",
+    "Train/Part#607": "train interior",
+    "Train/Part#608": "train interior",
+    "Train/Part#609": "train interior",
+    "Train/Part#639": "train interior",
+    "Train/Part#640": "train side",
+    "Train/Part#652": "train interior",
+    "Train/Part#653": "train side",
+    "Train/Part#728": "train interior",
+    "Train/Part#729": "train interior",
+    "Train/Part#755": "train side",
+    "Train/Part#756": "train side",
+    "Train/Part#766": "train side",
+    "Train/Part#774": "train side",
+    "Train/Part#775": "train side",
+    "Train/Part#776": "train side",
+    "Train/Part#802": "train interior",
+    "Train/Part#807": "train interior",
+    "Train/Part#813": "train interior",
+    "Train/Part#819": "train interior",
+    "Train/Part#829": "train interior",
+    "Train/Part#830": "train interior",
+    "Train/Part#831": "train interior",
+    "Train/Part#832": "train interior",
+    "Train/Part#856": "train interior",
+    "Train/Part#857": "train side",
+    "Train/Part#869": "train interior",
+    "Train/Part#870": "train side",
+    "Train/Part#91": "train interior",
+    "Train/Part#937": "train interior",
+    "Train/Part#938": "train interior",
+    "Train/Part#96": "train interior",
+    "Train/Part#964": "train side",
+    "Train/Part#965": "train side",
+    "Train/Part#975": "train side",
+    "Train/Part#983": "train side",
+    "Train/Part#984": "train side",
+    "Train/Part#985": "train side",
+    "Train/Seat#1355": "train interior",
+    "Train/Seat#1362": "train interior",
+    "Train/Seat#1377": "train interior",
+    "Train/Seat#1384": "train interior",
+    "Train/Seat#1399": "train interior",
+    "Train/Seat#1406": "train interior",
+    "Train/Seat#1421": "train interior",
+    "Train/Seat#1428": "train interior",
+    "Train/Seat#1443": "train interior",
+    "Train/Seat#1450": "train interior",
+    "Train/Seat#1540": "train interior",
+    "Train/Seat#1568": "train interior",
+    "Train/Seat#1604": "train interior",
+    "Train/Seat#1706": "train interior",
+    "Train/Seat#1708": "train side",
+    "Trolley#996": "Trolley",
+    "WaterTower#884": "WaterTower",
+    "Well#1252": "Well",
+    "Well#1261": "Well",
+    "Wheelbarrow#1248": "Wheelbarrow",
+    "Wheelbarrow#1257": "Wheelbarrow"
+   },
+   "C": 2437,
+   "families": {
+    "A": {
+     "Container edge": 6,
+     "Lamp edge": 8,
+     "Slab edge": 14,
+     "coping": 1,
+     "platform face": 2
+    },
+    "B": {
+     "Barrels": 2,
+     "Bench": 6,
+     "BookingHall": 1,
+     "BrokenRoad": 4,
+     "Canopy": 1,
+     "Cart": 2,
+     "CattleDock": 1,
+     "Churns": 1,
+     "Container": 65,
+     "DecorCrates": 9,
+     "FireBuckets": 1,
+     "GoodsShed": 1,
+     "Haystack": 3,
+     "House": 4,
+     "Inn": 1,
+     "Lamp": 8,
+     "Oak": 39,
+     "Planter": 2,
+     "PlatformEnd": 2,
+     "Poplar": 16,
+     "Pump": 2,
+     "Rubble": 4,
+     "Scarecrow": 2,
+     "Shed": 3,
+     "Sign": 3,
+     "StationmasterHouse": 1,
+     "Timetable": 1,
+     "Trolley": 1,
+     "WaterTower": 1,
+     "Well": 2,
+     "Wheelbarrow": 2,
+     "train interior": 154,
+     "train side": 63
+    }
+   }
+  },
+  "Market": {
+   "A": {
+    "169": {
+     "family": "platform face",
+     "kind": "drop",
+     "lips": [
+      [
+       -240.05,
+       6.95,
+       -240.05,
+       7.55
+      ],
+      [
+       240.05,
+       6.95,
+       240.05,
+       7.55
+      ],
+      [
+       -240.05,
+       6.95,
+       240.05,
+       6.95
+      ]
+     ]
+    },
+    "171": {
+     "family": "coping",
+     "kind": "step",
+     "lips": [
+      [
+       -240.0,
+       6.85,
+       -240.0,
+       8.4
+      ],
+      [
+       240.0,
+       6.85,
+       240.0,
+       8.4
+      ],
+      [
+       -240.0,
+       6.85,
+       240.0,
+       6.85
+      ],
+      [
+       -240.0,
+       8.4,
+       240.0,
+       8.4
+      ]
+     ]
+    },
+    "172": {
+     "family": "platform face",
+     "kind": "drop",
+     "lips": [
+      [
+       -240.0,
+       7.0,
+       -240.0,
+       31.0
+      ],
+      [
+       240.0,
+       7.0,
+       240.0,
+       31.0
+      ],
+      [
+       -240.0,
+       7.0,
+       240.0,
+       7.0
+      ]
+     ]
+    },
+    "339": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       239.94,
+       31.06,
+       239.94,
+       42.94
+      ]
+     ]
+    },
+    "432": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -239.94,
+       55.06,
+       -239.94,
+       66.94
+      ]
+     ]
+    },
+    "696": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -239.94,
+       91.06,
+       -239.94,
+       102.94
+      ]
+     ]
+    },
+    "862": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -239.94,
+       115.06,
+       -239.94,
+       126.94
+      ]
+     ]
+    },
+    "944": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -239.94,
+       127.06,
+       -239.94,
+       138.94
+      ]
+     ]
+    },
+    "1643": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -239.94,
+       235.06,
+       -239.94,
+       246.94
+      ]
+     ]
+    },
+    "1969": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       239.94,
+       271.06,
+       239.94,
+       282.94
+      ]
+     ]
+    },
+    "2701": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       239.94,
+       391.06,
+       239.94,
+       402.94
+      ]
+     ]
+    },
+    "2757": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -131.94,
+       414.94,
+       -120.06,
+       414.94
+      ]
+     ]
+    },
+    "2763": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -119.94,
+       414.94,
+       -108.06,
+       414.94
+      ]
+     ]
+    },
+    "2841": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       48.06,
+       414.94,
+       59.94,
+       414.94
+      ]
+     ]
+    },
+    "2870": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       120.06,
+       414.94,
+       131.94,
+       414.94
+      ]
+     ]
+    },
+    "2915": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       216.06,
+       414.94,
+       227.94,
+       414.94
+      ]
+     ]
+    },
+    "4415": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -222.8,
+       69.63,
+       -222.8,
+       74.06
+      ],
+      [
+       -219.56,
+       69.63,
+       -219.56,
+       74.06
+      ],
+      [
+       -222.8,
+       69.63,
+       -219.56,
+       69.63
+      ],
+      [
+       -222.8,
+       74.06,
+       -219.56,
+       74.06
+      ]
+     ]
+    },
+    "4425": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -78.23,
+       81.75,
+       -78.23,
+       85.42
+      ],
+      [
+       -73.5,
+       81.75,
+       -73.5,
+       85.42
+      ],
+      [
+       -78.23,
+       81.75,
+       -73.5,
+       81.75
+      ],
+      [
+       -78.23,
+       85.42,
+       -73.5,
+       85.42
+      ]
+     ]
+    },
+    "4555": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -104.62,
+       230.6,
+       -104.62,
+       233.3
+      ],
+      [
+       -101.72,
+       230.6,
+       -101.72,
+       233.3
+      ],
+      [
+       -104.62,
+       230.6,
+       -101.72,
+       230.6
+      ],
+      [
+       -104.62,
+       233.3,
+       -101.72,
+       233.3
+      ]
+     ]
+    },
+    "4604": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -61.98,
+       230.6,
+       -61.98,
+       233.3
+      ],
+      [
+       -59.08,
+       230.6,
+       -59.08,
+       233.3
+      ],
+      [
+       -61.98,
+       230.6,
+       -59.08,
+       230.6
+      ],
+      [
+       -61.98,
+       233.3,
+       -59.08,
+       233.3
+      ]
+     ]
+    },
+    "4767": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       182.85,
+       326.6,
+       182.85,
+       329.3
+      ],
+      [
+       185.75,
+       326.6,
+       185.75,
+       329.3
+      ],
+      [
+       182.85,
+       326.6,
+       185.75,
+       326.6
+      ],
+      [
+       182.85,
+       329.3,
+       185.75,
+       329.3
+      ]
+     ]
+    },
+    "5097": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -225.6,
+       27.4,
+       -225.6,
+       28.6
+      ],
+      [
+       -224.4,
+       27.4,
+       -224.4,
+       28.6
+      ],
+      [
+       -225.6,
+       27.4,
+       -224.4,
+       27.4
+      ],
+      [
+       -225.6,
+       28.6,
+       -224.4,
+       28.6
+      ]
+     ]
+    },
+    "5106": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -195.6,
+       27.4,
+       -195.6,
+       28.6
+      ],
+      [
+       -194.4,
+       27.4,
+       -194.4,
+       28.6
+      ],
+      [
+       -195.6,
+       27.4,
+       -194.4,
+       27.4
+      ],
+      [
+       -195.6,
+       28.6,
+       -194.4,
+       28.6
+      ]
+     ]
+    },
+    "5111": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -165.6,
+       27.4,
+       -165.6,
+       28.6
+      ],
+      [
+       -164.4,
+       27.4,
+       -164.4,
+       28.6
+      ],
+      [
+       -165.6,
+       27.4,
+       -164.4,
+       27.4
+      ],
+      [
+       -165.6,
+       28.6,
+       -164.4,
+       28.6
+      ]
+     ]
+    },
+    "5120": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -135.6,
+       27.4,
+       -135.6,
+       28.6
+      ],
+      [
+       -134.4,
+       27.4,
+       -134.4,
+       28.6
+      ],
+      [
+       -135.6,
+       27.4,
+       -134.4,
+       27.4
+      ],
+      [
+       -135.6,
+       28.6,
+       -134.4,
+       28.6
+      ]
+     ]
+    },
+    "5125": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -105.6,
+       27.4,
+       -105.6,
+       28.6
+      ],
+      [
+       -104.4,
+       27.4,
+       -104.4,
+       28.6
+      ],
+      [
+       -105.6,
+       27.4,
+       -104.4,
+       27.4
+      ],
+      [
+       -105.6,
+       28.6,
+       -104.4,
+       28.6
+      ]
+     ]
+    },
+    "5134": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -75.6,
+       27.4,
+       -75.6,
+       28.6
+      ],
+      [
+       -74.4,
+       27.4,
+       -74.4,
+       28.6
+      ],
+      [
+       -75.6,
+       27.4,
+       -74.4,
+       27.4
+      ],
+      [
+       -75.6,
+       28.6,
+       -74.4,
+       28.6
+      ]
+     ]
+    },
+    "5147": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       74.4,
+       27.4,
+       74.4,
+       28.6
+      ],
+      [
+       75.6,
+       27.4,
+       75.6,
+       28.6
+      ],
+      [
+       74.4,
+       27.4,
+       75.6,
+       27.4
+      ],
+      [
+       74.4,
+       28.6,
+       75.6,
+       28.6
+      ]
+     ]
+    },
+    "5156": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       104.4,
+       27.4,
+       104.4,
+       28.6
+      ],
+      [
+       105.6,
+       27.4,
+       105.6,
+       28.6
+      ],
+      [
+       104.4,
+       27.4,
+       105.6,
+       27.4
+      ],
+      [
+       104.4,
+       28.6,
+       105.6,
+       28.6
+      ]
+     ]
+    },
+    "5161": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       134.4,
+       27.4,
+       134.4,
+       28.6
+      ],
+      [
+       135.6,
+       27.4,
+       135.6,
+       28.6
+      ],
+      [
+       134.4,
+       27.4,
+       135.6,
+       27.4
+      ],
+      [
+       134.4,
+       28.6,
+       135.6,
+       28.6
+      ]
+     ]
+    },
+    "5170": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       164.4,
+       27.4,
+       164.4,
+       28.6
+      ],
+      [
+       165.6,
+       27.4,
+       165.6,
+       28.6
+      ],
+      [
+       164.4,
+       27.4,
+       165.6,
+       27.4
+      ],
+      [
+       164.4,
+       28.6,
+       165.6,
+       28.6
+      ]
+     ]
+    },
+    "5175": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       194.4,
+       27.4,
+       194.4,
+       28.6
+      ],
+      [
+       195.6,
+       27.4,
+       195.6,
+       28.6
+      ],
+      [
+       194.4,
+       27.4,
+       195.6,
+       27.4
+      ],
+      [
+       194.4,
+       28.6,
+       195.6,
+       28.6
+      ]
+     ]
+    },
+    "5184": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       224.4,
+       27.4,
+       224.4,
+       28.6
+      ],
+      [
+       225.6,
+       27.4,
+       225.6,
+       28.6
+      ],
+      [
+       224.4,
+       27.4,
+       225.6,
+       27.4
+      ],
+      [
+       224.4,
+       28.6,
+       225.6,
+       28.6
+      ]
+     ]
+    }
+   },
+   "B": {
+    "Barrels#1614": "Barrels",
+    "Barrels#1621": "Barrels",
+    "Barrels#1628": "Barrels",
+    "Barrels#1635": "Barrels",
+    "Bench#1310": "Bench",
+    "Bench#1313": "Bench",
+    "Bench#1316": "Bench",
+    "Bench#1318": "Bench",
+    "Bench#1319": "Bench",
+    "Bench#1321": "Bench",
+    "Bench#1324": "Bench",
+    "Bench#1327": "Bench",
+    "BrokenRoad#1639": "BrokenRoad",
+    "BrokenRoad#1641": "BrokenRoad",
+    "BrokenRoad#1643": "BrokenRoad",
+    "BrokenRoad#1645": "BrokenRoad",
+    "Canopy#1308": "Canopy",
+    "Cart#1615": "Cart",
+    "Cart#1620": "Cart",
+    "Cart#1622": "Cart",
+    "Cart#1627": "Cart",
+    "Cart#1629": "Cart",
+    "Cart#1634": "Cart",
+    "Chapel#1206": "Chapel",
+    "Churns#1333": "Churns",
+    "ClockTower#1181": "ClockTower",
+    "Container_1#1208": "Container",
+    "Container_10#1217": "Container",
+    "Container_11#1218": "Container",
+    "Container_12#1219": "Container",
+    "Container_13#1220": "Container",
+    "Container_14#1221": "Container",
+    "Container_15#1222": "Container",
+    "Container_16#1223": "Container",
+    "Container_17#1224": "Container",
+    "Container_18#1225": "Container",
+    "Container_19#1226": "Container",
+    "Container_2#1209": "Container",
+    "Container_20#1227": "Container",
+    "Container_21#1228": "Container",
+    "Container_22#1229": "Container",
+    "Container_23#1230": "Container",
+    "Container_24#1231": "Container",
+    "Container_25#1232": "Container",
+    "Container_26#1233": "Container",
+    "Container_27#1234": "Container",
+    "Container_28#1235": "Container",
+    "Container_29#1236": "Container",
+    "Container_3#1210": "Container",
+    "Container_30#1237": "Container",
+    "Container_31#1238": "Container",
+    "Container_32#1239": "Container",
+    "Container_33#1240": "Container",
+    "Container_34#1241": "Container",
+    "Container_35#1242": "Container",
+    "Container_36#1243": "Container",
+    "Container_37#1244": "Container",
+    "Container_38#1245": "Container",
+    "Container_39#1246": "Container",
+    "Container_4#1211": "Container",
+    "Container_40#1247": "Container",
+    "Container_41#1248": "Container",
+    "Container_42#1249": "Container",
+    "Container_43#1250": "Container",
+    "Container_44#1251": "Container",
+    "Container_45#1252": "Container",
+    "Container_46#1253": "Container",
+    "Container_47#1254": "Container",
+    "Container_48#1255": "Container",
+    "Container_49#1256": "Container",
+    "Container_5#1212": "Container",
+    "Container_50#1257": "Container",
+    "Container_51#1258": "Container",
+    "Container_52#1259": "Container",
+    "Container_53#1260": "Container",
+    "Container_54#1261": "Container",
+    "Container_55#1262": "Container",
+    "Container_56#1263": "Container",
+    "Container_57#1264": "Container",
+    "Container_58#1265": "Container",
+    "Container_59#1266": "Container",
+    "Container_6#1213": "Container",
+    "Container_60#1267": "Container",
+    "Container_61#1268": "Container",
+    "Container_62#1269": "Container",
+    "Container_67#1274": "Container",
+    "Container_68#1275": "Container",
+    "Container_69#1276": "Container",
+    "Container_7#1214": "Container",
+    "Container_70#1277": "Container",
+    "Container_71#1278": "Container",
+    "Container_72#1279": "Container",
+    "Container_73#1280": "Container",
+    "Container_74#1281": "Container",
+    "Container_75#1282": "Container",
+    "Container_76#1283": "Container",
+    "Container_77#1284": "Container",
+    "Container_78#1285": "Container",
+    "Container_79#1286": "Container",
+    "Container_8#1215": "Container",
+    "Container_80#1287": "Container",
+    "Container_81#1288": "Container",
+    "Container_82#1289": "Container",
+    "Container_83#1290": "Container",
+    "Container_84#1291": "Container",
+    "Container_85#1292": "Container",
+    "Container_86#1293": "Container",
+    "Container_87#1294": "Container",
+    "Container_88#1295": "Container",
+    "Container_9#1216": "Container",
+    "DeadTree#1348": "DeadTree",
+    "DeadTree#1350": "DeadTree",
+    "DeadTree#1354": "DeadTree",
+    "DeadTree#1357": "DeadTree",
+    "DeadTree#1360": "DeadTree",
+    "DeadTree#1365": "DeadTree",
+    "DeadTree#1367": "DeadTree",
+    "DeadTree#1378": "DeadTree",
+    "DeadTree#1380": "DeadTree",
+    "DeadTree#1382": "DeadTree",
+    "DeadTree#1389": "DeadTree",
+    "DeadTree#1391": "DeadTree",
+    "DeadTree#1395": "DeadTree",
+    "DeadTree#1402": "DeadTree",
+    "DeadTree#1435": "DeadTree",
+    "DeadTree#1438": "DeadTree",
+    "DeadTree#1452": "DeadTree",
+    "DeadTree#1459": "DeadTree",
+    "DeadTree#1462": "DeadTree",
+    "DeadTree#1475": "DeadTree",
+    "DeadTree#1478": "DeadTree",
+    "DeadTree#1486": "DeadTree",
+    "DeadTree#1636": "DeadTree",
+    "DecorCrates#1604": "DecorCrates",
+    "DecorCrates#1605": "DecorCrates",
+    "DecorCrates#1606": "DecorCrates",
+    "DecorCrates#1607": "DecorCrates",
+    "DecorCrates#1608": "DecorCrates",
+    "DecorCrates#1609": "DecorCrates",
+    "DecorCrates#1610": "DecorCrates",
+    "DecorCrates#1611": "DecorCrates",
+    "DecorCrates#1612": "DecorCrates",
+    "DecorCrates#1613": "DecorCrates",
+    "FireBuckets#1334": "FireBuckets",
+    "Fountain#1180": "Fountain",
+    "GeneralStore#1201": "GeneralStore",
+    "GeneralStore#1203": "GeneralStore",
+    "House#1207": "House",
+    "Inn#1202": "Inn",
+    "Lamp#1309": "Lamp",
+    "Lamp#1311": "Lamp",
+    "Lamp#1312": "Lamp",
+    "Lamp#1314": "Lamp",
+    "Lamp#1315": "Lamp",
+    "Lamp#1317": "Lamp",
+    "Lamp#1320": "Lamp",
+    "Lamp#1322": "Lamp",
+    "Lamp#1323": "Lamp",
+    "Lamp#1325": "Lamp",
+    "Lamp#1326": "Lamp",
+    "Lamp#1328": "Lamp",
+    "MarketHall#1200": "MarketHall",
+    "Oak#1343": "Oak",
+    "Oak#1346": "Oak",
+    "Oak#1352": "Oak",
+    "Oak#1363": "Oak",
+    "Oak#1369": "Oak",
+    "Oak#1371": "Oak",
+    "Oak#1373": "Oak",
+    "Oak#1375": "Oak",
+    "Oak#1384": "Oak",
+    "Oak#1393": "Oak",
+    "Oak#1397": "Oak",
+    "Oak#1400": "Oak",
+    "Oak#1404": "Oak",
+    "Oak#1406": "Oak",
+    "Oak#1408": "Oak",
+    "Oak#1411": "Oak",
+    "Oak#1416": "Oak",
+    "Oak#1427": "Oak",
+    "Oak#1432": "Oak",
+    "Oak#1443": "Oak",
+    "Oak#1446": "Oak",
+    "Oak#1449": "Oak",
+    "Oak#1469": "Oak",
+    "Oak#1472": "Oak",
+    "Oak#1481": "Oak",
+    "Oak#1637": "Oak",
+    "Oak#1638": "Oak",
+    "PillarBox#1619": "PillarBox",
+    "PillarBox#1626": "PillarBox",
+    "PillarBox#1633": "PillarBox",
+    "Planter#1336": "Planter",
+    "Planter#1337": "Planter",
+    "PlatformEnd#1338": "PlatformEnd",
+    "PlatformEnd#1339": "PlatformEnd",
+    "Pump#1618": "Pump",
+    "Pump#1625": "Pump",
+    "Pump#1632": "Pump",
+    "Rubble#1640": "Rubble",
+    "Rubble#1642": "Rubble",
+    "Rubble#1644": "Rubble",
+    "Rubble#1646": "Rubble",
+    "Shed#1198": "Shed",
+    "Shed#1199": "Shed",
+    "Sign#1329": "Sign",
+    "Sign#1330": "Sign",
+    "Sign#1331": "Sign",
+    "Stall#1182": "Stall",
+    "Stall#1183": "Stall",
+    "Stall#1184": "Stall",
+    "Stall#1185": "Stall",
+    "Stall#1186": "Stall",
+    "Stall#1187": "Stall",
+    "Stall#1188": "Stall",
+    "Stall#1189": "Stall",
+    "Stall#1190": "Stall",
+    "Stall#1191": "Stall",
+    "Stall#1192": "Stall",
+    "Stall#1193": "Stall",
+    "Stall#1194": "Stall",
+    "Stall#1195": "Stall",
+    "Stall#1196": "Stall",
+    "Stall#1197": "Stall",
+    "Terrace#1204": "Terrace",
+    "Terrace#1205": "Terrace",
+    "Timetable#1335": "Timetable",
+    "Train/Boiler#1309": "train interior",
+    "Train/Bunk#1558": "train interior",
+    "Train/FireDoor#1667": "train interior",
+    "Train/FireDoor#1669": "train interior",
+    "Train/Part#1011": "train interior",
+    "Train/Part#1016": "train interior",
+    "Train/Part#102": "train interior",
+    "Train/Part#1022": "train interior",
+    "Train/Part#1028": "train interior",
+    "Train/Part#1038": "train interior",
+    "Train/Part#1039": "train interior",
+    "Train/Part#1040": "train interior",
+    "Train/Part#1041": "train interior",
+    "Train/Part#1065": "train interior",
+    "Train/Part#1066": "train side",
+    "Train/Part#1078": "train side",
+    "Train/Part#108": "train interior",
+    "Train/Part#1139": "train interior",
+    "Train/Part#114": "train interior",
+    "Train/Part#1140": "train interior",
+    "Train/Part#1141": "train interior",
+    "Train/Part#1142": "train interior",
+    "Train/Part#1151": "train interior",
+    "Train/Part#1152": "train interior",
+    "Train/Part#1183": "train interior",
+    "Train/Part#1186": "train side",
+    "Train/Part#1189": "train side",
+    "Train/Part#1190": "train side",
+    "Train/Part#1220": "train side",
+    "Train/Part#1221": "train side",
+    "Train/Part#1228": "train side",
+    "Train/Part#1229": "train side",
+    "Train/Part#1235": "train interior",
+    "Train/Part#1240": "train interior",
+    "Train/Part#1248": "train interior",
+    "Train/Part#1249": "train interior",
+    "Train/Part#125": "train interior",
+    "Train/Part#1250": "train side",
+    "Train/Part#1254": "train side",
+    "Train/Part#1256": "train interior",
+    "Train/Part#126": "train interior",
+    "Train/Part#127": "train interior",
+    "Train/Part#128": "train interior",
+    "Train/Part#129": "train interior",
+    "Train/Part#1354": "train side",
+    "Train/Part#1356": "train side",
+    "Train/Part#1359": "train interior",
+    "Train/Part#1361": "train side",
+    "Train/Part#1363": "train side",
+    "Train/Part#1366": "train interior",
+    "Train/Part#1368": "train side",
+    "Train/Part#1369": "train interior",
+    "Train/Part#1376": "train interior",
+    "Train/Part#1378": "train interior",
+    "Train/Part#1381": "train interior",
+    "Train/Part#1383": "train interior",
+    "Train/Part#1385": "train interior",
+    "Train/Part#1388": "train interior",
+    "Train/Part#1390": "train interior",
+    "Train/Part#1391": "train interior",
+    "Train/Part#1398": "train interior",
+    "Train/Part#1400": "train interior",
+    "Train/Part#1403": "train interior",
+    "Train/Part#1405": "train interior",
+    "Train/Part#1407": "train interior",
+    "Train/Part#1410": "train interior",
+    "Train/Part#1412": "train interior",
+    "Train/Part#1413": "train interior",
+    "Train/Part#1420": "train interior",
+    "Train/Part#1422": "train interior",
+    "Train/Part#1425": "train interior",
+    "Train/Part#1427": "train interior",
+    "Train/Part#1429": "train interior",
+    "Train/Part#1432": "train interior",
+    "Train/Part#1434": "train interior",
+    "Train/Part#1435": "train interior",
+    "Train/Part#1442": "train interior",
+    "Train/Part#1444": "train interior",
+    "Train/Part#1447": "train interior",
+    "Train/Part#1449": "train interior",
+    "Train/Part#1451": "train interior",
+    "Train/Part#1454": "train interior",
+    "Train/Part#1456": "train interior",
+    "Train/Part#1457": "train interior",
+    "Train/Part#1520": "train interior",
+    "Train/Part#1528": "train interior",
+    "Train/Part#1535": "train interior",
+    "Train/Part#1541": "train interior",
+    "Train/Part#1543": "train interior",
+    "Train/Part#1544": "train interior",
+    "Train/Part#1545": "train interior",
+    "Train/Part#1546": "train interior",
+    "Train/Part#1547": "train interior",
+    "Train/Part#1559": "train side",
+    "Train/Part#1560": "train side",
+    "Train/Part#1561": "train interior",
+    "Train/Part#1567": "train interior",
+    "Train/Part#1594": "train interior",
+    "Train/Part#1595": "train interior",
+    "Train/Part#1596": "train interior",
+    "Train/Part#1597": "train interior",
+    "Train/Part#1600": "train interior",
+    "Train/Part#1603": "train interior",
+    "Train/Part#1622": "train interior",
+    "Train/Part#1623": "train interior",
+    "Train/Part#1640": "train interior",
+    "Train/Part#1641": "train interior",
+    "Train/Part#1642": "train interior",
+    "Train/Part#1643": "train interior",
+    "Train/Part#167": "train interior",
+    "Train/Part#1673": "train interior",
+    "Train/Part#168": "train side",
+    "Train/Part#1698": "train interior",
+    "Train/Part#1705": "train interior",
+    "Train/Part#1707": "train side",
+    "Train/Part#180": "train interior",
+    "Train/Part#181": "train side",
+    "Train/Part#25": "train side",
+    "Train/Part#26": "train side",
+    "Train/Part#264": "train interior",
+    "Train/Part#265": "train side",
+    "Train/Part#266": "train side",
+    "Train/Part#267": "train interior",
+    "Train/Part#268": "train interior",
+    "Train/Part#273": "train interior",
+    "Train/Part#280": "train interior",
+    "Train/Part#281": "train interior",
+    "Train/Part#307": "train side",
+    "Train/Part#308": "train side",
+    "Train/Part#318": "train side",
+    "Train/Part#326": "train side",
+    "Train/Part#327": "train side",
+    "Train/Part#328": "train side",
+    "Train/Part#356": "train interior",
+    "Train/Part#36": "train side",
+    "Train/Part#361": "train interior",
+    "Train/Part#367": "train interior",
+    "Train/Part#373": "train interior",
+    "Train/Part#383": "train interior",
+    "Train/Part#384": "train interior",
+    "Train/Part#385": "train interior",
+    "Train/Part#386": "train interior",
+    "Train/Part#416": "train interior",
+    "Train/Part#417": "train side",
+    "Train/Part#42": "train side",
+    "Train/Part#429": "train interior",
+    "Train/Part#430": "train side",
+    "Train/Part#503": "train interior",
+    "Train/Part#504": "train interior",
+    "Train/Part#52": "train side",
+    "Train/Part#53": "train side",
+    "Train/Part#530": "train side",
+    "Train/Part#531": "train side",
+    "Train/Part#54": "train side",
+    "Train/Part#541": "train side",
+    "Train/Part#549": "train side",
+    "Train/Part#55": "train side",
+    "Train/Part#550": "train side",
+    "Train/Part#551": "train side",
+    "Train/Part#579": "train interior",
+    "Train/Part#584": "train interior",
+    "Train/Part#590": "train interior",
+    "Train/Part#596": "train interior",
+    "Train/Part#606": "train interior",
+    "Train/Part#607": "train interior",
+    "Train/Part#608": "train interior",
+    "Train/Part#609": "train interior",
+    "Train/Part#639": "train interior",
+    "Train/Part#640": "train side",
+    "Train/Part#652": "train interior",
+    "Train/Part#653": "train side",
+    "Train/Part#728": "train interior",
+    "Train/Part#729": "train interior",
+    "Train/Part#755": "train side",
+    "Train/Part#756": "train side",
+    "Train/Part#766": "train side",
+    "Train/Part#774": "train side",
+    "Train/Part#775": "train side",
+    "Train/Part#776": "train side",
+    "Train/Part#802": "train interior",
+    "Train/Part#807": "train interior",
+    "Train/Part#813": "train interior",
+    "Train/Part#819": "train interior",
+    "Train/Part#829": "train interior",
+    "Train/Part#830": "train interior",
+    "Train/Part#831": "train interior",
+    "Train/Part#832": "train interior",
+    "Train/Part#856": "train interior",
+    "Train/Part#857": "train side",
+    "Train/Part#869": "train interior",
+    "Train/Part#870": "train side",
+    "Train/Part#91": "train interior",
+    "Train/Part#937": "train interior",
+    "Train/Part#938": "train interior",
+    "Train/Part#96": "train interior",
+    "Train/Part#964": "train side",
+    "Train/Part#965": "train side",
+    "Train/Part#975": "train side",
+    "Train/Part#983": "train side",
+    "Train/Part#984": "train side",
+    "Train/Part#985": "train side",
+    "Train/Seat#1355": "train interior",
+    "Train/Seat#1362": "train interior",
+    "Train/Seat#1377": "train interior",
+    "Train/Seat#1384": "train interior",
+    "Train/Seat#1399": "train interior",
+    "Train/Seat#1406": "train interior",
+    "Train/Seat#1421": "train interior",
+    "Train/Seat#1428": "train interior",
+    "Train/Seat#1443": "train interior",
+    "Train/Seat#1450": "train interior",
+    "Train/Seat#1540": "train interior",
+    "Train/Seat#1568": "train interior",
+    "Train/Seat#1604": "train interior",
+    "Train/Seat#1706": "train interior",
+    "Train/Seat#1708": "train side",
+    "Trolley#1332": "Trolley",
+    "WallStone#1340": "WallStone",
+    "WallStone#1341": "WallStone",
+    "WallStone#1342": "WallStone",
+    "WallStone#1344": "WallStone",
+    "WallStone#1345": "WallStone",
+    "WallStone#1347": "WallStone",
+    "WallStone#1349": "WallStone",
+    "WallStone#1351": "WallStone",
+    "WallStone#1353": "WallStone",
+    "WallStone#1355": "WallStone",
+    "WallStone#1356": "WallStone",
+    "WallStone#1358": "WallStone",
+    "WallStone#1359": "WallStone",
+    "WallStone#1361": "WallStone",
+    "WallStone#1362": "WallStone",
+    "WallStone#1364": "WallStone",
+    "WallStone#1366": "WallStone",
+    "WallStone#1368": "WallStone",
+    "WallStone#1370": "WallStone",
+    "WallStone#1372": "WallStone",
+    "WallStone#1374": "WallStone",
+    "WallStone#1376": "WallStone",
+    "WallStone#1377": "WallStone",
+    "WallStone#1379": "WallStone",
+    "WallStone#1381": "WallStone",
+    "WallStone#1383": "WallStone",
+    "WallStone#1385": "WallStone",
+    "WallStone#1386": "WallStone",
+    "WallStone#1387": "WallStone",
+    "WallStone#1388": "WallStone",
+    "WallStone#1390": "WallStone",
+    "WallStone#1392": "WallStone",
+    "WallStone#1394": "WallStone",
+    "WallStone#1396": "WallStone",
+    "WallStone#1398": "WallStone",
+    "WallStone#1399": "WallStone",
+    "WallStone#1401": "WallStone",
+    "WallStone#1403": "WallStone",
+    "WallStone#1405": "WallStone",
+    "WallStone#1407": "WallStone",
+    "WallStone#1409": "WallStone",
+    "WallStone#1410": "WallStone",
+    "WallStone#1412": "WallStone",
+    "WallStone#1413": "WallStone",
+    "WallStone#1414": "WallStone",
+    "WallStone#1415": "WallStone",
+    "WallStone#1417": "WallStone",
+    "WallStone#1418": "WallStone",
+    "WallStone#1419": "WallStone",
+    "WallStone#1420": "WallStone",
+    "WallStone#1421": "WallStone",
+    "WallStone#1422": "WallStone",
+    "WallStone#1423": "WallStone",
+    "WallStone#1424": "WallStone",
+    "WallStone#1425": "WallStone",
+    "WallStone#1426": "WallStone",
+    "WallStone#1428": "WallStone",
+    "WallStone#1429": "WallStone",
+    "WallStone#1430": "WallStone",
+    "WallStone#1431": "WallStone",
+    "WallStone#1433": "WallStone",
+    "WallStone#1434": "WallStone",
+    "WallStone#1436": "WallStone",
+    "WallStone#1437": "WallStone",
+    "WallStone#1439": "WallStone",
+    "WallStone#1440": "WallStone",
+    "WallStone#1441": "WallStone",
+    "WallStone#1442": "WallStone",
+    "WallStone#1444": "WallStone",
+    "WallStone#1445": "WallStone",
+    "WallStone#1447": "WallStone",
+    "WallStone#1448": "WallStone",
+    "WallStone#1450": "WallStone",
+    "WallStone#1451": "WallStone",
+    "WallStone#1453": "WallStone",
+    "WallStone#1454": "WallStone",
+    "WallStone#1455": "WallStone",
+    "WallStone#1456": "WallStone",
+    "WallStone#1457": "WallStone",
+    "WallStone#1458": "WallStone",
+    "WallStone#1460": "WallStone",
+    "WallStone#1461": "WallStone",
+    "WallStone#1463": "WallStone",
+    "WallStone#1464": "WallStone",
+    "WallStone#1465": "WallStone",
+    "WallStone#1466": "WallStone",
+    "WallStone#1467": "WallStone",
+    "WallStone#1468": "WallStone",
+    "WallStone#1470": "WallStone",
+    "WallStone#1471": "WallStone",
+    "WallStone#1473": "WallStone",
+    "WallStone#1474": "WallStone",
+    "WallStone#1476": "WallStone",
+    "WallStone#1477": "WallStone",
+    "WallStone#1479": "WallStone",
+    "WallStone#1480": "WallStone",
+    "WallStone#1482": "WallStone",
+    "WallStone#1483": "WallStone",
+    "WallStone#1484": "WallStone",
+    "WallStone#1485": "WallStone",
+    "WallStone#1487": "WallStone",
+    "WallStone#1488": "WallStone"
+   },
+   "C": 2749,
+   "families": {
+    "A": {
+     "Container edge": 5,
+     "Lamp edge": 12,
+     "Slab edge": 13,
+     "coping": 1,
+     "platform face": 2
+    },
+    "B": {
+     "Barrels": 4,
+     "Bench": 8,
+     "BrokenRoad": 4,
+     "Canopy": 1,
+     "Cart": 6,
+     "Chapel": 1,
+     "Churns": 1,
+     "ClockTower": 1,
+     "Container": 84,
+     "DeadTree": 23,
+     "DecorCrates": 10,
+     "FireBuckets": 1,
+     "Fountain": 1,
+     "GeneralStore": 2,
+     "House": 1,
+     "Inn": 1,
+     "Lamp": 12,
+     "MarketHall": 1,
+     "Oak": 27,
+     "PillarBox": 3,
+     "Planter": 2,
+     "PlatformEnd": 2,
+     "Pump": 3,
+     "Rubble": 4,
+     "Shed": 2,
+     "Sign": 3,
+     "Stall": 16,
+     "Terrace": 2,
+     "Timetable": 1,
+     "Trolley": 1,
+     "WallStone": 102,
+     "train interior": 154,
+     "train side": 62
+    }
+   }
+  },
+  "Minehead": {
+   "A": {
+    "169": {
+     "family": "platform face",
+     "kind": "drop",
+     "lips": [
+      [
+       -240.05,
+       6.95,
+       -240.05,
+       7.55
+      ],
+      [
+       240.05,
+       6.95,
+       240.05,
+       7.55
+      ],
+      [
+       -240.05,
+       6.95,
+       240.05,
+       6.95
+      ]
+     ]
+    },
+    "171": {
+     "family": "coping",
+     "kind": "step",
+     "lips": [
+      [
+       -240.0,
+       6.85,
+       -240.0,
+       8.4
+      ],
+      [
+       240.0,
+       6.85,
+       240.0,
+       8.4
+      ],
+      [
+       -240.0,
+       6.85,
+       240.0,
+       6.85
+      ],
+      [
+       -240.0,
+       8.4,
+       240.0,
+       8.4
+      ]
+     ]
+    },
+    "172": {
+     "family": "platform face",
+     "kind": "drop",
+     "lips": [
+      [
+       -240.0,
+       7.0,
+       -240.0,
+       31.0
+      ],
+      [
+       240.0,
+       7.0,
+       240.0,
+       31.0
+      ],
+      [
+       -240.0,
+       7.0,
+       240.0,
+       7.0
+      ]
+     ]
+    },
+    "183": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -167.94,
+       438.94,
+       -120.06,
+       438.94
+      ]
+     ]
+    },
+    "991": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -239.94,
+       139.06,
+       -239.94,
+       150.94
+      ]
+     ]
+    },
+    "1560": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       239.94,
+       211.06,
+       239.94,
+       222.94
+      ]
+     ]
+    },
+    "1720": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -239.94,
+       247.06,
+       -239.94,
+       258.94
+      ]
+     ]
+    },
+    "2405": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       239.94,
+       343.06,
+       239.94,
+       354.94
+      ]
+     ]
+    },
+    "2879": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -239.94,
+       438.94,
+       -228.06,
+       438.94
+      ]
+     ]
+    },
+    "3032": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       120.06,
+       438.94,
+       131.94,
+       438.94
+      ]
+     ]
+    },
+    "3063": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       180.06,
+       438.94,
+       191.94,
+       438.94
+      ]
+     ]
+    },
+    "3082": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       216.06,
+       438.94,
+       227.94,
+       438.94
+      ]
+     ]
+    },
+    "3086": {
+     "family": "Slab edge",
+     "kind": "drop",
+     "lips": [
+      [
+       228.06,
+       438.94,
+       239.94,
+       438.94
+      ]
+     ]
+    },
+    "4245": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -115.0,
+       33.12,
+       -115.0,
+       37.89
+      ],
+      [
+       -111.27,
+       33.12,
+       -111.27,
+       37.89
+      ],
+      [
+       -115.0,
+       33.12,
+       -111.27,
+       33.12
+      ],
+      [
+       -115.0,
+       37.89,
+       -111.27,
+       37.89
+      ]
+     ]
+    },
+    "4255": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -17.84,
+       37.12,
+       -17.84,
+       41.53
+      ],
+      [
+       -14.62,
+       37.12,
+       -14.62,
+       41.53
+      ],
+      [
+       -17.84,
+       37.12,
+       -14.62,
+       37.12
+      ],
+      [
+       -17.84,
+       41.53,
+       -14.62,
+       41.53
+      ]
+     ]
+    },
+    "4265": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -176.4,
+       94.0,
+       -176.4,
+       97.74
+      ],
+      [
+       -171.62,
+       94.0,
+       -171.62,
+       97.74
+      ],
+      [
+       -176.4,
+       94.0,
+       -171.62,
+       94.0
+      ],
+      [
+       -176.4,
+       97.74,
+       -171.62,
+       97.74
+      ]
+     ]
+    },
+    "4275": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       86.73,
+       46.24,
+       86.73,
+       50.82
+      ],
+      [
+       90.18,
+       46.24,
+       90.18,
+       50.82
+      ],
+      [
+       86.73,
+       46.24,
+       90.18,
+       46.24
+      ],
+      [
+       86.73,
+       50.82,
+       90.18,
+       50.82
+      ]
+     ]
+    },
+    "4285": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       205.52,
+       120.52,
+       205.52,
+       124.25
+      ],
+      [
+       210.28,
+       120.52,
+       210.28,
+       124.25
+      ],
+      [
+       205.52,
+       120.52,
+       210.28,
+       120.52
+      ],
+      [
+       205.52,
+       124.25,
+       210.28,
+       124.25
+      ]
+     ]
+    },
+    "4295": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       220.59,
+       144.35,
+       220.59,
+       147.96
+      ],
+      [
+       225.28,
+       144.35,
+       225.28,
+       147.96
+      ],
+      [
+       220.59,
+       144.35,
+       225.28,
+       144.35
+      ],
+      [
+       220.59,
+       147.96,
+       225.28,
+       147.96
+      ]
+     ]
+    },
+    "4305": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       2.7,
+       60.31,
+       2.7,
+       64.9
+      ],
+      [
+       6.17,
+       60.31,
+       6.17,
+       64.9
+      ],
+      [
+       2.7,
+       60.31,
+       6.17,
+       60.31
+      ],
+      [
+       2.7,
+       64.9,
+       6.17,
+       64.9
+      ]
+     ]
+    },
+    "4315": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -18.0,
+       72.76,
+       -18.0,
+       77.56
+      ],
+      [
+       -14.22,
+       72.76,
+       -14.22,
+       77.56
+      ],
+      [
+       -18.0,
+       72.76,
+       -14.22,
+       72.76
+      ],
+      [
+       -18.0,
+       77.56,
+       -14.22,
+       77.56
+      ]
+     ]
+    },
+    "4353": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       173.72,
+       369.85,
+       173.72,
+       374.56
+      ],
+      [
+       177.37,
+       369.85,
+       177.37,
+       374.56
+      ],
+      [
+       173.72,
+       369.85,
+       177.37,
+       369.85
+      ],
+      [
+       173.72,
+       374.56,
+       177.37,
+       374.56
+      ]
+     ]
+    },
+    "4363": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       -67.3,
+       369.72,
+       -67.3,
+       374.18
+      ],
+      [
+       -64.01,
+       369.72,
+       -64.01,
+       374.18
+      ],
+      [
+       -67.3,
+       369.72,
+       -64.01,
+       369.72
+      ],
+      [
+       -67.3,
+       374.18,
+       -64.01,
+       374.18
+      ]
+     ]
+    },
+    "4458": {
+     "family": "Container edge",
+     "kind": "step",
+     "lips": [
+      [
+       209.79,
+       254.6,
+       209.79,
+       257.3
+      ],
+      [
+       212.69,
+       254.6,
+       212.69,
+       257.3
+      ],
+      [
+       209.79,
+       254.6,
+       212.69,
+       254.6
+      ],
+      [
+       209.79,
+       257.3,
+       212.69,
+       257.3
+      ]
+     ]
+    },
+    "4762": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -222.6,
+       27.4,
+       -222.6,
+       28.6
+      ],
+      [
+       -221.4,
+       27.4,
+       -221.4,
+       28.6
+      ],
+      [
+       -222.6,
+       27.4,
+       -221.4,
+       27.4
+      ],
+      [
+       -222.6,
+       28.6,
+       -221.4,
+       28.6
+      ]
+     ]
+    },
+    "4771": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -186.6,
+       27.4,
+       -186.6,
+       28.6
+      ],
+      [
+       -185.4,
+       27.4,
+       -185.4,
+       28.6
+      ],
+      [
+       -186.6,
+       27.4,
+       -185.4,
+       27.4
+      ],
+      [
+       -186.6,
+       28.6,
+       -185.4,
+       28.6
+      ]
+     ]
+    },
+    "4776": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -150.6,
+       27.4,
+       -150.6,
+       28.6
+      ],
+      [
+       -149.4,
+       27.4,
+       -149.4,
+       28.6
+      ],
+      [
+       -150.6,
+       27.4,
+       -149.4,
+       27.4
+      ],
+      [
+       -150.6,
+       28.6,
+       -149.4,
+       28.6
+      ]
+     ]
+    },
+    "4785": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -114.6,
+       27.4,
+       -114.6,
+       28.6
+      ],
+      [
+       -113.4,
+       27.4,
+       -113.4,
+       28.6
+      ],
+      [
+       -114.6,
+       27.4,
+       -113.4,
+       27.4
+      ],
+      [
+       -114.6,
+       28.6,
+       -113.4,
+       28.6
+      ]
+     ]
+    },
+    "4790": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       -78.6,
+       27.4,
+       -78.6,
+       28.6
+      ],
+      [
+       -77.4,
+       27.4,
+       -77.4,
+       28.6
+      ],
+      [
+       -78.6,
+       27.4,
+       -77.4,
+       27.4
+      ],
+      [
+       -78.6,
+       28.6,
+       -77.4,
+       28.6
+      ]
+     ]
+    },
+    "4807": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       101.4,
+       27.4,
+       101.4,
+       28.6
+      ],
+      [
+       102.6,
+       27.4,
+       102.6,
+       28.6
+      ],
+      [
+       101.4,
+       27.4,
+       102.6,
+       27.4
+      ],
+      [
+       101.4,
+       28.6,
+       102.6,
+       28.6
+      ]
+     ]
+    },
+    "4812": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       137.4,
+       27.4,
+       137.4,
+       28.6
+      ],
+      [
+       138.6,
+       27.4,
+       138.6,
+       28.6
+      ],
+      [
+       137.4,
+       27.4,
+       138.6,
+       27.4
+      ],
+      [
+       137.4,
+       28.6,
+       138.6,
+       28.6
+      ]
+     ]
+    },
+    "4821": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       173.4,
+       27.4,
+       173.4,
+       28.6
+      ],
+      [
+       174.6,
+       27.4,
+       174.6,
+       28.6
+      ],
+      [
+       173.4,
+       27.4,
+       174.6,
+       27.4
+      ],
+      [
+       173.4,
+       28.6,
+       174.6,
+       28.6
+      ]
+     ]
+    },
+    "4826": {
+     "family": "Lamp edge",
+     "kind": "drop",
+     "lips": [
+      [
+       209.4,
+       27.4,
+       209.4,
+       28.6
+      ],
+      [
+       210.6,
+       27.4,
+       210.6,
+       28.6
+      ],
+      [
+       209.4,
+       27.4,
+       210.6,
+       27.4
+      ],
+      [
+       209.4,
+       28.6,
+       210.6,
+       28.6
+      ]
+     ]
+    }
+   },
+   "B": {
+    "Barrels#1649": "Barrels",
+    "Barrels#1656": "Barrels",
+    "Barrels#1663": "Barrels",
+    "Barrels#1670": "Barrels",
+    "Bench#1355": "Bench",
+    "Bench#1358": "Bench",
+    "Bench#1361": "Bench",
+    "Bench#1362": "Bench",
+    "Bench#1363": "Bench",
+    "Bench#1366": "Bench",
+    "Canopy#1353": "Canopy",
+    "Chapel#1271": "Chapel",
+    "Chimney#1257": "Chimney",
+    "Churns#1373": "Churns",
+    "CoalHeap#1262": "CoalHeap",
+    "CoalHeap#1263": "CoalHeap",
+    "CoalHeap#1264": "CoalHeap",
+    "CoalHeap#1265": "CoalHeap",
+    "CoalHeap#1266": "CoalHeap",
+    "CoalOffice#1269": "CoalOffice",
+    "Container_1#1275": "Container",
+    "Container_10#1284": "Container",
+    "Container_11#1285": "Container",
+    "Container_12#1286": "Container",
+    "Container_13#1287": "Container",
+    "Container_14#1288": "Container",
+    "Container_15#1289": "Container",
+    "Container_16#1290": "Container",
+    "Container_17#1291": "Container",
+    "Container_18#1292": "Container",
+    "Container_19#1293": "Container",
+    "Container_2#1276": "Container",
+    "Container_20#1294": "Container",
+    "Container_21#1295": "Container",
+    "Container_22#1296": "Container",
+    "Container_23#1297": "Container",
+    "Container_24#1298": "Container",
+    "Container_25#1299": "Container",
+    "Container_26#1300": "Container",
+    "Container_27#1301": "Container",
+    "Container_28#1302": "Container",
+    "Container_29#1303": "Container",
+    "Container_3#1277": "Container",
+    "Container_30#1304": "Container",
+    "Container_31#1305": "Container",
+    "Container_32#1306": "Container",
+    "Container_33#1307": "Container",
+    "Container_34#1308": "Container",
+    "Container_35#1309": "Container",
+    "Container_36#1310": "Container",
+    "Container_37#1311": "Container",
+    "Container_38#1312": "Container",
+    "Container_39#1313": "Container",
+    "Container_4#1278": "Container",
+    "Container_40#1314": "Container",
+    "Container_41#1315": "Container",
+    "Container_42#1316": "Container",
+    "Container_43#1317": "Container",
+    "Container_44#1318": "Container",
+    "Container_45#1319": "Container",
+    "Container_46#1320": "Container",
+    "Container_47#1321": "Container",
+    "Container_48#1322": "Container",
+    "Container_49#1323": "Container",
+    "Container_5#1279": "Container",
+    "Container_50#1324": "Container",
+    "Container_51#1325": "Container",
+    "Container_52#1326": "Container",
+    "Container_53#1327": "Container",
+    "Container_54#1328": "Container",
+    "Container_55#1329": "Container",
+    "Container_56#1330": "Container",
+    "Container_57#1331": "Container",
+    "Container_58#1332": "Container",
+    "Container_59#1333": "Container",
+    "Container_6#1280": "Container",
+    "Container_60#1334": "Container",
+    "Container_61#1335": "Container",
+    "Container_62#1336": "Container",
+    "Container_7#1281": "Container",
+    "Container_8#1282": "Container",
+    "Container_9#1283": "Container",
+    "DeadTree#1390": "DeadTree",
+    "DeadTree#1401": "DeadTree",
+    "DeadTree#1403": "DeadTree",
+    "DeadTree#1405": "DeadTree",
+    "DeadTree#1407": "DeadTree",
+    "DeadTree#1411": "DeadTree",
+    "DeadTree#1417": "DeadTree",
+    "DeadTree#1419": "DeadTree",
+    "DeadTree#1443": "DeadTree",
+    "DeadTree#1446": "DeadTree",
+    "DeadTree#1457": "DeadTree",
+    "DeadTree#1466": "DeadTree",
+    "DeadTree#1475": "DeadTree",
+    "DeadTree#1481": "DeadTree",
+    "DeadTree#1492": "DeadTree",
+    "DeadTree#1510": "DeadTree",
+    "DeadTree#1525": "DeadTree",
+    "DeadTree#1673": "DeadTree",
+    "DeadTree#1675": "DeadTree",
+    "DecorCrates#1638": "DecorCrates",
+    "DecorCrates#1639": "DecorCrates",
+    "DecorCrates#1640": "DecorCrates",
+    "DecorCrates#1641": "DecorCrates",
+    "DecorCrates#1642": "DecorCrates",
+    "DecorCrates#1643": "DecorCrates",
+    "DecorCrates#1644": "DecorCrates",
+    "DecorCrates#1645": "DecorCrates",
+    "DecorCrates#1646": "DecorCrates",
+    "DecorCrates#1647": "DecorCrates",
+    "FenceRail#1380": "FenceRail",
+    "FenceRail#1382": "FenceRail",
+    "FenceRail#1383": "FenceRail",
+    "FenceRail#1384": "FenceRail",
+    "FenceRail#1385": "FenceRail",
+    "FenceRail#1386": "FenceRail",
+    "FenceRail#1387": "FenceRail",
+    "FenceRail#1389": "FenceRail",
+    "FenceRail#1391": "FenceRail",
+    "FenceRail#1393": "FenceRail",
+    "FenceRail#1395": "FenceRail",
+    "FenceRail#1397": "FenceRail",
+    "FenceRail#1398": "FenceRail",
+    "FenceRail#1400": "FenceRail",
+    "FenceRail#1402": "FenceRail",
+    "FenceRail#1404": "FenceRail",
+    "FenceRail#1406": "FenceRail",
+    "FenceRail#1408": "FenceRail",
+    "FenceRail#1410": "FenceRail",
+    "FenceRail#1412": "FenceRail",
+    "FenceRail#1413": "FenceRail",
+    "FenceRail#1415": "FenceRail",
+    "FenceRail#1416": "FenceRail",
+    "FenceRail#1418": "FenceRail",
+    "FenceRail#1420": "FenceRail",
+    "FenceRail#1422": "FenceRail",
+    "FenceRail#1423": "FenceRail",
+    "FenceRail#1425": "FenceRail",
+    "FenceRail#1426": "FenceRail",
+    "FenceRail#1427": "FenceRail",
+    "FenceRail#1428": "FenceRail",
+    "FenceRail#1430": "FenceRail",
+    "FenceRail#1432": "FenceRail",
+    "FenceRail#1434": "FenceRail",
+    "FenceRail#1435": "FenceRail",
+    "FenceRail#1437": "FenceRail",
+    "FenceRail#1438": "FenceRail",
+    "FenceRail#1439": "FenceRail",
+    "FenceRail#1441": "FenceRail",
+    "FenceRail#1442": "FenceRail",
+    "FenceRail#1444": "FenceRail",
+    "FenceRail#1445": "FenceRail",
+    "FenceRail#1447": "FenceRail",
+    "FenceRail#1448": "FenceRail",
+    "FenceRail#1450": "FenceRail",
+    "FenceRail#1451": "FenceRail",
+    "FenceRail#1452": "FenceRail",
+    "FenceRail#1453": "FenceRail",
+    "FenceRail#1455": "FenceRail",
+    "FenceRail#1456": "FenceRail",
+    "FenceRail#1458": "FenceRail",
+    "FenceRail#1459": "FenceRail",
+    "FenceRail#1461": "FenceRail",
+    "FenceRail#1462": "FenceRail",
+    "FenceRail#1464": "FenceRail",
+    "FenceRail#1465": "FenceRail",
+    "FenceRail#1467": "FenceRail",
+    "FenceRail#1468": "FenceRail",
+    "FenceRail#1470": "FenceRail",
+    "FenceRail#1471": "FenceRail",
+    "FenceRail#1473": "FenceRail",
+    "FenceRail#1474": "FenceRail",
+    "FenceRail#1476": "FenceRail",
+    "FenceRail#1477": "FenceRail",
+    "FenceRail#1479": "FenceRail",
+    "FenceRail#1480": "FenceRail",
+    "FenceRail#1482": "FenceRail",
+    "FenceRail#1483": "FenceRail",
+    "FenceRail#1485": "FenceRail",
+    "FenceRail#1486": "FenceRail",
+    "FenceRail#1487": "FenceRail",
+    "FenceRail#1488": "FenceRail",
+    "FenceRail#1490": "FenceRail",
+    "FenceRail#1491": "FenceRail",
+    "FenceRail#1493": "FenceRail",
+    "FenceRail#1494": "FenceRail",
+    "FenceRail#1496": "FenceRail",
+    "FenceRail#1497": "FenceRail",
+    "FenceRail#1498": "FenceRail",
+    "FenceRail#1499": "FenceRail",
+    "FenceRail#1500": "FenceRail",
+    "FenceRail#1501": "FenceRail",
+    "FenceRail#1503": "FenceRail",
+    "FenceRail#1504": "FenceRail",
+    "FenceRail#1506": "FenceRail",
+    "FenceRail#1507": "FenceRail",
+    "FenceRail#1508": "FenceRail",
+    "FenceRail#1509": "FenceRail",
+    "FenceRail#1511": "FenceRail",
+    "FenceRail#1512": "FenceRail",
+    "FenceRail#1514": "FenceRail",
+    "FenceRail#1515": "FenceRail",
+    "FenceRail#1517": "FenceRail",
+    "FenceRail#1518": "FenceRail",
+    "FenceRail#1519": "FenceRail",
+    "FenceRail#1520": "FenceRail",
+    "FenceRail#1521": "FenceRail",
+    "FenceRail#1522": "FenceRail",
+    "FenceRail#1523": "FenceRail",
+    "FenceRail#1524": "FenceRail",
+    "FireBuckets#1374": "FireBuckets",
+    "Headframe#1256": "Headframe",
+    "House#1273": "House",
+    "House#1274": "House",
+    "Lamp#1354": "Lamp",
+    "Lamp#1356": "Lamp",
+    "Lamp#1357": "Lamp",
+    "Lamp#1359": "Lamp",
+    "Lamp#1360": "Lamp",
+    "Lamp#1364": "Lamp",
+    "Lamp#1365": "Lamp",
+    "Lamp#1367": "Lamp",
+    "Lamp#1368": "Lamp",
+    "LampRoom#1267": "LampRoom",
+    "MineCart#1648": "MineCart",
+    "MineCart#1654": "MineCart",
+    "MineCart#1655": "MineCart",
+    "MineCart#1661": "MineCart",
+    "MineCart#1662": "MineCart",
+    "MineCart#1668": "MineCart",
+    "MineCart#1669": "MineCart",
+    "Pine#1381": "Pine",
+    "Pine#1388": "Pine",
+    "Pine#1392": "Pine",
+    "Pine#1394": "Pine",
+    "Pine#1396": "Pine",
+    "Pine#1399": "Pine",
+    "Pine#1409": "Pine",
+    "Pine#1414": "Pine",
+    "Pine#1421": "Pine",
+    "Pine#1424": "Pine",
+    "Pine#1429": "Pine",
+    "Pine#1431": "Pine",
+    "Pine#1433": "Pine",
+    "Pine#1436": "Pine",
+    "Pine#1440": "Pine",
+    "Pine#1449": "Pine",
+    "Pine#1454": "Pine",
+    "Pine#1460": "Pine",
+    "Pine#1463": "Pine",
+    "Pine#1469": "Pine",
+    "Pine#1472": "Pine",
+    "Pine#1478": "Pine",
+    "Pine#1484": "Pine",
+    "Pine#1489": "Pine",
+    "Pine#1495": "Pine",
+    "Pine#1502": "Pine",
+    "Pine#1505": "Pine",
+    "Pine#1513": "Pine",
+    "Pine#1516": "Pine",
+    "Pine#1672": "Pine",
+    "Pine#1674": "Pine",
+    "Planter#1376": "Planter",
+    "Planter#1377": "Planter",
+    "PlatformEnd#1378": "PlatformEnd",
+    "PlatformEnd#1379": "PlatformEnd",
+    "Rubble#1677": "Rubble",
+    "Rubble#1679": "Rubble",
+    "Rubble#1681": "Rubble",
+    "Rubble#1683": "Rubble",
+    "Rubble#1685": "Rubble",
+    "Shed#1259": "Shed",
+    "Shed#1260": "Shed",
+    "Shed#1261": "Shed",
+    "Sign#1369": "Sign",
+    "Sign#1370": "Sign",
+    "Sign#1371": "Sign",
+    "Terrace#1270": "Terrace",
+    "Terrace#1272": "Terrace",
+    "Timetable#1375": "Timetable",
+    "Train/Boiler#1309": "train interior",
+    "Train/Bunk#1558": "train interior",
+    "Train/FireDoor#1667": "train interior",
+    "Train/FireDoor#1669": "train interior",
+    "Train/Part#1011": "train interior",
+    "Train/Part#1016": "train interior",
+    "Train/Part#102": "train interior",
+    "Train/Part#1022": "train interior",
+    "Train/Part#1028": "train interior",
+    "Train/Part#1038": "train interior",
+    "Train/Part#1039": "train interior",
+    "Train/Part#1040": "train interior",
+    "Train/Part#1041": "train interior",
+    "Train/Part#1065": "train interior",
+    "Train/Part#1066": "train side",
+    "Train/Part#1078": "train side",
+    "Train/Part#108": "train interior",
+    "Train/Part#1139": "train interior",
+    "Train/Part#114": "train interior",
+    "Train/Part#1140": "train interior",
+    "Train/Part#1141": "train interior",
+    "Train/Part#1142": "train interior",
+    "Train/Part#1151": "train interior",
+    "Train/Part#1152": "train interior",
+    "Train/Part#1183": "train interior",
+    "Train/Part#1186": "train side",
+    "Train/Part#1189": "train side",
+    "Train/Part#1190": "train side",
+    "Train/Part#1220": "train side",
+    "Train/Part#1221": "train side",
+    "Train/Part#1228": "train side",
+    "Train/Part#1229": "train side",
+    "Train/Part#1235": "train interior",
+    "Train/Part#1240": "train interior",
+    "Train/Part#1248": "train interior",
+    "Train/Part#1249": "train interior",
+    "Train/Part#125": "train interior",
+    "Train/Part#1250": "train side",
+    "Train/Part#1254": "train side",
+    "Train/Part#1256": "train interior",
+    "Train/Part#126": "train interior",
+    "Train/Part#127": "train interior",
+    "Train/Part#128": "train interior",
+    "Train/Part#129": "train interior",
+    "Train/Part#1354": "train side",
+    "Train/Part#1356": "train side",
+    "Train/Part#1359": "train interior",
+    "Train/Part#1361": "train side",
+    "Train/Part#1363": "train side",
+    "Train/Part#1366": "train interior",
+    "Train/Part#1368": "train side",
+    "Train/Part#1369": "train interior",
+    "Train/Part#1376": "train interior",
+    "Train/Part#1378": "train interior",
+    "Train/Part#1381": "train interior",
+    "Train/Part#1383": "train interior",
+    "Train/Part#1385": "train interior",
+    "Train/Part#1388": "train interior",
+    "Train/Part#1390": "train interior",
+    "Train/Part#1391": "train interior",
+    "Train/Part#1398": "train interior",
+    "Train/Part#1400": "train interior",
+    "Train/Part#1403": "train interior",
+    "Train/Part#1405": "train interior",
+    "Train/Part#1407": "train interior",
+    "Train/Part#1410": "train interior",
+    "Train/Part#1412": "train interior",
+    "Train/Part#1413": "train interior",
+    "Train/Part#1420": "train interior",
+    "Train/Part#1422": "train interior",
+    "Train/Part#1425": "train interior",
+    "Train/Part#1427": "train interior",
+    "Train/Part#1429": "train interior",
+    "Train/Part#1432": "train interior",
+    "Train/Part#1434": "train interior",
+    "Train/Part#1435": "train interior",
+    "Train/Part#1442": "train interior",
+    "Train/Part#1444": "train interior",
+    "Train/Part#1447": "train interior",
+    "Train/Part#1449": "train interior",
+    "Train/Part#1451": "train interior",
+    "Train/Part#1454": "train interior",
+    "Train/Part#1456": "train interior",
+    "Train/Part#1457": "train interior",
+    "Train/Part#1520": "train interior",
+    "Train/Part#1528": "train interior",
+    "Train/Part#1535": "train interior",
+    "Train/Part#1541": "train interior",
+    "Train/Part#1543": "train interior",
+    "Train/Part#1544": "train interior",
+    "Train/Part#1545": "train interior",
+    "Train/Part#1546": "train interior",
+    "Train/Part#1547": "train interior",
+    "Train/Part#1559": "train side",
+    "Train/Part#1560": "train side",
+    "Train/Part#1561": "train interior",
+    "Train/Part#1567": "train interior",
+    "Train/Part#1594": "train interior",
+    "Train/Part#1595": "train interior",
+    "Train/Part#1596": "train interior",
+    "Train/Part#1597": "train interior",
+    "Train/Part#1600": "train interior",
+    "Train/Part#1603": "train interior",
+    "Train/Part#1622": "train interior",
+    "Train/Part#1623": "train interior",
+    "Train/Part#1640": "train interior",
+    "Train/Part#1641": "train interior",
+    "Train/Part#1642": "train interior",
+    "Train/Part#1643": "train interior",
+    "Train/Part#167": "train interior",
+    "Train/Part#1673": "train interior",
+    "Train/Part#168": "train side",
+    "Train/Part#1698": "train interior",
+    "Train/Part#1705": "train interior",
+    "Train/Part#1707": "train side",
+    "Train/Part#180": "train interior",
+    "Train/Part#181": "train side",
+    "Train/Part#25": "train side",
+    "Train/Part#26": "train side",
+    "Train/Part#264": "train interior",
+    "Train/Part#265": "train side",
+    "Train/Part#266": "train side",
+    "Train/Part#267": "train interior",
+    "Train/Part#268": "train interior",
+    "Train/Part#273": "train interior",
+    "Train/Part#280": "train interior",
+    "Train/Part#281": "train interior",
+    "Train/Part#307": "train side",
+    "Train/Part#308": "train side",
+    "Train/Part#318": "train side",
+    "Train/Part#326": "train side",
+    "Train/Part#327": "train side",
+    "Train/Part#328": "train side",
+    "Train/Part#356": "train interior",
+    "Train/Part#36": "train side",
+    "Train/Part#361": "train interior",
+    "Train/Part#367": "train interior",
+    "Train/Part#373": "train interior",
+    "Train/Part#383": "train interior",
+    "Train/Part#384": "train interior",
+    "Train/Part#385": "train interior",
+    "Train/Part#386": "train interior",
+    "Train/Part#416": "train interior",
+    "Train/Part#417": "train side",
+    "Train/Part#42": "train side",
+    "Train/Part#429": "train interior",
+    "Train/Part#430": "train side",
+    "Train/Part#503": "train interior",
+    "Train/Part#504": "train interior",
+    "Train/Part#52": "train side",
+    "Train/Part#53": "train side",
+    "Train/Part#530": "train side",
+    "Train/Part#531": "train side",
+    "Train/Part#54": "train side",
+    "Train/Part#541": "train side",
+    "Train/Part#549": "train side",
+    "Train/Part#55": "train side",
+    "Train/Part#550": "train side",
+    "Train/Part#551": "train side",
+    "Train/Part#579": "train interior",
+    "Train/Part#584": "train interior",
+    "Train/Part#590": "train interior",
+    "Train/Part#596": "train interior",
+    "Train/Part#606": "train interior",
+    "Train/Part#607": "train interior",
+    "Train/Part#608": "train interior",
+    "Train/Part#609": "train interior",
+    "Train/Part#639": "train interior",
+    "Train/Part#640": "train side",
+    "Train/Part#652": "train interior",
+    "Train/Part#653": "train side",
+    "Train/Part#728": "train interior",
+    "Train/Part#729": "train interior",
+    "Train/Part#755": "train side",
+    "Train/Part#756": "train side",
+    "Train/Part#766": "train side",
+    "Train/Part#774": "train side",
+    "Train/Part#775": "train side",
+    "Train/Part#776": "train side",
+    "Train/Part#802": "train interior",
+    "Train/Part#807": "train interior",
+    "Train/Part#813": "train interior",
+    "Train/Part#819": "train interior",
+    "Train/Part#829": "train interior",
+    "Train/Part#830": "train interior",
+    "Train/Part#831": "train interior",
+    "Train/Part#832": "train interior",
+    "Train/Part#856": "train interior",
+    "Train/Part#857": "train side",
+    "Train/Part#869": "train interior",
+    "Train/Part#870": "train side",
+    "Train/Part#91": "train interior",
+    "Train/Part#937": "train interior",
+    "Train/Part#938": "train interior",
+    "Train/Part#96": "train interior",
+    "Train/Part#964": "train side",
+    "Train/Part#965": "train side",
+    "Train/Part#975": "train side",
+    "Train/Part#983": "train side",
+    "Train/Part#984": "train side",
+    "Train/Part#985": "train side",
+    "Train/Seat#1355": "train interior",
+    "Train/Seat#1362": "train interior",
+    "Train/Seat#1377": "train interior",
+    "Train/Seat#1384": "train interior",
+    "Train/Seat#1399": "train interior",
+    "Train/Seat#1406": "train interior",
+    "Train/Seat#1421": "train interior",
+    "Train/Seat#1428": "train interior",
+    "Train/Seat#1443": "train interior",
+    "Train/Seat#1450": "train interior",
+    "Train/Seat#1540": "train interior",
+    "Train/Seat#1568": "train interior",
+    "Train/Seat#1604": "train interior",
+    "Train/Seat#1706": "train interior",
+    "Train/Seat#1708": "train side",
+    "Trench#1676": "Trench",
+    "Trench#1678": "Trench",
+    "Trench#1680": "Trench",
+    "Trench#1682": "Trench",
+    "Trench#1684": "Trench",
+    "Trolley#1372": "Trolley",
+    "TunnelMouth#1258": "TunnelMouth",
+    "Wheelbarrow#1652": "Wheelbarrow",
+    "Wheelbarrow#1659": "Wheelbarrow",
+    "Wheelbarrow#1666": "Wheelbarrow",
+    "WindingHouse#1268": "WindingHouse"
+   },
+   "C": 2837,
+   "families": {
+    "A": {
+     "Container edge": 11,
+     "Lamp edge": 9,
+     "Slab edge": 10,
+     "coping": 1,
+     "platform face": 2
+    },
+    "B": {
+     "Barrels": 4,
+     "Bench": 6,
+     "Canopy": 1,
+     "Chapel": 1,
+     "Chimney": 1,
+     "Churns": 1,
+     "CoalHeap": 5,
+     "CoalOffice": 1,
+     "Container": 62,
+     "DeadTree": 19,
+     "DecorCrates": 10,
+     "FenceRail": 100,
+     "FireBuckets": 1,
+     "Headframe": 1,
+     "House": 2,
+     "Lamp": 9,
+     "LampRoom": 1,
+     "MineCart": 7,
+     "Pine": 31,
+     "Planter": 2,
+     "PlatformEnd": 2,
+     "Rubble": 5,
+     "Shed": 3,
+     "Sign": 3,
+     "Terrace": 2,
+     "Timetable": 1,
+     "Trench": 5,
+     "Trolley": 1,
+     "TunnelMouth": 1,
+     "Wheelbarrow": 3,
+     "WindingHouse": 1,
+     "train interior": 154,
+     "train side": 62
+    }
+   }
+  }
+ }
+}
