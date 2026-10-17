@@ -36,6 +36,11 @@ Studio; looks were judged in `lune run preview` + `tools/preview/render.mjs`, di
   back with +0.1 exposure relief that eases away over 10 s. Caught again before the relief: no second flicker. Floor
   retuned after a dimmed chase preview: ambient (54,58,66), outdoor (88,96,110), exposure 0.26.
   Preview: `--chase=1`, `--relief=1`.
+- T7 performance (`Tuning.Visibility.Budget`): one light per player (the lantern; the cone is local to its bearer),
+  lantern shadows forced off, one shadow-casting light at most (your own cone, Quality only). Performance: no
+  shadows, cone 26 studs (still above the floor), 4 rims, a one-ring beacon, crewmates' lanterns beyond 90 studs
+  switched off locally. No new light is ever created per frame; the chase only rescales existing station lights
+  when its dim changes.
 2. Known bugs/regressions
 - Not verified in Studio (Studio closed). Density cap 0.62 thins the station fog bank a little.
 - Coloured lanterns (Signal green, Ember crimson) light the same reach but read darker than amber.

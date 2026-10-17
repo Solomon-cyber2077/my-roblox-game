@@ -24,6 +24,10 @@
 	    which BuildingVisuals reads); the lanterns keep the floor and reach further too.
 	    Escaped, the relief, then the night settles back
 
+	Budget (Visibility.Budget): one light per player, one shadow (your cone, Quality only), a
+	fixed Highlight pool; under Performance no shadows, a shorter cone, half the rims, crewmates'
+	far lanterns off and a one-ring beacon.
+
 	The lobby keeps its own lamp-lit look: no cone there.
 ]]
 
@@ -50,6 +54,7 @@ local LOBBY_RADIUS = 420 -- the same test as AtmosphereController's
 local SCAN_SECONDS = 0.5 -- how often the crew's lanterns are looked up again
 local WARM = Color3.fromRGB(255, 196, 128)
 
+local BUDGET = Tuning.Visibility.Budget
 local RIM = Tuning.Visibility.Rim
 local RIM_KINDS: { [string]: boolean } = {}
 for _, kind in RIM.Kinds do
@@ -81,6 +86,7 @@ local rims: { Highlight } = {}
 local rimStation: Model? = nil
 local rimTargets: { Model } = {}
 local lanterns: { PointLight } = {}
+local ownLantern: PointLight? = nil
 local lanternColor = WARM
 
 local function performance(): boolean
@@ -102,11 +108,13 @@ end
 
 local function scan()
 	table.clear(lanterns)
+	ownLantern = nil
 	for _, player in Players:GetPlayers() do
 		local light = player.Character and lanternLight(player.Character)
 		if light then
 			table.insert(lanterns, light)
 			if player == Players.LocalPlayer then
+				ownLantern = light
 				lanternColor = light.Color
 			end
 		end
@@ -394,9 +402,17 @@ function VisibilityController.Start()
 		-- the lanterns hold the floor, and reach a little further in the chase's dark
 		local radius = VisibilityController.Radius()
 		local reach = radius * MathX.lerp(1, CHASE.LightRange, look.dim)
+		local simple = performance()
+		local eye = Workspace.CurrentCamera.CFrame.Position
 		for _, light in lanterns do
-			if light.Parent then
+			local lens = light.Parent
+			if lens and lens:IsA("BasePart") then
 				light.Range = reach
+				light.Shadows = false
+				-- Performance: a crewmate's lantern far off is one dynamic light too many
+				light.Enabled = not simple
+					or light == ownLantern
+					or (lens.Position - eye).Magnitude <= BUDGET.LanternCull
 			end
 		end
 		if root and not inLobby then
@@ -404,8 +420,8 @@ function VisibilityController.Start()
 			light.Enabled = true
 			light.Color = lanternColor
 			light.Brightness = LAMP.ConeBrightness
-			light.Range = math.max(LAMP.ConeRange, radius)
-			light.Shadows = not performance()
+			light.Range = math.max(if simple then BUDGET.ConeRangePerformance else LAMP.ConeRange, radius)
+			light.Shadows = not simple and BUDGET.Shadows > 0
 		elseif cone then
 			cone.Enabled = false
 		end
