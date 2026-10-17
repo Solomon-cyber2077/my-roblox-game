@@ -530,6 +530,27 @@ local Tuning = {
 		OutdoorFloor = { 70, 78, 92 }, -- Lighting.OutdoorAmbient never darker than this
 		ExposureFloor = 0.2, -- Lighting.ExposureCompensation never lower
 		DensityCap = 0.62, -- Atmosphere.Density never thicker: 0.78 hid the ground inside 18 studs
+		-- a cold moonlit edge on the nearest obstacles and tall structures, so silhouettes read
+		-- (Highlights: a fixed pool whose Adornee moves, never created per frame)
+		Rim = {
+			Kinds = {
+				"Canopy",
+				"GatePier",
+				"Chimney",
+				"Elm",
+				"Statue",
+				"Obelisk",
+				"DrinkingFountain",
+				"NoticeBoard",
+			}, -- station props; every station building is rimmed too
+			Range = 90, -- studs: nothing further is rimmed
+			Max = 8, -- Highlights at once (Performance: MaxPerformance)
+			MaxPerformance = 4,
+			Color = { 168, 194, 228 }, -- moonlight
+			Outline = 0.55, -- outline transparency
+			Fill = 0.94, -- fill transparency: the faintest cold wash
+			Every = 0.75, -- seconds between choosing the nearest
+		},
 	},
 }
 
