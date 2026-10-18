@@ -135,7 +135,7 @@ local Tuning = {
 	},
 	Crew = {
 		MaxHealth = 100,
-		WalkSpeed = 30, -- payroll balance: duo 28.5, solo 18; sprint still costs stamina
+		WalkSpeed = 30, -- carry speeds: duo 25.5, solo 19.5; sprint still costs stamina
 		SprintSpeed = 31, -- and a sprint outruns them, while the breath lasts
 		StaminaMax = 100,
 		StaminaDrainPerSecond = 18, -- about five and a half seconds of sprint

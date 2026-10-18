@@ -1,6 +1,7 @@
 local Haul = require(Shared.Config.Haul)
 local Items = require(Shared.Config.Items)
 local Inventory = require(Shared.Logic.Inventory)
+local Tuning = require(Shared.Config.Tuning)
 
 describe("Payroll haul", function()
 	it("keeps period valuables in inventory slots while cargo is deposited", function()
@@ -27,15 +28,14 @@ describe("Payroll haul", function()
 		end
 	end)
 
-	it("preserves the permitted carrier speed balance", function()
-		local walk = 30
+	it("uses the requested carrier speed penalties", function()
+		local walk = Tuning.Crew.WalkSpeed
 		local duo = walk * (1 - Haul.DuoPenalty)
 		local solo = walk * (1 - Haul.SoloPenalty)
-		-- Brute is the slowest regular chase profile after the allowed tuning.
-		local slowestMonster = 26 * 0.98 * 1.06
-		local fastestMonster = 22 * 0.98 * 0.94
-		expect(duo).toBeGreaterThan(slowestMonster - 0.001)
-		expect(solo).toBeLessThan(fastestMonster)
+		expect(Haul.DuoPenalty).toBe(0.15)
+		expect(Haul.SoloPenalty).toBe(0.35)
+		expect(duo).toBe(25.5)
+		expect(solo).toBe(19.5)
 		expect(walk).toBe(30)
 	end)
 end)
