@@ -2,8 +2,8 @@
 -- Physical recovery feeds existing Crew Rank XP, never a spendable balance.
 return {
 	DoubleFraction = 0.6,
-	DuoPenalty = 0.05,
-	SoloPenalty = 0.4,
+	DuoPenalty = 0.15,
+	SoloPenalty = 0.35,
 	LampBonus = 0.5,
 	PromptReach = 9,
 	PickupReach = 3,

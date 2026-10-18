@@ -1,5 +1,30 @@
 # HANDOFF
 
+## 2026-10-18: Prompt 8 audit of 38b14e1
+1. Completed
+- Audited claude/last-train-out at 38b14e1. Existing MAP.md changes preserved and excluded.
+- One targeted fix: Config/Haul DuoPenalty 0.05 -> 0.15, SoloPenalty 0.40 -> 0.35. Updated Tuning's speed comment and Haul.spec to assert the requested constants against actual walk tuning. No monster or visual changes.
+- Source/test verdicts (live presentation remains unverified):
+  1. PASS: slots and cargo separation (tests/Haul.spec.luau:7); non-spendable haul XP (Config/Haul.luau:26, Services/ProgressionService.luau:64); representative physical stacks, no floating balance (Builders/HaulBuilder.luau:103).
+  2. PASS: stores strongbox/marked receiving spot (Builders/HaulBuilder.luau:67); E and server reach check (Services/HaulService.luau:42); deposit/visible stacks (:160).
+  3. PASS: Terminus opens lid (Services/RunDirector.luau:484, Services/HaulService.luau:284), timed ledger rows (UI/HaulReceipt.luau:93), Crew Rank XP and persistent placeholder stats (Services/ProgressionService.luau:64, :95). Actual outfit/pin awards and Crew Pass presentation remain placeholders, as recorded below.
+  4. PASS: lost valuables only and 0.45-second stamp (UI/HaulReceipt.luau:64), M1 closes whole report (:49); haul discarded (Services/HaulService.luau:298), existing progression only incremented (Services/ProgressionService.luau:80).
+  5. PASS: drop removes inventory only on successful station pickup creation (Services/InventoryService.luau:179); pickups belong to current station model (Services/LootService.luau:61).
+  6. PASS for the ten normal loot stops: one sealed crate (Services/HaulService.luau:234, Builders/HaulBuilder.luau:12), back row (Logic/LayoutGen.luau:312), six valuables versus three loose, ticket and scrap/tonic, no coal (Config/Haul.luau:15; LORE.md:226); delivery reveals contents (Services/HaulService.luau:172). Explicit scope caveat: LayoutGen:316 excludes Terminus and the EmergencyVillage rescue stop.
+  7. FAIL at audited commit: penalties were 5%/40%; fixed to requested 15%/35% (Config/Haul.luau:5). Sprint blocked (Controllers/MovementController.luau:95), inventory dropping blocked (Services/InventoryService.luau:179); consumables allowed for duo, blocked solo (:134). Universal monster balance has exceptions below.
+  8. PASS: server-owned carrier list and movement validation (Services/HaulService.luau:252, :365); only new nearest-distance duo progress (Logic/Payroll.luau:59); 60% threshold (:82); only valuables doubled (Services/HaulService.luau:186); membership changes preserve accounting (Logic/Payroll.luau:38, :49), disconnect uses leave (Services/HaulService.luau:429). Entirely solo routes never double; an already earned duo threshold survives a solo final leg by design (tests/Payroll.spec.luau:70).
+  9. PASS in source: lamp copy/restore (Services/HaulService.luau:59, :78), one PointLight (Builders/HaulBuilder.luau:28), 30 solo/45 duo range, both colored lamp models and blended pool (Services/HaulService.luau:402), faint dropped glow, crate center two studs below carrier roots (:385). Runtime visibility/clearance is not certified.
+  10. PASS: tests/Payroll.spec.luau:4 (distance), :18 (double), :27 (solo), :35 (swaps), :51 (drop/recovery), :70 (disconnect), :85 (once-only). These are pure accounting tests, not Studio integration tests.
+2. Checks and remaining limitations
+- 397 tests passed in 56 specs; full visual audit clean (Haul 1837 parts, 24 lights); fresh Rojo sourcemap and strict luau-lsp passed (existing TimedEventDirector deprecated API warning).
+- Full lune run check: formatting passes, Selene blocked fetching Roblox API dump. Tests lint also cannot complete in this environment. Full gate is not green.
+- Studio lists zero instances: start_stop_play, get_console_output and screen_capture unavailable. No live claims. Blueprint URL was inaccessible; this audit uses the user's ten explicit requirements. No visual fix, so Blender/web visual work was unnecessary. No scratch files or downloads created.
+- Final speeds, studs/sec: walk 30; sprint 31; duo 25.5; solo 19.5. Chase envelope over D=0..1 and +/-6% pace: Stalker 20.68..27.56; Crawler 22.748..30.316; Brute 20.2664..27.0088; scripted tutorial Crawler 12.5114..16.6738 (0.55 multiplier; envelope, not a claim all difficulties occur in its stop).
+- Duo exceeds the global slowest regular chase by 5.2336, but cannot hold every Brute: fastest Brute closes by 1.5088 (Stalker up to 2.06, Crawler 4.816). Solo is below all regular monsters (minimum margin 0.7664), but outruns tutorial Crawler by 2.8262..6.9886. Existing HollowSpeed spec compares duo to the global minimum, not every Brute; passing it does not prove the stronger guarantee.
+3. Next logical step
+- Recommend accepting the scripted Crawler as a tutorial-only exception: it intentionally teaches a visible, nonlethal grab; adding 10 percentage points to its multiplier still leaves its minimum 14.7862 below solo 19.5. Monster tuning was left untouched.
+- Two-client Studio checklist: stop/restart after Rojo sync; check crate at rear and E strongbox; verify 25.5/19.5, blocked sprint/drop and duo tonic; circle then approach, drop/recover, swap and disconnect; compare six versus twelve valuables with one ticket/supply bundle; check both lamp colors, restoration, faint glow and camera clearance; recover loose valuables at the same station; test Terminus lid/tally/persistence, then failure and immediate M1; inspect server/client Output.
+
 ## 2026-10-18: PHYSICAL HAUL + PAYROLL (claude/last-train-out)
 1. Features completed
 - Station-back sovereigns, silver watches and share certificates occupy inventory slots. E deposits them in a new locked stores-car strongbox; physical stacks/glints show the haul. Existing chest retained.
