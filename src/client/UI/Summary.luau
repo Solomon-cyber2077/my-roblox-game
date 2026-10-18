@@ -8,6 +8,7 @@ local Format = require(ReplicatedStorage.Shared.Util.Format)
 local Modal = require(script.Parent.Modal)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
+local HaulReceipt = require(script.Parent.HaulReceipt)
 
 local Summary = {}
 
@@ -32,6 +33,7 @@ local TITLES: { [string]: { text: string, color: Color3, line: string } } = {
 
 function Summary.mount(gui: ScreenGui)
 	modal = Modal.new(gui, "Run receipt", Vector2.new(WIDTH, MAX_HEIGHT))
+	HaulReceipt.mount(gui)
 end
 
 -- One ledger row: label and dotted leader on the left (clipped), the amount set flush right.
@@ -87,6 +89,10 @@ end
 	tear-off foot. Lost runs are lit by the blood moon; the Terminus by a warm lamp.
 ]]
 function Summary.show(data: { [string]: any })
+	if data.haul then
+		HaulReceipt.show(data)
+		return
+	end
 	local body = modal.body
 	for _, child in body:GetChildren() do
 		child:Destroy()

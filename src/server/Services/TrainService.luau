@@ -390,6 +390,7 @@ function TrainService.SetDoors(open: boolean)
 end
 
 function TrainService.ResetForRun()
+	Registry.HaulService.Reset()
 	for id in breachPrompts do
 		closeBreach(id)
 	end

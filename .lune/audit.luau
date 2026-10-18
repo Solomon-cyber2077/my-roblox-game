@@ -52,6 +52,7 @@ local Tuning = load(Shared.Config.Tuning)
 local ItemModel = load(Shared.Visual.ItemModel)
 local CosmeticModels = load(Shared.Visual.CosmeticModels)
 local TrainBuilder = load(Server.Builders.TrainBuilder)
+local HaulBuilder = load(Server.Builders.HaulBuilder)
 local Limewash = load(Server.Builders.Limewash)
 local LobbyBuilder = load(Server.Builders.LobbyBuilder)
 local StationBuilder = load(Server.Builders.StationBuilder)
@@ -301,6 +302,43 @@ table.insert(targets, {
 		local train = TrainBuilder.build(CFrame.new(), nil).model
 		Limewash.train(train, CFrame.new()) -- as TrainService does
 		return { { instance = train } }
+	end,
+})
+
+table.insert(targets, {
+	name = "Haul",
+	budget = { parts = 2000, lights = 36, shadows = 12 },
+	build = function()
+		local folder = Instance.new("Folder")
+		local origin = CFrame.new()
+		local train = TrainBuilder.build(origin, nil).model
+		train.Parent = folder
+		local stores = HaulBuilder.stores(folder, origin)
+		HaulBuilder.stack(stores, {
+			"Sovereign",
+			"SilverWatch",
+			"ShareCertificate",
+			"Sovereign",
+			"SilverWatch",
+			"ShareCertificate",
+			"Sovereign",
+			"SilverWatch",
+			"ShareCertificate",
+			"Sovereign",
+			"SilverWatch",
+			"ShareCertificate",
+			"Sovereign",
+			"SilverWatch",
+			"ShareCertificate",
+			"Sovereign",
+			"SilverWatch",
+			"ShareCertificate",
+		})
+		HaulBuilder.ticket(folder, origin * CFrame.new(12, 2.35, -4.7))
+		HaulBuilder.crate(folder, origin * CFrame.new(20, 0.9, -4.3))
+		return {
+			{ instance = folder },
+		}
 	end,
 })
 

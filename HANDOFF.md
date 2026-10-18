@@ -1,5 +1,35 @@
 # HANDOFF
 
+## 2026-10-18: PHYSICAL HAUL + PAYROLL (claude/last-train-out)
+1. Features completed
+- Station-back sovereigns, silver watches and share certificates occupy inventory slots. E deposits them in a new locked stores-car strongbox; physical stacks/glints show the haul. Existing chest retained.
+- One square wax-sealed payroll crate uses the existing back-of-station payroll location: six valuables versus three loose valuables, one burnt railway ticket, scrap and tonic; no coal. Delivery at the marked stores-car spot reveals contents. Unclaimed tonic bottles remain available in separate slots; the ticket is represented physically.
+- Server-owned carrier membership (maximum two), per-carrier distance and record-low approach distance survive drops, recoveries, swaps and disconnects. Only simultaneous duo progress counts; >=60% of initial pickup-to-delivery distance doubles valuables, never supplies/trophy. Circling and solo approach cannot build duo credit. Movement budget rejects implausible crate jumps.
+- Carrying blocks sprint and inventory drops; only duos may use consumables. Lamps transfer to crate sides and restore on release/delivery; both lens colours remain, one blended 360-degree pool uses range 30 solo / 45 duo (+50% constant), and a dropped crate glows faintly. Grab-dropped valuables use existing station-owned pickups, so they cannot follow to another station.
+- Terminus opens the strongbox, tallies the ledger and adds haul XP to existing Crew Rank. Failure discards the haul and shows only lost valuables, with a 0.45-second stamp; M1 dismisses stamp and report together. Earned permanent progress is retained. No new currency, Robux connection, wheel or daily reward; the previous daily payout bonus is disabled.
+- Persistent non-spendable placeholders in profile.stats: payrollTickets (keepsake/trophy), payrollOutfitProgress, payrollCrewPassProgress, recoveredValuables. These survive profile reconciliation; actual outfit-piece/pin awards and Crew Pass presentation are not implemented.
+- LORE.md records primary-source checks for the specific coins, watch, certificate, cardboard ticket and sealed box used. Colours of fictional fittings are explicitly artistic choices. Blender blockout source: tools/haul/blockout.py; no uploaded assets or temporary outputs.
+
+2. Balance, checks and limitations
+- Approved base walking change: 20 -> 30 studs/sec (+10). Duo penalty 15% -> 5% (-10 percentage points); solo 35% -> 40% (+5). Sprint stays 31. Footstep stride 5.6 -> 6.2 preserves distinct walking/sprint cadence at the higher walk speed. Monster/lobby/NPC code untouched; HollowSpeed.spec changed with explicit approval.
+
+| Movement | Minimum | Maximum (studs/sec) |
+|---|---:|---:|
+| Walk / sprint | 30 | 31 |
+| Duo / solo carrier | 28.5 | 18 |
+| Stalker chase, difficulty endpoints and +/-6% pace | 20.68 | 27.56 |
+| Crawler chase | 22.748 | 30.316 |
+| Brute chase | 20.2664 | 27.0088 |
+| Scripted tutorial Crawler (0.55 chase multiplier) | 12.5114 | 16.6738 |
+
+- Regular monsters satisfy the requested balance: duo holds distance against the slowest even at maximum difficulty/pace; solo cannot outrun any regular monster. **Exception: the deliberately slowed tutorial Crawler is slower than solo.** A single global walk speed and allowed penalties cannot satisfy both that tutorial minimum and the regular Brute maximum. Resolving it needs a separately approved tutorial/monster rule; its tuning was not changed.
+- 397 Lune tests passed (56 spec files), including threshold/circling, solo, drops/recovery, carrier swaps, disconnect handoff, exactly-once delivery, inventory slots and regular monster speed comparisons. Full headless visual audit passed; final Haul target: 1837 parts, 24 lights, no z-fights/clashes. Blender blockout passed. Strict luau-lsp passed with the existing TimedEventDirector GetRankInGroupAsync deprecation warning.
+- `lune run check` stops at Selene: "error when getting API dump" while collecting Roblox standard library. This is not Windows Application Control: `rojo sourcemap` succeeds. Remaining checks ran separately; full gate is not green.
+- No Studio instance connected: live playtest, console inspection and rendered UI/lamp verification were unavailable. Crates left undelivered are discarded with their station; collapsed station pickups are lost. MAP.md's pre-existing changes excluded from this task commit.
+
+3. Next logical step
+- Connect Rojo and run Studio with two clients: find the back crate, compare solo/duo movement and consume/drop restrictions, circle then approach, swap carriers, disconnect one, drop/recover, and deliver. Check both lamp colours, restoration and view clearance; collect several crates while leaving tonic unclaimed. Trigger a grab and recover valuables at that same station. Test Terminus rank/stat persistence, then failure and immediate M1 dismissal; inspect server/client consoles. Resolve the tutorial-speed exception and rerun the full check when Selene can fetch its API dump.
+
 ## 2026-10-17: AUDIO + THRESHOLD PASS (Prompt 7, branch claude/last-train-out)
 Monster, lobby and NPC files untouched; footsteps and breathing unchanged (only their mix group, task 4).
 Rojo: the plugin failed only because no `rojo serve` was running; started it and accepted the sync. No WDAC block.

@@ -418,6 +418,10 @@ function VisibilityController.Start()
 		local simple = performance()
 		local eye = Workspace.CurrentCamera.CFrame.Position
 		for _, light in lanterns do
+			if light:GetAttribute("PayrollAttached") then
+				light.Enabled = false
+				continue
+			end
 			local lens = light.Parent
 			if lens and lens:IsA("BasePart") then
 				light.Range = reach
@@ -428,7 +432,7 @@ function VisibilityController.Start()
 					or (lens.Position - eye).Magnitude <= BUDGET.LanternCull
 			end
 		end
-		if root and not inLobby then
+		if root and not inLobby and not root.Parent:GetAttribute("PayrollCarriers") then
 			local light = coneFor(root)
 			light.Enabled = true
 			light.Color = lanternColor

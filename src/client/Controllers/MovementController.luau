@@ -17,6 +17,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
+local Haul = require(Shared.Config.Haul)
 local Inventory = require(Shared.Logic.Inventory)
 local MathX = require(Shared.Util.MathX)
 
@@ -41,6 +42,12 @@ local function onSprint(
 	inputState: Enum.UserInputState,
 	input: InputObject
 ): Enum.ContextActionResult
+	local character = Players.LocalPlayer.Character
+	local carriers = if character then character:GetAttribute("PayrollCarriers") else nil
+	if typeof(carriers) == "number" and carriers > 0 then
+		sprintHeld = false
+		return Enum.ContextActionResult.Sink
+	end
 	if input.KeyCode == Enum.KeyCode.ButtonL3 then
 		if inputState == Enum.UserInputState.Begin then
 			sprintHeld = not sprintHeld
@@ -76,6 +83,8 @@ function MovementController.Start()
 			return
 		end
 		local held = character:GetAttribute("GrabStyle") ~= nil
+		local carriers = character:GetAttribute("PayrollCarriers")
+		local carrying = typeof(carriers) == "number" and carriers > 0
 		local immobilized = frozen or held
 		local moving = humanoid.MoveDirection.Magnitude > 0.1
 		local crew = Tuning.Crew
@@ -89,6 +98,7 @@ function MovementController.Start()
 			and not exhausted
 			and not immobilized
 			and not humanoid.Sit
+			and not carrying
 		local inLobby = Registry.StateController
 			and Registry.StateController.Get({ "run", "phase" }) == "Lobby"
 		if inLobby then
@@ -111,7 +121,9 @@ function MovementController.Start()
 		end
 
 		local inv = Registry.StateController.GetPrivate({ "inventory" })
-		local carry = if inv and inv.items then Inventory.speedMultiplier(inv) else 1
+		local carry = if carrying
+			then 1 - if carriers == 2 then Haul.DuoPenalty else Haul.SoloPenalty
+			else if inv and inv.items then Inventory.speedMultiplier(inv) else 1
 		local slow = if clock < slowUntil then crew.HitSlowMultiplier else 1
 		local winded = if clock < windedUntil then crew.WindedMultiplier else 1
 		local base = if sprinting then crew.SprintSpeed else crew.WalkSpeed
