@@ -481,6 +481,7 @@ Enter.Terminus = function()
 	Registry.StationService.Dock()
 	Registry.TrainService.SetDoors(true)
 	Registry.CrewService.MarkTerminus()
+	Registry.HaulService.Open()
 	NetService.FireAll("Notify", "Station", "Terminus. End of the line. You made it.")
 end
 

@@ -46,13 +46,14 @@ function ProgressionService.PayRun(
 		crewCount += 1
 	end
 	local e = Tuning.Economy
+	local haul = Registry.HaulService.Settle(outcome == "Victory")
 
 	for player, tally in tallies do
 		local profile = DataService.GetProfile(player)
 		if profile then
 			local rankBefore = Rank.fromXp(profile.xp)
 			local tierBefore = profile.unlockedTier
-			local dailyBonus = profile.daily.lastBonusDay ~= day
+			local dailyBonus = false
 			local payout = Economy.payout(tally, {
 				outcome = outcome,
 				dailyBonus = dailyBonus,
@@ -60,6 +61,7 @@ function ProgressionService.PayRun(
 				tier = tier,
 			})
 			local brass = payout.brass
+			payout.xp += haul.xp
 			local errands = Registry.NpcService.TakeErrands(player)
 			if errands > 0 then
 				table.insert(payout.lines, { label = "Crew errands", amount = errands })
@@ -90,6 +92,13 @@ function ProgressionService.PayRun(
 					p.daily.charterBrass += brass
 				end
 				local s = p.stats
+				-- Persistent keepsake and unlock-track placeholders; these are not currencies.
+				if outcome == "Victory" then
+					s.payrollTickets = (s.payrollTickets or 0) + #haul.trophies
+					s.recoveredValuables = (s.recoveredValuables or 0) + #haul.valuables
+					s.payrollOutfitProgress = (s.payrollOutfitProgress or 0) + #haul.valuables
+					s.payrollCrewPassProgress = (s.payrollCrewPassProgress or 0) + #haul.trophies
+				end
 				s.runs = (s.runs or 0) + 1
 				s.victories = (s.victories or 0)
 					+ (if outcome == "Victory" and tally.reachedTerminus then 1 else 0)
@@ -129,6 +138,7 @@ function ProgressionService.PayRun(
 
 			NetService.Fire("Fx", player, "RunSummary", {
 				outcome = outcome,
+				haul = haul,
 				brass = brass,
 				xp = payout.xp,
 				lines = payout.lines,

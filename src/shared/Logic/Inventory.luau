@@ -94,13 +94,13 @@ function Inventory.jumpHeight(inv: State): number
 	return if Inventory.heavyCount(inv) > 0 then Tuning.Crew.HeavyJumpHeight else Tuning.Crew.JumpHeight
 end
 
--- Splits cargo and relics (deposited) from tools (kept).
+-- Splits depositable cargo and relics from tools and valuables (kept).
 function Inventory.splitCargo(inv: State): (State, { string })
 	local kept: { string } = {}
 	local cargo: { string } = {}
 	for _, id in inv.items do
 		local def = Items[id]
-		if def and def.kind == "Tool" then
+		if def and (def.kind == "Tool" or def.kind == "Valuable") then
 			table.insert(kept, id)
 		else
 			table.insert(cargo, id)
@@ -112,7 +112,7 @@ end
 function Inventory.hasCargo(inv: State): boolean
 	for _, id in inv.items do
 		local def = Items[id]
-		if def and def.kind ~= "Tool" then
+		if def and (def.kind == "Cargo" or def.kind == "Relic") then
 			return true
 		end
 	end

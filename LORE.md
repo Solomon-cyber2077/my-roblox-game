@@ -216,3 +216,12 @@ letters on boards) and section 7's board schools (slate roofs, gables, bell turr
 - Lime-washed tree trunks and posts: no railway source found; this rests on general rural limewash practice.
   Treat the trunk bands as an artistic choice.
 - Unchecked: the exact Ember/Signal/Aurora glass colours are game cosmetics, not period claims.
+
+## Payroll haul: checked references (2026-10-18)
+
+These checks apply only to the objects used for the haul feature, not to every colour, costume or prop above.
+- Sovereigns are gold: the [Royal Mint's 1887 example](https://www.royalmint.com/sovereign/all/1887-Victoria-Gold-Sovereign/) is 22 carat. They are physical inventory objects, not a new spendable currency.
+- The silver pocket watch's white dial and black hands follow the [Payne & Co. watch, 1870-1875](https://www.gardnermuseum.org/experience/collection/15145). Its simplified geometry is not a replica.
+- Railway share certificates are supported by [Museum Wales's Rhondda & Swansea Bay Railway example](https://museum.wales/collections/online/object/55a95439-44dc-3063-a1b0-3314a1212959/Rhondda--Swansea-Bay-Railway-Company-share-certificate/?field0=string&field1=with_images&value0=centenary&value1=on). Buff ageing and the border are fictional S&WCR art direction, not a verified company colour scheme.
+- The guaranteed burnt railway ticket is stiff cardboard, following [Hopetown's Edmondson ticket account](https://www.hopetowndarlington.co.uk/stories/edmondson-ticket/): preprinted journey details, serial number and issue-date stamp. Burning is fictional damage; it should not look like a modern receipt roll.
+- Sealed wooden valuables boxes carried in a railway safe are supported by the [National Railway Museum's 1855 bullion-box account](https://blog.railwaymuseum.org.uk/turning-gold-to-lead-the-first-great-train-robbery/). Our square payroll crate, iron bindings, dark iron strongbox and burgundy wax seal are fictional fittings, not a replica or a claim about documented S&WCR colours. No clothing claim is used for this feature.

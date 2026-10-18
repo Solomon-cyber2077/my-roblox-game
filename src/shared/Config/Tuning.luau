@@ -125,7 +125,7 @@ local Tuning = {
 	-- Footsteps (Logic/Footsteps): one step every Stride studs walked, never faster than
 	-- MinInterval nor slower than MaxInterval; none below MinSpeed. Takes per surface.
 	Footsteps = {
-		Stride = 5.6,
+		Stride = 6.2,
 		MinInterval = 0.2,
 		MaxInterval = 0.7,
 		MinSpeed = 2,
@@ -135,7 +135,7 @@ local Tuning = {
 	},
 	Crew = {
 		MaxHealth = 100,
-		WalkSpeed = 20, -- a jog: Hollows on the hunt are a little faster
+		WalkSpeed = 30, -- payroll balance: duo 28.5, solo 18; sprint still costs stamina
 		SprintSpeed = 31, -- and a sprint outruns them, while the breath lasts
 		StaminaMax = 100,
 		StaminaDrainPerSecond = 18, -- about five and a half seconds of sprint

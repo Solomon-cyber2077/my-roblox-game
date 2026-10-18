@@ -129,6 +129,9 @@ export type StopOutcome = "Cleared" | "Victory" | "Wiped" | "Derailed"
 -- What the crew brought aboard and lost over one stop (since the previous stop resolved).
 export type StopHaul = { coal: number, parts: number, relics: number, downs: number }
 
+-- RunSummary.haul: recovered physical objects, credited once through existing Crew Rank.
+export type HaulReceipt = { valuables: { string }, trophies: { string }, xp: number }
+
 -- run.log[i], one per resolved stop in stop order (Logic/RunLog). A sealed ticket that never arrived
 -- keeps its sealed name and tier 0; `revealed` is set only once its station was unsealed at Arrival.
 export type LogEntry = {

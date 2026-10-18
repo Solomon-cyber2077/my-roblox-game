@@ -144,6 +144,7 @@ function LootService.Activate(built: StationBuilder.Built, plan: LayoutGen.Plan)
 	active = true
 	local searchPrompts: { [number]: ProximityPrompt } = {}
 	current = { built = built, plan = plan, prompts = searchPrompts }
+	Registry.HaulService.Activate(built, plan)
 	for _, handle in built.containers do
 		local def = Loot.Containers[handle.def.kind]
 		local hold = LootRoll.holdSeconds(handle.def.kind, handle.def.zone)

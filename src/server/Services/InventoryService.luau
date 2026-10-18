@@ -138,10 +138,14 @@ function InventoryService.Use(player: Player, slot: number)
 		return
 	end
 	local def = Items[itemId]
+	local character = player.Character
+	local carriers = if character then character:GetAttribute("PayrollCarriers") else nil
+	if typeof(carriers) == "number" and carriers == 1 and def.kind == "Tool" and def.use ~= nil then
+		return
+	end
 	if def.kind ~= "Tool" then
 		return
 	end
-	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if humanoid == nil or root == nil then
@@ -173,6 +177,11 @@ function InventoryService.Use(player: Player, slot: number)
 end
 
 function InventoryService.Drop(player: Player, slot: number)
+	local character = player.Character
+	local carriers = if character then character:GetAttribute("PayrollCarriers") else nil
+	if typeof(carriers) == "number" and carriers > 0 then
+		return
+	end
 	local phase = Registry.RunDirector.Phase()
 	if not RunRules.isStationOpen(phase) or Registry.CrewService.IsAboard(player) then
 		return
@@ -182,7 +191,6 @@ function InventoryService.Drop(player: Player, slot: number)
 	if itemId == nil then
 		return
 	end
-	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if root == nil then
 		return

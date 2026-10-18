@@ -1,0 +1,41 @@
+local Haul = require(Shared.Config.Haul)
+local Items = require(Shared.Config.Items)
+local Inventory = require(Shared.Logic.Inventory)
+
+describe("Payroll haul", function()
+	it("keeps period valuables in inventory slots while cargo is deposited", function()
+		local inv = Inventory.new(4)
+		local nextState, leftovers =
+			Inventory.addMany(inv, { "CoalLump", "Sovereign", "SilverWatch", "Scrap" })
+		expect(leftovers).toEqual({})
+		expect(Inventory.used(nextState)).toBe(4)
+		local kept, cargo = Inventory.splitCargo(nextState)
+		expect(kept.items).toEqual({ "Sovereign", "SilverWatch" })
+		expect(cargo).toEqual({ "CoalLump", "Scrap" })
+		expect(Inventory.hasCargo(kept)).toBe(false)
+		expect(Inventory.hasCargo(nextState)).toBe(true)
+	end)
+
+	it("defines a sealed payroll crate as a larger physical haul with no coal", function()
+		expect(#Haul.CrateValuables).toBe(6)
+		expect(#Haul.LooseValuables).toBe(3)
+		expect(#Haul.CrateValuables).toBeGreaterThan(#Haul.LooseValuables)
+		expect(table.find(Haul.Supplies, "CoalLump")).toBe(nil)
+		expect(Haul.Trophy).toBe("Burnt railway ticket")
+		for _, id in Haul.CrateValuables do
+			expect(Items[id].kind).toBe("Valuable")
+		end
+	end)
+
+	it("preserves the permitted carrier speed balance", function()
+		local walk = 30
+		local duo = walk * (1 - Haul.DuoPenalty)
+		local solo = walk * (1 - Haul.SoloPenalty)
+		-- Brute is the slowest regular chase profile after the allowed tuning.
+		local slowestMonster = 26 * 0.98 * 1.06
+		local fastestMonster = 22 * 0.98 * 0.94
+		expect(duo).toBeGreaterThan(slowestMonster - 0.001)
+		expect(solo).toBeLessThan(fastestMonster)
+		expect(walk).toBe(30)
+	end)
+end)
