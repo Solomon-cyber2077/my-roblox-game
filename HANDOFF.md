@@ -7,6 +7,7 @@
 2. Known gaps
 - The Codex original (`Documents/Codex/2026-10-20/o/outputs`) is now a second copy; edit the repo copy. `Last Train Out - Organized.html` there is the older professional layer, not the final draft.
 - Added later the same day: G1 prerequisites (phone smoke test, durable telemetry read-back, recording consent), G2 eight-week time box, icon testing; `after-the-prompts.md` no longer gives success odds and points to `docs/FINAL-DESIGN.md`.
+- Prompt 0 now specifies the durable DataStore telemetry sink and a `telemetry dump` dev command. `lune run check` passed in full on 2026-10-21 (exit 0, audit clean); Selene's API-dump fetch worked this time.
 3. Next logical step
 - Prompt 0 (telemetry and report fix), then Prompt 1 (speed ladder).
 
