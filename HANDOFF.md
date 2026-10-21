@@ -1,5 +1,15 @@
 # HANDOFF
 
+## 2026-10-20: PROFESSIONAL LAYER DIRECTION (design only, no game code changed)
+1. Completed
+- `docs/direction/2026-10-20_LTO-professional-layer.md`: audit of the analytical audit and the owner's response, the resolved design brief, nine ordered implementation prompts (telemetry; speed ladder; stalk state and tells; body language; bell, dwell and railing grasp; first run and AGAIN; station material, edge, grade and lighting lock; sound hierarchy and ping; retire Brass and the Depot premise; release checklist) and the completion standard.
+- Facts established from the shipped modules: a full ten-stop run is about 53 min (doors open 185-240 s per stop); Hollows (chase 22.3-25.5 before kind) are slower than the 30 stud/s walk everywhere except lunges, so sprint and stamina currently do not matter; no stalking state exists; no AnalyticsService use; the stations' modern read traces to the hazard rails/tape/red strip, whitewash, limewash and cyan grades.
+- `lune run check` passed in full at 6333312 this session (format, lint, strict types, tests, audit). `lune run report` crashes: its "neutral" archetype has no length/depth (`DifficultyModel.farWalk`); Prompt 0 fixes it.
+2. Known gaps
+- No Studio instance was running: nothing play-tested live; no real phone. The "v2 decisions and algorithms" document was not found anywhere on disk or in the bridge; the owner's raw response was used as the authoritative intent.
+3. Next logical step
+- Run Prompt 0 (telemetry + report fix), then Prompt 1 (speed ladder). Prompts 6, 7 and 8 can run in parallel with 1-5 on separate files.
+
 ## 2026-10-18: Prompt 8 audit of 38b14e1
 1. Completed
 - Audited claude/last-train-out at 38b14e1. Existing MAP.md changes preserved and excluded.
