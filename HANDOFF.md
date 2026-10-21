@@ -1,5 +1,15 @@
 # HANDOFF
 
+## 2026-10-21: FINAL DESIGN DRAFT IN THE REPO (docs only)
+1. Completed
+- `docs/FINAL-DESIGN.md`: copy of the Codex final draft, plus A.4 "Budget and release" (budget gate at G1, co-op horror positioning, no seasonal date, zero-revenue plan, $0-300 cash) and a D.2 budget-gate check. Linked from README and AGENTS.
+- `docs/direction/2026-10-21_LTO-investment-assessment.md`: fact check of the outside assessment and a staged second opinion.
+2. Known gaps
+- The Codex original (`Documents/Codex/2026-10-20/o/outputs`) is now a second copy; edit the repo copy. `Last Train Out - Organized.html` there is the older professional layer, not the final draft.
+- Draft does not yet cover: consent for recording under-18 testers, a G1 telemetry read-back path, a real-phone check before G1, an icon test, a Stage 2 time box. `after-the-prompts.md` gives success odds the draft says are not established.
+3. Next logical step
+- Prompt 0 (telemetry and report fix), then Prompt 1 (speed ladder).
+
 ## 2026-10-20: PROFESSIONAL LAYER DIRECTION (design only, no game code changed)
 1. Completed
 - `docs/direction/2026-10-20_LTO-professional-layer.md`: audit of the analytical audit and the owner's response, the resolved design brief, nine ordered implementation prompts (telemetry; speed ladder; stalk state and tells; body language; bell, dwell and railing grasp; first run and AGAIN; station material, edge, grade and lighting lock; sound hierarchy and ping; retire Brass and the Depot premise; release checklist) and the completion standard.
