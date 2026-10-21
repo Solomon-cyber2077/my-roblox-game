@@ -6,7 +6,7 @@
 - `docs/direction/2026-10-21_LTO-investment-assessment.md`: fact check of the outside assessment and a staged second opinion.
 2. Known gaps
 - The Codex original (`Documents/Codex/2026-10-20/o/outputs`) is now a second copy; edit the repo copy. `Last Train Out - Organized.html` there is the older professional layer, not the final draft.
-- Draft does not yet cover: consent for recording under-18 testers, a G1 telemetry read-back path, a real-phone check before G1, an icon test, a Stage 2 time box. `after-the-prompts.md` gives success odds the draft says are not established.
+- Added later the same day: G1 prerequisites (phone smoke test, durable telemetry read-back, recording consent), G2 eight-week time box, icon testing; `after-the-prompts.md` no longer gives success odds and points to `docs/FINAL-DESIGN.md`.
 3. Next logical step
 - Prompt 0 (telemetry and report fix), then Prompt 1 (speed ladder).
 
