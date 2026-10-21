@@ -1,7 +1,7 @@
 # After the prompts: playtest, launch, scale
 
-This is a reference for after the implementation prompts. It follows A.4 and D of *Last Train Out - Final Design and
-Implementation Draft.md*; where the two differ, the draft wins. The order is:
+This is a reference for after the implementation prompts. It follows A.4 and D of `docs/FINAL-DESIGN.md`; where the two differ,
+the draft wins. The order is:
 
 1. Milestone 1 (Prompts 0–5, 10, plus readability and sound essentials)
 2. **Stage 1: G1 playtest**
@@ -9,11 +9,14 @@ Implementation Draft.md*; where the two differ, the draft wins. The order is:
 4. **Stage 2: soft launch and G2**
 5. **Stage 3: scale**
 
-| Stage | Outcome it decides | Estimate (judgment, not measured) |
-|---|---|---|
-| 1 | Passes G1 | about 55–65% on the first attempt |
-| 2 | Sustains 100+ average CCU | about 20–30% |
-| 3 | Sustains 1,000+ average CCU | about 5–10% |
+| Stage | Outcome it decides |
+|---|---|
+| 1 | Passes G1 |
+| 2 | Sustains 100+ average CCU |
+| 3 | Sustains 1,000+ average CCU |
+
+No success probability is given for any stage. The draft (D.3) states that none is established, and the
+investment assessment plans for zero revenue until it is measured.
 
 ---
 
@@ -27,7 +30,11 @@ Implementation Draft.md*; where the two differ, the draft wins. The order is:
       (Prompt 10).
 - [ ] The game is published to a private or friends-only place that testers can join. Robux product ids are not
       needed yet.
-- [ ] The telemetry print path works in that place, so you can read every tester's events afterwards.
+- [ ] One real phone (mid-range Android, Performance, landscape) has completed a full first session.
+- [ ] Every event is written to a durable sink (a DataStore keyed by session and player) and has been read back
+      after the server closed. `print` output does not survive the server.
+- [ ] A written recording policy: record only testers 13 and over, with written guardian consent under 18;
+      observe younger testers through telemetry and the debrief only.
 
 ### Recruiting
 - 8–12 people who have **never** played LTO. At least half play on a **phone**, and a mix of ages and experience
@@ -86,7 +93,7 @@ Implementation Draft.md*; where the two differ, the draft wins. The order is:
 - [ ] **Account:** age/ID verification and two-step verification done.
 - [ ] **Robux products** created and their ids bound (`Config/Cosmetics`). **Private servers** enabled at a low
       price.
-- [ ] **2–5 thumbnails**, built from the three clip moments: the Stalker at the edge of the light, the grasp
+- [ ] **An icon and 2–5 thumbnails**, built from the three clip moments: the Stalker at the edge of the light, the grasp
       near-miss and the crewmate pry. One of them is the amber lantern with the tall silhouette.
 - [ ] Store listing that leads with "co-op survival". Plain description, no lore dump.
 - [ ] **Published-server telemetry check:** the events actually arrive in Creator Analytics, not just in Studio
@@ -126,7 +133,13 @@ Benchmarks are comparisons only and do not affect ranking.
 - Short or Long Line as the new-player default (E1).
 - Sighting kept or removed (E2).
 - Brass kept or simplified: compare Brass spending with D2–7 return; it is provisional.
-- Which thumbnail stays (play-through rate, not taste).
+- Which icon and thumbnail stay (play-through rate, not taste).
+
+### If it stalls
+After the experiments reach a directional read, give public play eight weeks (provisional), then record one of:
+**iterate** (one funnel step clearly fails and the cause is known), **relaunch** (players stay but too few click:
+rework icon, thumbnails, title and clips) or **stop** (players bounce and no single step explains it; keep the
+codebase).
 
 ---
 
