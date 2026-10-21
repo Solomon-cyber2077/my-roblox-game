@@ -8,6 +8,7 @@
 2. Known gaps
 - No Studio instance was running: nothing play-tested live; no real phone. The "v2 decisions and algorithms" document was not found anywhere on disk or in the bridge; the owner's raw response was used as the authoritative intent.
 3. Next logical step
+- `docs/direction/2026-10-20_LTO-debate-response.md` answers the GPT review point by point (ladder, dwell decoupling, grasp, stalk, telemetry mapping, service record); the brief's prompts are to be updated with those values once the review confirms.
 - Run Prompt 0 (telemetry + report fix), then Prompt 1 (speed ladder). Prompts 6, 7 and 8 can run in parallel with 1-5 on separate files.
 
 ## 2026-10-18: Prompt 8 audit of 38b14e1
