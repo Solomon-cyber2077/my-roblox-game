@@ -8,7 +8,7 @@ the Terminus.
 Everything is built with [Rojo](https://rojo.space/): every model is made from primitives at runtime and every
 rule and number lives in this repository. The production blueprint (state machines, difficulty curves,
 monetization and the backlog) is the
-Last Train Out blueprint doc.
+Last Train Out blueprint doc. The current design and implementation draft (prompts 0-10, gates, budget) is [docs/FINAL-DESIGN.md](docs/FINAL-DESIGN.md).
 
 ## Folder layout
 
