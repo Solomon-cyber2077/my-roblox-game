@@ -12,6 +12,7 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
 - src/client: `Controllers/`, `Animation/`, `Camera/`, `Scenery/` (land, sky, fog), `UI/`
 - src/shared: `Config/` numbers, `Logic/` pure rules, `Net/Remotes`, `Types`, `Util/`, `Visual/Kit`
 - tests/: Lune specs; .lune/: check, test, audit, preview; tools/preview: three.js viewer
+- docs/FINAL-DESIGN.md: current design draft and implementation prompts 0-10; reviews in docs/direction/
 
 ## Features that exist now
 - Lobby, route vote, 11-phase run, stations with loot, fog/collapse hazards, left-behind rule
