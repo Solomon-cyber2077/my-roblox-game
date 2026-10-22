@@ -40,6 +40,10 @@ function SettingsUi.mount(gui: ScreenGui)
 				then UDim2.fromOffset(14, 14)
 				elseif lobby.Visible then UDim2.fromOffset(14, 244)
 				else UDim2.fromOffset(14, 146)
+			-- in a run it is a small tab under the gauges, not a full button
+			local inRun = not lobby.Visible
+			open.Size = if inRun then UDim2.fromOffset(104, 28) else UDim2.fromOffset(160, 40)
+			open.TextSize = if inRun then 14 else 20
 		end
 		place()
 		lobby:GetPropertyChangedSignal("Visible"):Connect(place)
@@ -84,6 +88,13 @@ function SettingsUi.mount(gui: ScreenGui)
 			values = { "Show", "Hide" },
 			toggle = true,
 			note = "The pocket watch, gauges, backpack and crew roster during a run.",
+		},
+		{
+			key = "Camera",
+			title = "CAMERA",
+			values = { "Locked", "Free" },
+			toggle = false,
+			note = "Locked keeps the camera behind you at one distance. Free lets you zoom in and out.",
 		},
 		{
 			key = "Ambience",

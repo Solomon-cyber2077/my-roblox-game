@@ -41,7 +41,8 @@ export type PostGrab = { immunity: number, stagger: boolean }
 	  Junction    the vote for the next stop opens
 	  Carrying    your backpack holds something
 ]]
-export type Prompt = { id: string, tier: number, when: string, text: string }
+-- touch: the wording on a phone or tablet (the keys in `text` mean nothing there)
+export type Prompt = { id: string, tier: number, when: string, text: string, touch: string? }
 
 export type Tier = {
 	stop1Cap: number?,
@@ -165,18 +166,26 @@ return table.freeze({
 	-- ROUGH DRAFT: the owner rewrites these freely. Order is the order they queue in.
 	Prompts = table.freeze({
 		-- run 1: moving, looting, the light, the edge
-		{ id = "Move", tier = 1, when = "RunStart", text = "WASD to move. Hold SHIFT to sprint." },
+		{
+			id = "Move",
+			tier = 1,
+			when = "RunStart",
+			text = "WASD to move. Hold SHIFT to sprint.",
+			touch = "Move with the left stick. Tap RUN to sprint, tap again to walk.",
+		},
 		{
 			id = "Loot",
 			tier = 1,
 			when = "OffTrain",
 			text = "Search crates and bags with E. Carry coal and parts back aboard.",
+			touch = "Tap a crate or bag to search it. Carry coal and parts back aboard.",
 		},
 		{
 			id = "Drop",
 			tier = 1,
 			when = "Carrying",
 			text = "Right-click an item in your backpack to drop it.",
+			touch = "Press and hold an item in your backpack to drop it.",
 		},
 		{
 			id = "Light",

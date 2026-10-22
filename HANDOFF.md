@@ -23,7 +23,45 @@ Branch `claude/void-mist` (worktree ../LTO-mist, Studio place ../mist.rbxl, rojo
 - Studio tooling: execute_luau replies can fail while the code still runs (re-firing `god` toggled it off);
   tools/shot.ps1 cannot size the window with three Studios open.
 3. Next logical step
-- Owner review of the renders and a playtest of the open questions in QA.md, then merge `claude/void-mist`.
+- Merged into claude/last-train-out (owner approved the renders). Next: playtest the open questions and HUMAN lines in
+  docs/direction/void-mist/QA.md.
+
+## 2026-10-22: PHONE HUD IN-RUN CHECKS (continues Astra's follow-up below)
+1. Completed
+- Studio, iPhone 7 preset (viewport 666x374), solo, stop 1 doors open: roster hidden; errands panel hidden; pocket watch y101-199 clear of LOOK/RUN (y218-263, LOOK beside RUN) and of the leak slot (y9-36); in-run SETTINGS tab 70x19 on screen; tutorial slot clear.
+- Fixed: the TRAIN CAMERA chip (fixed at 236 px above the bottom) overlapped the lifted watch on a phone (y78-118 vs 101). It now sits just above the watch wherever the HUD puts it (TrainCamController): y50-94.
+- Camera setting: Locked -> zoom 10-10, Free -> 0.5-30, switched live through SetSetting.
+- Sinkhole edge: 36 rope sections on the far line at the test stop; the edge reads as a barrier in the phone view.
+- Console: only the known DataStore, TrainVolumes yield, cab-sill and asset 203785492 warnings. `lune run check` passed (514 tests, audit clean).
+2. NOT verified (need a real touch device or a crew)
+- RUN tap toggle and its idle/winded shutdown, long-press drop, the touch wording of tutorial prompts and the "TRAIN CAM" label (the simulator's clicks count as mouse, so it shows "[C]"), errands panel showing for 6 s on a change (no errand was active), roster with 2-4 crew, camera lock inside buildings.
+3. Next logical step
+- Play one first run on a real phone with that list, then Gate G1.
+
+## 2026-10-22: PHONE HUD VERIFICATION FOLLOW-UP
+1. Completed
+- Started `main-s1.rbxl` successfully through Studio MCP on the existing iPhone 7 Device Simulator preset; the lobby rendered in third person with LOOK beside RUN and no visible overlap in that row. Playtest was stopped afterward. The published `LAST TRAIN` Studio window was left untouched.
+2. Known gaps
+- In-run checks were blocked because the computer-use helper repeatedly returned “Computer Use helper already has an active request,” including after window recovery. Console output contained the expected unpublished-place DataStore warning, fixed-size EditableMesh cab-sill warning, and asset `203785492` type mismatch.
+- The network-enabled `lune run check` retry passed: 514 tests across 69 spec files, visual audit clean. The initial sandbox attempt failed while fetching Roblox’s API dump.
+3. Next logical step
+- Finish the phone run checklist: solo roster hidden; errands hide after 6 seconds; no watch/ticket/LOOK/RUN overlap; RUN toggle and idle/winded shutdown; long-press backpack drop; locked/free camera in train and buildings; visible sinkhole rope; clean console; then test on a real phone.
+
+## 2026-10-22: PHONE HUD DECLUTTER, TOUCH CONTROLS, CAMERA LOCK, VISIBLE EDGE (from the owner's phone screenshots)
+1. Completed (code only; `lune run check` passed, audit clean)
+- Crew Errands (UI/QuestTracker): always shown in the hall; in a run, only for 6 s after an errand changes (it covered LOOK, the stop ticket and the watch on phones).
+- Operators roster hidden on a solo run; the leak slot moves up when it is hidden.
+- Touch: LOOK now sits beside RUN on the same row (the watch no longer climbs over a stack); RUN is a tap toggle (WALK/RUN title; ends after 1 s standing still or when out of breath); Shift stays hold-to-run.
+- Alerts are said once: the big centre alert for the crew, the feed only for others (hull breach showed three times).
+- In-run SETTINGS is a small tab (104x28); TRAIN CAMERA chip drops "[C]" on touch; tutorial prompts have touch wording (Move, Loot, Drop); press-and-hold a backpack slot drops it on touch (there was no touch drop at all).
+- Camera setting (Settings: CAMERA, Locked default / Free): Locked pins zoom at Tuning.Camera.LockZoom 10 on PC and touch (no pinch/wheel zoom, never first person); boarding cars bring min and max in together.
+- The invisible wall: StationDressing EdgeMark (the unseen stop 4.5 studs short of the sinkhole lip) now has a timber stake and a rope at hip height per tile, non-colliding; the collider is unchanged.
+- Route ballot text: "THE DRIVER TAKES THE SHORTER LEG" (was "SHORT LINE", now a route name).
+2. NOT verified
+- No Studio playtest of any of this yet (the Device Simulator was being opened when usage ran out). Check: phone preset HUD in a run (no overlaps, LOOK beside RUN, solo roster gone, errands hide after 6 s), RUN toggle, long-press drop, camera lock in the train/buildings, rope visible at the edge, console clean.
+- A second Studio window "LAST TRAIN" (the published place) is open with a Rojo connect prompt; it was left alone.
+3. Next logical step
+- Run the checks above in Studio on the phone preset, then on a real phone; then Gate G1.
 
 ## 2026-10-22: S8 / MILESTONE 1 ESSENTIALS (PROMPT 6 READABILITY, PROMPT 7 PRIORITY + INTENT HUSH)
 1. Completed

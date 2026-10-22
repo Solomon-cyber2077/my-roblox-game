@@ -160,20 +160,21 @@ function Hud.mount(gui: ScreenGui)
 		local lift = 0
 		local look = ContextActionService:GetButton("LTO_Glance")
 		local run = ContextActionService:GetButton("LTO_Sprint")
-		local controlsTop = touchTop(look)
-		if look and run and controlsTop and look.Parent and look.Parent:IsA("GuiObject") then
+		-- LOOK sits beside RUN, to its left on the same row, so the right thumb reaches both
+		-- and the pocket watch does not have to climb over a stack of buttons
+		if look and run and look.Parent and look.Parent:IsA("GuiObject") then
 			local parent = look.Parent
 			local size = parent.AbsoluteSize
 			if size.X > 0 and size.Y > 0 then
 				look.AnchorPoint = Vector2.zero
 				look.Position = UDim2.fromScale(
-					(run.AbsolutePosition.X - parent.AbsolutePosition.X) / size.X,
 					(
-						controlsTop
+						run.AbsolutePosition.X
 						- Tuning.Camera.GlanceTouchGap
-						- look.AbsoluteSize.Y
-						- parent.AbsolutePosition.Y
-					) / size.Y
+						- look.AbsoluteSize.X
+						- parent.AbsolutePosition.X
+					) / size.X,
+					(run.AbsolutePosition.Y - parent.AbsolutePosition.Y) / size.Y
 				)
 			end
 		end
@@ -808,6 +809,8 @@ function Hud.mount(gui: ScreenGui)
 		for key, entry in map do
 			table.insert(entries, { key = key, entry = entry })
 		end
+		-- a solo run has nobody else to track: the panel only takes room from the watch
+		rosterFade.group.Visible = #entries > 1
 		table.sort(entries, function(a, b)
 			local aliveA = a.entry.status ~= "Eliminated"
 			local aliveB = b.entry.status ~= "Eliminated"
@@ -1064,6 +1067,12 @@ function Hud.mount(gui: ScreenGui)
 				end)
 				button.MouseButton2Click:Connect(function()
 					Net.Fire("DropItem", index)
+				end)
+				-- touch has no right click: press and hold the slot
+				button.TouchLongPress:Connect(function(_, pressState)
+					if pressState == Enum.UserInputState.Begin then
+						Net.Fire("DropItem", index)
+					end
 				end)
 				cursor += def.slots
 			end
@@ -1349,8 +1358,9 @@ function Hud.mount(gui: ScreenGui)
 		leakFrame.Visible = not slotBlocked()
 		-- the leak slot rides under the Operators panel, whatever its height (crew size)
 		local uiScale = gui:FindFirstChildOfClass("UIScale")
-		local rosterHeight = rosterFade.group.AbsoluteSize.Y
-			/ (if uiScale and uiScale.Scale > 0 then uiScale.Scale else 1)
+		local rosterHeight = if rosterFade.group.Visible
+			then rosterFade.group.AbsoluteSize.Y / (if uiScale and uiScale.Scale > 0 then uiScale.Scale else 1)
+			else -LEAK_SLOT.y + 2
 		leakFrame.Position = UDim2.new(1, -LEAK_SLOT.x, 0, 12 + rosterHeight + LEAK_SLOT.y)
 		tutorialFrame.Visible = leakFrame.Visible
 
