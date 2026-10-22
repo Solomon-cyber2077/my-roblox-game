@@ -53,7 +53,9 @@ end
 local function textOf(id: string): string
 	for _, prompt in T.Prompts do
 		if prompt.id == id then
-			return (string.gsub(prompt.text, "{KEY}", keyName()))
+			local touch = UserInputService:GetLastInputType() == Enum.UserInputType.Touch
+			local text = if touch and prompt.touch then prompt.touch else prompt.text
+			return (string.gsub(text, "{KEY}", keyName()))
 		end
 	end
 	return ""

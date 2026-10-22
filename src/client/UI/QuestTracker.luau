@@ -2,15 +2,22 @@
 --[[
 	Crew errands on the right edge of the screen: one entry per resident with an errand
 	this run, from the private `quests` list (NpcService). Hidden when there are none.
+	In the hall it stays up; in a run it shows for SHOW_SECONDS when an errand changes (taken,
+	item found, done) and then gets out of the way of the watch and the touch buttons.
 ]]
 
+local RunService = game:GetService("RunService")
+
 local Registry = require(script.Parent.Parent.Registry)
+local Session = require(script.Parent.Parent.Session)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
 local QuestTracker = {}
 
 type Entry = { npc: string, name: string, title: string, text: string, status: string, helper: boolean }
+
+local SHOW_SECONDS = 6
 
 function QuestTracker.mount(gui: ScreenGui)
 	local State = Registry.StateController
@@ -26,6 +33,9 @@ function QuestTracker.mount(gui: ScreenGui)
 	})
 	Ui.padding(10, 12).Parent = frame
 	Ui.list(Enum.FillDirection.Vertical, 6).Parent = frame
+	local count = 0
+	local shownKey = ""
+	local changedAt = -math.huge
 
 	local function render(entries: { Entry }?)
 		for _, child in frame:GetChildren() do
@@ -34,7 +44,15 @@ function QuestTracker.mount(gui: ScreenGui)
 			end
 		end
 		local list: { Entry } = entries or {}
-		frame.Visible = #list > 0
+		count = #list
+		local key = ""
+		for _, entry in list do
+			key ..= `{entry.npc}|{entry.title}|{entry.text}|{entry.status};`
+		end
+		if key ~= shownKey then
+			shownKey = key
+			changedAt = os.clock()
+		end
 		local header = Ui.text({
 			Text = "CREW ERRANDS",
 			Font = Theme.Font.displayMedium,
@@ -68,6 +86,10 @@ function QuestTracker.mount(gui: ScreenGui)
 	end
 
 	State.Observe("private", { "quests" }, render)
+	RunService.Heartbeat:Connect(function()
+		local recent = os.clock() - changedAt < SHOW_SECONDS
+		frame.Visible = count > 0 and (not Session.isMember() or recent)
+	end)
 end
 
 return QuestTracker

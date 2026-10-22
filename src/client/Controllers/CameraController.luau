@@ -8,7 +8,8 @@
 	The camera is reset on every spawn and every phase change: Custom type,
 	the humanoid as subject, zoom clamped to Tuning.Camera and a close start,
 	so a camera left Scriptable by anything (a test command, a plugin) can
-	never stick.
+	never stick. With the Camera setting Locked (the default) the zoom is pinned at
+	Tuning.Camera.LockZoom: third person, no pinch or wheel zoom, never first person.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -60,6 +61,19 @@ local function ownHumanoid(): Humanoid?
 	return character and character:FindFirstChildOfClass("Humanoid")
 end
 
+-- The zoom range the Camera setting allows: one distance when Locked, else MinZoom..MaxZoom.
+local function zoomRange(): (number, number)
+	if Players.LocalPlayer:GetAttribute("Camera") == "Free" then
+		return CAM.MinZoom, CAM.MaxZoom
+	end
+	return CAM.LockZoom, CAM.LockZoom
+end
+
+local function applyZoom()
+	local player = Players.LocalPlayer
+	player.CameraMinZoomDistance, player.CameraMaxZoomDistance = zoomRange()
+end
+
 -- Puts the camera back in the default player camera, following us, at a close zoom.
 local function resetCamera(pinZoom: boolean)
 	local player = Players.LocalPlayer
@@ -73,8 +87,7 @@ local function resetCamera(pinZoom: boolean)
 	end
 	player.CameraMode = Enum.CameraMode.Classic
 	if not pinZoom then
-		player.CameraMinZoomDistance = CAM.MinZoom
-		player.CameraMaxZoomDistance = CAM.MaxZoom
+		applyZoom()
 		return
 	end
 	-- Pinning min = max for a frame makes the camera module adopt the start zoom.
@@ -86,8 +99,7 @@ local function resetCamera(pinZoom: boolean)
 		RunService.RenderStepped:Wait()
 		RunService.RenderStepped:Wait()
 		if serial == resetSerial then
-			player.CameraMinZoomDistance = CAM.MinZoom
-			player.CameraMaxZoomDistance = CAM.MaxZoom
+			applyZoom()
 		end
 	end)
 end
@@ -174,6 +186,7 @@ function CameraController.Start()
 		glanceHeld = false
 	end)
 	local player = Players.LocalPlayer
+	player:GetAttributeChangedSignal("Camera"):Connect(applyZoom)
 	player.CharacterAdded:Connect(onCharacter)
 	if player.Character then
 		task.spawn(onCharacter, player.Character)

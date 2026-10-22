@@ -111,11 +111,11 @@ describe("TicketModel", function()
 			{ archetype = "Market", tier = 2, distanceKm = 12, hint = "" },
 		}
 		expect(TicketModel.tieNote({ a = 1 }, options)).toBe(nil)
-		expect(TicketModel.tieNote({}, options)).toBe("NO VOTES: THE DRIVER TAKES THE SHORT LINE")
-		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe("A TIE: THE DRIVER TAKES THE SHORT LINE")
+		expect(TicketModel.tieNote({}, options)).toBe("NO VOTES: THE DRIVER TAKES THE SHORTER LEG")
+		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe("A TIE: THE DRIVER TAKES THE SHORTER LEG")
 		options[2].distanceKm = 8
 		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe(
-			"A TIE: SHORTEST LINES LEVEL, THE DRIVER TOSSES A COIN"
+			"A TIE: SHORTEST LEGS LEVEL, THE DRIVER TOSSES A COIN"
 		)
 	end)
 

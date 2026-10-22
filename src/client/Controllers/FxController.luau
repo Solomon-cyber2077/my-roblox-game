@@ -261,9 +261,11 @@ local ALERT_KINDS: { [string]: Color3 } = {
 }
 
 local function onNotify(kind: string, text: string)
-	Overlay.feed(kind, text)
+	-- an alert is said once: the big centre line for the crew, the feed for everyone else
 	if ALERT_KINDS[kind] and Session.isMember() then
 		Overlay.alert(string.upper(text), ALERT_KINDS[kind], 2.6)
+	else
+		Overlay.feed(kind, text)
 	end
 	if kind == "Alarm" then
 		audio("Alarm")

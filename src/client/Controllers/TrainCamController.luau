@@ -329,7 +329,14 @@ function TrainCamController.Start()
 		distance = math.clamp(distance / 1.15, ORBIT_NEAR, ORBIT_FAR)
 	end, { Size = UDim2.fromOffset(40, 40), Position = UDim2.new(1, -46, 0, 34), TextSize = 22 })
 	zoomIn.Parent = bar
+	-- the chip names its key only where there is one
+	local function chipLabel()
+		local last = UserInputService:GetLastInputType()
+		chip.Text = if last == Enum.UserInputType.Touch then "TRAIN CAM" else "TRAIN CAMERA  [C]"
+	end
+	chipLabel()
 	UserInputService.LastInputTypeChanged:Connect(function()
+		chipLabel()
 		if active then
 			label()
 		end
@@ -445,8 +452,28 @@ function TrainCamController.Start()
 		end
 		Safe.call("TrainCamController.frame", frame, dt)
 	end)
+	-- the chip rides just above the pocket watch wherever the HUD put it (a phone lifts the watch
+	-- over the touch buttons), right edges lined up; the fixed spot is the fallback
+	local CHIP_HOME = chip.Position
+	local hudWatch: GuiObject? = nil
 	RunService.Heartbeat:Connect(function()
 		chip.Visible = aboard() and not active
+		if not chip.Visible then
+			return
+		end
+		if hudWatch == nil or hudWatch.Parent == nil then
+			hudWatch = gui:FindFirstChild("PocketWatch", true) :: GuiObject?
+		end
+		local watch = hudWatch
+		if watch and watch.AbsoluteSize.Y > 0 then
+			local origin = screen.AbsolutePosition
+			chip.Position = UDim2.fromOffset(
+				watch.AbsolutePosition.X + watch.AbsoluteSize.X - origin.X,
+				watch.AbsolutePosition.Y - 6 - origin.Y
+			)
+		else
+			chip.Position = CHIP_HOME
+		end
 	end)
 	Players.LocalPlayer.CharacterAdded:Connect(function()
 		setActive(false)
