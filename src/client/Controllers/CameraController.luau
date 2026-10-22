@@ -182,6 +182,13 @@ function CameraController.Start()
 		return Enum.ContextActionResult.Sink
 	end, true, Enum.KeyCode.Q, Enum.KeyCode.ButtonR1)
 	ContextActionService:SetTitle("LTO_Glance", "LOOK")
+	-- LOOK does nothing in the hall, so its touch button only shows to a crew member in a run
+	RunService.Heartbeat:Connect(function()
+		local lookButton = ContextActionService:GetButton("LTO_Glance")
+		if lookButton then
+			lookButton.Visible = Session.isMember()
+		end
+	end)
 	UserInputService.WindowFocusReleased:Connect(function()
 		glanceHeld = false
 	end)

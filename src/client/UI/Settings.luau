@@ -3,6 +3,7 @@
 local Players = game:GetService("Players")
 
 local Net = require(script.Parent.Parent.Net)
+local Menu = require(script.Parent.Menu)
 local Modal = require(script.Parent.Modal)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
@@ -19,35 +20,9 @@ function SettingsUi.mount(gui: ScreenGui)
 	require(script.Parent.BrokenThingMarkers).mount(gui)
 	local player = Players.LocalPlayer
 	local modal = Modal.new(gui, "Settings", Vector2.new(720, 600))
-	local open = Ui.button("SETTINGS", "Secondary", function()
+	-- one entry in the MENU dropdown (UI/Menu), in the hall and in a run
+	Menu.add("SETTINGS", 30, function()
 		modal:open()
-	end, {
-		Name = "SettingsButton",
-		-- top left, under the lobby's crew pass and its shortcuts (Lobby.luau)
-		Size = UDim2.fromOffset(160, 40),
-		Position = UDim2.fromOffset(14, 244),
-		TextSize = 20,
-		Selectable = true,
-	})
-	open.ZIndex = 20
-	open.Parent = gui
-	-- with the lobby panel gone (in a run) it rides up close under the coal, parts and hull
-	-- gauges (Hud.luau: the gauge case 14, 12, 236x136 with its firebox warning line)
-	task.spawn(function()
-		local lobby = gui:WaitForChild("Lobby") :: GuiObject
-		local function place()
-			open.Position = if player:GetAttribute("Hud") == "Hide"
-				then UDim2.fromOffset(14, 14)
-				elseif lobby.Visible then UDim2.fromOffset(14, 244)
-				else UDim2.fromOffset(14, 146)
-			-- in a run it is a small tab under the gauges, not a full button
-			local inRun = not lobby.Visible
-			open.Size = if inRun then UDim2.fromOffset(104, 28) else UDim2.fromOffset(160, 40)
-			open.TextSize = if inRun then 14 else 20
-		end
-		place()
-		lobby:GetPropertyChangedSignal("Visible"):Connect(place)
-		player:GetAttributeChangedSignal("Hud"):Connect(place)
 	end)
 
 	local list = Ui.new("ScrollingFrame", {

@@ -1,5 +1,17 @@
 # HANDOFF
 
+## 2026-10-22: PHONE DECLUTTER PASS 2 (MENU DROPDOWN, FOLDED PASS)
+1. Completed
+- UI/Menu: one small MENU button (top left) with a dropdown: INVITE FRIENDS (when allowed), LINE MASTERY (in the hall), SETTINGS. It replaces the separate SETTINGS button, the LINE MASTERY shortcut and the hall's INVITE button. Sits under the crew pass in the hall, under the gauges in a run.
+- Lobby on a phone (gui Compact): the crew pass folds to one line (rank badge, name, Brass); a tap opens it, another folds it. Desktop keeps the full pass.
+- Hall row is one row: BOARD A CAR and a single LINE button (tap switches your vote Short/Long; with a new Hand it names the fixed line and is disabled).
+- LOOK's touch button shows only to a crew member in a run (it does nothing in the hall).
+- Run on a phone: empty backpack wells are faint; the TRAIN CAM chip is a small tab.
+- Fixed: on a fresh phone client the HUD's first watch placement could stall Hud.mount (no error), and every UI after it never mounted (no lobby panel, no menu). The first placement now runs on its own thread.
+2. Verified (Studio, iPhone 7 preset)
+- Lobby: folded pass, MENU, two-button row and the START panel only; MENU opens with its three entries (tapped through the simulator). Run at stop 1: gauges, MENU, watch and ticket, small TRAIN CAM tab, LOOK/RUN/jump, faint wells; no overlaps. Console: known warnings only. `lune run check` passed.
+- NOT verified: on a real phone; the dropdown with gamepad selection.
+
 ## 2026-10-22: WHITE BASES REMOVED FROM STATION PROPS
 1. Completed
 - StationBuilder no longer calls Limewash.station (the pale band at the foot of every crate, cabinet and obstacle kind the owner flagged in phone screenshots). The canopy column feet and the plinth foot in StationDressing are stone (Slate) instead of pale plaster. Limewash.train (the train lining) is unchanged; Limewash.station is kept but unused until Prompt 6.
