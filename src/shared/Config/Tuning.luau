@@ -747,7 +747,9 @@ local Tuning = {
 		DamagePerSecond = 8, -- in the edge zone, after the grace (fog damage is its own)
 		TickInterval = 0.25,
 		EntryGrace = 0.5, -- seconds in the zone before the first tick
-		CurrentMaxOut = 12, -- outward studs/s allowed at the zone's inner face, 0 at the rail
+		-- outward studs/s allowed at the zone's inner face, 0 at the rail: the crew's walk (Crew.WalkSpeed),
+		-- so a walk slows from the face on (the Council's 12 assumed a 16 walk; at 21 it was a jolt)
+		CurrentMaxOut = 21,
 		ProximityRange = 8, -- studs over which the tint and hum come in
 		IdleSeconds = 12,
 		IdleOpacityBoost = 0.15, -- transparency taken off the mist while idle near it
