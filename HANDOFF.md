@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-22: WHITE BASES REMOVED FROM STATION PROPS
+1. Completed
+- StationBuilder no longer calls Limewash.station (the pale band at the foot of every crate, cabinet and obstacle kind the owner flagged in phone screenshots). The canopy column feet and the plinth foot in StationDressing are stone (Slate) instead of pale plaster. Limewash.train (the train lining) is unchanged; Limewash.station is kept but unused until Prompt 6.
+- `lune run check` passed, audit clean. Studio: no pale parts within 4 studs of a container at Post Town.
+2. Not verified: a full sweep of every archetype in Studio.
+
 ## 2026-10-22: PHONE HUD IN-RUN CHECKS (continues Astra's follow-up below)
 1. Completed
 - Studio, iPhone 7 preset (viewport 666x374), solo, stop 1 doors open: roster hidden; errands panel hidden; pocket watch y101-199 clear of LOOK/RUN (y218-263, LOOK beside RUN) and of the leak slot (y9-36); in-run SETTINGS tab 70x19 on screen; tutorial slot clear.
