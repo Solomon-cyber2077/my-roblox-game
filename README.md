@@ -101,8 +101,12 @@ game.ReplicatedStorage.Remotes.Dev:FireServer("state")
 | `leak` | A steam leak bursts now while the train runs (or as soon as it next does) |
 | `hull 20` | Set the hull to a percent (`hull 1` while the train runs is a breakdown) |
 | `state` | Print the run, crew, train and backpack to the Output |
-| `sky 26` / `sky` | Pin every client's sky to an hour (18.3 dusk, 21 the amber moon rising, 26 the blood moon, 30.5 sunrise), or let it follow the run again |
+| `sky 26` / `sky` | (also the QA checklist's "clock") Pin every client's sky to an hour (18.3 dusk, 21 the amber moon rising, 26 the blood moon, 30.5 sunrise), or let it follow the run again |
 | `omen Eye` | Every client sees an omen now: `Hush`, `TallOnes`, `Blink`, `Bleed` or `Eye` |
 | `strike` | A lightning strike now |
+| `mist preset Slate` | Recolour the void mist on every client: `Teal`, `Slate` or `Amber` (2 s fade) |
+| `mist outlines` | Toggle boxes round the edge rails (red) and their mist zones (cyan) |
+| `mist debug` | Toggle the void mist's debug: the current's label and a summary every 60 s |
+| `mist summary` | Print the void mist's session counts (rescues, edge damage, seconds per zone) |
 
 The remote does not exist in live servers.

@@ -30,4 +30,4 @@ Run in order; VM4 and VM5 need only VM1; VM6 needs VM5; VM7 comes last.
 | VM4 | [VM4.md](VM4.md) | 04 Client current | VM1 | done |
 | VM5 | [VM5.md](VM5.md) | 05 Mist visuals and tint | VM1 | done (MicroProfiler HUMAN) |
 | VM6 | [VM6.md](VM6.md) | 06 Hum and idle | VM5 | done (two-client + listening HUMAN) |
-| VM7 | [VM7.md](VM7.md) | 07 Debug tools and QA | VM2-VM6 | todo |
+| VM7 | [VM7.md](VM7.md) | 07 Debug tools and QA | VM2-VM6 | done (QA lines 4,5,9,14,15 HUMAN) |
