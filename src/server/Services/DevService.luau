@@ -34,6 +34,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local StarterPlayer = game:GetService("StarterPlayer")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
@@ -45,10 +46,57 @@ local StateService = require(script.Parent.StateService)
 local HollowBuilder = require(script.Parent.Parent.Builders.HollowBuilder)
 local PhotoCommand = require(script.Parent.Parent.Tools.PhotoCommand)
 
+-- Every state each kind can be posed in (Prompt 3), for the photo's IK report.
+local POSE_STATES: { { state: string, extra: { [string]: any } } } = {
+	{ state = "Prowl", extra = {} },
+	{ state = "Stalk", extra = {} },
+	{ state = "Stalk", extra = { frozen = true } },
+	{ state = "Hunt", extra = {} },
+	{ state = "Hunt", extra = { coil = true } },
+	{ state = "Windup", extra = {} },
+	{ state = "Recover", extra = {} },
+	{ state = "Dormant", extra = {} },
+	{ state = "Emerge", extra = {} },
+	{ state = "Repelled", extra = {} },
+	{ state = "Reel", extra = {} },
+	{ state = "Stunned", extra = {} },
+}
+
 local PHOTO = {
 	kinds = HollowBuilder.Kinds,
 	spawn = function(kind: string, cframe: CFrame)
 		return (HollowBuilder.build(cframe, kind))
+	end,
+	-- the furthest any hand or foot falls short, over every state at a sweep of speeds and phases
+	report = function(model: Model, kind: string): string
+		local HollowPoses = require(StarterPlayer.StarterPlayerScripts.Client.Animation.HollowPoses) :: any
+		local rig = HollowPoses.rigOf(model)
+		local worst, posed = 0, 0
+		for _, entry in POSE_STATES do
+			for speed = 0, 30, 6 do
+				for phase = 0, 6.2, 0.8 do
+					local input = {
+						state = entry.state,
+						elapsed = phase / 6.2 * 1.5,
+						speed = speed,
+						phase = phase,
+						now = 100,
+						seed = 7,
+						emerge = "Rise",
+						stunned = false,
+						windup = 0.3,
+						grabTime = 0,
+					}
+					for key, value in entry.extra do
+						(input :: any)[key] = value
+					end
+					HollowPoses.pose(rig, input)
+					worst = math.max(worst, HollowPoses.shortfall())
+					posed += 1
+				end
+			end
+		end
+		return `{kind} IK shortfall {string.format("%.2f", worst)} studs over {#POSE_STATES} states ({posed} poses)`
 	end,
 }
 
@@ -156,6 +204,9 @@ Commands.photo = function(player, args)
 		PhotoCommand.clear()
 	elseif args[1] == "stalk" then
 		PhotoCommand.run(player, PHOTO, "Stalk")
+	elseif args[1] then
+		-- `photo <State> [coil|frozen]`, e.g. `photo Hunt coil`, `photo Windup`, `photo Stalk frozen`
+		PhotoCommand.run(player, PHOTO, args[1], args[2])
 	else
 		PhotoCommand.run(player, PHOTO)
 	end

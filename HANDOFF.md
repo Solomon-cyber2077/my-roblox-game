@@ -1,5 +1,21 @@
 # HANDOFF
 
+## 2026-10-22: S4 / PROMPT 3, BODY LANGUAGE
+1. Completed
+- Logic/HollowMotion (pure, spec'd): look-at yaw with the 0.25 s lag and per-kind caps (Stalker 70, Crawler 50, Brute 35), prowl scan, lean from forward acceleration (clamped 0.3 rad), blend rules (Prowl/Stalk/Hunt/Recover/Repelled ease out over 0.28 s; Coil, Windup and Lunge snap), and foot plants by gait phase (bipeds at pi/2 and 3pi/2, the Crawler's four limbs as each swing ends).
+- Server: HollowService replicates `Target` (the head's prey) and `Intent` (+ IntentAt): a hunter in sight within LungeRange 16 once its first-strike guard is met. Intent drives the coil only; it never delays an attack. The 0.4 s Intent hush is S8's (audio), not done here.
+- HollowPoses: coil pose per kind (crouch, head low, arms swept back and out; the Crawler sunk on its haunches; while moving the legs keep the gait's stride), shown for Intent and for the S3 WarningCoil; breathing, swaying Stalk freeze; miss follow-through (strike to 0.18 s, then an over-reach stumble until RecoverSeconds 0.4); the Stalker's windup arms flung wider. Kind windups unchanged (Crawler 0.21, Stalker 0.3, Brute 0.42 s).
+- HollowAnimator: look-at and lean for the nearest 6 Hollows within 60 studs; blending/snapping per HollowMotion; HollowStep on plants only (the timer emission is gone): Brute heavy + ground shake, Stalker soft, Crawler skitter; every other plant while stalking, none while frozen.
+- HollowCosmetics: the Stalker's 3-5 coat strips (primitive parts on Welds, hinged at the hem, trailing with speed and stirring in the wind, count by stop progression) and pallor (head, jaw, hands toward Bone, a darkening socket band), within MaxParts 40 (the chain accessory drops to two links to make room). Mesh strips were not used: no HUMAN upload pending.
+- Audit: the Grabs target now poses every kind in every state (Prowl, Stalk, Stalk frozen, Hunt, Hunt coil, Windup, Recover, Dormant, Emerge, Repelled, Reel, Stunned). Studio /photo prints each kind's IK shortfall over those 12 states; `photo <State> [coil|frozen]` poses the lineup (only roots are anchored now, so the animator moves the joints).
+2. Verified / known gaps
+- `lune run check` passed (461 tests); Grabs audit 6,606 poses, furthest reach 0.00 studs short. Studio /photo: Stalker, Crawler and Brute IK shortfall 0.00 over 12 states.
+- Studio captures at 25 studs (desktop viewport, Depot Hall): Hunt vs coil vs Windup vs Stalk frozen read as distinct silhouettes. NOT checked at a phone-sized viewport (Device Simulator needs manual setup).
+- Studio run: a stalking Stalker's head turned toward me (bearing -62 degrees, head -79: the cap limits the look-at itself; the Stalker's existing contortion twist adds on top); Target replicated; Intent toggled on in the close hunt and off at Windup/Recover. Console clean.
+- NOT verified by ear: steps on plants (no audio capture); coat strips seen only in code paths, not photographed from behind.
+3. Next logical step
+- S5 is running with Astra (codex/s5-bell-astra); merge it when done, then S6 (Prompt 5, first run and AGAIN).
+
 ## 2026-10-22: S3 / PROMPT 2, STALK, FIRST-STRIKE GUARD, DOOR-FORCING, TELLS
 1. Completed
 - State diagram (Logic/Stalk header): Prowl -> Stalk when a crew member is sensed beyond CommitRange, this Hollow is the nearest prowler sensing them, nobody already hunts them, its one stalk per target per stop is unspent and no stun/stagger exclusion (6 s) runs. Stalk -> Hunt on Surge, proximity (CommitRange), a seized target, MaxStalk (overrides facing) or a turned back (after MinStalk; halved when alone within 14 and unlit). Stalk -> Prowl when sight is lost for Persistence, on a stun, or when the target leaves. Hunt -> Windup only once the first-strike guard is met. Wanderers, Surges and the scripted Crawler commit directly; `StalkWanderer` on a wanderer opts it into Stalk (for Prompt 5's tutorial Stalker).

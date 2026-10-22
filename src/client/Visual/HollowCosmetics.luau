@@ -1,5 +1,8 @@
 --!strict
 -- Local dressing only. HollowAnimator owns the update loop and every joint write.
+-- The Stalker's look (Prompt 3): 3-5 shredded coat strips hinged at the hem, swinging with its speed
+-- and the wind, and pallor (skin toward Bone, darker eye sockets), both growing with the stop's
+-- progression. Primitive parts within MaxParts; a mesh coat would be a HUMAN upload, not done here.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
@@ -32,6 +35,9 @@ export type Handle = {
 	grime: number,
 	seed: number,
 	parts: number,
+	strips: { { part: BasePart, weld: Weld, hem: CFrame, side: number } },
+	skin: { { part: BasePart, color: Color3 } }, -- the Stalker's bare skin and its first colour
+	sockets: BasePart?,
 }
 local Cosmetics = {}
 
@@ -74,6 +80,39 @@ local function part(
 	p.Parent = h.model
 	keep(h, p)
 	return p
+end
+
+-- A coat strip on a Weld (not a WeldConstraint) so its hinge can swing every frame.
+local function strip(
+	h: Handle,
+	chest: BasePart,
+	hem: CFrame,
+	length: number,
+	shade: Color3,
+	scale: number,
+	side: number
+)
+	assert(h.parts < C.MaxParts, "Hollow cosmetic part budget")
+	h.parts += 1
+	local p: BasePart = Instance.new("Part")
+	p.Name = "CoatStrip"
+	p.Size = Vector3.new(0.16, length, 0.04) * scale
+	p.Color = shade
+	p.Material = Enum.Material.Fabric
+	p.Massless = true
+	p.CanCollide = false
+	p.CanTouch = false
+	p.CanQuery = false
+	p.CastShadow = false
+	local weld = Instance.new("Weld")
+	weld.Part0 = chest
+	weld.Part1 = p
+	weld.C0 = hem
+	weld.C1 = CFrame.new(0, p.Size.Y / 2, 0) -- hung from its top edge
+	weld.Parent = p
+	p.Parent = h.model
+	keep(h, p)
+	table.insert(h.strips, { part = p, weld = weld, hem = hem, side = side })
 end
 
 local function stain(
@@ -346,7 +385,7 @@ local function build(h: Handle)
 		end
 		part(h, chest, Vector3.new(0.44, 0.09, 0.28), anchor * CFrame.new(0, -0.51, 0), iron, v.scale)
 	else
-		for i = 1, 3 do
+		for i = 1, 2 do -- two links: the coat strips need the third link's parts
 			local link = anchor * CFrame.new(0, -i * 0.22, 0) * CFrame.Angles(0, (i % 2) * math.pi / 2, 0.25)
 			for _, side in { -1, 1 } do
 				part(
@@ -365,6 +404,34 @@ local function build(h: Handle)
 					iron,
 					v.scale
 				)
+			end
+		end
+	end
+	if kind == "Stalker" then
+		-- the coat's shredded hem: five strips round the back and sides, shown by progression
+		local hemY = -chest.Size.Y / 2
+		local coat = color("Coat", v.tint * 0.85)
+		for i = 1, 5 do
+			local x = (i - 3) * chest.Size.X * 0.22
+			local z = chest.Size.Z / 2 + 0.02 - math.abs(i - 3) * 0.12
+			local hem = CFrame.new(x, hemY, z) * CFrame.Angles(0, 0, (i - 3) * 0.06)
+			strip(h, chest, hem, 1.1 + ((h.seed + i * 7) % 5) * 0.12, coat, v.scale, i - 3)
+		end
+		-- sunken sockets behind the eyes: one dark band, darker as pallor grows
+		local band = part(
+			h,
+			head,
+			Vector3.new(head.Size.X * 0.66, 0.16, 0.03),
+			CFrame.new(0, head.Size.Y * 0.08, front + 0.012),
+			color("Crack", 0.5),
+			v.scale
+		)
+		band.Transparency = 1
+		h.sockets = band
+		for _, name in { "Head", "Jaw", "LeftHand", "RightHand", "LHand", "RHand" } do
+			local skin = model:FindFirstChild(name)
+			if skin and skin:IsA("BasePart") then
+				table.insert(h.skin, { part = skin, color = skin.Color })
 			end
 		end
 	end
@@ -390,6 +457,9 @@ function Cosmetics.attach(model: Model, root: BasePart): Handle
 		effects = {},
 		eyes = {},
 		sheds = {},
+		strips = {},
+		skin = {},
+		sockets = nil,
 		light = nil,
 		built = false,
 		destroyed = false,
@@ -418,6 +488,32 @@ function Cosmetics.update(h: Handle, position: Vector3?, grime: number, state: s
 		for _, s in h.stains do
 			s.part.Color = s.color:Lerp(Color3.new(0, 0, 0), grime * 0.25)
 			s.part.Transparency = if grime < s.threshold then 1 else 0.8 - grime * 0.65
+		end
+		-- pallor: skin toward Bone, the sockets darkening
+		local bone = color("Bone", 1)
+		for _, skin in h.skin do
+			skin.part.Color = skin.color:Lerp(bone, grime * 0.6)
+		end
+		if h.sockets then
+			h.sockets.Transparency = 1 - grime * 0.85
+		end
+		local counts = Tuning.HollowMotion.StripCount
+		local shown = counts[1] + math.floor((counts[2] - counts[1]) * grime + 0.5)
+		for i, entry in h.strips do
+			-- the middle strips first, then the outer ones
+			local order = ({ 3, 2, 4, 1, 5 })[i] or i
+			entry.part.Transparency = if order <= shown then 0 else 1
+		end
+	end
+	if near and #h.strips > 0 then
+		-- the strips trail behind its speed and stir in the wind
+		local velocity = h.root.AssemblyLinearVelocity
+		local forward = velocity:Dot(h.root.CFrame.LookVector)
+		local trail = -math.clamp(forward * 0.035, -0.3, 1.0)
+		local t = os.clock()
+		for i, entry in h.strips do
+			local gust = math.sin(t * 2.3 + i * 1.7 + h.seed) * 0.12 + math.sin(t * 5.1 + i) * 0.05
+			entry.weld.C0 = entry.hem * CFrame.Angles(trail + gust, 0, entry.side * 0.05 + gust * 0.5)
 		end
 	end
 	local now = os.clock()

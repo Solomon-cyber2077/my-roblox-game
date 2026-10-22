@@ -456,31 +456,47 @@ table.insert(targets, {
 					end
 				end
 			end
-			if kind == "Crawler" then
-				for _, state in
-					{ "Prowl", "Hunt", "Windup", "Recover", "Dormant", "Emerge", "Repelled", "Reel" }
-				do
-					for speed = 0, 30, 3 do
-						for phase = 0, 6.2, 0.4 do
-							HollowPoses.pose(
-								rig,
-								input(state, { speed = speed, phase = phase, elapsed = phase / 6.2 * 1.5 })
-							)
-							posed += 1
-							local short = HollowPoses.shortfall()
-							worst = math.max(worst, short)
-							if short > 0.3 then
-								table.insert(
-									problems,
-									string.format(
-										"Crawler %s at %d studs/s: a limb falls %.2f studs short",
-										state,
-										speed,
-										short
-									)
+			-- every state of every kind (Prompt 3: Stalk frozen and moving, the coil, the stumble)
+			local variants = {
+				{ "Prowl", {} },
+				{ "Stalk", {} },
+				{ "Stalk", { frozen = true } },
+				{ "Hunt", {} },
+				{ "Hunt", { coil = true } },
+				{ "Windup", {} },
+				{ "Recover", {} },
+				{ "Dormant", {} },
+				{ "Emerge", {} },
+				{ "Repelled", {} },
+				{ "Reel", {} },
+				{ "Stunned", {} },
+			}
+			for _, variant in variants do
+				local state, extra = variant[1], variant[2]
+				local failed = false
+				for speed = 0, 30, 3 do
+					for phase = 0, 6.2, 0.4 do
+						local given = { speed = speed, phase = phase, elapsed = phase / 6.2 * 1.5 }
+						for key, value in extra do
+							given[key] = value
+						end
+						HollowPoses.pose(rig, input(state, given))
+						posed += 1
+						local short = HollowPoses.shortfall()
+						worst = math.max(worst, short)
+						if short > 0.3 and not failed then
+							failed = true
+							table.insert(
+								problems,
+								string.format(
+									"%s %s%s at %d studs/s: a limb falls %.2f studs short",
+									kind,
+									state,
+									if extra.coil then " (coil)" elseif extra.frozen then " (frozen)" else "",
+									speed,
+									short
 								)
-								break
-							end
+							)
 						end
 					end
 				end
