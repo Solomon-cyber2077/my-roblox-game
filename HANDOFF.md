@@ -1,5 +1,30 @@
 # HANDOFF
 
+## 2026-10-22: VOID MIST, VM1-VM7 (Council run 20261022-131445; Claude, Astra verified VM2/VM3 partway)
+Branch `claude/void-mist` (worktree ../LTO-mist, Studio place ../mist.rbxl, rojo port 34874). Not merged, not pushed.
+1. Completed
+- prompts/VM1-VM7: the Council's seven generic prompts mapped onto this codebase (prompts/README.md).
+- VM1 Config/Tuning.VoidMist, Logic/VoidMist (+ spec). VM2 EdgeRail 50 tall, CanQuery off; MistService fall
+  rescue (station-local last safe spot, 15 dmg, Fx MistRescue, telemetry mist_rescue). VM3 edge-zone damage
+  (8 HP/s after 0.5 s, not on top of fog), attribute MistZone. VM4 VoidCurrentController: caps the walk's
+  outward share at render step after the controls (velocity alone was undone by the Humanoid), CurrentMaxOut
+  21 (the crew's walk; the Council's 12 assumed 16). VM5 Scenery/EdgeMist + MistController: beams on every
+  rail (veil, back rise, sea), preset via workspace MistPreset, half-way to grey so it never reads as water;
+  AtmosphereController.SetMistTint proximity tint. VM6 hum (drone at 2x, Outdoor mix) and the client-only idle
+  reaction. VM7 `mist preset|outlines|debug|summary`, session counts, docs/direction/void-mist/QA.md.
+- Renders before/after: docs/direction/void-mist/ (README lists them).
+2. Verified / known gaps
+- `lune run check` green at every commit. Studio evidence per line in QA.md and the commit messages.
+- HUMAN pending: replication lag 0.2/0.3 feel, 4-player 5-minute edge run (0 rescues), two-client idle check,
+  MicroProfiler on low-end hardware (570 beams), listening to the hum.
+- Sprinting (31) drops to 21 in one frame at the zone face (no jitter after). Station fog keeps its per-stop
+  tints (CHOICE). Lightning in the mist is LATER. One early VM3 run (CoalYard) showed ~5 HP extra damage at the
+  probe's spot that later runs did not repeat; unexplained.
+- Studio tooling: execute_luau replies can fail while the code still runs (re-firing `god` toggled it off);
+  tools/shot.ps1 cannot size the window with three Studios open.
+3. Next logical step
+- Owner review of the renders and a playtest of the open questions in QA.md, then merge `claude/void-mist`.
+
 ## 2026-10-22: S8 / MILESTONE 1 ESSENTIALS (PROMPT 6 READABILITY, PROMPT 7 PRIORITY + INTENT HUSH)
 1. Completed
 - Priority table (Config/AudioPriority; beside Config/Audio so the cue table keeps its `{ [name]: Cue }` shape): 1 Warnings (WarnTick/Bell/Whistle/WhistleLong, own group outside the main mix) > 2 Threat (mix "Cues": swipe, slam, scream, wake, strike, spawn, scrabble, heartbeat, alarm, DoorForce, and the stalk breath, now on the Cues group) > 3 Feedback (mix "Steps" and new "Feedback": hit, loot, deposit, heal, flash, eliminated, purchase, clutch, clicks, ticket sounds, the player's winded breath) > 4 Ambience (Ambience/Outdoor beds, TrainRun moved in, so the Settings Ambience row now scales the train run too) > 5 Piano (LobbyPiano, mix "Piano").

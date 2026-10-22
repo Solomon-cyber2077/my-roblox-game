@@ -1,4 +1,4 @@
-# Void Mist handoff to Astra (Claude Code ran out of usage, 2026-10-22)
+# Void Mist handoff to Astra (Claude Code ran out of usage, 2026-10-22) - CLOSED: Claude finished VM2-VM7 the same day; see HANDOFF.md
 
 Branch `claude/void-mist`, worktree `../LTO-mist`. Prompts: `prompts/VM1.md`-`VM7.md` (adapted from Council run
 20261022-131445; status in prompts/README.md). Place for a separate Studio window: `../mist.rbxl` (copy of
