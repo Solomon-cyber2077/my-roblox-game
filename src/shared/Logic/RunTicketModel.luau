@@ -7,6 +7,7 @@
 ]]
 
 local Shared = script.Parent.Parent
+local Tuning = require(Shared.Config.Tuning)
 local DeathCause = require(Shared.Logic.DeathCause)
 local RunLog = require(Shared.Logic.RunLog)
 
@@ -28,6 +29,7 @@ export type Input = {
 	outcome: string?,
 	log: { any }?,
 	nextStop: number?,
+	stopCount: number?, -- run.stopCount: a Short Line's victory stamps SHORT LINE
 	runId: string?,
 	crew: { [string]: CrewEntry }?,
 	me: string,
@@ -114,7 +116,11 @@ function RunTicketModel.build(input: Input): Data
 			{ label = "CREW", value = table.concat(initials, " · ") },
 		},
 		crew = marks,
-		stamp = RunLog.final(outcome :: any, RunLog.endStop(input.log :: any, input.nextStop)),
+		stamp = RunLog.final(
+			outcome :: any,
+			RunLog.endStop(input.log :: any, input.nextStop),
+			input.stopCount == Tuning.Run.Routes.Short
+		),
 	}
 end
 

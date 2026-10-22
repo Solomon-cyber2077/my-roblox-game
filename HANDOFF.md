@@ -1,5 +1,69 @@
 # HANDOFF
 
+## 2026-10-22: S7 / PROMPT 10, FIRST THREE MINUTES, ROUTES, INVITES, EXPERIMENTS
+1. Completed
+- First visit: hall spawns face the departure board, which reads "START · OR BOARD A CAR" with one line for each. The panel button is START (CANCEL once ready; JOIN RUN mid-run). Above it: BOARD A CAR (walks you to the door of a car with riders, else the nearest; then hold E to Board) and INVITE. Cars CountdownSeconds 40 -> 20 (PROVISIONAL); MinPlayers and ArrivalWaitSeconds unchanged.
+- Short first leg: on a tier-1 run every leg-1 option is Tuning.Run.FirstLegKm 1 km (cruise 18 + 6 = 24 s). RouteGen makes the same draws, so stations, tiers and later legs are unchanged (spec'd). The scenery is not sped up.
+- Routes (Logic/Routes + spec): Tuning.Run.Routes {Short 5, Long 10}, replicated as run.stopCount. Short stop k reads Long stop m(k) = {1,2,4,6,8} for every stop-indexed difficulty input:
+  - forStop over the Long count
+  - Threat.total (Hollow caps) and Threat.protection
+  - leaks, skill checks, door-forcing
+  These read HazardParams.level. The stop clock, HollowSpeed's first-Crawler rule and the tutorial stop rules use the real k. Short D = 0.080 / 0.117 / 0.252 / 0.431 / 0.643; the Terminus keeps d = 0.
+- Sky, omens and timed events:
+  - The sky already reads run.stopCount (Journey.hour with stops 5).
+  - Omens get `dark` from AtmosphereController's hour, so they follow it.
+  - Timed events depend only on the layout seed and D, not the route length.
+- Route policy: a player is new until 2 runs reached RunEnd (profile.stats.runs; Studio's `/tutorial reset` sets a session override).
+  - Any new crew member fixes the line: Short, or E1's arm while E1 runs. The hall shows "Short Line: a new Hand rides with you."
+  - Otherwise each hall player votes SHORT or LONG (remote VoteLine); the crew's votes decide at Boarding, and a tie or no votes goes Long (CHOICE).
+- Rewards:
+  - Per-stop Brass/XP/haul unchanged; a Short Line victory is stamped SHORT LINE and counts toward `victories`.
+  - New stat `longVictories` counts Long victories only (Ledger "Long Line arrivals").
+- INVITE (UI/Invite): on the Depot hall row and the run card. Shown only when CanSendGameInviteAsync allows; opens PromptGameInvite and logs invite_prompted (depot/runcard).
+- Experiments (Config/Experiments, Logic/Experiments + spec): arm = Rng(hash(runSeed, salt)) for the whole crew.
+  - E1: Short/Long; eligible = new Hands; exposed at run start.
+  - E2: Sighting/None; eligible = players on their own first run; exposed at stop 1's doors in both arms; it drives hazards.sighting.
+  - Each player's first arm is stored in profile.telemetry.cohorts and logged once (cohort_assigned, arms A/B). Telemetry vocabulary narrowed to E1/E2 and A/B.
+  - Both are `enabled = false` until the soft launch (G2). Dev `experiment <E1|E2> <arm|auto>` forces an arm.
+- Telemetry first_session_timing `first_hollow_seen`: the first clear line between any Hollow and the player (declared in S1, sent now).
+- Report (`lune run report`): a Short Line difficulty table, and both routes through the new Logic/RouteModel (spec'd) with Brass per winning run and Brass per minute. No bell: Long 47.60 min / Short 24.26. Every stop u=0.40: 33.87 / 17.65. 60% of stops u=0.50: 40.98 / 21.07. brass_win 140 / 110 (per-stop + Terminus only).
+- Fixed (S6 bug): the stop-1 sighting got one placement try, at the first step off the train. Near the train the 24-stud safe strip counts as lit, so it usually never appeared. It now retries every Sighting.RetrySeconds 1 while pending.
+2. Verified / known gaps
+- `lune run check` passed: 510 tests, 68 spec files, audit clean.
+- Studio first-session timings, fresh tutorial (Dev reset), scripted player, against the A.4 targets:
+
+  | Timing | Target | Desktop | iPhone 7 preset (Device Simulator) |
+  |---|---|---|---|
+  | control | ≤10 s | 1.23 s | 0.66 s |
+  | run Countdown | ≤45 s | 14.75 s | 17.67 s |
+  | stop-1 doors | ≤120 s | 82.82 s | 85.73 s |
+  | first Hollow in line of sight | ≤180 s | 149.31 s | 92.12 s |
+
+  - The Countdown timing includes a scripted START press about 13–17 s after join, slowed by the Studio script's latency.
+  - The desktop Hollow time was inflated by a debugging pause; the phone run walked out about 5 s after the doors opened.
+  - Doors opened 68.6–68.9 s after START (Countdown 10 + Boarding 4 + Junction 20 + Cruise 24 + Arrival 10).
+- Studio:
+  - The spawn faces the board; the hall row shows the fixed line for a new Hand, and the vote buttons (✓ SHORT LINE · 5 (1)) for a veteran.
+  - A veteran's Short vote gave STOP 1/5. The HUD read STOP 1/5 on the first run.
+  - Short victory: SHORT LINE stamp, payout 110 Brass (5 x 6 + 80), run_progress `short`.
+  - INVITE showed on the card and in the hall; the wipe card's stamp sits clear of the buttons.
+  - Console clean apart from the known asset/cab-sill/TrainVolumes warnings.
+- NOT verified:
+  - An actual invite send and a friend's join.
+  - longVictories after a real Long victory (only code and spec'd stats paths).
+  - E1/E2 live (both off; covered by specs and Dev force only).
+  - BOARD A CAR's walk.
+  - Multi-player line votes.
+- Drift / known issues:
+  - Device Simulator reports touch+keyboard+mouse, so telemetry logged the device as `unknown` there; real phones are HUMAN.
+  - From some spawn points a hall post hides part of the board's text (the START panel is always on screen).
+  - ProgressionService passes `dailyBonus = false`, so the daily first-run bonus is off in code today (left unchanged, as Prompt 10 says).
+  - livery_royal is still a 2400 Brass item, and the Roll of the Terminus does not exist: longVictories gating is Prompt 8's (S11).
+  - JoinInProgressMaxStation 6 lets anyone join a Short Line at any stop.
+- HUMAN: real-device timings; enable private servers in Creator Hub and record the price.
+3. Next logical step
+- S8 (Milestone 1 essentials from Prompts 6 and 7), then the G1 playtest. Still pending from before: S5's two-client latency matrix, multi-client AGAIN.
+
 ## 2026-10-22: S6 / PROMPT 5, FIRST RUN AND AGAIN
 1. Completed
 - First run (tier 1, Config/Tutorial): stop 1 has no Hollows (stop1Cap 0) and a scripted sighting; stop 2 has only the scripted Crawler (ScriptedGrab.Stop 2, non-lethal, zone 100 degrees; yard lamps at stop 2); stops 1-2 are quiet (quietUntilStop 2: no wanderer, no timed events); stop 3 has one awake Stalker wanderer that stalks (Stop3, `StalkWanderer`) and leaves anyone within 20 studs of the train alone (`AwayStuds`, measured in station-local Z); no leak on the first cruise (Difficulty.Leaks.FirstCruiseCap 0, `Leaks.cap/count(..., tutorialTier)`). Tier 2 keeps the old stop-1 cap and drops the scripted grab.

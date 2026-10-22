@@ -458,8 +458,9 @@ function TrainService.OpenBreach(): boolean
 	return Ledger.breachCount(train) > before
 end
 
--- A trip of `km` and `seconds` toward stop `stop` of difficulty `d`: plans its leaks (none on a
--- first run's first cruise: `tutorialTier`).
+-- A trip of `km` and `seconds` toward a stop of difficulty `d` whose Long Line level is `stop`
+-- (Logic/Routes.level; stop 1 is level 1 on both lines): plans its leaks (none on a first run's
+-- first cruise: `tutorialTier`).
 function TrainService.BeginLeg(km: number, seconds: number, stop: number, d: number, tutorialTier: number?)
 	local count = Leaks.count(stop, d, train.upgrades, rng:NextNumber(), tutorialTier)
 	local shares = Leaks.shares(count, function()

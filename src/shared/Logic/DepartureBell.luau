@@ -15,6 +15,7 @@ local DepartureBell = {}
 export type Branch = "all" | "half"
 
 local LEAD = 30 -- seconds a pull leaves before departure (FIXED)
+DepartureBell.LEAD = LEAD
 
 function DepartureBell.share(elapsed: number, originalDwell: number): number
 	return if originalDwell > 0 then elapsed / originalDwell else 0

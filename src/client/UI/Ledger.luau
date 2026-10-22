@@ -22,6 +22,7 @@ local modal: Modal.Modal
 local STAT_LABELS = {
 	{ key = "runs", label = "Runs" },
 	{ key = "victories", label = "Terminus arrivals" },
+	{ key = "longVictories", label = "Long Line arrivals" },
 	{ key = "stationsDeparted", label = "Stations departed" },
 	{ key = "bestStation", label = "Best run (stations)" },
 	{ key = "coalDelivered", label = "Coal delivered" },

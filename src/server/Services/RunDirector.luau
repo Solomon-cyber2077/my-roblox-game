@@ -14,13 +14,16 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
+local ExperimentsConfig = require(Shared.Config.Experiments)
 local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 local DifficultyModel = require(Shared.Logic.DifficultyModel)
+local Experiments = require(Shared.Logic.Experiments)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Ledger = require(Shared.Logic.Ledger)
 local Mystery = require(Shared.Logic.Mystery)
 local RouteGen = require(Shared.Logic.RouteGen)
+local Routes = require(Shared.Logic.Routes)
 local RunLog = require(Shared.Logic.RunLog)
 local RunRules = require(Shared.Logic.RunRules)
 local DepartureBell = require(Shared.Logic.DepartureBell)
@@ -67,6 +70,10 @@ type RunState = {
 	pending: Types.LogEntry?, -- this stop's run.log entry, appended when the stop resolves
 	mark: Types.StopHaul, -- the run's loot and downs when the previous stop resolved
 	tutorial: number, -- the crew's tutorial tier for this run (Services/TutorialService), 0 past it
+	route: Routes.Route, -- the run's line (Logic/Routes), fixed at Boarding
+	stopCount: number, -- its stops before the Terminus (run.stopCount)
+	arms: { [string]: string }, -- this run's experiment arms by id (Logic/Experiments), absent when off
+	forcedArms: { [string]: string }, -- Dev `experiment`: arms the next runs use
 	-- the Emergency Village after a breakdown: the trip it interrupted, to resume after it
 	village: { resume: number, params: Types.HazardParams, partsAt: number?, needed: number }?,
 }
@@ -98,6 +105,10 @@ local state: RunState = {
 	pending = nil,
 	mark = { coal = 0, parts = 0, relics = 0, downs = 0 },
 	tutorial = 0,
+	route = "Long",
+	stopCount = Tuning.Run.Routes.Long,
+	arms = {},
+	forcedArms = {},
 	village = nil,
 }
 
@@ -115,14 +126,14 @@ local function publish()
 	StateService.Set({ "run", "seed" }, state.seed)
 	StateService.Set({ "run", "nextStop" }, state.nextStop)
 	StateService.Set({ "run", "stationsCleared" }, state.stationsCleared)
-	StateService.Set({ "run", "stopCount" }, Tuning.Run.StationCount)
+	StateService.Set({ "run", "stopCount" }, state.stopCount)
 	StateService.Set({ "run", "outcome" }, state.outcome)
 end
 
 local function context(): RunRules.Context
 	return {
 		nextStop = state.nextStop,
-		stopCount = Tuning.Run.StationCount,
+		stopCount = state.stopCount,
 		readyCount = Registry.LobbyService.ReadyCount(),
 		lobbyCount = Registry.LobbyService.LobbyCount(),
 		crewAlive = Registry.CrewService.AliveCount(),
@@ -177,6 +188,34 @@ local function cleanupRun()
 	StateService.Set({ "run", "destination" }, nil)
 end
 
+-- Each eligible player's first exposure to `def`'s arm this run is stored and logged once.
+local function exposeArm(def: ExperimentsConfig.Def, eligible: { Player })
+	local arm = state.arms[def.id]
+	if arm == nil then
+		return
+	end
+	for _, player in eligible do
+		Registry.TelemetryService.CohortAssigned(player, def, arm)
+	end
+end
+
+-- Boarding: the run's line (Logic/Routes) and its experiment arms (Logic/Experiments). A crew with a
+-- new Hand rides a fixed length (E1's arm while E1 runs, else Short); otherwise the hall's vote.
+local function chooseRoute(crew: { Player })
+	local newHands = Registry.TutorialService.NewHands(crew)
+	local e1, e2 = ExperimentsConfig.E1, ExperimentsConfig.E2
+	table.clear(state.arms)
+	state.arms[e1.id] = Experiments.pick(state.seed, e1, #newHands > 0, state.forcedArms[e1.id]) :: any
+	local firstRun = state.tutorial == 1
+	state.arms[e2.id] = Experiments.pick(state.seed, e2, firstRun, state.forcedArms[e2.id]) :: any
+	local short, long = Registry.LobbyService.LineVotes(crew)
+	local forced = state.forcedArms[e1.id] ~= nil
+	state.route = Routes.decide(#newHands > 0 or forced, state.arms[e1.id], short, long)
+	state.stopCount = Routes.length(state.route)
+	StateService.Set({ "run", "stopCount" }, state.stopCount)
+	exposeArm(e1, newHands)
+end
+
 -- Phase entry ---------------------------------------------------------------------------
 
 local Enter: { [string]: (previous: Phase, outcome: Types.Outcome?) -> () } = {}
@@ -214,6 +253,7 @@ Enter.Boarding = function()
 	state.tutorial = Registry.TutorialService.CrewTier(crew)
 	StateService.Set({ "run", "tutorial" }, state.tutorial)
 	Registry.TutorialService.AnnouncePace(crew, state.tutorial)
+	chooseRoute(crew)
 	Registry.CosmeticService.RefreshLivery()
 	Registry.LobbyService.ResetReady()
 end
@@ -221,8 +261,10 @@ end
 -- The ballot, with a sealed mystery ticket when Logic/Mystery says so. Its real station comes from a
 -- seed only the server holds and is handed to RouteService alone; state sees the stand-in.
 local function openBallot()
-	local leg, stops = state.nextStop, Tuning.Run.StationCount
-	local options = RouteGen.options(state.seed, leg, stops, state.lastArchetype)
+	local leg, stops = state.nextStop, state.stopCount
+	-- a first run's first leg is short (Prompt 10: its cruise within 25 s)
+	local firstLegKm = if state.tutorial == 1 then Tuning.Run.FirstLegKm else nil
+	local options = RouteGen.options(state.seed, leg, stops, state.lastArchetype, firstLegKm)
 	local forced = state.forceArchetype
 	if forced and leg <= stops then
 		for _, option in options do
@@ -261,9 +303,11 @@ Enter.Cruise = function()
 	end
 	local index, ticket, option = Registry.RouteService.Close()
 	local arch = Stations.List[option.archetype]
+	-- the Long Line stop this stop's difficulty reads (Logic/Routes: Short stop k reads m(k))
+	local level = Routes.level(state.route, state.nextStop)
 	local d = if arch.terminus
 		then 0
-		else DifficultyModel.forStop(state.nextStop, Tuning.Run.StationCount, option.tier, state.runTier)
+		else DifficultyModel.forStop(level, Tuning.Run.StationCount, option.tier, state.runTier)
 	local train = Registry.TrainService.Get()
 	state.chosen = option
 	state.lastArchetype = option.archetype
@@ -271,14 +315,17 @@ Enter.Cruise = function()
 		DifficultyModel.params(d, arch, Registry.CrewService.AliveCount(), train.upgrades, state.nextStop)
 	local stopParams = state.params :: Types.HazardParams
 	stopParams.stop = state.nextStop
+	stopParams.level = level
 	stopParams.tutorial = state.tutorial
+	local sightingArm = state.arms[ExperimentsConfig.E2.id]
+	stopParams.sighting = if sightingArm then sightingArm == "Sighting" else nil
 	state.sealed = Mystery.isSealed(ticket)
 	if state.sealed then
 		local params = state.params :: Types.HazardParams
 		params.lootMul = Mystery.lootMul(params.lootMul)
 	end
 	state.cruiseSeconds = DifficultyModel.cruiseSeconds(option.distanceKm)
-	Registry.TrainService.BeginLeg(option.distanceKm, state.cruiseSeconds, state.nextStop, d, state.tutorial)
+	Registry.TrainService.BeginLeg(option.distanceKm, state.cruiseSeconds, level, d, state.tutorial)
 	local coalCost = Ledger.legCoalCost(train, option.distanceKm)
 	local destination: Types.Destination = if state.sealed
 		then Mystery.sealed(option.distanceKm, coalCost, option.archetype)
@@ -408,6 +455,13 @@ Enter.Dwell = function()
 	end
 	Registry.HazardDirector.Begin(plan, info)
 	Registry.CrewService.SpawnPendingJoiners()
+	if state.nextStop == 1 and info.emergency == nil then
+		-- E2's exposure: the players present as stop 1's doors open, in either arm (A.4)
+		exposeArm(
+			ExperimentsConfig.E2,
+			Registry.TutorialService.FirstRunPlayers(Registry.CrewService.MemberPlayers())
+		)
+	end
 	local village = state.village
 	if village and info.emergency then
 		village.partsAt = Registry.TrainService.Get().parts
@@ -525,7 +579,8 @@ Enter.RunEnd = function(previous, outcome)
 		finalOutcome,
 		Registry.CrewService.Tallies(),
 		state.stationsCleared,
-		state.runTier
+		state.runTier,
+		state.route
 	)
 	local text = {
 		Victory = "The train reached the Terminus.",
@@ -758,6 +813,20 @@ end
 
 function RunDirector.NextStop(): number
 	return state.nextStop
+end
+
+-- The run's stops before the Terminus (Short or Long Line).
+function RunDirector.StopCount(): number
+	return state.stopCount
+end
+
+function RunDirector.Route(): Routes.Route
+	return state.route
+end
+
+-- Dev `experiment <id> <arm|auto>`: the arm later runs use (nil: back to the hash).
+function RunDirector.DevForceArm(id: string, arm: string?)
+	state.forcedArms[id] = arm :: any -- nil clears it
 end
 
 function RunDirector.StationsCleared(): number

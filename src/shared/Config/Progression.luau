@@ -113,6 +113,7 @@ return table.freeze({
 	Stats = table.freeze({
 		"runs",
 		"victories",
+		"longVictories", -- Long Line victories only (Prompt 10; gates the Long Line's status items)
 		"stationsDeparted",
 		"bestStation",
 		"coalDelivered",

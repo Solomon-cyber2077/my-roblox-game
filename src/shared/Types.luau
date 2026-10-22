@@ -61,6 +61,9 @@ export type HazardParams = {
 	hollowChase: number,
 	hollowDamage: number,
 	stop: number?, -- the stop's number in the run (RunDirector), for the per-stop rules
+	-- the Long Line stop index this stop's difficulty reads (Logic/Routes.level; nil: stop)
+	level: number?,
+	sighting: boolean?, -- E2's arm for a tier-1 stop 1 (Config/Experiments); nil: Config/Tutorial
 	tutorial: number?, -- the crew's tutorial tier (Logic/Tutorial): 1..3, nil or 0 when past it
 	dormantStart: boolean?, -- tutorial stop 1: every Hollow starts asleep, no wanderer, no fog spawns
 	scriptedOnly: boolean?, -- a first run's stop 3: no sleepers, no fog spawns, only its one Stalker
@@ -169,6 +172,16 @@ export type CrewTally = {
 	reachedTerminus: boolean,
 }
 
+-- lobby.line: the hall's route choice (LobbyService, Logic/Routes). fixed: a new Hand is in the
+-- hall, so the length is set (route); otherwise votes per userKey and the counts.
+export type LobbyLine = {
+	fixed: boolean,
+	route: string,
+	short: number,
+	long: number,
+	votes: { [string]: string },
+}
+
 -- lobby.tier: the opt-in run tier the host has picked, the crew's cap and the host's user id.
 export type LobbyTier = { selected: number, max: number, host: string? }
 
@@ -195,6 +208,7 @@ export type TelemetryProfile = {
 	onboarding: boolean, -- in the onboarding funnel: a new player, set on their first visit
 	steps: { [string]: boolean }, -- funnel steps already sent, "<funnel>/<step>"
 	funnels: { [string]: string }, -- funnel session ids, kept so a later visit can finish the funnel
+	cohorts: { [string]: string }, -- each experiment's first exposed arm, never changed (Logic/Experiments)
 }
 
 -- profile.npcs[npcId]: one resident's story for one player (Logic/NpcSave).

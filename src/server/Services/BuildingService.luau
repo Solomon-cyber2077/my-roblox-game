@@ -218,7 +218,7 @@ function BuildingService.Activate(built: StationBuilder.Built, plan: LayoutGen.P
 	end
 	table.clear(lockups)
 	local info = StationService.Info()
-	local stop = if info then info.hazards.stop else nil
+	local stop = if info then info.hazards.level or info.hazards.stop else nil
 	forcingStop = info ~= nil
 		and stop ~= nil
 		and info.emergency == nil

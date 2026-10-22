@@ -277,7 +277,7 @@ local function flags(player: Player): { [string]: boolean }
 	end
 	local tally = Registry.CrewService.Tallies()[player]
 	out.CloseCall = tally ~= nil and tally.closeCalls > 0
-	out.NearTerminus = Registry.RunDirector.NextStop() >= Tuning.Run.StationCount
+	out.NearTerminus = Registry.RunDirector.NextStop() >= Registry.RunDirector.StopCount()
 	return out
 end
 

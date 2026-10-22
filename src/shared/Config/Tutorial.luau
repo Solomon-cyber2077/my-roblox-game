@@ -134,9 +134,9 @@ return table.freeze({
 		ZoneDegrees = 100,
 	}),
 
-	-- Stop 1's scripted sighting (Prompt 5, FIXED; E2's treatment arm, `Enabled` is the arm's flag
-	-- until S7 assigns cohorts). A harmless Stalker appears in sight of the first crew member off
-	-- the train, holds the Stalk freeze, then withdraws at walking pace into the dark.
+	-- Stop 1's scripted sighting (Prompt 5, FIXED; E2's treatment arm). `Enabled` decides while E2
+	-- is off (Config/Experiments); E2's arm decides while it runs. A harmless Stalker appears in
+	-- sight of a crew member off the train, holds the Stalk freeze, then withdraws at walking pace.
 	Sighting = table.freeze({
 		Enabled = true,
 		Kind = "Stalker",
@@ -149,6 +149,7 @@ return table.freeze({
 		SeenSeconds = 1.5, -- every living off-train member has seen it this long: it withdraws
 		MaxSeconds = 12, -- it withdraws by now whatever happens
 		WithdrawSeconds = 8, -- walking away, then it is gone
+		RetrySeconds = 1, -- no spot in view yet: look again this often while someone is off the train
 	}),
 
 	-- Stop 3 of a first run: one Stalker, a wanderer-with-stalk (Prompt 5, FIXED).

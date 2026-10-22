@@ -65,8 +65,8 @@ local Vocab = table.freeze({
 	Milestone = list({ "control", "run_start", "first_stop", "first_hollow_seen" }),
 	Entry = list({ "hall", "car", "join_in_progress" }),
 	InviteSource = list({ "depot", "runcard" }),
-	ExperimentId = list({ "E1", "E2", "E3", "E4" }), -- PROVISIONAL: Prompt 10 names the experiments
-	Arm = list({ "A", "B", "C" }),
+	ExperimentId = list({ "E1", "E2" }), -- Config/Experiments
+	Arm = list({ "A", "B" }), -- an experiment's arms[1], arms[2]
 })
 
 export type EventDef = { fields: { string | false } }

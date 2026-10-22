@@ -25,6 +25,8 @@
 	  sound hiss|creak|alarm  play that hull sound through the game's own code: the hiss as a leak
 	                       6 studs ahead of you for 30 s (walk away to hear it fall off), the
 	                       creak and alarm as at the Emergency tier
+	  experiment <E1|E2> <arm|auto>  force an experiment's arm on the next runs (E1 Short|Long,
+	                       E2 Sighting|None); auto goes back to the hash (Config/Experiments)
 
 	The sky commands set attributes on ReplicatedStorage that AtmosphereController reads in
 	Studio only (DevSkyHour, DevOmen, DevStrike); `sound` sets DevSound and DevSoundAt, read by
@@ -38,6 +40,7 @@ local StarterPlayer = game:GetService("StarterPlayer")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Experiments = require(Shared.Config.Experiments)
 local Items = require(Shared.Config.Items)
 local Tuning = require(Shared.Config.Tuning)
 
@@ -196,6 +199,23 @@ end
 -- `tutorial <reset|0-3>`: the owner's tutorial-run count, as the /tutorial chat command sets it.
 Commands.tutorial = function(player, args)
 	Registry.TutorialService.DevSetRuns(player, args[1] or "reset")
+end
+
+-- `experiment <E1|E2> <arm|auto>`: the arm later runs use (Logic/Experiments).
+Commands.experiment = function(_player, args)
+	local def = Experiments[args[1] or ""]
+	if type(def) ~= "table" or def.arms == nil then
+		print("[Dev] experiment E1 Short|Long|auto, or E2 Sighting|None|auto")
+		return
+	end
+	local arm = args[2]
+	if arm == nil or arm == "auto" or not table.find(def.arms, arm) then
+		Registry.RunDirector.DevForceArm(def.id, nil)
+		print(`[Dev] {def.id}: back to the hash (enabled={def.enabled})`)
+	else
+		Registry.RunDirector.DevForceArm(def.id, arm)
+		print(`[Dev] {def.id}: next runs use {arm}`)
+	end
 end
 
 -- `grasp [studs]`: the server holds you that far from the doorway rail and tries a grasp (Studio).

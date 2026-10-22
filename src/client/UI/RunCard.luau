@@ -9,6 +9,7 @@
 	or 20 s pass with one ready); the count beside it is the crew's ready count. DEPOT (gamepad B)
 	leaves them unready in the hall and closes the card; the backdrop just closes it. H hides the
 	buttons and the hint for a clean screenshot. Only the ended run's members see AGAIN.
+	INVITE (UI/Invite) opens Roblox's invite prompt; hidden when this player may not invite.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -20,6 +21,7 @@ local RunTicketModel = require(ReplicatedStorage.Shared.Logic.RunTicketModel)
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
+local Invite = require(script.Parent.Invite)
 local RunTicket = require(script.Parent.RunTicket)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
@@ -33,6 +35,8 @@ local root: TextButton
 local closeButton: TextButton -- DEPOT
 local againButton: TextButton
 local countLabel: TextLabel
+local inviteButton: TextButton
+local inviteAllowed = false
 local hint: TextLabel
 local ticket: ImageLabel? = nil
 local shownFor: string? = nil
@@ -54,6 +58,7 @@ local function runData(): RunTicketModel.Data
 		outcome = State.Get({ "run", "outcome" }),
 		log = State.Get({ "run", "log" }),
 		nextStop = State.Get({ "run", "nextStop" }),
+		stopCount = State.Get({ "run", "stopCount" }),
 		runId = State.Get({ "run", "runId" }),
 		crew = State.Get({ "crew" }),
 		me = Session.userKey,
@@ -74,6 +79,7 @@ end
 local function refreshAgain()
 	local eligible, chose, ready, of = againState()
 	local shown = closeButton.Visible
+	inviteButton.Visible = inviteAllowed and shown
 	againButton.Visible = eligible and shown
 	countLabel.Visible = eligible and shown and of > 0
 	countLabel.Text = `{ready}/{of} READY`
@@ -103,6 +109,7 @@ local function show()
 		closeButton.Parent = root
 		againButton.Parent = root
 		countLabel.Parent = root
+		inviteButton.Parent = root
 		hint.Parent = root
 		ticket:Destroy()
 	end
@@ -115,6 +122,7 @@ local function show()
 	closeButton.Parent = built
 	againButton.Parent = built
 	countLabel.Parent = built
+	inviteButton.Parent = built
 	hint.Parent = built
 	closeButton.Visible = true
 	hint.Visible = true
@@ -190,6 +198,22 @@ function RunCard.mount(gui: ScreenGui)
 		TextSize = 17,
 	})
 	closeButton.ZIndex = Z + 12
+	inviteButton = Ui.button("INVITE", "Secondary", function()
+		Invite.prompt("runcard")
+	end, {
+		Name = "Invite",
+		Size = UDim2.fromOffset(100, 42),
+		Position = UDim2.new(0, PAD + 306, 1, -RunTicket.FOOT + 6),
+		TextSize = 17,
+	})
+	inviteButton.ZIndex = Z + 12
+	inviteButton.Visible = false
+	Invite.whenChecked(function(allowed)
+		inviteAllowed = allowed
+		if root.Visible then
+			refreshAgain()
+		end
+	end)
 	hint = Ui.text({
 		Name = "Hint",
 		Text = "H hides these buttons",

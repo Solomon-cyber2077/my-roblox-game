@@ -132,6 +132,7 @@ local function run(): string
 			Escaped = function() end,
 			Pried = function() end,
 			Tell = function() end,
+			HollowSeen = function() end,
 		},
 	}
 	local net = {

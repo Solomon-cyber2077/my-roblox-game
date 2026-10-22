@@ -199,6 +199,7 @@ local offTrainAt: { [Player]: number } = {} -- os.clock() each player first stoo
 local scripted: { pending: boolean, hollow: Hollow? } = { pending = false, hollow = nil }
 -- stop 1's scripted sighting on a first run (E2's treatment arm): pending until it appears
 local sightingPending = false
+local sightingTryAt = 0 -- os.clock() of the next try at placing the sighting
 local AGENT = {
 	AgentRadius = 2.2,
 	AgentHeight = 7,
@@ -536,7 +537,8 @@ local function release(hollow: Hollow, why: string)
 	-- post-grab protection (Logic/Threat): no Hollow may grab them for a while, and early on
 	-- the one that held them is staggered and shoved away
 	local p = params
-	local protection = Threat.protection(if p then p.stop or 1 else 1, if p then p.tutorial else nil)
+	local protection =
+		Threat.protection(if p then p.level or p.stop or 1 else 1, if p then p.tutorial else nil)
 	graceUntil[hold.victim] = os.clock() + protection.immunity
 	budgetAt[hold.victim] = graceUntil[hold.victim]
 	if why == "Escaped" and protection.stagger then
@@ -630,7 +632,8 @@ local function seize(hollow: Hollow, target: Player): boolean
 	root.AssemblyLinearVelocity = Vector3.zero
 
 	local now = serverNow()
-	local stop = (params :: Types.HazardParams).stop or 1
+	local hazards = params :: Types.HazardParams
+	local stop = hazards.level or hazards.stop or 1 -- the skill check reads the Long Line level
 	local tier = tutorialTier()
 	local zone = if hollow.scripted
 		then T.ScriptedGrab.ZoneDegrees
@@ -1223,6 +1226,9 @@ local function think(hollow: Hollow)
 				local distance = (root.Position - position).Magnitude
 				if wanderer or distance < A.SightRange then
 					local visible = clearBetween(position, root.Position)
+					if visible then
+						Registry.TelemetryService.HollowSeen(player) -- first_hollow_seen (A.4)
+					end
 					if wanderer or visible or distance <= A.AwarenessRange then
 						if player == current then
 							currentRoot, currentDistance, currentVisible = root, distance, visible
@@ -1741,6 +1747,9 @@ sightingThink = function(hollow: Hollow, dt: number)
 		if root then
 			local sight = clearBetween(position, root.Position)
 			local distance = (root.Position - position).Magnitude
+			if sight then
+				Registry.TelemetryService.HollowSeen(player)
+			end
 			table.insert(watchers, {
 				id = player.UserId,
 				offTrain = not Registry.CrewService.IsAboard(player),
@@ -1778,10 +1787,14 @@ end
 local function tutorialStep()
 	local clock = os.clock()
 	for _, player in Registry.CrewService.AlivePlayers() do
-		if offTrainAt[player] == nil and not Registry.CrewService.IsAboard(player) then
-			offTrainAt[player] = clock
-			if sightingPending then
-				-- the first crew member off the train: the sighting appears in their sight
+		if not Registry.CrewService.IsAboard(player) then
+			if offTrainAt[player] == nil then
+				offTrainAt[player] = clock
+			end
+			if sightingPending and clock >= sightingTryAt then
+				-- a crew member off the train: the sighting appears in their sight, looking again
+				-- every RetrySeconds while no dark spot is in view (lamps, walls)
+				sightingTryAt = clock + T.Sighting.RetrySeconds
 				if spawnSighting(player) then
 					sightingPending = false
 				end
@@ -1888,7 +1901,9 @@ function HollowService.Configure(hazards: Types.HazardParams)
 		pending = tier ~= nil and tier.scriptedGrab and (hazards.stop or 1) == T.ScriptedGrab.Stop,
 		hollow = nil,
 	}
-	sightingPending = tier ~= nil and tier.sighting and T.Sighting.Enabled and (hazards.stop or 1) == 1
+	-- E2's arm when it runs (hazards.sighting), else the Config/Tutorial flag
+	local sightingOn = if hazards.sighting ~= nil then hazards.sighting else T.Sighting.Enabled
+	sightingPending = tier ~= nil and tier.sighting and sightingOn and (hazards.stop or 1) == 1
 end
 
 -- Retain planned sleepers and fill larger buildings with distinct, clear interior spots.

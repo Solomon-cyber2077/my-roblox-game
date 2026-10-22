@@ -243,7 +243,7 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		text = data.stamp,
 		color = if data.won then WIN else Theme.Color.signal,
 		size = 26,
-		Position = UDim2.new(1, -PAD - 110, 1, -RunTicket.FOOT - 16),
+		Position = UDim2.new(1, -PAD - 110, 1, -RunTicket.FOOT - 24),
 		ZIndex = z + 10,
 	})
 	stamp.Parent = ticket
