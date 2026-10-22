@@ -13,6 +13,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
 local Items = require(Shared.Config.Items)
+local Tuning = require(Shared.Config.Tuning)
 local Format = require(Shared.Util.Format)
 
 local Net = require(script.Parent.Parent.Net)
@@ -239,6 +240,7 @@ local function onFx(kind: string, data: { [string]: any }?)
 	elseif kind == "Clutch" then
 		if d.userId == Players.LocalPlayer.UserId then
 			Overlay.alert("BY A WHISKER!", Theme.Color.brassLight, 2.2)
+			Registry.CameraController.ShakeFor(0.35, Tuning.Grasp.CameraKickSeconds)
 			audio("Clutch")
 		end
 	elseif kind == "Purchased" then

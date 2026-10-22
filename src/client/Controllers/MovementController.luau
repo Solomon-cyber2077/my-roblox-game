@@ -13,6 +13,7 @@ local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
@@ -22,6 +23,7 @@ local Inventory = require(Shared.Logic.Inventory)
 local MathX = require(Shared.Util.MathX)
 
 local Registry = require(script.Parent.Parent.Registry)
+local Net = require(script.Parent.Parent.Net)
 
 local MovementController = {}
 
@@ -63,6 +65,26 @@ end
 function MovementController.Init() end
 
 function MovementController.Start()
+	UserInputService.JumpRequest:Connect(function()
+		local character = Players.LocalPlayer.Character
+		if character == nil or character:GetAttribute("GrabStyle") ~= nil then
+			return
+		end
+		local grasp = character:GetAttribute("Grasp")
+		if grasp == "Hang" or grasp == "Haul" or grasp == "Miss" then
+			return
+		end
+		local departure = Registry.DepartureClock
+		local phase = Registry.StateController.Get({ "run", "phase" })
+		if
+			phase == "Departure"
+			and departure
+			and not departure.InGrace()
+			and character:GetAttribute("OffTrain") == true
+		then
+			Net.Fire("Grasp")
+		end
+	end)
 	ContextActionService:BindActionAtPriority(
 		"LTO_Sprint",
 		onSprint,
@@ -83,9 +105,11 @@ function MovementController.Start()
 			return
 		end
 		local held = character:GetAttribute("GrabStyle") ~= nil
+		local grasp = character:GetAttribute("Grasp")
+		local grasping = grasp == "Hang" or grasp == "Haul"
 		local carriers = character:GetAttribute("PayrollCarriers")
 		local carrying = typeof(carriers) == "number" and carriers > 0
-		local immobilized = frozen or held
+		local immobilized = frozen or held or grasping
 		local moving = humanoid.MoveDirection.Magnitude > 0.1
 		local crew = Tuning.Crew
 		local clock = os.clock()

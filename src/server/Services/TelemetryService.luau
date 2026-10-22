@@ -432,7 +432,7 @@ local function stopResolved(current: Run, entry: Types.LogEntry)
 	local share = if current.dwell and current.dwell > 0 then doors / current.dwell * 100 else 0
 	local crewSize = Telemetry.crewSize(current.crewSize)
 	local outcome = string.lower(entry.outcome)
-	crewEvent(current, "stop_resolved", round(share, 1), { stop, outcome, "none" })
+	crewEvent(current, "stop_resolved", round(share, 1), { stop, outcome, entry.bell or "none" })
 	crewEvent(current, "stop_archetype", 1, { stop, entry.archetype, crewSize })
 	crewEvent(current, "stop_timing", round(doors, 1), { stop, Telemetry.doorsOpen(doors), crewSize })
 	for _, participant in current.order do

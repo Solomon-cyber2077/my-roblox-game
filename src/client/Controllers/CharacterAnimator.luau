@@ -132,10 +132,19 @@ local function animate(rig: Rig, dt: number, now: number)
 		rig.phase += dt * CrewPoses.cadence(speed)
 	end
 
+	local grasp = model:GetAttribute("Grasp") :: string?
 	local style = model:GetAttribute("GrabStyle") :: string?
 	local target: CrewPoses.Pose
 	local rate = 16
-	if style then
+	if grasp == "Hang" or grasp == "Haul" or grasp == "Miss" then
+		local at = (model:GetAttribute("GraspAt") :: number?) or now
+		local t = math.max(now - at, 0)
+		target = if grasp == "Hang"
+			then CrewPoses.hang(t, now, rig.seed)
+			elseif grasp == "Haul" then CrewPoses.haul(t, now, rig.seed)
+			else CrewPoses.fallShort(t, now, rig.seed)
+		rate = 24
+	elseif style then
 		local at = (model:GetAttribute("GrabAt") :: number?) or now
 		local struggle = if rig.mine and Registry.GrabController
 			then Registry.GrabController.Struggle()

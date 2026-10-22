@@ -18,6 +18,8 @@ local StationReach = {}
 export type Reach = {
 	dist: { [number]: number }, -- studs from the train, keyed gz * cols + gx; missing = unreachable
 	farthestLoot: number, -- studs to the farthest container or loose pickup
+	farthestPayroll: number, -- studs to the payroll delivery cell
+	payrollUnreachable: number, -- payroll cells no walk reaches
 	unreachable: number, -- containers and pickups no walk reaches
 	walkable: number, -- tiles you can stand on (outside the safe strip)
 	area: number, -- walkable studs², safe strip included
@@ -62,8 +64,8 @@ function StationReach.measure(plan: any): Reach
 		end
 	end
 
-	local farthest, unreachable = 0, 0
-	local function spot(x: number, z: number)
+	local farthest, unreachable, farthestPayroll, payrollUnreachable = 0, 0, 0, 0
+	local function spot(x: number, z: number, payroll: boolean?)
 		local gx, gz = StationReach.tileOf(plan, x, z)
 		local d = dist[gz * cols + gx]
 		if d == nil then
@@ -77,9 +79,17 @@ function StationReach.measure(plan: any): Reach
 			end
 		end
 		if d == nil then
-			unreachable += 1
+			if payroll then
+				payrollUnreachable += 1
+			else
+				unreachable += 1
+			end
 		else
-			farthest = math.max(farthest, d)
+			if payroll then
+				farthestPayroll = math.max(farthestPayroll, d)
+			else
+				farthest = math.max(farthest, d)
+			end
 		end
 	end
 	for _, container in plan.containers do
@@ -87,6 +97,9 @@ function StationReach.measure(plan: any): Reach
 	end
 	for _, item in plan.loose do
 		spot(item.x, item.z)
+	end
+	if plan.payroll then
+		spot(plan.payroll.x, plan.payroll.z, true)
 	end
 
 	local walkable = 0
@@ -100,6 +113,8 @@ function StationReach.measure(plan: any): Reach
 	return {
 		dist = dist,
 		farthestLoot = farthest,
+		farthestPayroll = farthestPayroll,
+		payrollUnreachable = payrollUnreachable,
 		unreachable = unreachable,
 		walkable = walkable,
 		area = (walkable + plan.safeRows * cols) * tile * tile,

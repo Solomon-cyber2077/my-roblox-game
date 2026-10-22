@@ -30,15 +30,8 @@ local Run = Tuning.Run
 local Crew = Tuning.Crew
 
 -- Stop clock B (B.4, Prompt 4): the clock the design adopts. Until Prompt 4 lands it is a scenario
--- here, beside the clock the game runs now. WalkReference sizes the timer only.
-local CLOCK_B = {
-	Search = { 80, 60 },
-	PerBuildingTile = Difficulty.StopClock.PerBuildingTile,
-	BuildingTileCap = Difficulty.StopClock.BuildingTileCap,
-	WalkMargin = 1.4,
-	PerStop = 3,
-	WalkReference = 30,
-}
+-- here, beside the shipped clock. WalkReference sizes the timer only.
+local CLOCK_B = Difficulty.StopClock
 
 local function round(x: number, digits: number?): number
 	local m = 10 ^ (digits or 0)
@@ -53,7 +46,7 @@ local function csv(values: { any }): string
 	return table.concat(out, ",")
 end
 
--- The clock the game runs now: DifficultyModel.dwell itself.
+-- The shipped clock: DifficultyModel.dwell itself.
 local function dwellNow(d: number, arch: any, stop: number): number
 	return DifficultyModel.dwell(d, arch, stop)
 end
@@ -86,16 +79,16 @@ local function assumptions()
 		`Run: {N} stops then the Terminus; run tier 1 unless stated; no upgrades; route tier from the first offered option.`
 	)
 	print(
-		`Speeds: walk {Crew.WalkSpeed}, sprint {Crew.SprintSpeed} (reach and chases use these). Timer walk term: clock now uses Crew.WalkSpeed {Crew.WalkSpeed}; clock B uses WalkReference {CLOCK_B.WalkReference} (timer only).`
+		`Speeds: walk {Crew.WalkSpeed}, sprint {Crew.SprintSpeed} (reach and chases use these). Timer walk term uses WalkReference {CLOCK_B.WalkReference} (timer only).`
 	)
 	print(
-		`Clock now: Search {Difficulty.StopClock.Search[1]}/{Difficulty.StopClock.Search[2]}, WalkMargin {Difficulty.StopClock.WalkMargin}, PerStop {Difficulty.StopClock.PerStop}, Detour {Difficulty.StopClock.Detour}.`
+		`Clock: Search {Difficulty.StopClock.Search[1]}/{Difficulty.StopClock.Search[2]}, WalkMargin {Difficulty.StopClock.WalkMargin}, PerStop {Difficulty.StopClock.PerStop}, Detour {Difficulty.StopClock.Detour}.`
 	)
 	print(
-		`Clock B:   Search {CLOCK_B.Search[1]}/{CLOCK_B.Search[2]}, WalkMargin {CLOCK_B.WalkMargin}, PerStop {CLOCK_B.PerStop}, Detour {Difficulty.StopClock.Detour} (scenario until Prompt 4).`
+		`Clock B matches shipped clock: Search {CLOCK_B.Search[1]}/{CLOCK_B.Search[2]}, WalkMargin {CLOCK_B.WalkMargin}, PerStop {CLOCK_B.PerStop}, Detour {Difficulty.StopClock.Detour}.`
 	)
 	print(
-		`Bell: not implemented yet (Prompt 4). Scenarios pull at elapsed share u of the original params.dwell (LastCall included) from doorsOpenAt; departAt becomes min(departAt, pull + {BELL_LEAD} s). Eligibility is assumed, not simulated.`
+		`Bell scenarios pull at elapsed share u of dwell from doorsOpenAt; departAt becomes min(departAt, pull + {BELL_LEAD} s). Eligibility is assumed, not simulated.`
 	)
 end
 
@@ -300,7 +293,9 @@ local function routeModel()
 	section(
 		`Route model ({seeds} seeds, first offered route, run tier 1, no upgrades, Countdown through RunEnd; telemetry run_ended stops at RunEnd entry, {Run.RunEndSeconds} s sooner)`
 	)
-	print("line,stops,crew,clock,scenario,eligibility,mean_min,min_min,max_min,mean_doors_open_s")
+	print(
+		"line,stops,crew,clock,scenario,eligibility,mean_min,median_min,p10_min,p90_min,min_min,max_min,mean_doors_open_s"
+	)
 	local lines = {
 		{ name = "Long Line", stops = N, note = "" },
 		{
@@ -314,12 +309,19 @@ local function routeModel()
 			for _, clock in CLOCKS do
 				for _, scenario in SCENARIOS do
 					local sum, lo, hi, doors = 0, math.huge, -math.huge, 0
+					local samples: { number } = {}
 					for seed = 1, seeds do
 						local seconds, meanDoors = simulate(seed, line.stops, crew, clock.dwell, scenario)
 						sum += seconds
+						table.insert(samples, seconds)
 						lo = math.min(lo, seconds)
 						hi = math.max(hi, seconds)
 						doors += meanDoors
+					end
+					table.sort(samples)
+					local function percentile(pct: number): number
+						local index = math.max(1, math.ceil(#samples * pct))
+						return samples[index]
 					end
 					print(csv({
 						line.name .. line.note,
@@ -329,6 +331,9 @@ local function routeModel()
 						scenario.name,
 						scenario.eligibility,
 						round(sum / seeds / 60, 2),
+						round(percentile(0.5) / 60, 2),
+						round(percentile(0.1) / 60, 2),
+						round(percentile(0.9) / 60, 2),
 						round(lo / 60, 2),
 						round(hi / 60, 2),
 						round(doors / seeds),

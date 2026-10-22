@@ -1,5 +1,20 @@
 # HANDOFF
 
+## 2026-10-22: S5 / PROMPT 4, BELL, STOP CLOCK B AND THE RAILING GRASP (Astra started, Claude finished)
+1. Completed
+- Bell: a rope by the route board (TrainInterior), `TrainService.RingBell` (Dwell, alive, aboard, within 9 studs) -> `RunDirector.ShortenStop`. u = elapsed since doorsOpenAt / the ORIGINAL params.dwell (LastCall included); "all" at u >= 0.40 with every living member aboard, "half" at u >= 0.60 with at least ceil(living/2) aboard. departAt = min(departAt, now + 30) only if strictly shorter (idempotent, never extends); Dwell ends 15 s before; startedAt and the hazard dwell are kept; timed events cancel; the branch is stored and reported on stop_resolved. No bell at the Emergency Village or the Terminus. Logic/DepartureBell + spec.
+- Stop clock B shipped: WalkReference 30 (timer only), Search 80/60, WalkMargin 1.4, PerStop 3. Report: 47.57 min no bell / 33.85 at u 0.40 / 40.09 at u 0.60 / 41.09 with 60% of stops at 0.50 (was 58.3 min after S2's walk 21).
+- Payroll reach: StationReach measures the payroll cell's BFS route; specs hold it inside farWalk and the solo inequality (farWalk/21 + farWalk/13.65 + 0.5 + approach <= dwell - 15) at D0/D1, stops 1 and 10. Studio Minehead (largest farWalk 720): PathfindingService route 435.5 studs (agent radius 1.6) / 448.7 (2.2), straight 425.4; solo return ~54.8 s against 175 s.
+- Grasp: Jump during the live chase window sends `Grasp`; GraspService snapshots the server's root and the nearest static GraspRail once at receipt (no history, no extrapolation). Logic/RailingGrasp: reach 3 + 0.5 + min(closing x 0.1, 1.0) (3.5-4.5), press estimate = receipt - one-way latency clamped 0-0.2 s for the window only, receipt <= chaseEnd + 0.2 (RunDirector holds Departure that long). Aboard credited at attachment and held until the departure resolves; 0.6 s hang, 0.5 s haul into the doorway, collisions off then restored; miss = 0.5 s stumble, retry allowed; left-behind line gives the measured shortfall ("less than 0.1 stud short" under 0.1; window/state reasons stated as such). CrewPoses hang/haul/fallShort; 0.35 s camera kick on Clutch. Telemetry grasp/grasp_shortfall (+ grasp_reach, grasp_press_offset diagnostics); GraspResult adds window/state/occupied.
+- Studio-only: Dev `bell`, `grasp [studs]` (server holds the pose then runs the normal attempt).
+2. Verified / known gaps
+- `lune run check` passed on the merge: 479 tests, audit clean (Grabs 0.00 short).
+- Studio: bell at u ~0.45 cut 1:43 to 0:29 ("all"), a second pull was refused; grasp from 6 studs missed (shortfall 2.64, stumble), from 2 studs caught (Hang 0.56 s, Haul 0.51 s, released inside the cab, stop cleared, Clutch + "made it", no fall). Merged build: bell, Stalk/guard/grab and telemetry ran together without script errors.
+- Fixed during testing: TrainShell was swapping the GraspRails out (kept by name now); a credited grasp could be undone by positionTick after release (now held to departure).
+- PENDING: the two-client latency matrix (0/50/100/200 ms) and real Jump/touch/gamepad presses. A scripted client could not hold a pose on the moving platform for the receipt snapshot, so the network path of the grasp is unverified; Studio checks used the server-held Dev path. T-10 after a bell jump not observed separately (DepartureSchedule returns only the latest milestone, spec'd before).
+3. Next logical step
+- S6 (Prompt 5, first run and AGAIN), then S7, S8, then the G1 playtest.
+
 ## 2026-10-22: S4 / PROMPT 3, BODY LANGUAGE
 1. Completed
 - Logic/HollowMotion (pure, spec'd): look-at yaw with the 0.25 s lag and per-kind caps (Stalker 70, Crawler 50, Brute 35), prowl scan, lean from forward acceleration (clamped 0.3 rad), blend rules (Prowl/Stalk/Hunt/Recover/Repelled ease out over 0.28 s; Coil, Windup and Lunge snap), and foot plants by gait phase (bipeds at pi/2 and 3pi/2, the Crawler's four limbs as each swing ends).

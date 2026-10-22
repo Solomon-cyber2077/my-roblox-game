@@ -28,6 +28,7 @@ local TrainShell = {}
 -- parts of the primitive train that something else finds by name or attribute
 local KEEP_NAMES = {
 	DoorBlocker = true,
+	GraspRail = true, -- the railing grasp's handholds (Services/GraspService)
 	Seat = true,
 	ChimneyTop = true,
 	SteamVent = true,

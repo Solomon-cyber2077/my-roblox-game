@@ -39,6 +39,47 @@ describe("Station reach", function()
 		end)
 	end)
 
+	it("reaches every payroll cell within the far-corner bound", function()
+		eachPlan(function(id, arch, plan)
+			local reach = StationReach.measure(plan)
+			if plan.payroll then
+				expect(reach.payrollUnreachable).toBe(0)
+				if reach.farthestPayroll > DifficultyModel.farWalk(arch) then
+					error(
+						`{id}: payroll route {reach.farthestPayroll} exceeds far-walk {DifficultyModel.farWalk(
+							arch
+						)}`
+					)
+				end
+			end
+		end)
+	end)
+
+	it("keeps solo payroll delivery inside the D0 and D1 stop clocks", function()
+		local carrySpeed = 13.65
+		local deliveryApproachSeconds = 4 / carrySpeed
+		-- LayoutGen keeps payroll in the open back yard; no room door is traversed.
+		local mandatoryDoorSeconds = 0
+		eachPlan(function(id, arch, plan)
+			if plan.payroll then
+				local farWalk = DifficultyModel.farWalk(arch)
+				for _, d in { 0, 1 } do
+					for _, stop in { 1, STOPS } do
+						local dwell = DifficultyModel.dwell(d, arch, stop)
+						local seconds = farWalk / Tuning.Crew.WalkSpeed
+							+ farWalk / carrySpeed
+							+ 0.5
+							+ deliveryApproachSeconds
+							+ mandatoryDoorSeconds
+						if seconds > dwell - 15 then
+							error(`{id}: D{d} stop {stop} payroll {seconds} s exceeds {dwell - 15} s`)
+						end
+					end
+				end
+			end
+		end)
+	end)
+
 	it("leaves no walkable ground cut off from the platform", function()
 		eachPlan(function(id, _, plan)
 			local reach = StationReach.measure(plan)

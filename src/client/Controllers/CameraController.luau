@@ -32,6 +32,10 @@ local CAM = Tuning.Camera
 local TRAIN_MIN_X, TRAIN_MAX_X = -97, 97
 
 local trauma = 0
+local timedKick = 0
+local timedKickAmount = 0
+local timedKickLeft = 0
+local timedKickDuration = 0
 local fov = 70
 local throb = 0 -- a heartbeat's squeeze, decaying
 local THROB_FOV = 2.6 -- degrees the view narrows at a full throb
@@ -217,7 +221,15 @@ function CameraController.Start()
 		rumble += pace * 0.05 * echo
 
 		trauma = math.max(trauma - dt * 1.4, 0)
-		local shake = trauma * trauma + rumble
+		if timedKickLeft > 0 then
+			timedKickLeft = math.max(timedKickLeft - dt, 0)
+			timedKick = timedKickAmount
+				* if timedKickDuration > 0 then timedKickLeft / timedKickDuration else 0
+		else
+			timedKick = 0
+			timedKickAmount = 0
+		end
+		local shake = trauma * trauma + timedKick * timedKick + rumble
 		local t = os.clock()
 		local offset = CFrame.identity
 		if camera.CameraType == Enum.CameraType.Custom then
@@ -307,6 +319,14 @@ end
 -- Adds a one-off shake. 0.3 is a nudge, 1 is a heavy hit.
 function CameraController.Shake(amount: number)
 	trauma = math.min(trauma + amount, 1.2)
+end
+
+-- A local camera impulse with an explicit lifetime, used for short success cues.
+function CameraController.ShakeFor(amount: number, duration: number)
+	timedKickAmount = math.max(timedKickAmount, amount)
+	timedKick = timedKickAmount
+	timedKickDuration = math.max(duration, 0)
+	timedKickLeft = timedKickDuration
 end
 
 -- Drags the view toward `point` every frame until it is cleared with nil.

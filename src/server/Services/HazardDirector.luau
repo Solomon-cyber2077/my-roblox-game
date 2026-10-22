@@ -211,4 +211,8 @@ function HazardDirector.Stop()
 	timeline = nil
 end
 
+function HazardDirector.CancelTimedEvents()
+	TimedEventDirector.Cancel()
+end
+
 return HazardDirector

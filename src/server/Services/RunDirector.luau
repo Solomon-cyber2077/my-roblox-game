@@ -23,6 +23,7 @@ local Mystery = require(Shared.Logic.Mystery)
 local RouteGen = require(Shared.Logic.RouteGen)
 local RunLog = require(Shared.Logic.RunLog)
 local RunRules = require(Shared.Logic.RunRules)
+local DepartureBell = require(Shared.Logic.DepartureBell)
 local Format = require(Shared.Util.Format)
 local Rng = require(Shared.Util.Rng)
 local Safe = require(Shared.Util.Safe)
@@ -56,6 +57,9 @@ type RunState = {
 	plan: LayoutGen.Plan?,
 	outcome: Types.Outcome?,
 	departed: boolean, -- false only during the Last Call grace, while the station is still docked
+	chaseStart: number?,
+	chaseEnd: number?,
+	resolutionEndsAt: number?,
 	mystery: Mystery.History, -- junctions since the last mystery ticket
 	sealed: boolean, -- this leg's destination is a mystery not yet revealed
 	forceMystery: boolean, -- Dev `mystery`: the next ballot has one
@@ -84,6 +88,9 @@ local state: RunState = {
 	plan = nil,
 	outcome = nil,
 	departed = true,
+	chaseStart = nil,
+	chaseEnd = nil,
+	resolutionEndsAt = nil,
 	mystery = Mystery.newHistory(),
 	sealed = false,
 	forceMystery = false,
@@ -146,6 +153,9 @@ local function logStop(outcome: Types.StopOutcome, closeCalls: { string }?)
 	local pending = state.pending
 	if pending == nil then
 		return
+	end
+	if state.info then
+		pending.bell = state.info.bell
 	end
 	state.pending = nil
 	local log = StateService.Get({ "run", "log" }) :: { Types.LogEntry }?
@@ -383,6 +393,8 @@ Enter.Dwell = function()
 	-- The doors open now: re-anchor the station clock to this exact moment.
 	info.startedAt = now()
 	info.departAt = info.startedAt + info.dwell
+	info.originalDwell = info.dwell
+	info.bell = "none"
 	Registry.StationService.SetInfo(info)
 	StateService.Set({ "run", "station" }, info)
 	Registry.TrainService.SetDoors(true)
@@ -419,6 +431,13 @@ end
 -- The actual departure: the end of the Last Call grace (at once when there is none).
 local function depart()
 	state.departed = true
+	local chaseStart = now()
+	local chaseEnd = chaseStart + (state.params :: Types.HazardParams).chaseWindow
+	state.chaseStart = chaseStart
+	state.chaseEnd = chaseEnd
+	state.endsAt = chaseEnd
+	state.resolutionEndsAt = chaseEnd + Tuning.Grasp.ResolutionBuffer
+	StateService.Set({ "run", "phaseEndsAt" }, state.endsAt)
 	local params = state.params :: Types.HazardParams
 	Registry.HazardDirector.Freeze()
 	Registry.HollowService.LetGo()
@@ -427,6 +446,9 @@ end
 
 -- T-0: the whistle blows. The station stays docked through the grace, then departs (tick).
 Enter.Departure = function()
+	state.chaseStart = nil
+	state.chaseEnd = nil
+	state.resolutionEndsAt = nil
 	Registry.CrewService.MarkLastCall()
 	local info = state.info
 	local grace = RunRules.graceSeconds()
@@ -518,12 +540,16 @@ local function transition(nextPhase: any, outcome: any)
 	end
 	state.phase = nextPhase
 	state.startedAt = now()
+	state.resolutionEndsAt = nil
 	local enterFn = Enter[nextPhase]
 	if enterFn then
 		Safe.call(`RunDirector.enter {nextPhase}`, enterFn, previous, outcome)
 	end
 	local duration = RunRules.duration(nextPhase, context())
 	state.endsAt = if duration then state.startedAt + duration else nil
+	if nextPhase == "Departure" and state.chaseEnd then
+		state.endsAt = state.chaseEnd
+	end
 	if nextPhase == "LastCall" and state.info then
 		-- Anchor to the published departure so the clock and the phase can never disagree.
 		state.endsAt = state.info.departAt
@@ -545,7 +571,10 @@ local function tick()
 			Safe.call("RunDirector.depart", depart)
 		end
 	end
-	if state.endsAt and now() >= state.endsAt then
+	local deadline = if state.phase == "Departure"
+		then state.resolutionEndsAt or state.endsAt
+		else state.endsAt
+	if deadline and now() >= deadline then
 		local nextPhase = RunRules.next(state.phase, ctx)
 		if state.phase == "Departure" and state.village then
 			nextPhase = "Cruise" -- the Emergency Village: back on the interrupted trip
@@ -570,6 +599,43 @@ function RunDirector.ExtendPhase(seconds: number)
 		state.endsAt += seconds
 		StateService.Set({ "run", "phaseEndsAt" }, state.endsAt)
 	end
+end
+
+function RunDirector.ShortenStop(_player: Player): (boolean, string?)
+	local info = state.info
+	if state.phase ~= "Dwell" or info == nil or info.terminus or state.village ~= nil then
+		return false, "not_dwell"
+	end
+	local original = info.originalDwell or info.dwell
+	local alive = Registry.CrewService.AlivePlayers()
+	local aboard = 0
+	for _, member in alive do
+		if Registry.CrewService.IsAboard(member) then
+			aboard += 1
+		end
+	end
+	local branch: DepartureBell.Branch? =
+		DepartureBell.branch(aboard, #alive, now() - info.startedAt, original)
+	if branch == nil then
+		return false, "ineligible"
+	end
+	local proposed = DepartureBell.proposed(info.departAt, now())
+	if proposed == nil then
+		return false, "already_shortened"
+	end
+	info.departAt = proposed
+	info.bell = branch
+	state.endsAt = proposed - Tuning.Run.LastCallSeconds
+	Registry.StationService.SetInfo(info)
+	StateService.Set({ "run", "station" }, info)
+	StateService.Set({ "run", "phaseEndsAt" }, state.endsAt)
+	Registry.HazardDirector.CancelTimedEvents()
+	NetService.FireAll("Notify", "Warning", "The departure bell has been rung.")
+	return true, branch
+end
+
+function RunDirector.ChaseWindow(): (number?, number?)
+	return state.chaseStart, state.chaseEnd
 end
 
 -- Ends the run now with `outcome` (the train lost to a second breakdown).

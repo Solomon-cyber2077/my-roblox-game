@@ -16,6 +16,7 @@
 	  device    nil or a short word (Logic/Telemetry.device reads anything unlisted as unknown)
 ]]
 
+local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Difficulty = require(script.Parent.Parent.Config.Difficulty)
 
 export type ArgKind = string -- "boolean" | "slot" | "option" | "id"
@@ -41,6 +42,12 @@ local Remotes: { [string]: RemoteDef } = {
 	ShopPurchase = { direction = "ToServer", args = { "id" }, rate = 2, burst = 3 },
 	SetSetting = { direction = "ToServer", args = { "id", "id" }, rate = 4, burst = 4 },
 	ShopEquip = { direction = "ToServer", args = { "id" }, rate = 4, burst = 4 },
+	Grasp = {
+		direction = "ToServer",
+		args = {},
+		rate = Tuning.Grasp.AttemptRate,
+		burst = Tuning.Grasp.AttemptBurst,
+	},
 	JoinInProgress = { direction = "ToServer", args = {}, rate = 1, burst = 1 },
 	-- one press for a skill check while a Hollow holds you, with the server time the client saw
 	-- when the key went down; the server judges (within a latency tolerance) and rate-limits it
