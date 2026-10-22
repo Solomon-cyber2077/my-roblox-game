@@ -16,7 +16,15 @@
 	  Emerge    rising, climbing or waking (attribute Emerge): no moving, no striking yet
 	  Dormant   a sleeper in a building, until crew come close or the dwell runs on
 	  Prowl     no target: drift between the light and the fog
-	  Hunt      chase the nearest crew member it senses, pathing around walls, lunging close
+	  Stalk     a crew member sensed (Logic/Stalk): hold the 24-33-stud shadow band, freeze while
+	            faced, slip between cover while not; commit to Hunt on Surge, proximity, a seized
+	            target, the maximum stalk or a turned back. Only the nearest Hollow stalks a target;
+	            one stalk per Hollow per target per stop
+	  Hunt      chase the nearest crew member it senses, pathing around walls, lunging close.
+	            The first-strike guard: until a target has had 1.5 s of warning in sight within 36
+	            studs from this Hollow, it coils (WarningCoil), will not close inside 16 on its own
+	            and cannot wind up, lunge or strike. A shut locked door in the way can be forced
+	            on a forcing stop (BuildingService owns the timer)
 	  Windup    the tell: it rears back, and seizes the target if it is still in reach
 	  Grab      holding its prey (Config/Grabs): it bites on the grab's rhythm until the
 	            victim wins their skill checks (Logic/SkillCheck), the crew pry them loose,
@@ -50,6 +58,7 @@ local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 local SkillCheck = require(Shared.Logic.SkillCheck)
+local Stalk = require(Shared.Logic.Stalk)
 local Threat = require(Shared.Logic.Threat)
 local Tutorial = require(Shared.Logic.Tutorial)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
@@ -137,6 +146,20 @@ type Hollow = {
 	checkAt: number,
 	hold: Hold?,
 	scripted: Player?, -- the tutorial's teaching Crawler: it hunts only this player
+	stalk: StalkRun?, -- the stalk under way
+	exposure: { [Player]: number }, -- warning seconds each target has had from this Hollow
+	stalked: { [Player]: number }, -- os.clock() it stalked each target this stop (the budget)
+	noStalkUntil: number, -- after a stun or stagger
+	lastThink: number,
+	door: BasePart?, -- the shut door it is forcing
+}
+
+type StalkRun = {
+	target: Player,
+	track: Stalk.Track,
+	point: Vector3?, -- the shadow point it is making for
+	searchAt: number, -- os.clock() of the last shadow-point search
+	unseenSince: number?, -- os.clock() line of sight was lost
 }
 
 local H = Tuning.Hollow
@@ -155,6 +178,7 @@ local roomParams = OverlapParams.new()
 roomParams.FilterType = Enum.RaycastFilterType.Exclude
 roomParams.RespectCanCollide = true
 local graceUntil: { [Player]: number } = {}
+local budgetAt: { [Player]: number } = {} -- when a target's post-grab immunity ends: stalk budgets reset
 local alertUntil = 0 -- os.clock() until which every Hollow hunts the crew (a Surge)
 local T = Difficulty.Tutorial
 local safeLights: { BasePart } = {} -- parts tagged SafeLight
@@ -498,6 +522,10 @@ local function release(hollow: Hollow, why: string)
 	local p = params
 	local protection = Threat.protection(if p then p.stop or 1 else 1, if p then p.tutorial else nil)
 	graceUntil[hold.victim] = os.clock() + protection.immunity
+	budgetAt[hold.victim] = graceUntil[hold.victim]
+	if why == "Escaped" and protection.stagger then
+		hollow.noStalkUntil = os.clock() + Difficulty.PostGrab.StaggerSeconds + Tuning.Stalk.StunExclusion
+	end
 	character:SetAttribute("GrabImmuneUntil", serverNow() + protection.immunity)
 	for _, name in { "GrabStyle", "GrabAt", "GrabVictim" } do
 		hollow.model:SetAttribute(name, nil)
@@ -666,6 +694,10 @@ local function seize(hollow: Hollow, target: Player): boolean
 		end
 	end)
 	setState(hollow, "Grab")
+	-- the first strike on this target has landed: the guard is for first strikes only
+	hollow.exposure[target] = math.max(hollow.exposure[target] or 0, Tuning.Stalk.WarnSeconds)
+	hollow.model:SetAttribute("WarningCoil", nil)
+	hollow.model:SetAttribute("WarningTarget", nil)
 	NetService.Fire("Fx", target, "Grabbed", { style = def.id, kind = hollow.kind })
 	Registry.TelemetryService.Grabbed(target, hollow.kind)
 	return true
@@ -869,6 +901,182 @@ local function shouldWake(hollow: Hollow): boolean
 	return false
 end
 
+-- Stalking (Logic/Stalk) ------------------------------------------------------------------------
+
+local function flat(v: Vector3): Vector3
+	return Vector3.new(v.X, 0, v.Z)
+end
+
+local function endStalk(hollow: Hollow)
+	if hollow.stalk then
+		hollow.stalk = nil
+		hollow.model:SetAttribute("StalkTarget", nil)
+	end
+	hollow.model:SetAttribute("Frozen", nil)
+end
+
+local function prowl(hollow: Hollow, clock: number)
+	if clock >= hollow.wanderUntil then
+		local point = wanderPoint()
+		if point then
+			moveToward(hollow, spaced(hollow, point), false)
+		end
+		hollow.wanderUntil = clock + rng:NextNumber(3, 6)
+	end
+end
+
+-- Inside a light's pool: the lit band by the train, a SafeLight or a working building lamp. Red
+-- edge danger lamps make no pool.
+local function inLampPool(position: Vector3): boolean
+	if isLit(position) or StationService.ToLocal(position).Z < safeEdge() then
+		return true
+	end
+	for _, light in CollectionService:GetTagged("LTO_BuildingLamp") do
+		local bulb = light.Parent
+		if
+			light:IsA("Light")
+			and light.Enabled
+			and bulb
+			and bulb:IsA("BasePart")
+			and (bulb.Position - position).Magnitude < Tuning.Stalk.LampPool
+		then
+			return true
+		end
+	end
+	return false
+end
+
+-- Whether the crew member at `root` faces `at`: their root's look, never the camera, so a glance
+-- never freezes a Hollow.
+local function facedBy(root: BasePart, at: Vector3): boolean
+	local look = root.CFrame.LookVector
+	local to = at - root.Position
+	return Stalk.facing(look.X, look.Z, to.X, to.Z)
+end
+
+local function nearestCrewmate(player: Player, at: Vector3): number
+	local best = math.huge
+	for _, other in Registry.CrewService.AlivePlayers() do
+		local root = if other ~= player then characterRoot(other) else nil
+		if root then
+			best = math.min(best, (root.Position - at).Magnitude)
+		end
+	end
+	return best
+end
+
+-- A shadow point for a stalk: in the 24-33-stud band around the prey, in sight of them, on open
+-- ground outside every light's pool, and the nearest such to the Hollow. Nil when none is legal.
+local function shadowPoint(hollow: Hollow, preyAt: Vector3): Vector3?
+	local near, far = Stalk.band()
+	local away = flat(hollow.root.Position - preyAt)
+	local bearing = if away.Magnitude > 0.1
+		then math.atan2(away.X, away.Z)
+		else rng:NextNumber(0, 2 * math.pi)
+	local best: Vector3? = nil
+	local bestDistance = math.huge
+	for _ = 1, Tuning.Stalk.ShadowSamples do
+		local angle = bearing + math.rad(rng:NextNumber(-80, 80))
+		local guess = preyAt + Vector3.new(math.sin(angle), 0, math.cos(angle)) * rng:NextNumber(near, far)
+		local ground = Workspace:Raycast(guess + Vector3.yAxis * 12, -Vector3.yAxis * 40, sightParams)
+		if ground and ground.Normal.Y > 0.6 and math.abs(ground.Position.Y - preyAt.Y) < 8 then
+			local point = ground.Position
+			if not inLampPool(point) and clearBetween(point, preyAt) then
+				local distance = (point - hollow.root.Position).Magnitude
+				if distance < bestDistance then
+					best, bestDistance = point, distance
+				end
+			end
+		end
+	end
+	return best
+end
+
+-- One stalk per Hollow per target per stop; a target's budgets come back when their post-grab
+-- immunity ends.
+local function stalkBudget(hollow: Hollow, player: Player): boolean
+	local at = hollow.stalked[player]
+	if at == nil then
+		return true
+	end
+	local reset = budgetAt[player]
+	return reset ~= nil and at < reset and os.clock() >= reset
+end
+
+local function huntedByOther(player: Player, except: Hollow): boolean
+	for _, other in hollows do
+		if
+			other ~= except
+			and other.target == player
+			and (other.state == "Hunt" or other.state == "Windup" or other.state == "Grab")
+		then
+			return true
+		end
+	end
+	return false
+end
+
+-- Whether this Hollow is the one to stalk `player`: nobody stalks them yet and no other prowler
+-- sensing them is nearer.
+local function nearestFor(hollow: Hollow, player: Player, distance: number): boolean
+	local root = characterRoot(player)
+	for _, other in hollows do
+		if other ~= hollow and other.target == player then
+			if other.state == "Stalk" then
+				return false
+			end
+			if
+				other.state == "Prowl"
+				and root
+				and (other.root.Position - root.Position).Magnitude < distance
+			then
+				return false
+			end
+		end
+	end
+	return true
+end
+
+-- A shut locked door this hunter faces on its way to its prey, close enough to force.
+local function doorInWay(hollow: Hollow, preyAt: Vector3): BasePart?
+	local origin = hollow.root.Position
+	local hit = Workspace:Raycast(origin, preyAt - origin, sightParams)
+	if hit == nil or hit.Distance > Tuning.DoorForce.Reach then
+		return nil
+	end
+	local part = hit.Instance
+	if part.Name == "LockedDoor" and part:IsA("BasePart") then
+		return part
+	end
+	local parent = part.Parent
+	if parent and parent.Name == "LockedDoor" and parent:IsA("BasePart") then
+		return parent
+	end
+	return nil
+end
+
+local function leaveDoor(hollow: Hollow)
+	local door = hollow.door
+	if door then
+		hollow.door = nil
+		Registry.BuildingService.LeaveForce(door, hollow)
+	end
+end
+
+-- The guard is met and the prey is in reach: the strike begins. Telemetry records the warning
+-- this target had from this Hollow (an opportunity, not proof it was seen).
+local function strikeAttempt(hollow: Hollow, target: Player, targetRoot: BasePart)
+	local near = 0
+	for _, other in Registry.CrewService.AlivePlayers() do
+		local root = if other ~= target then characterRoot(other) else nil
+		if root and (root.Position - targetRoot.Position).Magnitude <= 20 then
+			near += 1
+		end
+	end
+	Registry.TelemetryService.Tell(target, hollow.exposure[target] or 0, near)
+	setState(hollow, "Windup")
+end
+
 local function think(hollow: Hollow)
 	local clock = os.clock()
 	local position = hollow.root.Position
@@ -897,37 +1105,11 @@ local function think(hollow: Hollow)
 		return
 	end
 
-	-- The first Crawler must visibly coil before pursuit. Prompt 5 schedules the encounter.
-	local p = params :: Types.HazardParams
-	if
-		HollowSpeed.isFirstCrawler(hollow.kind, hollow.scripted ~= nil, p.tutorial, p.stop)
-		and hollow.model:GetAttribute("FirstWarningDone") ~= true
-	then
-		local target = hollow.scripted
-		local root = target and characterRoot(target)
-		local visible = root ~= nil
-			and clearBetween(position, root.Position)
-			and not isLit(root.Position)
-			and not Registry.CrewService.IsAboard(target)
-		local since = hollow.model:GetAttribute("FirstWarningAt") :: number?
-		if not visible or clock < hollow.stunnedUntil then
-			hollow.model:SetAttribute("FirstWarningAt", nil)
-			setState(hollow, "Prowl")
-		elseif since == nil then
-			hollow.model:SetAttribute("FirstWarningAt", clock)
-			setState(hollow, "Windup")
-		elseif clock - since >= T.FirstCrawler.WarningSeconds then
-			hollow.model:SetAttribute("FirstWarningDone", true)
-			setState(hollow, "Hunt")
-			-- S1 hook: record first Crawler warning opportunity, not claimed player awareness.
-		end
-		hollow.humanoid.WalkSpeed = 0
-		hollow.humanoid:MoveTo(position)
-		return
-	end
-
+	local dt = math.clamp(clock - hollow.lastThink, 0, 0.5)
+	hollow.lastThink = clock
 	local walk, chase, lungeSpeed, lungeSeconds = speeds(hollow)
 	if clock < hollow.stunnedUntil then
+		endStalk(hollow)
 		setState(hollow, "Stunned")
 		hollow.humanoid.WalkSpeed = 0
 		hollow.humanoid:MoveTo(position)
@@ -935,6 +1117,7 @@ local function think(hollow: Hollow)
 	end
 	if clock < hollow.reelUntil then
 		-- thrown off: it is shoved back, slowing, before it comes again
+		endStalk(hollow)
 		local left = (hollow.reelUntil - clock) / Difficulty.PostGrab.StaggerSeconds
 		hollow.humanoid.WalkSpeed = math.max(Difficulty.PostGrab.StaggerPush * left, walk * 0.4)
 		hollow.humanoid:MoveTo(position - hollow.root.CFrame.LookVector * 4)
@@ -943,6 +1126,8 @@ local function think(hollow: Hollow)
 
 	-- caught inside a building as its lights come on: cower, then get out
 	if isLit(position) then
+		endStalk(hollow)
+		leaveDoor(hollow)
 		if hollow.state ~= "Repelled" then
 			setState(hollow, "Repelled")
 		end
@@ -984,14 +1169,18 @@ local function think(hollow: Hollow)
 		setState(hollow, "Hunt")
 	end
 
-	-- the nearest crew member it can sense, and is not already in another Hollow's hands
+	-- every crew member it can sense who is not already in another Hollow's hands
+	local wanderer = hollow.model:GetAttribute("Wanderer") == true or clock < alertUntil
+	local tier = tutorialTier()
+	local grace = if tier then tier.grace else 0
 	local best: Player? = nil
 	local bestRoot: BasePart? = nil
 	local bestDistance = math.huge
 	local bestVisible = false
-	local wanderer = hollow.model:GetAttribute("Wanderer") == true or clock < alertUntil
-	local tier = tutorialTier()
-	local grace = if tier then tier.grace else 0
+	local current: Player? = hollow.target
+	local currentRoot: BasePart? = nil
+	local currentDistance = math.huge
+	local currentVisible = false
 	for _, player in Registry.CrewService.AlivePlayers() do
 		local offAt = offTrainAt[player]
 		if
@@ -1004,13 +1193,31 @@ local function think(hollow: Hollow)
 			local root = characterRoot(player)
 			if root then
 				local distance = (root.Position - position).Magnitude
-				if (wanderer or distance < A.SightRange) and distance < bestDistance then
+				if wanderer or distance < A.SightRange then
 					local visible = clearBetween(position, root.Position)
 					if wanderer or visible or distance <= A.AwarenessRange then
-						best, bestRoot, bestDistance, bestVisible = player, root, distance, visible
+						if player == current then
+							currentRoot, currentDistance, currentVisible = root, distance, visible
+						end
+						if distance < bestDistance then
+							best, bestRoot, bestDistance, bestVisible = player, root, distance, visible
+						end
 					end
 				end
 			end
+		end
+	end
+	-- keep the target it has unless someone else is much nearer (the new one's warning is its own)
+	if currentRoot and best ~= current and not Stalk.switches(currentDistance, bestDistance) then
+		best, bestRoot, bestDistance, bestVisible = current, currentRoot, currentDistance, currentVisible
+	end
+	local stalking = hollow.stalk
+	if stalking and (best ~= stalking.target or stalking.target.Parent == nil) then
+		-- its prey was seized by another, left, or was given up for someone much nearer
+		local seized = holderOf(stalking.target) ~= nil
+		endStalk(hollow)
+		if seized then
+			setState(hollow, "Hunt")
 		end
 	end
 
@@ -1018,6 +1225,7 @@ local function think(hollow: Hollow)
 	local ownLocal = StationService.ToLocal(position)
 	if ownLocal.Z < edge then
 		-- pushed into the light somehow: back out first
+		endStalk(hollow)
 		hollow.humanoid.WalkSpeed = walk
 		hollow.humanoid:MoveTo(StationService.ToWorld(ownLocal.X, 3, edge + 8))
 		setState(hollow, "Repelled")
@@ -1030,6 +1238,7 @@ local function think(hollow: Hollow)
 		hollow.lastSeenAt = clock
 		local targetLocal = StationService.ToLocal(bestRoot.Position)
 		if targetLocal.Z < edge or isLit(bestRoot.Position) then
+			endStalk(hollow)
 			setState(hollow, "Repelled")
 			hollow.humanoid.WalkSpeed = walk
 			if targetLocal.Z < edge then
@@ -1039,10 +1248,124 @@ local function think(hollow: Hollow)
 			end
 			return
 		end
+
+		-- Prowl -> Stalk, or straight to Hunt (Logic/Stalk)
+		local settings = Stalk.settings((params :: Types.HazardParams).difficulty)
+		if hollow.state ~= "Stalk" and hollow.state ~= "Hunt" then
+			local stalker = hollow.model:GetAttribute("StalkWanderer") == true
+			local commitsDirectly = (wanderer and not stalker) or hollow.scripted ~= nil
+			-- straight to Hunt: wanderers, alerts and the scripted Crawler, prey already close, a stun's
+			-- after-effect, a spent budget, or prey another Hollow already hunts (the pack fans out)
+			if
+				commitsDirectly
+				or bestDistance <= settings.commitRange
+				or clock < alertUntil
+				or clock < hollow.noStalkUntil
+				or not stalkBudget(hollow, best)
+				or huntedByOther(best, hollow)
+			then
+				setState(hollow, "Hunt")
+			elseif nearestFor(hollow, best, bestDistance) then
+				hollow.stalked[best] = clock
+				hollow.stalk = {
+					target = best,
+					track = Stalk.newTrack(),
+					point = nil,
+					searchAt = 0,
+					unseenSince = nil,
+				}
+				hollow.model:SetAttribute("StalkTarget", best.UserId)
+				setState(hollow, "Stalk")
+			else
+				-- another Hollow is nearer this prey: it stalks, this one keeps prowling
+				setState(hollow, "Prowl")
+				hollow.humanoid.WalkSpeed = walk
+				prowl(hollow, clock)
+				return
+			end
+		end
+
+		if hollow.state == "Stalk" then
+			local run = hollow.stalk :: StalkRun
+			hollow.exposure[best] = Stalk.expose(hollow.exposure[best] or 0, dt, bestVisible, bestDistance)
+			if bestVisible then
+				run.unseenSince = nil
+			elseif run.unseenSince == nil then
+				run.unseenSince = clock
+			end
+			if run.unseenSince and clock - run.unseenSince >= A.Persistence then
+				endStalk(hollow) -- lost: back to prowling, its stalk spent
+				setState(hollow, "Prowl")
+				hollow.target = nil
+				return
+			end
+			local faced = facedBy(bestRoot, position)
+			local reason
+			run.track, reason = Stalk.step(run.track, {
+				dt = dt,
+				faced = faced,
+				alone = nearestCrewmate(best, bestRoot.Position) > settings.aloneRadius,
+				lit = inLampPool(bestRoot.Position),
+				distance = bestDistance,
+				surge = clock < alertUntil,
+				seized = false,
+			}, settings)
+			if reason then
+				endStalk(hollow)
+				setState(hollow, "Hunt")
+			else
+				hollow.model:SetAttribute("Frozen", faced or nil)
+				if faced then
+					-- held by a look: no step, no sound, only the breath and the head following
+					hollow.humanoid.WalkSpeed = 0
+					hollow.humanoid:MoveTo(position)
+					return
+				end
+				if clock - run.searchAt >= Tuning.Stalk.ShadowRetry then
+					run.searchAt = clock
+					local point = run.point
+					if point == nil or not Stalk.inBand((point - bestRoot.Position).Magnitude) then
+						run.point = shadowPoint(hollow, bestRoot.Position)
+					end
+				end
+				local point = run.point
+				if point == nil then
+					-- no legal shadow: hold, and look again next second (the stalk clock runs on)
+					hollow.humanoid.WalkSpeed = 0
+					hollow.humanoid:MoveTo(position)
+				else
+					hollow.humanoid.WalkSpeed = walk
+					moveToward(hollow, spaced(hollow, point), false)
+				end
+				return
+			end
+		end
+
 		setState(hollow, "Hunt")
+		local exposure = hollow.exposure[best] or 0
+		local guarded = Stalk.guarded(exposure)
+		if guarded then
+			-- the first-strike guard: coil where it can be seen, and earn the warning first
+			hollow.exposure[best] = Stalk.expose(exposure, dt, bestVisible, bestDistance)
+			guarded = Stalk.guarded(hollow.exposure[best])
+		end
+		hollow.model:SetAttribute("WarningCoil", guarded or nil)
+		hollow.model:SetAttribute("WarningTarget", if guarded then best.UserId else nil)
+
+		-- a shut door between it and its prey: force it, if this stop's Hollows can
+		local door = if bestVisible then nil else doorInWay(hollow, bestRoot.Position)
+		if door and Registry.BuildingService.RequestForce(door, hollow) then
+			hollow.door = door
+			hollow.humanoid.WalkSpeed = 0
+			hollow.humanoid:MoveTo(position)
+			return
+		end
+		leaveDoor(hollow)
+
 		local lunging = lungeSpeed > 0 and clock < hollow.lungeUntil
 		if
-			not lunging
+			not guarded
+			and not lunging
 			and lungeSpeed > 0
 			and bestVisible
 			and bestDistance <= H.LungeRange
@@ -1059,34 +1382,43 @@ local function think(hollow: Hollow)
 		local direct = bestVisible
 			and math.abs(bestRoot.Position.Y - position.Y) < H.SameFloor
 			and clock >= hollow.forcePathUntil
-		moveToward(hollow, approach(hollow, best, bestRoot.Position, bestDistance), direct)
-		if
-			bestDistance <= H.StrikeRange * hollow.def.reach
-			and math.abs(bestRoot.Position.Y - position.Y) < 8
-			and clock - hollow.lastStrike >= A.StrikeCooldown
-			and (graceUntil[best] or 0) <= clock
-		then
-			setState(hollow, "Windup")
+		if guarded then
+			-- never deliberately inside GuardDistance: pace the prey from there, or hold and coil
+			local away = flat(position - bestRoot.Position)
+			if bestDistance > Tuning.Stalk.GuardDistance + 0.5 and away.Magnitude > 0.1 then
+				moveToward(hollow, bestRoot.Position + away.Unit * Tuning.Stalk.GuardDistance, direct)
+			else
+				hollow.humanoid.WalkSpeed = 0
+				hollow.humanoid:MoveTo(position)
+			end
+		else
+			moveToward(hollow, approach(hollow, best, bestRoot.Position, bestDistance), direct)
+			if
+				bestDistance <= H.StrikeRange * hollow.def.reach
+				and math.abs(bestRoot.Position.Y - position.Y) < 8
+				and clock - hollow.lastStrike >= A.StrikeCooldown
+				and (graceUntil[best] or 0) <= clock
+			then
+				strikeAttempt(hollow, best, bestRoot)
+			end
 		end
-	elseif hollow.lastSeen and clock - hollow.lastSeenAt < A.Persistence then
+	elseif hollow.lastSeen and clock - hollow.lastSeenAt < A.Persistence and hollow.state ~= "Stalk" then
 		-- lost sight: search where it saw them last
 		setState(hollow, "Hunt")
+		hollow.model:SetAttribute("WarningCoil", nil)
 		hollow.humanoid.WalkSpeed = chase * 0.85
 		moveToward(hollow, spaced(hollow, hollow.lastSeen :: Vector3), false)
 		if (position - (hollow.lastSeen :: Vector3)).Magnitude < 4 then
 			hollow.lastSeen = nil
 		end
 	else
+		endStalk(hollow)
+		leaveDoor(hollow)
 		setState(hollow, "Prowl")
 		hollow.target = nil
+		hollow.model:SetAttribute("WarningCoil", nil)
 		hollow.humanoid.WalkSpeed = walk
-		if clock >= hollow.wanderUntil then
-			local point = wanderPoint()
-			if point then
-				moveToward(hollow, spaced(hollow, point), false)
-			end
-			hollow.wanderUntil = clock + rng:NextNumber(3, 6)
-		end
+		prowl(hollow, clock)
 	end
 
 	-- stuck on a corner (or wedged against another Hollow): sidestep
@@ -1188,6 +1520,12 @@ local function add(at: CFrame, kind: string, state: string, emerge: string?): Ho
 		stirAt = math.huge,
 		checkAt = 0,
 		hold = nil,
+		stalk = nil,
+		exposure = {},
+		stalked = {},
+		noStalkUntil = 0,
+		lastThink = os.clock(),
+		door = nil,
 	}
 	table.insert(hollows, hollow)
 	return hollow
@@ -1559,6 +1897,7 @@ function HollowService.Stun(position: Vector3, radius: number, seconds: number):
 	for _, hollow in hollows do
 		if hollow.state ~= "Dormant" and (hollow.root.Position - position).Magnitude <= radius then
 			hollow.stunnedUntil = os.clock() + seconds
+			hollow.noStalkUntil = hollow.stunnedUntil + Tuning.Stalk.StunExclusion
 			hollow.model:SetAttribute("StunnedUntil", serverNow() + seconds)
 			if hollow.hold then
 				release(hollow, "Flash")
@@ -1596,6 +1935,42 @@ function HollowService.DevGrab(player: Player, kind: string?): boolean
 	return seize(hollow, player)
 end
 
+-- Studio: an ordinary (not wandering) Hollow of `kind` on the ground `distance` studs from `player`
+-- (ahead if there is ground there, else to a side or behind), prowling, so stalks and the first-strike guard can be checked at a known range.
+function HollowService.DevSpawnAt(player: Player, kind: string?, distance: number): boolean
+	local root = characterRoot(player)
+	if params == nil or root == nil or StationService.Plan() == nil then
+		return false
+	end
+	local chosen = if kind and (Tuning.HollowKinds :: any)[kind] then kind else pickKind()
+	local look = flat(root.CFrame.LookVector)
+	local forward = if look.Magnitude > 0.1 then look.Unit else Vector3.zAxis
+	local right = forward:Cross(Vector3.yAxis)
+	local ground: RaycastResult? = nil
+	for _, side in { forward, right, -right, -forward } do
+		local guess = root.Position + side * distance
+		local hit = Workspace:Raycast(guess + Vector3.yAxis * 12, -Vector3.yAxis * 40, sightParams)
+		if hit and hit.Normal.Y > 0.6 and math.abs(hit.Position.Y - root.Position.Y) < 8 then
+			ground = hit
+			break
+		end
+	end
+	if ground == nil then
+		return false
+	end
+	local at = ground.Position + Vector3.yAxis * HollowBuilder.rootHeight(chosen)
+	local hollow =
+		add(CFrame.lookAt(at, Vector3.new(root.Position.X, at.Y, root.Position.Z)), chosen, "Prowl", nil)
+	hollow.root.Anchored = false
+	hollow.model:SetAttribute("DevSpawn", true)
+	return true
+end
+
+-- Whether light keeps Hollows off `position` (a lit building, a tutorial SafeLight).
+function HollowService.IsLit(position: Vector3): boolean
+	return isLit(position)
+end
+
 -- True while a Hollow has `player` in its hands.
 function HollowService.IsHeld(player: Player): boolean
 	return holderOf(player) ~= nil
@@ -1617,6 +1992,7 @@ function HollowService.Clear()
 	end
 	table.clear(hollows)
 	table.clear(graceUntil)
+	table.clear(budgetAt)
 	table.clear(offTrainAt)
 	alertUntil = 0
 	params = nil

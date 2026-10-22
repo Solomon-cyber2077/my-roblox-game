@@ -611,6 +611,11 @@ function Hud.mount(gui: ScreenGui)
 			local to = (target - camera.CFrame.Position) * Vector3.new(1, 0, 1)
 			needle.Rotation = -math.deg(math.atan2(look:Cross(to).Y, look:Dot(to)))
 		end
+		-- something stalks within 1.2r (Logic/Tells): the needle stutters
+		local visibility = Registry.VisibilityController
+		if visibility and visibility.Tells().stutter then
+			needle.Rotation += (if math.floor(now * 9) % 2 == 0 then 1 else -1) * 7
+		end
 	end
 
 	-- Train gauges -----------------------------------------------------------------------------

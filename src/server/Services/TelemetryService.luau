@@ -568,7 +568,37 @@ local function heldBy(player: Player, cause: string): string
 	return if type(kind) == "string" and table.find(Config.Vocab.HeldBy, kind) then kind else "none"
 end
 
+-- Where the run is, as a stop field, and the seconds since that stop's (or village's) doors opened.
+local function stopNow(current: Run): (string, number)
+	if current.villageAt then
+		return "village", os.clock() - current.villageAt
+	elseif current.openAt and STOP_PHASES[Registry.RunDirector.Phase()] then
+		return Telemetry.stop(current.stop), os.clock() - current.openAt
+	elseif current.stop then
+		return Telemetry.stop(current.stop), 0
+	end
+	return if current.stopsReached > 0 then "between" else "pre", 0
+end
+
 -- Hooks ------------------------------------------------------------------------------------
+
+-- A Hollow's strike attempt on `player` (HollowService): the warning it gave them first, its
+-- Stalk/coil time in sight within 36 studs. An opportunity to see it, not proof they did.
+function TelemetryService.Tell(player: Player, seconds: number, crewmatesNear: number)
+	local current = run
+	local participant = current and current.byPlayer[player]
+	if current == nil or participant == nil then
+		return
+	end
+	local bucket = Telemetry.tell(seconds)
+	local stop = stopNow(current)
+	TelemetryService.Event(player, "tell_exposure", round(seconds, 2), {
+		bucket,
+		Telemetry.crewNear(crewmatesNear),
+		stop,
+	})
+	TelemetryService.Event(player, "tell_cohort", round(seconds, 2), playerFields(participant, bucket))
+end
 
 -- A late joiner is on the line (CrewService.SpawnPendingJoiners).
 function TelemetryService.RunJoined(player: Player)
@@ -586,14 +616,7 @@ function TelemetryService.Eliminated(player: Player, cause: string)
 		return
 	end
 	participant.eliminations += 1
-	local stop, since = if current.stopsReached > 0 then "between" else "pre", 0
-	if current.villageAt then
-		stop, since = "village", os.clock() - current.villageAt
-	elseif current.openAt and STOP_PHASES[Registry.RunDirector.Phase()] then
-		stop, since = Telemetry.stop(current.stop), os.clock() - current.openAt
-	elseif current.stop then
-		stop = Telemetry.stop(current.stop)
-	end
+	local stop, since = stopNow(current)
 	TelemetryService.Event(
 		player,
 		"player_eliminated",

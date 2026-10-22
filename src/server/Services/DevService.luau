@@ -34,6 +34,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Items = require(Shared.Config.Items)
@@ -124,6 +125,26 @@ Commands.hollow = function(player, args)
 	end
 end
 
+-- `doors`: whether this stop's Hollows can force doors, and where its shut locked doors are.
+Commands.doors = function()
+	local shut = {}
+	for _, part in Workspace:GetDescendants() do
+		if part.Name == "LockedDoor" and part:IsA("BasePart") and part.CanCollide then
+			local p = part.Position
+			table.insert(shut, `{p.X // 1},{p.Y // 1},{p.Z // 1}`)
+		end
+	end
+	print(
+		`[Dev] doors: forcing={Registry.BuildingService.IsForcingStop()} shut={#shut} {table.concat(shut, " ")}`
+	)
+end
+
+-- `stalker [kind] [studs]`: an ordinary Hollow that far in front of you (default 30), prowling.
+Commands.stalker = function(player, args)
+	local ok = Registry.HollowService.DevSpawnAt(player, args[1], tonumber(args[2]) or 30)
+	print(`[Dev] stalker: {ok}`)
+end
+
 Commands.grab = function(player, args)
 	print(`[Dev] grab: {Registry.HollowService.DevGrab(player, args[1])}`)
 end
@@ -133,6 +154,8 @@ end
 Commands.photo = function(player, args)
 	if args[1] == "clear" then
 		PhotoCommand.clear()
+	elseif args[1] == "stalk" then
+		PhotoCommand.run(player, PHOTO, "Stalk")
 	else
 		PhotoCommand.run(player, PHOTO)
 	end

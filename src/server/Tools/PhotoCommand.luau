@@ -182,7 +182,8 @@ function PhotoCommand.clear()
 	end
 end
 
-function PhotoCommand.run(player: Player, opts: PhotoOptions): string
+-- `state` (optional) poses the whole lineup in one Hollow state, such as "Stalk".
+function PhotoCommand.run(player: Player, opts: PhotoOptions, state: string?): string
 	assert(opts and opts.kinds and opts.spawn, "PhotoCommand.run needs opts.kinds and opts.spawn")
 	PhotoCommand.clear()
 
@@ -220,7 +221,11 @@ function PhotoCommand.run(player: Player, opts: PhotoOptions): string
 			model:PivotTo(model:GetPivot() + Vector3.new(0, lift, 0))
 			local freeze: (Model) -> () = opts.freeze or defaultFreeze
 			freeze(model)
-			label(model, kind)
+			if state then
+				model:SetAttribute("State", state)
+				model:SetAttribute("StateAt", Workspace:GetServerTimeNow())
+			end
+			label(model, if state then `{kind} · {state}` else kind)
 			local p = model:GetPivot().Position
 			table.insert(
 				report,
@@ -246,6 +251,8 @@ function PhotoCommand.bindChat(opts: PhotoOptions)
 			local m = msg:lower()
 			if m == "/photo" then
 				PhotoCommand.run(player, opts)
+			elseif m == "/photo stalk" then
+				PhotoCommand.run(player, opts, "Stalk")
 			elseif m == "/photo clear" then
 				PhotoCommand.clear()
 			end

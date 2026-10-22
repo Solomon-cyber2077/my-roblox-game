@@ -47,7 +47,11 @@ function CosmeticMotion.bind(root: Instance): (number) -> ()
 	return function(time: number)
 		for _, entry in lights do
 			local wave = math.sin(time * entry.speed * 6.283)
-			entry.light.Brightness = entry.base * (1 + wave * entry.amount)
+			-- a stalker's gutter (VisibilityController, Logic/Tells): brightness only, never reach
+			local dim = entry.light:GetAttribute("TellDim")
+			entry.light.Brightness = entry.base
+				* (1 + wave * entry.amount)
+				* (1 - (if typeof(dim) == "number" then dim else 0))
 		end
 		for _, entry in cycles do
 			local alpha = (math.sin(time * 0.1 * 6.283) + 1) * 0.5
