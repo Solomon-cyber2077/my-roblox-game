@@ -506,6 +506,9 @@ local function release(hollow: Hollow, why: string)
 			HollowService.Dismiss(model)
 		end)
 	end
+	if why == "Escaped" then
+		Registry.TelemetryService.Escaped(hold.victim)
+	end
 	if why == "Escaped" and protection.stagger then
 		-- staggered: it reels back, shoved hard at first, and cannot strike until it recovers
 		hollow.reelUntil = os.clock() + Difficulty.PostGrab.StaggerSeconds
@@ -651,10 +654,12 @@ local function seize(hollow: Hollow, target: Player): boolean
 			hold.progress = SkillCheck.pry(hold.progress)
 			publishEscape(hold)
 			NetService.Fire("Fx", target, "Pried", { by = ally.UserId })
+			Registry.TelemetryService.Pried(ally)
 		end
 	end)
 	setState(hollow, "Grab")
 	NetService.Fire("Fx", target, "Grabbed", { style = def.id, kind = hollow.kind })
+	Registry.TelemetryService.Grabbed(target, hollow.kind)
 	return true
 end
 

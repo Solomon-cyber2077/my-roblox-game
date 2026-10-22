@@ -503,6 +503,24 @@ local Tuning = {
 		ReceiptHistory = 50,
 	},
 
+	-- Telemetry (Services/TelemetryService, Config/Telemetry) and its durable playtest sink
+	-- (Logic/TelemetrySink). The sink always runs in Studio and private servers; SinkEnabled turns it
+	-- on for public servers. PROVISIONAL: store name, flush interval, cap; SinkEnabled goes false after G1.
+	Telemetry = {
+		SinkStore = "TelemetryLog_v1",
+		SinkFlushSeconds = 30,
+		SinkMaxRecords = 2000, -- per player per server, well under the DataStore value limit
+		SinkEnabled = true,
+		SinkRetries = 3,
+		SinkRetryDelay = 1,
+		ShutdownWaitSeconds = 20, -- BindToClose waits this long for the last flushes
+		DumpMaxKeys = 200, -- Dev `telemetry dump` reads at most this many keys
+		PollSeconds = 1, -- crew status checks (off the train, late joiners)
+		StudioPrint = true, -- Studio diagnostic output: one line per call
+		TabletShortSide = 600, -- touch-only screens this many pixels or more on the short side are tablets
+		TakenGrabSeconds = 30, -- a Taken death this soon after a grab is that kind's (heldBy)
+	},
+
 	-- The train's residents (Config/Npcs) and their errands (Config/NpcQuests).
 	Npc = {
 		PromptDistance = 8,

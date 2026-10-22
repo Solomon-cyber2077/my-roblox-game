@@ -136,6 +136,7 @@ function ShopService.Start()
 			p.owned[itemId] = true
 		end)
 		NetService.Fire("Fx", player, "Purchased", { id = itemId, price = price })
+		Registry.TelemetryService.Brass(player, "Sink", price, profile.brass, itemId)
 	end, canShop)
 
 	NetService.Handle("ShopEquip", function(player, itemId: string)

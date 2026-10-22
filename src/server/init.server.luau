@@ -14,6 +14,7 @@ local ORDER = {
 	"NetService",
 	"StateService",
 	"DataService",
+	"TelemetryService",
 	"LobbyService",
 	"TrainService",
 	"StationService",

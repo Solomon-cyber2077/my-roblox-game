@@ -1,5 +1,22 @@
 # HANDOFF
 
+## 2026-10-22: S1 / PROMPT 0, TELEMETRY AND THE BALANCE REPORT
+1. Completed
+- `Services/TelemetryService` (ORDER after DataService) is the only AnalyticsService caller: `Event`, `Funnel` (onboarding via LogOnboardingFunnelStepEvent, other funnels via LogFunnelStepEvent with server-made ids kept in `profile.telemetry`), `Brass` (LogEconomyEvent). Vocabularies frozen in `Config/Telemetry`; `Logic/Telemetry` checks every field and buckets; specs keep every event under 8,000 combinations (largest: tell_exposure, 168).
+- Events wired now: run_started, run_joined, stop_resolved (bell always `none` until Prompt 4), stop_archetype, stop_timing, player_stop_resolved, player_eliminated (heldBy from the last grab), run_ended, run_progress (route length), player_run_outcome, player_progress, session_ended, quit_after_outcome, first_session_timing (control, run_start, first_stop). Funnels: onboarding (joined, first_board, first_off_train, survived_stop1, reached_stop3), grab (first_grab, first_escape), pry, replay (first_run_ended, second_run_started). Brass: run payout and milestone sources, shop sink.
+- Declared but waiting for their prompts: tell_exposure/tell_cohort (S3), grasp/grasp_shortfall (S5), again_pressed (S6), cohort_assigned, invite_prompted, first_hollow_seen (S7). GraspResult and ExperimentId/Arm lists are PROVISIONAL.
+- Scope rules: crew events once per run/stop to the first connected member (UserId order); player events per occurrence; join-in-progress players get run_joined and first_board but not survived_stop1/reached_stop3 that run. Doors-open time runs from Dwell to the T-0 whistle; stop_resolved value = that over the original params.dwell x 100. Stop field: `pre` before stop 1, `between` after a stop resolved, `village`, `terminus`. The Terminus leg is the run's end, not a stop. Run time starts at Countdown (Boarding when launched without one) and ends at RunEnd entry.
+- Device: the client classifies once (`Logic/Telemetry.classify`) and sends it in ClientReady (new arg kind `device`); the server keeps the first report. No new remote.
+- Durable sink (`Logic/TelemetrySink`, spec'd): per player per server key `<placeId>/<serverId>/<userId>`, flushed every 30 s, on leave and at BindToClose through Logic/Retry, capped at 2,000 with one `sink_overflow` record. On in Studio and private servers; `Tuning.Telemetry.SinkEnabled` (true until G1) for public ones. Dev `telemetry`, `telemetry flush`, `telemetry dump [serverId]` (CSV).
+- `.lune/report.luau` repaired: real archetypes and dimensions, clock now vs clock B, chase ranges by kind and pace, Threat.total, fog start, and a 1,000-seed route model through the Terminus with bell scenarios (u over original dwell, departAt = min(departAt, pull + 30)), Long and placeholder Short Line. Clock B reproduces B.4 exactly: 47.57 / 33.85 / 40.09 min (60%@0.5: 41.09 vs B.4's 41.21, which stops ring differs).
+2. Known bugs / pending
+- `lune run check` passed (420 tests, audit clean). Studio (unpublished main-s1.rbxl): join, boarding, off-train, stop 1 resolution, elimination, run end, Brass and the replay funnel all printed once each with valid fields. session_ended was not seen (a stopped server's last output does not reach the console).
+- Sink read-back NOT verified: DataStores need a published place. Manual: open the published place, enable Studio API access, play, `Remotes.Dev:FireServer("telemetry")` to note the server id, stop, play again, `Remotes.Dev:FireServer("telemetry dump <old id>")`.
+- Published ingestion pending (Creator Analytics). Funnels need a loaded profile outside Studio.
+- After S2 lands (walk 21), the clock's walk term uses Crew.WalkSpeed, so dwell grows until Prompt 4 adds WalkReference 30. Re-run the report then.
+3. Next logical step
+- Merge S2 (Astra, branch codex/s2-speed-astra), re-run `lune run report`, then S3.
+
 ## 2026-10-21: FINAL DESIGN DRAFT IN THE REPO (docs only)
 1. Completed
 - `docs/FINAL-DESIGN.md`: copy of the Codex final draft, plus A.4 "Budget and release" (budget gate at G1, co-op horror positioning, no seasonal date, zero-revenue plan, $0-300 cash) and a D.2 budget-gate check. Linked from README and AGENTS.

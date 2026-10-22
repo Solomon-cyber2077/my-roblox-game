@@ -13,6 +13,7 @@
 	  tier      integer 1..Difficulty.RunTier.Max
 	  check     integer 1..1e6, a skill check's id (Logic/SkillCheck)
 	  time      a finite number of seconds 0..1e10 (a server-clock instant the client claims)
+	  device    nil or a short word (Logic/Telemetry.device reads anything unlisted as unknown)
 ]]
 
 local Difficulty = require(script.Parent.Parent.Config.Difficulty)
@@ -28,7 +29,8 @@ export type RemoteDef = {
 
 local Remotes: { [string]: RemoteDef } = {
 	-- Client to server intents
-	ClientReady = { direction = "ToServer", args = {}, rate = 1, burst = 2 },
+	-- asks for a state snapshot; carries the client's device once (Services/TelemetryService)
+	ClientReady = { direction = "ToServer", args = { "device" }, rate = 1, burst = 2 },
 	SetReady = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
 	SetRunTier = { direction = "ToServer", args = { "tier" }, rate = 4, burst = 4 }, -- host only
 	CastVote = { direction = "ToServer", args = { "option" }, rate = 4, burst = 4 },
@@ -77,6 +79,10 @@ local Checks: { [ArgKind]: (any) -> boolean } = {
 	end,
 	time = function(value)
 		return type(value) == "number" and value == value and value >= 0 and value <= 1e10
+	end,
+	device = function(value)
+		return value == nil
+			or (type(value) == "string" and #value <= 16 and string.match(value, "^%a+$") ~= nil)
 	end,
 	id = function(value)
 		return type(value) == "string"

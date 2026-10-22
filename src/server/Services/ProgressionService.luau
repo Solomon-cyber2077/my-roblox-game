@@ -77,6 +77,7 @@ function ProgressionService.PayRun(
 			end
 
 			local granted: { string } = {}
+			local milestoneBrass = 0
 			DataService.Update(player, function(p)
 				p.brass += brass
 				p.xp += payout.xp
@@ -123,6 +124,7 @@ function ProgressionService.PayRun(
 					p.milestones[id] = true
 					if milestone.reward.brass then
 						p.brass += milestone.reward.brass
+						milestoneBrass += milestone.reward.brass
 					end
 					if milestone.reward.cosmetic then
 						p.owned[milestone.reward.cosmetic] = true
@@ -136,6 +138,14 @@ function ProgressionService.PayRun(
 				end
 			end)
 
+			Registry.TelemetryService.Brass(
+				player,
+				"Source",
+				brass,
+				profile.brass - milestoneBrass,
+				"run_payout"
+			)
+			Registry.TelemetryService.Brass(player, "Source", milestoneBrass, profile.brass, "milestone")
 			NetService.Fire("Fx", player, "RunSummary", {
 				outcome = outcome,
 				haul = haul,

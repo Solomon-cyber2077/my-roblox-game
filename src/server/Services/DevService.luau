@@ -238,6 +238,20 @@ Commands.sound = function(player, args)
 	print(`[Dev] sound {kind}`)
 end
 
+-- `telemetry` prints this server's sink id; `telemetry flush` writes the buffers now; `telemetry dump
+-- [serverId]` prints the sink's records (every server of this place, or one) as CSV rows.
+Commands.telemetry = function(_, args)
+	local telemetry = Registry.TelemetryService
+	if args[1] == "dump" then
+		telemetry.Dump(args[2])
+	elseif args[1] == "flush" then
+		telemetry.FlushAll()
+		print("[Dev] telemetry flush started")
+	else
+		print(`[Dev] telemetry server {telemetry.ServerId()}`)
+	end
+end
+
 Commands.npcreset = function(player, args)
 	local npcId = if args[1] == nil or args[1] == "all" then nil else args[1]
 	local ok = Registry.NpcService.DevReset(player, npcId)
