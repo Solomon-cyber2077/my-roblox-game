@@ -13,6 +13,8 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
 - src/shared: `Config/` numbers, `Logic/` pure rules, `Net/Remotes`, `Types`, `Util/`, `Visual/Kit`
 - tests/: Lune specs; .lune/: check, test, audit, preview; tools/preview: three.js viewer
 - docs/FINAL-DESIGN.md: current design draft and implementation prompts 0-10; reviews in docs/direction/
+- prompts/: ready-to-paste session prompts `S1.md`-`S11.md` (preamble included) and a status index in README.md.
+  When the owner says "run S9", "do S9" or "prompt S9", read `prompts/S9.md` and follow it as the full prompt.
 
 ## Features that exist now
 - Lobby, route vote, 11-phase run, stations with loot, fog/collapse hazards, left-behind rule

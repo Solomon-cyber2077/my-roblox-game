@@ -2,6 +2,7 @@
 
 There is one session per block. Run them **in order** in a fresh session each time. Paste the shared preamble, then the
 block. The design file is the source of truth; these prompts only scope each session.
+Ready-to-paste copies (preamble + block, one file per session) are in `prompts/S<n>.md`.
 
 **Merges.** Only two were safe:
 - **S8:** the Milestone 1 essentials from Prompts 6 and 7 (one small readability and audio pass).
