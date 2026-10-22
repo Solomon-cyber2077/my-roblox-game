@@ -29,6 +29,7 @@ local V = Tuning.VoidMist
 local MistService = {}
 
 type Track = {
+	character: Model?,
 	safe: Vector3?, -- station-local
 	enteredAt: number?, -- in the edge mist since
 }
@@ -73,7 +74,7 @@ end
 local function trackOf(player: Player): Track
 	local track = tracks[player]
 	if track == nil then
-		track = {}
+		track = { character = nil }
 		tracks[player] = track
 	end
 	return track
@@ -103,6 +104,7 @@ local function rescue(player: Player, character: Model, root: BasePart, humanoid
 	local target = if track.safe
 		then CFrame.new(Registry.StationService.ToWorld(track.safe.X, track.safe.Y + 3, track.safe.Z))
 		else Registry.StationService.StragglerSpawn()
+	local here = Registry.StationService.ToLocal(root.Position) -- where they fell, for the log
 	character:PivotTo(target)
 	root.AssemblyLinearVelocity = Vector3.zero
 	track.enteredAt = nil
@@ -112,9 +114,8 @@ local function rescue(player: Player, character: Model, root: BasePart, humanoid
 	end
 	Registry.NetService.Fire("Fx", player, "MistRescue", {})
 	local pingMs = player:GetNetworkPing() * 1000
-	local here = Registry.StationService.ToLocal(root.Position)
 	warn(
-		`[VoidMist] rescued {player.Name} at local ({math.floor(here.X)}, {math.floor(here.Z)}), ping {math.floor(
+		`[VoidMist] rescued {player.Name} fallen at local ({math.floor(here.X)}, {math.floor(here.Z)}), ping {math.floor(
 			pingMs
 		)} ms`
 	)
@@ -133,7 +134,17 @@ local function step()
 		tickAt = now + V.TickInterval
 	end
 	local fog = if tick then Registry.HazardDirector.FogFront() else nil
-	for _, player in Registry.CrewService.AlivePlayers() do
+	local alive = Registry.CrewService.AlivePlayers()
+	local aliveSet: { [Player]: boolean } = {}
+	for _, player in alive do
+		aliveSet[player] = true
+	end
+	for player in tracks do
+		if not aliveSet[player] then
+			clear(player)
+		end
+	end
+	for _, player in alive do
 		local character, root, humanoid = onStation(player)
 		if character == nil or root == nil or humanoid == nil then
 			if tracks[player] then
@@ -142,6 +153,11 @@ local function step()
 			continue
 		end
 		local track = trackOf(player)
+		if track.character ~= character then
+			clear(player)
+			track = trackOf(player)
+			track.character = character
+		end
 		local here = Registry.StationService.ToLocal(root.Position)
 		if here.Y < -V.KillDrop then
 			rescue(player, character, root, humanoid)
