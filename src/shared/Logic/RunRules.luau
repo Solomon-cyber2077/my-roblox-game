@@ -25,6 +25,7 @@ export type Context = {
 	cruiseSeconds: number,
 	dwellSeconds: number,
 	chaseSeconds: number,
+	holdCountdown: boolean?, -- an AGAIN crew is still readying (Logic/Again): the hall waits
 }
 
 local RUN_PHASES: { [Phase]: boolean } = {
@@ -185,6 +186,7 @@ function RunRules.guard(phase: Phase, ctx: Context): (Phase?, Outcome?)
 		phase == "Lobby"
 		and ctx.lobbyCount > 0
 		and ctx.readyCount >= RunRules.requiredReady(ctx.lobbyCount)
+		and not ctx.holdCountdown
 	then
 		return "Countdown", nil
 	end

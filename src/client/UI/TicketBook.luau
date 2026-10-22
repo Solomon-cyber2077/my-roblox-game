@@ -231,11 +231,17 @@ local function render()
 	row.Position = UDim2.fromOffset(0, 24)
 	row.Parent = scroll
 	local totals = RunLog.totals(log)
+	-- the cover's record: the deepest stop this player has ever reached (stats.bestStation)
+	local profile = Registry.StateController.GetPrivate({ "profile" })
+	local deepest = if profile and profile.stats then profile.stats.bestStation or 0 else 0
 	local foot = Ui.text({
 		Text = `{totals.km} KM  ·  COAL BURNED x{math.floor(totals.coal * 10 + 0.5) / 10}  ·  {totals.stops} STOP{if totals.stops
 				== 1
 			then ""
-			else "S"}  ·  {totals.loot} LOOT  ·  {totals.downs} DOWN{if totals.downs == 1 then "" else "S"}`,
+			else "S"}  ·  {totals.loot} LOOT  ·  {totals.downs} DOWN{if totals.downs == 1 then "" else "S"}{if deepest
+				> 0
+			then `  ·  DEEPEST STOP {deepest}`
+			else ""}`,
 		Font = Theme.Font.type,
 		TextSize = 16,
 		Color = Theme.Color.paper,

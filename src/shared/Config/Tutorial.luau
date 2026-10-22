@@ -13,7 +13,16 @@
 	grace           seconds after you step off the train before any Hollow comes for you
 	zoneDegrees     skill-check zone width for the whole run (nil: Difficulty.SkillCheck.ZoneByStop)
 	postGrab        immunity and stagger after breaking free, at every stop
-	scriptedGrab    a slow Crawler's first grab at stop 1, to teach the skill check
+	scriptedGrab    the scripted Crawler at ScriptedGrab.Stop, to teach the skill check
+	quietUntilStop  stops 1..this: no wanderer and no timed events (no Surge), so only the
+	                planned first-run encounters happen (docs/FINAL-DESIGN.md Prompt 5)
+	sighting        stop 1's scripted Stalker sighting (Sighting below; E2's treatment arm)
+	stop3Stalker    stop 3 holds one awake Stalker, a wanderer that stalks the first player
+	                Stop3.AwayStuds or more from the train, and nothing else
+
+	First run (tier 1, Prompt 5): stop 1 no attacks and the sighting, no leak on the first cruise;
+	stop 2 the scripted Crawler (pursuit 24, lunge 40, the first-strike guard); stop 3 the
+	stalking wanderer. Tier 2 keeps zone 100 and grace 15 without a scripted grab.
 ]]
 
 export type PostGrab = { immunity: number, stagger: boolean }
@@ -42,19 +51,25 @@ export type Tier = {
 	zoneDegrees: number?,
 	postGrab: PostGrab?,
 	scriptedGrab: boolean,
+	quietUntilStop: number?,
+	sighting: boolean,
+	stop3Stalker: boolean,
 }
 
 local POST_GRAB: PostGrab = table.freeze({ immunity = 5, stagger = true })
 
 local Tiers: { Tier } = {
 	table.freeze({
-		stop1Cap = 1,
+		stop1Cap = 0, -- no attacks at all on a first run's stop 1: only the sighting
 		stop1Dormant = true,
 		safeLightScale = 1,
 		grace = 25,
-		zoneDegrees = nil,
+		zoneDegrees = 100,
 		postGrab = POST_GRAB,
-		scriptedGrab = false,
+		scriptedGrab = true,
+		quietUntilStop = 2,
+		sighting = true,
+		stop3Stalker = true,
 	}),
 	table.freeze({
 		stop1Cap = 1,
@@ -63,7 +78,10 @@ local Tiers: { Tier } = {
 		grace = 15,
 		zoneDegrees = 100,
 		postGrab = POST_GRAB,
-		scriptedGrab = true,
+		scriptedGrab = false,
+		quietUntilStop = nil,
+		sighting = false,
+		stop3Stalker = false,
 	}),
 	table.freeze({
 		stop1Cap = nil,
@@ -73,6 +91,9 @@ local Tiers: { Tier } = {
 		zoneDegrees = nil,
 		postGrab = POST_GRAB,
 		scriptedGrab = false,
+		quietUntilStop = nil,
+		sighting = false,
+		stop3Stalker = false,
 	}),
 }
 
@@ -86,9 +107,9 @@ return table.freeze({
 		Tag = "SafeLight",
 		TrainRadius = 34,
 		LampRadius = 16,
-		-- at the tutorial's first stop the yard's lamp pools are SafeLights too: a lit way out
-		-- across the bigger stop, darkness between the pools (Services/StationService)
-		YardLampsAtStop = 1,
+		-- where the teaching Crawler comes (ScriptedGrab.Stop) the yard's lamp pools are SafeLights
+		-- too: a lit way out across the bigger stop, darkness between the pools (StationService)
+		YardLampsAtStop = 2,
 	}),
 
 	-- Prompt 5 installs this tier-1 stop-2 encounter; absolute speeds ignore normal scaling.
@@ -101,16 +122,44 @@ return table.freeze({
 		WarningSeconds = 1.5,
 	}),
 
-	-- Tier 2's teaching grab: a slow Crawler comes for the first player who is off the train
-	-- at stop 1 once their grace is over, and its hold has an oversized zone and cannot kill.
+	-- The first run's teaching Crawler (tier 1, stop 2): it comes for the first player who is off
+	-- the train once their grace is over, at FirstCrawler's absolute speeds behind the
+	-- first-strike guard; its hold has the oversized zone and cannot kill. Sprinting away works.
 	ScriptedGrab = table.freeze({
-		Stop = 1,
+		Stop = 2,
 		Kind = "Crawler",
 		AfterGrace = 4, -- seconds after the player's grace ends
 		Distance = 18, -- studs from the player it claws up
-		ChaseScale = 0.55, -- of its usual chase speed: you see it coming
-		ZoneDegrees = 140,
+		ChaseScale = 0.55, -- only if a scripted Crawler ever runs outside FirstCrawler's stop
+		ZoneDegrees = 100,
 	}),
+
+	-- Stop 1's scripted sighting (Prompt 5, FIXED; E2's treatment arm, `Enabled` is the arm's flag
+	-- until S7 assigns cohorts). A harmless Stalker appears in sight of the first crew member off
+	-- the train, holds the Stalk freeze, then withdraws at walking pace into the dark.
+	Sighting = table.freeze({
+		Enabled = true,
+		Kind = "Stalker",
+		Near = 15, -- studs from that player: inside Visibility RadiusMin 18 at every setting
+		Far = 17,
+		Fallback = 24, -- the nearest legal point up to this when none fits 15-17
+		LampMargin = 4, -- studs outside every lamp pool, at the light's edge
+		MinSeconds = 3, -- held at least this long after anyone first sees it
+		FacedSeconds = 1, -- faced this long (after the minimum): it withdraws
+		SeenSeconds = 1.5, -- every living off-train member has seen it this long: it withdraws
+		MaxSeconds = 12, -- it withdraws by now whatever happens
+		WithdrawSeconds = 8, -- walking away, then it is gone
+	}),
+
+	-- Stop 3 of a first run: one Stalker, a wanderer-with-stalk (Prompt 5, FIXED).
+	Stop3 = table.freeze({
+		Stop = 3,
+		Kind = "Stalker",
+		AwayStuds = 20, -- it targets only a player this far from the train
+	}),
+
+	-- Shown to a crew member riding below their own tier (Logic/Tutorial.crewTier).
+	NewHandPace = "Riding at a new Hand's pace.",
 
 	-- ROUGH DRAFT: the owner rewrites these freely. Order is the order they queue in.
 	Prompts = table.freeze({
@@ -139,6 +188,18 @@ return table.freeze({
 			tier = 1,
 			when = "NearEdge",
 			text = "The far edge drops into a sinkhole. Keep back from it.",
+		},
+		{
+			id = "Face",
+			tier = 1,
+			when = "Stalked",
+			text = "Face it and it waits. Staring only buys time; the glance just looks behind you.",
+		},
+		{
+			id = "Bell",
+			tier = 1,
+			when = "BackAboard",
+			text = "Everyone aboard? Ring the bell in the saloon to leave early.",
 		},
 		-- run 2: the skill check
 		{

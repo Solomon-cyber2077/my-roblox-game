@@ -1,5 +1,20 @@
 # HANDOFF
 
+## 2026-10-22: S6 / PROMPT 5, FIRST RUN AND AGAIN
+1. Completed
+- First run (tier 1, Config/Tutorial): stop 1 has no Hollows (stop1Cap 0) and a scripted sighting; stop 2 has only the scripted Crawler (ScriptedGrab.Stop 2, non-lethal, zone 100 degrees; yard lamps at stop 2); stops 1-2 are quiet (quietUntilStop 2: no wanderer, no timed events); stop 3 has one awake Stalker wanderer that stalks (Stop3, `StalkWanderer`) and leaves anyone within 20 studs of the train alone (`AwayStuds`, measured in station-local Z); no leak on the first cruise (Difficulty.Leaks.FirstCruiseCap 0, `Leaks.cap/count(..., tutorialTier)`). Tier 2 keeps the old stop-1 cap and drops the scripted grab.
+- Sighting (Logic/Sighting + spec, HollowService): a Stalker shows 15-17 studs off (fallback 24) in the dark, out of lamp reach, holds 3-12 s (1 s faced / 1.5 s seen), then walks 60 studs deeper and is dismissed after 8 s. Telemetry `sighting_exposure`. `Tutorial.Sighting.Enabled` is the E2 flag.
+- AGAIN/DEPOT (Logic/Again + spec, LobbyService, UI/RunCard): RunEnd opens a card for the run's present members. AGAIN (gamepad A) during RunEnd is queued and applied after ResetReady on Enter.Lobby; in the hall it applies at once. The hall holds its countdown (RunRules `holdCountdown`) until every present, non-DEPOT member is ready, or 20 s after the first applied press with one ready. DEPOT (gamepad B) leaves the player unready. Card shows the crew's ready count (`lobby.again`). Remote `Again(boolean)`, telemetry `again_pressed`.
+- Prompts "Face" (on being stalked) and "Bell" (once back aboard); a crew member past the crew's tier is told the run goes at a new Hand's pace (TutorialService.AnnouncePace). Lobby and TicketBook show DEEPEST STOP. Dev `tutorial <reset|0-3>`.
+- Fixed: HollowService.think now advances dt/lastThink before its early returns, so a Hollow leaving Emerge no longer banks the jump into its first-strike warning (the stop-2 Crawler's coil was 1.0 s real; now 1.51 s logged).
+- Run card layout: the stamp sits just above the foot, the three buttons share the foot, the H hint moved under the ticket.
+2. Verified / known gaps
+- `lune run check` passed: 495 tests, 66 spec files, audit clean.
+- Studio (solo, main-s1): stop 1 no Hollows, sighting at 16.2 studs, froze, withdrew, gone after 8 s (sighting_exposure 3.01). Stop 2: only the scripted Crawler, coil then Windup and a non-lethal grab released after ~7 s; no wanderer or timed event. Stop 3: no Hollow within 20 studs of the train for 30 s; beyond 20 the Stalker stalked, hunted and struck after tell_exposure 1.51 s. AGAIN in the hall started the countdown at once; AGAIN during RunEnd showed READY 1/1, survived the reset and the next run counted down with no lobby input; DEPOT stayed unready (0/1 after 25 s). Console: only the known asset 203785492 and cab-sill warnings.
+- NOT verified: multi-client AGAIN (the 20 s fallback hold, late joiners, a member leaving mid-wait), real gamepad A/B and click input on the card, the "Face"/"Bell" prompt text on screen, tier 2 in Studio, phone-sized card layout.
+3. Next logical step
+- S7 (Prompt 6), then S8, then the G1 playtest. S5's two-client latency matrix is still pending.
+
 ## 2026-10-22: S5 / PROMPT 4, BELL, STOP CLOCK B AND THE RAILING GRASP (Astra started, Claude finished)
 1. Completed
 - Bell: a rope by the route board (TrainInterior), `TrainService.RingBell` (Dwell, alive, aboard, within 9 studs) -> `RunDirector.ShortenStop`. u = elapsed since doorsOpenAt / the ORIGINAL params.dwell (LastCall included); "all" at u >= 0.40 with every living member aboard, "half" at u >= 0.60 with at least ceil(living/2) aboard. departAt = min(departAt, now + 30) only if strictly shorter (idempotent, never extends); Dwell ends 15 s before; startedAt and the hazard dwell are kept; timed events cancel; the branch is stored and reported on stop_resolved. No bell at the Emergency Village or the Terminus. Logic/DepartureBell + spec.

@@ -144,6 +144,8 @@ describe("Part 2 config (Config/Difficulty)", function()
 			Exhausted = true,
 			Carrying = true,
 			Junction = true,
+			Stalked = true,
+			BackAboard = true,
 		}
 		local ids = {}
 		local tiers = {}

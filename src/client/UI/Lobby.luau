@@ -499,7 +499,11 @@ function Lobby.mount(gui: ScreenGui)
 		badge.Text = tostring(rank)
 		rankLabel.Text = if span > 0 then `{into} / {span} XP` else "MAX RANK"
 		setXp(if span > 0 then into / span else 1)
-		brassLabel.Text = `{Format.thousands(profile.brass or 0)} BRASS`
+		-- the deepest stop ever reached (stats.bestStation; Prompt 8 styles it)
+		local deepest = if profile.stats then profile.stats.bestStation or 0 else 0
+		brassLabel.Text = `{Format.thousands(profile.brass or 0)} BRASS{if deepest > 0
+			then `  ·  DEEPEST STOP {deepest}`
+			else ""}`
 		savingLabel.Text = if profile.saving == "Offline" then "NOT SAVING" else ""
 	end
 	State.Observe("private", { "profile" }, renderProfile)

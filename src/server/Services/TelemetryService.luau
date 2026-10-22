@@ -582,6 +582,32 @@ end
 
 -- Hooks ------------------------------------------------------------------------------------
 
+-- The first run's stop-1 sighting withdrew: `seconds` of line of sight this player had of it (an
+-- opportunity to see it; G1's think-aloud says whether they noticed).
+function TelemetryService.Sighting(player: Player, seconds: number)
+	local current = run
+	local participant = current and current.byPlayer[player]
+	if participant == nil or not once(`sighting|{current and current.id}|{player.UserId}`) then
+		return
+	end
+	TelemetryService.Event(
+		player,
+		"sighting_exposure",
+		round(seconds, 2),
+		playerFields(participant, Telemetry.tell(seconds))
+	)
+end
+
+-- AGAIN accepted on the run card (LobbyService), once per player per card: seconds after the card
+-- opened, and the run it followed.
+function TelemetryService.AgainPressed(player: Player, secondsAfterCard: number, outcome: string)
+	TelemetryService.Event(player, "again_pressed", round(secondsAfterCard, 2), {
+		string.lower(outcome),
+		TelemetryService.Device(player),
+		experienceOf(player),
+	})
+end
+
 -- A Hollow's strike attempt on `player` (HollowService): the warning it gave them first, its
 -- Stalk/coil time in sight within 36 studs. An opportunity to see it, not proof they did.
 function TelemetryService.Tell(player: Player, seconds: number, crewmatesNear: number)

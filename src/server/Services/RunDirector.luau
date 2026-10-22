@@ -131,6 +131,7 @@ local function context(): RunRules.Context
 		cruiseSeconds = state.cruiseSeconds,
 		dwellSeconds = if state.params then state.params.dwell else 60,
 		chaseSeconds = if state.params then state.params.chaseWindow else 6,
+		holdCountdown = Registry.LobbyService.HoldCountdown(),
 	}
 end
 
@@ -187,6 +188,7 @@ Enter.Lobby = function(previous)
 	end
 	state.outcome = nil
 	Registry.LobbyService.ResetReady()
+	Registry.LobbyService.ApplyAgain() -- AGAIN pressed on the run card: ready again now
 	Registry.CosmeticService.RefreshLivery()
 end
 
@@ -211,6 +213,7 @@ Enter.Boarding = function()
 	Registry.CrewService.BeginRun(crew)
 	state.tutorial = Registry.TutorialService.CrewTier(crew)
 	StateService.Set({ "run", "tutorial" }, state.tutorial)
+	Registry.TutorialService.AnnouncePace(crew, state.tutorial)
 	Registry.CosmeticService.RefreshLivery()
 	Registry.LobbyService.ResetReady()
 end
@@ -275,7 +278,7 @@ Enter.Cruise = function()
 		params.lootMul = Mystery.lootMul(params.lootMul)
 	end
 	state.cruiseSeconds = DifficultyModel.cruiseSeconds(option.distanceKm)
-	Registry.TrainService.BeginLeg(option.distanceKm, state.cruiseSeconds, state.nextStop, d)
+	Registry.TrainService.BeginLeg(option.distanceKm, state.cruiseSeconds, state.nextStop, d, state.tutorial)
 	local coalCost = Ledger.legCoalCost(train, option.distanceKm)
 	local destination: Types.Destination = if state.sealed
 		then Mystery.sealed(option.distanceKm, coalCost, option.archetype)
@@ -512,6 +515,8 @@ Enter.RunEnd = function(previous, outcome)
 	Registry.HazardDirector.Stop()
 	Registry.HollowService.Clear()
 	local finalOutcome = state.outcome :: Types.Outcome
+	-- the run card's AGAIN/DEPOT: every present member of this run, alive or not
+	Registry.LobbyService.OpenCard(Registry.CrewService.MemberPlayers(), finalOutcome)
 	if finalOutcome == "Derailed" then
 		Registry.CrewService.MarkWrecked()
 	end

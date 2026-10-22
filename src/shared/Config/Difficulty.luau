@@ -186,6 +186,7 @@ return table.freeze({
 		ExpectedPerTrip = table.freeze({ 0.8, 2.2 }), -- leaks per trip by station difficulty
 		EarlyCap = 1, -- stops 1 to EarlyUntilStop: at most one leak
 		EarlyUntilStop = 3,
+		FirstCruiseCap = 0, -- a first run (tutorial tier 1): no leak on the way to stop 1 (Prompt 5)
 		Cap = 3,
 		PatchParts = 1,
 		PatchHold = 1.5,

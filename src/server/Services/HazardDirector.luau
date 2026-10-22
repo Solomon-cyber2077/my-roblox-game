@@ -17,6 +17,7 @@ local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local Threat = require(Shared.Logic.Threat)
 local Tutorial = require(Shared.Logic.Tutorial)
+local TutorialConfig = require(Shared.Config.Tutorial)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Types = require(Shared.Types)
 
@@ -162,10 +163,22 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 			hazards.hollowCap = math.min(hazards.hollowCap, tier.stop1Cap)
 		end
 		hazards.dormantStart = tier ~= nil and stop == 1 and tier.stop1Dormant
+		-- a first run's stop 3: one awake Stalker, a wanderer that stalks (Prompt 5)
+		if tier and tier.stop3Stalker and stop == TutorialConfig.Stop3.Stop then
+			hazards.hollowCap = 1
+			hazards.scriptedOnly = true
+		end
 		info.hazards = hazards
 		Registry.StateService.Set({ "run", "station", "hazards" }, hazards)
 	end
 	local dormant = info.hazards.dormantStart == true
+	local scriptedOnly = info.hazards.scriptedOnly == true
+	-- a first run's quiet stops: no wanderer and no timed events (no Surge), only the planned
+	-- first-run encounters (Prompt 5)
+	local tier = Tutorial.def(info.hazards.tutorial)
+	local quiet = tier ~= nil
+		and tier.quietUntilStop ~= nil
+		and (info.hazards.stop or 1) <= (tier.quietUntilStop :: number)
 	local geo = { depth = plan.depth, safe = Tuning.World.SafeStrip }
 	local refs: { HazardSchedule.SlabRef } = {}
 	for _, slab in plan.slabs do
@@ -178,18 +191,23 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 		events = HazardSchedule.collapsePlan(info.hazards, geo, refs, info.layoutSeed),
 		warnIndex = 1,
 		collapseIndex = 1,
-		spawns = if dormant then {} else HazardSchedule.spawnTimes(info.hazards, info.layoutSeed),
+		spawns = if dormant or scriptedOnly
+			then {}
+			else HazardSchedule.spawnTimes(info.hazards, info.layoutSeed),
 		spawnIndex = 1,
 		wandererAt = Difficulty.WandererDelay[1]
 			+ (Difficulty.WandererDelay[2] - Difficulty.WandererDelay[1]) * info.hazards.difficulty,
-		wandererSpawned = dormant,
+		wandererSpawned = dormant or quiet or scriptedOnly,
 		frozenAt = nil,
 		lastDamage = 0,
 		rng = Random.new(info.layoutSeed % 2147483647),
 	}
 	Registry.HollowService.Configure(info.hazards)
 	Registry.HollowService.Prepare(plan)
-	if not dormant then
+	if scriptedOnly then
+		Registry.HollowService.SpawnStalkingWanderer(plan)
+	end
+	if not dormant and not quiet then
 		TimedEventDirector.Begin(info)
 	end
 	connection = RunService.Heartbeat:Connect(step)
