@@ -45,7 +45,11 @@ local function zoneOf(rail: BasePart): VoidMist.Zone
 end
 
 local function debugLabel(): TextLabel?
-	if not (V.Debug and RunService:IsStudio()) then
+	local on = V.Debug or ReplicatedStorage:GetAttribute("DevMistDebug") == true
+	if not (on and RunService:IsStudio()) then
+		if label then
+			label.Text = ""
+		end
 		return nil
 	end
 	if label == nil then

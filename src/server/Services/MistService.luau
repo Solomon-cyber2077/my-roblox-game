@@ -7,6 +7,9 @@
 	  * edge mist damage: the BufferDepth strip in front of each sinkhole rail hurts after
 	    EntryGrace, DamagePerSecond in TickInterval ticks; never on top of the fog's own damage
 	  * the player attribute MistZone: "Edge", "Fog" or nil, for the client and debugging
+	  * session counts for playtests (prompts/VM7): rescues, edge damage dealt, seconds per zone
+	    per player; Studio's `mist summary` prints them, and with `mist debug` on they print
+	    every SummaryEvery seconds. `mist outlines` boxes the rails and their zones.
 	The rail itself (StationDressing EdgeMark, WallHeight tall) is the hard stop; the client's
 	VoidCurrentController is only feel. The server never sets crew velocity except to zero it once
 	on a rescue teleport.
@@ -16,6 +19,7 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
@@ -25,6 +29,7 @@ local Safe = require(Shared.Util.Safe)
 local Registry = require(script.Parent.Parent.Registry)
 
 local V = Tuning.VoidMist
+local SUMMARY_EVERY = 60 -- seconds between debug summaries
 
 local MistService = {}
 
@@ -39,6 +44,15 @@ local zones: { VoidMist.Zone } = {}
 local zonesFor: Model? = nil -- the station model the zones were read from
 local sampleAt = 0
 local tickAt = 0
+local summaryAt = 0
+
+-- What a playtest needs to read back (never reset during a session).
+local counts = {
+	rescues = 0,
+	damage = 0, -- edge mist damage dealt (god mode deals none)
+	seconds = {} :: { [string]: { [string]: number } }, -- player name -> zone -> seconds in it
+}
+local outlines: Folder? = nil
 
 -- The edge zones of the station standing now, in station-local space.
 local function refreshZones()
@@ -113,6 +127,7 @@ local function rescue(player: Player, character: Model, root: BasePart, humanoid
 		humanoid:TakeDamage(V.RescueDamage)
 	end
 	Registry.NetService.Fire("Fx", player, "MistRescue", {})
+	counts.rescues += 1
 	local pingMs = player:GetNetworkPing() * 1000
 	warn(
 		`[VoidMist] rescued {player.Name} fallen at local ({math.floor(here.X)}, {math.floor(here.Z)}), ping {math.floor(
@@ -169,7 +184,13 @@ local function step()
 		end
 		if tick then
 			local fogged = fog ~= nil and here.Z > fog
-			player:SetAttribute("MistZone", if fogged then "Fog" elseif edge then "Edge" else nil)
+			local zone = if fogged then "Fog" elseif edge then "Edge" else nil
+			player:SetAttribute("MistZone", zone)
+			if zone then
+				local seconds = counts.seconds[player.Name] or {}
+				counts.seconds[player.Name] = seconds
+				seconds[zone] = (seconds[zone] or 0) + V.TickInterval
+			end
 			if not edge then
 				track.enteredAt = nil
 			elseif track.enteredAt == nil then
@@ -182,10 +203,64 @@ local function step()
 				-- the fog's own damage (HazardDirector) already covers anyone past its front
 				Registry.CrewService.TagDamage(character, "Fog")
 				humanoid:TakeDamage(V.DamagePerSecond * V.TickInterval)
+				counts.damage += V.DamagePerSecond * V.TickInterval
 				Registry.NetService.Fire("Fx", player, "FogTick", {})
 			end
 		end
 	end
+end
+
+function MistService.PrintSummary()
+	local lines = { `[VoidMist] rescues {counts.rescues}, edge damage {counts.damage}` }
+	for name, zones_ in counts.seconds do
+		table.insert(lines, `  {name}: Edge {zones_.Edge or 0} s, Fog {zones_.Fog or 0} s`)
+	end
+	print(table.concat(lines, "\n"))
+end
+
+-- Studio: boxes round every edge rail of the standing station and its mist zone. Returns
+-- whether they are on now.
+function MistService.ToggleOutlines(): boolean
+	if outlines then
+		outlines:Destroy()
+		outlines = nil
+		return false
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "VoidMistOutlines"
+	local built = Registry.StationService.Built()
+	for _, rail in CollectionService:GetTagged(TutorialConfig.EdgeTag) do
+		if rail:IsA("BasePart") and built and rail:IsDescendantOf(built.model) then
+			local railBox = Instance.new("SelectionBox")
+			railBox.Adornee = rail
+			railBox.Color3 = Color3.fromRGB(255, 80, 60)
+			railBox.LineThickness = 0.05
+			railBox.Parent = folder
+			-- the zone: BufferDepth on the train side of the rail, shown 6 studs tall
+			local box = Instance.new("Part")
+			box.Anchored = true
+			box.CanCollide = false
+			box.CanQuery = false
+			box.CanTouch = false
+			box.Transparency = 1
+			box.Size = Vector3.new(rail.Size.X, 6, V.BufferDepth)
+			box.CFrame = rail.CFrame * CFrame.new(0, -rail.Size.Y / 2 + 3, -V.BufferDepth / 2)
+			box.Parent = folder
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = box
+			weld.Part1 = rail
+			weld.Parent = box
+			box.Anchored = false
+			local zoneBox = Instance.new("SelectionBox")
+			zoneBox.Adornee = box
+			zoneBox.Color3 = Color3.fromRGB(80, 200, 210)
+			zoneBox.LineThickness = 0.04
+			zoneBox.Parent = folder
+		end
+	end
+	folder.Parent = Workspace
+	outlines = folder
+	return true
 end
 
 function MistService.Init() end
@@ -193,6 +268,14 @@ function MistService.Init() end
 function MistService.Start()
 	RunService.Heartbeat:Connect(function()
 		Safe.call("MistService.step", step)
+		if
+			RunService:IsStudio()
+			and ReplicatedStorage:GetAttribute("DevMistDebug")
+			and os.clock() >= summaryAt
+		then
+			summaryAt = os.clock() + SUMMARY_EVERY
+			MistService.PrintSummary()
+		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		tracks[player] = nil
