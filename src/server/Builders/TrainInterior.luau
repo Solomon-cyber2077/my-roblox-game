@@ -38,6 +38,7 @@ export type Dims = {
 export type Furnished = {
 	seats: { Seat },
 	chest: BasePart, -- the crew chest's prompt volume (Services/TrainService)
+	bell: BasePart,
 }
 
 local TrainInterior = {}
@@ -509,6 +510,7 @@ end
 
 function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnished
 	local seats: { Seat } = {}
+	local bell: BasePart
 	local LI = dims.lineIn
 	local CEIL = dims.ceiling
 	-- enamel signs over the sliding doors sit clear of their brass heads
@@ -759,6 +761,27 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	-- tickets and dials are SurfaceGuis on the clear faces, the lanterns' light follows the vote.
 	do
 		local XB, ZB = -23.62, 4.05 -- the lining's face, and the board's middle across the car
+		-- A reachable brass bell rope hangs beside the route board, clear of its tickets.
+		bell = Kit.cylinder(
+			model,
+			0.18,
+			0.7,
+			origin * CFrame.new(-22.9, 5.1, 2.25),
+			C.brass,
+			{ material = M.Metal }
+		)
+		bell.Name = "DepartureBell"
+		bell:SetAttribute("Bell", true)
+		local rope = Kit.cylinder(
+			model,
+			0.035,
+			1.0,
+			origin * CFrame.new(-22.9, 4.35, 2.25) * CFrame.Angles(0, 0, math.pi / 2),
+			C.leather,
+			{ material = M.Fabric, collide = false }
+		)
+		rope.Name = "DepartureBellRope"
+		rope:SetAttribute("BellRope", true)
 		local board = Instance.new("Model")
 		board.Name = "RouteBoard"
 		board.Parent = model
@@ -1349,7 +1372,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		namePlate.Name = "Nameplate"
 	end
 
-	return { seats = seats, chest = chest }
+	return { seats = seats, chest = chest, bell = bell }
 end
 
 return TrainInterior

@@ -1,4 +1,5 @@
 local DifficultyModel = require(Shared.Logic.DifficultyModel)
+local Difficulty = require(Shared.Config.Difficulty)
 local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 
@@ -95,7 +96,11 @@ describe("DifficultyModel", function()
 		local small = DifficultyModel.params(0.5, halt, 4, nil, 3)
 		local big = DifficultyModel.params(0.5, bigger, 4, nil, 3)
 		-- 240 studs more walk there and back, at a jog, with the margin
-		local extra = 2 * 180 * 1.2 / Tuning.Crew.WalkSpeed * 1.6
+		local extra = 2
+			* 180
+			* Difficulty.StopClock.Detour
+			/ Difficulty.StopClock.WalkReference
+			* Difficulty.StopClock.WalkMargin
 		expect(big.dwell - small.dwell).toBeCloseTo(extra, 1)
 		local school = DifficultyModel.params(0.5, Stations.List.Schoolhouse, 4, nil)
 		expect(school.hollowCap).toBeAtLeast(DifficultyModel.params(0.5, halt, 4, nil).hollowCap)
@@ -105,7 +110,7 @@ describe("DifficultyModel", function()
 		local halt = Stations.List.Halt
 		local first = DifficultyModel.params(0.5, halt, 1, nil, 1)
 		local fifth = DifficultyModel.params(0.5, halt, 1, nil, 5)
-		expect(fifth.dwell - first.dwell).toBe(4 * 4)
+		expect(fifth.dwell - first.dwell).toBe(4 * Difficulty.StopClock.PerStop)
 	end)
 
 	it("applies upgrades", function()
@@ -118,12 +123,19 @@ describe("DifficultyModel", function()
 		expect(upgraded.fogDps).toBeCloseTo(base.fogDps * 0.85)
 	end)
 
-	it("runs the search time from 105 to 75 seconds, on top of the walk", function()
+	it("runs the search time from 80 to 60 seconds, on top of the walk", function()
 		local neutral = table.clone(Stations.List.CoalYard)
 		neutral.landmarks = nil
 		neutral.village = nil
-		local walk = 2 * DifficultyModel.farWalk(neutral) / Tuning.Crew.WalkSpeed * 1.6
-		expect(DifficultyModel.params(0, neutral, 1, nil).dwell).toBe(math.floor(105 + walk + 0.5))
-		expect(DifficultyModel.params(1, neutral, 1, nil).dwell).toBe(math.floor(75 + walk + 0.5))
+		local walk = 2
+			* DifficultyModel.farWalk(neutral)
+			/ Difficulty.StopClock.WalkReference
+			* Difficulty.StopClock.WalkMargin
+		expect(DifficultyModel.params(0, neutral, 1, nil).dwell).toBe(
+			math.floor(Difficulty.StopClock.Search[1] + walk + 0.5)
+		)
+		expect(DifficultyModel.params(1, neutral, 1, nil).dwell).toBe(
+			math.floor(Difficulty.StopClock.Search[2] + walk + 0.5)
+		)
 	end)
 end)

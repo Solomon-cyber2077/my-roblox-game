@@ -27,6 +27,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 
 local TrainInterior = require(script.Parent.TrainInterior)
 local TrainShell = require(script.Parent.TrainShell)
@@ -98,11 +99,13 @@ export type Built = {
 	spawnPoints: { CFrame },
 	breachAnchors: { BasePart },
 	doorBlockers: { BasePart },
+	graspRails: { BasePart },
 	workbench: BasePart,
 	mast: BasePart,
 	mastLamp: BasePart,
 	seats: { Seat },
 	chest: BasePart, -- the crew chest in the stores car (its prompt's part)
+	bell: BasePart,
 	cabins: { Cabin },
 }
 
@@ -155,6 +158,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	local varnish = { material = Enum.Material.SmoothPlastic, reflectance = 0.04 }
 
 	local doorBlockers: { BasePart } = {}
+	local graspRails: { BasePart } = {}
 	local breachAnchors: { BasePart } = {}
 	local cabins: { Cabin } = {}
 
@@ -193,7 +197,6 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			end
 		end
 	end
-
 	local function buffers(x: number, dir: number)
 		for _, side in { -1, 1 } do
 			Kit.cylinder(
@@ -1708,6 +1711,30 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	})
 
 	model.PrimaryPart = boiler
+	-- Fixed handholds beside every side door: two reachable grips just outside the wall.
+	for _, blocker in doorBlockers do
+		local localPosition = origin:PointToObjectSpace(blocker.CFrame.Position)
+		local side = if localPosition.Z >= 0 then 1 else -1
+		for _, dx in { -blocker.Size.X / 4, blocker.Size.X / 4 } do
+			local facing = if side > 0 then CFrame.new() else CFrame.Angles(0, math.pi, 0)
+			local rail = Kit.block(
+				model,
+				Vector3.new(Tuning.Grasp.RailWidth, Tuning.Grasp.RailHeightSize, Tuning.Grasp.RailDepth),
+				origin
+					* CFrame.new(
+						localPosition.X + dx,
+						Tuning.Grasp.RailHeight,
+						side * (HALF + Tuning.Grasp.RailOutside)
+					)
+					* facing,
+				C.rail,
+				{ material = Enum.Material.Metal, collide = false } -- a handhold, not a snag for runners
+			)
+			rail.Name = "GraspRail"
+			rail:SetAttribute("GraspRail", true)
+			table.insert(graspRails, rail)
+		end
+	end
 	Kit.setCollisionGroup(model, "Train")
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
@@ -1748,11 +1775,13 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		spawnPoints = spawnPoints,
 		breachAnchors = breachAnchors,
 		doorBlockers = doorBlockers,
+		graspRails = graspRails,
 		workbench = workbench,
 		mast = mast,
 		mastLamp = mastLamp,
 		seats = furnished.seats,
 		chest = furnished.chest,
+		bell = furnished.bell,
 		cabins = cabins,
 	}
 end

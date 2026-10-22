@@ -84,6 +84,8 @@ export type StationInfo = {
 	layoutSeed: number,
 	hazards: HazardParams,
 	terminus: boolean,
+	originalDwell: number?,
+	bell: "none" | "all" | "half"?,
 	-- the Emergency Village after a breakdown (not one of the stops): bring `needed` repair parts
 	-- aboard; `found` counts those that have come aboard since the doors opened
 	emergency: { needed: number, found: number }?,
@@ -150,6 +152,7 @@ export type LogEntry = {
 	closeCalls: { string }?, -- display names: not aboard at T-0, aboard when the stop resolved
 	haul: StopHaul?, -- loot banked and crew downed during this stop
 	outcome: StopOutcome,
+	bell: "none" | "all" | "half"?,
 }
 
 -- Per-player tally that feeds the end-of-run payout.
