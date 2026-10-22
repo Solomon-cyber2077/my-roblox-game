@@ -1,5 +1,14 @@
 # HANDOFF
 
+## 2026-10-22: PHONE HUD VERIFICATION FOLLOW-UP
+1. Completed
+- Started `main-s1.rbxl` successfully through Studio MCP on the existing iPhone 7 Device Simulator preset; the lobby rendered in third person with LOOK beside RUN and no visible overlap in that row. Playtest was stopped afterward. The published `LAST TRAIN` Studio window was left untouched.
+2. Known gaps
+- In-run checks were blocked because the computer-use helper repeatedly returned “Computer Use helper already has an active request,” including after window recovery. Console output contained the expected unpublished-place DataStore warning, fixed-size EditableMesh cab-sill warning, and asset `203785492` type mismatch.
+- The network-enabled `lune run check` retry passed: 514 tests across 69 spec files, visual audit clean. The initial sandbox attempt failed while fetching Roblox’s API dump.
+3. Next logical step
+- Finish the phone run checklist: solo roster hidden; errands hide after 6 seconds; no watch/ticket/LOOK/RUN overlap; RUN toggle and idle/winded shutdown; long-press backpack drop; locked/free camera in train and buildings; visible sinkhole rope; clean console; then test on a real phone.
+
 ## 2026-10-22: PHONE HUD DECLUTTER, TOUCH CONTROLS, CAMERA LOCK, VISIBLE EDGE (from the owner's phone screenshots)
 1. Completed (code only; `lune run check` passed, audit clean)
 - Crew Errands (UI/QuestTracker): always shown in the hall; in a run, only for 6 s after an errand changes (it covered LOOK, the stop ticket and the watch on phones).
