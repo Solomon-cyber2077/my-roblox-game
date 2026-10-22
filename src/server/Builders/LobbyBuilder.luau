@@ -2135,7 +2135,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local spawnPoints: { CFrame } = {}
 	for i = 0, 11 do
 		local angle = i / 12 * math.pi * 2
-		table.insert(spawnPoints, at(math.cos(angle) * 14, 3, 24 + math.sin(angle) * 9))
+		local position = Vector3.new(math.cos(angle) * 14, 3, 24 + math.sin(angle) * 9)
+		-- facing the departure board: a first visit opens on its START prompt (Prompt 10)
+		table.insert(spawnPoints, origin * CFrame.lookAt(position, Vector3.new(0, 3, BACK_Z)))
 	end
 
 	Kit.setCollisionGroup(model, "Default")

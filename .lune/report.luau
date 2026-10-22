@@ -19,10 +19,9 @@ local Tuning = require(Shared.Config.Tuning)
 local DifficultyModel = require(Shared.Logic.DifficultyModel)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local Leaks = require(Shared.Logic.Leaks)
-local RouteGen = require(Shared.Logic.RouteGen)
-local RunRules = require(Shared.Logic.RunRules)
+local RouteModel = require(Shared.Logic.RouteModel)
+local Routes = require(Shared.Logic.Routes)
 local Threat = require(Shared.Logic.Threat)
-local Rng = require(Shared.Util.Rng)
 
 local only = process.args[1]
 local N = Tuning.Run.StationCount
@@ -46,11 +45,6 @@ local function csv(values: { any }): string
 	return table.concat(out, ",")
 end
 
--- The shipped clock: DifficultyModel.dwell itself.
-local function dwellNow(d: number, arch: any, stop: number): number
-	return DifficultyModel.dwell(d, arch, stop)
-end
-
 -- Clock B: DifficultyModel.dwell's formula with B's terms and the timer's reference walk speed.
 local function dwellB(d: number, arch: any, stop: number): number
 	local c = CLOCK_B
@@ -60,8 +54,6 @@ local function dwellB(d: number, arch: any, stop: number): number
 	local walk = 2 * DifficultyModel.farWalk(arch) / c.WalkReference * c.WalkMargin
 	return math.floor(search + walk + c.PerStop * math.max(stop - 1, 0) + 0.5)
 end
-
-local CLOCKS = { { name = "now", dwell = dwellNow }, { name = "B", dwell = dwellB } }
 
 -- A bell pull sets departAt = min(departAt, now + BELL_LEAD) (Prompt 4, FIXED).
 local BELL_LEAD = 30
@@ -94,6 +86,20 @@ end
 
 --------------------------------------------------------------------------------------------
 -- Difficulty by stop
+
+local function shortLineTable()
+	section("Short Line difficulty (Prompt 10: stop k reads Long Line stop m(k), tier offset 0)")
+	print("stop,long_stop,D_short,D_long_same_stop")
+	for k = 1, Routes.length("Short") do
+		local level = Routes.level("Short", k)
+		print(csv({
+			k,
+			level,
+			round(DifficultyModel.forStop(level, N, 2), 3),
+			round(DifficultyModel.forStop(k, N, 2), 3),
+		}))
+	end
+end
 
 local function difficultyTable()
 	section("D by stop and route tier (run tier 1)")
@@ -253,97 +259,66 @@ local SCENARIOS: { Scenario } = {
 	{ name = "60% of stops u=0.50", share = 0.50, fraction = 0.6, eligibility = "all living crew aboard" },
 }
 
--- One run: seconds from Countdown to the end of RunEnd (as B.4 counts it) and the mean doors-open seconds per stop.
-local function simulate(
-	seed: number,
-	stops: number,
-	crew: number,
-	dwellOf: any,
-	scenario: Scenario
-): (number, number)
-	local total = Run.CountdownSeconds + Run.BoardingSeconds
-	local doorsTotal = 0
-	local previous = nil
-	for leg = 1, stops do
-		local option = RouteGen.options(seed, leg, stops, previous)[1]
-		previous = option.archetype
-		local arch = Stations.List[option.archetype]
-		local d = DifficultyModel.forStop(leg, stops, option.tier, 1)
-		local p = DifficultyModel.params(d, arch, crew, nil, leg)
-		local dwell = dwellOf(d, arch, leg)
-		local doors = math.max(dwell - Run.LastCallSeconds, 1) + Run.LastCallSeconds
-		local share = scenario.share
-		if share then
-			local rings = scenario.fraction >= 1
-				or Rng.new(Rng.derive(seed, "bell", leg)):next() < scenario.fraction
-			if rings then
-				doors = math.min(doors, share * dwell + BELL_LEAD)
-			end
-		end
-		doorsTotal += doors
-		total += Run.JunctionSeconds + DifficultyModel.cruiseSeconds(option.distanceKm) + Run.ArrivalSeconds + doors + RunRules.graceSeconds() + p.chaseWindow
-	end
-	local terminus = RouteGen.terminusOption()
-	total += Run.FinalJunctionSeconds + DifficultyModel.cruiseSeconds(terminus.distanceKm) + Run.ArrivalSeconds + Run.TerminusSeconds + Run.RunEndSeconds
-	return total, doorsTotal / stops
+-- One run: Logic/RouteModel (the shipped clock, bell scenarios as above).
+local function simulate(seed: number, route: Routes.Route, crew: number, scenario: Scenario): (number, number)
+	local share = scenario.share
+	local bell = if share then { share = share, fraction = scenario.fraction } else nil
+	return RouteModel.seconds(seed, route, crew, bell)
 end
 
 local function routeModel()
 	local seeds = tonumber(process.env.REPORT_SEEDS) or 1000
 	section(
-		`Route model ({seeds} seeds, first offered route, run tier 1, no upgrades, Countdown through RunEnd; telemetry run_ended stops at RunEnd entry, {Run.RunEndSeconds} s sooner)`
+		`Route model ({seeds} seeds, first offered route, run tier 1, no upgrades, stop clock B, Countdown through RunEnd; telemetry run_ended stops at RunEnd entry, {Run.RunEndSeconds} s sooner)`
 	)
 	print(
-		"line,stops,crew,clock,scenario,eligibility,mean_min,median_min,p10_min,p90_min,min_min,max_min,mean_doors_open_s"
+		"line,stops,crew,scenario,eligibility,mean_min,median_min,p10_min,p90_min,min_min,max_min,mean_doors_open_s,brass_win,brass_per_min"
 	)
-	local lines = {
-		{ name = "Long Line", stops = N, note = "" },
-		{
-			name = "Short Line",
-			stops = 5,
-			note = " (placeholder: Prompt 10 sets its difficulty, sky and rewards)",
-		},
-	}
-	for _, line in lines do
+	for _, route in { "Long", "Short" } :: { Routes.Route } do
+		local stops = Routes.length(route)
+		local brass = RouteModel.brass(route, true)
 		for _, crew in { 1, 4 } do
-			for _, clock in CLOCKS do
-				for _, scenario in SCENARIOS do
-					local sum, lo, hi, doors = 0, math.huge, -math.huge, 0
-					local samples: { number } = {}
-					for seed = 1, seeds do
-						local seconds, meanDoors = simulate(seed, line.stops, crew, clock.dwell, scenario)
-						sum += seconds
-						table.insert(samples, seconds)
-						lo = math.min(lo, seconds)
-						hi = math.max(hi, seconds)
-						doors += meanDoors
-					end
-					table.sort(samples)
-					local function percentile(pct: number): number
-						local index = math.max(1, math.ceil(#samples * pct))
-						return samples[index]
-					end
-					print(csv({
-						line.name .. line.note,
-						line.stops,
-						crew,
-						clock.name,
-						scenario.name,
-						scenario.eligibility,
-						round(sum / seeds / 60, 2),
-						round(percentile(0.5) / 60, 2),
-						round(percentile(0.1) / 60, 2),
-						round(percentile(0.9) / 60, 2),
-						round(lo / 60, 2),
-						round(hi / 60, 2),
-						round(doors / seeds),
-					}))
+			for _, scenario in SCENARIOS do
+				local sum, lo, hi, doors = 0, math.huge, -math.huge, 0
+				local samples: { number } = {}
+				for seed = 1, seeds do
+					local seconds, meanDoors = simulate(seed, route, crew, scenario)
+					sum += seconds
+					table.insert(samples, seconds)
+					lo = math.min(lo, seconds)
+					hi = math.max(hi, seconds)
+					doors += meanDoors
 				end
+				table.sort(samples)
+				local function percentile(pct: number): number
+					local index = math.max(1, math.ceil(#samples * pct))
+					return samples[index]
+				end
+				local meanMin = sum / seeds / 60
+				print(csv({
+					`{route} Line`,
+					stops,
+					crew,
+					scenario.name,
+					scenario.eligibility,
+					round(meanMin, 2),
+					round(percentile(0.5) / 60, 2),
+					round(percentile(0.1) / 60, 2),
+					round(percentile(0.9) / 60, 2),
+					round(lo / 60, 2),
+					round(hi / 60, 2),
+					round(doors / seeds),
+					brass,
+					round(brass / meanMin, 2),
+				}))
 			end
 		end
 	end
 	print(
 		"Crew size changes Hollow counts, not the clock, so 1 and 4 match on duration. Means, not ceilings; no outcome or completion rate follows from them."
+	)
+	print(
+		"brass_win: one crew member who departs every stop alive and reaches the Terminus (per-stop Brass + the Terminus); loot, relics, rescues, tiers and the daily bonus excluded. A Short Line pays for the stops it covers."
 	)
 end
 
@@ -352,6 +327,7 @@ if only == "route" then
 else
 	assumptions()
 	difficultyTable()
+	shortLineTable()
 	archetypeTable()
 	chaseTable()
 	hazardTable()

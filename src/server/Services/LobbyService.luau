@@ -10,6 +10,9 @@
 	The run card's AGAIN (Logic/Again, Prompt 5): pressed during RunEnd it is queued and applied
 	after ResetReady; the hall then holds its countdown until the run's present members are all
 	ready or 20 s pass with one ready. DEPOT leaves that player unready.
+	The line (Logic/Routes, Prompt 10): with a new Hand in the hall the length is fixed and the hall
+	is told so; otherwise each hall player may vote Short or Long (`VoteLine`), and the run counts
+	its crew's votes at Boarding (a tie or none: Long). INVITE presses are logged (`Invited`).
 ]]
 
 local Players = game:GetService("Players")
@@ -20,6 +23,7 @@ local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local Again = require(Shared.Logic.Again)
+local Routes = require(Shared.Logic.Routes)
 local RunTier = require(Shared.Logic.RunTier)
 local Safe = require(Shared.Util.Safe)
 local Types = require(Shared.Types)
@@ -41,6 +45,8 @@ local published: Types.LobbyTier? = nil
 local card: Again.Card? = nil -- the ended run's AGAIN/DEPOT card
 local cardAt = 0 -- os.clock() it opened
 local cardOutcome = "aborted"
+local lineVotes: { [Player]: string } = {} -- "Short" or "Long"
+local publishedLine = ""
 
 local function publishReady()
 	local map: { [string]: boolean } = {}
@@ -141,6 +147,36 @@ local function publishTier()
 	StateService.Set({ "lobby", "tier" }, info)
 end
 
+-- lobby.line: is the hall's line fixed by a new Hand, and the hall's votes.
+local function publishLine()
+	local hall = LobbyService.LobbyPlayers()
+	local votes: { [string]: string } = {}
+	local short, long = 0, 0
+	for _, player in hall do
+		local vote = lineVotes[player]
+		if vote then
+			votes[tostring(player.UserId)] = vote
+			if vote == "Short" then
+				short += 1
+			else
+				long += 1
+			end
+		end
+	end
+	local anyNew = #Registry.TutorialService.NewHands(hall) > 0
+	local route, fixed = Routes.decide(anyNew, nil, short, long)
+	local line: Types.LobbyLine = { fixed = fixed, route = route, short = short, long = long, votes = votes }
+	local key = `{fixed}|{route}|{short}|{long}`
+	for id, vote in votes do
+		key ..= `|{id}={vote}`
+	end
+	if key == publishedLine then
+		return
+	end
+	publishedLine = key
+	StateService.Set({ "lobby", "line" }, line)
+end
+
 function LobbyService.Init()
 	local origin = Tuning.World.LobbyOrigin
 	built = LobbyBuilder.build(CFrame.new(origin[1], origin[2], origin[3]), Workspace)
@@ -219,6 +255,26 @@ function LobbyService.Start()
 			and not Registry.CarService.IsAboard(player)
 	end)
 
+	NetService.Handle("VoteLine", function(player, route: string)
+		if route ~= "Short" and route ~= "Long" then
+			return
+		end
+		lineVotes[player] = route
+		publishLine()
+	end, function(player)
+		local phase = Registry.RunDirector.Phase()
+		return (phase == "Lobby" or phase == "Countdown")
+			and not Registry.CrewService.IsMember(player)
+			and not Registry.CarService.IsAboard(player)
+	end)
+
+	-- the INVITE buttons (UI/Lobby, UI/RunCard) report a prompt they opened
+	NetService.Handle("Invited", function(player, source: string)
+		if source == "depot" or source == "runcard" then
+			Registry.TelemetryService.InvitePrompted(player, source)
+		end
+	end)
+
 	NetService.Handle("SetRunTier", function(_player, tier: number)
 		selectedTier = RunTier.clamp(tier)
 		publishTier()
@@ -229,6 +285,8 @@ function LobbyService.Start()
 
 	Players.PlayerRemoving:Connect(function(player)
 		ready[player] = nil
+		lineVotes[player] = nil
+		task.defer(publishLine)
 		task.defer(publishAgain) -- a leaving member drops out of the AGAIN count
 		local index = table.find(joinOrder, player)
 		if index then
@@ -250,6 +308,7 @@ function LobbyService.Start()
 		while true do
 			task.wait(Difficulty.RunTier.LobbyRefreshSeconds)
 			Safe.call("LobbyService.publishTier", publishTier)
+			Safe.call("LobbyService.publishLine", publishLine)
 		end
 	end)
 end
@@ -302,6 +361,20 @@ function LobbyService.ReadyCount(): number
 end
 
 -- The run tier for this crew: the host's pick, capped by what every member has unlocked.
+-- The crew's line votes at Boarding: Short, Long.
+function LobbyService.LineVotes(crew: { Player }): (number, number)
+	local short, long = 0, 0
+	for _, player in crew do
+		local vote = lineVotes[player]
+		if vote == "Short" then
+			short += 1
+		elseif vote == "Long" then
+			long += 1
+		end
+	end
+	return short, long
+end
+
 function LobbyService.TierFor(crew: { Player }): number
 	return math.min(selectedTier, crewMax(crew))
 end

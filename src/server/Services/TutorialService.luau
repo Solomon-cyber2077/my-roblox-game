@@ -4,10 +4,13 @@
 	run starts (its least experienced member's), notes who steps off the train, and when the
 	run ends adds one to profile.tutorialRuns for each of them who stepped off at least once.
 	A profile that failed to load plays as a finished tutorial and is never written.
+	It also answers who is a new Hand for the route policy (Logic/Routes: fewer than NewHandRuns
+	runs that reached RunEnd, profile.stats.runs), with the same rule for a profile that did not load.
 
 	The owner (Config/Tutorial OwnerUserId, nobody else) can type in chat:
-	  /tutorial reset   your count back to 0 (first-run tutorial on your next run)
-	  /tutorial 2       your count set to 0..3
+	  /tutorial reset   your count back to 0 (first-run tutorial on your next run), and a new Hand
+	                    again for the route policy
+	  /tutorial 2       your count set to 0..3 (and runs ended set to the same)
 	It takes effect on the next run. With a profile that did not load (an unpublished place in
 	Studio) it changes only this session.
 ]]
@@ -17,6 +20,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
+local Routes = require(Shared.Logic.Routes)
 local RunRules = require(Shared.Logic.RunRules)
 local Tutorial = require(Shared.Logic.Tutorial)
 local Safe = require(Shared.Util.Safe)
@@ -29,6 +33,7 @@ local TutorialService = {}
 
 local steppedOff: { [Player]: boolean } = {}
 local overrides: { [Player]: number } = {} -- owner dev settings for a session whose profile did not load
+local endedOverrides: { [Player]: number } = {} -- the same for runs that reached RunEnd
 
 -- Completed tutorial runs this player plays by.
 function TutorialService.Runs(player: Player): number
@@ -38,6 +43,47 @@ function TutorialService.Runs(player: Player): number
 		return Tutorial.runs(true, profile and profile.tutorialRuns, nil)
 	end
 	return Tutorial.runs(false, nil, override)
+end
+
+-- Runs this player has seen reach RunEnd (profile.stats.runs), or nil when unknown.
+local function runsEnded(player: Player): number?
+	local override = endedOverrides[player]
+	if override ~= nil then
+		return override
+	end
+	if DataService.IsLoaded(player) then
+		local profile = DataService.GetProfile(player)
+		return if profile then profile.stats.runs or 0 else nil
+	end
+	return nil
+end
+
+-- A new Hand for the route policy. A profile that did not load is not one (it rides as a veteran).
+function TutorialService.IsNew(player: Player): boolean
+	local ended = runsEnded(player)
+	return ended ~= nil and Routes.isNew(ended)
+end
+
+-- The new Hands among `players`.
+function TutorialService.NewHands(players: { Player }): { Player }
+	local out: { Player } = {}
+	for _, player in players do
+		if TutorialService.IsNew(player) then
+			table.insert(out, player)
+		end
+	end
+	return out
+end
+
+-- The players among `players` on their own first run (tier 1): E2's population.
+function TutorialService.FirstRunPlayers(players: { Player }): { Player }
+	local out: { Player } = {}
+	for _, player in players do
+		if player.Parent ~= nil and Tutorial.tier(TutorialService.Runs(player)) == 1 then
+			table.insert(out, player)
+		end
+	end
+	return out
 end
 
 -- The tier a crew of these players rides at.
@@ -63,6 +109,10 @@ end
 
 local function countRun()
 	for player, off in steppedOff do
+		local ended = endedOverrides[player]
+		if ended ~= nil then
+			endedOverrides[player] = ended + 1
+		end
 		if player.Parent then
 			local profile = DataService.GetProfile(player)
 			local override = overrides[player]
@@ -108,6 +158,7 @@ local function onChatted(player: Player, message: string)
 	else
 		overrides[player] = runs
 	end
+	endedOverrides[player] = runs -- the route policy follows (runs ended this session only)
 	NetService.Fire(
 		"Notify",
 		player,
@@ -159,6 +210,7 @@ function TutorialService.Start()
 	Players.PlayerRemoving:Connect(function(player)
 		steppedOff[player] = nil
 		overrides[player] = nil
+		endedOverrides[player] = nil
 	end)
 end
 

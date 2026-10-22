@@ -156,7 +156,8 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	if info.hazards.hollowCap > 0 then
 		local hazards = table.clone(info.hazards)
 		local stop = hazards.stop or 1
-		hazards.hollowCap = Threat.total(stop, #Registry.CrewService.MemberPlayers())
+		-- the threat curve reads the stop's Long Line level (Logic/Routes); the tutorial its real stop
+		hazards.hollowCap = Threat.total(hazards.level or stop, #Registry.CrewService.MemberPlayers())
 		-- the tutorial's first stop: at most stop1Cap Hollows, all asleep (Config/Tutorial)
 		local tier = Tutorial.def(hazards.tutorial)
 		if tier and stop == 1 and tier.stop1Cap then

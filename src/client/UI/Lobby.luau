@@ -1,8 +1,11 @@
 --!strict
 --[[
-	Depot Hall UI: profile card, the ready toggle, join-in-progress, shortcuts to
-	the Outfitter and the Ledger, and the in-world
-	departure board.
+	Depot Hall UI: profile card, the START toggle (ready), join-in-progress, shortcuts to
+	the Outfitter and the Ledger, and the in-world departure board.
+	First visit (Prompt 10): players spawn facing the board, which names the two plain choices:
+	START (ride now, the hall's ready) or BOARD A CAR (walks you to a boarding car's door to ride
+	with others). Above the panel: the line (Logic/Routes: SHORT or LONG, or fixed while a new Hand
+	is in the hall), BOARD A CAR and INVITE (UI/Invite, hidden when inviting is not allowed).
 ]]
 
 local Players = game:GetService("Players")
@@ -15,11 +18,13 @@ local Tuning = require(Shared.Config.Tuning)
 local Rank = require(Shared.Logic.Rank)
 local RunRules = require(Shared.Logic.RunRules)
 local Format = require(Shared.Util.Format)
+local Routes = require(Shared.Logic.Routes)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local CarBoarding = require(script.Parent.CarBoarding)
+local Invite = require(script.Parent.Invite)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
@@ -333,7 +338,7 @@ function Lobby.mount(gui: ScreenGui)
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	detail.Parent = panel
-	local readyButton = Ui.button("READY", "Primary", nil, {
+	local readyButton = Ui.button("START", "Primary", nil, {
 		Size = UDim2.new(1, -24, 0, 34),
 		Position = UDim2.new(0.5, 0, 1, -10),
 		AnchorPoint = Vector2.new(0.5, 1),
@@ -403,6 +408,132 @@ function Lobby.mount(gui: ScreenGui)
 			Net.Fire("SetReady", not mine)
 		end
 	end)
+
+	-- Above the panel: BOARD A CAR, INVITE and the line --------------------------------------------
+	local hallRow = Ui.new("Frame", {
+		Name = "HallRow",
+		Size = UDim2.fromOffset(PANEL_W, 72),
+		Position = UDim2.new(0.5, 0, 1, -20 - PANEL_H - 8),
+		AnchorPoint = Vector2.new(0.5, 1),
+		BackgroundTransparency = 1,
+		Parent = container,
+	})
+	-- walks this player to the door of the boarding car to join: one with riders first, then the nearest
+	local function boardACar()
+		local character = Players.LocalPlayer.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local doors = Workspace:FindFirstChild("CarDoors", true)
+		if humanoid == nil or root == nil or doors == nil then
+			return
+		end
+		local cars = State.Get({ "lobby", "cars" }) or {}
+		local best: BasePart? = nil
+		local bestScore = math.huge
+		for _, door in doors:GetChildren() do
+			if door:IsA("BasePart") and door.Name == "CarDoorOut" then
+				local car = cars[door:GetAttribute("Car") :: number]
+				local riders = if car then #car.occupants else 0
+				if not (car and car.departing) and riders < Tuning.Cars.MaxPlayers then
+					local score = (door.Position - root.Position).Magnitude - (if riders > 0 then 1000 else 0)
+					if score < bestScore then
+						best, bestScore = door, score
+					end
+				end
+			end
+		end
+		local target = best
+		if target == nil then
+			return
+		end
+		-- MoveTo gives up after 8 s: ask again until close or three tries
+		task.spawn(function()
+			for _ = 1, 3 do
+				humanoid:MoveTo(target.Position)
+				local reached = humanoid.MoveToFinished:Wait()
+				if reached or (root.Position - target.Position).Magnitude < 4 then
+					return
+				end
+			end
+		end)
+	end
+	local carButton = Ui.button("BOARD A CAR", "Secondary", boardACar, {
+		Name = "BoardACar",
+		Size = UDim2.new(0.5, -4, 0, 32),
+		TextSize = 17,
+	})
+	carButton.TextColor3 = Theme.Color.bone
+	carButton.Parent = hallRow
+	local inviteButton = Ui.button("INVITE", "Secondary", function()
+		Invite.prompt("depot")
+	end, {
+		Name = "Invite",
+		Size = UDim2.new(0.5, -4, 0, 32),
+		Position = UDim2.new(0.5, 4, 0, 0),
+		TextSize = 17,
+	})
+	inviteButton.TextColor3 = Theme.Color.bone
+	inviteButton.Visible = false
+	inviteButton.Parent = hallRow
+	Invite.whenChecked(function(allowed)
+		inviteButton.Visible = allowed
+	end)
+	local function lineButton(route: string, x: number): TextButton
+		local button = Ui.button("", "Secondary", function()
+			Net.Fire("VoteLine", route)
+		end, {
+			Name = `Line{route}`,
+			Size = UDim2.new(0.5, -4, 0, 32),
+			Position = UDim2.new(x, if x > 0 then 4 else 0, 0, 40),
+			TextSize = 15,
+		})
+		button.TextColor3 = Theme.Color.bone
+		button.Parent = hallRow
+		return button
+	end
+	local shortButton = lineButton("Short", 0)
+	local longButton = lineButton("Long", 0.5)
+	local fixedLine = Ui.panel({
+		Name = "FixedLine",
+		Size = UDim2.new(1, 0, 0, 32),
+		Position = UDim2.fromOffset(0, 40),
+		BackgroundTransparency = 0.06,
+		Parent = hallRow,
+	})
+	local fixedText = Ui.text({
+		Text = "",
+		Font = Theme.Font.body,
+		TextSize = 15,
+		Color = Theme.Color.bone,
+		Size = UDim2.fromScale(1, 1),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	fixedText.Parent = fixedLine
+
+	local function renderLine()
+		local line = State.Get({ "lobby", "line" })
+		local known = type(line) == "table"
+		local fixed = known and line.fixed == true
+		fixedLine.Visible = fixed
+		shortButton.Visible = not fixed
+		longButton.Visible = not fixed
+		if fixed then
+			fixedText.Text = if line.route == "Short"
+				then "Short Line: a new Hand rides with you."
+				else "A new Hand rides with you: the line is set."
+			return
+		end
+		local mine = if known and line.votes then line.votes[Session.userKey] else nil
+		local function label(route: string, votes: number): string
+			local tick = if mine == route then "✓ " else ""
+			local count = if votes > 0 then ` ({votes})` else ""
+			return `{tick}{string.upper(route)} LINE · {Routes.length(route :: any)}{count}`
+		end
+		shortButton.Text = label("Short", if known then line.short or 0 else 0)
+		longButton.Text = label("Long", if known then line.long or 0 else 0)
+	end
+	State.Observe("public", { "lobby", "line" }, renderLine)
+	renderLine()
 
 	-- Shortcut: a plate under the pass (the Outfitter is the stand in the hall) -------------------
 	local shortcuts = Ui.new("Frame", {
@@ -521,29 +652,33 @@ function Lobby.mount(gui: ScreenGui)
 		local mine = State.Get({ "lobby", "ready", Session.userKey }) == true
 
 		local head, rows = "PLATFORM 1  ·  LAST TRAIN OUT", ""
+		local stopCount = run.stopCount or Tuning.Run.StationCount
+		hallRow.Visible = panel.Visible and (phase == "Lobby" or phase == "Countdown")
 		if RunRules.isRunPhase(phase :: any) or phase == "RunEnd" then
-			local stop = math.min(run.nextStop or 1, Tuning.Run.StationCount)
-			status.Text = `RUN UNDERWAY  ·  STOP {stop}/{Tuning.Run.StationCount}`
+			local stop = math.min(run.nextStop or 1, stopCount)
+			status.Text = `RUN UNDERWAY  ·  STOP {stop}/{stopCount}`
 			local joinable = (run.nextStop or 1) <= Tuning.Run.JoinInProgressMaxStation and phase ~= "RunEnd"
 			detail.Text = if joinable
 				then "Jump in: you'll arrive at the next station and run for the train."
 				else "Too far down the line. Next departure after this run."
-			readyButton.Text = "JOIN AT NEXT STOP"
+			readyButton.Text = "JOIN RUN"
 			Ui.setButtonEnabled(readyButton, joinable)
-			rows = `EN ROUTE  ·  STOP {stop} OF {Tuning.Run.StationCount}\nNEXT DEPARTURE AFTER THIS RUN`
+			rows = `EN ROUTE  ·  STOP {stop} OF {stopCount}\nNEXT DEPARTURE AFTER THIS RUN`
 		elseif phase == "Countdown" then
 			local remaining = math.max((run.phaseEndsAt or now) - now, 0)
 			status.Text = `DEPARTING IN {Format.clock(remaining)}`
 			detail.Text = `{readyCount} ready to depart`
-			readyButton.Text = if mine then "READY ✓" else "READY"
+			readyButton.Text = if mine then "CANCEL" else "START"
 			Ui.setButtonEnabled(readyButton, true)
 			rows = `BOARDING NOW  ·  DEPARTS {Format.clock(remaining)}\n{readyCount} CREW READY`
 		else
 			status.Text = "WAITING FOR CREW"
 			detail.Text = `{readyCount}/{needed} ready to depart`
-			readyButton.Text = if mine then "READY ✓" else "READY"
+			readyButton.Text = if mine then "CANCEL" else "START"
 			Ui.setButtonEnabled(readyButton, true)
-			rows = `STATUS  ·  WAITING FOR CREW\n{readyCount} OF {needed} READY`
+			-- the first-visit prompt: the board names the two ways to ride
+			head = "START  ·  OR BOARD A CAR"
+			rows = "START to ride now.\nBOARD A CAR to ride with others."
 		end
 		if boardHead and boardRows and boardGui then
 			boardHead.Text = head

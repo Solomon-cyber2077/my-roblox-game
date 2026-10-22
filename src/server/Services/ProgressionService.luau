@@ -37,7 +37,8 @@ function ProgressionService.PayRun(
 	outcome: Types.Outcome,
 	tallies: { [Player]: Types.CrewTally },
 	stationsCleared: number,
-	tier: number
+	tier: number,
+	route: string?
 )
 	local day = Catalog.dayNumber(os.time())
 	local charter = isCharter()
@@ -101,8 +102,10 @@ function ProgressionService.PayRun(
 					s.payrollCrewPassProgress = (s.payrollCrewPassProgress or 0) + #haul.trophies
 				end
 				s.runs = (s.runs or 0) + 1
-				s.victories = (s.victories or 0)
-					+ (if outcome == "Victory" and tally.reachedTerminus then 1 else 0)
+				local arrived = outcome == "Victory" and tally.reachedTerminus
+				s.victories = (s.victories or 0) + (if arrived then 1 else 0)
+				-- a Short Line victory counts above; this one is the Long Line's alone
+				s.longVictories = (s.longVictories or 0) + (if arrived and route ~= "Short" then 1 else 0)
 				s.stationsDeparted = (s.stationsDeparted or 0) + tally.stationsDeparted
 				s.bestStation = math.max(s.bestStation or 0, tally.stationsDeparted)
 				s.coalDelivered = (s.coalDelivered or 0) + tally.coalDelivered

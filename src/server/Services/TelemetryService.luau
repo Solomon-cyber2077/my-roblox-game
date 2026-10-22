@@ -32,6 +32,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config.Telemetry)
 local Tuning = require(Shared.Config.Tuning)
+local Experiments = require(Shared.Logic.Experiments)
 local Retry = require(Shared.Logic.Retry)
 local Telemetry = require(Shared.Logic.Telemetry)
 local TelemetrySink = require(Shared.Logic.TelemetrySink)
@@ -505,7 +506,7 @@ local function endRun(current: Run)
 	crewEvent(current, "run_progress", current.stopsReached, {
 		outcome,
 		crewSize,
-		Telemetry.routeLength(Tuning.Run.StationCount),
+		Telemetry.routeLength(Registry.RunDirector.StopCount()),
 	})
 	for _, participant in current.order do
 		local player = participant.player
@@ -603,6 +604,51 @@ end
 function TelemetryService.AgainPressed(player: Player, secondsAfterCard: number, outcome: string)
 	TelemetryService.Event(player, "again_pressed", round(secondsAfterCard, 2), {
 		string.lower(outcome),
+		TelemetryService.Device(player),
+		experienceOf(player),
+	})
+end
+
+-- A Hollow had a clear line to this player (HollowService): first_hollow_seen, the A.4 timing
+-- "join to first Hollow in line of sight" (an unobstructed line, not proof they looked).
+local hollowSeen: { [Player]: boolean } = {}
+function TelemetryService.HollowSeen(player: Player)
+	if hollowSeen[player] then
+		return
+	end
+	hollowSeen[player] = true
+	timing(player, "first_hollow_seen")
+end
+
+-- An experiment's exposure (RunDirector): the player's first exposed arm is stored for good and
+-- logged once (cohort_assigned: experiment, arm A/B as actually run, device). A profile that did not
+-- load keeps it for this session only.
+local sessionCohorts: { [Player]: { [string]: string } } = {}
+function TelemetryService.CohortAssigned(player: Player, def: Experiments.Def, arm: string)
+	local first = false
+	if DataService.GetProfile(player) and DataService.IsLoaded(player) then
+		DataService.Update(player, function(p)
+			p.telemetry.cohorts = p.telemetry.cohorts or {}
+			first = Experiments.expose(p.telemetry.cohorts, def, arm)
+		end)
+	else
+		local cohorts = sessionCohorts[player] or {}
+		sessionCohorts[player] = cohorts
+		first = Experiments.expose(cohorts, def, arm)
+	end
+	if first then
+		TelemetryService.Event(player, "cohort_assigned", 1, {
+			def.id,
+			Experiments.label(def, arm),
+			TelemetryService.Device(player),
+		})
+	end
+end
+
+-- An INVITE button opened Roblox's invite prompt (UI/Lobby "depot", UI/RunCard "runcard").
+function TelemetryService.InvitePrompted(player: Player, source: string)
+	TelemetryService.Event(player, "invite_prompted", 1, {
+		source,
 		TelemetryService.Device(player),
 		experienceOf(player),
 	})
@@ -822,6 +868,8 @@ end
 
 local function onPlayerRemoving(player: Player)
 	early[player] = nil
+	sessionCohorts[player] = nil
+	hollowSeen[player] = nil
 	local visitor = visitors[player]
 	if visitor == nil then
 		return

@@ -9,7 +9,13 @@ local Difficulty = require(script.Parent.Difficulty)
 
 local Tuning = {
 	Run = {
-		StationCount = 10, -- regular stops before the Terminus
+		StationCount = 10, -- the Long Line's stops before the Terminus: the most any run has
+		-- route lengths (Logic/Routes, Prompt 10 FIXED); a run's own is run.stopCount
+		Routes = table.freeze({ Short = 5, Long = 10 }),
+		-- Short Line stop k reads the Long Line's stop m(k) for every stop-indexed difficulty input
+		ShortLevels = table.freeze({ 1, 2, 4, 6, 8 }),
+		NewHandRuns = 2, -- a player is new until this many of their runs reached RunEnd (route policy)
+		FirstLegKm = 1, -- a first run's first leg: cruise 18 + 6 x 1 = 24 s (A.4: 25 s or less)
 		MaxCrew = 4,
 		CountdownSeconds = 10,
 		BoardingSeconds = 4,
@@ -65,7 +71,7 @@ local Tuning = {
 	Cars = {
 		MinPlayers = 2, -- the countdown starts once this many are aboard
 		MaxPlayers = 4, -- a full car leaves at once
-		CountdownSeconds = 40,
+		CountdownSeconds = 20, -- PROVISIONAL (Prompt 10: was 40)
 		ExitWindowSeconds = 10, -- after the countdown starts, the door lets people out this long
 		HoldSeconds = 0.6, -- hold E to board or leave (touch players tap)
 		FadeSeconds = 1, -- the screen goes black this long before the teleport

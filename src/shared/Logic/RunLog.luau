@@ -198,9 +198,10 @@ end
 
 -- "TERMINUS", "TRAIN LOST AT STOP 6" (a second breakdown), "LOST AT STOP 6" (the crew).
 -- `stop` is where the run ended (run.nextStop).
-function RunLog.final(outcome: Types.Outcome?, stop: number?): string
+-- The run ticket's stamp. A Short Line victory is stamped SHORT LINE (Prompt 10).
+function RunLog.final(outcome: Types.Outcome?, stop: number?, short: boolean?): string
 	if outcome == "Victory" then
-		return "TERMINUS"
+		return if short then "SHORT LINE" else "TERMINUS"
 	end
 	local verb = if outcome == "Derailed" then "TRAIN LOST" else "LOST"
 	return `{verb} AT STOP {stop or 1}`

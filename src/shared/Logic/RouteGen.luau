@@ -10,6 +10,8 @@
 	archetypes (a ballot never shows the same station twice), an archetype never
 	repeats the previous stop unless nothing else is eligible, legs 1 and 2 never
 	show tier 3, and every junction offers at least one leg of 5 km or less.
+	A first run's first leg (`firstLegKm`, Tuning.Run.FirstLegKm) is that long on every option, so
+	its cruise stays within 25 s (Prompt 10); the draws are the same, so the rest of the plan is too.
 ]]
 
 local Shared = script.Parent.Parent
@@ -32,7 +34,13 @@ function RouteGen.terminusOption(): RouteOption
 	}
 end
 
-function RouteGen.options(runSeed: number, leg: number, stopCount: number, previous: string?): { RouteOption }
+function RouteGen.options(
+	runSeed: number,
+	leg: number,
+	stopCount: number,
+	previous: string?,
+	firstLegKm: number?
+): { RouteOption }
 	if leg > stopCount then
 		return { RouteGen.terminusOption() }
 	end
@@ -86,6 +94,11 @@ function RouteGen.options(runSeed: number, leg: number, stopCount: number, previ
 	end
 	if not hasShort and #options > 0 then
 		options[rng:int(1, #options)].distanceKm = rng:int(3, 5)
+	end
+	if firstLegKm and leg == 1 then
+		for _, option in options do
+			option.distanceKm = firstLegKm
+		end
 	end
 
 	return options
