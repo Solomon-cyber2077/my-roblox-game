@@ -452,8 +452,28 @@ function TrainCamController.Start()
 		end
 		Safe.call("TrainCamController.frame", frame, dt)
 	end)
+	-- the chip rides just above the pocket watch wherever the HUD put it (a phone lifts the watch
+	-- over the touch buttons), right edges lined up; the fixed spot is the fallback
+	local CHIP_HOME = chip.Position
+	local hudWatch: GuiObject? = nil
 	RunService.Heartbeat:Connect(function()
 		chip.Visible = aboard() and not active
+		if not chip.Visible then
+			return
+		end
+		if hudWatch == nil or hudWatch.Parent == nil then
+			hudWatch = gui:FindFirstChild("PocketWatch", true) :: GuiObject?
+		end
+		local watch = hudWatch
+		if watch and watch.AbsoluteSize.Y > 0 then
+			local origin = screen.AbsolutePosition
+			chip.Position = UDim2.fromOffset(
+				watch.AbsolutePosition.X + watch.AbsoluteSize.X - origin.X,
+				watch.AbsolutePosition.Y - 6 - origin.Y
+			)
+		else
+			chip.Position = CHIP_HOME
+		end
 	end)
 	Players.LocalPlayer.CharacterAdded:Connect(function()
 		setActive(false)

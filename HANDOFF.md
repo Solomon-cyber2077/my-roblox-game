@@ -1,5 +1,17 @@
 # HANDOFF
 
+## 2026-10-22: PHONE HUD IN-RUN CHECKS (continues Astra's follow-up below)
+1. Completed
+- Studio, iPhone 7 preset (viewport 666x374), solo, stop 1 doors open: roster hidden; errands panel hidden; pocket watch y101-199 clear of LOOK/RUN (y218-263, LOOK beside RUN) and of the leak slot (y9-36); in-run SETTINGS tab 70x19 on screen; tutorial slot clear.
+- Fixed: the TRAIN CAMERA chip (fixed at 236 px above the bottom) overlapped the lifted watch on a phone (y78-118 vs 101). It now sits just above the watch wherever the HUD puts it (TrainCamController): y50-94.
+- Camera setting: Locked -> zoom 10-10, Free -> 0.5-30, switched live through SetSetting.
+- Sinkhole edge: 36 rope sections on the far line at the test stop; the edge reads as a barrier in the phone view.
+- Console: only the known DataStore, TrainVolumes yield, cab-sill and asset 203785492 warnings. `lune run check` passed (514 tests, audit clean).
+2. NOT verified (need a real touch device or a crew)
+- RUN tap toggle and its idle/winded shutdown, long-press drop, the touch wording of tutorial prompts and the "TRAIN CAM" label (the simulator's clicks count as mouse, so it shows "[C]"), errands panel showing for 6 s on a change (no errand was active), roster with 2-4 crew, camera lock inside buildings.
+3. Next logical step
+- Play one first run on a real phone with that list, then Gate G1.
+
 ## 2026-10-22: PHONE HUD VERIFICATION FOLLOW-UP
 1. Completed
 - Started `main-s1.rbxl` successfully through Studio MCP on the existing iPhone 7 Device Simulator preset; the lobby rendered in third person with LOOK beside RUN and no visible overlap in that row. Playtest was stopped afterward. The published `LAST TRAIN` Studio window was left untouched.
