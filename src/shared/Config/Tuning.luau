@@ -751,6 +751,7 @@ local Tuning = {
 		-- so a walk slows from the face on (the design's 12 assumed a 16 walk; at 21 it was a jolt)
 		CurrentMaxOut = 21,
 		ProximityRange = 8, -- studs over which the tint and hum come in
+		TintSaturation = -0.15, -- saturation added at full proximity
 		IdleSeconds = 12,
 		IdleOpacityBoost = 0.15, -- transparency taken off the mist while idle near it
 		IdleHumMult = 1.5,
