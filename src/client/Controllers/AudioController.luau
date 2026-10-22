@@ -24,6 +24,11 @@
 	heard by the whole crew at once: a bell the size of the sky as the moon blinks,
 	the sky groaning as it bleeds, a slow pulse while the Eye is open, and the Hush,
 	when every sound drains away and comes back on a single far-off toll.
+
+	The mix follows Config/AudioPriority: Warnings above Threat above Feedback above Ambience above
+	the lobby piano, each tier's groups ducked by every tier above (sidechain compressors), with a
+	cap on one-shots per lower tier. A Hollow's replicated Intent hushes the ambience and steps for
+	0.4 s (IntentHush; SoundService attribute IntentHushAt marks each one for Studio checks).
 ]]
 
 local Players = game:GetService("Players")
@@ -34,6 +39,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Audio = require(Shared.Config.Audio)
+local AudioPriority = require(Shared.Config.AudioPriority)
 local SettingsConfig = require(Shared.Config.Settings)
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
@@ -49,6 +55,9 @@ local mixes: { [string]: SoundGroup } = {} -- Config/Audio's `mix`: Ambience, an
 local walls: EqualizerSoundEffect -- the carriage walls, on the Outdoor group
 local groups: { [string]: SoundGroup } = {}
 local duckUntil = 0
+local hushUntil = 0 -- the Intent hush (Config/AudioPriority.IntentHush)
+local tierOf: { [string]: number } = {} -- SoundGroup name -> its priority tier
+local voices: { [number]: number } = {} -- one-shots playing per tier
 local anchorPart: Part
 local beds: { [string]: Sound } = {}
 local loops: { [string]: Sound } = {}
@@ -76,13 +85,6 @@ local OUTSIDE: { [string]: boolean } =
 local SHELTER_DIP = 0.45 -- share of the outside beds the walls take away
 local SHELTER_HIGH, SHELTER_MID = -30, -10 -- dB the walls take off the Outdoor group's highs and mids
 local SHELTER_ROOM = 0.5 -- share of the hall's room tone heard aboard
--- The Ambience group ducks under what must be heard (sidechain compressors keyed by these groups):
--- hard under danger cues and the departure warnings, a light dip under each footstep.
-local DUCKS = {
-	{ key = "Cues", threshold = -30, ratio = 8, release = 0.5 },
-	{ key = "Warnings", threshold = -30, ratio = 8, release = 0.5 },
-	{ key = "Steps", threshold = -26, ratio = 2.5, release = 0.18 },
-}
 
 local LOBBY =
 	Vector3.new(Tuning.World.LobbyOrigin[1], Tuning.World.LobbyOrigin[2], Tuning.World.LobbyOrigin[3])
@@ -252,23 +254,39 @@ function AudioController.Init()
 	walls.Name = "Walls"
 	walls.LowGain, walls.MidGain, walls.HighGain = 0, 0, 0
 	walls.Parent = outdoor
-	-- what the ambience makes way for, under the main group (so the Hush still drains them)
-	for _, name in { "Cues", "Steps" } do
+	-- the other tiers' groups, under the main group (so the Hush still drains them); Warnings is a
+	-- group of its own beside the main one, so the Hush and the departure dip leave it alone
+	for _, name in { "Cues", "Steps", "Feedback", "Piano" } do
 		local made = Instance.new("SoundGroup")
 		made.Name = name
 		made.Volume = 1
 		made.Parent = group
 		mixes[name] = made
 	end
-	for _, duck in DUCKS do
-		local compressor = Instance.new("CompressorSoundEffect")
-		compressor.Name = `Duck{duck.key}`
-		compressor.SideChain = mixes[duck.key] or ownGroup(duck.key)
-		compressor.Threshold = duck.threshold
-		compressor.Ratio = duck.ratio
-		compressor.Attack = 0.005
-		compressor.Release = duck.release
-		compressor.Parent = ambience
+	-- higher ducks lower: one compressor per (lower group, higher group) pair (Config/AudioPriority)
+	local tiers = AudioPriority.Tiers
+	for rank, tier in tiers do
+		for _, name in tier.groups do
+			tierOf[name] = rank
+		end
+	end
+	for rank, tier in tiers do
+		for _, name in tier.groups do
+			local target = mixes[name] or ownGroup(name)
+			for higher = 1, rank - 1 do
+				local above = tiers[higher]
+				for _, key in above.groups do
+					local compressor = Instance.new("CompressorSoundEffect")
+					compressor.Name = `Duck{key}`
+					compressor.SideChain = mixes[key] or ownGroup(key)
+					compressor.Threshold = above.duck.threshold
+					compressor.Ratio = above.duck.ratio
+					compressor.Attack = 0.005
+					compressor.Release = above.duck.release
+					compressor.Parent = target
+				end
+			end
+		end
 	end
 	anchorPart = Instance.new("Part")
 	anchorPart.Name = "AudioAnchor"
@@ -414,6 +432,11 @@ function AudioController.Start()
 
 		local duck = if os.clock() < duckUntil then 1 - Tuning.Departure.DuckShare else 1
 		group.Volume = (1 - (1 - HUSH_FLOOR) * hush) * duck
+		-- the Intent hush: ambience and steps dip for its 0.4 s (warnings and threat untouched)
+		local intent = AudioPriority.IntentHush
+		local hushing = os.clock() < hushUntil
+		mixes.Ambience.Volume *= if hushing then intent.Ambience else 1
+		mixes.Steps.Volume = if hushing then intent.Steps else 1
 
 		local targets: { [string]: number } = {
 			TrainRun = if inLobby then 0 else Audio.TrainRun.volume * pace * (1 + 0.35 * tunnel),
@@ -517,6 +540,15 @@ function AudioController.Play(cueName: string, position: Vector3?, gain: number?
 		(holder :: Attachment).Parent = anchorPart
 		parent = holder :: Attachment
 	end
+	-- a lower tier past its cap drops the cue; warnings and threat never drop
+	local rank = tierOf[cue.group or cue.mix or ""]
+	local cap = if rank then AudioPriority.Tiers[rank].voices else 0
+	if rank and cap > 0 and (voices[rank] or 0) >= cap then
+		if holder then
+			holder:Destroy()
+		end
+		return
+	end
 	local sound = makeSound(cueName, parent)
 	if sound == nil then
 		return
@@ -524,6 +556,19 @@ function AudioController.Play(cueName: string, position: Vector3?, gain: number?
 	sound.Volume = cue.volume * (gain or 1)
 	sound.PlaybackSpeed = (cue.pitch or 1) * (pitch or 1)
 	sound:Play()
+	if rank then
+		local tier: number = rank
+		local counted = true
+		local function release()
+			if counted then
+				counted = false
+				voices[tier] = math.max((voices[tier] or 1) - 1, 0)
+			end
+		end
+		voices[tier] = (voices[tier] or 0) + 1
+		sound.Ended:Once(release)
+		sound.Destroying:Once(release)
+	end
 	if cue.with then
 		AudioController.Play(cue.with, position, gain)
 	end
@@ -541,6 +586,17 @@ function AudioController.Play(cueName: string, position: Vector3?, gain: number?
 			holder:Destroy()
 		end
 	end)
+end
+
+-- The SoundGroup of a mix ("Cues", "Steps", ...), for sounds made elsewhere (a Hollow's breath).
+function AudioController.Group(mix: string): SoundGroup?
+	return mixes[mix]
+end
+
+-- A Hollow's Intent turned on (HollowAnimator): the 0.4 s predictive hush of ambience and steps.
+function AudioController.IntentHush()
+	hushUntil = os.clock() + AudioPriority.IntentHush.Seconds
+	SoundService:SetAttribute("IntentHushAt", os.clock())
 end
 
 -- Dips the main mix (not cues with a group of their own) for a moment, under a bell or a whistle.

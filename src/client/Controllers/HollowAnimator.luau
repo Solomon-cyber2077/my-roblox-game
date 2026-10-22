@@ -35,6 +35,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local HollowMotion = require(Shared.Logic.HollowMotion)
 local Audio = require(Shared.Config.Audio)
+local AudioPriority = require(Shared.Config.AudioPriority)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
 local Safe = require(Shared.Util.Safe)
@@ -71,6 +72,7 @@ type Rig = {
 	embers: PointLight?,
 	quietStep: boolean, -- a stalking Hollow sounds every other footfall
 	breath: Sound?, -- its stalk breath
+	intent: boolean, -- its replicated Intent last frame (the hush starts on the rising edge)
 	aim: number, -- the head's yaw now (Logic/HollowMotion)
 	lean: number, -- the torso's lean now
 	lastVelocity: Vector3,
@@ -231,6 +233,8 @@ local function breathe(rig: Rig, on: boolean)
 		made.RollOffMode = Enum.RollOffMode.Linear
 		made.RollOffMinDistance = Tuning.Stalk.BreathNear * Tuning.Stalk.ReferenceRadius
 		made.RollOffMaxDistance = Tuning.Stalk.BreathFar * Tuning.Stalk.ReferenceRadius
+		-- a threat cue in the priority table: it ducks feedback and ambience, under the warnings
+		made.SoundGroup = if Registry.AudioController then Registry.AudioController.Group("Cues") else nil
 		made.Parent = rig.root
 		rig.breath = made
 		sound = made
@@ -354,8 +358,21 @@ local function animate(
 	local stunned = ((model:GetAttribute("StunnedUntil") :: number?) or 0) > now
 	local stalking = state == "Stalk"
 	local frozen = stalking and model:GetAttribute("Frozen") == true
-	local coiled = state == "Hunt"
-		and (model:GetAttribute("WarningCoil") == true or model:GetAttribute("Intent") == true)
+	local intent = model:GetAttribute("Intent") == true
+	local coiled = state == "Hunt" and (model:GetAttribute("WarningCoil") == true or intent)
+	-- the Intent hush (Config/AudioPriority): on Intent's rising edge while still hunting (never from a
+	-- Windup under way), for a Hollow after this player or near them
+	if intent and not rig.intent and state == "Hunt" and Registry.AudioController then
+		local character = Players.LocalPlayer.Character
+		local mine = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if
+			model:GetAttribute("Target") == Players.LocalPlayer.UserId
+			or (mine and (mine.Position - rig.root.Position).Magnitude <= AudioPriority.IntentHush.Range)
+		then
+			Registry.AudioController.IntentHush()
+		end
+	end
+	rig.intent = intent
 	local kindDef = (Tuning.HollowKinds :: any)[rig.kind]
 	local windup = H.WindupSeconds * (if kindDef then kindDef.windup else 1)
 	breathe(rig, stalking or coiled)
@@ -568,6 +585,7 @@ local function register(model: Instance)
 		embers = if chest then chest:FindFirstChild("EmberGlow") :: PointLight? else nil,
 		quietStep = false,
 		breath = nil,
+		intent = false,
 		aim = 0,
 		lean = 0,
 		lastVelocity = Vector3.zero,
