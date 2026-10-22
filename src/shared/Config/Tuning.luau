@@ -424,6 +424,19 @@ local Tuning = {
 	HollowMotion = {
 		SpeedResponse = 8,
 		TwitchAngle = 0.12,
+		-- body language (Logic/HollowMotion, docs/FINAL-DESIGN.md Prompt 3)
+		LookLag = 0.25, -- seconds the head lags its target (FIXED)
+		LookCap = { Stalker = 70, Crawler = 50, Brute = 35 }, -- degrees the head may turn (FIXED)
+		ScanDegrees = 25, -- a prowling head's slow scan
+		ScanRate = 0.35, -- scans per second
+		LeanPerAccel = 0.012, -- radians of torso lean per stud/s^2 of acceleration
+		LeanMax = 0.3, -- radians
+		LeanResponse = 6, -- how quickly the lean follows
+		BlendSeconds = 0.28, -- Prowl, Stalk, Hunt, Recover and Repelled blend over this (0.2-0.35, FIXED range)
+		FullMotion = 6, -- the nearest this many Hollows get look-at, lean and coat motion
+		SimpleBeyond = 60, -- studs: further than this, no secondary motion
+		StumbleFrom = 0.18, -- seconds into Recover the strike ends and the stumble begins
+		StripCount = { 3, 5 }, -- the Stalker's coat strips, by stop progression
 	},
 	HollowContortion = {
 		StalkerLean = 0.5,

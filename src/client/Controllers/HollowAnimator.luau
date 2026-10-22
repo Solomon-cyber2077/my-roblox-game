@@ -11,9 +11,12 @@
 	           back; it rears like a mantis, then pounces
 	  Brute    a heavy, rolling stomp that shakes the ground
 
-	Stalk (Logic/Stalk) holds the prowl's body: still while the prey faces it (attribute Frozen),
-	half-rate steps while it slips between cover, and a breath that carries 15-30 studs. A guarded
-	hunter (attribute WarningCoil) holds a coiled, half-reared windup pose until its warning is met.
+	Body language (Prompt 3, Logic/HollowMotion): the head follows its target (attribute Target)
+	with a lag and a per-kind cap, or scans while it prowls; the torso leans into acceleration; feet
+	sound on their plants, every other plant while stalking and none while frozen under a look; a
+	hunter with Intent or an unmet first-strike warning (WarningCoil) holds the coil. Ordinary
+	changes blend over BlendSeconds; coil, windup and lunge snap. Only the nearest FullMotion
+	Hollows within SimpleBeyond get the look-at and lean.
 
 	Spawning is a show too: Hollows claw up out of the ground, haul themselves over the
 	station's edge out of the dark, or wake in jerks from a slump in a building. A strike
@@ -30,6 +33,7 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local HollowMotion = require(Shared.Logic.HollowMotion)
 local Audio = require(Shared.Config.Audio)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
@@ -67,6 +71,14 @@ type Rig = {
 	embers: PointLight?,
 	quietStep: boolean, -- a stalking Hollow sounds every other footfall
 	breath: Sound?, -- its stalk breath
+	aim: number, -- the head's yaw now (Logic/HollowMotion)
+	lean: number, -- the torso's lean now
+	lastVelocity: Vector3,
+	poseKey: string, -- the pose it is in: a state, or Coil / Lunge
+	blendFrom: Pose?, -- the body a blended change started from
+	blendAt: number,
+	blendFor: number,
+	snap: boolean, -- the next frame jumps straight to the target
 }
 
 local HollowAnimator = {}
@@ -294,9 +306,35 @@ local function onBite(rig: Rig, def: Grabs.Def)
 	end
 end
 
+-- A foot comes down (Logic/HollowMotion.plants): the Brute shakes the ground, the Stalker's step is
+-- soft, the Crawler's a skitter.
+local function plantStep(rig: Rig, speed: number)
+	local position = rig.root.Position
+	if rig.kind == "Brute" then
+		audio("HollowStep", position, 1, 0.9 + rig.stepSide * 0.08)
+		shakeNear(position, 16, 0.25)
+	elseif rig.kind == "Crawler" then
+		audio(if speed > 10 then "HollowScrabble" else "HollowStep", position, 0.3, 1.9)
+	else
+		audio("HollowStep", position, 0.5, 1.15 + rig.stepSide * 0.05)
+	end
+	rig.stepSide = -rig.stepSide
+end
+
+local LOOKS = { Stalk = true, Hunt = true, Windup = true }
+local SECONDARY = { Prowl = true, Stalk = true, Hunt = true, Windup = true, Recover = true, Repelled = true }
+
 -- Frame ------------------------------------------------------------------------------------------
 
-local function animate(rig: Rig, dt: number, now: number, clock: number, position: Vector3?, grime: number)
+local function animate(
+	rig: Rig,
+	dt: number,
+	now: number,
+	clock: number,
+	position: Vector3?,
+	grime: number,
+	full: boolean
+)
 	local model = rig.model
 	local state = (model:GetAttribute("State") :: string?) or "Prowl"
 	local stateAt = (model:GetAttribute("StateAt") :: number?) or now
@@ -307,6 +345,7 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 		onState(rig, state)
 	end
 	local lungeAt = (model:GetAttribute("LungeAt") :: number?) or 0
+	local lunging = state == "Hunt" and now - lungeAt < 0.55
 	if lungeAt ~= rig.lungeAt then
 		rig.lungeAt = lungeAt
 		audio("HollowScrabble", rig.root.Position, 0.8, 1.2)
@@ -315,13 +354,25 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	local stunned = ((model:GetAttribute("StunnedUntil") :: number?) or 0) > now
 	local stalking = state == "Stalk"
 	local frozen = stalking and model:GetAttribute("Frozen") == true
-	local coiled = state == "Hunt" and model:GetAttribute("WarningCoil") == true
+	local coiled = state == "Hunt"
+		and (model:GetAttribute("WarningCoil") == true or model:GetAttribute("Intent") == true)
 	local kindDef = (Tuning.HollowKinds :: any)[rig.kind]
 	local windup = H.WindupSeconds * (if kindDef then kindDef.windup else 1)
-	-- the body a stalk and a coil borrow: the prowl's, and a windup held half-reared
-	local poseState = if stalking then "Prowl" elseif coiled then "Windup" else state
-	local poseElapsed = if coiled then windup * 0.6 else elapsed
 	breathe(rig, stalking or coiled)
+	-- ordinary changes blend; the coil, the windup and the lunge snap
+	local poseKey = if coiled then "Coil" elseif lunging then "Lunge" else state
+	if poseKey ~= rig.poseKey then
+		local blend = HollowMotion.blendSeconds(rig.poseKey, poseKey)
+		if blend > 0 and next(rig.pose) ~= nil then
+			rig.blendFrom = table.clone(rig.pose)
+			rig.blendAt = clock
+			rig.blendFor = blend
+		else
+			rig.blendFrom = nil
+			rig.snap = poseKey == "Coil" or poseKey == "Windup" or poseKey == "Lunge"
+		end
+		rig.poseKey = poseKey
+	end
 
 	local velocity = rig.root.AssemblyLinearVelocity
 	local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
@@ -335,22 +386,17 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	end
 	local before = rig.phase
 	rig.phase += dt * HollowPoses.cadence(rig.kind, animationSpeed)
-	-- a footfall every half turn: the Brute shakes the ground. Stalking, it sounds only every other
-	-- step; frozen, none.
-	local footfall = math.floor(before / math.pi) ~= math.floor(rig.phase / math.pi)
-		and animationSpeed > 4
-		and not frozen
-	if footfall and stalking then
-		rig.quietStep = not rig.quietStep
-		footfall = rig.quietStep
-	end
-	if footfall then
-		if rig.kind == "Brute" then
-			audio("HollowStep", rig.root.Position, 1, 0.9 + rig.stepSide * 0.08)
-			shakeNear(rig.root.Position, 16, 0.25)
-			rig.stepSide = -rig.stepSide
-		elseif rig.kind == "Crawler" and animationSpeed > 10 then
-			audio("HollowScrabble", rig.root.Position, 0.25, 1.9)
+	-- steps sound on the plants (no timer): every other plant while stalking, none while frozen
+	if animationSpeed > 1.5 and not frozen and state ~= "Grab" then
+		for _ in HollowMotion.plants(rig.kind, before, rig.phase) do
+			local sounds = true
+			if stalking then
+				rig.quietStep = not rig.quietStep
+				sounds = rig.quietStep
+			end
+			if sounds then
+				plantStep(rig, animationSpeed)
+			end
 		end
 	end
 	if rig.kind == "Crawler" and not dressing then
@@ -389,8 +435,8 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	local twitching = not dressing and clock < rig.twitchUntil and state ~= "Emerge" and state ~= "Grab"
 
 	local target = HollowPoses.pose(rig.skeleton, {
-		state = poseState,
-		elapsed = poseElapsed,
+		state = state,
+		elapsed = elapsed,
 		speed = animationSpeed,
 		phase = rig.phase,
 		now = now,
@@ -401,6 +447,8 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 		grab = grabId,
 		grabTime = grabTime,
 		grime = grime,
+		coil = coiled,
+		frozen = frozen,
 	})
 	if
 		state == "Recover"
@@ -419,19 +467,60 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 		target.Neck = (target.Neck or I) * rig.twitch
 	end
 
-	-- smooth toward the target: fast through strikes and grabs, slower otherwise
-	local rate = if poseState == "Windup"
-			or state == "Recover"
-			or state == "Grab"
+	-- attention and weight: the head follows its prey (or scans), the torso leans into its speed
+	if full and SECONDARY[state] and not stunned then
+		local goal = 0
+		local targetId = model:GetAttribute("Target")
+		local prey = if LOOKS[state] and typeof(targetId) == "number"
+			then Players:GetPlayerByUserId(targetId)
+			else nil
+		local preyRoot = prey and prey.Character and prey.Character:FindFirstChild("HumanoidRootPart")
+		if preyRoot and preyRoot:IsA("BasePart") then
+			local at = rig.root.CFrame:PointToObjectSpace(preyRoot.Position)
+			goal = HollowMotion.yawTo(rig.kind, at.X, at.Z)
+		elseif state == "Prowl" then
+			goal = HollowMotion.scan(rig.kind, clock, rig.seed)
+		end
+		rig.aim = HollowMotion.follow(rig.aim, goal, dt)
+		target.Neck = A(0, rig.aim, 0) * (target.Neck or I)
+		local accel = if dt > 0 then (velocity - rig.lastVelocity) / dt else Vector3.zero
+		local forward = accel:Dot(rig.root.CFrame.LookVector)
+		local response = 1 - math.exp(-Tuning.HollowMotion.LeanResponse * dt)
+		rig.lean += (HollowMotion.lean(forward) - rig.lean) * response
+		target.Waist = A(rig.lean, 0, 0) * (target.Waist or I)
+	else
+		rig.aim = HollowMotion.follow(rig.aim, 0, dt)
+		rig.lean = 0
+	end
+	rig.lastVelocity = velocity
+
+	-- a blended change eases out over its BlendSeconds; a snap jumps; otherwise smooth toward the
+	-- target, fast through strikes and grabs
+	local rate = if poseKey == "Coil"
+			or poseKey == "Windup"
+			or poseKey == "Lunge"
+			or poseKey == "Recover"
 		then 26
+		elseif state == "Grab" then 26
 		elseif state == "Emerge" then 22
 		elseif rig.kind == "Crawler" then 18
 		else 12
 	local alpha = 1 - math.exp(-rate * dt)
+	local from = rig.blendFrom
+	local blendT = if from then (clock - rig.blendAt) / rig.blendFor else 1
+	if from and blendT >= 1 then
+		rig.blendFrom = nil
+		from = nil
+	end
+	local snap = rig.snap
+	rig.snap = false
 	for name, motor in rig.motors do
 		local goal = target[name] or I
 		local current = rig.pose[name] or I
-		local value = current:Lerp(goal, alpha)
+		local value = if snap
+			then goal
+			elseif from then (from[name] or I):Lerp(goal, HollowMotion.easeOut(blendT))
+			else current:Lerp(goal, alpha)
 		rig.pose[name] = value
 		motor.Transform = value
 			* (if name == "Neck" then neckOffset elseif name == "Jaw" then jawOffset else I)
@@ -479,6 +568,14 @@ local function register(model: Instance)
 		embers = if chest then chest:FindFirstChild("EmberGlow") :: PointLight? else nil,
 		quietStep = false,
 		breath = nil,
+		aim = 0,
+		lean = 0,
+		lastVelocity = Vector3.zero,
+		poseKey = "",
+		blendFrom = nil,
+		blendAt = 0,
+		blendFor = 0,
+		snap = true,
 	}
 	makeTrails(rig)
 	rigs[model] = rig
@@ -526,6 +623,19 @@ function HollowAnimator.Start()
 			task.spawn(register, child)
 		end
 	end)
+	-- Studio: the /photo lineup (Tools/PhotoCommand) is posed like any Hollow
+	if RunService:IsStudio() then
+		Workspace.ChildAdded:Connect(function(child)
+			if child.Name == "PhotoRig" then
+				child.ChildAdded:Connect(function(model)
+					task.spawn(register, model)
+				end)
+				for _, model in child:GetChildren() do
+					task.spawn(register, model)
+				end
+			end
+		end)
+	end
 
 	RunService.Stepped:Connect(function(_, dt: number)
 		local now = Workspace:GetServerTimeNow()
@@ -541,8 +651,20 @@ function HollowAnimator.Start()
 				run.station ~= nil and run.station.terminus == true
 			)
 			else 0
+		-- secondary motion (look-at, lean) for the nearest FullMotion Hollows within SimpleBeyond
+		local camera = Workspace.CurrentCamera
+		local eye = if camera then camera.CFrame.Position else (position or Vector3.zero)
+		local order: { { rig: Rig, distance: number } } = {}
 		for _, rig in rigs do
-			Safe.call("HollowAnimator", animate, rig, dt, now, clock, position, grime)
+			table.insert(order, { rig = rig, distance = (rig.root.Position - eye).Magnitude })
+		end
+		table.sort(order, function(a, b)
+			return a.distance < b.distance
+		end)
+		local M = Tuning.HollowMotion
+		for i, entry in order do
+			local full = i <= M.FullMotion and entry.distance <= M.SimpleBeyond
+			Safe.call("HollowAnimator", animate, entry.rig, dt, now, clock, position, grime, full)
 		end
 	end)
 end

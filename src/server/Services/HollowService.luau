@@ -232,6 +232,9 @@ local function setState(hollow: Hollow, state: string)
 	end
 	hollow.state = state
 	hollow.stateAt = os.clock()
+	if state ~= "Hunt" then
+		hollow.model:SetAttribute("Intent", nil) -- the committed approach ends with the hunt
+	end
 	hollow.model:SetAttribute("State", state)
 	hollow.model:SetAttribute("StateAt", serverNow())
 end
@@ -1234,6 +1237,7 @@ local function think(hollow: Hollow)
 
 	if best and bestRoot then
 		hollow.target = best
+		hollow.model:SetAttribute("Target", best.UserId) -- who its head follows (HollowAnimator)
 		hollow.lastSeen = bestRoot.Position
 		hollow.lastSeenAt = clock
 		local targetLocal = StationService.ToLocal(bestRoot.Position)
@@ -1297,6 +1301,7 @@ local function think(hollow: Hollow)
 				endStalk(hollow) -- lost: back to prowling, its stalk spent
 				setState(hollow, "Prowl")
 				hollow.target = nil
+				hollow.model:SetAttribute("Target", nil)
 				return
 			end
 			local faced = facedBy(bestRoot, position)
@@ -1351,6 +1356,15 @@ local function think(hollow: Hollow)
 		end
 		hollow.model:SetAttribute("WarningCoil", guarded or nil)
 		hollow.model:SetAttribute("WarningTarget", if guarded then best.UserId else nil)
+		-- Intent (Prompt 3): the committed approach, in sight within LungeRange once the guard is met.
+		-- It drives the coil on every client; it never delays an attack.
+		local intent = not guarded and bestVisible and bestDistance <= H.LungeRange
+		if intent ~= (hollow.model:GetAttribute("Intent") == true) then
+			hollow.model:SetAttribute("Intent", intent or nil)
+			if intent then
+				hollow.model:SetAttribute("IntentAt", serverNow())
+			end
+		end
 
 		-- a shut door between it and its prey: force it, if this stop's Hollows can
 		local door = if bestVisible then nil else doorInWay(hollow, bestRoot.Position)
@@ -1416,6 +1430,7 @@ local function think(hollow: Hollow)
 		leaveDoor(hollow)
 		setState(hollow, "Prowl")
 		hollow.target = nil
+		hollow.model:SetAttribute("Target", nil)
 		hollow.model:SetAttribute("WarningCoil", nil)
 		hollow.humanoid.WalkSpeed = walk
 		prowl(hollow, clock)

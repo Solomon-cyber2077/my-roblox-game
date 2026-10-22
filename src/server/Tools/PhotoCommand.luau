@@ -33,6 +33,7 @@ type PhotoOptions = {
 	spawn: (string, CFrame) -> Model?,
 	spacing: number?,
 	freeze: ((Model) -> ())?,
+	report: ((Model, string) -> string)?, -- an extra line per model (DevService: IK shortfall by state)
 }
 
 local PhotoCommand = {}
@@ -135,10 +136,12 @@ local function findRow(root: BasePart, count: number, spacing: number): ({ Vecto
 	return nil
 end
 
+-- Only the root is anchored: the joints stay free, so HollowAnimator can pose the lineup.
 local function defaultFreeze(model: Model)
+	local root = model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then
-			d.Anchored = true
+			d.Anchored = d == root
 		elseif d:IsA("Humanoid") then
 			d.WalkSpeed = 0
 			d.JumpPower = 0
@@ -182,8 +185,9 @@ function PhotoCommand.clear()
 	end
 end
 
--- `state` (optional) poses the whole lineup in one Hollow state, such as "Stalk".
-function PhotoCommand.run(player: Player, opts: PhotoOptions, state: string?): string
+-- `state` (optional) poses the whole lineup in one Hollow state, such as "Stalk"; `flag` adds
+-- "coil" (WarningCoil) or "frozen" (Frozen).
+function PhotoCommand.run(player: Player, opts: PhotoOptions, state: string?, flag: string?): string
 	assert(opts and opts.kinds and opts.spawn, "PhotoCommand.run needs opts.kinds and opts.spawn")
 	PhotoCommand.clear()
 
@@ -224,13 +228,18 @@ function PhotoCommand.run(player: Player, opts: PhotoOptions, state: string?): s
 			if state then
 				model:SetAttribute("State", state)
 				model:SetAttribute("StateAt", Workspace:GetServerTimeNow())
+				model:SetAttribute("WarningCoil", if flag == "coil" then true else nil)
+				model:SetAttribute("Frozen", if flag == "frozen" then true else nil)
 			end
-			label(model, if state then `{kind} · {state}` else kind)
+			label(model, if state then `{kind} · {state}{if flag then " " .. flag else ""}` else kind)
 			local p = model:GetPivot().Position
 			table.insert(
 				report,
 				`- {kind}: at {p.X // 1},{p.Y // 1},{p.Z // 1} size {size.X // 0.1 / 10}x{size.Y // 0.1 / 10}x{size.Z // 0.1 / 10} frozen=true`
 			)
+			if opts.report then
+				table.insert(report, `  {opts.report(model, kind)}`)
+			end
 		end
 	end
 
@@ -253,6 +262,9 @@ function PhotoCommand.bindChat(opts: PhotoOptions)
 				PhotoCommand.run(player, opts)
 			elseif m == "/photo stalk" then
 				PhotoCommand.run(player, opts, "Stalk")
+			elseif string.sub(m, 1, 7) == "/photo " then
+				local words = string.split(string.sub(msg, 8), " ")
+				PhotoCommand.run(player, opts, words[1], words[2])
 			elseif m == "/photo clear" then
 				PhotoCommand.clear()
 			end

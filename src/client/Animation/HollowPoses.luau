@@ -14,6 +14,10 @@
 	           the Crawler's spider walk on planted hands and feet), sleeping, emerging,
 	           the windup and the strike, cowering, reeling, and three grabs per kind
 	           (Config/Grabs), each squeezing on the grab's own rhythm
+	  stalk    (Prompt 3) the prowl's body; frozen under a look it sways and breathes in place
+	  coil     a hunter's Intent or its first-strike warning: shoulders back, head low, knees
+	           bent, the Crawler's haunches drawn under it. Snapped, never blended
+	  follow   a missed strike over-reaches, then stumbles until RecoverSeconds
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -50,6 +54,8 @@ export type Input = {
 	grab: string?, -- the grab's id while holding someone
 	grabTime: number, -- seconds into the hold
 	grime: number?, -- shared stop progression; original Brute silhouette stays unchanged
+	coil: boolean?, -- Hunt with Intent or the first-strike warning: the coil pose
+	frozen: boolean?, -- Stalk under a look: still, swaying and breathing
 }
 
 local HollowPoses = {}
@@ -814,9 +820,10 @@ local function bipedAttack(kind: string, out: Pose, windup: number?, strike: num
 			out.Neck = A(0.5 * e + shake, 0, 0)
 			out.Jaw = A(-0.8 * e, 0, 0)
 		else
+			-- arms flung wide so the silhouette reads at 25 studs
 			out.Waist = A(-0.1 + 0.45 * e, 0, 0)
-			out.LShoulder = A(2.6 * e, 0, -0.35 * e)
-			out.RShoulder = A(2.6 * e, 0, 0.35 * e)
+			out.LShoulder = A(2.4 * e, 0, -0.75 * e)
+			out.RShoulder = A(2.4 * e, 0, 0.75 * e)
 			out.LElbow = A(0.5 * e, 0, 0)
 			out.RElbow = A(0.5 * e, 0, 0)
 			out.Neck = A(0.5 * e + shake, shake, 0)
@@ -869,6 +876,69 @@ local function bipedCower(out: Pose, now: number, stunned: boolean, reeling: num
 	out.RootJoint = CFrame.new(0, -0.4, 0.3) * A(0, 0, shiver)
 end
 
+-- Coil and follow-through (Prompt 3) ----------------------------------------------------------------
+
+-- Gathered to spring: shoulders back, head low, knees bent; the Crawler sinks onto its haunches
+-- with its hind feet drawn under it. Moving, the legs keep the gait's stride (no sliding) and only
+-- the body coils.
+local function coil(rig: Rig, out: Pose, kind: string, now: number, seed: number, moving: boolean)
+	local tremble = math.sin(now * 23 + seed) * 0.03
+	if kind == "Crawler" then
+		out.RootJoint = (if moving then out.RootJoint or I else CFrame.new(0, 0, 0.8))
+			* CFrame.new(0, -1.15, 0)
+			* A(-0.22, 0, tremble)
+		out.Waist = A(-0.3, 0, 0)
+		out.Neck = A(-0.45 + tremble, 0, 0)
+		out.Jaw = A(-0.5, 0, 0)
+		if moving then
+			return
+		end
+		for _, spot in CRAWL do
+			if spot.limb == "Arm" then
+				plant(rig, out, spot, 0, -0.4, 0)
+			else
+				plant(rig, out, spot, 0, -1.6, 0)
+			end
+		end
+		return
+	end
+	local brute = kind == "Brute"
+	out.Waist = A(if brute then -0.35 else -0.5, 0, 0)
+	out.Neck = A(if brute then 0.45 else 0.9, 0, 0)
+	if moving then
+		out.RootJoint = (out.RootJoint or I) * CFrame.new(0, -0.25, 0) * A(-0.15, 0, tremble)
+	else
+		-- a deep crouch: hips and knees folded, the body pitched over them
+		out.RootJoint = CFrame.new(0, if brute then -0.6 else -1.0, 0.3)
+			* A(if brute then -0.15 else -0.45, 0, tremble)
+		out.LHip = A(0.8, 0, -0.1)
+		out.RHip = A(0.65, 0, 0.1)
+		out.LKnee = A(-1.15, 0, 0)
+		out.RKnee = A(-1.0, 0, 0)
+	end
+	-- arms swept back and out, hands low: drawn, not raised
+	out.LShoulder = A(-0.55, 0, -0.6)
+	out.RShoulder = A(-0.55, 0, 0.6)
+	out.LElbow = A(0.3, 0, 0)
+	out.RElbow = A(0.3, 0, 0)
+	out.LWrist = I
+	out.RWrist = I
+	out.Jaw = A(-0.45, 0, 0)
+end
+
+-- After a miss: carried past its reach, it stumbles and finds its feet. `k` is 0..1..0 over the
+-- stumble.
+local function stumble(out: Pose, kind: string, k: number)
+	if kind == "Crawler" then
+		out.RootJoint = (out.RootJoint or I) * CFrame.new(0, -0.5 * k, -0.4 * k) * A(0.2 * k, 0, 0.25 * k)
+		out.Waist = (out.Waist or I) * A(0.15 * k, 0, 0)
+		return
+	end
+	out.RootJoint = (out.RootJoint or I) * CFrame.new(0, -0.45 * k, -0.6 * k) * A(0, 0.15 * k, 0.12 * k)
+	out.Waist = (out.Waist or I) * A(-0.45 * k, 0, 0.1 * k)
+	out.Neck = (out.Neck or I) * A(0.3 * k, -0.2 * k, 0)
+end
+
 -- Cadence -----------------------------------------------------------------------------------------
 
 -- Radians per second the gait's phase runs at `speed`. The Crawler's feet stay planted:
@@ -899,6 +969,19 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 	local out: Pose = {}
 	local state = input.state
 	local hunt = state == "Hunt" or state == "Windup" or state == "Recover"
+	if state == "Stalk" and input.frozen then
+		-- held by a look: no step, the head free for the animator's look-at, a slow sway and breath
+		local still = table.clone(input)
+		still.speed = 0
+		still.phase = 0
+		still.frozen = false
+		local frozen = HollowPoses.pose(rig, still)
+		local sway = math.sin(input.now * 0.9 + input.seed) * 0.05
+		local breath = math.sin(input.now * 1.7 + input.seed * 0.5) * 0.045
+		frozen.RootJoint = (frozen.RootJoint or I) * CFrame.new(0, breath * 0.6, 0) * A(0, 0, sway)
+		frozen.Waist = (frozen.Waist or I) * A(breath, 0, 0)
+		return frozen
+	end
 	local stride = math.min(input.speed / 12, 1.4)
 	local crawler = kind == "Crawler"
 	local function gait(target: Pose, isHunting: boolean, speedOverride: number?)
@@ -1011,6 +1094,10 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		return out
 	end
 	gait(out, hunt)
+	if state == "Hunt" and input.coil then
+		coil(rig, out, kind, input.now, input.seed, input.speed > 1)
+		return out
+	end
 	if state == "Windup" then
 		local w = clamp01(input.elapsed / input.windup)
 		if crawler then
@@ -1018,12 +1105,18 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		else
 			bipedAttack(kind, out, w, nil, input.now)
 		end
-	elseif state == "Recover" and input.elapsed < 0.3 then
-		local s = clamp01(input.elapsed / 0.18)
+	elseif state == "Recover" and input.elapsed < Tuning.Hollow.RecoverSeconds then
+		-- the strike carries through, then it over-reaches and stumbles: the counterplay window
+		local from = Tuning.HollowMotion.StumbleFrom
+		local s = clamp01(input.elapsed / from)
 		if crawler then
 			crawlerAttack(rig, out, input, nil, s)
 		else
 			bipedAttack(kind, out, nil, s, input.now)
+		end
+		if input.elapsed > from then
+			local u = clamp01((input.elapsed - from) / (Tuning.Hollow.RecoverSeconds - from))
+			stumble(out, kind, math.sin(u * math.pi))
 		end
 	end
 	return out
