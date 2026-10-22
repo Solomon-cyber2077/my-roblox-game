@@ -672,6 +672,21 @@ function TelemetryService.Tell(player: Player, seconds: number, crewmatesNear: n
 	TelemetryService.Event(player, "tell_cohort", round(seconds, 2), playerFields(participant, bucket))
 end
 
+-- The void mist caught a fall past the sinkhole rail (MistService): each one is a bug to chase.
+function TelemetryService.MistRescue(player: Player, pingMs: number)
+	local current = run
+	if current == nil or current.byPlayer[player] == nil then
+		return
+	end
+	local stop = stopNow(current)
+	TelemetryService.Event(
+		player,
+		"mist_rescue",
+		round(pingMs, 0),
+		{ stop, TelemetryService.Device(player), false }
+	)
+end
+
 -- A late joiner is on the line (CrewService.SpawnPendingJoiners).
 function TelemetryService.RunJoined(player: Player)
 	local current = run

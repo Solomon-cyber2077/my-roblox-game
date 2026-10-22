@@ -115,7 +115,9 @@ local function happening(when: string, run: any): boolean
 			return false
 		end
 		for _, edge in CollectionService:GetTagged(T.EdgeTag) do
-			if edge:IsA("BasePart") and (edge.Position - root.Position).Magnitude <= T.EdgeDistance then
+			-- on the ground plane: the rail is a tall wall (Tuning.VoidMist.WallHeight)
+			local gap = edge:IsA("BasePart") and (edge.Position - root.Position) * Vector3.new(1, 0, 1)
+			if gap and gap.Magnitude <= T.EdgeDistance then
 				return true
 			end
 		end
