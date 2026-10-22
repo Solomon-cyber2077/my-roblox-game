@@ -72,7 +72,7 @@ function DifficultyModel.dwell(d: number, archetype: Archetype, stop: number): n
 	local clock = Difficulty.StopClock
 	local tiles = math.min(DifficultyModel.buildingTiles(archetype), clock.BuildingTileCap)
 	local search = (blend(clock.Search, d) + clock.PerBuildingTile * tiles) * archetype.dwellMultiplier
-	local walk = 2 * DifficultyModel.farWalk(archetype) / Tuning.Crew.WalkSpeed * clock.WalkMargin
+	local walk = 2 * DifficultyModel.farWalk(archetype) / clock.WalkReference * clock.WalkMargin
 	return math.floor(search + walk + clock.PerStop * math.max(stop - 1, 0) + 0.5)
 end
 

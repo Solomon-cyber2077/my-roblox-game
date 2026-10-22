@@ -41,6 +41,7 @@ type Member = {
 	load: number,
 	tally: Types.CrewTally,
 	clutchCounted: boolean,
+	grasped: boolean, -- caught the railing this departure: Aboard stands until it resolves
 }
 
 local CrewService = {}
@@ -230,6 +231,8 @@ function CrewService.LoadCharacterAt(player: Player, cframe: CFrame)
 	Registry.CosmeticService.Apply(player)
 end
 
+local departureResolved = false
+
 local function positionTick()
 	local phase: Types.Phase = Registry.RunDirector.Phase()
 	if not RunRules.isRunPhase(phase) or phase == "Boarding" then
@@ -248,7 +251,13 @@ local function positionTick()
 				then
 					CrewService.Eliminate(player, "Fell")
 				else
-					local inside = Registry.TrainService.IsInside(position)
+					-- a credited grasp holds Aboard until the departure resolves (Prompt 4)
+					local inside = member.grasped
+						or Registry.GraspService.IsAttached(player)
+						or Registry.TrainService.IsInside(position)
+					if character then
+						character:SetAttribute("OffTrain", not inside)
+					end
 					local nextStatus: CrewStatus = if inside
 						then "Aboard"
 						elseif member.status == "Straggler" then "Straggler"
@@ -416,6 +425,7 @@ function CrewService.BeginRun(players: { Player })
 			load = 0,
 			tally = Economy.emptyTally(),
 			clutchCounted = false,
+			grasped = false,
 		}
 		members[player] = member
 		publish(member)
@@ -462,6 +472,8 @@ function CrewService.Eliminate(player: Player, cause: Cause)
 	if member == nil or not isAliveStatus(member.status) then
 		return
 	end
+	local graspText = if cause == "LeftBehind" then Registry.GraspService.LeftBehindText(player) else nil
+	Registry.GraspService.Cleanup(player)
 	member.status = "Eliminated"
 	member.cause = cause
 	downs += 1
@@ -471,7 +483,11 @@ function CrewService.Eliminate(player: Player, cause: Cause)
 	Registry.TelemetryService.Eliminated(player, cause)
 	Registry.InventoryService.Clear(player)
 	NetService.Fire("Fx", player, "Eliminated", { cause = cause, canRescue = not member.rescued })
-	NetService.FireAll("Notify", "Elimination", `{player.DisplayName} {CAUSE_TEXT[cause]}.`)
+	NetService.FireAll(
+		"Notify",
+		"Elimination",
+		`{player.DisplayName} {CAUSE_TEXT[cause]}.{if graspText then " " .. graspText else ""}`
+	)
 
 	local character = player.Character
 	local generation = spawnGeneration[player]
@@ -488,7 +504,29 @@ function CrewService.Eliminate(player: Player, cause: Cause)
 end
 
 -- T-0, the Last Call whistle: remembers who is not aboard yet, for close calls.
+-- A catch is authoritative before the physical haul starts, including the latency buffer.
+function CrewService.CreditGrasp(player: Player): boolean
+	local member = members[player]
+	if member == nil or not isAliveStatus(member.status) then
+		return false
+	end
+	member.status = "Aboard"
+	member.grasped = true
+	if player.Character then
+		player.Character:SetAttribute("OffTrain", false)
+	end
+	if not member.clutchCounted then
+		member.clutchCounted = true
+		member.tally.clutchBoards += 1
+		NetService.FireAll("Fx", "Clutch", { userId = player.UserId })
+		NetService.FireAll("Notify", "Crew", `{player.DisplayName} made it!`)
+	end
+	publish(member)
+	return true
+end
+
 function CrewService.MarkLastCall()
+	departureResolved = false
 	table.clear(missingAtLastCall)
 	for player, member in members do
 		if isAliveStatus(member.status) and member.status ~= "Aboard" then
@@ -500,6 +538,10 @@ end
 -- Called when the chase window closes: anyone not aboard stays behind. Returns the display names
 -- of this stop's close calls, for the run log.
 function CrewService.ResolveDeparture(): { string }
+	if departureResolved then
+		return {}
+	end
+	departureResolved = true
 	local aboard: { [Player]: boolean } = {}
 	for player, member in members do
 		aboard[player] = member.status == "Aboard"
@@ -522,6 +564,7 @@ function CrewService.ResolveDeparture(): { string }
 			end
 		end
 		member.clutchCounted = false
+		member.grasped = false
 	end
 	return names
 end
@@ -618,6 +661,7 @@ function CrewService.SpawnPendingJoiners()
 				load = 0,
 				tally = Economy.emptyTally(),
 				clutchCounted = false,
+				grasped = false,
 			}
 			members[player] = member
 			publish(member)

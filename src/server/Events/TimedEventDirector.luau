@@ -33,6 +33,7 @@ local info: Types.StationInfo? = nil
 local slots: { Schedule.Slot } = {}
 local index = 1
 local running: Running? = nil
+local cancelled = false
 
 local ATTRIBUTES = {
 	"TimedEvent",
@@ -94,6 +95,7 @@ end
 
 function TimedEventDirector.Begin(stationInfo: Types.StationInfo)
 	TimedEventDirector.Finish()
+	cancelled = false
 	info = stationInfo
 	index = 1
 	-- the Emergency Village has its own clock and toast (BreakdownService): no events there
@@ -104,6 +106,9 @@ end
 
 -- `t` is seconds since the doors opened.
 function TimedEventDirector.Step(t: number)
+	if cancelled then
+		return
+	end
 	local station = info
 	if station == nil then
 		return
@@ -127,6 +132,11 @@ function TimedEventDirector.Step(t: number)
 	elseif current.started and t >= current.slot.endAt then
 		TimedEventDirector.Finish()
 	end
+end
+
+function TimedEventDirector.Cancel()
+	cancelled = true
+	TimedEventDirector.Finish()
 end
 
 -- Runs `id` now (with its warning), for testing. Returns why not, or nil when it starts.
