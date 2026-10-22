@@ -24,7 +24,7 @@ Run in order; VM4 and VM5 need only VM1; VM6 needs VM5; VM7 comes last.
 
 | Session | File | Council prompt | Depends on | Status |
 |---|---|---|---|---|
-| VM1 | [VM1.md](VM1.md) | 01 Tuning and zone math | none | todo |
+| VM1 | [VM1.md](VM1.md) | 01 Tuning and zone math | none | done |
 | VM2 | [VM2.md](VM2.md) | 02 Edge wall and fall rescue | VM1 | todo |
 | VM3 | [VM3.md](VM3.md) | 03 Edge mist damage | VM2 | todo |
 | VM4 | [VM4.md](VM4.md) | 04 Client current | VM1 | todo |
