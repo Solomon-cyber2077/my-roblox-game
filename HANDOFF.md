@@ -14,8 +14,10 @@
 - Sink read-back NOT verified: DataStores need a published place. Manual: open the published place, enable Studio API access, play, `Remotes.Dev:FireServer("telemetry")` to note the server id, stop, play again, `Remotes.Dev:FireServer("telemetry dump <old id>")`.
 - Published ingestion pending (Creator Analytics). Funnels need a loaded profile outside Studio.
 - After S2 lands (walk 21), the clock's walk term uses Crew.WalkSpeed, so dwell grows until Prompt 4 adds WalkReference 30. Re-run the report then.
+- S2 (Astra, `codex/s2-speed-astra`, see HANDOFF-ASTRA.md) merged here with no conflicts; merged `lune run check` passed (422 tests, audit clean) and a merged Studio run reached stop 1 with walk 21 and telemetry intact. Report after merge: chase ranges match B.4's table exactly; the clock the game runs now gives 58.3 min no-bell runs and 252 s doors-open stops (walk 21 in its walk term) against clock B's 47.57 min / 187 s. S5 (Prompt 4) fixes it with WalkReference 30.
+- Astra left a `-- S1 hook:` in HollowService at the scripted Crawler's first warning: that is tell_exposure work for S3.
 3. Next logical step
-- Merge S2 (Astra, branch codex/s2-speed-astra), re-run `lune run report`, then S3.
+- S3 (Prompt 2), wiring tell_exposure/tell_cohort at Astra's hook. Consider S5's clock change early, since runs are now ~58 min.
 
 ## 2026-10-21: FINAL DESIGN DRAFT IN THE REPO (docs only)
 1. Completed
