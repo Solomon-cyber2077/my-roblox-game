@@ -182,6 +182,15 @@ export type Profile = {
 	settings: { [string]: any },
 	npcs: { [string]: NpcProgress }, -- Logic/NpcSave
 	tutorialRuns: number, -- tutorial runs completed (Logic/Tutorial); 0 for a new player
+	telemetry: TelemetryProfile, -- Services/TelemetryService
+}
+
+-- profile.telemetry: what lets funnels span visits (Services/TelemetryService).
+export type TelemetryProfile = {
+	visits: number,
+	onboarding: boolean, -- in the onboarding funnel: a new player, set on their first visit
+	steps: { [string]: boolean }, -- funnel steps already sent, "<funnel>/<step>"
+	funnels: { [string]: string }, -- funnel session ids, kept so a later visit can finish the funnel
 }
 
 -- profile.npcs[npcId]: one resident's story for one player (Logic/NpcSave).

@@ -127,6 +127,11 @@ local function run(): string
 				model:SetAttribute("LastDamageSource", source)
 			end,
 		},
+		TelemetryService = {
+			Grabbed = function() end,
+			Escaped = function() end,
+			Pried = function() end,
+		},
 	}
 	local net = {
 		Handle = function(name, fn)

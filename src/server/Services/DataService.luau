@@ -62,6 +62,7 @@ local function defaultProfile(): Profile
 		settings = {},
 		npcs = NpcSave.defaults(),
 		tutorialRuns = 0,
+		telemetry = { visits = 0, onboarding = false, steps = {}, funnels = {} },
 	}
 end
 

@@ -16,6 +16,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local NetService = require(script.Parent.NetService)
+local Registry = require(script.Parent.Parent.Registry)
 
 type Path = { string }
 type Change = { p: Path, v: any }
@@ -159,8 +160,9 @@ end
 function StateService.Init() end
 
 function StateService.Start()
-	NetService.Handle("ClientReady", function(player)
+	NetService.Handle("ClientReady", function(player, device: string?)
 		StateService.SendSnapshot(player)
+		Registry.TelemetryService.ReportDevice(player, device)
 	end)
 	RunService.Heartbeat:Connect(flush)
 	Players.PlayerRemoving:Connect(function(player)

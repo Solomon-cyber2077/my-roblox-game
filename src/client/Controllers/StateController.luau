@@ -7,8 +7,12 @@
 	carry sequence numbers per scope; a gap asks the server for a fresh snapshot.
 ]]
 
+local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
+local Telemetry = require(ReplicatedStorage.Shared.Logic.Telemetry)
 local Signal = require(ReplicatedStorage.Shared.Util.Signal)
 
 local Net = require(script.Parent.Parent.Net)
@@ -26,6 +30,24 @@ local seqs: { [string]: number } = { public = 0, private = 0 }
 local observers: { Observer } = {}
 local isReady = false
 local resyncRequested = false
+local device: string? = nil -- read once, sent with every ClientReady (the server keeps the first)
+
+-- What kind of device this is, for the server's telemetry (Logic/Telemetry.classify).
+local function deviceKind(): string
+	if device == nil then
+		local camera = Workspace.CurrentCamera
+		local size = if camera then camera.ViewportSize else nil
+		device = Telemetry.classify({
+			touch = UserInputService.TouchEnabled,
+			keyboard = UserInputService.KeyboardEnabled,
+			mouse = UserInputService.MouseEnabled,
+			gamepad = UserInputService.GamepadEnabled,
+			tenFoot = GuiService:IsTenFootInterface(),
+			shortSide = if size and size.X > 1 then math.min(size.X, size.Y) else nil,
+		})
+	end
+	return device :: string
+end
 
 local function read(root: { [string]: any }, path: Path): any
 	local node: any = root
@@ -94,7 +116,7 @@ function StateController.Init()
 		if seq ~= seqs[scope] + 1 then
 			if not resyncRequested then
 				resyncRequested = true
-				Net.Fire("ClientReady")
+				Net.Fire("ClientReady", deviceKind())
 			end
 			return
 		end
@@ -115,7 +137,7 @@ function StateController.Init()
 end
 
 function StateController.Start()
-	Net.Fire("ClientReady")
+	Net.Fire("ClientReady", deviceKind())
 end
 
 function StateController.IsReady(): boolean

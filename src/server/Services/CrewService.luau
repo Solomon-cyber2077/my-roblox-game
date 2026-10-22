@@ -294,6 +294,7 @@ function CrewService.Start()
 		spawnGeneration[player] = nil
 		local member = members[player]
 		if member then
+			Registry.TelemetryService.Left(player, isAliveStatus(member.status))
 			if isAliveStatus(member.status) then
 				NetService.FireAll("Notify", "Crew", `{player.DisplayName} {CAUSE_TEXT.Disconnected}.`)
 			end
@@ -467,6 +468,7 @@ function CrewService.Eliminate(player: Player, cause: Cause)
 	member.load = 0
 	publish(member)
 	print(`[Crew] {player.Name} eliminated: {cause} at stop {Registry.RunDirector.NextStop()}`)
+	Registry.TelemetryService.Eliminated(player, cause)
 	Registry.InventoryService.Clear(player)
 	NetService.Fire("Fx", player, "Eliminated", { cause = cause, canRescue = not member.rescued })
 	NetService.FireAll("Notify", "Elimination", `{player.DisplayName} {CAUSE_TEXT[cause]}.`)
@@ -622,6 +624,7 @@ function CrewService.SpawnPendingJoiners()
 			Registry.InventoryService.Reset(player)
 			task.spawn(CrewService.LoadCharacterAt, player, Registry.StationService.StragglerSpawn())
 			NetService.FireAll("Notify", "Crew", `{player.DisplayName} is running for the train!`)
+			Registry.TelemetryService.RunJoined(player)
 		end
 	end
 end
