@@ -379,6 +379,8 @@ end
 
 local starsShown = -STAR_STEP
 local warningFog = 0 -- extra density while the departure warning is up (SetWarning)
+local mistTint = 0 -- 0..1, how near the void mist is (SetMistTint)
+local mistColor = Color3.new(1, 1, 1) -- the mist preset's tint
 local windShown = Vector3.zero
 
 local function apply(state: Sky.State)
@@ -400,9 +402,11 @@ local function apply(state: Sky.State)
 	clouds.Density = state.cloudDensity
 	clouds.Color = state.clouds
 	rays.Intensity = state.rays
-	grade.Saturation = state.saturation
+	-- the void mist's proximity tint, an offset on the composed grade
+	local mist = Color3.new(1, 1, 1):Lerp(mistColor, mistTint)
+	grade.Saturation = state.saturation + Tuning.VoidMist.TintSaturation * mistTint
 	grade.Contrast = state.contrast
-	grade.TintColor = state.tint
+	grade.TintColor = Color3.new(state.tint.R * mist.R, state.tint.G * mist.G, state.tint.B * mist.B)
 	grade.Brightness = state.lift
 	focus.Enabled = state.blur > 0.01
 	focus.FarIntensity = state.blur
@@ -635,6 +639,13 @@ end
 -- top of the composed look, so the sky's own values are never overwritten.
 function AtmosphereController.SetWarning(level: number)
 	warningFog = Tuning.Departure.FogDensity * math.clamp(level, 0, 1)
+end
+
+-- The void mist's proximity tint (MistController): t 0..1 toward `color`, with the mist's
+-- desaturation. An offset like SetWarning: the sky's own values are never overwritten.
+function AtmosphereController.SetMistTint(t: number, color: Color3)
+	mistTint = math.clamp(t, 0, 1)
+	mistColor = color
 end
 
 function AtmosphereController.FlareFlash()
