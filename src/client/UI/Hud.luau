@@ -186,7 +186,9 @@ function Hud.mount(gui: ScreenGui)
 		end
 		watchFade.group.Position = UDim2.new(1, -14, 1, -14 - lift)
 	end
-	placeWatch()
+	-- on its own thread: the touch buttons may still be on their way, and the rest of the UI must
+	-- not wait for them (a stalled placement once kept every UI after the HUD from mounting)
+	task.spawn(placeWatch)
 	-- the touch controls arrive after the character and move when the screen turns
 	for _, name in TOUCH_GUIS do
 		local layer = playerGui:FindFirstChild(name)
@@ -974,6 +976,8 @@ function Hud.mount(gui: ScreenGui)
 		handSlot = Inventory.follow({ items = state.items or {}, capacity = capacity }, handSlot, handId)
 		handId = if handSlot then state.items[handSlot] else nil
 		backpack.Size = UDim2.fromOffset(capacity * CELL + (capacity - 1) * GAP, CELL)
+		-- on a phone the empty wells are faint, so an empty backpack is not a row of boxes
+		local faint = gui:GetAttribute("Compact") == true
 		for i = 1, capacity do
 			-- an empty slot: a sunken soot well in a blackened-brass bezel
 			local cell = Ui.new("ImageLabel", {
@@ -981,12 +985,12 @@ function Hud.mount(gui: ScreenGui)
 				Size = UDim2.fromOffset(CELL, CELL),
 				Position = UDim2.fromOffset((i - 1) * (CELL + GAP), 0),
 				BackgroundColor3 = Theme.Color.steel,
-				BackgroundTransparency = 0.2,
+				BackgroundTransparency = if faint then 0.8 else 0.2,
 				Image = Theme.Image.panel.id,
 				ScaleType = Enum.ScaleType.Slice,
 				SliceCenter = Theme.Image.panel.slice,
 				SliceScale = 0.16,
-				ImageTransparency = 0.1,
+				ImageTransparency = if faint then 0.75 else 0.1,
 				Parent = backpack,
 			})
 			Ui.corner(2).Parent = cell

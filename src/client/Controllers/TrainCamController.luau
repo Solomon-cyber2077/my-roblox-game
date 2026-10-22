@@ -333,6 +333,11 @@ function TrainCamController.Start()
 	local function chipLabel()
 		local last = UserInputService:GetLastInputType()
 		chip.Text = if last == Enum.UserInputType.Touch then "TRAIN CAM" else "TRAIN CAMERA  [C]"
+		-- a phone gets a small tab, not a full button
+		local hud = gui:FindFirstChild("LastTrainOut")
+		local compact = hud ~= nil and hud:GetAttribute("Compact") == true
+		chip.Size = if compact then UDim2.fromOffset(112, 30) else UDim2.fromOffset(176, 44)
+		chip.TextSize = if compact then 12 else 14
 	end
 	chipLabel()
 	UserInputService.LastInputTypeChanged:Connect(function()

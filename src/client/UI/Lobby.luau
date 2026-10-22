@@ -25,6 +25,7 @@ local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local CarBoarding = require(script.Parent.CarBoarding)
 local Invite = require(script.Parent.Invite)
+local Menu = require(script.Parent.Menu)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
@@ -93,38 +94,6 @@ function Lobby.mount(gui: ScreenGui)
 		end
 		local light = letters(1, Theme.Color.brassLight, 0.3)
 		return plate, letters(0, Theme.Color.inkDeep, 0), light
-	end
-	-- A plate in a bevelled brass rim, with an amber halo behind it on hover and selection.
-	local function brassRim(button: TextButton, holder: GuiObject)
-		Ui.new("ImageLabel", {
-			Name = "Rim",
-			BackgroundTransparency = 1,
-			Size = UDim2.new(1, 0, 1, 3),
-			Image = Theme.Image.rimBrass.id,
-			ScaleType = Enum.ScaleType.Slice,
-			SliceCenter = Theme.Image.rimBrass.slice,
-			SliceScale = 0.18,
-			Parent = button,
-		})
-		local glow = halo({
-			Name = "Glow",
-			Size = button.Size + UDim2.fromOffset(30, 30),
-			Position = button.Position - UDim2.fromOffset(15, 13),
-			AnchorPoint = button.AnchorPoint,
-			ImageColor3 = Theme.Color.amber,
-			ImageTransparency = 1,
-			ZIndex = button.ZIndex - 1,
-			Parent = holder,
-		})
-		local function lit(on: boolean): () -> ()
-			return function()
-				Ui.tween(glow, { ImageTransparency = if on then 0.55 else 1 })
-			end
-		end
-		button.MouseEnter:Connect(lit(true))
-		button.MouseLeave:Connect(lit(false))
-		button.SelectionGained:Connect(lit(true))
-		button.SelectionLost:Connect(lit(false))
 	end
 
 	-- Profile card: the operator's crew pass --------------------------------------------------
@@ -276,6 +245,56 @@ function Lobby.mount(gui: ScreenGui)
 	})
 	savingLabel.Parent = card
 
+	-- On a phone the pass folds to one line (name, rank, Brass) so the hall is not a wall of boxes;
+	-- a tap opens it, another folds it. Desktop keeps it open. MENU sits just under it (UI/Menu).
+	local fullLayout: { [GuiObject]: { position: UDim2, size: UDim2, textSize: number? } } = {}
+	for _, child in card:GetChildren() do
+		if child:IsA("GuiObject") then
+			fullLayout[child] = {
+				position = child.Position,
+				size = child.Size,
+				textSize = if child:IsA("TextLabel") then child.TextSize else nil,
+			}
+		end
+	end
+	local KEEP: { [GuiObject]: boolean } = { [nameLabel] = true, [badge] = true, [brassLabel] = true }
+	local folded = false
+	local userOpened = false
+	local function layoutCard()
+		local compact = gui:GetAttribute("Compact") == true
+		folded = compact and not userOpened
+		card.Size = if folded then UDim2.fromOffset(250, 58) else UDim2.fromOffset(330, 164)
+		for child, layout in fullLayout do
+			child.Visible = not folded or KEEP[child] == true or child.Name == "Falloff"
+			child.Position, child.Size = layout.position, layout.size
+			if child:IsA("TextLabel") and layout.textSize then
+				child.TextSize = layout.textSize
+			end
+		end
+		if folded then
+			badge.Position = UDim2.fromOffset(10, 11)
+			nameLabel.Position, nameLabel.Size = UDim2.fromOffset(56, 6), UDim2.new(1, -64, 0, 24)
+			nameLabel.TextSize = 21
+			brassLabel.Position, brassLabel.Size = UDim2.fromOffset(56, 31), UDim2.new(1, -64, 0, 20)
+			brassLabel.TextSize = 15
+		end
+		Menu.setLobbyY(if folded then 12 + 58 + 8 else 186)
+	end
+	local fold = Ui.new("TextButton", {
+		Name = "Fold",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		ZIndex = 5,
+		Parent = card,
+	})
+	fold.Activated:Connect(function()
+		userOpened = folded
+		layoutCard()
+	end)
+	gui:GetAttributeChangedSignal("Compact"):Connect(layoutCard)
+	layoutCard()
+
 	-- Departure panel: the platform indicator --------------------------------------------------
 	local panel = Ui.panel({
 		Name = "Departure",
@@ -412,7 +431,7 @@ function Lobby.mount(gui: ScreenGui)
 	-- Above the panel: BOARD A CAR, INVITE and the line --------------------------------------------
 	local hallRow = Ui.new("Frame", {
 		Name = "HallRow",
-		Size = UDim2.fromOffset(PANEL_W, 72),
+		Size = UDim2.fromOffset(PANEL_W, 32),
 		Position = UDim2.new(0.5, 0, 1, -20 - PANEL_H - 8),
 		AnchorPoint = Vector2.new(0.5, 1),
 		BackgroundTransparency = 1,
@@ -464,97 +483,56 @@ function Lobby.mount(gui: ScreenGui)
 	})
 	carButton.TextColor3 = Theme.Color.bone
 	carButton.Parent = hallRow
-	local inviteButton = Ui.button("INVITE", "Secondary", function()
-		Invite.prompt("depot")
-	end, {
-		Name = "Invite",
+	-- the line: one button. With a new Hand aboard it only names the fixed line; otherwise a tap
+	-- switches your vote between the Short and the Long Line (the crew's votes decide at boarding)
+	local lineButton = Ui.button("", "Secondary", nil, {
+		Name = "Line",
 		Size = UDim2.new(0.5, -4, 0, 32),
 		Position = UDim2.new(0.5, 4, 0, 0),
-		TextSize = 17,
-	})
-	inviteButton.TextColor3 = Theme.Color.bone
-	inviteButton.Visible = false
-	inviteButton.Parent = hallRow
-	Invite.whenChecked(function(allowed)
-		inviteButton.Visible = allowed
-	end)
-	local function lineButton(route: string, x: number): TextButton
-		local button = Ui.button("", "Secondary", function()
-			Net.Fire("VoteLine", route)
-		end, {
-			Name = `Line{route}`,
-			Size = UDim2.new(0.5, -4, 0, 32),
-			Position = UDim2.new(x, if x > 0 then 4 else 0, 0, 40),
-			TextSize = 15,
-		})
-		button.TextColor3 = Theme.Color.bone
-		button.Parent = hallRow
-		return button
-	end
-	local shortButton = lineButton("Short", 0)
-	local longButton = lineButton("Long", 0.5)
-	local fixedLine = Ui.panel({
-		Name = "FixedLine",
-		Size = UDim2.new(1, 0, 0, 32),
-		Position = UDim2.fromOffset(0, 40),
-		BackgroundTransparency = 0.06,
-		Parent = hallRow,
-	})
-	local fixedText = Ui.text({
-		Text = "",
-		Font = Theme.Font.body,
 		TextSize = 15,
-		Color = Theme.Color.bone,
-		Size = UDim2.fromScale(1, 1),
-		XAlign = Enum.TextXAlignment.Center,
 	})
-	fixedText.Parent = fixedLine
+	lineButton.TextColor3 = Theme.Color.bone
+	lineButton.Parent = hallRow
+	local lineFixed, myLine = false, "Long"
+	lineButton.Activated:Connect(function()
+		if not lineFixed then
+			Net.Fire("VoteLine", if myLine == "Short" then "Long" else "Short")
+		end
+	end)
 
 	local function renderLine()
 		local line = State.Get({ "lobby", "line" })
 		local known = type(line) == "table"
-		local fixed = known and line.fixed == true
-		fixedLine.Visible = fixed
-		shortButton.Visible = not fixed
-		longButton.Visible = not fixed
-		if fixed then
-			fixedText.Text = if line.route == "Short"
-				then "Short Line: a new Hand rides with you."
-				else "A new Hand rides with you: the line is set."
-			return
-		end
+		lineFixed = known and line.fixed == true
+		local route = if known then line.route else "Long"
 		local mine = if known and line.votes then line.votes[Session.userKey] else nil
-		local function label(route: string, votes: number): string
-			local tick = if mine == route then "✓ " else ""
-			local count = if votes > 0 then ` ({votes})` else ""
-			return `{tick}{string.upper(route)} LINE · {Routes.length(route :: any)}{count}`
+		if lineFixed then
+			lineButton.Text = `{string.upper(route)} LINE · NEW HAND`
+		else
+			myLine = mine or route
+			lineButton.Text = `{string.upper(myLine)} LINE · {Routes.length(myLine :: any)} STOPS`
 		end
-		shortButton.Text = label("Short", if known then line.short or 0 else 0)
-		longButton.Text = label("Long", if known then line.long or 0 else 0)
+		Ui.setButtonEnabled(lineButton, not lineFixed)
 	end
 	State.Observe("public", { "lobby", "line" }, renderLine)
 	renderLine()
 
-	-- Shortcut: a plate under the pass (the Outfitter is the stand in the hall) -------------------
-	local shortcuts = Ui.new("Frame", {
-		Size = UDim2.fromOffset(330, 44),
-		Position = UDim2.fromOffset(14, 186),
-		BackgroundTransparency = 1,
-		Parent = container,
-	})
-	for i, shortcut in { { "LINE MASTERY", "Ledger" } } do
-		local button = Ui.button(shortcut[1], "Secondary", function()
-			Registry.UIController.Open(shortcut[2])
-		end, {
-			Size = UDim2.new(0.5, -5, 1, 0),
-			Position = UDim2.new((i - 1) * 0.5, if i == 1 then 0 else 5, 0, 0),
-			TextSize = 19,
-		})
-		button.TextColor3 = Theme.Color.bone
-		button.ZIndex = 2
-		button.Parent = shortcuts
-		brassRim(button, shortcuts)
-	end
+	-- The hall's shortcuts live in the MENU dropdown (UI/Menu): Line Mastery while in the hall,
+	-- INVITE when this player may invite
+	Menu.add("LINE MASTERY", 20, function()
+		Registry.UIController.Open("Ledger")
+	end, function()
+		return container.Visible
+	end)
+	local inviteAllowed = false
+	Invite.whenChecked(function(allowed)
+		inviteAllowed = allowed
+	end)
+	Menu.add("INVITE FRIENDS", 10, function()
+		Invite.prompt("depot")
+	end, function()
+		return inviteAllowed
+	end)
 
 	-- In-world departure board ----------------------------------------------------------------
 	local boardGui: SurfaceGui? = nil
