@@ -133,7 +133,7 @@ function Hud.mount(gui: ScreenGui)
 	-- on a phone it is drawn a little smaller so it still sits under the crew roster.
 	local playerGui = gui.Parent :: Instance
 	local clusterScale = Ui.new("UIScale", { Parent = watchFade.group })
-	local function touchTop(): number?
+	local function touchTop(exclude: Instance?): number?
 		local top: number? = nil
 		local half = container.AbsolutePosition.X + container.AbsoluteSize.X / 2
 		for _, name in TOUCH_GUIS do
@@ -142,6 +142,7 @@ function Hud.mount(gui: ScreenGui)
 				for _, button in layer:GetDescendants() do
 					if
 						button:IsA("GuiButton")
+						and button ~= exclude
 						and button.Visible
 						and button.AbsoluteSize.X > 0
 						and button.AbsolutePosition.X > half
@@ -157,7 +158,26 @@ function Hud.mount(gui: ScreenGui)
 		local compact = gui:GetAttribute("Compact") == true
 		clusterScale.Scale = if compact then COMPACT_WATCH else 1
 		local lift = 0
-		local top = touchTop()
+		local look = ContextActionService:GetButton("LTO_Glance")
+		local run = ContextActionService:GetButton("LTO_Sprint")
+		local controlsTop = touchTop(look)
+		if look and run and controlsTop and look.Parent and look.Parent:IsA("GuiObject") then
+			local parent = look.Parent
+			local size = parent.AbsoluteSize
+			if size.X > 0 and size.Y > 0 then
+				look.AnchorPoint = Vector2.zero
+				look.Position = UDim2.fromScale(
+					(run.AbsolutePosition.X - parent.AbsolutePosition.X) / size.X,
+					(
+						controlsTop
+						- Tuning.Camera.GlanceTouchGap
+						- look.AbsoluteSize.Y
+						- parent.AbsolutePosition.Y
+					) / size.Y
+				)
+			end
+		end
+		local top = touchTop(nil)
 		local scale = gui:FindFirstChildOfClass("UIScale")
 		if top and scale and scale.Scale > 0 then
 			local bottom = container.AbsolutePosition.Y + container.AbsoluteSize.Y

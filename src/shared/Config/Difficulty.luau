@@ -62,7 +62,7 @@ return table.freeze({
 	-- Wanderer delay in seconds after doors open, interpolated from easiest to hardest stop.
 	WandererDelay = table.freeze({ 18, 10 }),
 	HollowWalk = table.freeze({ 11, 14 }),
-	HollowChase = table.freeze({ 22, 26 }), -- between the crew's jog (20) and sprint (31)
+	HollowChase = table.freeze({ 25, 26 }), -- between the crew's walk (21) and sprint (31)
 	HollowDamage = table.freeze({ 25, 40 }), -- was { 20, 32 } (+25%)
 	-- how often each kind of Hollow comes
 	HollowKinds = table.freeze({

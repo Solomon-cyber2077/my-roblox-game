@@ -11,6 +11,8 @@
 	never stick.
 ]]
 
+local ContextActionService = game:GetService("ContextActionService")
+local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -136,6 +138,37 @@ end
 function CameraController.Init() end
 
 function CameraController.Start()
+	local glanceHeld = false
+	local glance = 0
+	local function canGlance(): boolean
+		local character = Players.LocalPlayer.Character
+		local humanoid = ownHumanoid()
+		local blocked = Session.phase() == "Lobby"
+			or character == nil
+			or character:GetAttribute("GrabStyle") ~= nil
+			or humanoid == nil
+			or humanoid.Health <= 0
+			or Workspace.CurrentCamera.CameraType ~= Enum.CameraType.Custom
+			or spectateTarget ~= nil
+			or UserInputService:GetFocusedTextBox() ~= nil
+		return not blocked
+	end
+	ContextActionService:BindAction("LTO_Glance", function(_, state)
+		if not canGlance() then
+			glanceHeld = false
+			return Enum.ContextActionResult.Pass
+		end
+		if state == Enum.UserInputState.Begin then
+			glanceHeld = UserInputService:GetFocusedTextBox() == nil
+		elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+			glanceHeld = false
+		end
+		return Enum.ContextActionResult.Sink
+	end, true, Enum.KeyCode.Q, Enum.KeyCode.ButtonR1)
+	ContextActionService:SetTitle("LTO_Glance", "LOOK")
+	UserInputService.WindowFocusReleased:Connect(function()
+		glanceHeld = false
+	end)
 	local player = Players.LocalPlayer
 	player.CharacterAdded:Connect(onCharacter)
 	if player.Character then
@@ -153,9 +186,9 @@ function CameraController.Start()
 
 	-- The default camera reads Camera.CFrame to find its look direction, so a
 	-- shake left in place would accumulate into drift. Remove last frame's offset
-	-- before the camera module runs, and re-apply a fresh one after it.
+	-- before player controls read camera-relative movement, then re-apply after the camera.
 	local applied = CFrame.identity
-	RunService:BindToRenderStep("LTO_CameraUnshake", Enum.RenderPriority.Camera.Value - 1, function()
+	RunService:BindToRenderStep("LTO_CameraUnshake", Enum.RenderPriority.Input.Value - 1, function()
 		if applied ~= CFrame.identity then
 			local camera = Workspace.CurrentCamera
 			camera.CFrame *= applied:Inverse()
@@ -238,6 +271,16 @@ function CameraController.Start()
 			end
 		end
 
+		if not canGlance() then
+			glanceHeld = false
+			glance = 0
+		else
+			local goal = if glanceHeld then 1 else 0
+			local step = dt / CAM.GlanceSeconds
+			glance += math.clamp(goal - glance, -step, step)
+		end
+		-- View-only yaw: never change Humanoid movement or the character's root facing.
+		offset *= CFrame.Angles(0, math.rad(CAM.GlanceDegrees) * glance, 0)
 		if offset ~= CFrame.identity then
 			applied = offset
 			camera.CFrame *= applied
