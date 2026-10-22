@@ -91,6 +91,16 @@ return table.freeze({
 		YardLampsAtStop = 1,
 	}),
 
+	-- Prompt 5 installs this tier-1 stop-2 encounter; absolute speeds ignore normal scaling.
+	FirstCrawler = table.freeze({
+		Tier = 1,
+		Stop = 2,
+		ChaseSpeed = 24,
+		LungeSpeed = 40,
+		LungeSeconds = 0.55,
+		WarningSeconds = 1.5,
+	}),
+
 	-- Tier 2's teaching grab: a slow Crawler comes for the first player who is off the train
 	-- at stop 1 once their grace is over, and its hold has an oversized zone and cannot kill.
 	ScriptedGrab = table.freeze({

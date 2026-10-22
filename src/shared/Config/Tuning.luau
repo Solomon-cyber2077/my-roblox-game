@@ -135,7 +135,7 @@ local Tuning = {
 	},
 	Crew = {
 		MaxHealth = 100,
-		WalkSpeed = 30, -- carry speeds: duo 25.5, solo 19.5; sprint still costs stamina
+		WalkSpeed = 21, -- carry speeds: duo 17.85, solo 13.65; sprint still costs stamina
 		SprintSpeed = 31, -- and a sprint outruns them, while the breath lasts
 		StaminaMax = 100,
 		StaminaDrainPerSecond = 18, -- about five and a half seconds of sprint
@@ -326,6 +326,9 @@ local Tuning = {
 		RailLength = 48, -- a joint kick every rail length (about 0.45 s at cruise)
 		BogieGap = 13, -- the second, softer kick follows after this many studs
 		JointKick = 0.22, -- degrees of pitch per kick at cruise
+		GlanceDegrees = 150,
+		GlanceSeconds = 0.18,
+		GlanceTouchGap = 8,
 	},
 
 	TrainCamera = {
@@ -434,10 +437,20 @@ local Tuning = {
 		Jaw = 0.35,
 	},
 	HollowKinds = {
-		Stalker = { walk = 1, chase = 1, reach = 1, windup = 1, radius = 1.6, grip = 1, crush = 1 },
+		Stalker = {
+			walk = 1,
+			chase = 1,
+			lunge = 1.45,
+			reach = 1,
+			windup = 1,
+			radius = 1.6,
+			grip = 1,
+			crush = 1,
+		},
 		Crawler = {
 			walk = 0.8,
-			chase = 1.1,
+			chase = 1,
+			lunge = 1.6,
 			reach = 0.9,
 			windup = 0.7,
 			radius = 2.6,
@@ -447,6 +460,7 @@ local Tuning = {
 		Brute = {
 			walk = 0.9,
 			chase = 0.98, -- was 0.82: every Hollow on the hunt outpaces a jog (tests/HollowSpeed.spec)
+			lunge = 0,
 			reach = 1.25,
 			windup = 1.4,
 			radius = 2.2,
