@@ -8,9 +8,11 @@
 	of a part tagged SafeLight (attribute Radius, scaled by the tier's safeLightScale).
 
 	Tutorial (Config/Tutorial, by HazardParams.tutorial): nobody is hunted until they have been
-	off the train the tier's `grace` seconds at this stop, and on tier 2's first stop a slow
-	scripted Crawler comes for one player to teach the skill check (an oversized zone, and its
-	hold cannot kill).
+	off the train the tier's `grace` seconds at this stop. A first run (Prompt 5): at stop 1 a
+	harmless scripted Stalker is sighted at the edge of the light and withdraws (Logic/Sighting);
+	at stop 2 a scripted Crawler comes for one player to teach the skill check (an oversized zone,
+	the first-strike guard, and its hold cannot kill); at stop 3 one Stalker wanders and stalks
+	only a player 20+ studs from the train.
 
 	States (mirrored to the model's State and StateAt attributes; HollowAnimator plays them)
 	  Emerge    rising, climbing or waking (attribute Emerge): no moving, no striking yet
@@ -58,6 +60,7 @@ local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 local SkillCheck = require(Shared.Logic.SkillCheck)
+local Sighting = require(Shared.Logic.Sighting)
 local Stalk = require(Shared.Logic.Stalk)
 local Threat = require(Shared.Logic.Threat)
 local Tutorial = require(Shared.Logic.Tutorial)
@@ -152,6 +155,14 @@ type Hollow = {
 	noStalkUntil: number, -- after a stun or stagger
 	lastThink: number,
 	door: BasePart?, -- the shut door it is forcing
+	sighting: SightingRun?, -- stop 1's scripted sighting: never hunts, strikes or grabs
+}
+
+type SightingRun = {
+	track: Sighting.State,
+	lastAt: number,
+	withdrawAt: number?, -- os.clock() it began to walk away
+	away: Vector3?, -- where it walks to
 }
 
 type StalkRun = {
@@ -184,8 +195,10 @@ local T = Difficulty.Tutorial
 local safeLights: { BasePart } = {} -- parts tagged SafeLight
 local lightScale = 0 -- the tutorial tier's safeLightScale; 0 past the tutorial
 local offTrainAt: { [Player]: number } = {} -- os.clock() each player first stood off the train this stop
--- tier 2's teaching grab at its stop: pending until the Crawler has come and gone
+-- the first run's teaching grab at its stop: pending until the Crawler has come and gone
 local scripted: { pending: boolean, hollow: Hollow? } = { pending = false, hollow = nil }
+-- stop 1's scripted sighting on a first run (E2's treatment arm): pending until it appears
+local sightingPending = false
 local AGENT = {
 	AgentRadius = 2.2,
 	AgentHeight = 7,
@@ -904,6 +917,8 @@ local function shouldWake(hollow: Hollow): boolean
 	return false
 end
 
+local sightingThink: (Hollow, number) -> ()
+
 -- Stalking (Logic/Stalk) ------------------------------------------------------------------------
 
 local function flat(v: Vector3): Vector3
@@ -1083,6 +1098,10 @@ end
 local function think(hollow: Hollow)
 	local clock = os.clock()
 	local position = hollow.root.Position
+	-- seconds since its last think, kept current through every early return (emerging, sleeping,
+	-- holding) so warning time never counts a gap it was not watching (Logic/Stalk)
+	local dt = math.clamp(clock - hollow.lastThink, 0, 0.5)
+	hollow.lastThink = clock
 
 	if hollow.state == "Dormant" then
 		if clock >= hollow.checkAt then
@@ -1108,8 +1127,10 @@ local function think(hollow: Hollow)
 		return
 	end
 
-	local dt = math.clamp(clock - hollow.lastThink, 0, 0.5)
-	hollow.lastThink = clock
+	if hollow.sighting then
+		sightingThink(hollow, dt)
+		return
+	end
 	local walk, chase, lungeSpeed, lungeSeconds = speeds(hollow)
 	if clock < hollow.stunnedUntil then
 		endStalk(hollow)
@@ -1194,6 +1215,10 @@ local function think(hollow: Hollow)
 			and (hollow.scripted == nil or hollow.scripted == player)
 		then
 			local root = characterRoot(player)
+			local away = hollow.model:GetAttribute("AwayStuds")
+			if root and typeof(away) == "number" and StationService.ToLocal(root.Position).Z < away then
+				root = nil -- a first run's stop-3 Stalker leaves anyone near the train alone
+			end
 			if root then
 				local distance = (root.Position - position).Magnitude
 				if wanderer or distance < A.SightRange then
@@ -1541,6 +1566,7 @@ local function add(at: CFrame, kind: string, state: string, emerge: string?): Ho
 		noStalkUntil = 0,
 		lastThink = os.clock(),
 		door = nil,
+		sighting = nil,
 	}
 	table.insert(hollows, hollow)
 	return hollow
@@ -1612,12 +1638,154 @@ local function spawnScripted(player: Player): Hollow?
 	return nil
 end
 
+-- Stop 1's sighting -------------------------------------------------------------------------
+
+-- Clear of every light's pool by Sighting.LampMargin: the point and four around it are all dark.
+local function darkAround(point: Vector3): boolean
+	local margin = T.Sighting.LampMargin
+	for _, offset in
+		{
+			Vector3.zero,
+			Vector3.xAxis * margin,
+			-Vector3.xAxis * margin,
+			Vector3.zAxis * margin,
+			-Vector3.zAxis * margin,
+		}
+	do
+		if inLampPool(point + offset) then
+			return false
+		end
+	end
+	return true
+end
+
+-- A spot for the sighting: in sight of `root`, dark around, on the ground. 15-17 studs if any fits,
+-- else the nearest legal spot up to 24.
+local function sightingSpot(root: BasePart): Vector3?
+	local look = flat(root.CFrame.LookVector)
+	local base = if look.Magnitude > 0.1 then math.atan2(look.X, look.Z) else 0
+	local function search(distances: { number }): Vector3?
+		for _, distance in distances do
+			for i = 0, 23 do
+				-- ahead first, sweeping out to the sides and round behind
+				local turn = (if i % 2 == 0 then 1 else -1) * math.ceil(i / 2) * math.rad(15)
+				local angle = base + turn
+				local guess = root.Position + Vector3.new(math.sin(angle), 0, math.cos(angle)) * distance
+				local ground = Workspace:Raycast(guess + Vector3.yAxis * 12, -Vector3.yAxis * 40, sightParams)
+				if ground and ground.Normal.Y > 0.6 and math.abs(ground.Position.Y - root.Position.Y) < 6 then
+					local point = ground.Position
+					if darkAround(point) and clearBetween(point, root.Position) then
+						return point
+					end
+				end
+			end
+		end
+		return nil
+	end
+	local near, far, fallback = T.Sighting.Near, T.Sighting.Far, T.Sighting.Fallback
+	local preferred = search({ (near + far) / 2, near, far })
+	if preferred then
+		return preferred
+	end
+	local outward: { number } = {}
+	for distance = far + 1, fallback do
+		table.insert(outward, distance)
+	end
+	for distance = near - 1, 4, -1 do
+		table.insert(outward, distance)
+	end
+	table.sort(outward, function(a, b)
+		return math.abs(a - (near + far) / 2) < math.abs(b - (near + far) / 2)
+	end)
+	return search(outward)
+end
+
+local function spawnSighting(player: Player): Hollow?
+	local root = characterRoot(player)
+	if root == nil then
+		return nil
+	end
+	local spot = sightingSpot(root)
+	if spot == nil then
+		return nil
+	end
+	local kind = T.Sighting.Kind
+	local at = spot + Vector3.yAxis * HollowBuilder.rootHeight(kind)
+	local hollow =
+		add(CFrame.lookAt(at, Vector3.new(root.Position.X, at.Y, root.Position.Z)), kind, "Stalk", nil)
+	hollow.sighting = { track = Sighting.new(), lastAt = os.clock(), withdrawAt = nil, away = nil }
+	hollow.model:SetAttribute("Sighting", true)
+	hollow.model:SetAttribute("Frozen", true)
+	hollow.model:SetAttribute("Target", player.UserId)
+	hollow.humanoid.WalkSpeed = 0
+	return hollow
+end
+
+-- The sighting holds its Stalk freeze until Logic/Sighting lets it go, then walks into the dark and
+-- is gone. It never hunts, strikes or grabs. Each crew member's line-of-sight seconds go to
+-- telemetry (sighting_exposure: an opportunity to see it, not proof they noticed).
+sightingThink = function(hollow: Hollow, dt: number)
+	local run = hollow.sighting :: SightingRun
+	local position = hollow.root.Position
+	if run.withdrawAt then
+		if os.clock() - run.withdrawAt >= T.Sighting.WithdrawSeconds then
+			HollowService.Dismiss(hollow.model)
+		end
+		return
+	end
+	local watchers: { Sighting.Watcher } = {}
+	local nearest: Player? = nil
+	local nearestDistance = math.huge
+	for _, player in Registry.CrewService.AlivePlayers() do
+		local root = characterRoot(player)
+		if root then
+			local sight = clearBetween(position, root.Position)
+			local distance = (root.Position - position).Magnitude
+			table.insert(watchers, {
+				id = player.UserId,
+				offTrain = not Registry.CrewService.IsAboard(player),
+				sight = sight,
+				facing = sight and facedBy(root, position),
+			})
+			if distance < nearestDistance then
+				nearest, nearestDistance = player, distance
+			end
+		end
+	end
+	if nearest then
+		hollow.model:SetAttribute("Target", nearest.UserId) -- the head follows the nearest watcher
+	end
+	local reason
+	run.track, reason = Sighting.step(run.track, dt, watchers)
+	if reason == nil then
+		return
+	end
+	-- withdraw: back into the dark at walking pace, away from the train
+	for _, player in Registry.CrewService.AlivePlayers() do
+		Registry.TelemetryService.Sighting(player, run.track.seen[player.UserId] or 0)
+	end
+	run.withdrawAt = os.clock()
+	local here = StationService.ToLocal(position)
+	run.away = StationService.ToWorld(here.X, 3, here.Z + 60)
+	hollow.model:SetAttribute("Frozen", nil)
+	hollow.model:SetAttribute("Target", nil)
+	setState(hollow, "Prowl")
+	hollow.humanoid.WalkSpeed = (params :: Types.HazardParams).hollowWalk * hollow.def.walk
+	moveToward(hollow, run.away :: Vector3, false)
+end
+
 -- Notes who has stepped off the train at this stop, and sends the teaching Crawler when due.
 local function tutorialStep()
 	local clock = os.clock()
 	for _, player in Registry.CrewService.AlivePlayers() do
 		if offTrainAt[player] == nil and not Registry.CrewService.IsAboard(player) then
 			offTrainAt[player] = clock
+			if sightingPending then
+				-- the first crew member off the train: the sighting appears in their sight
+				if spawnSighting(player) then
+					sightingPending = false
+				end
+			end
 		end
 	end
 	if not scripted.pending or scripted.hollow ~= nil then
@@ -1720,12 +1888,13 @@ function HollowService.Configure(hazards: Types.HazardParams)
 		pending = tier ~= nil and tier.scriptedGrab and (hazards.stop or 1) == T.ScriptedGrab.Stop,
 		hollow = nil,
 	}
+	sightingPending = tier ~= nil and tier.sighting and T.Sighting.Enabled and (hazards.stop or 1) == 1
 end
 
 -- Retain planned sleepers and fill larger buildings with distinct, clear interior spots.
 function HollowService.Prepare(plan: LayoutGen.Plan)
 	local p = params
-	if p == nil or p.hollowCap <= 0 then
+	if p == nil or p.hollowCap <= 0 or p.scriptedOnly then
 		return
 	end
 	local sleepers = table.clone(plan.sleepers)
@@ -1981,6 +2150,19 @@ function HollowService.DevSpawnAt(player: Player, kind: string?, distance: numbe
 	return true
 end
 
+-- A first run's stop 3 (Prompt 5): one Stalker that wanders and stalks, and only goes for a player
+-- Stop3.AwayStuds or more from the train.
+function HollowService.SpawnStalkingWanderer(plan: LayoutGen.Plan)
+	for _, lane in plan.spawnLanes do
+		local ok, model = HollowService.TrySpawn(lane, plan.depth / 2, T.Stop3.Kind, true)
+		if ok and model then
+			model:SetAttribute("StalkWanderer", true)
+			model:SetAttribute("AwayStuds", T.Stop3.AwayStuds)
+			return
+		end
+	end
+end
+
 -- Whether light keeps Hollows off `position` (a lit building, a tutorial SafeLight).
 function HollowService.IsLit(position: Vector3): boolean
 	return isLit(position)
@@ -2014,6 +2196,7 @@ function HollowService.Clear()
 	wandererPending = false
 	lightScale = 0
 	scripted = { pending = false, hollow = nil }
+	sightingPending = false
 	if Registry.TrainService then
 		Registry.TrainService.SetSafeGlow(false)
 	end

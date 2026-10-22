@@ -33,6 +33,8 @@ local Remotes: { [string]: RemoteDef } = {
 	-- asks for a state snapshot; carries the client's device once (Services/TelemetryService)
 	ClientReady = { direction = "ToServer", args = { "device" }, rate = 1, burst = 2 },
 	SetReady = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
+	-- the run card: true AGAIN (ready the same crew), false DEPOT (stay unready); Logic/Again
+	Again = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
 	SetRunTier = { direction = "ToServer", args = { "tier" }, rate = 4, burst = 4 }, -- host only
 	CastVote = { direction = "ToServer", args = { "option" }, rate = 4, burst = 4 },
 	UseItem = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },

@@ -49,6 +49,18 @@ function TutorialService.CrewTier(players: { Player }): number
 	return Tutorial.crewTier(list)
 end
 
+-- Boarding: a crew member past the crew's tier is told the run goes at a new Hand's pace.
+function TutorialService.AnnouncePace(players: { Player }, crewTier: number)
+	if crewTier < 1 then
+		return
+	end
+	for _, player in players do
+		if Tutorial.tier(TutorialService.Runs(player)) ~= crewTier then
+			NetService.Fire("Notify", player, "Info", Difficulty.Tutorial.NewHandPace)
+		end
+	end
+end
+
 local function countRun()
 	for player, off in steppedOff do
 		if player.Parent then
@@ -102,6 +114,11 @@ local function onChatted(player: Player, message: string)
 		"Warning",
 		`Tutorial runs set to {runs} (tier {Tutorial.tier(runs)} next run).`
 	)
+end
+
+-- Studio's Dev `tutorial <n>`: the same owner-only setting as the chat command.
+function TutorialService.DevSetRuns(player: Player, arg: string)
+	onChatted(player, `/tutorial {arg}`)
 end
 
 function TutorialService.Init() end

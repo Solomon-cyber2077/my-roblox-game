@@ -193,6 +193,11 @@ Commands.stalker = function(player, args)
 	print(`[Dev] stalker: {ok}`)
 end
 
+-- `tutorial <reset|0-3>`: the owner's tutorial-run count, as the /tutorial chat command sets it.
+Commands.tutorial = function(player, args)
+	Registry.TutorialService.DevSetRuns(player, args[1] or "reset")
+end
+
 -- `grasp [studs]`: the server holds you that far from the doorway rail and tries a grasp (Studio).
 Commands.grasp = function(player, args)
 	print(`[Dev] grasp: {Registry.GraspService.DevAttempt(player, tonumber(args[1]) or 2)}`)

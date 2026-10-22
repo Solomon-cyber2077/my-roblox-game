@@ -82,3 +82,15 @@ describe("Leaks", function()
 		end
 	end)
 end)
+
+describe("Leaks on a first run", function()
+	it("plans no leak on a first run's first cruise, and the usual cap after", function()
+		for roll = 0, 0.99, 0.11 do
+			expect(Leaks.count(1, 1, nil, roll, 1)).toBe(0)
+		end
+		expect(Leaks.cap(1, 1)).toBe(0)
+		expect(Leaks.cap(2, 1)).toBe(C.EarlyCap)
+		expect(Leaks.cap(1, 2)).toBe(C.EarlyCap)
+		expect(Leaks.cap(1, nil)).toBe(C.EarlyCap)
+	end)
+end)

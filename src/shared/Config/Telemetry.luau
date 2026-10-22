@@ -100,6 +100,8 @@ local Events: { [string]: EventDef } = table.freeze({
 	first_session_timing = event("Milestone", "Device", "Entry"),
 	cohort_assigned = event("ExperimentId", "Arm", "Device"),
 	invite_prompted = event("InviteSource", "Device", "Experience"),
+	-- stop 1's scripted sighting on a first run: each player's line-of-sight seconds (Prompt 5, E2)
+	sighting_exposure = event("TellBucket", "Device", "Experience"),
 })
 
 -- Funnel name -> its step names, in order. `onboarding` goes through LogOnboardingFunnelStepEvent;

@@ -9,7 +9,7 @@
 
 	Top to bottom: a stub with the company line and serial, the perforation, the hero line,
 	your own cause, a hairline rule, three stats (stops reached, loot, the crew's initials) and
-	the stamp struck across the foot. The foot's left is left clear for the host's buttons.
+	the stamp struck just above the foot. The foot is left clear for the host's buttons.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,7 +23,7 @@ local Ui = require(script.Parent.Ui)
 local RunTicket = {}
 
 RunTicket.W, RunTicket.H = 520, 340
-RunTicket.FOOT = 58 -- the strip along the bottom kept free for the host's CLOSE button
+RunTicket.FOOT = 58 -- the strip along the bottom kept free for the host's buttons
 
 local HEAD = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
 local PAD = 28
@@ -237,13 +237,13 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		end
 	end
 
-	-- The stamp, struck across the foot on the right (the left of the foot is the host's)
+	-- The stamp, struck on the right just above the foot (the foot is the host's buttons)
 	local stamp = Stamp.word({
 		key = `runticket{data.stamp}`,
 		text = data.stamp,
 		color = if data.won then WIN else Theme.Color.signal,
 		size = 26,
-		Position = UDim2.new(1, -PAD - 110, 1, -RunTicket.FOOT / 2 - 4),
+		Position = UDim2.new(1, -PAD - 110, 1, -RunTicket.FOOT - 16),
 		ZIndex = z + 10,
 	})
 	stamp.Parent = ticket

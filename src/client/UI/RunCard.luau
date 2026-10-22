@@ -2,8 +2,13 @@
 --[[
 	The end-of-run screen: one stamped run ticket (UI/RunTicket, data from Logic/RunTicketModel),
 	shown once per run when it ends, win or wipe, even at stop 1. It replaced the old run card and
-	the run receipt (UI/Summary, no longer shown). The ticket sits centred on a dim backdrop and
-	closes with CLOSE, the backdrop or gamepad B; H hides CLOSE and its hint for a clean screenshot.
+	the run receipt (UI/Summary, no longer shown). The ticket sits centred on a dim backdrop.
+
+	AGAIN (gamepad A) readies this player for another run with the same crew (Logic/Again: pressed
+	during RunEnd it waits for the hall, then the hall holds its countdown until the crew is ready
+	or 20 s pass with one ready); the count beside it is the crew's ready count. DEPOT (gamepad B)
+	leaves them unready in the hall and closes the card; the backdrop just closes it. H hides the
+	buttons and the hint for a clean screenshot. Only the ended run's members see AGAIN.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -12,6 +17,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local RunTicketModel = require(ReplicatedStorage.Shared.Logic.RunTicketModel)
 
+local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local RunTicket = require(script.Parent.RunTicket)
@@ -24,7 +30,9 @@ local Z = 60
 local PAD = 28
 
 local root: TextButton
-local closeButton: TextButton
+local closeButton: TextButton -- DEPOT
+local againButton: TextButton
+local countLabel: TextLabel
 local hint: TextLabel
 local ticket: ImageLabel? = nil
 local shownFor: string? = nil
@@ -52,10 +60,49 @@ local function runData(): RunTicketModel.Data
 	})
 end
 
+-- The card's AGAIN state for this player (LobbyService publishes lobby.again).
+local function againState(): (boolean, string?, number, number)
+	local data = Registry.StateController.Get({ "lobby", "again" })
+	if type(data) ~= "table" then
+		return false, nil, 0, 0
+	end
+	local eligible = data.eligible and data.eligible[Session.userKey] == true
+	local chose = data.chose and data.chose[Session.userKey]
+	return eligible, chose, data.ready or 0, data.of or 0
+end
+
+local function refreshAgain()
+	local eligible, chose, ready, of = againState()
+	local shown = closeButton.Visible
+	againButton.Visible = eligible and shown
+	countLabel.Visible = eligible and shown and of > 0
+	countLabel.Text = `{ready}/{of} READY`
+	againButton.Text = if chose == "again" then "READY" else "AGAIN"
+	againButton.Active = chose ~= "again"
+	againButton.AutoButtonColor = chose ~= "again"
+end
+
+local function pressAgain()
+	local eligible, chose = againState()
+	if eligible and chose ~= "again" then
+		Net.Fire("Again", true)
+	end
+end
+
+local function depot()
+	local eligible = againState()
+	if eligible then
+		Net.Fire("Again", false)
+	end
+	hide()
+end
+
 local function show()
 	if ticket then
-		-- CLOSE and the hint live on the ticket; lift them off before it goes, or they go with it
+		-- the buttons and the hint live on the ticket; lift them off before it goes, or they go with it
 		closeButton.Parent = root
+		againButton.Parent = root
+		countLabel.Parent = root
 		hint.Parent = root
 		ticket:Destroy()
 	end
@@ -66,12 +113,15 @@ local function show()
 	built.Parent = root
 	ticket = built
 	closeButton.Parent = built
+	againButton.Parent = built
+	countLabel.Parent = built
 	hint.Parent = built
 	closeButton.Visible = true
 	hint.Visible = true
+	refreshAgain()
 
 	root.Visible = true
-	GuiService.SelectedObject = closeButton
+	GuiService.SelectedObject = if againButton.Visible then againButton else closeButton
 	ContextActionService:BindActionAtPriority("LTO_RunCard", function(_, inputState, input)
 		if inputState ~= Enum.UserInputState.Begin then
 			return Enum.ContextActionResult.Pass
@@ -79,11 +129,14 @@ local function show()
 		if input.KeyCode == Enum.KeyCode.H then
 			closeButton.Visible = not closeButton.Visible
 			hint.Visible = closeButton.Visible
+			refreshAgain()
+		elseif input.KeyCode == Enum.KeyCode.ButtonA then
+			pressAgain()
 		else
-			hide()
+			depot()
 		end
 		return Enum.ContextActionResult.Sink
-	end, false, 3100, Enum.KeyCode.ButtonB, Enum.KeyCode.H)
+	end, false, 3100, Enum.KeyCode.ButtonA, Enum.KeyCode.ButtonB, Enum.KeyCode.H)
 
 	-- a beat to read the hero line, then the stamp comes down
 	task.delay(0.6, function()
@@ -110,33 +163,60 @@ function RunCard.mount(gui: ScreenGui)
 		Parent = gui,
 	})
 	root.Activated:Connect(hide)
-	closeButton = Ui.button("CLOSE", "Secondary", hide, {
+	-- one large bottom row: AGAIN, the crew's ready count, DEPOT; the stamps sit above it
+	againButton = Ui.button("AGAIN", "Primary", pressAgain, {
+		Name = "Again",
+		Size = UDim2.fromOffset(116, 42),
+		Position = UDim2.new(0, PAD, 1, -RunTicket.FOOT + 6),
+		TextSize = 18,
+	})
+	againButton.ZIndex = Z + 12
+	againButton.Visible = false
+	countLabel = Ui.text({
+		Name = "ReadyCount",
+		Text = "",
+		Font = Theme.Font.body,
+		TextSize = 15,
+		Color = Theme.Color.ink,
+		Position = UDim2.new(0, PAD + 124, 1, -RunTicket.FOOT + 16),
+		Size = UDim2.fromOffset(70, 22),
+	})
+	countLabel.ZIndex = Z + 12
+	countLabel.Visible = false
+	closeButton = Ui.button("DEPOT", "Secondary", depot, {
 		Name = "Close",
-		Size = UDim2.fromOffset(110, 38),
-		Position = UDim2.new(0, PAD, 1, -RunTicket.FOOT + 8),
+		Size = UDim2.fromOffset(100, 42),
+		Position = UDim2.new(0, PAD + 198, 1, -RunTicket.FOOT + 6),
 		TextSize = 17,
 	})
 	closeButton.ZIndex = Z + 12
 	hint = Ui.text({
 		Name = "Hint",
-		Text = "H hides this button",
+		Text = "H hides these buttons",
 		Font = Theme.Font.body,
 		TextSize = 12,
-		Color = Theme.Color.inkSoft,
-		Position = UDim2.new(0, PAD + 120, 1, -RunTicket.FOOT + 16),
-		Size = UDim2.fromOffset(120, 22),
+		Color = Theme.Color.boneDim,
+		-- under the ticket, on the backdrop: the foot's right is the stamp's
+		Position = UDim2.new(0, 0, 1, 8),
+		Size = UDim2.new(1, 0, 0, 22),
+		XAlign = Enum.TextXAlignment.Center,
 	})
 	hint.ZIndex = Z + 12
 
-	-- keep gamepad selection on CLOSE while the ticket is up
+	-- keep gamepad selection on AGAIN (or DEPOT) while the ticket is up
 	GuiService:GetPropertyChangedSignal("SelectedObject"):Connect(function()
 		local selected = GuiService.SelectedObject
 		if root.Visible and closeButton.Visible and selected and not selected:IsDescendantOf(root) then
-			GuiService.SelectedObject = closeButton
+			GuiService.SelectedObject = if againButton.Visible then againButton else closeButton
 		end
 	end)
 
 	local State = Registry.StateController
+	State.Observe("public", { "lobby", "again" }, function()
+		if root.Visible then
+			refreshAgain()
+		end
+	end)
 	State.Observe("public", { "run", "phase" }, function(phase)
 		if phase == "RunEnd" then
 			local runId = State.Get({ "run", "runId" })

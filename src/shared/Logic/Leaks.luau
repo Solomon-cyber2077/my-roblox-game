@@ -34,19 +34,28 @@ function Leaks.k(): number
 	return C.OneLeakTrip / integral(C.FirstShare)
 end
 
--- Most leaks a trip toward stop `stop` may hold.
-function Leaks.cap(stop: number): number
+-- Most leaks a trip toward stop `stop` may hold; a first run's first cruise holds none.
+function Leaks.cap(stop: number, tutorialTier: number?): number
+	if tutorialTier == 1 and stop <= 1 then
+		return C.FirstCruiseCap
+	end
 	return if stop <= C.EarlyUntilStop then C.EarlyCap else C.Cap
 end
 
 -- Leaks a trip plans: `roll` in [0, 1) decides the fractional part of the expected count.
-function Leaks.count(stop: number, d: number, upgrades: { [string]: number }?, roll: number): number
+function Leaks.count(
+	stop: number,
+	d: number,
+	upgrades: { [string]: number }?,
+	roll: number,
+	tutorialTier: number?
+): number
 	local armour = if upgrades then upgrades.ArmorPlating or 0 else 0
 	local expected = MathX.lerp(C.ExpectedPerTrip[1], C.ExpectedPerTrip[2], MathX.saturate(d))
 		* UpgradesConfig.Effects.BreachMultiplierPerLevel ^ armour
 	local whole = math.floor(expected)
 	local n = whole + (if roll < expected - whole then 1 else 0)
-	return math.clamp(n, 0, Leaks.cap(stop))
+	return math.clamp(n, 0, Leaks.cap(stop, tutorialTier))
 end
 
 -- When each of `n` leaks bursts, as shares of the trip. `jitter(i)` in [-1, 1].

@@ -13,9 +13,11 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
+local Tuning = require(Shared.Config.Tuning)
 local Safe = require(Shared.Util.Safe)
 
 local Registry = require(script.Parent.Parent.Registry)
@@ -133,6 +135,29 @@ local function happening(when: string, run: any): boolean
 	elseif when == "Carrying" then
 		local inv = Registry.StateController.GetPrivate({ "inventory" })
 		return inv ~= nil and inv.items ~= nil and #inv.items > 0
+	elseif when == "Stalked" then
+		-- a Hollow holding the Stalk freeze or slipping between cover within 1.2r (Logic/Tells)
+		local character = Players.LocalPlayer.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local folder = Workspace:FindFirstChild("Hollows")
+		if root == nil or folder == nil then
+			return false
+		end
+		local range = Tuning.Stalk.WatchRadius * Tuning.Stalk.ReferenceRadius
+		for _, hollow in folder:GetChildren() do
+			local body = hollow:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if
+				body
+				and hollow:GetAttribute("State") == "Stalk"
+				and (body.Position - root.Position).Magnitude <= range
+			then
+				return true
+			end
+		end
+		return false
+	elseif when == "BackAboard" then
+		-- aboard again while the doors are open, having been off: the bell is the next thing
+		return status == "Aboard" and phase == "Dwell" and offSince ~= nil
 	end
 	return false
 end

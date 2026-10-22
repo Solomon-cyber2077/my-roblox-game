@@ -7,6 +7,9 @@
 	player can go solo while the rest of the hall stays put.
 	The host (the lobby player who has been in the server longest) picks the opt-in
 	run tier, up to the lowest tier any hall player has unlocked.
+	The run card's AGAIN (Logic/Again, Prompt 5): pressed during RunEnd it is queued and applied
+	after ResetReady; the hall then holds its countdown until the run's present members are all
+	ready or 20 s pass with one ready. DEPOT leaves that player unready.
 ]]
 
 local Players = game:GetService("Players")
@@ -16,6 +19,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
+local Again = require(Shared.Logic.Again)
 local RunTier = require(Shared.Logic.RunTier)
 local Safe = require(Shared.Util.Safe)
 local Types = require(Shared.Types)
@@ -34,6 +38,9 @@ local crewOverride: { Player }? = nil
 local joinOrder: { Player } = {}
 local selectedTier = Difficulty.RunTier.Default
 local published: Types.LobbyTier? = nil
+local card: Again.Card? = nil -- the ended run's AGAIN/DEPOT card
+local cardAt = 0 -- os.clock() it opened
+local cardOutcome = "aborted"
 
 local function publishReady()
 	local map: { [string]: boolean } = {}
@@ -43,6 +50,48 @@ local function publishReady()
 		end
 	end
 	StateService.Set({ "lobby", "ready" }, map)
+end
+
+local function presentIds(): { [number]: boolean }
+	local out: { [number]: boolean } = {}
+	for _, player in Players:GetPlayers() do
+		out[player.UserId] = true
+	end
+	return out
+end
+
+local function readyIds(): { [number]: boolean }
+	local out: { [number]: boolean } = {}
+	for player, isReady in ready do
+		if isReady and player.Parent ~= nil then
+			out[player.UserId] = true
+		end
+	end
+	return out
+end
+
+-- The card's state for the clients (UI/RunCard): who may press, who chose what, the ready count.
+local function publishAgain()
+	if card == nil then
+		StateService.Set({ "lobby", "again" }, nil)
+		return
+	end
+	local readyCount, of = Again.count(card, presentIds(), readyIds())
+	local eligible: { [string]: boolean } = {}
+	for id in card.eligible do
+		eligible[tostring(id)] = true
+	end
+	local chose: { [string]: string } = {}
+	for id in card.pressed do
+		chose[tostring(id)] = "again"
+	end
+	for id in card.declined do
+		chose[tostring(id)] = "depot"
+	end
+	StateService.Set(
+		{ "lobby", "again" },
+		{ ready = readyCount, of = of, eligible = eligible, chose = chose }
+	)
 end
 
 local function prompt(part: BasePart, action: string, objectText: string, actionText: string)
@@ -135,10 +184,38 @@ function LobbyService.Start()
 	NetService.Handle("SetReady", function(player, isReady: boolean)
 		ready[player] = isReady
 		publishReady()
+		publishAgain()
 	end, function(player)
 		local phase = Registry.RunDirector.Phase()
 		return (phase == "Lobby" or phase == "Countdown")
 			and not Registry.CrewService.IsMember(player)
+			and not Registry.CarService.IsAboard(player)
+	end)
+
+	NetService.Handle("Again", function(player, again: boolean)
+		local current = card
+		if current == nil then
+			return
+		end
+		local phase = Registry.RunDirector.Phase()
+		if again then
+			local accepted, now = Again.press(current, player.UserId, phase ~= "RunEnd", os.clock())
+			if accepted then
+				Registry.TelemetryService.AgainPressed(player, os.clock() - cardAt, cardOutcome)
+			end
+			if now then
+				ready[player] = true
+				publishReady()
+			end
+		else
+			Again.depot(current, player.UserId)
+			ready[player] = nil
+			publishReady()
+		end
+		publishAgain()
+	end, function(player)
+		local phase = Registry.RunDirector.Phase()
+		return (phase == "RunEnd" or phase == "Lobby" or phase == "Countdown")
 			and not Registry.CarService.IsAboard(player)
 	end)
 
@@ -152,6 +229,7 @@ function LobbyService.Start()
 
 	Players.PlayerRemoving:Connect(function(player)
 		ready[player] = nil
+		task.defer(publishAgain) -- a leaving member drops out of the AGAIN count
 		local index = table.find(joinOrder, player)
 		if index then
 			table.remove(joinOrder, index)
@@ -249,7 +327,45 @@ function LobbyService.TakeCrew(): { Player }
 	local readied = LobbyService.ReadyPlayers()
 	local crew = crewOverride or (if #readied > 0 then readied else LobbyService.LobbyPlayers())
 	crewOverride = nil
+	-- the run is leaving: the last card is done
+	card = nil
+	publishAgain()
 	return crew
+end
+
+-- RunEnd: the card for this run's present members (alive or eliminated).
+function LobbyService.OpenCard(players: { Player }, outcome: string)
+	local ids: { number } = {}
+	for _, player in players do
+		if player.Parent ~= nil then
+			table.insert(ids, player.UserId)
+		end
+	end
+	card = Again.card(ids)
+	cardAt = os.clock()
+	cardOutcome = outcome
+	publishAgain()
+end
+
+-- Enter.Lobby, after ResetReady: queued AGAIN presses become ready now (and start the 20 s wait).
+function LobbyService.ApplyAgain()
+	local current = card
+	if current == nil then
+		return
+	end
+	for _, id in Again.apply(current, os.clock()) do
+		local player = Players:GetPlayerByUserId(id)
+		if player then
+			ready[player] = true
+		end
+	end
+	publishReady()
+	publishAgain()
+end
+
+-- Whether the hall holds its countdown for an AGAIN crew still readying.
+function LobbyService.HoldCountdown(): boolean
+	return Again.hold(card, presentIds(), readyIds(), os.clock())
 end
 
 function LobbyService.ClearReady(player: Player)
