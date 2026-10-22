@@ -65,9 +65,11 @@ describe("DifficultyModel", function()
 		end
 	end)
 
-	it("gives each body its own pace: the Crawler bolts, the Brute plods", function()
+	it("distinguishes Crawler lunges from the slower non-lunging Brute", function()
 		local kinds = Tuning.HollowKinds
-		expect(kinds.Crawler.chase).toBeGreaterThan(kinds.Stalker.chase)
+		expect(kinds.Crawler.chase).toBe(kinds.Stalker.chase)
+		expect(kinds.Crawler.lunge).toBeGreaterThan(kinds.Stalker.lunge)
+		expect(kinds.Brute.lunge).toBe(0)
 		expect(kinds.Stalker.chase).toBeGreaterThan(kinds.Brute.chase)
 		-- same-kind hunters drift apart: no two share a pace exactly
 		expect(Tuning.Hollow.PaceSpread).toBeGreaterThan(0)

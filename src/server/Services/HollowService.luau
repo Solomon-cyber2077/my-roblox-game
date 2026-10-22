@@ -42,6 +42,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local HollowSpeed = require(Shared.Logic.HollowSpeed)
 local Buildings = require(Shared.Config.Buildings)
 local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
@@ -242,10 +243,17 @@ local function tutorialTier(): Tutorial.Def?
 	return Tutorial.def(if params then params.tutorial else nil)
 end
 
-local function speeds(hollow: Hollow): (number, number)
+local function speeds(hollow: Hollow): (number, number, number, number)
 	local p = params :: Types.HazardParams
-	local slow = if hollow.scripted then T.ScriptedGrab.ChaseScale else 1
-	return p.hollowWalk * hollow.def.walk * hollow.pace, p.hollowChase * hollow.def.chase * hollow.pace * slow
+	local chase, lunge, duration = HollowSpeed.resolve(
+		p.hollowChase,
+		hollow.kind,
+		hollow.pace,
+		hollow.scripted ~= nil,
+		p.tutorial,
+		p.stop
+	)
+	return p.hollowWalk * hollow.def.walk * hollow.pace, chase, lunge, duration
 end
 
 -- The Hollow holding `player`, if any.
@@ -884,7 +892,36 @@ local function think(hollow: Hollow)
 		return
 	end
 
-	local walk, chase = speeds(hollow)
+	-- The first Crawler must visibly coil before pursuit. Prompt 5 schedules the encounter.
+	local p = params :: Types.HazardParams
+	if
+		HollowSpeed.isFirstCrawler(hollow.kind, hollow.scripted ~= nil, p.tutorial, p.stop)
+		and hollow.model:GetAttribute("FirstWarningDone") ~= true
+	then
+		local target = hollow.scripted
+		local root = target and characterRoot(target)
+		local visible = root ~= nil
+			and clearBetween(position, root.Position)
+			and not isLit(root.Position)
+			and not Registry.CrewService.IsAboard(target)
+		local since = hollow.model:GetAttribute("FirstWarningAt") :: number?
+		if not visible or clock < hollow.stunnedUntil then
+			hollow.model:SetAttribute("FirstWarningAt", nil)
+			setState(hollow, "Prowl")
+		elseif since == nil then
+			hollow.model:SetAttribute("FirstWarningAt", clock)
+			setState(hollow, "Windup")
+		elseif clock - since >= T.FirstCrawler.WarningSeconds then
+			hollow.model:SetAttribute("FirstWarningDone", true)
+			setState(hollow, "Hunt")
+			-- S1 hook: record first Crawler warning opportunity, not claimed player awareness.
+		end
+		hollow.humanoid.WalkSpeed = 0
+		hollow.humanoid:MoveTo(position)
+		return
+	end
+
+	local walk, chase, lungeSpeed, lungeSeconds = speeds(hollow)
 	if clock < hollow.stunnedUntil then
 		setState(hollow, "Stunned")
 		hollow.humanoid.WalkSpeed = 0
@@ -998,20 +1035,21 @@ local function think(hollow: Hollow)
 			return
 		end
 		setState(hollow, "Hunt")
-		local lunging = clock < hollow.lungeUntil
+		local lunging = lungeSpeed > 0 and clock < hollow.lungeUntil
 		if
 			not lunging
+			and lungeSpeed > 0
 			and bestVisible
 			and bestDistance <= H.LungeRange
 			and bestDistance > H.StrikeRange
 			and clock - hollow.lastLunge >= H.LungeCooldown
 		then
-			hollow.lungeUntil = clock + H.LungeSeconds
+			hollow.lungeUntil = clock + lungeSeconds
 			hollow.lastLunge = clock
 			lunging = true
 			hollow.model:SetAttribute("LungeAt", serverNow())
 		end
-		hollow.humanoid.WalkSpeed = if lunging then chase * H.LungeBoost else chase
+		hollow.humanoid.WalkSpeed = if lunging then lungeSpeed else chase
 		-- straight only on its own floor: prey seen up a stairwell is reached by the ramp
 		local direct = bestVisible
 			and math.abs(bestRoot.Position.Y - position.Y) < H.SameFloor
