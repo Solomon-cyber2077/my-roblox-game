@@ -216,7 +216,7 @@ describe("Mystery ballot", function()
 		-- no votes at all: the same rule
 		expect(Vote.tally({}, options, 0.5)).toBe(3)
 		expect(TicketModel.tieNote({ x = 1, y = 2, z = 3 }, options)).toBe(
-			"A TIE: SHORTEST LINES LEVEL, THE DRIVER TOSSES A COIN"
+			"A TIE: SHORTEST LEGS LEVEL, THE DRIVER TOSSES A COIN"
 		)
 	end)
 end)

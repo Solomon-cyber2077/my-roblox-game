@@ -352,6 +352,7 @@ local Tuning = {
 		MinZoom = 0.5, -- first person
 		MaxZoom = 30,
 		StartZoom = 11, -- close third person on every spawn
+		LockZoom = 10, -- the Camera setting's Locked distance (both PC and touch): no zoom, no first person
 		SwayRoll = 0.35, -- degrees of roll at cruise while aboard
 		RailLength = 48, -- a joint kick every rail length (about 0.45 s at cruise)
 		BogieGap = 13, -- the second, softer kick follows after this many studs

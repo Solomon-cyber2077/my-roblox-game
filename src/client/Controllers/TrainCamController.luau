@@ -329,7 +329,14 @@ function TrainCamController.Start()
 		distance = math.clamp(distance / 1.15, ORBIT_NEAR, ORBIT_FAR)
 	end, { Size = UDim2.fromOffset(40, 40), Position = UDim2.new(1, -46, 0, 34), TextSize = 22 })
 	zoomIn.Parent = bar
+	-- the chip names its key only where there is one
+	local function chipLabel()
+		local last = UserInputService:GetLastInputType()
+		chip.Text = if last == Enum.UserInputType.Touch then "TRAIN CAM" else "TRAIN CAMERA  [C]"
+	end
+	chipLabel()
 	UserInputService.LastInputTypeChanged:Connect(function()
+		chipLabel()
 		if active then
 			label()
 		end

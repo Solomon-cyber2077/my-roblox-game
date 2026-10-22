@@ -1540,9 +1540,9 @@ end
 -- The sinkhole edge ---------------------------------------------------------------------------
 --[[
 	EdgeMark: one tile of the edge, the frame on the rail's line, -Z toward the train. An unseen
-	stop the crew cannot walk through (collision group EdgeRail: Hollows climb over it); nothing
-	drawn, so the yard simply ends at the sinkhole. It carries the SinkholeEdge tag the
-	tutorial's edge prompt looks for.
+	stop the crew cannot walk through (collision group EdgeRail: Hollows climb over it), marked by
+	a sagging rope on timber stakes so nobody walks into an invisible wall. The rope and stakes do
+	not collide; the stop does. It carries the SinkholeEdge tag the tutorial's edge prompt looks for.
 ]]
 Builders.EdgeMark = function(ctx)
 	local stop = Kit.block(
@@ -1553,6 +1553,16 @@ Builders.EdgeMark = function(ctx)
 		{ name = "EdgeRail", transparency = 1, shadow = false }
 	)
 	stop:AddTag(Tutorial.EdgeTag)
+	-- the marking: a stake at this tile's start and a rope along it at hip height
+	local half = ctx.width / 2
+	post(ctx, 3.4, 0.32, f(ctx, -half + 0.2, 1.7, 0), C.woodDark, M.Wood)
+	block(
+		ctx,
+		Vector3.new(math.max(ctx.width - 0.5, 0.5), 0.16, 0.16),
+		f(ctx, 0.05, 2.75, 0),
+		C.burlap,
+		M.Fabric
+	)
 end
 
 -- A yard lamp: a gas lamp on a post, lighting a pool of the route round it. Not a SafeLight
