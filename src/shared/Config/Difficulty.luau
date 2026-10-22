@@ -96,6 +96,16 @@ return table.freeze({
 		StrikeCooldown = 0.72, -- seconds from one strike's start to the next (was 0.9: -20%)
 	}),
 
+	-- The Stalk state's commit rules (Logic/Stalk, docs/FINAL-DESIGN.md Prompt 2, FIXED), D0 -> D1.
+	-- Distances fixed by the design (the band, facing, the guard) live in Tuning.Stalk.
+	Stalk = table.freeze({
+		MinStalkSeconds = table.freeze({ 4, 1.5 }), -- before any timed commit
+		MaxStalkSeconds = table.freeze({ 12, 6 }), -- runs while faced and overrides facing
+		BackTurnedSeconds = table.freeze({ 2.5, 1 }), -- uninterrupted not-facing time that commits
+		CommitRange = table.freeze({ 12, 16 }), -- studs: closer than this commits at once
+		AloneRadius = table.freeze({ 14, 14 }), -- studs: no crewmate this near counts as alone
+	}),
+
 	-- What a hold does to you (Logic/Grab), carried over from round 2.
 	GrabDamage = table.freeze({
 		DpsShare = 0.6, -- damage per second held, as a share of the stop's hollowDamage

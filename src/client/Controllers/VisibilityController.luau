@@ -29,6 +29,11 @@
 	far lanterns off and a one-ring beacon.
 
 	The lobby keeps its own lamp-lit look: no cone there.
+
+	A stalking Hollow's tells (Logic/Tells, fixed r = 30, never this slider): within r the cone
+	leans away from it and the lantern gutters by at most 15% of its brightness (its reach, and so
+	the floor, never moves); within 1.2r the pocket watch stutters (UI/Hud reads Tells()). They
+	clear within a second of leaving range.
 ]]
 
 local Players = game:GetService("Players")
@@ -41,6 +46,7 @@ local Buildings = require(Shared.Config.Buildings)
 local MathX = require(Shared.Util.MathX)
 local Safe = require(Shared.Util.Safe)
 local Tuning = require(Shared.Config.Tuning)
+local Tells = require(Shared.Logic.Tells)
 local Visibility = require(Shared.Logic.Visibility)
 
 local Session = require(script.Parent.Parent.Session)
@@ -350,6 +356,60 @@ local function updateStationLights(station: Model?, dim: number)
 	end
 end
 
+-- The tells now, eased (Logic/Tells): lean strength and direction, flicker, the watch's stutter.
+local tell = { strength = 0, leanX = 0, leanZ = 0, flicker = 0, stutter = 0 }
+local lastTellAt = os.clock()
+
+local function stalkers(): { Tells.Source }
+	local sources: { Tells.Source } = {}
+	local folder = Workspace:FindFirstChild("Hollows")
+	if folder then
+		for _, hollow in folder:GetChildren() do
+			local state = hollow:GetAttribute("State")
+			local body = hollow:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if body and (state == "Stalk" or state == "Hunt") then
+				local position = body.Position
+				table.insert(sources, {
+					x = position.X,
+					z = position.Z,
+					state = state :: string,
+					coil = hollow:GetAttribute("WarningCoil") == true,
+				})
+			end
+		end
+	end
+	return sources
+end
+
+local function updateTells(root: BasePart?, clock: number)
+	local dt = math.clamp(clock - lastTellAt, 0, 0.25)
+	lastTellAt = clock
+	local now = if root
+		then Tells.compute(root.Position.X, root.Position.Z, stalkers(), clock)
+		else Tells.compute(0, 0, {}, clock)
+	tell.strength = Tells.fade(tell.strength, now.strength, dt)
+	tell.flicker = Tells.fade(tell.flicker, now.flicker, dt)
+	tell.stutter = Tells.fade(tell.stutter, if now.stutter then 1 else 0, dt)
+	if now.strength > 0 then
+		tell.leanX, tell.leanZ = now.leanX, now.leanZ
+	end
+	if ownLantern then
+		ownLantern:SetAttribute("TellDim", if tell.flicker > 0.001 then tell.flicker else nil)
+	end
+	local holder = cone and cone.Parent
+	if holder and holder:IsA("Attachment") and root then
+		-- the beam swings away from the stalker, never more than LeanDegrees
+		local away = root.CFrame:VectorToObjectSpace(Vector3.new(tell.leanX, 0, tell.leanZ))
+		local yaw = -math.rad(Tuning.Stalk.LeanDegrees) * tell.strength * math.clamp(away.X, -1, 1)
+		holder.CFrame = CFrame.new(holder.Position) * CFrame.Angles(0, yaw, 0)
+	end
+end
+
+-- The stalk tells now: `stutter` true while the pocket watch should stutter.
+function VisibilityController.Tells(): { stutter: boolean, strength: number }
+	return { stutter = tell.stutter > 0.05, strength = tell.strength }
+end
+
 -- What the chase shows now: dim, relief and the flicker's black (Logic/Visibility).
 function VisibilityController.Chase(): Visibility.ChaseLook
 	return look
@@ -411,6 +471,7 @@ function VisibilityController.Start()
 		look = Visibility.chaseLook(chase, clock)
 		blackout.BackgroundTransparency = 1 - look.black
 		updateStationLights(if inLobby then nil else dockedStation(), look.dim)
+		updateTells(if inLobby then nil else root, clock)
 
 		-- the lanterns hold the floor, and reach a little further in the chase's dark
 		local radius = VisibilityController.Radius()

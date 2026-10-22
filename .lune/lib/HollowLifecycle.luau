@@ -131,6 +131,7 @@ local function run(): string
 			Grabbed = function() end,
 			Escaped = function() end,
 			Pried = function() end,
+			Tell = function() end,
 		},
 	}
 	local net = {

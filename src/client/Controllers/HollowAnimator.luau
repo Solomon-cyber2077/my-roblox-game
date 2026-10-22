@@ -11,6 +11,10 @@
 	           back; it rears like a mantis, then pounces
 	  Brute    a heavy, rolling stomp that shakes the ground
 
+	Stalk (Logic/Stalk) holds the prowl's body: still while the prey faces it (attribute Frozen),
+	half-rate steps while it slips between cover, and a breath that carries 15-30 studs. A guarded
+	hunter (attribute WarningCoil) holds a coiled, half-reared windup pose until its warning is met.
+
 	Spawning is a show too: Hollows claw up out of the ground, haul themselves over the
 	station's edge out of the dark, or wake in jerks from a slump in a building. A strike
 	that lands is a grab (Config/Grabs): the Hollow holds its victim in one of three ways
@@ -26,6 +30,7 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Audio = require(Shared.Config.Audio)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
 local Safe = require(Shared.Util.Safe)
@@ -60,6 +65,8 @@ type Rig = {
 	lungeAt: number,
 	bites: number, -- bites of the current hold already sounded
 	embers: PointLight?,
+	quietStep: boolean, -- a stalking Hollow sounds every other footfall
+	breath: Sound?, -- its stalk breath
 }
 
 local HollowAnimator = {}
@@ -199,6 +206,32 @@ local function ground(rig: Rig): Vector3
 	return rig.root.Position + Vector3.new(0, rig.skeleton.ground, 0)
 end
 
+-- A stalking or coiling Hollow's breath: full within 0.5r, gone past 1.0r (r = 30, Logic/Tells).
+local function breathe(rig: Rig, on: boolean)
+	local sound = rig.breath
+	if on and sound == nil then
+		local made = Instance.new("Sound")
+		made.Name = "StalkBreath"
+		made.SoundId = `rbxassetid://{Audio.Breath.id}`
+		made.Looped = true
+		made.Volume = Audio.Breath.volume
+		made.PlaybackSpeed = 0.7 + (rig.seed % 20) / 100
+		made.RollOffMode = Enum.RollOffMode.Linear
+		made.RollOffMinDistance = Tuning.Stalk.BreathNear * Tuning.Stalk.ReferenceRadius
+		made.RollOffMaxDistance = Tuning.Stalk.BreathFar * Tuning.Stalk.ReferenceRadius
+		made.Parent = rig.root
+		rig.breath = made
+		sound = made
+	end
+	if sound and sound.IsPlaying ~= on then
+		if on then
+			sound:Play()
+		else
+			sound:Stop()
+		end
+	end
+end
+
 -- Called when a rig's state changes: sounds and effects that go with the new state.
 local function onState(rig: Rig, state: string)
 	local position = rig.root.Position
@@ -280,6 +313,15 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	end
 	local elapsed = now - stateAt
 	local stunned = ((model:GetAttribute("StunnedUntil") :: number?) or 0) > now
+	local stalking = state == "Stalk"
+	local frozen = stalking and model:GetAttribute("Frozen") == true
+	local coiled = state == "Hunt" and model:GetAttribute("WarningCoil") == true
+	local kindDef = (Tuning.HollowKinds :: any)[rig.kind]
+	local windup = H.WindupSeconds * (if kindDef then kindDef.windup else 1)
+	-- the body a stalk and a coil borrow: the prowl's, and a windup held half-reared
+	local poseState = if stalking then "Prowl" elseif coiled then "Windup" else state
+	local poseElapsed = if coiled then windup * 0.6 else elapsed
+	breathe(rig, stalking or coiled)
 
 	local velocity = rig.root.AssemblyLinearVelocity
 	local speed = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
@@ -293,8 +335,16 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	end
 	local before = rig.phase
 	rig.phase += dt * HollowPoses.cadence(rig.kind, animationSpeed)
-	-- a footfall every half turn: the Brute shakes the ground
-	if math.floor(before / math.pi) ~= math.floor(rig.phase / math.pi) and animationSpeed > 4 then
+	-- a footfall every half turn: the Brute shakes the ground. Stalking, it sounds only every other
+	-- step; frozen, none.
+	local footfall = math.floor(before / math.pi) ~= math.floor(rig.phase / math.pi)
+		and animationSpeed > 4
+		and not frozen
+	if footfall and stalking then
+		rig.quietStep = not rig.quietStep
+		footfall = rig.quietStep
+	end
+	if footfall then
 		if rig.kind == "Brute" then
 			audio("HollowStep", rig.root.Position, 1, 0.9 + rig.stepSide * 0.08)
 			shakeNear(rig.root.Position, 16, 0.25)
@@ -338,17 +388,16 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	end
 	local twitching = not dressing and clock < rig.twitchUntil and state ~= "Emerge" and state ~= "Grab"
 
-	local kindDef = (Tuning.HollowKinds :: any)[rig.kind]
 	local target = HollowPoses.pose(rig.skeleton, {
-		state = state,
-		elapsed = elapsed,
+		state = poseState,
+		elapsed = poseElapsed,
 		speed = animationSpeed,
 		phase = rig.phase,
 		now = now,
 		seed = rig.seed,
 		emerge = rig.emerge,
 		stunned = stunned,
-		windup = H.WindupSeconds * (if kindDef then kindDef.windup else 1),
+		windup = windup,
 		grab = grabId,
 		grabTime = grabTime,
 		grime = grime,
@@ -371,7 +420,7 @@ local function animate(rig: Rig, dt: number, now: number, clock: number, positio
 	end
 
 	-- smooth toward the target: fast through strikes and grabs, slower otherwise
-	local rate = if state == "Windup"
+	local rate = if poseState == "Windup"
 			or state == "Recover"
 			or state == "Grab"
 		then 26
@@ -428,6 +477,8 @@ local function register(model: Instance)
 		lungeAt = (model:GetAttribute("LungeAt") :: number?) or 0,
 		bites = 0,
 		embers = if chest then chest:FindFirstChild("EmberGlow") :: PointLight? else nil,
+		quietStep = false,
+		breath = nil,
 	}
 	makeTrails(rig)
 	rigs[model] = rig

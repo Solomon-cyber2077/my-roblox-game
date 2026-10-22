@@ -517,6 +517,42 @@ local Tuning = {
 		ReceiptHistory = 50,
 	},
 
+	-- Stalking (Logic/Stalk, Logic/Tells; docs/FINAL-DESIGN.md Prompt 2, FIXED). Server-owned: no AI
+	-- distance or cue threshold reads the Visibility slider. r = ReferenceRadius.
+	Stalk = {
+		ReferenceRadius = 30,
+		BandNear = 0.8, -- shadow points between 0.8r and 1.1r (24-33 studs)
+		BandFar = 1.1,
+		ExposureScale = 1.2, -- warning time counts with line of sight within 1.2r (36)
+		WarnSeconds = 1.5, -- the first-strike guard: warning before a new target's first strike
+		GuardDistance = 16, -- studs a guarded Hollow will not close inside on its own
+		FacingDegrees = 25, -- the target's root looks within this of the Hollow...
+		FacingRange = 40, -- ...from no further than this: it freezes
+		SwitchShare = 0.6, -- another crew member this much nearer than the target takes over
+		StunExclusion = 6, -- seconds after a stun or stagger with no stalking
+		ShadowRetry = 1, -- seconds between searches when no shadow point is legal
+		ShadowSamples = 12, -- candidate points per search
+		LampPool = 22, -- studs: a station lamp's pool a shadow point stays out of
+		BreathNear = 0.5, -- stalk breath full at 0.5r, gone at 1.0r
+		BreathFar = 1.0,
+		LeanRadius = 1.0, -- lantern lean and flicker within 1.0r
+		WatchRadius = 1.2, -- watch stutter within 1.2r
+		FlickerMax = 0.15, -- at most this share off the lantern's brightness
+		LeanDegrees = 18, -- the lantern's light leans this far away at most
+		TellClearSeconds = 1, -- tells fade out within this of leaving range
+	},
+
+	-- Door-forcing (Logic/Doors, Services/BuildingService; Prompt 2, FIXED).
+	DoorForce = {
+		Chance = 0.4, -- of a stop forcing doors, from FromStop on, every tutorial tier
+		FromStop = 3,
+		BaseSeconds = 3,
+		HoldSeconds = 4, -- holding the door adds this once per episode, shared by every attacker
+		OpenSeconds = 6, -- a forced door stays open at least this long
+		Reach = 6, -- studs from a shut door's leaf a hunter must be to start on it
+		HoldDistance = 8, -- studs a crew member may hold the door from
+	},
+
 	-- Telemetry (Services/TelemetryService, Config/Telemetry) and its durable playtest sink
 	-- (Logic/TelemetrySink). The sink always runs in Studio and private servers; SinkEnabled turns it
 	-- on for public servers. PROVISIONAL: store name, flush interval, cap; SinkEnabled goes false after G1.
