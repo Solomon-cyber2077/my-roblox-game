@@ -1,5 +1,21 @@
 # HANDOFF
 
+## 2026-10-22: PHONE HUD DECLUTTER, TOUCH CONTROLS, CAMERA LOCK, VISIBLE EDGE (from the owner's phone screenshots)
+1. Completed (code only; `lune run check` passed, audit clean)
+- Crew Errands (UI/QuestTracker): always shown in the hall; in a run, only for 6 s after an errand changes (it covered LOOK, the stop ticket and the watch on phones).
+- Operators roster hidden on a solo run; the leak slot moves up when it is hidden.
+- Touch: LOOK now sits beside RUN on the same row (the watch no longer climbs over a stack); RUN is a tap toggle (WALK/RUN title; ends after 1 s standing still or when out of breath); Shift stays hold-to-run.
+- Alerts are said once: the big centre alert for the crew, the feed only for others (hull breach showed three times).
+- In-run SETTINGS is a small tab (104x28); TRAIN CAMERA chip drops "[C]" on touch; tutorial prompts have touch wording (Move, Loot, Drop); press-and-hold a backpack slot drops it on touch (there was no touch drop at all).
+- Camera setting (Settings: CAMERA, Locked default / Free): Locked pins zoom at Tuning.Camera.LockZoom 10 on PC and touch (no pinch/wheel zoom, never first person); boarding cars bring min and max in together.
+- The invisible wall: StationDressing EdgeMark (the unseen stop 4.5 studs short of the sinkhole lip) now has a timber stake and a rope at hip height per tile, non-colliding; the collider is unchanged.
+- Route ballot text: "THE DRIVER TAKES THE SHORTER LEG" (was "SHORT LINE", now a route name).
+2. NOT verified
+- No Studio playtest of any of this yet (the Device Simulator was being opened when usage ran out). Check: phone preset HUD in a run (no overlaps, LOOK beside RUN, solo roster gone, errands hide after 6 s), RUN toggle, long-press drop, camera lock in the train/buildings, rope visible at the edge, console clean.
+- A second Studio window "LAST TRAIN" (the published place) is open with a Rojo connect prompt; it was left alone.
+3. Next logical step
+- Run the checks above in Studio on the phone preset, then on a real phone; then Gate G1.
+
 ## 2026-10-22: S8 / MILESTONE 1 ESSENTIALS (PROMPT 6 READABILITY, PROMPT 7 PRIORITY + INTENT HUSH)
 1. Completed
 - Priority table (Config/AudioPriority; beside Config/Audio so the cue table keeps its `{ [name]: Cue }` shape): 1 Warnings (WarnTick/Bell/Whistle/WhistleLong, own group outside the main mix) > 2 Threat (mix "Cues": swipe, slam, scream, wake, strike, spawn, scrabble, heartbeat, alarm, DoorForce, and the stalk breath, now on the Cues group) > 3 Feedback (mix "Steps" and new "Feedback": hit, loot, deposit, heal, flash, eliminated, purchase, clutch, clicks, ticket sounds, the player's winded breath) > 4 Ambience (Ambience/Outdoor beds, TrainRun moved in, so the Settings Ambience row now scales the train run too) > 5 Piano (LobbyPiano, mix "Piano").

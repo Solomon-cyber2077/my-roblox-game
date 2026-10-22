@@ -227,6 +227,7 @@ function CarBoardingUi.mount(gui: ScreenGui)
 	local wasDeparting = false
 	local lastCar: number? = nil
 	local zoomBefore = Players.LocalPlayer.CameraMaxZoomDistance
+	local minBefore = Players.LocalPlayer.CameraMinZoomDistance
 	RunService.RenderStepped:Connect(function()
 		local now = Session.now()
 		local member = Session.isMember()
@@ -236,9 +237,13 @@ function CarBoardingUi.mount(gui: ScreenGui)
 			local player = Players.LocalPlayer
 			if lastCar == nil then
 				zoomBefore = player.CameraMaxZoomDistance
+				minBefore = player.CameraMinZoomDistance
+				-- the Camera setting's lock pins min = max: bring both in for the car
+				player.CameraMinZoomDistance = math.min(minBefore, Tuning.Cars.CameraZoom)
 				player.CameraMaxZoomDistance = math.min(zoomBefore, Tuning.Cars.CameraZoom)
 			elseif mine == nil then
 				player.CameraMaxZoomDistance = zoomBefore
+				player.CameraMinZoomDistance = minBefore
 			end
 			lastCar = mine
 			if not member then

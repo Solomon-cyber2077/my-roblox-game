@@ -7,6 +7,10 @@
 	Running dry is a commitment: you cannot sprint again until a share of stamina is
 	back, and for a moment you are winded and slower than your jog. That gap is where
 	a Hollow catches you.
+
+	Shift is held to sprint. The touch RUN button and the gamepad's stick click toggle it
+	instead (one thumb is on the stick, the other turns the camera); a toggled sprint ends
+	when you stand still for TOGGLE_IDLE seconds or run out of breath.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -38,6 +42,9 @@ local slowUntil = 0
 local windedUntil = 0
 local fovKick = 0
 local frozen = false -- watching through the train camera: the body stays put
+local sprintToggled = false -- the sprint is on from a tap (touch RUN, gamepad stick click)
+local stillSince: number? = nil
+local TOGGLE_IDLE = 1 -- seconds standing still that end a toggled sprint
 
 local function onSprint(
 	_: string,
@@ -50,11 +57,15 @@ local function onSprint(
 		sprintHeld = false
 		return Enum.ContextActionResult.Sink
 	end
-	if input.KeyCode == Enum.KeyCode.ButtonL3 then
+	if input.KeyCode == Enum.KeyCode.ButtonL3 or input.UserInputType == Enum.UserInputType.Touch then
 		if inputState == Enum.UserInputState.Begin then
 			sprintHeld = not sprintHeld
+			sprintToggled = sprintHeld
+			stillSince = nil
+			ContextActionService:SetTitle("LTO_Sprint", if sprintHeld then "WALK" else "RUN")
 		end
 	else
+		sprintToggled = false
 		sprintHeld = inputState == Enum.UserInputState.Begin or inputState == Enum.UserInputState.Change
 	end
 	-- Shift is also Roblox's shift-lock switch: passing it on toggled shift lock with every
@@ -113,6 +124,18 @@ function MovementController.Start()
 		local moving = humanoid.MoveDirection.Magnitude > 0.1
 		local crew = Tuning.Crew
 		local clock = os.clock()
+		-- a tapped sprint ends on its own once you stop, or when your breath runs out
+		if sprintToggled then
+			if moving then
+				stillSince = nil
+			elseif stillSince == nil then
+				stillSince = clock
+			end
+			if exhausted or (stillSince ~= nil and clock - stillSince > TOGGLE_IDLE) then
+				sprintHeld, sprintToggled, stillSince = false, false, nil
+				ContextActionService:SetTitle("LTO_Sprint", "RUN")
+			end
+		end
 		if exhausted and stamina >= crew.StaminaMax * crew.ExhaustedResume then
 			exhausted = false
 		end
