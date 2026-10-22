@@ -15,6 +15,8 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
 - docs/FINAL-DESIGN.md: current design draft and implementation prompts 0-10; reviews in docs/direction/
 - prompts/: ready-to-paste session prompts `S1.md`-`S11.md` (preamble included) and a status index in README.md.
   When the owner says "run S9", "do S9" or "prompt S9", read `prompts/S9.md` and follow it as the full prompt.
+- "TC" = The Council (free design models on the Zenbook). Fetch its packs and build prompts yourself with
+  `tc pack` / `tc prompts` / `tc prompt <n>` (bash: `ssh solo@192.168.1.168 council ...`); never ask the owner to paste them.
 
 ## Features that exist now
 - Lobby, route vote, 11-phase run, stations with loot, fog/collapse hazards, left-behind rule
@@ -90,6 +92,12 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
   library ids in `Config/Audio`. Exception (approved for the train exterior overhaul): the Blender train
   meshes and maps in `assets/train/` are uploaded under user 11744048795 (ids in `asset_ids.json`).
   Exception (approved by the owner, 2026-10-13): the station kit `assets/stationkit/StationKit.fbx` may be uploaded through Studio's 3D Importer under the owner's account (ids in `Config/StationKit`).
+- Visual quality (owner rule, 2026-10-22, for Opus and Astra): anything players see gets a real design pass,
+  never placeholder blocks or "good enough" parts. Gather references first, then model or refine it in Blender
+  (`C:\Program Files\Blender Foundation\Blender 5.2\blender.exe --background --python <script>`; scripts and
+  sources in `tools/<area>/`, exports in `assets/<area>/`). Render before/after at 0.5 scale, compare against the
+  references and fix what falls short before committing. Part-built models must clear the same bar. Blender meshes
+  may be uploaded through Studio's 3D Importer under the owner's account; list that upload as HUMAN pending.
 - Engine-guarded properties (such as `Workspace.FallenPartsDestroyHeight`) go in `default.project.json`
   `$properties`, never in a script.
 - Escape belongs to the Roblox menu. Modals close with gamepad B, the backdrop or a CLOSE button.
