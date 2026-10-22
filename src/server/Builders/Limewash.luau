@@ -6,8 +6,9 @@
 
 	  station(model, archetype, seed): a lime-washed band low on every obstacle kind listed in
 	    Surfaces.Limewash.kinds, each band's height and tone varied a little (brushed by hand),
-	    darkened by the grade's grime (Surfaces.Grime). Called by StationBuilder before it
-	    unanchors the assembly.
+	    darkened by the grade's grime (Surfaces.Grime). No longer called (2026-10-22): the white
+	    bands read as clutter on every crate and cabinet (owner's phone screenshots; Prompt 6
+	    removes the station path). Kept for the visibility harness until Prompt 6 lands.
 	  train(model, origin): a pale lining along the foot and the waist of the platform side's lower
 	    panels, and the brass there polished. Kept out of TrainBuilder (the exterior rework
 	    owns it); TrainService and the harnesses call it after TrainBuilder.build. The lining

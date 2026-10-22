@@ -66,7 +66,6 @@ local C = {
 	galvanised = rgb(150, 156, 160),
 	slate = rgb(56, 58, 64),
 	glass = rgb(200, 210, 210),
-	limewash = rgb(214, 212, 200), -- pale lime-washed feet on pillars, so they read in the dark
 }
 -- Leaves at night: muted, dark, a little cold
 local FOLIAGE = { rgb(50, 64, 44), rgb(58, 70, 46), rgb(44, 56, 42), rgb(66, 72, 48) }
@@ -683,7 +682,7 @@ Builders.Canopy = function(ctx)
 	end
 	local columns = Stations.canopyColumns(half)
 	for _, x in columns do
-		block(ctx, Vector3.new(1.4, 0.8, 1.4), f(ctx, x, 0.4, z), C.limewash, M.Plaster, true)
+		block(ctx, Vector3.new(1.4, 0.8, 1.4), f(ctx, x, 0.4, z), C.stone, M.Slate, true)
 		post(ctx, 11.6, 0.8, f(ctx, x, 6.6, z), C.iron, M.Metal, true)
 		post(ctx, 0.6, 1.4, f(ctx, x, 12.7, z), C.iron, M.Metal)
 		-- brackets up into the roof, either way
@@ -1276,7 +1275,7 @@ Builders.GatePier = function(ctx)
 	local function at(y: number): CFrame
 		return turn * CFrame.new(0, y, 0)
 	end
-	piece(ctx, Vector3.new(4.1, 0.6, 4.1), at(0.28), C.limewash, M.Plaster) -- lime-washed foot
+	piece(ctx, Vector3.new(4.1, 0.6, 4.1), at(0.28), C.stone, M.Slate) -- plinth
 	piece(ctx, Vector3.new(3.3, 10.4, 3.3), at(5.4), stone, M.Limestone)
 	for _, y in { 3.1, 6.4 } do -- rusticated bands
 		piece(ctx, Vector3.new(3.5, 0.32, 3.5), at(y), dark, M.Limestone)
