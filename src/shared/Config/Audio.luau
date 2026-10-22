@@ -11,10 +11,11 @@
 	group      a SoundGroup of its own (beside the main one, so ducking the mix leaves it alone)
 	rollOff    studs a spatial cue carries before it falls silent (default 220)
 	with       another cue played together with this one (a layered sound)
-	mix        where it sits in the mix (AudioController): "Ambience" (the beds the Settings
-	           volume turns down), "Outdoor" (ambience out in the night, muffled by the carriage walls),
-	           "Cues" (danger you must hear: the ambience ducks hard under them), "Steps" (footsteps:
-	           the ambience dips a little under each). The Warnings group ducks the ambience too.
+	mix        where it sits in the mix (AudioController; tiers in Config/AudioPriority): "Ambience"
+	           (the beds the Settings volume turns down), "Outdoor" (ambience out in the night,
+	           muffled by the carriage walls), "Cues" (threat: everything below ducks hard under
+	           it), "Steps" and "Feedback" (footsteps and the player's own sounds), "Piano" (the
+	           lobby piano, under everything). The Warnings group sits above them all.
 ]]
 
 export type Cue = {
@@ -39,32 +40,32 @@ local Cues: { [string]: Cue } = {
 	-- "Door Bang Rattle 8", heavy double doors, Creator Store)
 	DoorThud = { id = 9114129572, volume = 0.5, maxSeconds = 1.2, pitch = 0.78 },
 	Alarm = { id = 9113085203, volume = 0.45, maxSeconds = 2.5, mix = "Cues" },
-	Deposit = { id = 9113849492, volume = 0.6 },
-	Loot = { id = 17208319162, volume = 0.6 },
-	Heal = { id = 9114171855, volume = 0.6 },
-	Hit = { id = 9113570506, volume = 0.8 },
+	Deposit = { id = 9113849492, volume = 0.6, mix = "Feedback" },
+	Loot = { id = 17208319162, volume = 0.6, mix = "Feedback" },
+	Heal = { id = 9114171855, volume = 0.6, mix = "Feedback" },
+	Hit = { id = 9113570506, volume = 0.8, mix = "Feedback" },
 	HollowSpawn = { id = 9125475729, volume = 0.9, spatial = true, mix = "Cues" },
 	HollowStrike = { id = 9125471724, volume = 0.9, spatial = true, mix = "Cues" },
-	Flash = { id = 9113024908, volume = 0.8, spatial = true },
+	Flash = { id = 9113024908, volume = 0.8, spatial = true, mix = "Feedback" },
 	FlareLaunch = { id = 12222095, volume = 0.8, spatial = true, maxSeconds = 3 },
 	FlareBurst = { id = 9114361763, volume = 0.7, spatial = true, maxSeconds = 3 },
 	Toll = { id = 9113804436, volume = 0.35, maxSeconds = 4 },
-	Eliminated = { id = 9126213744, volume = 0.7 },
+	Eliminated = { id = 9126213744, volume = 0.7, mix = "Feedback" },
 	Rumble = { id = 9113218938, volume = 0.7, spatial = true, maxSeconds = 2.5 },
 	Thunder = { id = 9113218938, volume = 0.55, maxSeconds = 4, pitch = 0.62 },
 	Collapse = { id = 9118582680, volume = 0.9, spatial = true, maxSeconds = 3 },
 	SteamLeak = { id = 9116496074, volume = 0.6, spatial = true, loop = true },
 	Victory = { id = 9112766203, volume = 0.5, maxSeconds = 6 },
-	Purchase = { id = 9113728042, volume = 0.6 },
-	Clutch = { id = 9125573009, volume = 0.6, maxSeconds = 2 },
-	Click = { id = 15675059323, volume = 0.4 },
+	Purchase = { id = 9113728042, volume = 0.6, mix = "Feedback" },
+	Clutch = { id = 9125573009, volume = 0.6, maxSeconds = 2, mix = "Feedback" },
+	Click = { id = 15675059323, volume = 0.4, mix = "Feedback" },
 	-- UI sounds, Creator Store (ProSoundEffects), chosen 2026-10-17 for audition (HANDOFF.md lists them)
-	MenuClick = { id = 9120300134, volume = 0.3, maxSeconds = 0.25, pitch = 0.9 }, -- "Typewriter Key 2"
+	MenuClick = { id = 9120300134, volume = 0.3, maxSeconds = 0.25, pitch = 0.9, mix = "Feedback" }, -- "Typewriter Key 2"
 	-- a vote lands: heavy paper, then the brass clip ("Paper Tear Heavy Paper Bag Slow Rustle 5")
-	TicketStamp = { id = 9125725195, volume = 0.45, maxSeconds = 0.7, with = "BrassClick" },
-	BrassClick = { id = 9117028601, volume = 0.35, maxSeconds = 0.3, pitch = 0.85 }, -- "Moviola Toggle Switch 6"
+	TicketStamp = { id = 9125725195, volume = 0.45, maxSeconds = 0.7, with = "BrassClick", mix = "Feedback" },
+	BrassClick = { id = 9117028601, volume = 0.35, maxSeconds = 0.3, pitch = 0.85, mix = "Feedback" }, -- "Moviola Toggle Switch 6"
 	-- the ticket's stamp coming down ("Table Hit Hand Smacks On Wood Table 14")
-	TicketPunch = { id = 9119909448, volume = 0.6, maxSeconds = 0.6, pitch = 0.8 },
+	TicketPunch = { id = 9119909448, volume = 0.6, maxSeconds = 0.6, pitch = 0.8, mix = "Feedback" },
 
 	-- Departure warnings (Controllers/DepartureClock), from the recordings above
 	WarnTick = { id = 15675059323, volume = 0.1, maxSeconds = 0.4, pitch = 1.7, group = "Warnings" },
@@ -90,12 +91,12 @@ local Cues: { [string]: Cue } = {
 	},
 
 	-- Beds
-	TrainRun = { id = 9120247081, volume = 0.55, loop = true },
+	TrainRun = { id = 9120247081, volume = 0.55, loop = true, mix = "Ambience" },
 	Wind = { id = 9113286969, volume = 0.4, loop = true, mix = "Outdoor" },
 	StationEerie = { id = 9125440141, volume = 0.35, loop = true, mix = "Outdoor" },
 	DepotHall = { id = 9114872503, volume = 0.3, loop = true, mix = "Ambience" },
 	-- Satie, Gnossienne No. 3 (APM Music), from the lobby piano (Builders/LobbyBuilder)
-	LobbyPiano = { id = 1837474268, volume = 0.48, loop = true, spatial = true },
+	LobbyPiano = { id = 1837474268, volume = 0.48, loop = true, spatial = true, mix = "Piano" },
 
 	-- The stops' soundscape: the same recordings slowed and shaped (AudioController
 	-- adds the filters and reverb), so nothing new needs clearing.
@@ -197,7 +198,14 @@ local Cues: { [string]: Cue } = {
 	},
 
 	-- building interactions
-	DoorForce = { id = 9118582680, volume = 0.75, spatial = true, pitch = 1.25, maxSeconds = 1.5 },
+	DoorForce = {
+		id = 9118582680,
+		volume = 0.75,
+		spatial = true,
+		pitch = 1.25,
+		maxSeconds = 1.5,
+		mix = "Cues",
+	},
 	Winded = { id = 9113570506, volume = 0.45, maxSeconds = 0.8, pitch = 0.5 },
 
 	-- Footsteps by surface (Logic/Footsteps, Controllers/FootstepController): Creator Store
@@ -279,7 +287,7 @@ local Cues: { [string]: Cue } = {
 		mix = "Steps",
 	},
 	-- heavy breathing while stamina is spent (MovementController.IsExhausted), not tied to combat
-	Breath = { id = 100147087354736, volume = 0.5, loop = true },
+	Breath = { id = 100147087354736, volume = 0.5, loop = true, mix = "Feedback" },
 }
 
 for _, cue in Cues do
