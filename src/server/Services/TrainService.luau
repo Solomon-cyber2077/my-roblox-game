@@ -301,6 +301,12 @@ function TrainService.Init()
 	mastPrompt.Triggered:Connect(function(player)
 		TrainService.FireFlare(player)
 	end)
+	local bellPrompt =
+		makePrompt(built.bell, "Bell", "Departure bell", "Ring departure bell", Tuning.Grasp.BellHold)
+	bellPrompt.MaxActivationDistance = Tuning.Grasp.BellDistance
+	bellPrompt.Triggered:Connect(function(player)
+		TrainService.RingBell(player)
+	end)
 	TrainService.SetDoors(false)
 	publish(true)
 end
@@ -365,6 +371,39 @@ end
 -- Where leaks burst, one or two per car (BreachAnchor attribute names the car).
 function TrainService.BreachAnchors(): { BasePart }
 	return table.clone(built.breachAnchors)
+end
+
+-- The departure bell (Prompt 4): a living crew member aboard, at the rope, during Dwell. The server
+-- checks phase, proximity and eligibility (RunDirector.ShortenStop). True if the clock shortened.
+function TrainService.RingBell(player: Player): (boolean, string?)
+	if
+		Registry.RunDirector.Phase() ~= "Dwell"
+		or not Registry.CrewService.IsAlive(player)
+		or not isAboard(player)
+	then
+		return false, "not_ready"
+	end
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if
+		root == nil
+		or ((root :: BasePart).Position - built.bell.Position).Magnitude > Tuning.Grasp.BellDistance
+	then
+		return false, "too_far"
+	end
+	local accepted, why = Registry.RunDirector.ShortenStop(player)
+	if accepted then
+		NetService.FireAll("Fx", "Sound", { cue = "WarnBell", position = built.bell.Position })
+	end
+	return accepted, why
+end
+
+-- Where the bell rope hangs (Studio checks).
+function TrainService.BellPosition(): Vector3
+	return built.bell.Position
+end
+
+function TrainService.GraspRails(): { BasePart }
+	return table.clone(built.graspRails)
 end
 
 function TrainService.SpawnPoint(index: number): CFrame

@@ -145,6 +145,22 @@ Commands.stalker = function(player, args)
 	print(`[Dev] stalker: {ok}`)
 end
 
+-- `grasp [studs]`: the server holds you that far from the doorway rail and tries a grasp (Studio).
+Commands.grasp = function(player, args)
+	print(`[Dev] grasp: {Registry.GraspService.DevAttempt(player, tonumber(args[1]) or 2)}`)
+end
+
+-- `bell`: stand at the departure bell's rope and ring it (the same checks as its prompt).
+Commands.bell = function(player)
+	local character = player.Character
+	if character then
+		character:PivotTo(CFrame.new(Registry.TrainService.BellPosition() + Vector3.new(1.5, 0, 0)))
+	end
+	task.wait(0.3)
+	local ok, why = Registry.TrainService.RingBell(player)
+	print(`[Dev] bell: {ok} {why or ""}`)
+end
+
 Commands.grab = function(player, args)
 	print(`[Dev] grab: {Registry.HollowService.DevGrab(player, args[1])}`)
 end

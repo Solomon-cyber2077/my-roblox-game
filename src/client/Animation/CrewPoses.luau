@@ -98,6 +98,54 @@ function CrewPoses.cadence(speed: number): number
 	return speed / (3.2 + speed * 0.12) * math.pi
 end
 
+-- The brief, readable poses used while a player catches the train's railing.
+function CrewPoses.hang(t: number, now: number, seed: number): Pose
+	local sway = math.sin(now * 5 + seed) * 0.08
+	local tremor = math.sin(t * 18 + seed) * 0.04
+	local out: Pose = {}
+	set(
+		out,
+		limb(RIGHT, 1.35 + tremor, 0.5 + sway, 0.08),
+		limb(LEFT, 1.35 - tremor, 0.5 - sway, 0.08),
+		limb(RIGHT, -0.35, 0.1),
+		limb(LEFT, -0.35, 0.1)
+	)
+	out.RootJoint = body(-0.32, sway, 0, 0.08, -0.04)
+	out.Neck = head(0.24, 0, sway * 1.5)
+	return out
+end
+
+function CrewPoses.haul(t: number, now: number, seed: number): Pose
+	local sway = math.sin(now * 6 + seed) * 0.05
+	local pull = math.sin(math.clamp(t / 0.5, 0, 1) * math.pi) * 0.12
+	local out: Pose = {}
+	set(
+		out,
+		limb(RIGHT, 1.55, 0.48 + pull, 0.12),
+		limb(LEFT, 1.55, 0.48 + pull, 0.12),
+		limb(RIGHT, -0.65, 0.12),
+		limb(LEFT, -0.65, 0.12)
+	)
+	out.RootJoint = body(-0.48, sway, 0, 0.12, -0.12)
+	out.Neck = head(0.3, 0, sway)
+	return out
+end
+
+function CrewPoses.fallShort(t: number, now: number, seed: number): Pose
+	local kick = math.sin(t * 13 + seed) * 0.18
+	local out: Pose = {}
+	set(
+		out,
+		limb(RIGHT, 0.35 + kick, 0.35),
+		limb(LEFT, 0.35 - kick, 0.35),
+		limb(RIGHT, 0.9, 0.08),
+		limb(LEFT, 0.55, 0.08)
+	)
+	out.RootJoint = body(0.65, 0.12 * math.sin(now * 8 + seed), 0, -0.12)
+	out.Neck = head(-0.28, 0, 0.2 * math.sin(now * 7 + seed))
+	return out
+end
+
 -- On foot, in the air or seated.
 function CrewPoses.locomote(input: Input): Pose
 	local out: Pose = {}

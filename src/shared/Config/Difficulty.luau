@@ -35,12 +35,13 @@ return table.freeze({
 		of every layout fits in it.
 	]]
 	StopClock = table.freeze({
-		Search = table.freeze({ 105, 75 }), -- seconds, D0 -> D1
+		WalkReference = 30,
+		Search = table.freeze({ 80, 60 }), -- seconds, D0 -> D1
 		PerBuildingTile = 0.5,
 		BuildingTileCap = 90,
-		WalkMargin = 1.6,
+		WalkMargin = 1.4,
 		Detour = 1.2,
-		PerStop = 4,
+		PerStop = 3,
 	}),
 
 	FogStartU = table.freeze({ 0.45, 0.15 }), -- share of the dwell before the fog front moves

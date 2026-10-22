@@ -1,0 +1,76 @@
+local RailingGrasp = require(Shared.Logic.RailingGrasp)
+
+local START, FINISH = 10, 20
+
+describe("Railing grasp tolerance", function()
+	it("adds 0.5 plus the capped closing term: 0.5/0.5/1.0/1.5/1.5 at -5/0/5/10/27 studs/s", function()
+		for _, case in { { -5, 3.5 }, { 0, 3.5 }, { 5, 4.0 }, { 10, 4.5 }, { 27, 4.5 } } do
+			expect(RailingGrasp.reach(case[1])).toBeCloseTo(case[2])
+		end
+	end)
+
+	it("reads zero closing speed from a zero-length direction", function()
+		expect(RailingGrasp.closing(5, 0, 0, 0, 0, 0)).toBe(0)
+		expect(RailingGrasp.closing(5, 0, 0, 2, 0, 0)).toBeCloseTo(5)
+		expect(RailingGrasp.closing(-5, 0, 0, 2, 0, 0)).toBeCloseTo(-5)
+		expect(RailingGrasp.closing(3, 4, 0, 0, 1, 0)).toBeCloseTo(4)
+	end)
+end)
+
+describe("Railing grasp timing", function()
+	it("clamps the measured one-way latency to 0..0.2 s", function()
+		expect(RailingGrasp.pressTime(10, -1)).toBe(10)
+		expect(RailingGrasp.pressTime(10, 0.1)).toBeCloseTo(9.9)
+		expect(RailingGrasp.pressTime(10, 1)).toBeCloseTo(9.8)
+	end)
+
+	it("accepts an estimated press just inside either window boundary", function()
+		expect(RailingGrasp.evaluate(START + 0.05, 0.05, START, FINISH, 3, 0).accepted).toBe(true)
+		expect(RailingGrasp.evaluate(FINISH + 0.1, 0.1, START, FINISH, 3, 0).accepted).toBe(true)
+		expect(RailingGrasp.evaluate(START + 0.001, 0, START, FINISH, 3, 0).accepted).toBe(true)
+	end)
+
+	it("rejects an estimated press just outside either boundary as a window miss", function()
+		local early = RailingGrasp.evaluate(START + 0.05, 0.06, START, FINISH, 3, 0)
+		local late = RailingGrasp.evaluate(FINISH + 0.1, 0.09, START, FINISH, 3, 0)
+		expect(early.reason).toBe("window")
+		expect(late.reason).toBe("window")
+	end)
+
+	it("rejects a receipt after chaseEnd + 0.2 even with a large latency", function()
+		local result = RailingGrasp.evaluate(FINISH + 0.21, 0.2, START, FINISH, 3, 0)
+		expect(result.accepted).toBe(false)
+		expect(result.reason).toBe("window")
+	end)
+end)
+
+describe("Railing grasp reach", function()
+	it("takes gaps below and at reach, refuses just above", function()
+		expect(RailingGrasp.evaluate(15, 0, START, FINISH, 3.49, 0).accepted).toBe(true)
+		expect(RailingGrasp.evaluate(15, 0, START, FINISH, 3.5, 0).accepted).toBe(true)
+		local above = RailingGrasp.evaluate(15, 0, START, FINISH, 3.51, 0)
+		expect(above.accepted).toBe(false)
+		expect(above.reason).toBe("missed")
+		expect(above.shortfall).toBeCloseTo(0.01)
+	end)
+
+	it("never accepts beyond 4.5 studs however fast the approach", function()
+		expect(RailingGrasp.evaluate(15, 0, START, FINISH, 4.5, 27).accepted).toBe(true)
+		expect(RailingGrasp.evaluate(15, 0, START, FINISH, 4.51, 1000).accepted).toBe(false)
+	end)
+
+	it("measures the shortfall from effective reach, not the root gap", function()
+		local missed = RailingGrasp.evaluate(15, 0, START, FINISH, 6.5, 0)
+		expect(missed.shortfall).toBeCloseTo(3)
+		expect(RailingGrasp.shortfallText(missed.shortfall)).toBe("3.0 studs short")
+		expect(RailingGrasp.shortfallText(0.05)).toBe("less than 0.1 stud short")
+		expect(RailingGrasp.shortfallText(0)).toBe("within reach")
+	end)
+
+	it("decides from the one snapshot it is given (no history to search)", function()
+		local a = RailingGrasp.evaluate(15, 0.1, START, FINISH, 4.2, 6)
+		local b = RailingGrasp.evaluate(15, 0.1, START, FINISH, 4.2, 6)
+		expect(a.accepted).toBe(b.accepted)
+		expect(a.reach).toBe(b.reach)
+	end)
+end)
