@@ -12,6 +12,8 @@
 	lying  the victim is on the ground (the room check uses a body lying down)
 	name   what the struggle prompt calls it
 	pin    a slam and pin: the Hollow uses only its pins, which tick at Tuning.Grab.Pin
+	area   the part of the victim it is working on: its bites mark that limb, and a death in
+	       this grip takes it (Builders/Wounds)
 
 	The poses that go with them live in the client's Animation/HollowPoses and
 	Animation/CrewPoses; the audit checks the Hollow's hands meet the victim.
@@ -23,8 +25,11 @@ export type Hold = {
 	face: { number },
 }
 
+export type Area = "Head" | "Torso" | "LeftArm" | "RightArm" | "LeftLeg" | "RightLeg"
+
 export type Def = {
 	id: string,
+	area: Area,
 	name: string,
 	hold: Hold,
 	bite: number,
@@ -46,6 +51,7 @@ local Grabs: { [string]: { Def } } = {
 	Stalker = {
 		{
 			id = "Throttle",
+			area = "Head",
 			name = "LIFTED BY THE THROAT",
 			hold = { pos = { 0.4, 0, -4.2 }, up = STANDING, face = TOWARD },
 			bite = 0.9,
@@ -53,6 +59,7 @@ local Grabs: { [string]: { Def } } = {
 		},
 		{
 			id = "Embrace",
+			area = "Torso",
 			name = "CRUSHED IN ITS ARMS",
 			hold = { pos = { 0, -1.7, -3.0 }, up = STANDING, face = TOWARD },
 			bite = 1.1,
@@ -60,6 +67,7 @@ local Grabs: { [string]: { Def } } = {
 		},
 		{
 			id = "Drag",
+			area = "RightLeg",
 			name = "DRAGGED BY THE ANKLE",
 			hold = { pos = { 0, -4.65, -5.8 }, up = AWAY, face = DOWN },
 			bite = 0.8,
@@ -71,6 +79,7 @@ local Grabs: { [string]: { Def } } = {
 	Crawler = {
 		{
 			id = "Pin",
+			area = "Head",
 			name = "PINNED DOWN",
 			hold = { pos = { 0, -2.95, -2.7 }, up = AWAY, face = UP },
 			bite = 0.6,
@@ -78,6 +87,7 @@ local Grabs: { [string]: { Def } } = {
 		},
 		{
 			id = "Latch",
+			area = "LeftLeg",
 			name = "CAUGHT BY THE LEGS",
 			hold = { pos = { 0, -2.95, -6.6 }, up = AWAY, face = DOWN },
 			bite = 0.7,
@@ -85,6 +95,7 @@ local Grabs: { [string]: { Def } } = {
 		},
 		{
 			id = "Ride",
+			area = "RightArm",
 			name = "IT IS ON YOUR BACK",
 			hold = { pos = { 0, -1.9, -3.2 }, up = STANDING, face = AWAY },
 			bite = 0.65,
@@ -96,6 +107,7 @@ local Grabs: { [string]: { Def } } = {
 	Brute = {
 		{
 			id = "Fist",
+			area = "LeftArm",
 			name = "IN ITS FIST",
 			hold = { pos = { -1.6, 0.4, -3.8 }, up = STANDING, face = TOWARD },
 			bite = 1.2,
@@ -103,6 +115,7 @@ local Grabs: { [string]: { Def } } = {
 		},
 		{
 			id = "Shovel",
+			area = "Torso",
 			name = "PINNED UNDER THE SHOVEL",
 			hold = { pos = { 0.9, -5.15, -5.2 }, up = AWAY, face = UP },
 			bite = 1.0,
@@ -110,6 +123,7 @@ local Grabs: { [string]: { Def } } = {
 		},
 		{
 			id = "Bearhug",
+			area = "Torso",
 			name = "CRUSHED TO ITS CHEST",
 			hold = { pos = { 0, -1.1, -2.9 }, up = STANDING, face = TOWARD },
 			bite = 1.3,
@@ -118,6 +132,7 @@ local Grabs: { [string]: { Def } } = {
 		-- what it does now: slams you face down and pins you under the shovel blade
 		{
 			id = "Slam",
+			area = "RightLeg",
 			name = "PINNED BY THE BRUTE",
 			hold = { pos = { 0.9, -5.15, -5.2 }, up = AWAY, face = DOWN },
 			bite = Tuning.Grab.Pin.Tick,

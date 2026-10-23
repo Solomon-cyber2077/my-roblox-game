@@ -356,8 +356,18 @@ function Ui.button(
 	button.SelectionLost:Connect(function()
 		look("Rest")
 	end)
+	-- the key sounds as the finger goes down, not when it lifts (Activated): a mouse or a touch
+	-- here, a gamepad's A or Enter in Activated below
+	local tappedAt = 0
+	local function tap()
+		if onClick and not button:GetAttribute("Disabled") and Registry.AudioController then
+			tappedAt = os.clock()
+			Registry.AudioController.Tap("MenuClick")
+		end
+	end
 	button.MouseButton1Down:Connect(function()
 		look("Down")
+		tap()
 	end)
 	button.MouseButton1Up:Connect(function()
 		look(if hovering then "Hover" else "Rest")
@@ -365,9 +375,8 @@ function Ui.button(
 	if onClick then
 		button.Activated:Connect(function()
 			if not button:GetAttribute("Disabled") then
-				-- a tactile key under the finger
-				if Registry.AudioController then
-					Registry.AudioController.Play("MenuClick")
+				if os.clock() - tappedAt > 0.6 then
+					tap() -- pressed without a pointer (gamepad A, Enter)
 				end
 				onClick()
 			end

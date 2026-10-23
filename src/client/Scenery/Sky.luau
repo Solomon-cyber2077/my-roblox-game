@@ -443,8 +443,8 @@ local BLOOM = { intensity = 0.55, threshold = 1.3, size = 24 }
 local LOBBY = {
 	brightness = 0,
 	exposure = -0.1,
-	ambient = rgb(10, 10, 12),
-	outdoor = rgb(12, 12, 15),
+	ambient = rgb(13, 10, 7), -- a warm floor under the lamps, never a grey one
+	outdoor = rgb(13, 10, 8),
 	bloom = 0.25,
 	bloomThreshold = 1.8,
 	bloomSize = 16,

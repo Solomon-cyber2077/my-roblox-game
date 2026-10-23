@@ -73,6 +73,7 @@ local Safe = require(Shared.Util.Safe)
 local Types = require(Shared.Types)
 
 local HollowBuilder = require(script.Parent.Parent.Builders.HollowBuilder)
+local Wounds = require(script.Parent.Parent.Builders.Wounds)
 local Registry = require(script.Parent.Parent.Registry)
 local NetService = require(script.Parent.NetService)
 local StationService = require(script.Parent.StationService)
@@ -181,6 +182,7 @@ local HollowService = {}
 
 local hollows: { Hollow } = {}
 local params: Types.HazardParams? = nil
+local woundRng = Random.new() -- where a bite marks the body: looks only, so not from the run seed
 local folder: Folder
 local rng = Random.new()
 local sightParams = RaycastParams.new()
@@ -757,6 +759,8 @@ local function finishHold(hollow: Hollow)
 		return
 	end
 	Registry.CrewService.TagDamage(hold.character, "Hollow")
+	-- what it was working on comes away (Builders/Wounds keeps it short of gore)
+	Safe.call("HollowService.sever", Wounds.sever, hold.character, hold.def.area)
 	hold.humanoid.Health = 0
 end
 
@@ -818,6 +822,7 @@ local function holdTick(hollow: Hollow)
 		Registry.CrewService.TagDamage(character, "Hollow")
 		hold.humanoid:TakeDamage(damage)
 		NetService.Fire("Fx", hold.victim, "Bite", { style = hold.def.id, damage = damage })
+		Safe.call("HollowService.wound", Wounds.mark, character, hold.def.area, woundRng)
 	end
 	local now = serverNow()
 	-- an unpressed check runs out after its turn: a miss

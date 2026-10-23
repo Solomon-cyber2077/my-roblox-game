@@ -1,5 +1,18 @@
 # HANDOFF
 
+## 2026-10-22: LOBBY LIGHT AT JOIN, CAB DOORWAY, GRAB TRAUMA, SLIM SKILL CHECK, CLICKS
+1. Completed
+- Lobby brightness: the cause was AtmosphereController treating "no character yet" (CharacterAutoLoads is off; the camera sits at the origin, 12000 studs from the hall) as outside the hall, so the run's night sky (exposure floor 0.26, ambient floor, sky diffuse, run bloom) lit the hall and then eased down after spawn. Outside a run, no character now counts as the hall, and crossing into or out of the hall cuts to its look. default.project.json carries the hall look as Lighting defaults so it is right before any script runs. Sky.LOBBY ambient is warm (13,10,7). Piano corner: candles 0.55/8, the pool 0.6/22 moved out from the wall (no floor hot spot, no blotch on the board).
+- Last Light cab doorway: the floating pieces were the two GraspRails (placed inside the opening) and the glazing sills baked into LocomotiveFittingsP. Rails now sit on the jambs (Tuning.Grasp.RailJamb). The EditableMesh sill cut never worked (Mesh APIs are off; in-experience meshes are fixed-size), so TrainVisualsController hides FittingsP while the doors are open (all else on it is below the platform edge). assets/train/Locomotive_FittingsP.fbx is still the cut mesh for a re-import.
+- Grab: UI/Trauma (stress tunnel that throbs with the heartbeat, vein cracks and blur at each bite, 9 s adrenaline rush after escaping with gasps, the tunnel shutting at a death). Config/Grabs gives every grip an `area`; Builders/Wounds marks that limb on each bite (round bruise, three claw rakes, dark colours) and at a death in the grip that limb comes away with dark stump caps and a few dark drops (no bright red, no spray).
+- UI/Struggle has no plate: the grip's name in typewriter type, a thin bar with amber zone and bright sliver, red clock and escape hairlines, a small key chip.
+- Train return beacon removed (VisibilityController, Tuning.Visibility.Beacon).
+- Clicks: buttons and MENU play the typewriter key on press-down from a pool preloaded at start (AudioController.Tap); MENU toggles on press-down and ignores its own release (Activated still serves gamepad A / Enter).
+2. Verified: `lune run check` passed (staged snapshot alone too). Studio: no character -> hall look at once, entering the hall cuts to it; hall and piano screenshots warm and even; display-train cab doorway clear with doors open; Dev grab shows the slim check, tunnel and veins; Wounds marks and a severed arm photographed in the hall; MENU opens once on a held press. Console clean apart from the known Studio notices.
+- NOT verified: Rojo has not pushed the new Lighting defaults into this Studio copy (reconnect the Rojo plugin); a death in a live grip seen from a crewmate's view; the click timing by ear; on a phone.
+- Content rating: limb loss is kept dark and bloodless, but dismemberment may still count against the experience's maturity questionnaire; review before publishing.
+3. Next: reconnect Rojo and check the place's Lighting; re-import the cut FittingsP mesh to drop the door-open hide.
+
 ## 2026-10-22: PHONE PASS 3 (TRAIN CAM, ERRAND BOARD, BALLOT, POPUPS; PHONE ONLY)
 1. Completed (phone = gui Compact; a computer is unchanged unless noted)
 - Train camera: no on-screen chip on a phone; TRAIN CAMERA is a MENU entry while aboard. A computer keeps the chip above the watch; C / D-pad up as before.

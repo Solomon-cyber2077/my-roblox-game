@@ -14,7 +14,6 @@
 	players whose cars streamed in late.
 ]]
 
-local AssetService = game:GetService("AssetService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -50,6 +49,7 @@ type Rig = {
 	doorOpen: number,
 	live: boolean,
 	doorLamps: { PointLight }?, -- at the platform-side doors, made at the first Last Call grace
+	cabFittings: BasePart?, -- hidden while the doors are open (see CAB_FITTINGS)
 }
 
 local TrainVisualsController = {}
@@ -58,16 +58,11 @@ local rigs: { Rig } = {}
 local angle = 0
 local lastPuff = 0
 
--- The Last Light's cab door: its glazing sills were baked into the static FittingsP mesh, so they
--- hung in the doorway when the leaves slid open. They are cut from a local copy of the mesh and
--- rebuilt as parts that slide with their leaves (assets/train has the cut mesh for a re-import).
+-- The Last Light's cab door: its glazing sills are baked into the static FittingsP mesh, so they
+-- would hang in the doorway once the leaves slide open. Everything else on that mesh sits below
+-- the platform edge, and the doors only open at a platform, so the mesh is hidden while they are.
+-- (A cut mesh is in assets/train for a re-import; EditableMesh cannot cut it in a live game.)
 local CAB_FITTINGS = "LocomotiveFittingsP"
-local CAB_SILL_X = { -- mesh-local x spans
-	{ lo = -17.6, hi = -16.5, leaf = "DoorLeafL" },
-	{ lo = -15.6, hi = -14.5, leaf = "DoorLeafR" },
-}
-local CAB_SILL_BAND = 0.08 -- the sills are the mesh's topmost faces
-local CAB_SILL_TEAK = Color3.fromRGB(104, 58, 38)
 
 local SMOKE = ColorSequence.new(Color3.fromRGB(70, 66, 64), Color3.fromRGB(150, 144, 138))
 local STARVING_SMOKE = ColorSequence.new(Color3.fromRGB(176, 172, 168), Color3.fromRGB(214, 210, 206))
@@ -105,75 +100,6 @@ local function steamEmitter(parent: BasePart, rate: number): ParticleEmitter
 	return emitter
 end
 
--- Cuts the cab door's sills out of the Last Light's FittingsP mesh and hangs them on the leaves.
--- On any failure (no EditableMesh access) the mesh is left as it was and no sills are added.
-local function cutCabSills(part: MeshPart)
-	if part:GetAttribute("SillsCut") then
-		return
-	end
-	part:SetAttribute("SillsCut", true)
-	local ok, err = pcall(function()
-		local em = AssetService:CreateEditableMeshAsync(Content.fromUri(part.MeshId))
-		local lo, hi = Vector3.one * math.huge, -Vector3.one * math.huge
-		for _, v in em:GetVertices() do
-			local p = em:GetPosition(v)
-			lo, hi = lo:Min(p), hi:Max(p)
-		end
-		local scale = part.Size / (hi - lo)
-		local sills: { [string]: { lo: Vector3, hi: Vector3 } } = {}
-		for _, f in em:GetFaces() do
-			local fLo, fHi = Vector3.one * math.huge, -Vector3.one * math.huge
-			for _, v in em:GetFaceVertices(f) do
-				local p = em:GetPosition(v)
-				fLo, fHi = fLo:Min(p), fHi:Max(p)
-			end
-			for _, span in CAB_SILL_X do
-				if fLo.X > span.lo and fHi.X < span.hi and fLo.Y > hi.Y - CAB_SILL_BAND and fLo.Z > 0 then
-					em:RemoveFace(f)
-					local s = sills[span.leaf]
-					sills[span.leaf] = if s
-						then { lo = s.lo:Min(fLo), hi = s.hi:Max(fHi) }
-						else { lo = fLo, hi = fHi }
-				end
-			end
-		end
-		if next(sills) == nil then
-			return nil -- already cut (a re-imported mesh)
-		end
-		em:RemoveUnused()
-		local newLo, newHi = Vector3.one * math.huge, -Vector3.one * math.huge
-		for _, v in em:GetVertices() do
-			local p = em:GetPosition(v)
-			newLo, newHi = newLo:Min(p), newHi:Max(p)
-		end
-		local base = part.CFrame
-		local cut = AssetService:CreateMeshPartAsync(Content.fromObject(em))
-		part:ApplyMesh(cut)
-		part.Size = (newHi - newLo) * scale
-		part.CFrame = base * CFrame.new((newLo + newHi) / 2 * scale)
-		for leafName, box in sills do
-			local leaf = part.Parent and part.Parent:FindFirstChild(leafName)
-			local sill = Instance.new("Part")
-			sill.Name = `{leafName}Sill`
-			sill.Size = (box.hi - box.lo) * scale
-			sill.CFrame = base * CFrame.new((box.lo + box.hi) / 2 * scale)
-			sill.Color = CAB_SILL_TEAK
-			sill.Material = Enum.Material.Wood
-			sill.Anchored = true
-			sill.CanCollide = false
-			sill.CanQuery = false
-			sill.CanTouch = false
-			sill.CastShadow = false
-			sill:SetAttribute("DoorSlide", if leaf then leaf:GetAttribute("DoorSlide") else nil)
-			sill.Parent = part.Parent
-		end
-		return nil
-	end)
-	if not ok then
-		warn(`[TrainVisuals] cab sills left in the mesh: {err}`)
-	end
-end
-
 -- Picks up one part of a rig: a wheel, rod, door leaf, coal lump, chimney, vent or fire.
 local function register(rig: Rig, part: Instance)
 	if not part:IsA("BasePart") then
@@ -206,8 +132,8 @@ local function register(rig: Rig, part: Instance)
 	if part.Name == "DoorBlocker" then
 		rig.doorLamps = nil -- a doorway arrived: the Last Call lamps are found again
 	end
-	if part.Name == CAB_FITTINGS and part:IsA("MeshPart") then
-		task.spawn(cutCabSills, part)
+	if part.Name == CAB_FITTINGS then
+		rig.cabFittings = part
 	end
 	if part.Name == "ChimneyTop" then
 		rig.smoke = smokeEmitter(part)
@@ -243,6 +169,9 @@ end
 local function unregister(rig: Rig, part: Instance)
 	if not part:IsA("BasePart") then
 		return
+	end
+	if rig.cabFittings == part then
+		rig.cabFittings = nil
 	end
 	without(rig.spins, function(spin: Spin)
 		return spin.part == part
@@ -294,6 +223,7 @@ local function rigFor(model: Model, live: boolean): Rig
 		doorOpen = 0,
 		live = live,
 		doorLamps = nil,
+		cabFittings = nil,
 	}
 	for _, part in model:GetDescendants() do
 		register(rig, part)
@@ -551,6 +481,10 @@ function TrainVisualsController.Start()
 					spinFrames,
 					door.base * CFrame.new(door.slide * MathX.smoothstep(0, 1, rig.doorOpen), 0, 0)
 				)
+			end
+			local fittings = rig.cabFittings
+			if fittings then
+				fittings.LocalTransparencyModifier = if rig.doorOpen > 0.01 then 1 else 0
 			end
 			-- A starving engine (no coal) shows it: thin pale smoke and a dying, sputtering fire.
 			local starving = rig.live and Registry.StateController.Get({ "train", "starving" }) == true

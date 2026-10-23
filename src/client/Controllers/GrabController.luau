@@ -17,6 +17,9 @@
 	  * the view is dragged round toward the thing's face, every bite jolts it and pulses
 	    the screen red, and your heart pounds
 	  * when you tear free (or a flash makes it let go) you are thrown clear
+	  * the screen carries your nerves (UI/Trauma): a tunnel that tightens and throbs with your
+	    heart while it has you, dark veins cracking in at every bite, then the adrenaline rush
+	    after you tear free; dying in its grip shuts the tunnel
 
 	While it has you, your own look and turn are frozen: the server pins your anchored root
 	to the hold every tick, and shift lock or AutoRotate turning it locally made the body
@@ -47,6 +50,7 @@ local Session = require(script.Parent.Parent.Session)
 local Overlay = require(script.Parent.Parent.UI.Overlay)
 local Struggle = require(script.Parent.Parent.UI.Struggle)
 local Theme = require(script.Parent.Parent.UI.Theme)
+local Trauma = require(script.Parent.Parent.UI.Trauma)
 
 local GrabController = {}
 
@@ -63,6 +67,7 @@ local held = false
 local struggle = 0 -- 0..1 how hard you have been fighting lately
 local escapeShown = 0
 local heartAt = 0
+local gaspAt = 0 -- the rush's next gasp for breath
 local check: SkillCheck.Check? = nil -- the check on screen now
 local pressed = false -- its one press has gone to the server
 local finishFrom = 0 -- server times the grab's clock runs between
@@ -229,6 +234,7 @@ local function begin(model: Model, style: string)
 	pressed = false
 	finishFrom = Workspace:GetServerTimeNow()
 	finishAt = (model:GetAttribute("GrabFinishAt") :: number?) or finishFrom
+	Trauma.seize()
 	local crew = Registry.StateController.Get({ "crew" }) or {}
 	Struggle.show(
 		if def then def.name else "IT HAS YOU",
@@ -276,7 +282,14 @@ local function finish(model: Model)
 	safely("unlock", unlock)
 	local outcome = OUTCOMES[(model:GetAttribute("GrabOutcome") :: string?) or ""]
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	if outcome and humanoid and humanoid.Health > 0 then
+	local alive = humanoid ~= nil and humanoid.Health > 0
+	if alive then
+		Trauma.release(true)
+		gaspAt = os.clock() + 0.3
+	else
+		Trauma.died()
+	end
+	if outcome and alive then
 		Overlay.alert(outcome.text, outcome.color, 2.4)
 	end
 end
@@ -317,6 +330,7 @@ function GrabController.Init() end
 
 function GrabController.Start()
 	local ui = Registry.UIController.Gui()
+	Trauma.mount(ui)
 	Struggle.mount(ui, press)
 	local player = Players.LocalPlayer
 	player.CharacterRemoving:Connect(function(model)
@@ -334,6 +348,7 @@ function GrabController.Start()
 		end
 		-- a failed unlock must never stop the new body being watched
 		safely("unlock on respawn", unlock)
+		Trauma.clear()
 		model:WaitForChild("Humanoid", 10)
 		watch(model)
 	end)
@@ -358,6 +373,12 @@ function GrabController.Start()
 	RunService.RenderStepped:Connect(function(dt)
 		struggle *= math.exp(-dt * 2.2)
 		if not held then
+			-- the rush after tearing free: gasps that slow as it ebbs
+			local rush = Trauma.rush()
+			if rush > 0.25 and os.clock() >= gaspAt then
+				gaspAt = os.clock() + 1.1 + 1.4 * (1 - rush)
+				audio("Winded", 0.3 + 0.4 * rush, 0.75 + math.random() * 0.15)
+			end
 			return
 		end
 		local model = character()
@@ -389,6 +410,7 @@ function GrabController.Start()
 			heartAt = os.clock() + 0.42 + 0.35 * life
 			audio("Heartbeat", 0.9, 1)
 			Registry.CameraController.Pulse(0.6)
+			Trauma.beat(1)
 		end
 	end)
 end
@@ -409,16 +431,18 @@ function GrabController.Unstick()
 	end
 end
 
--- A bite, squeeze or yank landed on you (Fx from HollowService).
-function GrabController.Bite()
-	Overlay.pulse(Theme.Color.signal, 0.85, 0.5)
-	Registry.CameraController.Shake(0.55)
+-- A bite, squeeze or yank landed on you (Fx from HollowService): `damage` taken by it.
+function GrabController.Bite(damage: number?)
+	local strength = math.clamp((damage or 8) / 14, 0.45, 1)
+	Overlay.pulse(Theme.Color.signalDark, 0.9, 0.7)
+	Registry.CameraController.Shake(0.45 + 0.4 * strength)
+	Trauma.hit(strength)
 	audio("Hit", 0.75, 0.85)
 end
 
 -- It just seized you.
 function GrabController.Seized()
-	Overlay.pulse(Theme.Color.signal, 1, 0.9)
+	Overlay.pulse(Theme.Color.signalDark, 1, 1.1)
 	Registry.CameraController.Shake(1)
 	audio("Hit", 1, 0.7)
 end

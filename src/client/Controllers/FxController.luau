@@ -211,7 +211,9 @@ local function onFx(kind: string, data: { [string]: any }?)
 	elseif kind == "Grabbed" then
 		Registry.GrabController.Seized()
 	elseif kind == "Bite" then
-		Registry.GrabController.Bite()
+		Registry.GrabController.Bite(
+			if type(d) == "table" and type(d.damage) == "number" then d.damage else nil
+		)
 	elseif kind == "SkillCheck" then
 		Registry.GrabController.Check(d)
 	elseif kind == "SkillResult" then

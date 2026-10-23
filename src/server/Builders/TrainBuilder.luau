@@ -1711,11 +1711,13 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	})
 
 	model.PrimaryPart = boiler
-	-- Fixed handholds beside every side door: two reachable grips just outside the wall.
+	-- Fixed handholds beside every side door: two reachable grips just outside the wall, one on
+	-- each jamb, clear of the opening (inside it they hung in mid-air once the leaves slid away)
 	for _, blocker in doorBlockers do
 		local localPosition = origin:PointToObjectSpace(blocker.CFrame.Position)
 		local side = if localPosition.Z >= 0 then 1 else -1
-		for _, dx in { -blocker.Size.X / 4, blocker.Size.X / 4 } do
+		local jamb = blocker.Size.X / 2 + Tuning.Grasp.RailWidth / 2 + Tuning.Grasp.RailJamb
+		for _, dx in { -jamb, jamb } do
 			local facing = if side > 0 then CFrame.new() else CFrame.Angles(0, math.pi, 0)
 			local rail = Kit.block(
 				model,
