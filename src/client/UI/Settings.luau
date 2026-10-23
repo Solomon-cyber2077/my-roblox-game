@@ -59,10 +59,10 @@ function SettingsUi.mount(gui: ScreenGui)
 		},
 		{
 			key = "Hud",
-			title = "HUD",
+			title = "HUD (CREATOR MODE)",
 			values = { "Show", "Hide" },
 			toggle = true,
-			note = "The pocket watch, gauges, backpack and crew roster during a run.",
+			note = "Off is Creator mode for clean clips: no watch, gauges, backpack, roster, name tags or your own ping glow.",
 		},
 		{
 			key = "Camera",

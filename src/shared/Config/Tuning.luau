@@ -138,6 +138,25 @@ local Tuning = {
 		PitchJitter = 0.08,
 		Takes = { Plank = 2, TrainFloor = 2, Gravel = 2, Snow = 3 },
 		BreathFade = 1.5, -- seconds the breathing takes to swell or die away
+		-- four boot timbres by crew slot (Prompt 7): the same takes played at a base pitch and level
+		-- of their own, each step still jittered by PitchJitter around it
+		Boots = {
+			{ name = "Hobnail", pitch = 1.12, gain = 1.0 },
+			{ name = "SoftLeather", pitch = 0.86, gain = 0.7 },
+			{ name = "Clog", pitch = 0.7, gain = 1.1 },
+			{ name = "Heel", pitch = 1.36, gain = 0.85 },
+		},
+		CrewRollOff = 40, -- studs: a crewmate's steps fall silent past this
+		ArrivalHushSeconds = 2, -- after the arrival brakes: near-silence (ambience -12 dB, no drone)
+		ArrivalHushLevel = 0.25, -- -12 dB
+		OwnMuffle = -10, -- dB off the high end of your own steps (low-passed)
+	},
+	-- The co-op ping (Prompt 7): the pinger's lantern flares and the crew's watches point at them.
+	Ping = {
+		GlowSeconds = 1.5,
+		GlowBrightness = 4,
+		GlowRange = 18,
+		CompassSeconds = 2,
 	},
 	-- What a grab does to the screen (UI/Trauma) and the body (Builders/Wounds)
 	Trauma = {

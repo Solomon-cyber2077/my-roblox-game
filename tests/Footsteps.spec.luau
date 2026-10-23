@@ -41,3 +41,28 @@ describe("Footsteps", function()
 		expect(Audio.Breath.loop).toBe(true)
 	end)
 end)
+
+describe("Crew-slot boots", function()
+	it("gives a joiner the lowest free slot and never moves anyone", function()
+		expect(Footsteps.freeSlot({})).toBe(1)
+		expect(Footsteps.freeSlot({ [1] = true, [2] = true })).toBe(3)
+		expect(Footsteps.freeSlot({ [1] = true, [3] = true })).toBe(2) -- a left player's slot is reused
+		expect(Footsteps.freeSlot({ [1] = true, [2] = true, [3] = true, [4] = true })).toBe(1)
+	end)
+
+	it("keeps four timbres far enough apart that the step jitter never blurs two together", function()
+		local boots = Tuning.Footsteps.Boots
+		expect(#boots).toBe(4)
+		local jitter = Tuning.Footsteps.PitchJitter
+		for i = 1, #boots do
+			for j = i + 1, #boots do
+				local a, b =
+					math.min(boots[i].pitch, boots[j].pitch), math.max(boots[i].pitch, boots[j].pitch)
+				expect(a * (1 + jitter)).toBeLessThan(b * (1 - jitter))
+			end
+		end
+		expect(Footsteps.boots(2).name).toBe(boots[2].name)
+		expect(Footsteps.boots(nil).name).toBe(boots[1].name)
+		expect(Footsteps.boots(6).name).toBe(boots[2].name)
+	end)
+end)

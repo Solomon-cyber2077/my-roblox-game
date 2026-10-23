@@ -77,10 +77,23 @@ local function step(character: Model, root: BasePart, humanoid: Humanoid, now: n
 		snowy = snowy,
 	})
 	walker.count += 1
-	local jitter = Tuning.Footsteps.PitchJitter
+	local T = Tuning.Footsteps
 	local cue = Footsteps.cue(surface, walker.count)
 	if Audio[cue] and Registry.AudioController then
-		Registry.AudioController.Play(cue, hit.Position, 1, 1 + (math.random() * 2 - 1) * jitter)
+		-- each crew member's boots (their crew slot); yours low-passed, a crewmate's out to CrewRollOff
+		local player = Players:GetPlayerFromCharacter(character)
+		local entry = if player
+			then Registry.StateController.Get({ "crew", tostring(player.UserId) })
+			else nil
+		local boots = Footsteps.boots(if type(entry) == "table" then entry.slot else nil)
+		local own = player == Players.LocalPlayer
+		Registry.AudioController.Play(
+			cue,
+			hit.Position,
+			boots.gain,
+			boots.pitch * (1 + (math.random() * 2 - 1) * T.PitchJitter),
+			if own then { muffle = T.OwnMuffle } else { rollOff = T.CrewRollOff }
+		)
 	end
 end
 

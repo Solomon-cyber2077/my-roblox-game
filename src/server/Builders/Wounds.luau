@@ -158,7 +158,7 @@ local function drops(on: BasePart)
 	emitter.Acceleration = Vector3.new(0, -40, 0)
 	emitter.Rate = 0
 	emitter.Parent = on
-	emitter:Emit(10)
+	emitter:Emit(7) -- a third fewer than the first pass (Prompt 9 blood audit)
 	task.delay(1.5, function()
 		emitter:Destroy()
 	end)

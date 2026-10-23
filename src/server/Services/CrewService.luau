@@ -20,6 +20,7 @@ local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
 local DeathCause = require(Shared.Logic.DeathCause)
 local Economy = require(Shared.Logic.Economy)
+local Footsteps = require(Shared.Logic.Footsteps)
 local Ledger = require(Shared.Logic.Ledger)
 local RunRules = require(Shared.Logic.RunRules)
 local Safe = require(Shared.Util.Safe)
@@ -42,6 +43,7 @@ type Member = {
 	tally: Types.CrewTally,
 	clutchCounted: boolean,
 	grasped: boolean, -- caught the railing this departure: Aboard stands until it resolves
+	slot: number, -- crew slot for the run (Logic/Footsteps boots), kept by a member, freed by none
 }
 
 local CrewService = {}
@@ -76,7 +78,17 @@ local function publish(member: Member)
 		cause = member.cause,
 		rescued = member.rescued,
 		load = member.load,
+		slot = member.slot,
 	})
+end
+
+-- The lowest crew slot no member holds (a joiner's boots).
+local function freeSlot(): number
+	local used: { [number]: boolean } = {}
+	for _, member in members do
+		used[member.slot] = true
+	end
+	return Footsteps.freeSlot(used)
 end
 
 local function unpublish(player: Player)
@@ -297,6 +309,16 @@ function CrewService.Start()
 	NetService.Handle("JoinInProgress", function(player)
 		CrewService.RequestJoin(player)
 	end)
+	-- the co-op ping: every client flares the pinger's lantern, points its watch at them and
+	-- whistles (FxController); never in the hall; NetService allows one every 3 s
+	NetService.Handle("Ping", function(player)
+		NetService.FireAll("Fx", "Ping", { userId = player.UserId })
+	end, function(player)
+		local member = members[player]
+		return member ~= nil
+			and isAliveStatus(member.status)
+			and RunRules.isRunPhase(Registry.RunDirector.Phase())
+	end)
 
 	Players.PlayerRemoving:Connect(function(player)
 		pendingJoin[player] = nil
@@ -426,6 +448,7 @@ function CrewService.BeginRun(players: { Player })
 			tally = Economy.emptyTally(),
 			clutchCounted = false,
 			grasped = false,
+			slot = i,
 		}
 		members[player] = member
 		publish(member)
@@ -662,6 +685,7 @@ function CrewService.SpawnPendingJoiners()
 				tally = Economy.emptyTally(),
 				clutchCounted = false,
 				grasped = false,
+				slot = freeSlot(),
 			}
 			members[player] = member
 			publish(member)

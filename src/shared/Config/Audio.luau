@@ -33,6 +33,35 @@ export type Cue = {
 
 local Cues: { [string]: Cue } = {
 	Whistle = { id = 9119628070, volume = 0.7, maxSeconds = 4 },
+	-- the co-op ping: a soft whistle from the pinger (the engine's whistle, high and short)
+	PingWhistle = {
+		id = 9119628070,
+		volume = 0.35,
+		maxSeconds = 0.9,
+		pitch = 1.9,
+		spatial = true,
+		rollOff = 180,
+		mix = "Feedback",
+	},
+	-- a stalking Hollow between cover: now and then a board creaks or a pebble skips (Prompt 7)
+	StalkCreak = {
+		id = 9114129572,
+		volume = 0.22,
+		maxSeconds = 0.9,
+		pitch = 0.55,
+		spatial = true,
+		rollOff = 40,
+		mix = "Cues",
+	},
+	StalkPebble = {
+		id = 15675059323,
+		volume = 0.16,
+		maxSeconds = 0.4,
+		pitch = 2.1,
+		spatial = true,
+		rollOff = 35,
+		mix = "Cues",
+	},
 	Departure = { id = 9119628064, volume = 0.75, maxSeconds = 5 },
 	Brakes = { id = 9114659986, volume = 0.6 },
 	DoorsOpen = { id = 9120301474, volume = 0.5 },
