@@ -123,8 +123,12 @@ local VERBOSE = process.env.AUDIT_VERBOSE ~= nil -- also print each shown fight'
 -- lit: lights switched on as built (a building's dead lamps come on only with its power);
 -- tris: an estimate from each primitive's shape (block 12, wedge 8, cylinder 88, ball 432: the
 -- cylinder and ball costs measured in Studio's render stats, 1000 parts each, 2026-10-13)
+-- `parts` holds the Performance build: every part but the ones tagged "Detail", which the
+-- client takes out under the Performance graphics setting (Controllers/DetailController).
+-- `quality` caps the full build, details included.
 type Budget = {
 	parts: number?,
+	quality: number?,
 	lights: number?,
 	lit: number?,
 	shadows: number?,
@@ -297,7 +301,7 @@ table.insert(targets, {
 
 table.insert(targets, {
 	name = "Train",
-	budget = { parts = 1800, lights = 34, shadows = 10, emitters = 4 },
+	budget = { parts = 1800, quality = 2200, lights = 34, shadows = 10, emitters = 4 },
 	build = function()
 		local train = TrainBuilder.build(CFrame.new(), nil).model
 		Limewash.train(train, CFrame.new()) -- as TrainService does
@@ -951,6 +955,7 @@ end
 
 type Stats = {
 	parts: number,
+	details: number, -- of those, tagged "Detail" (gone under Performance)
 	lights: number,
 	lit: number,
 	shadows: number,
@@ -960,7 +965,7 @@ type Stats = {
 }
 
 local function newStats(): Stats
-	return { parts = 0, lights = 0, lit = 0, shadows = 0, emitters = 0, particles = 0, tris = 0 }
+	return { parts = 0, details = 0, lights = 0, lit = 0, shadows = 0, emitters = 0, particles = 0, tris = 0 }
 end
 
 local function tally(
@@ -978,6 +983,9 @@ local function tally(
 		end
 		if d:IsA("BasePart") then
 			stats.parts += 1
+			if d:HasTag("Detail") then
+				stats.details += 1
+			end
 			if d:IsA("WedgePart") then
 				stats.tris += 8
 			elseif d:IsA("CornerWedgePart") then
@@ -1042,9 +1050,15 @@ local function over(stats: Stats, budget: Budget?): { string }
 		for _, key in { "parts", "lights", "lit", "shadows", "emitters", "particles", "tris" } do
 			local limit = (budget :: any)[key]
 			local value = (stats :: any)[key]
+			if key == "parts" then
+				value -= stats.details -- the Performance build
+			end
 			if limit ~= nil and value > limit then
 				table.insert(problems, `{key} {math.floor(value + 0.5)} > {limit}`)
 			end
+		end
+		if budget.quality and stats.parts > budget.quality then
+			table.insert(problems, `parts with details {stats.parts} > {budget.quality}`)
 		end
 	end
 	return problems
@@ -1180,6 +1194,13 @@ for _, target in targets do
 	local clean = #fights == 0 and #clashes == 0 and #problems == 0
 	local color = if clean then "green" else "red"
 	local landNote = if land.parts > 0 then string.format("  (landscape window %d)", land.parts) else ""
+	if total.details > 0 then
+		landNote ..= string.format(
+			"  (%d of them details: %d under Performance)",
+			total.details,
+			total.parts - total.details
+		)
+	end
 	print(
 		stdio.color(color)
 			.. string.format(

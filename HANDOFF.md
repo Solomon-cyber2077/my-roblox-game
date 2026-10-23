@@ -1,5 +1,14 @@
 # HANDOFF
 
+## 2026-10-23: DETAIL LEVEL FOLLOWS THE GRAPHICS SETTING
+1. Completed
+- Parts tagged "Detail" are finishing touches: Controllers/DetailController hides them (LocalTransparencyModifier 1) under Settings' Performance and shows them under Quality, catching parts that stream in later.
+- The visual audit counts details apart: `parts` budgets the Performance build (everything but details), a new `quality` key caps the full build. Train: parts 1800, quality 2200; it is 1837 with 52 details (1785 under Performance).
+- Restored as details: the train lanterns' brass finial, corner bars, base and ceiling rose, the roof drip rails, the door backs' glazing frames and pull mounts, the cornice's gilt bead and drip cap.
+2. Verified: tests (517) and the audit passed; luau-lsp clean for these files (the full `lune run check` stopped at lint on S10's in-progress Hud.luau). Studio (built place): 220 Detail parts, all hidden under Performance and all shown again under Quality.
+- NOT verified: a frame-time comparison of the two settings on a phone.
+3. Next: tag details in the hall and the stations the same way where their budgets are tight.
+
 ## 2026-10-23: S10 / PROMPT 7 THE REST + PROMPT 9 (FOOTSTEPS, PING, ARRIVAL SILENCE, RELEASE PLUMBING)
 1. Completed
 - Boots by crew slot: CrewService gives each member a slot (run order; a joiner takes the lowest free, `Logic/Footsteps.freeSlot`), replicated as `CrewEntry.slot`. Four timbres (`Tuning.Footsteps.Boots`: Hobnail, SoftLeather, Clog, Heel) set base pitch and level, spaced wider than the step jitter. A crewmate's steps fall silent past 40 studs; your own are low-passed 10 dB.

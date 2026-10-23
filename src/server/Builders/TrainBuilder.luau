@@ -142,6 +142,13 @@ local function tag(part: BasePart, role: string): BasePart
 	return part
 end
 
+-- A finishing touch the Performance graphics setting takes out (Controllers/DetailController):
+-- the audit holds the train's part budget to everything else.
+local function detail(part: BasePart): BasePart
+	part:AddTag("Detail")
+	return part
+end
+
 function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 	local model = Kit.model("Train")
 	-- the build's frame, for clients that work in train-local studs (Controllers/LeakController)
@@ -803,12 +810,12 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			local eave = at(cx, WALL_H + 0.2, side * 4.9) * Kit.angles(side * -12, 0, 0)
 			tag(Kit.block(model, Vector3.new(len, 0.5, 3.8), eave, roof, metal), "Roof")
 			-- a rounded drip rail along its lower edge, in the body's varnished teak
-			Kit.cylinder(model, len, 0.26, eave * CFrame.new(0, -0.05, side * 1.98), body, {
+			detail(Kit.cylinder(model, len, 0.26, eave * CFrame.new(0, -0.05, side * 1.98), body, {
 				material = Enum.Material.SmoothPlastic,
 				reflectance = 0.04,
 				collide = false,
 				shadow = false,
-			})
+			}))
 		end
 		-- the monitor: side walls below and above the lights, glazing bars between, end walls, capping
 		local base = WALL_H + 0.8
@@ -960,7 +967,10 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		local brass = { material = Enum.Material.Metal, collide = false, shadow = false }
 		local roofIn = MONITOR_TOP - 0.1 -- underside of the clerestory roof lining
 		for _, x in lamps do
-			-- a long brass rod from the clerestory roof, and the lantern on it
+			-- a rose on the clerestory roof, a long brass rod, and the lantern on it
+			detail(
+				Kit.cylinder(model, 0.12, 0.9, at(x, roofIn - 0.06, 0) * Kit.angles(0, 0, 90), C.brass, brass)
+			)
 			local rodTop, rodBottom = roofIn - 0.12, CEIL_BOTTOM - 0.62
 			Kit.cylinder(
 				model,
@@ -970,15 +980,24 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				C.brass,
 				brass
 			)
-			-- a square glazed lantern, the hall's back-wall lamp head in small: an iron cap over the
-			-- amber glass, hung from the brass rod
+			-- a square glazed lantern, the hall's back-wall lamp head in small: an iron cap with a brass
+			-- finial over the amber glass, four corner bars and an iron base
 			local iron = { material = Enum.Material.Metal, collide = false, shadow = false }
 			local top = CEIL_BOTTOM - 0.68
+			detail(Kit.ball(model, 0.22, at(x, top, 0), C.brass, brass))
 			Kit.block(model, Vector3.new(0.86, 0.22, 0.86), at(x, top - 0.2, 0), C.iron, iron)
 			local glassY = top - 0.31 - 0.45
 			local glass = Kit.neon(model, Vector3.new(0.62, 0.9, 0.62), at(x, glassY, 0), C.lanternGlass)
 			glass.Transparency = 0.15
 			glass.Name = "CeilingLantern"
+			for _, bx in { -0.32, 0.32 } do
+				for _, bz in { -0.32, 0.32 } do
+					detail(
+						Kit.block(model, Vector3.new(0.07, 0.94, 0.07), at(x + bx, glassY, bz), C.iron, iron)
+					)
+				end
+			end
+			detail(Kit.block(model, Vector3.new(0.78, 0.12, 0.78), at(x, glassY - 0.51, 0), C.iron, iron))
 			local L = InteriorLight.Train.Lantern
 			Kit.pointLight(glass, Kit.rgb(L.color), L.brightness, L.range, L.shadows)
 		end
