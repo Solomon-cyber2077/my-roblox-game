@@ -44,7 +44,7 @@ local C = {
 	glass = Color3.fromRGB(150, 170, 180),
 	canvasA = Color3.fromRGB(150, 44, 48),
 	canvasB = Color3.fromRGB(40, 70, 66), -- awnings: red and the line's teal
-	enamel = Color3.fromRGB(204, 222, 234), -- clock faces and sign lettering: a cold white that survives warm light
+	enamel = Color3.fromRGB(204, 220, 232), -- clock faces and sign lettering: a cold white that survives warm light
 	company = Color3.fromRGB(24, 58, 54), -- the line's teal-green enamel
 	water = Color3.fromRGB(40, 48, 52),
 }
@@ -993,7 +993,7 @@ Builders.TunnelMouth = function(ctx)
 		ctx.parent,
 		Vector3.new(12, 11, 2),
 		f(ctx, 0, 5.5, -d / 2 + 2.2),
-		Color3.new(),
+		Color3.fromRGB(18, 17, 16), -- the bore's dark: as near black as the surface rule allows
 		{ material = Enum.Material.SmoothPlastic, collide = false }
 	)
 	for _, x in { -6.5, 6.5 } do

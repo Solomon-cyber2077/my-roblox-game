@@ -515,6 +515,38 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			lit -= 1
 		end
 	end
+	-- The danger lamps' red light, last, from what the budgets leave: evenly spaced along the edge
+	-- (Config/Stations Danger). Visual warning only: no SafeLight tag, no lamp pool.
+	local total = 0
+	local glasses: { BasePart } = {}
+	for _, d in model:GetDescendants() do
+		if d:IsA("PointLight") or d:IsA("SpotLight") or d:IsA("SurfaceLight") then
+			total += 1
+		elseif d:IsA("BasePart") and d:HasTag("DangerLamp") then
+			table.insert(glasses, d)
+		end
+	end
+	-- along the edge: round from one side, across the far end, to the other
+	table.sort(glasses, function(a, b)
+		local pa, pb =
+			docked:PointToObjectSpace(a.CFrame.Position), docked:PointToObjectSpace(b.CFrame.Position)
+		return math.atan2(pa.X, pa.Z) < math.atan2(pb.X, pb.Z)
+	end)
+	local D = Stations.Danger
+	local count = math.min(
+		#glasses,
+		D.MaxLit,
+		math.max(0, D.LightMax - total),
+		math.max(0, Stations.Lamps.LitMax - lit)
+	)
+	if count > 0 then
+		local step = #glasses / count
+		for i = 0, count - 1 do
+			local glass = glasses[math.floor(i * step) + 1]
+			local light = Kit.pointLight(glass, glass.Color, D.Brightness, D.Range, false)
+			light.Name = "DangerLight"
+		end
+	end
 
 	-- Everything except Root moves with physics; Root holds the assembly when anchored.
 	for _, part in model:GetDescendants() do

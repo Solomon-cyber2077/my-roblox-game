@@ -23,13 +23,33 @@ describe("Surface treatments (Config/Surfaces)", function()
 		expect(Luminance.shaded(Surfaces.Limewash.color, worstShade())).toBeAtLeast(Surfaces.MinPale)
 	end)
 
-	it("keeps the coping and the train's lining pale", function()
-		expect(Luminance.of(Surfaces.Coping.color)).toBeAtLeast(Surfaces.MinPale)
+	it("keeps the train's lining pale and the coping wet stone inside the surface rule", function()
 		expect(Luminance.of(Surfaces.Train.lining)).toBeAtLeast(Surfaces.MinPale)
+		local lo, hi = Surfaces.SurfaceRule[1], Surfaces.SurfaceRule[2]
+		for _, channel in Surfaces.Coping.color do
+			expect(channel).toBeBetween(lo, hi)
+		end
+		for _, channel in Surfaces.Margin.color do
+			expect(channel).toBeBetween(lo, hi)
+		end
+	end)
+
+	it("keeps every station palette surface inside the rule (lamp light colours exempt)", function()
+		local Stations = require(Shared.Config.Stations)
+		local lo, hi = Surfaces.SurfaceRule[1], Surfaces.SurfaceRule[2]
+		for _, arch in Stations.List do
+			for _, key in { "ground", "accent", "trim" } do
+				for _, channel in arch.palette[key] do
+					expect(channel).toBeBetween(lo, hi)
+				end
+			end
+		end
 	end)
 
 	it("keeps the blue-brick margin dark, so the coping reads against it", function()
 		expect(Luminance.of(Surfaces.Margin.color)).toBeAtMost(Surfaces.MaxMargin)
+		local coping, margin = Luminance.of(Surfaces.Coping.color), Luminance.of(Surfaces.Margin.color)
+		expect((coping + 0.05) / (margin + 0.05)).toBeAtLeast(Surfaces.MinCopingContrast)
 	end)
 
 	it("gives every station grade a grime entry no darker than the floor allows", function()

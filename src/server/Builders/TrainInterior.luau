@@ -26,6 +26,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
+local IL = InteriorLight
 
 export type Dims = {
 	lineIn: number, -- inner face of the side linings (|z|)
@@ -87,6 +89,17 @@ local BOARD_FONT = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.
 local PLATE_FONT = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold)
 
 -- Lettering on one face of a part.
+
+-- A fixture from Config/InteriorLight (the lighting lock), lit on `part`.
+local function fixtureLight(part: Instance, f: InteriorLight.Fixture, shadows: boolean?): PointLight
+	return Kit.pointLight(
+		part,
+		Kit.rgb(f.color),
+		f.brightness,
+		f.range,
+		if shadows ~= nil then shadows else f.shadows
+	)
+end
 local function letter(
 	part: BasePart,
 	face: Enum.NormalId,
@@ -705,7 +718,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		post(0.5, 0.95, at(tx, 4.05, side * 5.0), C.shade, M.Glass)
 		local bulb =
 			Kit.neon(model, Vector3.one * 0.3, at(tx, 3.85, side * 5.0), C.interiorWarm, Enum.PartType.Ball)
-		Kit.pointLight(bulb, C.interiorWarm, 0.6, 11, false)
+		fixtureLight(bulb, IL.Train.Bulb)
 	end
 
 	-- two bays on the far side of each saloon car; on the platform side a bay and the doors
@@ -844,7 +857,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 			piece(Vector3.new(0.32, 0.06, 0.32), at(XB - 0.45, 6.71, z), C.iron, M.Metal, "LanternBase")
 			local glass = Kit.neon(board, Vector3.new(0.26, 0.36, 0.26), at(XB - 0.45, 6.92, z), C.warm)
 			glass.Name = `Lantern{i}`
-			Kit.pointLight(glass, C.warm, 0.4, 12, false)
+			fixtureLight(glass, IL.Train.BoardLantern)
 		end
 		-- the coal gauge and the clock: brass rims round clear dial faces
 		for _, dial in { { name = "CoalGauge", dz = -0.8 }, { name = "Clock", dz = 0.8 } } do
@@ -872,7 +885,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	disc(0.15, 2.25, at(sx, 2.725, sz), C.ironLight, M.Metal)
 	local glow = Kit.neon(model, Vector3.new(0.9, 0.55, 0.1), at(sx, 1.0, sz + 0.98), C.fire)
 	glow.Name = "StoveGlow"
-	Kit.pointLight(glow, C.fire, 1.0, 13, false)
+	fixtureLight(glow, IL.Train.Firebox)
 	post(6.03, 0.55, at(sx, 5.815, sz), C.iron, M.Metal)
 	-- the fender in front of it, and the coal scuttle
 	decor(Vector3.new(2.8, 0.1, 0.1), at(sx, 0.85, sz + 1.62), C.brass, M.Metal)
@@ -1000,7 +1013,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	post(0.6, 0.08, at(-86.0, 3.46, 5.2), C.brass, M.Metal)
 	local banker = Kit.neon(model, Vector3.new(0.9, 0.24, 0.5), at(-86.0, 3.86, 5.05), rgb(70, 150, 96))
 	banker.Name = "DeskLamp"
-	Kit.pointLight(banker, C.interiorWarm, 0.55, 9, false)
+	fixtureLight(banker, IL.Train.Banker)
 	post(2.05, 0.3, at(-87.0, 1.025, 2.6), C.woodDark, M.Wood, true)
 	seat(Vector3.new(1.3, 0.25, 1.3), at(-87.0, 2.175, 2.6) * Kit.angles(0, 180, 0), C.leather, "Stool")
 	-- the flags in their holder by the back door, the guard's coat on its peg
@@ -1026,7 +1039,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	local flame =
 		Kit.neon(model, Vector3.one * 0.2, at(-71.4, CEIL - 2.05, -2.4), C.ember, Enum.PartType.Ball)
 	flame.Name = "LanternFlame"
-	Kit.pointLight(flame, C.interiorWarm, 0.7, 14, false)
+	fixtureLight(flame, IL.Train.Flame)
 	disc(0.12, 0.62, at(-71.4, CEIL - 2.48, -2.4), C.brass, M.Metal)
 	doorSign(Vector3.new(-66.71, 7.66, 0), Vector3.new(-1, 0, 0), "CREW SALOON")
 	doorSign(Vector3.new(-89.29, 7.66, 0), Vector3.new(1, 0, 0), "SIGNAL MAST")
@@ -1041,7 +1054,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	local benchLamp =
 		Kit.neon(model, Vector3.one * 0.32, at(-6.0, CEIL - 2.08, -4.0), C.interiorWarm, Enum.PartType.Ball)
 	benchLamp.Name = "BenchLamp"
-	Kit.pointLight(benchLamp, C.interiorWarm, 0.8, 13, false)
+	fixtureLight(benchLamp, IL.Train.BenchLamp)
 	-- the lathe
 	for _, x in { -16.9, -12.1 } do
 		solid(Vector3.new(1.2, 2.6, 1.4), at(x, 1.3, -4.7), C.ironLight, M.Metal)
@@ -1157,7 +1170,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	-- the fire inside: a bed of coals glowing behind the hole, the brick arch over it
 	local fire = Kit.neon(model, Vector3.new(0.1, 1.5, 1.9), at(fx + 0.23, 2.3, 0), C.fire)
 	fire.Name = "Firebox"
-	Kit.pointLight(fire, C.fire, 2.2, 16, true)
+	fixtureLight(fire, IL.Train.Stove)
 	decor(Vector3.new(0.5, 0.25, 1.96), at(fx + 0.02, 2.97, 0), C.brick, M.Brick)
 	local flames = decor(Vector3.new(0.3, 0.3, 1.6), at(fx + 0.05, 1.7, 0), C.fire, M.SmoothPlastic)
 	flames.Transparency = 1
@@ -1268,7 +1281,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	ball(0.26, at(bx - 0.62, 7.0, 2.1), C.brass, M.Metal)
 	local gaugeLamp = Kit.neon(model, Vector3.new(0.3, 0.2, 0.5), at(bx - 0.4, 8.55, 0), C.warm)
 	gaugeLamp.Name = "GaugeLamp"
-	Kit.pointLight(gaugeLamp, C.warm, 0.45, 7, false)
+	fixtureLight(gaugeLamp, IL.Train.GaugeLamp)
 	-- brass labels on the backhead
 	for _, label in
 		{

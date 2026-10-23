@@ -3,18 +3,22 @@
 -- screen (docs/visibility). Colour, value and a little geometry only: no light, no glow.
 -- Period basis (LORE.md): 19th-century platform edges were stone or hard blue coping brick;
 -- staff whitened edges with whitewash in fog before 1914 (rare, spreading in 1939); limewash
--- was the West Country's everyday paint for walls, posts and outbuildings. tests/Surfaces.spec
--- holds every pale colour here above its floor, after the worst grade's grime.
+-- was the West Country's everyday paint for walls, posts and outbuildings. Prompt 6 (B.3) took
+-- the whitewash and the station limewash off: station surfaces keep channels within 18-232
+-- (SurfaceRule, enforced by the visual audit on every stop); the coping is wet grey-brown stone
+-- read against the blue-brick margin. The train's lining keeps its pale floor (tests/Surfaces.spec).
 
 local Surfaces = {
 	-- linear relative luminance floors (Logic/Luminance, Rec. 709)
 	MinPale = 0.6, -- limewash, coping and train lining, after grime
 	MaxMargin = 0.04, -- the blue-brick margin behind the coping stays dark
+	MinCopingContrast = 2.5, -- the coping against the margin, WCAG contrast ratio
+	SurfaceRule = { 18, 232 }, -- every station surface channel within this band (Neon, Glass exempt)
 
 	-- the platform's edge stones: worn pale stone, fog-whitened; wider than before so their
 	-- inner half clears the docked train's overhang and takes the open sky
 	Coping = {
-		color = { 250, 250, 244 }, -- fresh whitewash: the most a surface can give under the overhang
+		color = { 120, 112, 100 }, -- wet grey-brown stone (was whitewash 250,250,244)
 		width = 2.35, -- studs (was 1.55); the outer edge does not move
 	},
 	-- a course of blue engineering brick laid behind the coping: the dark field the pale

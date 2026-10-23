@@ -1,5 +1,21 @@
 # HANDOFF
 
+## 2026-10-22: S9 / PROMPT 6 THE REST (STATION LOOK, LIGHTING LOCK) - run before Gate G1 at the owner's request
+1. Completed
+- Surface rule: station surfaces keep colour channels within 18-232 (Config/Surfaces SurfaceRule). The visual audit now checks every visible non-Neon, non-Glass part of every stop; the specs check the palettes, coping and margin. Fixed offenders: the whitewash coping -> wet grey-brown stone (120,112,100; contrast to the blue-brick margin >= 2.5 is spec'd), enamel (204,222,234) -> (204,220,232), the tunnel bore's black -> (18,17,16). Station limewash was already off (earlier today).
+- The sinkhole edge: the rope and stakes (now square timber), two ember-red cracks per tile (Neon, flush, one per half-tile), and a red oil danger lamp on a post every 4 tiles (glass tagged DangerLamp). StationBuilder lights at most Config/Stations Danger.MaxLit 8 (PROVISIONAL) of them, evenly spaced, after counting every other light: min(lamps, 8, 96 - all lights, 64 - lit). Range 10, no shadows, no SafeLight/lamp-pool tag. Under Performance the client turns their light off (glass only).
+- Grades off cyan: saturation 0.10 (PROVISIONAL, 0.08-0.14 per stop), tints moon green-grey and blue-grey; Infirmary is gaslit green-grey.
+- Materials by stop: LORE 7 table (company brick/stone/slate/cast iron vs frontier timber/tin/canvas/rope/oil lamps), plus the danger-lamp edge and Mabel's board. Density: every stop already had a skyline landmark (water tower, chimney, clock tower, headframe, chapel, hotel...); the Infirmary gets a midground water tower.
+- Lighting lock: Config/InteriorLight names every hall and train fixture (colour, brightness, range, shadows); LobbyBuilder and TrainInterior read it. Main fixtures use the 2600 K amber (255,190,120); tuned brightness/ranges and the other session's piano values are kept. Reference shots and luminance bands in docs/direction/reference/ (README, bands.json, tools/refbands.py).
+2. Verified / known gaps
+- `lune run check` passed (515 tests, audit clean). `AUDIT_SEEDS=6 lune run audit Station`: every stop under budget after the square posts (largest Schoolhouse#424244 8878 parts, 367k tris, 96 lights, 59 lit).
+- Studio: a SignalWorks stop showed 22 danger lamps, 8 lit; ember cracks read red along the edge; console clean (known warnings).
+- NOT done: interior doors. The train is at 1791 of its 1800-part budget, so primitive doors do not fit; this needs the Blender mesh path (HUMAN: owner upload) or a part budget raise. The lobby ambient trial (26,20,14, exposure 0) was not applied: Scenery/Sky LOBBY belongs to the lighting session, which set its own values.
+- Reference shots were taken in the iPhone 7 preset (Windows Click to Do blocked switching the simulator off); re-shoot on desktop if wanted. A teal-green line glows along the carriage floor edges in the saloon and workshop (existing; not from this pass).
+- HUMAN: the owner judges the look; real phone at 40% brightness; Visibility 18 vs 30 side by side.
+3. Next logical step
+- S10 (Prompt 7 rest + Prompt 9), or Gate G1 first as the plan intends.
+
 ## 2026-10-22: LOBBY LIGHT AT JOIN, CAB DOORWAY, GRAB TRAUMA, SLIM SKILL CHECK, CLICKS
 1. Completed
 - Lobby brightness: the cause was AtmosphereController treating "no character yet" (CharacterAutoLoads is off; the camera sits at the origin, 12000 studs from the hall) as outside the hall, so the run's night sky (exposure floor 0.26, ambient floor, sky diffuse, run bloom) lit the hall and then eased down after spawn. Outside a run, no character now counts as the hall, and crossing into or out of the hall cuts to its look. default.project.json carries the hall look as Lighting defaults so it is right before any script runs. Sky.LOBBY ambient is warm (13,10,7). Piano corner: candles 0.55/8, the pool 0.6/22 moved out from the wall (no floor hot spot, no blotch on the board).
