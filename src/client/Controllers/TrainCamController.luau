@@ -1,7 +1,7 @@
 --!strict
 --[[
-	The train camera. From aboard, press C (gamepad D-pad up, or the chip by the
-	backpack) to step out of the carriage's windows and watch the train itself run through
+	The train camera. From aboard, press C (gamepad D-pad up, the chip above the pocket watch on a
+	computer, or TRAIN CAMERA in the MENU dropdown on a phone) to step out of the carriage's windows and watch the train itself run through
 	the night from outside. F (D-pad right) cuts to the next shot:
 
 	  Orbit      free: drag to swing round the train, scroll (or the triggers) to close in
@@ -33,6 +33,7 @@ local Session = require(script.Parent.Parent.Session)
 local BrokenThingMarkers = require(script.Parent.Parent.UI.BrokenThingMarkers)
 local Theme = require(script.Parent.Parent.UI.Theme)
 local Ui = require(script.Parent.Parent.UI.Ui)
+local Menu = require(script.Parent.Parent.UI.Menu)
 local TrainFraming = require(script.Parent.Parent.Camera.TrainFraming)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Safe = require(ReplicatedStorage.Shared.Util.Safe)
@@ -74,7 +75,6 @@ local dragging = false
 local looking = false
 local lookYaw, lookPitch = 0, 0
 local LOOK_PITCH = math.rad(70)
-local chip: TextButton
 local bar: ImageLabel
 local barLabel: TextLabel
 local nextButton: TextButton
@@ -281,15 +281,27 @@ function TrainCamController.Start()
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		Parent = gui,
 	})
-	chip = Ui.button("TRAIN CAMERA  [C]", "Secondary", toggle, {
+	-- a phone has no button for it on the screen: the MENU dropdown offers it while aboard
+	local function phone(): boolean
+		local hud = gui:FindFirstChild("LastTrainOut")
+		return hud ~= nil and hud:GetAttribute("Compact") == true
+	end
+	Menu.add("TRAIN CAMERA", 25, toggle, function()
+		return phone() and aboard() and not active
+	end)
+	-- a computer keeps the chip, clear above the pocket watch's bow
+	local chip = Ui.button("TRAIN CAMERA  [C]", "Secondary", toggle, {
 		Name = "TrainCamChip",
 		Size = UDim2.fromOffset(176, 44),
-		Position = UDim2.new(1, -16, 1, -236), -- clear above the pocket watch's bow
+		Position = UDim2.new(1, -16, 1, -236),
 		AnchorPoint = Vector2.new(1, 1),
 		TextSize = 14,
 	})
 	chip.Visible = false
 	chip.Parent = screen
+	RunService.Heartbeat:Connect(function()
+		chip.Visible = not phone() and aboard() and not active
+	end)
 	bar = Ui.panel({
 		Name = "TrainCamBar",
 		-- stops short of the HUD's pocket watch in the bottom right
@@ -329,19 +341,7 @@ function TrainCamController.Start()
 		distance = math.clamp(distance / 1.15, ORBIT_NEAR, ORBIT_FAR)
 	end, { Size = UDim2.fromOffset(40, 40), Position = UDim2.new(1, -46, 0, 34), TextSize = 22 })
 	zoomIn.Parent = bar
-	-- the chip names its key only where there is one
-	local function chipLabel()
-		local last = UserInputService:GetLastInputType()
-		chip.Text = if last == Enum.UserInputType.Touch then "TRAIN CAM" else "TRAIN CAMERA  [C]"
-		-- a phone gets a small tab, not a full button
-		local hud = gui:FindFirstChild("LastTrainOut")
-		local compact = hud ~= nil and hud:GetAttribute("Compact") == true
-		chip.Size = if compact then UDim2.fromOffset(112, 30) else UDim2.fromOffset(176, 44)
-		chip.TextSize = if compact then 12 else 14
-	end
-	chipLabel()
 	UserInputService.LastInputTypeChanged:Connect(function()
-		chipLabel()
 		if active then
 			label()
 		end
@@ -456,29 +456,6 @@ function TrainCamController.Start()
 			end
 		end
 		Safe.call("TrainCamController.frame", frame, dt)
-	end)
-	-- the chip rides just above the pocket watch wherever the HUD put it (a phone lifts the watch
-	-- over the touch buttons), right edges lined up; the fixed spot is the fallback
-	local CHIP_HOME = chip.Position
-	local hudWatch: GuiObject? = nil
-	RunService.Heartbeat:Connect(function()
-		chip.Visible = aboard() and not active
-		if not chip.Visible then
-			return
-		end
-		if hudWatch == nil or hudWatch.Parent == nil then
-			hudWatch = gui:FindFirstChild("PocketWatch", true) :: GuiObject?
-		end
-		local watch = hudWatch
-		if watch and watch.AbsoluteSize.Y > 0 then
-			local origin = screen.AbsolutePosition
-			chip.Position = UDim2.fromOffset(
-				watch.AbsolutePosition.X + watch.AbsoluteSize.X - origin.X,
-				watch.AbsolutePosition.Y - 6 - origin.Y
-			)
-		else
-			chip.Position = CHIP_HOME
-		end
 	end)
 	Players.LocalPlayer.CharacterAdded:Connect(function()
 		setActive(false)

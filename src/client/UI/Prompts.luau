@@ -55,6 +55,12 @@ local function build(
 		Parent = billboard,
 	})
 	Ui.corner(3).Parent = chip
+	if gui:GetAttribute("Compact") == true then
+		-- a phone: the prompt is drawn smaller, centred where it was
+		chip.AnchorPoint = Vector2.new(0.5, 0.5)
+		chip.Position = UDim2.fromScale(0.5, 0.5)
+		Ui.new("UIScale", { Scale = 0.72, Parent = chip })
+	end
 	if steam then
 		chip.BackgroundColor3 = Theme.Color.steelLight
 		Ui.stroke(Theme.Color.brass, 2, 0.05).Parent = chip

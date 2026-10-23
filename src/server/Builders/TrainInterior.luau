@@ -741,7 +741,6 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	-- paintings of the line either side of each gangway door
 	picture(-62.38, 4.0, 1, 1)
 	picture(-62.38, -4.0, 1, 2)
-	picture(-23.62, -4.0, -1, 4)
 	picture(-45.12, 4.0, -1, 3)
 	picture(-45.12, -4.0, -1, 4)
 	picture(-41.88, 4.0, 1, 1)
@@ -754,6 +753,31 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	doorSign(Vector3.new(-36.25, SIDE_SIGN_Y, LI - 0.29), Vector3.new(0, 0, -1), "PLATFORM")
 	nameboard(-55.6, "CREW SALOON")
 	nameboard(-30.0, "CREW SALOON")
+
+	-- The errand board, on the end wall by the Workshop door (its far half, where a painting hung),
+	-- opposite the route board: UI/QuestTracker writes the crew's errands on its clear face.
+	do
+		local XE, ZE = -23.62, -4.05
+		local errands = Instance.new("Model")
+		errands.Name = "ErrandBoard"
+		errands.Parent = model
+		local function piece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, name: string)
+			local part =
+				Kit.block(errands, size, cf, color, { material = material, collide = false, shadow = false })
+			part.Name = name
+		end
+		piece(Vector3.new(0.14, 3.2, 3.0), at(XE - 0.08, 5.4, ZE), C.woodDark, M.Wood, "Board")
+		piece(Vector3.new(0.3, 0.16, 3.16), at(XE - 0.16, 7.08, ZE), C.polish, M.Wood, "BoardCap")
+		local center = Vector3.new(XE - 0.18, 5.35, ZE)
+		local face = Kit.block(
+			errands,
+			Vector3.new(2.7, 2.9, 0.02),
+			origin * CFrame.lookAt(center, center - Vector3.xAxis),
+			C.board,
+			{ transparency = 1, collide = false, shadow = false }
+		)
+		face.Name = "ErrandFace"
+	end
 
 	-- The route board, on the end wall by the Workshop door (its platform half, where a painting
 	-- hung): the junction's tickets hang under a brass rail with a lantern over each, the coal

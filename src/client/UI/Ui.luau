@@ -36,6 +36,20 @@ local function eventNameOf(key: any): string?
 	return nil
 end
 
+-- Draws `target` at `scale` of its size while `gui` is in the phone layout (its Compact attribute,
+-- UIController), full size otherwise: popups take less of a phone's screen.
+function Ui.phoneScale(target: GuiObject, gui: Instance, scale: number): UIScale
+	local uiScale = Instance.new("UIScale")
+	uiScale.Name = "PhoneScale"
+	uiScale.Parent = target
+	local function fit()
+		uiScale.Scale = if gui:GetAttribute("Compact") == true then scale else 1
+	end
+	gui:GetAttributeChangedSignal("Compact"):Connect(fit)
+	fit()
+	return uiScale
+end
+
 function Ui.new(className: string, props: { [any]: any }?, children: { Instance }?): any
 	local instance = Instance.new(className)
 	local p: { [any]: any } = props or {}

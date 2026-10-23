@@ -70,6 +70,7 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 		ZIndex = 20,
 		Parent = gui,
 	})
+	Ui.phoneScale(root, gui, 0.8) -- the grab's skill check: smaller on a phone, still easy to read
 	plateScale = Ui.new("UIScale", { Parent = root })
 	local plate = Ui.panel({
 		Name = "Plate",

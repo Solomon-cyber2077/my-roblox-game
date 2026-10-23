@@ -75,6 +75,8 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		ZIndex = 31,
 		Parent = gui,
 	})
+	-- modals (talking to a resident, the shop, settings) are drawn smaller on a phone
+	Ui.phoneScale(frame, gui, 0.8)
 	local header = Ui.new("Frame", {
 		Name = "Header",
 		Size = UDim2.new(1, -16, 0, 46),

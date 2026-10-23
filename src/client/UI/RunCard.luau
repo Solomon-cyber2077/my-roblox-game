@@ -114,6 +114,7 @@ local function show()
 		ticket:Destroy()
 	end
 	local built, play = RunTicket.build(runData(), Z + 1, true)
+	Ui.phoneScale(built, root.Parent :: Instance, 0.78) -- the run ticket, smaller on a phone
 	built.Position = UDim2.new(0.5, 0, 0.5, 20) -- centred in the visible area (the root reaches 60 above, 20 below)
 	built.AnchorPoint = Vector2.new(0.5, 0.5)
 	built.Active = true
