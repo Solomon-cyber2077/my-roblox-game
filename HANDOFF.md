@@ -8,6 +8,7 @@
 2. Verified: tests (517) and the audit passed; luau-lsp clean for these files (the full `lune run check` stopped at lint on S10's in-progress Hud.luau). Studio (built place): 220 Detail parts, all hidden under Performance and all shown again under Quality.
 - NOT verified: a frame-time comparison of the two settings on a phone.
 3. Next: tag details in the hall and the stations the same way where their budgets are tight.
+4. Status: complete. Commit 2db4161 on claude/last-train-out (on top of S10's 1af27c5), pushed; main left for the last finisher to merge (owner rule, 2026-10-23).
 
 ## 2026-10-23: S10 / PROMPT 7 THE REST + PROMPT 9 (FOOTSTEPS, PING, ARRIVAL SILENCE, RELEASE PLUMBING)
 1. Completed
