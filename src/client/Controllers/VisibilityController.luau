@@ -32,6 +32,7 @@
 	clear within a second of leaving range.
 ]]
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -387,6 +388,14 @@ function VisibilityController.Start()
 		if clock >= nextScan then
 			nextScan = clock + SCAN_SECONDS
 			scan()
+			-- the edge's red danger lamps keep their glass under Performance but lose their light
+			local lightsOn = not performance()
+			for _, glass in CollectionService:GetTagged("DangerLamp") do
+				local light = glass:FindFirstChild("DangerLight")
+				if light and light:IsA("Light") then
+					light.Enabled = lightsOn
+				end
+			end
 		end
 		local character = Players.LocalPlayer.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?

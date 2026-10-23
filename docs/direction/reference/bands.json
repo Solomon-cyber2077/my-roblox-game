@@ -1,0 +1,36 @@
+{
+  "shots": {
+    "hall-ready": {
+      "file": "hall-ready.jpg",
+      "mean": 0.0464,
+      "band": [
+        0.0371,
+        0.0557
+      ]
+    },
+    "hall-spawn": {
+      "file": "hall-spawn.jpg",
+      "mean": 0.036,
+      "band": [
+        0.0288,
+        0.0433
+      ]
+    },
+    "train-saloon": {
+      "file": "train-saloon.jpg",
+      "mean": 0.0647,
+      "band": [
+        0.0517,
+        0.0776
+      ]
+    },
+    "train-workshop": {
+      "file": "train-workshop.jpg",
+      "mean": 0.0508,
+      "band": [
+        0.0406,
+        0.0609
+      ]
+    }
+  }
+}

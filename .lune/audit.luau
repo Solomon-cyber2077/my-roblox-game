@@ -357,6 +357,39 @@ table.insert(targets, {
 	end,
 })
 
+--[[
+	The surface rule (Prompt 6, B.3): no station surface pure white or pure black. Every visible
+	part's colour channels stay within 18-232; glowing glass (Neon, Glass) and invisible parts are
+	exempt. Bone and parchment (inside the band) belong on trim only, which the owner judges.
+]]
+local SURFACE_LO, SURFACE_HI = 18, 232 -- Config/Surfaces SurfaceRule
+function surfaceRule(model: any): { string }
+	local counts: { [string]: number } = {}
+	for _, part in model:GetDescendants() do
+		if
+			part:IsA("BasePart")
+			and part.Transparency < 0.99
+			and part.Material.Name ~= "Neon"
+			and part.Material.Name ~= "Glass"
+		then
+			local c = part.Color
+			local r, g, b = math.round(c.R * 255), math.round(c.G * 255), math.round(c.B * 255)
+			local high = math.max(r, g, b) > SURFACE_HI
+			local low = math.max(r, g, b) < SURFACE_LO
+			if high or low then
+				local key = `{part.Parent and part.Parent.Name or "?"}/{part.Name} ({r},{g},{b})`
+				counts[key] = (counts[key] or 0) + 1
+			end
+		end
+	end
+	local out: { string } = {}
+	for key, n in counts do
+		table.insert(out, `surface rule: {key} x{n}`)
+	end
+	table.sort(out)
+	return out
+end
+
 local archetypes = {}
 for id in Stations.List do
 	table.insert(archetypes, id)
@@ -380,10 +413,9 @@ for i = 1, STATION_SEEDS * #archetypes do
 		build = function()
 			local plan = LayoutGen.generate(id, seed, 1)
 			local edge = Tuning.World.PlatformEdgeZ
+			local model = StationBuilder.build(plan, CFrame.new(0, 0, edge), Stations.List[id].name).model
 			return {
-				{
-					instance = StationBuilder.build(plan, CFrame.new(0, 0, edge), Stations.List[id].name).model,
-				},
+				{ instance = model, problems = surfaceRule(model) },
 			}
 		end,
 	})

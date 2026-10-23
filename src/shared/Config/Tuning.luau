@@ -688,23 +688,25 @@ local Tuning = {
 			Fill = 0.94, -- fill transparency: the faintest cold wash
 			Every = 0.75, -- seconds between choosing the nearest
 		},
-		-- each station's own cold, desaturated grade (cyan to olive-grey), weighed in as the
+		-- each station's own cold grade, off cyan (Prompt 6, B.3): moon green-grey and blue-grey,
+		-- with less desaturation so brick and oxblood still read as materials; weighed in as the
 		-- camera steps off the train onto the platform; the train and the lobby stay warm amber.
-		-- tint is the ColorCorrection tint, saturation is taken off on top of the night's
+		-- tint is the ColorCorrection tint, saturation is taken off on top of the night's.
+		-- saturation PROVISIONAL 0.10 (0.08..0.14)
 		Grades = {
-			Default = { tint = { 214, 230, 232 }, saturation = 0.18 },
-			Halt = { tint = { 210, 228, 230 }, saturation = 0.16 }, -- plain cold cyan
-			CoalYard = { tint = { 214, 218, 204 }, saturation = 0.24 }, -- soot olive
-			SignalWorks = { tint = { 204, 226, 234 }, saturation = 0.2 }, -- steel cyan
-			Market = { tint = { 220, 224, 206 }, saturation = 0.16 }, -- olive-grey
-			Viaduct = { tint = { 206, 224, 238 }, saturation = 0.2 }, -- high cold air
-			Minehead = { tint = { 208, 222, 214 }, saturation = 0.22 }, -- damp green-grey
-			Schoolhouse = { tint = { 218, 226, 220 }, saturation = 0.18 }, -- chalk grey
-			Infirmary = { tint = { 212, 232, 230 }, saturation = 0.26 }, -- carbolic cyan
-			RailwayHotel = { tint = { 222, 226, 212 }, saturation = 0.14 }, -- faded olive
-			PostTown = { tint = { 214, 224, 226 }, saturation = 0.18 }, -- slate
-			EmergencyVillage = { tint = { 216, 220, 202 }, saturation = 0.24 }, -- mud olive
-			Terminus = { tint = { 224, 232, 236 }, saturation = 0.1 }, -- dawn coming
+			Default = { tint = { 216, 224, 218 }, saturation = 0.1 }, -- moon green-grey
+			Halt = { tint = { 212, 220, 226 }, saturation = 0.1 }, -- plain blue-grey
+			CoalYard = { tint = { 216, 218, 208 }, saturation = 0.12 }, -- soot olive
+			SignalWorks = { tint = { 210, 218, 226 }, saturation = 0.1 }, -- steel blue-grey
+			Market = { tint = { 220, 222, 210 }, saturation = 0.1 }, -- olive-grey
+			Viaduct = { tint = { 210, 218, 228 }, saturation = 0.1 }, -- high cold air
+			Minehead = { tint = { 210, 220, 212 }, saturation = 0.12 }, -- damp green-grey
+			Schoolhouse = { tint = { 218, 222, 216 }, saturation = 0.1 }, -- chalk grey
+			Infirmary = { tint = { 212, 222, 212 }, saturation = 0.12 }, -- gaslit green-grey (was carbolic cyan)
+			RailwayHotel = { tint = { 222, 222, 212 }, saturation = 0.08 }, -- faded olive
+			PostTown = { tint = { 214, 220, 224 }, saturation = 0.1 }, -- slate
+			EmergencyVillage = { tint = { 218, 220, 206 }, saturation = 0.12 }, -- mud olive
+			Terminus = { tint = { 224, 230, 232 }, saturation = 0.08 }, -- dawn coming
 		},
 		GradeRamp = 8, -- studs past the platform edge over which the grade comes in
 		-- what all this may cost: one light per player (their lantern), one shadow-casting

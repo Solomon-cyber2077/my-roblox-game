@@ -133,6 +133,31 @@ flag it rather than drift. The design source of truth for mechanics is still the
 - **Buildings:** local stone or red brick with dressed quoins, slate roofs, tall chimneys, sash windows, Gothic chapels,
   board schools with bell turrets, shopfronts with fascia boards and gilt lettering, cobbles and setts, iron railings.
 
+- **Materials by stop (Prompt 6):** the Company built the stations; the frontier built the yards and villages.
+  Station surfaces keep every colour channel within 18-232 (no pure white or black); bone and parchment only on trim.
+
+  | Stop | Company buildings (brick, stone dressings, slate, cast iron, bottle green, oxblood) | Yard and frontier (board-and-batten, tin, canvas, rope, oil lamps) |
+  |---|---|---|
+  | Halt | a timber shelter only | fence, oil lamps, a water butt |
+  | Coaling Yard | booking hut in red brick | coal stages in timber and tin, tarpaulin, wheelbarrows |
+  | Signal Works | brick works shed, cast-iron gantry | signal posts, rope coils, oil cans |
+  | Market | brick shopfronts with fascia boards and gilt lettering | canvas stalls, crates, churns |
+  | Viaduct | stone abutments and parapets | timber walkways, rope, lamp posts |
+  | Minehead | brick engine house, tall chimney | timber headframe, tin sheds, mine carts |
+  | Schoolhouse | board school in brick with a bell turret | playground fence, timber privy |
+  | Infirmary | brick and stone, sash windows | canvas screens, carts |
+  | Railway Hotel | brick and stone dressings, slate, bottle-green joinery | stable yard in timber |
+  | Post Town | brick post office and shops, pillar box | carts, parcels, sacks |
+  | Emergency Village | none | all frontier: board-and-batten, tin roofs, canvas |
+  | Terminus | the Company's great stone station | none |
+
+- **The sinkhole edge (Prompt 6):** red oil danger lamps on timber posts, rope between stakes and ember-red cracks in
+  the ground. Red is danger shown as light; the lamps are a warning, never shelter. The platform coping is wet
+  grey-brown stone against the blue engineering-brick margin, the period's dark edge; the fog-season whitewash and the
+  lime-washed feet are gone (see the 2026-10-17 source checks below).
+- **Mabel's errand board:** errands are chalked on a board in the crew saloon, opposite the route board, not shown as
+  a list on a phone's screen.
+
 ## 8. Period checklist (run before finishing any change)
 
 1. Nothing invented after 1892 (no electric street lights, cars, phones, zips, plastics, wristwatches).

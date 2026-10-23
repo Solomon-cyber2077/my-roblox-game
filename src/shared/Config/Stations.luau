@@ -511,6 +511,7 @@ local Archetypes: { [string]: Archetype } = {
 		looseItems = 10,
 		structures = {
 			{ kind = "Chimney", count = 1, zones = { "Mid" } },
+			{ kind = "WaterTower", count = 1, zones = { "Near", "Mid" } }, -- midground height (Prompt 6 density)
 			{ kind = "Shed", count = 3, zones = { "Mid", "Far" } },
 		},
 		landmarks = {
@@ -807,6 +808,17 @@ return table.freeze({
 	-- LitMax: lights on as the stop docks; StationBuilder turns off moonlit panes, then working
 	-- room bulbs (a building's power wakes them) past it, whatever the seed.
 	Lamps = table.freeze({ PoolGap = 4.5, YardMax = 14, LitMax = 64 }),
+	-- The sinkhole edge's red oil danger lamps (Prompt 6): one on a post every DangerEvery edge tiles,
+	-- emissive glass always; PointLights (range DangerRange, no shadows) on at most DangerMaxLit
+	-- of them, evenly spaced, after every other light is counted against LightMax and LitMax. A
+	-- warning only: never a SafeLight, lamp pool or stalk exclusion. Performance shows the glass alone.
+	Danger = table.freeze({
+		Every = 4,
+		MaxLit = 8, -- PROVISIONAL
+		Range = 10,
+		Brightness = 0.9,
+		LightMax = 96, -- every PointLight a stop creates, enabled or not (the audit's budget)
+	}),
 	VillageFill = 0.55, -- the share of the Far/Village boundary closed off
 	-- The sinkhole edge (props EdgeMark on every open edge tile): an unseen stop RailBack in
 	-- from the edge; TapeBack is the margin HollowService keeps its teaching Crawler inside.

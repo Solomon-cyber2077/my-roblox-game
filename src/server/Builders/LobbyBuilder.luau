@@ -21,6 +21,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Audio = require(ReplicatedStorage.Shared.Config.Audio)
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
+local IL = InteriorLight
 local Outfits = require(ReplicatedStorage.Shared.Config.Outfits)
 local OutfitKit = require(script.Parent.OutfitKit)
 local PosterArt = require(script.Parent.PosterArt)
@@ -89,6 +91,16 @@ local WALL_TOP = 36
 local SEGMENTS = 12
 local BAY = 22 -- truss spacing along the hall
 
+-- A fixture from Config/InteriorLight (the lighting lock), lit on `part`.
+local function fixtureLight(part: Instance, f: InteriorLight.Fixture, shadows: boolean?): PointLight
+	return Kit.pointLight(
+		part,
+		Kit.rgb(f.color),
+		f.brightness,
+		f.range,
+		if shadows ~= nil then shadows else f.shadows
+	)
+end
 local function label(part: BasePart, face: Enum.NormalId, text: string, color: Color3, canvas: Vector2?)
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = face
@@ -796,7 +808,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Color3.fromRGB(236, 150, 72),
 			Enum.PartType.Ball
 		)
-		Kit.pointLight(lamp, Color3.fromRGB(255, 178, 98), 1, 38, (x + 99) % 44 == 0)
+		fixtureLight(lamp, IL.Hall.Globe, (x + 99) % 44 == 0)
 	end
 	-- purlins along the hall at every rib joint, carrying the roof
 	for i = 2, SEGMENTS do
@@ -1077,7 +1089,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	)
 	outfitter.Name = "OutfitterPrompt"
 	local kioskLamp = Kit.neon(model, Vector3.new(1, 1, 1), at(kx, 10, kz), C.warm, Enum.PartType.Ball)
-	Kit.pointLight(kioskLamp, C.warm, 0.75, 22, false)
+	fixtureLight(kioskLamp, IL.Hall.Kiosk)
 
 	-- Line Mastery: an honours board in a carved frame, the line painted on it in gilt -----------------
 	local lx, lz = -54, 36
@@ -1176,7 +1188,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			C.warm,
 			Enum.PartType.Ball
 		)
-		Kit.pointLight(bulb, C.warm, 0.55, 14, false)
+		fixtureLight(bulb, IL.Hall.Bulb)
 	end
 	local ledger = block(
 		Vector3.new(12, 6, 4),
@@ -1458,7 +1470,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		stoveAt * CFrame.new(1.62, 1.4, 0),
 		Color3.fromRGB(255, 120, 50)
 	)
-	Kit.pointLight(grate, Color3.fromRGB(255, 150, 80), 0.9, 18, false)
+	fixtureLight(grate, IL.Hall.Stove)
 	local chairColor = Color3.fromRGB(70, 92, 76)
 	local function armchair(x: number, z: number, yaw: number, wide: number)
 		local f = at(x, 0, z) * Kit.angles(0, yaw, 0)
@@ -1529,7 +1541,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		Color3.fromRGB(34, 92, 70),
 		{ material = Enum.Material.Glass, collide = false }
 	)
-	Kit.pointLight(shade, C.warm, 0.55, 16, false)
+	fixtureLight(shade, IL.Hall.TableLamp)
 	Kit.ball(
 		model,
 		0.7,
@@ -1692,7 +1704,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local pendant =
 		Kit.neon(model, Vector3.new(0.8, 0.8, 0.8), at(tx + 4, 11, tz), C.warm, Enum.PartType.Ball)
 	Kit.post(model, 9, 0.12, at(tx + 4, 16, tz), C.iron, { material = Enum.Material.Metal, collide = false })
-	Kit.pointLight(pendant, C.warm, 0.65, 20, false)
+	fixtureLight(pendant, IL.Hall.Pendant)
 	for _, dz in { -6, 6 } do
 		local tableAt = at(tx - 6, 0, tz + dz)
 		Kit.post(model, 2.8, 0.5, tableAt * CFrame.new(0, 1.4, 0), C.iron, { material = Enum.Material.Metal })
@@ -1928,7 +1940,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.PartType.Ball
 		)
 		-- firelight, kept to the piano itself: short and soft, so it never blots the board above
-		Kit.pointLight(flame, Color3.fromRGB(255, 147, 60), 0.55, 8, false)
+		fixtureLight(flame, IL.Hall.PianoFlame)
 	end
 	-- a soft pool over the floor before the piano, out from the wall so the board above stays dark,
 	-- and no stronger than a hall lamp's pool so the corner sits level with the rest of the hall
@@ -1940,7 +1952,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		{ transparency = 1, collide = false, shadow = false }
 	)
 	pool.Name = "PianoPool"
-	Kit.pointLight(pool, Color3.fromRGB(255, 178, 98), 0.6, 22, false)
+	fixtureLight(pool, IL.Hall.PianoPool)
 	-- Gnossienne No. 3 plays from inside the case; PianoNotes floats notes off the same spot
 	local voice = block(
 		Vector3.new(0.4, 0.4, 0.4),
@@ -2012,7 +2024,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				C.iron,
 				{ material = Enum.Material.Metal, collide = false }
 			)
-			Kit.pointLight(lantern, C.warm, 0.75, 22, false)
+			fixtureLight(lantern, IL.Hall.Lantern)
 		end
 	end
 	-- gas lamp standards flanking the board and along the back wall where the sconces were: plinth,
@@ -2077,7 +2089,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			C.brass,
 			{ material = Enum.Material.Metal, collide = false }
 		)
-		Kit.pointLight(glass, C.warm, 1.1, 31.5, false)
+		fixtureLight(glass, IL.Hall.Gooseneck)
 	end
 
 	-- The hall's people, dressed from one kit (Config/Outfits): Mrs. Pell behind the tea-room counter,

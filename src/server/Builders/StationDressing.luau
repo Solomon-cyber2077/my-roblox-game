@@ -58,7 +58,8 @@ local C = {
 	water = rgb(30, 36, 42),
 	coal = rgb(30, 29, 28),
 	red = rgb(168, 34, 30),
-	enamel = rgb(204, 222, 234), -- enamel signs and lettering: a cold white that survives warm lamplight
+	ember = rgb(214, 70, 34), -- the danger lamps' glass and the cracks at the sinkhole lip
+	enamel = rgb(204, 220, 232), -- enamel signs and lettering: a cold white that survives warm lamplight
 	company = rgb(24, 58, 54), -- the line's teal-green enamel
 	card = rgb(166, 192, 182), -- the line's grey-green card
 	pad = rgb(186, 206, 224), -- blue-ruled notepaper
@@ -1554,7 +1555,8 @@ Builders.EdgeMark = function(ctx)
 	stop:AddTag(Tutorial.EdgeTag)
 	-- the marking: a stake at this tile's start and a rope along it at hip height
 	local half = ctx.width / 2
-	post(ctx, 3.4, 0.32, f(ctx, -half + 0.2, 1.7, 0), C.woodDark, M.Wood)
+	-- square timber: a round post per tile costs a stop thousands of triangles
+	block(ctx, Vector3.new(0.3, 3.4, 0.3), f(ctx, -half + 0.2, 1.7, 0), C.woodDark, M.Wood)
 	block(
 		ctx,
 		Vector3.new(math.max(ctx.width - 0.5, 0.5), 0.16, 0.16),
@@ -1562,6 +1564,30 @@ Builders.EdgeMark = function(ctx)
 		C.burlap,
 		M.Fabric
 	)
+	-- ember cracks: the ground between the rope and the lip glows red in a few seams
+	for side = -1, 1, 2 do -- one in each half of the tile, so two never cross
+		local x = side * ctx.rng:NextNumber(math.min(1.8, half - 1), math.max(half - 1.2, 1.8))
+		local z = ctx.rng:NextNumber(1.2, Stations.Edge.RailBack - 0.8)
+		local seam = Kit.neon(
+			ctx.parent,
+			Vector3.new(ctx.rng:NextNumber(1.2, 2.6), 0.06, 0.14),
+			f(ctx, x, 0, z) * CFrame.Angles(0, ctx.rng:NextNumber(-0.6, 0.6), 0),
+			C.ember
+		)
+		seam.Name = "EmberCrack"
+		seam.Transparency = 0.35
+	end
+	-- a red oil danger lamp on a timber post every few tiles (StationBuilder lights some of them)
+	local at = ctx.frame.Position
+	if math.floor((at.X + at.Z) / 12 + 0.5) % Stations.Danger.Every == 0 then
+		local x = half - 0.6
+		block(ctx, Vector3.new(0.34, 4.6, 0.34), f(ctx, x, 2.3, -0.3), C.woodDark, M.Wood)
+		block(ctx, Vector3.new(0.5, 0.12, 0.5), f(ctx, x, 4.66, -0.3), C.iron, M.Metal)
+		local glass = Kit.neon(ctx.parent, Vector3.new(0.36, 0.5, 0.36), f(ctx, x, 5.0, -0.3), C.ember)
+		glass.Name = "DangerGlass"
+		glass:AddTag("DangerLamp")
+		block(ctx, Vector3.new(0.5, 0.14, 0.5), f(ctx, x, 5.32, -0.3), C.iron, M.Metal)
+	end
 end
 
 -- A yard lamp: a gas lamp on a post, lighting a pool of the route round it. Not a SafeLight
