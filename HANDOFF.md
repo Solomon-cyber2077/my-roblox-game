@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-22: PHONE PASS 3 (TRAIN CAM, ERRAND BOARD, BALLOT, POPUPS; PHONE ONLY)
+1. Completed (phone = gui Compact; a computer is unchanged unless noted)
+- Train camera: no on-screen chip on a phone; TRAIN CAMERA is a MENU entry while aboard. A computer keeps the chip above the watch; C / D-pad up as before.
+- Errands: a board in the crew saloon (TrainInterior ErrandBoard on the Workshop end wall, where a painting hung; UI/QuestTracker writes on its ErrandFace; ResetOnSpawn off so boarding keeps it). A phone shows errands only there; a computer also keeps the screen list (hall, and 6 s after a change in a run).
+- Ballot (RouteVote) drawn at 0.6 on a phone. Popups drawn smaller on a phone through Ui.phoneScale: every Modal (resident talk, shop, settings, Line Mastery) 0.8, the grab's Struggle 0.8, CarBoarding, Unseal and Spectate 0.75, the run ticket 0.78, the centre alert TextSize 28, proximity prompts 0.72.
+2. Verified (Studio, iPhone 7 preset): ballot is a strip of two small tickets at the top; in a run no chip and no errand panel; the saloon board reads "CREW ERRANDS / Unclaimed Valise / Mabel ..."; the run ticket is smaller. `lune run check` passed.
+- NOT verified: resident dialogue, Struggle and prompts at the new size on a real phone; text after the last board size bump.
+
 ## 2026-10-22: PHONE DECLUTTER PASS 2 (MENU DROPDOWN, FOLDED PASS)
 1. Completed
 - UI/Menu: one small MENU button (top left) with a dropdown: INVITE FRIENDS (when allowed), LINE MASTERY (in the hall), SETTINGS. It replaces the separate SETTINGS button, the LINE MASTERY shortcut and the hall's INVITE button. Sits under the crew pass in the hall, under the gauges in a run.

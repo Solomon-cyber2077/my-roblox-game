@@ -56,6 +56,7 @@ local function play(gui: ScreenGui, destination: any)
 		ZIndex = 30,
 		Parent = gui,
 	})
+	Ui.phoneScale(holder, gui, 0.75)
 	Ui.corner(2).Parent = holder
 	Ui.stroke(Theme.Color.inkSoft, 1, 0.5).Parent = holder
 	local kind = Ui.text({

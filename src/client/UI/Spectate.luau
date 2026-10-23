@@ -109,6 +109,7 @@ function Spectate.mount(gui: ScreenGui)
 		Visible = false,
 		Parent = gui,
 	})
+	Ui.phoneScale(bar, gui, 0.75)
 	barLabel = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,

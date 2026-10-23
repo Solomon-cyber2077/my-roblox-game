@@ -123,6 +123,12 @@ function Overlay.mount(gui: ScreenGui)
 	alertLabel.TextStrokeColor3 = Theme.Color.black
 	alertLabel.Parent = gui
 	alertScale = Ui.new("UIScale", { Parent = alertLabel })
+	-- the big centre line is smaller on a phone
+	local function fitAlert()
+		alertLabel.TextSize = if gui:GetAttribute("Compact") == true then 28 else 44
+	end
+	gui:GetAttributeChangedSignal("Compact"):Connect(fitAlert)
+	fitAlert()
 
 	slate = Ui.new("CanvasGroup", {
 		Name = "Slate",

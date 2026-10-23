@@ -42,6 +42,13 @@ function RouteVote.mount(gui: ScreenGui)
 		Visible = false,
 		Parent = gui,
 	})
+	-- on a phone the ballot is drawn smaller, a strip along the top rather than a third of the screen
+	local phoneScale = Ui.new("UIScale", { Scale = 1, Parent = container })
+	local function fit()
+		phoneScale.Scale = if gui:GetAttribute("Compact") == true then 0.6 else 1
+	end
+	gui:GetAttributeChangedSignal("Compact"):Connect(fit)
+	fit()
 	-- the tickets sit in a row of their own, so the tie note under them stays out of the layout
 	local ticketRow = Ui.new("Frame", {
 		Name = "Row",

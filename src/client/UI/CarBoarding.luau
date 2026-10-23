@@ -92,6 +92,7 @@ function CarBoardingUi.mount(gui: ScreenGui)
 		Visible = false,
 		Parent = gui,
 	})
+	Ui.phoneScale(panel, gui, 0.75)
 	local function outlined(label: TextLabel): TextLabel
 		Ui.new("UIStroke", {
 			Color = Theme.Color.black,
