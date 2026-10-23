@@ -120,6 +120,7 @@ export type CrewEntry = {
 	cause: Cause?,
 	rescued: boolean,
 	load: number,
+	slot: number?, -- crew slot 1-4, stable for the run (boot timbre: Logic/Footsteps)
 }
 
 export type RunStats = {

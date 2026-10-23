@@ -48,6 +48,28 @@ function Footsteps.interval(speed: number): number?
 	return math.clamp(T.Stride / speed, T.MinInterval, T.MaxInterval)
 end
 
+-- The first free crew slot (1..#Boots) given the slots in use: a joiner gets the lowest free one,
+-- and nobody's slot changes during a run. Past four crew, slots wrap.
+function Footsteps.freeSlot(used: { [number]: boolean }): number
+	local boots = #Tuning.Footsteps.Boots
+	for slot = 1, boots do
+		if not used[slot] then
+			return slot
+		end
+	end
+	local n = 0
+	for _ in used do
+		n += 1
+	end
+	return n % boots + 1
+end
+
+-- A crew slot's boots: the base pitch and level its steps play at (nil slot: the first boots).
+function Footsteps.boots(slot: number?): { name: string, pitch: number, gain: number }
+	local boots = Tuning.Footsteps.Boots
+	return boots[((slot or 1) - 1) % #boots + 1]
+end
+
 -- The cue for the `count`th step on `surface`: the takes in turn, so no take plays twice running.
 function Footsteps.cue(surface: string, count: number): string
 	local takes = Tuning.Footsteps.Takes[surface] or 1

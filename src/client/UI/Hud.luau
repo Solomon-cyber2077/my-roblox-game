@@ -64,6 +64,8 @@ local leakSlot: Frame? = nil
 -- Settings button (14, 146, 160x40). It yields exactly like the leak slot.
 local TUTORIAL_SLOT = { x = 14, y = 196, w = 236, h = 84 }
 local tutorialSlot: Frame? = nil
+local pingTarget: Vector3? = nil -- where the last ping came from (Hud.pointCompass)
+local pingUntil = 0
 
 local function tierStamps(tier: number): string
 	return string.rep("●", tier) .. string.rep("○", 3 - tier)
@@ -176,6 +178,19 @@ function Hud.mount(gui: ScreenGui)
 					) / size.X,
 					(run.AbsolutePosition.Y - parent.AbsolutePosition.Y) / size.Y
 				)
+				-- PING beside LOOK, further left on the same row
+				local pingButton = ContextActionService:GetButton("LTO_Ping")
+				if pingButton and pingButton.Parent == parent then
+					pingButton.AnchorPoint = Vector2.zero
+					pingButton.Position = UDim2.fromScale(
+						(
+							run.AbsolutePosition.X
+							- 2 * (Tuning.Camera.GlanceTouchGap + look.AbsoluteSize.X)
+							- parent.AbsolutePosition.X
+						) / size.X,
+						(run.AbsolutePosition.Y - parent.AbsolutePosition.Y) / size.Y
+					)
+				end
 			end
 		end
 		local top = touchTop(nil)
@@ -606,7 +621,12 @@ function Hud.mount(gui: ScreenGui)
 		end
 		local camera = workspace.CurrentCamera
 		local target = trainPosition()
-		if aboard or camera == nil or target == nil then
+		-- a crewmate's ping: the needle swings to them for a moment, aboard or not
+		local pinged = os.clock() < pingUntil and pingTarget ~= nil
+		if pinged then
+			target = pingTarget
+		end
+		if (aboard and not pinged) or camera == nil or target == nil then
 			-- aboard, the needle idles about the twelve
 			needle.Rotation = 8 * math.sin(now * 0.8)
 		else
@@ -1197,7 +1217,31 @@ function Hud.mount(gui: ScreenGui)
 			end
 		end
 		return Enum.ContextActionResult.Pass
-	end, false, Enum.KeyCode.G, Enum.KeyCode.ButtonY)
+	end, false, Enum.KeyCode.G, Enum.KeyCode.DPadDown) -- gamepad Y is the ping now
+	-- the co-op ping: V, gamepad Y or the touch PING beside LOOK (a crew member in a run only)
+	ContextActionService:BindAction("LTO_Ping", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin and Session.isMember() then
+			Net.Fire("Ping")
+			return Enum.ContextActionResult.Sink
+		end
+		return Enum.ContextActionResult.Pass
+	end, true, Enum.KeyCode.V, Enum.KeyCode.ButtonY)
+	ContextActionService:SetTitle("LTO_Ping", "PING")
+	-- Creator mode (the Hud setting off) also takes the name tags off every crew member, locally
+	task.spawn(function()
+		while true do
+			local hidden = Players.LocalPlayer:GetAttribute("Hud") == "Hide"
+			for _, other in Players:GetPlayers() do
+				local humanoid = other.Character and other.Character:FindFirstChildOfClass("Humanoid")
+				if humanoid then
+					humanoid.DisplayDistanceType = if hidden
+						then Enum.HumanoidDisplayDistanceType.None
+						else Enum.HumanoidDisplayDistanceType.Viewer
+				end
+			end
+			task.wait(1)
+		end
+	end)
 
 	-- Per-frame clock -------------------------------------------------------------------------
 	local lastPhase = ""
@@ -1379,6 +1423,12 @@ end
 
 -- The leak alert's layout slot under the Operators panel (nil before mount). Parent the alert into it;
 -- the slot hides itself whenever a modal or full-screen UI is open.
+-- A crewmate pinged at `position`: the watch's compass points there for Tuning.Ping.CompassSeconds.
+function Hud.pointCompass(position: Vector3)
+	pingTarget = position
+	pingUntil = os.clock() + Tuning.Ping.CompassSeconds
+end
+
 function Hud.leakSlot(): Frame?
 	return leakSlot
 end

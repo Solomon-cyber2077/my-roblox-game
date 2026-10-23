@@ -310,6 +310,7 @@ local function onBite(rig: Rig, def: Grabs.Def)
 	end
 end
 
+local STALK_NOISE = 0.25 -- share of a stalking Hollow's footfalls that also creak or skip a pebble
 -- A foot comes down (Logic/HollowMotion.plants): the Brute shakes the ground, the Stalker's step is
 -- soft, the Crawler's a skitter.
 local function plantStep(rig: Rig, speed: number)
@@ -321,6 +322,15 @@ local function plantStep(rig: Rig, speed: number)
 		audio(if speed > 10 then "HollowScrabble" else "HollowStep", position, 0.3, 1.9)
 	else
 		audio("HollowStep", position, 0.5, 1.15 + rig.stepSide * 0.05)
+	end
+	-- stalking between cover, now and then a board creaks or a pebble skips under it (Prompt 7)
+	if rig.state == "Stalk" and math.random() < STALK_NOISE then
+		audio(
+			if math.random() < 0.5 then "StalkCreak" else "StalkPebble",
+			position,
+			1,
+			0.9 + math.random() * 0.2
+		)
 	end
 	rig.stepSide = -rig.stepSide
 end

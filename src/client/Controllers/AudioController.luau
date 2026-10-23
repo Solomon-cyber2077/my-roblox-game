@@ -57,6 +57,7 @@ local walls: EqualizerSoundEffect -- the carriage walls, on the Outdoor group
 local groups: { [string]: SoundGroup } = {}
 local duckUntil = 0
 local hushUntil = 0 -- the Intent hush (Config/AudioPriority.IntentHush)
+local arrivalUntil = 0 -- the near-silence after the arrival brakes (Tuning.Footsteps.ArrivalHush*)
 local tierOf: { [string]: number } = {} -- SoundGroup name -> its priority tier
 local voices: { [number]: number } = {} -- one-shots playing per tier
 local anchorPart: Part
@@ -449,6 +450,11 @@ function AudioController.Start()
 		local hushing = os.clock() < hushUntil
 		mixes.Ambience.Volume *= if hushing then intent.Ambience else 1
 		mixes.Steps.Volume = if hushing then intent.Steps else 1
+		-- the train has stopped: 2 s of near-silence, the ambience down 12 dB and no drone
+		local arrived = os.clock() < arrivalUntil
+		if arrived then
+			mixes.Ambience.Volume *= Tuning.Footsteps.ArrivalHushLevel
+		end
 
 		local targets: { [string]: number } = {
 			TrainRun = if inLobby then 0 else Audio.TrainRun.volume * pace * (1 + 0.35 * tunnel),
@@ -471,8 +477,13 @@ function AudioController.Start()
 		for name in OUTSIDE do
 			targets[name] = (targets[name] or 0) * (1 - SHELTER_DIP * shelter)
 		end
+		if arrived then
+			targets.Drone, targets.DroneHarmonic = 0, 0
+		end
 		for name, sound in beds do
-			sound.Volume = MathX.lerp(sound.Volume, targets[name] or 0, MathX.damp(0.4, dt))
+			sound.Volume = if arrived and (name == "Drone" or name == "DroneHarmonic")
+				then 0
+				else MathX.lerp(sound.Volume, targets[name] or 0, MathX.damp(0.4, dt))
 			if name == "TrainRun" then
 				sound.PlaybackSpeed = 0.7 + 0.5 * pace
 			elseif name == "Wind" then
@@ -537,9 +548,20 @@ function AudioController.Start()
 	end)
 end
 
+export type Shape = {
+	rollOff: number?, -- studs a spatial cue carries (instead of the cue's own)
+	muffle: number?, -- dB off the high end (your own footsteps, low-passed)
+}
+
 -- Plays a one-shot cue, at a world position when the cue is spatial, optionally louder or
--- softer (gain) and higher or lower (pitch, a multiple of the cue's own).
-function AudioController.Play(cueName: string, position: Vector3?, gain: number?, pitch: number?)
+-- softer (gain), higher or lower (pitch, a multiple of the cue's own) and shaped (Shape).
+function AudioController.Play(
+	cueName: string,
+	position: Vector3?,
+	gain: number?,
+	pitch: number?,
+	shape: Shape?
+)
 	local cue = Audio[cueName]
 	if cue == nil then
 		return
@@ -567,6 +589,14 @@ function AudioController.Play(cueName: string, position: Vector3?, gain: number?
 	end
 	sound.Volume = cue.volume * (gain or 1)
 	sound.PlaybackSpeed = (cue.pitch or 1) * (pitch or 1)
+	if shape then
+		if shape.rollOff and cue.spatial then
+			sound.RollOffMaxDistance = shape.rollOff
+		end
+		if shape.muffle then
+			equalize(sound, 0, 0, shape.muffle)
+		end
+	end
 	sound:Play()
 	if rank then
 		local tier: number = rank
@@ -618,6 +648,13 @@ end
 -- The SoundGroup of a mix ("Cues", "Steps", ...), for sounds made elsewhere (a Hollow's breath).
 function AudioController.Group(mix: string): SoundGroup?
 	return mixes[mix]
+end
+
+-- The train has stopped at a stop (FxController, Dwell): the near-silence after the brakes.
+-- Warnings and the Hush omen are untouched.
+function AudioController.ArrivalHush()
+	arrivalUntil = os.clock() + Tuning.Footsteps.ArrivalHushSeconds
+	SoundService:SetAttribute("ArrivalHushAt", os.clock())
 end
 
 -- A Hollow's Intent turned on (HollowAnimator): the 0.4 s predictive hush of ambience and steps.

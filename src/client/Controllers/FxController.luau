@@ -19,6 +19,7 @@ local Format = require(Shared.Util.Format)
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
+local Hud = require(script.Parent.Parent.UI.Hud)
 local Overlay = require(script.Parent.Parent.UI.Overlay)
 local Spectate = require(script.Parent.Parent.UI.Spectate)
 local Theme = require(script.Parent.Parent.UI.Theme)
@@ -149,8 +150,48 @@ local function flash(position: Vector3, radius: number)
 	audio("Flash", position)
 end
 
+-- A crewmate's ping: their light flares for GlowSeconds (not your own in Creator mode, Hud Hide),
+-- your watch points at them, and a soft whistle comes from where they stand.
+local function ping(userId: number)
+	local pinger = Players:GetPlayerByUserId(userId)
+	local character = pinger and pinger.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if pinger == nil or root == nil then
+		return
+	end
+	local own = pinger == Players.LocalPlayer
+	local P = Tuning.Ping
+	if not (own and Players.LocalPlayer:GetAttribute("Hud") == "Hide") then
+		local glow = Instance.new("PointLight")
+		glow.Name = "PingGlow"
+		glow.Color = Theme.Color.amber
+		glow.Range = P.GlowRange
+		glow.Brightness = P.GlowBrightness
+		glow.Shadows = false
+		glow.Parent = root
+		TweenService
+			:Create(glow, TweenInfo.new(P.GlowSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+				Brightness = 0,
+			})
+			:Play()
+		task.delay(P.GlowSeconds, function()
+			glow:Destroy()
+		end)
+	end
+	if not own then
+		Hud.pointCompass(root.Position)
+	end
+	if Registry.AudioController then
+		Registry.AudioController.Play("PingWhistle", root.Position)
+	end
+end
+
 local function onFx(kind: string, data: { [string]: any }?)
 	local d: { [string]: any } = data or {}
+	if kind == "Ping" then
+		ping(tonumber(d.userId) or 0)
+		return
+	end
 	if kind == "Deposit" then
 		if (d.coal or 0) > 0 then
 			Overlay.popup(`+{d.coal} COAL`, Theme.Color.brassLight)
@@ -303,6 +344,9 @@ local function onPhase(phase: string?)
 	elseif phase == "Dwell" then
 		Overlay.alert(`DOORS OPEN  ·  {Format.clock(station and station.dwell or 0)}`, Theme.Color.go, 2.6)
 		audio("DoorsOpen")
+		if Registry.AudioController then
+			Registry.AudioController.ArrivalHush() -- the brakes are done: the stop's silence first
+		end
 	elseif phase == "LastCall" then
 		Overlay.alert("LAST CALL", Theme.Color.signal, 3)
 		audio("Whistle")

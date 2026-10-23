@@ -1,5 +1,20 @@
 # HANDOFF
 
+## 2026-10-23: S10 / PROMPT 7 THE REST + PROMPT 9 (FOOTSTEPS, PING, ARRIVAL SILENCE, RELEASE PLUMBING)
+1. Completed
+- Boots by crew slot: CrewService gives each member a slot (run order; a joiner takes the lowest free, `Logic/Footsteps.freeSlot`), replicated as `CrewEntry.slot`. Four timbres (`Tuning.Footsteps.Boots`: Hobnail, SoftLeather, Clog, Heel) set base pitch and level, spaced wider than the step jitter. A crewmate's steps fall silent past 40 studs; your own are low-passed 10 dB.
+- Ping: V, gamepad Y or the touch PING beside LOOK (crew member in a run only; one per 3 s, server-gated). Every client sees the pinger's lantern flare amber for 1.5 s, hears a whistle at them, and the watch's compass swings to them for 2 s. Drop-last moved to G / D-pad down.
+- Arrival silence: 2 s after the brakes, ambience -12 dB and no drone (warnings and the Hush omen untouched).
+- Stalk noise: a stalking Hollow's footfalls sometimes creak a board or kick a pebble (a quarter of plants).
+- Creator mode: the HUD setting is titled HUD (CREATOR MODE); off hides watch, gauges, backpack, roster, every name tag and your own ping glow.
+- Blood audit: the old bite puffs no longer exist; wound drops cut from 10 to 7 per hit. FLAG for the owner: Wounds "sever" (limbs come away) reads above the intended Mild presentation for the maturity questionnaire; unchanged here.
+2. Verified / known gaps
+- `lune run check` passed (517 tests, audit clean). New specs: crew-slot boots (free slot, pitch spacing beyond jitter, wrap).
+- NOT verified in Studio: main-s1 reopened without Rojo connected, so the synced code (Remotes.Ping) was not in the place. Manual: connect Rojo to 34872, Play with 2 players, press V (whistle, glow, other client's compass), ride to a stop (2 s hush), turn HUD off (no name tags), `/photo` a stalker.
+- Phone pass (HUMAN, real phone): landscape and portrait, Performance quality, 40% brightness; lobby, boarding, stop 1 loot, grab and skill check, bell, grasp, run card, Outfitter.
+- Release (HUMAN): maturity questionnaire, store listing and thumbnails, account verification / Kids evaluation, ads gates, owner audio audition (PingWhistle, StalkCreak, StalkPebble, boots), private-server price.
+3. Next: S11, then Gate G1 (human).
+
 ## 2026-10-23: MENU + FRIENDS MARK, HALL ROW, HALL LIGHT AT BOOT, TRAIN LANTERNS, DOOR BACKS, CORNICE, LEAK PAINT
 1. Completed
 - UI/Menu: one split box, MENU and a friends mark (two figures, one behind the other, drawn from frames) that opens the invite prompt while inviting is allowed (Menu.invite). INVITE FRIENDS and LINE MASTERY are out of the dropdown; Line Mastery is read at the honours board (its prompt).

@@ -188,6 +188,10 @@ function CameraController.Start()
 		if lookButton then
 			lookButton.Visible = Session.isMember()
 		end
+		local pingButton = ContextActionService:GetButton("LTO_Ping") -- the ping is never in the hall either
+		if pingButton then
+			pingButton.Visible = Session.isMember()
+		end
 	end)
 	UserInputService.WindowFocusReleased:Connect(function()
 		glanceHeld = false
