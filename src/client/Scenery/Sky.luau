@@ -440,11 +440,12 @@ local TUNNEL_OUTDOOR = rgb(40, 38, 44)
 local DREAD = { saturation = 0.5, contrast = 0.2, tint = 0.5, density = 0.16, haze = 0.8, exposure = 0.05 }
 local BLOOM = { intensity = 0.55, threshold = 1.3, size = 24 }
 -- night depot: almost no ambient, so the lamps are the light (was 0.3, -0.6, 54/55/58, 58/58/62)
+local HALL = Tuning.Sky.Hall
 local LOBBY = {
-	brightness = 0,
-	exposure = -0.1,
-	ambient = rgb(13, 10, 7), -- a warm floor under the lamps, never a grey one
-	outdoor = rgb(13, 10, 8),
+	brightness = HALL.Brightness,
+	exposure = HALL.Exposure,
+	ambient = rgb(HALL.Ambient[1], HALL.Ambient[2], HALL.Ambient[3]), -- warm under the lamps, never grey
+	outdoor = rgb(HALL.Outdoor[1], HALL.Outdoor[2], HALL.Outdoor[3]),
 	bloom = 0.25,
 	bloomThreshold = 1.8,
 	bloomSize = 16,

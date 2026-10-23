@@ -50,5 +50,8 @@ return table.freeze({
 		BenchLamp = fixture(AMBER, 0.8, 13),
 		Stove = fixture(COALS, 2.2, 16, true),
 		GaugeLamp = fixture(AMBER, 0.45, 7),
+		-- the saloon ceiling's square lanterns: the hall's back-wall lamp light (Hall.Gooseneck's gas
+		-- colour and strength), reach cut to a car's width
+		Lantern = fixture(GAS, 1.1, 20, true),
 	}),
 })

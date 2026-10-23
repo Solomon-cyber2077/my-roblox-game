@@ -22,6 +22,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config.TrainShell)
+local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 
 local TrainShell = {}
 
@@ -241,6 +242,88 @@ local function dressEngine(
 	return false
 end
 
+--[[
+	The inner face of a door leaf: the meshes are modelled from outside and their backs read as a
+	flat board, so each leaf gets a ledged-and-braced back to match its face: three battens and a
+	brace in a darker shade of the leaf, a brass pull at the meeting edge and a brass kick plate. Every piece carries the leaf's DoorSlide, so it
+	slides with it (TrainVisualsController).
+]]
+local INSIDE_BRASS = Color3.fromRGB(150, 120, 74)
+
+--[[
+	The cornice under a carriage's roof: the shell's baked maps streak the band just below the
+	eave, so it is covered along each side by a varnished fascia in the body colour, a gilt bead
+	along its foot and a dark drip cap over it.
+]]
+local CORNICE_GILT = Color3.fromRGB(172, 138, 80)
+local CORNICE_CAP = Color3.fromRGB(34, 32, 32)
+local CORNICE = { low = 9.04, high = 9.7, face = 6.88 } -- the band (y) and the shell's outer face (|z|)
+local function cornice(parent: Instance, origin: CFrame, car: any, colors: { [string]: Color3 })
+	local x0, x1 = car.x0 + 0.15, car.x1 - 0.15
+	local len, cx = x1 - x0, (x0 + x1) / 2
+	local body = colors.Body or Color3.fromRGB(60, 33, 28)
+	local opts = { material = Enum.Material.SmoothPlastic, collide = false, shadow = false }
+	local function strip(size: Vector3, y: number, z: number, color: Color3, name: string)
+		local part = Kit.block(parent, size, origin * CFrame.new(cx, y, z), color, opts)
+		part.Name = name
+		part.CastShadow = false
+	end
+	local mid, tall = (CORNICE.low + CORNICE.high) / 2, CORNICE.high - CORNICE.low
+	for _, side in { -1, 1 } do
+		strip(Vector3.new(len, tall, 0.16), mid, side * (CORNICE.face + 0.06), body, "Cornice")
+		strip(
+			Vector3.new(len, 0.07, 0.06),
+			CORNICE.low + 0.04,
+			side * (CORNICE.face + 0.16),
+			CORNICE_GILT,
+			"CorniceBead"
+		)
+		strip(
+			Vector3.new(len, 0.1, 0.3),
+			CORNICE.high + 0.05,
+			side * (CORNICE.face + 0.05),
+			CORNICE_CAP,
+			"CorniceCap"
+		)
+	end
+end
+local function dressLeafInside(leaf: BasePart, origin: CFrame, slide: number, parent: Instance)
+	local here = origin:ToObjectSpace(leaf.CFrame).Position
+	local side = if here.Z > 0 then 1 else -1
+	local w, h = leaf.Size.X, leaf.Size.Y
+	local face = here.Z - side * leaf.Size.Z / 2
+	local edge = if slide < 0 then 1 else -1 -- toward the meeting edge
+	local wood = Kit.shade(leaf.Color, 0.78)
+	local function at(x: number, y: number, out: number): Vector3
+		return Vector3.new(here.X + x, here.Y + y, face - side * out)
+	end
+	local function piece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material)
+		local part = Kit.block(
+			parent,
+			size,
+			origin * cf,
+			color,
+			{ material = material, collide = false, shadow = false }
+		)
+		part.Name = "DoorInside"
+		part:SetAttribute("DoorSlide", slide)
+	end
+	local low, mid = -h / 2 + 0.95, -0.45
+	for _, y in { h / 2 - 0.5, mid, low } do
+		piece(Vector3.new(w - 0.24, 0.36, 0.07), CFrame.new(at(0, y, 0.025)), wood, Enum.Material.Wood)
+	end
+	local a, b = at(-edge * (w / 2 - 0.35), low, 0.02), at(edge * (w / 2 - 0.35), mid, 0.02)
+	piece(Vector3.new(0.04, 0.3, (b - a).Magnitude - 0.3), Kit.between(a, b), wood, Enum.Material.Wood)
+	local px = edge * (w / 2 - 0.3)
+	piece(Vector3.new(0.09, 1.1, 0.09), CFrame.new(at(px, -1.6, 0.14)), INSIDE_BRASS, Enum.Material.Metal)
+	piece(
+		Vector3.new(w - 0.3, 0.5, 0.03),
+		CFrame.new(at(0, -h / 2 + 0.35, 0.005)),
+		INSIDE_BRASS,
+		Enum.Material.Metal
+	)
+end
+
 function TrainShell.dress(model: Model, origin: CFrame): boolean
 	if not Config.Enabled then
 		return false
@@ -340,7 +423,16 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 					light.Parent = holder
 				end
 			end
-			look(looks, piece.look, part)
+			-- the roof keeps its shape but not the atlas: its stretch of the baked maps streaked
+			-- the eave in long stripes, so it is plain matte roof colour
+			if piece.livery == "Roof" then
+				part.Material = Enum.Material.SmoothPlastic
+			else
+				look(looks, piece.look, part)
+			end
+		end
+		if not car.engine then
+			cornice(folder, origin, car, colors)
 		end
 
 		for _, part in mine do
@@ -390,6 +482,9 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 						leaf:SetAttribute("Livery", own.livery)
 						leaf:SetAttribute("DoorSlide", slide)
 						look(looks, own.look, leaf)
+						if slide then
+							dressLeafInside(leaf, origin, slide, folder)
+						end
 						retire(part, archive)
 						continue
 					end
@@ -405,6 +500,9 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 					leaf:SetAttribute("Livery", kit.livery)
 					leaf:SetAttribute("DoorSlide", slide)
 					look(looks, kit.look or Config.KitLook, leaf)
+					if slide then
+						dressLeafInside(leaf, origin, slide, folder)
+					end
 					retire(part, archive)
 				end
 			elseif part:GetAttribute("WheelRadius") ~= nil and cf.Y < 0 then

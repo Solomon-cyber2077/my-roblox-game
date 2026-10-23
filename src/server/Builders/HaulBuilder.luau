@@ -66,17 +66,19 @@ end
 
 function B.stores(parent: Instance, origin: CFrame): (Model, BasePart, BasePart)
 	local m = Kit.model("Haul strongbox", parent)
-	local cf = origin * CFrame.new(12, 1.1, -4.7)
+	-- side-on in the gap between the Stores car's crate stacks (x 8 to 11 on the far wall), its
+	-- lock to the aisle; it used to sit inside a crate
+	local cf = origin * CFrame.new(9.25, 1.1, -4.55) * CFrame.Angles(0, math.rad(90), 0)
 	local body = part(m, "Locked strongbox", Vector3.new(3.2, 1.8, 2.2), cf, iron)
 	body.CanCollide = true
 	m.PrimaryPart = body
 	part(m, "Lid", Vector3.new(3.3, 0.15, 2.3), cf * CFrame.new(0, 0.98, 0), iron)
-	part(m, "Lock", Vector3.new(0.4, 0.5, 0.15), cf * CFrame.new(0, 0.4, 1.2), Color3.fromRGB(140, 104, 45))
+	part(m, "Lock", Vector3.new(0.15, 0.5, 0.4), cf * CFrame.new(-1.68, 0.4, 0), Color3.fromRGB(140, 104, 45))
 	local marker = part(
 		m,
 		"Payroll delivery",
 		Vector3.new(3.5, 0.08, 3.5),
-		origin * CFrame.new(16, 0.1, -4.3),
+		origin * CFrame.new(16, 0.1, -1.2), -- on the aisle floor, clear of the crates
 		Color3.fromRGB(178, 160, 121)
 	)
 	local gui = Instance.new("SurfaceGui")

@@ -55,7 +55,7 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
   `Scenery/World` (the plan) and the chunk's own Rng, so a rebuilt chunk comes out the same.
 - **Lighting is client-owned.** `Controllers/AtmosphereController` builds the sky, atmosphere, clouds, post effects
   and weather and sets them every frame (time of day by run progress, biome air, tunnels, storms). The server
-  does not touch Lighting; `Lighting.Technology` is set to Future in `default.project.json`.
+  touches Lighting only once, at boot: WorldService writes the hall's base light (`Tuning.Sky.Hall`); `Lighting.Technology` is set to Future in `default.project.json`.
 - **The sky.** `Scenery/Sky` is the look as data and math: hour keys, the moon's path and colour through the night,
   and `compose`/`approach`/`finish`, which turn the hour, biome, dread and the omen into Lighting values.
   `Scenery/Heavens` draws what the engine cannot: the moon (the engine's is hidden), horizon glows, the TallOnes

@@ -1,5 +1,19 @@
 # HANDOFF
 
+## 2026-10-23: MENU + FRIENDS MARK, HALL ROW, HALL LIGHT AT BOOT, TRAIN LANTERNS, DOOR BACKS, CORNICE, LEAK PAINT
+1. Completed
+- UI/Menu: one split box, MENU and a friends mark (two figures, one behind the other, drawn from frames) that opens the invite prompt while inviting is allowed (Menu.invite). INVITE FRIENDS and LINE MASTERY are out of the dropdown; Line Mastery is read at the honours board (its prompt).
+- UI/Lobby: BOARD A CAR removed (it walked you to a boarding car's door; the car doors still board you); the line toggle sits alone, centred; START sits closer to its shaded lip (5 -> 3 px); the board reads "START · OR TAKE A CAR".
+- Hall light without Rojo: Tuning.Sky.Hall is the one source; Scenery/Sky's LOBBY reads it and WorldService writes it into Lighting at boot (Lighting replicates, so a joining client and the server's view start warm). Cause of "light again" reports: the owner's Studio was on Rojo port 34874, an older worktree; this checkout serves on 34872, and Rojo never pushes Lighting $properties into an open place.
+- Train ceiling lamps: square lanterns after the hall's back-wall lamp heads (iron cap, deep amber glass), lit as InteriorLight.Train.Lantern (gas colour, 1.1, range 20, shadows).
+- Door leaves' inner face (TrainShell): battens, brace, brass pull and kick plate in the leaf's shade, sliding with it.
+- Roof: the roof meshes drop the atlas (its eave stripes) for plain matte roof colour; a part-built cornice (varnished fascia, gilt bead, drip cap) covers the streaked band under the eave on every carriage. TrainBuilder roof parts are matte with a drip rail.
+- Haul: the strongbox stands side-on in the Stores car's gap between crate stacks, the PAYROLL RECEIVING plate on the aisle floor (both were inside crates).
+- Leak arrows: sprayed stencil chevrons (SurfaceGui, feathered strokes, overspray, lit safety yellow) instead of neon bars.
+2. Verified: `lune run check` passed (Train audit 1800/1800 parts after trimming). Studio (a place built from this checkout with rojo build, since desktop control to press the Rojo plugin was declined): server Lighting at boot 13,10,7 / exposure -0.10; MENU box with the friends mark; no BOARD A CAR; lantern, door backs, cornice and arrows photographed; strongbox overlaps none; console clean.
+- NOT verified: the top-down camera glitch was not reproduced (it matches the fixed test camera used for Studio photos); the friends mark on a phone; the plain roof and cornice on every carriage type up close.
+3. Next: in the owner's Studio, connect the Rojo plugin to port 34872 (this checkout), not 34874.
+
 ## 2026-10-22: S9 / PROMPT 6 THE REST (STATION LOOK, LIGHTING LOCK) - run before Gate G1 at the owner's request
 1. Completed
 - Surface rule: station surfaces keep colour channels within 18-232 (Config/Surfaces SurfaceRule). The visual audit now checks every visible non-Neon, non-Glass part of every stop; the specs check the palettes, coping and margin. Fixed offenders: the whitewash coping -> wet grey-brown stone (120,112,100; contrast to the blue-brick margin >= 2.5 is spec'd), enamel (204,222,234) -> (204,220,232), the tunnel bore's black -> (18,17,16). Station limewash was already off (earlier today).
