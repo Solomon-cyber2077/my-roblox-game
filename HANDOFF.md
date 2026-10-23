@@ -1627,3 +1627,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 2. Known: isolated `lune run check` baseline passed exit 0. Isolated lobby-idle-test Studio started, console read, baseline screenshot captured, then stopped. Existing unpublished DataStore warnings and asset 203785492 type mismatch remain.
 3. Next: quiet-time/input implementation, then clearance, orbit, audio, eligibility integration and final audition in Council order. Owner chooses the song from linked paid-model sample suggestions before release. Both Claude sessions acknowledged coordination; this branch integrates their completed commits through 53097e3 and owns final push.
 
+
+## 2026-10-23 Lobby idle prompt 2 quiet input (Astra, finished by Claude)
+1. Completed: `Logic/LobbyIdle` one-shot quiet timer on injected time (fresh eligibility interval, held-input reset, backward-clock reset, one attempt) with `tests/LobbyIdle.spec.luau`; `Controllers/LobbyIdleInput` disposable observer (IsHeld/IsBlocked/Destroy, never sinks input).
+2. Known: `lune run check` exit 0. The observer is not in the client boot list, so nothing runs in Studio until prompt 6 wires eligibility; hardware input behaviour is unverified.
+3. Next: prompt 3 (clearance) in Council order.
