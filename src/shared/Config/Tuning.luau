@@ -139,10 +139,20 @@ local Tuning = {
 		Takes = { Plank = 2, TrainFloor = 2, Gravel = 2, Snow = 3 },
 		BreathFade = 1.5, -- seconds the breathing takes to swell or die away
 	},
+	-- What a grab does to the screen (UI/Trauma) and the body (Builders/Wounds)
+	Trauma = {
+		AdrenalineSeconds = 9, -- the rush after tearing free, racing heart settling
+		VeinSeconds = 1.4, -- a bite's vein cracks fade over this
+		StressBlur = 3, -- BlurEffect.Size while held
+		HitBlur = 12, -- and added at a bite's instant
+		WoundsPerLimb = 3, -- marks a limb can carry before new ones replace the oldest
+		SeverImpulse = 18, -- studs/s a severed limb is thrown at
+	},
 	Grasp = {
 		RailOutside = 0.42,
 		RailHeight = 4.6,
 		RailWidth = 0.35,
+		RailJamb = 0.1, -- gap between a door's opening and its handhold
 		RailHeightSize = 1.2,
 		RailDepth = 0.18,
 		BellDistance = 9,
@@ -677,16 +687,6 @@ local Tuning = {
 			Outline = 0.55, -- outline transparency
 			Fill = 0.94, -- fill transparency: the faintest cold wash
 			Every = 0.75, -- seconds between choosing the nearest
-		},
-		-- the train's warm lamp glow, seen from anywhere on the station: a soft billboard (no
-		-- light), a fixed size on screen, fading out as you come close
-		Beacon = {
-			Color = { 255, 178, 96 }, -- the carriages' lamp amber
-			Pixels = 84, -- the glow's size on screen
-			Rings = { 0.86, 0.76, 0.62 }, -- transparency of each ring, outer to inner (Performance: the inner)
-			Height = 4, -- studs above the train's roof
-			Near = 40, -- studs from the train where it has faded out
-			Far = 90, -- and where it is full
 		},
 		-- each station's own cold, desaturated grade (cyan to olive-grey), weighed in as the
 		-- camera steps off the train onto the platform; the train and the lobby stay warm amber.

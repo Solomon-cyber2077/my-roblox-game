@@ -31,6 +31,7 @@
 	0.4 s (IntentHush; SoundService attribute IntentHushAt marks each one for Studio checks).
 ]]
 
+local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -212,7 +213,7 @@ local function makeSound(cueName: string, parent: Instance): Sound?
 end
 
 -- A cue that repeats quickly (rail joints, heartbeats) plays from a few reused sounds.
-local function pooled(cueName: string, gain: number)
+local function pooled(cueName: string, gain: number): Sound?
 	local pool = pools[cueName]
 	if pool == nil then
 		pool = { sounds = {}, next = 1 }
@@ -225,13 +226,14 @@ local function pooled(cueName: string, gain: number)
 		pools[cueName] = pool
 	end
 	if #pool.sounds == 0 then
-		return
+		return nil
 	end
 	local sound = pool.sounds[pool.next]
 	pool.next = pool.next % #pool.sounds + 1
 	sound.Volume = Audio[cueName].volume * gain
 	sound.TimePosition = 0
 	sound:Play()
+	return sound
 end
 
 function AudioController.Init()
@@ -301,6 +303,16 @@ function AudioController.Init()
 end
 
 function AudioController.Start()
+	-- the buttons' key, loaded up front so the first press is as quick as the rest
+	pooled("MenuClick", 0)
+	local tap = pools.MenuClick
+	if tap then
+		task.spawn(function()
+			pcall(function()
+				ContentProvider:PreloadAsync(tap.sounds)
+			end)
+		end)
+	end
 	Registry.SceneryController.TunnelAhead:Connect(function()
 		AudioController.Play("Whistle")
 	end)
@@ -586,6 +598,21 @@ function AudioController.Play(cueName: string, position: Vector3?, gain: number?
 			holder:Destroy()
 		end
 	end)
+end
+
+-- A UI tap (a button's key): from a pool loaded at Start, so it sounds the instant it is asked
+-- for, rather than after a new Sound's asset has loaded.
+function AudioController.Tap(cueName: string)
+	local sound = pooled(cueName, 1)
+	local cut = Audio[cueName].maxSeconds
+	if sound and cut then
+		task.delay(cut, function()
+			-- stop only this press's take: a quicker press may already have restarted the sound
+			if sound.IsPlaying and sound.TimePosition >= cut * 0.5 then
+				sound:Stop()
+			end
+		end)
+	end
 end
 
 -- The SoundGroup of a mix ("Cues", "Steps", ...), for sounds made elsewhere (a Hollow's breath).

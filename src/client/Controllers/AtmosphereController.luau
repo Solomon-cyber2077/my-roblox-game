@@ -466,6 +466,7 @@ function AtmosphereController.Start()
 	local darkness = 0 -- a tunnel's dark, smoothed
 	local dread = 0
 	local lastStrike = -math.huge
+	local wasLobby: boolean? = nil
 
 	local function frame(dt: number)
 		local character = Players.LocalPlayer.Character
@@ -474,7 +475,16 @@ function AtmosphereController.Start()
 		local around = if root then root.Position else camera.CFrame.Position
 		local phase = Session.phase()
 		local now = Session.now()
-		local inLobby = (around - LOBBY).Magnitude < 420
+		-- before the character spawns (it waits on the profile) the camera sits at the origin, far
+		-- from the hall: outside a run that is still the lobby, or its look would be the night sky's
+		local inLobby = if root
+			then (around - LOBBY).Magnitude < 420
+			else not Session.isRunActive() or (around - LOBBY).Magnitude < 420
+		if inLobby ~= wasLobby then
+			-- crossing into or out of the hall cuts straight to its look, never fades from the sky's
+			wasLobby = inLobby
+			current = nil
+		end
 
 		-- time of day
 		local pinned, devOmen, devStrike = devOverrides(now)

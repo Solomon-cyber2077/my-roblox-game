@@ -197,6 +197,15 @@ local function run(): string
 					end,
 				}
 			end
+			-- the stand-in body is not an Instance: marks and lost limbs are looks, not rules
+			if node == server.Builders.Wounds then
+				return {
+					mark = function() end,
+					sever = function()
+						return 0
+					end,
+				}
+			end
 			if node == shared.Util.Safe then
 				return {
 					call = function(_, fn, ...)

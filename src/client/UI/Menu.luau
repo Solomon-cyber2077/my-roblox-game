@@ -13,6 +13,7 @@
 
 local Players = game:GetService("Players")
 
+local Registry = require(script.Parent.Parent.Registry)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
@@ -98,11 +99,31 @@ function Menu.mount(gui: ScreenGui)
 		end
 	end
 	rebuild = build
-	open.Activated:Connect(function()
+	local function toggle()
 		if not drop.Visible then
 			build() -- entries that come and go (Line Mastery, INVITE) are read on opening
 		end
 		drop.Visible = not drop.Visible
+		if Registry.AudioController then
+			Registry.AudioController.Tap("MenuClick")
+		end
+	end
+	-- a mouse or a finger opens it as it goes down, with its key sound: waiting for the release
+	-- (Activated) felt like a missed press, and the second press shut it again
+	local pointerDown = false
+	open.InputBegan:Connect(function(input: InputObject)
+		local kind = input.UserInputType
+		if kind == Enum.UserInputType.MouseButton1 or kind == Enum.UserInputType.Touch then
+			pointerDown = true
+			toggle()
+		end
+	end)
+	open.Activated:Connect(function()
+		if pointerDown then
+			pointerDown = false -- the release of the press that already toggled it
+			return
+		end
+		toggle() -- gamepad A or Enter
 	end)
 
 	-- where it sits: the lobby slot, under the run's gauges, or the corner with the HUD hidden
