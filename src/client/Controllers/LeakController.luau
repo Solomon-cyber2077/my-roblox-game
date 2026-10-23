@@ -46,7 +46,8 @@ local label: TextLabel? = nil
 local notice: TextLabel? = nil
 local noticeAt = -math.huge -- os.clock() the Last Light notice started
 local chevronFolder: Folder? = nil
-local chevronParts: { BasePart } = {} -- two arms a chevron
+type Chevron = { part: BasePart, gui: SurfaceGui, paint: CanvasGroup }
+local chevrons: { Chevron } = {}
 
 local function buildPlate(slot: Frame)
 	local panel = Ui.new("Frame", {
@@ -75,33 +76,80 @@ local function buildPlate(slot: Frame)
 	label = text
 end
 
--- A chevron painted flat on the floor, its point along -Z: two thin amber arms in a V.
-local ARMS = {
-	CFrame.new(0.3, 0, -0.05) * CFrame.Angles(0, math.rad(40), 0),
-	CFrame.new(-0.3, 0, -0.05) * CFrame.Angles(0, math.rad(-40), 0),
-}
+-- A chevron sprayed on the floor through a stencil, its point along -Z: two arms in a V with
+-- feathered edges and a little overspray, in safety yellow lit by the car's lamps (not neon).
+local PAINT = Color3.fromRGB(224, 176, 52)
+local CANVAS = 96 -- pixels on a side
+local SIZE = 1.5 -- studs on a side
+local ARM_ANGLE = 40
+local FEATHER = NumberSequence.new({
+	NumberSequenceKeypoint.new(0, 1),
+	NumberSequenceKeypoint.new(0.3, 0.12),
+	NumberSequenceKeypoint.new(0.7, 0.12),
+	NumberSequenceKeypoint.new(1, 1),
+})
 
-local function chevronPart(): BasePart
+local function chevron(seed: number): Chevron
 	local part = Instance.new("Part")
 	part.Name = "LeakChevron"
-	part.Size = Vector3.new(0.24, 0.05, 0.95)
-	part.Color = Theme.Color.amber
-	part.Material = Enum.Material.Neon
+	part.Size = Vector3.new(SIZE, 0.05, SIZE)
+	part.Transparency = 1
 	part.Anchored = true
 	part.CanCollide = false
 	part.CanQuery = false
 	part.CanTouch = false
 	part.CastShadow = false
-	return part
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Top
+	gui.CanvasSize = Vector2.new(CANVAS, CANVAS)
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+	gui.LightInfluence = 1 -- paint, lit by the lamps, never glowing
+	gui.ClipsDescendants = true
+	gui.Adornee = part
+	gui.Parent = part
+	local paint = Instance.new("CanvasGroup")
+	paint.Size = UDim2.fromScale(1, 1)
+	paint.BackgroundTransparency = 1
+	paint.Parent = gui
+	-- the point sits near the canvas's top edge (turned to lead in updateChevrons)
+	for _, side in { -1, 1 } do
+		local arm = Instance.new("Frame")
+		arm.AnchorPoint = Vector2.new(0.5, 0.5)
+		arm.Position = UDim2.fromOffset(CANVAS / 2 + side * 15, CANVAS / 2 - 2)
+		arm.Size = UDim2.fromOffset(16, 52)
+		arm.Rotation = -side * ARM_ANGLE
+		arm.BackgroundColor3 = PAINT
+		arm.BorderSizePixel = 0
+		arm.Parent = paint
+		local fade = Instance.new("UIGradient")
+		fade.Transparency = FEATHER -- soft across the stroke, as a can leaves it
+		fade.Parent = arm
+	end
+	-- overspray: a few faint specks round the strokes, the same on every chevron of a seat
+	local rng = Random.new(seed)
+	for _ = 1, 9 do
+		local speck = Instance.new("Frame")
+		local d = rng:NextInteger(2, 4)
+		speck.Size = UDim2.fromOffset(d, d)
+		speck.Position = UDim2.fromOffset(rng:NextInteger(14, CANVAS - 18), rng:NextInteger(18, CANVAS - 20))
+		speck.BackgroundColor3 = PAINT
+		speck.BackgroundTransparency = rng:NextNumber(0.45, 0.75)
+		speck.BorderSizePixel = 0
+		speck.Parent = paint
+		local round = Instance.new("UICorner")
+		round.CornerRadius = UDim.new(0.5, 0)
+		round.Parent = speck
+	end
+	return { part = part, gui = gui, paint = paint }
 end
 
 local function buildChevrons()
 	local folder = Instance.new("Folder")
 	folder.Name = "LeakArrows"
-	for _ = 1, A.Count * #ARMS do
-		local part = chevronPart()
-		part.Parent = folder
-		table.insert(chevronParts, part)
+	for index = 1, A.Count do
+		local made = chevron(index)
+		made.part.Parent = folder
+		table.insert(chevrons, made)
 	end
 	folder.Parent = nil
 	chevronFolder = folder
@@ -233,23 +281,20 @@ local function updateChevrons(on: boolean, root: BasePart?)
 	rayParams.FilterDescendantsInstances = { folder, root.Parent :: Instance }
 	local rootY = origin:PointToObjectSpace(root.Position).Y
 	for index = 1, A.Count do
-		local chevron = placed[index]
-		for arm = 1, #ARMS do
-			local part = chevronParts[(index - 1) * #ARMS + arm]
-			if chevron == nil then
-				part.Transparency = 1
-			else
-				-- painted on whatever floor is under it: carriage boards or the platform
-				-- (never on a seat or a crate: anything above your feet is passed under)
-				local feet = origin * Vector3.new(chevron.x, rootY - FEET, chevron.z)
-				local hit = Workspace:Raycast(feet + origin.UpVector * 0.5, -origin.UpVector * 6, rayParams)
-				local at = if hit then hit.Position else feet
-				local look = origin:VectorToWorldSpace(Vector3.new(chevron.dx, 0, chevron.dz))
-				part.CFrame = CFrame.lookAt(at + origin.UpVector * 0.04, at + origin.UpVector * 0.04 + look)
-					* ARMS[arm]
-				-- the farther ones fade
-				part.Transparency = 0.2 + 0.6 * (index - 1) / A.Count
-			end
+		local spot = placed[index]
+		local made = chevrons[index]
+		made.gui.Enabled = spot ~= nil
+		if spot then
+			-- painted on whatever floor is under it: carriage boards or the platform
+			-- (never on a seat or a crate: anything above your feet is passed under)
+			local feet = origin * Vector3.new(spot.x, rootY - FEET, spot.z)
+			local hit = Workspace:Raycast(feet + origin.UpVector * 0.5, -origin.UpVector * 6, rayParams)
+			local at = (if hit then hit.Position else feet) + origin.UpVector * 0.03
+			local look = origin:VectorToWorldSpace(Vector3.new(spot.dx, 0, spot.dz))
+			-- a Top-face canvas's top edge lies along the part's -X: turn it so the point leads
+			made.part.CFrame = CFrame.lookAt(at, at + look) * CFrame.Angles(0, math.rad(-90), 0)
+			-- the farther ones fade
+			made.paint.GroupTransparency = 0.1 + 0.6 * (index - 1) / A.Count
 		end
 	end
 	folder.Parent = Workspace.CurrentCamera

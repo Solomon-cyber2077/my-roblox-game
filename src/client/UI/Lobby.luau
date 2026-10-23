@@ -2,10 +2,10 @@
 --[[
 	Depot Hall UI: profile card, the START toggle (ready), join-in-progress, shortcuts to
 	the Outfitter and the Ledger, and the in-world departure board.
-	First visit (Prompt 10): players spawn facing the board, which names the two plain choices:
-	START (ride now, the hall's ready) or BOARD A CAR (walks you to a boarding car's door to ride
-	with others). Above the panel: the line (Logic/Routes: SHORT or LONG, or fixed while a new Hand
-	is in the hall), BOARD A CAR and INVITE (UI/Invite, hidden when inviting is not allowed).
+	First visit (Prompt 10): players spawn facing the board, which names the plain choices: START
+	(ride now, the hall's ready), or walk to a car's door to ride with others. Above the panel,
+	centred: the line (Logic/Routes: SHORT or LONG, or fixed while a new Hand is in the hall).
+	INVITE is the friends mark on the MENU box (UI/Menu).
 ]]
 
 local Players = game:GetService("Players")
@@ -376,7 +376,7 @@ function Lobby.mount(gui: ScreenGui)
 		end
 	end
 	-- raised: a shaded lip along the bottom and right edges; hover sinks it halfway, a press pushes it flush
-	local READY_AT, LIP = readyButton.Position, 5
+	local READY_AT, LIP = readyButton.Position, 3
 	local lipColor = Color3.fromRGB(138, 100, 44)
 	local lipBottom = Ui.new("Frame", {
 		Name = "LipBottom",
@@ -428,7 +428,7 @@ function Lobby.mount(gui: ScreenGui)
 		end
 	end)
 
-	-- Above the panel: BOARD A CAR, INVITE and the line --------------------------------------------
+	-- Above the panel, centred: the line ----------------------------------------------------------
 	local hallRow = Ui.new("Frame", {
 		Name = "HallRow",
 		Size = UDim2.fromOffset(PANEL_W, 32),
@@ -437,58 +437,13 @@ function Lobby.mount(gui: ScreenGui)
 		BackgroundTransparency = 1,
 		Parent = container,
 	})
-	-- walks this player to the door of the boarding car to join: one with riders first, then the nearest
-	local function boardACar()
-		local character = Players.LocalPlayer.Character
-		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-		local doors = Workspace:FindFirstChild("CarDoors", true)
-		if humanoid == nil or root == nil or doors == nil then
-			return
-		end
-		local cars = State.Get({ "lobby", "cars" }) or {}
-		local best: BasePart? = nil
-		local bestScore = math.huge
-		for _, door in doors:GetChildren() do
-			if door:IsA("BasePart") and door.Name == "CarDoorOut" then
-				local car = cars[door:GetAttribute("Car") :: number]
-				local riders = if car then #car.occupants else 0
-				if not (car and car.departing) and riders < Tuning.Cars.MaxPlayers then
-					local score = (door.Position - root.Position).Magnitude - (if riders > 0 then 1000 else 0)
-					if score < bestScore then
-						best, bestScore = door, score
-					end
-				end
-			end
-		end
-		local target = best
-		if target == nil then
-			return
-		end
-		-- MoveTo gives up after 8 s: ask again until close or three tries
-		task.spawn(function()
-			for _ = 1, 3 do
-				humanoid:MoveTo(target.Position)
-				local reached = humanoid.MoveToFinished:Wait()
-				if reached or (root.Position - target.Position).Magnitude < 4 then
-					return
-				end
-			end
-		end)
-	end
-	local carButton = Ui.button("BOARD A CAR", "Secondary", boardACar, {
-		Name = "BoardACar",
-		Size = UDim2.new(0.5, -4, 0, 32),
-		TextSize = 17,
-	})
-	carButton.TextColor3 = Theme.Color.bone
-	carButton.Parent = hallRow
 	-- the line: one button. With a new Hand aboard it only names the fixed line; otherwise a tap
 	-- switches your vote between the Short and the Long Line (the crew's votes decide at boarding)
 	local lineButton = Ui.button("", "Secondary", nil, {
 		Name = "Line",
 		Size = UDim2.new(0.5, -4, 0, 32),
-		Position = UDim2.new(0.5, 4, 0, 0),
+		Position = UDim2.fromScale(0.5, 0),
+		AnchorPoint = Vector2.new(0.5, 0),
 		TextSize = 15,
 	})
 	lineButton.TextColor3 = Theme.Color.bone
@@ -517,18 +472,13 @@ function Lobby.mount(gui: ScreenGui)
 	State.Observe("public", { "lobby", "line" }, renderLine)
 	renderLine()
 
-	-- The hall's shortcuts live in the MENU dropdown (UI/Menu): Line Mastery while in the hall,
-	-- INVITE when this player may invite
-	Menu.add("LINE MASTERY", 20, function()
-		Registry.UIController.Open("Ledger")
-	end, function()
-		return container.Visible
-	end)
+	-- INVITE is the friends mark on the MENU box (UI/Menu), while this player may invite. Line
+	-- Mastery is read at its honours board in the hall (its own prompt), not from the screen.
 	local inviteAllowed = false
 	Invite.whenChecked(function(allowed)
 		inviteAllowed = allowed
 	end)
-	Menu.add("INVITE FRIENDS", 10, function()
+	Menu.invite(function()
 		Invite.prompt("depot")
 	end, function()
 		return inviteAllowed
@@ -655,8 +605,8 @@ function Lobby.mount(gui: ScreenGui)
 			readyButton.Text = if mine then "CANCEL" else "START"
 			Ui.setButtonEnabled(readyButton, true)
 			-- the first-visit prompt: the board names the two ways to ride
-			head = "START  ·  OR BOARD A CAR"
-			rows = "START to ride now.\nBOARD A CAR to ride with others."
+			head = "START  ·  OR TAKE A CAR"
+			rows = "START to ride now.\nWalk to a car's door to ride with others."
 		end
 		if boardHead and boardRows and boardGui then
 			boardHead.Text = head

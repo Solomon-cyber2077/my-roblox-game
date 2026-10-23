@@ -27,6 +27,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 
 local TrainInterior = require(script.Parent.TrainInterior)
@@ -86,7 +87,7 @@ local C = {
 	carpetEdge = Color3.fromRGB(150, 116, 58),
 	teak = Color3.fromRGB(78, 52, 32), -- Mansell wheel centres
 	globe = Color3.fromRGB(255, 226, 176),
-	interiorGlobe = Color3.fromRGB(255, 214, 150),
+	lanternGlass = Color3.fromRGB(206, 118, 54), -- as the hall's lamps: deep amber, the neon blooms it warmer
 }
 
 -- How a carriage is lined inside: curtains in the passenger cars, the runner from the workshop back.
@@ -771,7 +772,8 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		local len = x1 - x0 + 0.6
 		local cx = (x0 + x1) / 2
 		local ma, mb = monitorSpan(x0, x1)
-		local metal = { material = Enum.Material.Metal }
+		-- tarred canvas reads matte: the Metal material's brushed grain streaked the whole lip
+		local metal = { material = Enum.Material.SmoothPlastic }
 		for _, side in { -1, 1 } do
 			tag(
 				Kit.block(
@@ -798,16 +800,15 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			)
 		end
 		for _, side in { -1, 1 } do
-			tag(
-				Kit.block(
-					model,
-					Vector3.new(len, 0.5, 3.8),
-					at(cx, WALL_H + 0.2, side * 4.9) * Kit.angles(side * -12, 0, 0),
-					roof,
-					metal
-				),
-				"Roof"
-			)
+			local eave = at(cx, WALL_H + 0.2, side * 4.9) * Kit.angles(side * -12, 0, 0)
+			tag(Kit.block(model, Vector3.new(len, 0.5, 3.8), eave, roof, metal), "Roof")
+			-- a rounded drip rail along its lower edge, in the body's varnished teak
+			Kit.cylinder(model, len, 0.26, eave * CFrame.new(0, -0.05, side * 1.98), body, {
+				material = Enum.Material.SmoothPlastic,
+				reflectance = 0.04,
+				collide = false,
+				shadow = false,
+			})
 		end
 		-- the monitor: side walls below and above the lights, glazing bars between, end walls, capping
 		local base = WALL_H + 0.8
@@ -959,8 +960,7 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 		local brass = { material = Enum.Material.Metal, collide = false, shadow = false }
 		local roofIn = MONITOR_TOP - 0.1 -- underside of the clerestory roof lining
 		for _, x in lamps do
-			-- a rose on the clerestory roof, a long rod, a gallery and the globe
-			Kit.cylinder(model, 0.12, 0.9, at(x, roofIn - 0.06, 0) * Kit.angles(0, 0, 90), C.brass, brass)
+			-- a long brass rod from the clerestory roof, and the lantern on it
 			local rodTop, rodBottom = roofIn - 0.12, CEIL_BOTTOM - 0.62
 			Kit.cylinder(
 				model,
@@ -970,16 +970,17 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 				C.brass,
 				brass
 			)
-			Kit.cylinder(model, 0.2, 0.8, at(x, CEIL_BOTTOM - 0.72, 0) * Kit.angles(0, 0, 90), C.brass, brass)
-			local globe = Kit.neon(
-				model,
-				Vector3.new(1.1, 1.1, 1.1),
-				at(x, CEIL_BOTTOM - 1.2, 0),
-				C.interiorGlobe,
-				Enum.PartType.Ball
-			)
-			globe.Transparency = 0.1
-			Kit.pointLight(globe, C.interiorWarm, 1.15, 18, true)
+			-- a square glazed lantern, the hall's back-wall lamp head in small: an iron cap over the
+			-- amber glass, hung from the brass rod
+			local iron = { material = Enum.Material.Metal, collide = false, shadow = false }
+			local top = CEIL_BOTTOM - 0.68
+			Kit.block(model, Vector3.new(0.86, 0.22, 0.86), at(x, top - 0.2, 0), C.iron, iron)
+			local glassY = top - 0.31 - 0.45
+			local glass = Kit.neon(model, Vector3.new(0.62, 0.9, 0.62), at(x, glassY, 0), C.lanternGlass)
+			glass.Transparency = 0.15
+			glass.Name = "CeilingLantern"
+			local L = InteriorLight.Train.Lantern
+			Kit.pointLight(glass, Kit.rgb(L.color), L.brightness, L.range, L.shadows)
 		end
 	end
 

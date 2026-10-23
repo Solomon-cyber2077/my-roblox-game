@@ -2,13 +2,20 @@
 --[[
 	World setup that must exist before anything else: collision groups and
 	character loading policy. Lighting belongs to the client: AtmosphereController
-	builds the sky, atmosphere and post effects and drives the time of day.
+	builds the sky, atmosphere and post effects and drives the time of day. The one
+	exception is the Depot Hall's base light (Tuning.Sky.Hall), written once here: Lighting
+	replicates, so a joining client shows the warm hall before its scripts have run, and a
+	place whose saved Lighting is the bright default can never flash it.
 ]]
 
+local Lighting = game:GetService("Lighting")
 local PhysicsService = game:GetService("PhysicsService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local StarterPlayer = game:GetService("StarterPlayer")
 local Workspace = game:GetService("Workspace")
+
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 
 local WorldService = {}
 
@@ -60,6 +67,13 @@ function WorldService.Init()
 	StarterPlayer.CharacterUseJumpPower = false
 	setupCollisionGroups()
 	clearTemplate()
+	local hall = Tuning.Sky.Hall
+	Lighting.Ambient = Color3.fromRGB(hall.Ambient[1], hall.Ambient[2], hall.Ambient[3])
+	Lighting.OutdoorAmbient = Color3.fromRGB(hall.Outdoor[1], hall.Outdoor[2], hall.Outdoor[3])
+	Lighting.Brightness = hall.Brightness
+	Lighting.ExposureCompensation = hall.Exposure
+	Lighting.ClockTime = hall.Clock
+	Lighting.EnvironmentDiffuseScale = 0
 end
 
 function WorldService.Start() end

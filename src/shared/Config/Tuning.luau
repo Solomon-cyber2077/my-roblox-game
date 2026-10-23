@@ -339,6 +339,16 @@ local Tuning = {
 	-- from the run seed and the server clock. `dark` is how deep into the night the run is:
 	-- 0 at dusk and dawn, 1 at the darkest hour (Scenery/Sky).
 	Sky = {
+		-- the Depot Hall's base light (Scenery/Sky's LOBBY), also written into Lighting by the
+		-- server at boot (WorldService) so a joining client and the server's view start warm
+		-- before AtmosphereController runs; default.project.json carries the same numbers
+		Hall = {
+			Ambient = { 13, 10, 7 },
+			Outdoor = { 13, 10, 8 },
+			Brightness = 0,
+			Exposure = -0.1,
+			Clock = 19,
+		},
 		OmenSlot = 45, -- seconds of server time per omen roll; an omen never crosses its slot
 		OmenChance = { 0.2, 0.6 }, -- chance of an omen per slot at the edge of night, and at its depth
 		OmenMinDark = 0.25, -- none in the dusk or the dawn
