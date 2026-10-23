@@ -33,6 +33,7 @@ local ORDER = {
 	"LobbyStorm",
 	"LobbyShellController",
 	"FootstepController",
+	"DetailController",
 }
 
 local controllers: { { name: string, module: any } } = {}

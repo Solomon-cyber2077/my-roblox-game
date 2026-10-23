@@ -245,10 +245,12 @@ end
 --[[
 	The inner face of a door leaf: the meshes are modelled from outside and their backs read as a
 	flat board, so each leaf gets a ledged-and-braced back to match its face: three battens and a
-	brace in a darker shade of the leaf, a brass pull at the meeting edge and a brass kick plate. Every piece carries the leaf's DoorSlide, so it
-	slides with it (TrainVisualsController).
+	brace in a darker shade of the leaf, a brass pull at the meeting edge, a brass kick plate and,
+	as Detail (gone under Performance), an iron frame round the glazing and the pull's mounts.
+	Every piece carries the leaf's DoorSlide, so it slides with it (TrainVisualsController).
 ]]
 local INSIDE_BRASS = Color3.fromRGB(150, 120, 74)
+local INSIDE_IRON = Color3.fromRGB(46, 44, 42)
 
 --[[
 	The cornice under a carriage's roof: the shell's baked maps streak the band just below the
@@ -267,6 +269,9 @@ local function cornice(parent: Instance, origin: CFrame, car: any, colors: { [st
 		local part = Kit.block(parent, size, origin * CFrame.new(cx, y, z), color, opts)
 		part.Name = name
 		part.CastShadow = false
+		if name ~= "Cornice" then
+			part:AddTag("Detail") -- the fascia stays under Performance (it hides the streaks)
+		end
 	end
 	local mid, tall = (CORNICE.low + CORNICE.high) / 2, CORNICE.high - CORNICE.low
 	for _, side in { -1, 1 } do
@@ -287,7 +292,13 @@ local function cornice(parent: Instance, origin: CFrame, car: any, colors: { [st
 		)
 	end
 end
-local function dressLeafInside(leaf: BasePart, origin: CFrame, slide: number, parent: Instance)
+local function dressLeafInside(
+	leaf: BasePart,
+	origin: CFrame,
+	slide: number,
+	glazed: boolean,
+	parent: Instance
+)
 	local here = origin:ToObjectSpace(leaf.CFrame).Position
 	local side = if here.Z > 0 then 1 else -1
 	local w, h = leaf.Size.X, leaf.Size.Y
@@ -297,7 +308,7 @@ local function dressLeafInside(leaf: BasePart, origin: CFrame, slide: number, pa
 	local function at(x: number, y: number, out: number): Vector3
 		return Vector3.new(here.X + x, here.Y + y, face - side * out)
 	end
-	local function piece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material)
+	local function piece(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, fine: boolean?)
 		local part = Kit.block(
 			parent,
 			size,
@@ -307,6 +318,9 @@ local function dressLeafInside(leaf: BasePart, origin: CFrame, slide: number, pa
 		)
 		part.Name = "DoorInside"
 		part:SetAttribute("DoorSlide", slide)
+		if fine then
+			part:AddTag("Detail") -- gone under Performance (Controllers/DetailController)
+		end
 	end
 	local low, mid = -h / 2 + 0.95, -0.45
 	for _, y in { h / 2 - 0.5, mid, low } do
@@ -314,8 +328,38 @@ local function dressLeafInside(leaf: BasePart, origin: CFrame, slide: number, pa
 	end
 	local a, b = at(-edge * (w / 2 - 0.35), low, 0.02), at(edge * (w / 2 - 0.35), mid, 0.02)
 	piece(Vector3.new(0.04, 0.3, (b - a).Magnitude - 0.3), Kit.between(a, b), wood, Enum.Material.Wood)
+	if glazed then
+		-- an iron frame round the glazing (TrainBuilder's door pane: 0.7 by 2.2, its middle at h * 0.16)
+		local wy, ow, oh = h * 0.16, 0.7, 2.2
+		for _, s in { -1, 1 } do
+			local iron = INSIDE_IRON
+			piece(
+				Vector3.new(0.12, oh + 0.24, 0.09),
+				CFrame.new(at(s * (ow / 2 + 0.06), wy, 0.035)),
+				iron,
+				Enum.Material.Metal,
+				true
+			)
+			piece(
+				Vector3.new(ow, 0.12, 0.09),
+				CFrame.new(at(0, wy + s * (oh / 2 + 0.06), 0.035)),
+				iron,
+				Enum.Material.Metal,
+				true
+			)
+		end
+	end
 	local px = edge * (w / 2 - 0.3)
 	piece(Vector3.new(0.09, 1.1, 0.09), CFrame.new(at(px, -1.6, 0.14)), INSIDE_BRASS, Enum.Material.Metal)
+	for _, dy in { -0.45, 0.45 } do
+		piece(
+			Vector3.new(0.07, 0.07, 0.11),
+			CFrame.new(at(px, -1.6 + dy, 0.045)),
+			INSIDE_BRASS,
+			Enum.Material.Metal,
+			true
+		)
+	end
 	piece(
 		Vector3.new(w - 0.3, 0.5, 0.03),
 		CFrame.new(at(0, -h / 2 + 0.35, 0.005)),
@@ -483,7 +527,7 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 						leaf:SetAttribute("DoorSlide", slide)
 						look(looks, own.look, leaf)
 						if slide then
-							dressLeafInside(leaf, origin, slide, folder)
+							dressLeafInside(leaf, origin, slide, false, folder)
 						end
 						retire(part, archive)
 						continue
@@ -501,7 +545,7 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 					leaf:SetAttribute("DoorSlide", slide)
 					look(looks, kit.look or Config.KitLook, leaf)
 					if slide then
-						dressLeafInside(leaf, origin, slide, folder)
+						dressLeafInside(leaf, origin, slide, true, folder)
 					end
 					retire(part, archive)
 				end
