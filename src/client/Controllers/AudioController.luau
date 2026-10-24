@@ -31,6 +31,7 @@
 	0.4 s (IntentHush; SoundService attribute IntentHushAt marks each one for Studio checks).
 ]]
 
+local CollectionService = game:GetService("CollectionService")
 local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -44,6 +45,7 @@ local AudioPriority = require(Shared.Config.AudioPriority)
 local SettingsConfig = require(Shared.Config.Settings)
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
+local LobbyIdle = require(Shared.Logic.LobbyIdle)
 local MathX = require(Shared.Util.MathX)
 
 local Registry = require(script.Parent.Parent.Registry)
@@ -64,6 +66,15 @@ local anchorPart: Part
 local beds: { [string]: Sound } = {}
 local loops: { [string]: Sound } = {}
 local pools: { [string]: { sounds: { Sound }, next: number } } = {}
+-- The lobby idle piano (Tuning.LobbyIdle, only while Enabled): the hall's one server-made
+-- Gnossienne (Builders/LobbyBuilder, on the tagged PianoVoice) is moved, on this client only, into
+-- a group of its own under Piano, which is silent until we have been idle; the room tone dips.
+local IDLE = Tuning.LobbyIdle
+local idleGroup: SoundGroup? = nil
+local idleSound: Sound? = nil
+local idleWanted = false
+local idlePiano = 0 -- 0..1 envelope on idleGroup
+local idleBed = 0 -- 0..1 share of the room tone's dip
 
 local STOP_PHASES: { [string]: boolean } = { Dwell = true, LastCall = true, Departure = true }
 local DISTANT_EVERY = { 3.5, 8 } -- seconds between far-off sounds at a stop
@@ -332,6 +343,30 @@ function AudioController.Start()
 		end
 	end
 
+	if IDLE.Enabled then
+		local made = Instance.new("SoundGroup")
+		made.Name = "IdlePiano"
+		made.Volume = 0
+		made.Parent = mixes.Piano
+		idleGroup = made
+		local function adopt(child: Instance)
+			if child:IsA("Sound") then
+				child.SoundGroup = made
+				idleSound = child
+			end
+		end
+		local function bind(voice: Instance)
+			for _, child in voice:GetChildren() do
+				adopt(child)
+			end
+			voice.ChildAdded:Connect(adopt)
+		end
+		CollectionService:GetInstanceAddedSignal("PianoVoice"):Connect(bind)
+		for _, voice in CollectionService:GetTagged("PianoVoice") do
+			bind(voice)
+		end
+	end
+
 	local ambience = 0 -- 0..1: how much the stop's soundscape is playing
 	local danger = 0 -- 0..1: the drone's danger, eased
 	local night = 0 -- 0..1: how much of the night layer is playing on the line
@@ -472,6 +507,20 @@ function AudioController.Start()
 				* swayHigh,
 			Howl = Audio.Howl.volume * (ambience * (0.4 + 0.6 * tension) + 0.5 * swell),
 		}
+		-- the idle piano: up only once it is really playing, so the room never dips into silence
+		local piano = idleSound
+		local ready = idleGroup ~= nil
+			and piano ~= nil
+			and piano.Parent ~= nil
+			and piano.IsLoaded
+			and piano.IsPlaying
+		local idle = if idleWanted and ready then 1 else 0
+		idlePiano = LobbyIdle.approach(idlePiano, idle, IDLE.PianoIn, IDLE.PianoOut, dt)
+		idleBed = LobbyIdle.approach(idleBed, idle, IDLE.PianoIn, IDLE.BedRestore, dt)
+		if idleGroup then
+			idleGroup.Volume = idlePiano
+		end
+		targets.DepotHall *= 1 - (1 - IDLE.BedGain) * idleBed
 		walls.MidGain = SHELTER_MID * shelter
 		walls.HighGain = SHELTER_HIGH * shelter
 		for name in OUTSIDE do
@@ -643,6 +692,16 @@ function AudioController.Tap(cueName: string)
 			end
 		end)
 	end
+end
+
+-- The lobby idle (Controllers/LobbyIdleController): bring the hall piano up, or let it go.
+function AudioController.SetIdle(on: boolean)
+	idleWanted = on
+end
+
+-- False only while the idle piano is held down (always true when the feature is off).
+function AudioController.PianoAudible(): boolean
+	return idleGroup == nil or idlePiano > 0.05
 end
 
 -- The SoundGroup of a mix ("Cues", "Steps", ...), for sounds made elsewhere (a Hollow's breath).

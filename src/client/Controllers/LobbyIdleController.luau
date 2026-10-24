@@ -4,7 +4,9 @@
 	Tuning.LobbyIdle.Enabled. After Delay seconds of continuous quiet while eligible
 	(Logic/LobbyIdle), the view slowly turns round our character (Camera/IdleOrbit); any
 	deliberate input, held control, movement or loss of eligibility cancels it at once and a
-	fresh quiet interval is needed. One attempt per interval.
+	fresh quiet interval is needed. One attempt per interval. The hall piano comes up at the same
+	moment (AudioController.SetIdle) whether or not the view can turn, and goes down on the same
+	cancel.
 
 	Eligible here: a state snapshot received, phase Lobby, our own living character, no modal,
 	the Roblox menu shut, no text focus, the window focused and the train camera off. The
@@ -74,6 +76,8 @@ function LobbyIdleController.Start()
 			and not (trainCam and trainCam.Active())
 	end
 
+	local audio = Registry.AudioController
+	local idle = false
 	local quiet = LobbyIdle.new(os.clock(), IDLE.Delay)
 	RunService.Heartbeat:Connect(function()
 		Safe.call("LobbyIdleController", function()
@@ -82,8 +86,14 @@ function LobbyIdleController.Start()
 			stirred = false
 			if not ok or active then
 				orbit:Cancel()
+				if idle then
+					idle = false
+					audio.SetIdle(false)
+				end
 			end
 			if LobbyIdle.step(quiet, os.clock(), ok, active) then
+				idle = true
+				audio.SetIdle(true)
 				orbit:Begin()
 			end
 		end)

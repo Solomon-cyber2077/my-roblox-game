@@ -4,14 +4,18 @@
 	Each note is a BillboardGui of one glyph on the piano's hidden PianoVoice part
 	(Builders/LobbyBuilder, tagged "PianoVoice"): it rises, sways, and fades out
 	in gold, frost or amber. All local, nothing uploaded, nothing replicated.
+	None while reduced motion is on or while the idle piano is held down (AudioController).
 ]]
 
 local CollectionService = game:GetService("CollectionService")
+local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Safe = require(ReplicatedStorage.Shared.Util.Safe)
+
+local Registry = require(script.Parent.Parent.Registry)
 
 local TAG = "PianoVoice"
 local GLYPHS = { "♪", "♫", "♩", "♬" }
@@ -87,7 +91,14 @@ local function play(voice: Instance)
 			task.wait(between(INTERVAL))
 			Safe.call("PianoNotes", function()
 				local camera = Workspace.CurrentCamera
-				if voice.Parent and camera and (camera.CFrame.Position - voice.Position).Magnitude < NEAR then
+				local audio = Registry.AudioController
+				local audible = not GuiService.ReducedMotionEnabled and (audio == nil or audio.PianoAudible())
+				if
+					audible
+					and voice.Parent
+					and camera
+					and (camera.CFrame.Position - voice.Position).Magnitude < NEAR
+				then
 					emit(voice)
 				end
 			end)
