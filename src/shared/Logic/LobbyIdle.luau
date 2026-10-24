@@ -69,6 +69,17 @@ function LobbyIdle.step(state: State, now: number, eligible: boolean, activeInpu
 	return true
 end
 
+export type Hall = { HalfX: number, MinZ: number, MaxZ: number, MinY: number, MaxY: number }
+
+-- True when a point (studs from the hall's origin) is on the Depot Hall floor: not out on the
+-- track or the display road, not outside the walls.
+function LobbyIdle.inHall(x: number, y: number, z: number, hall: Hall): boolean
+	if not (finite(x) and finite(y) and finite(z)) then
+		return false
+	end
+	return math.abs(x) < hall.HalfX and z > hall.MinZ and z < hall.MaxZ and y > hall.MinY and y < hall.MaxY
+end
+
 -- Moves a 0..1 envelope toward `target` linearly: a full rise takes `rise` seconds and a
 -- full fall `fall` seconds; a change of direction starts from where it is.
 function LobbyIdle.approach(current: number, target: number, rise: number, fall: number, dt: number): number

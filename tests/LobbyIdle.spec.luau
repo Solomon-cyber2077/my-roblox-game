@@ -74,4 +74,16 @@ describe("LobbyIdle", function()
 		expect(LobbyIdle.approach(0.4, 1, 0, 1, 0.1)).toBe(1)
 		expect(LobbyIdle.approach(0 / 0, 1, 1.5, 1, 0.1)).toBe(0)
 	end)
+
+	it("keeps idle to the hall floor", function()
+		local hall = { HalfX = 111, MinZ = -21, MaxZ = 71, MinY = -4, MaxY = 30 }
+		expect(LobbyIdle.inHall(0, 3, 10, hall)).toBe(true)
+		expect(LobbyIdle.inHall(110.9, 3, 70.9, hall)).toBe(true)
+		expect(LobbyIdle.inHall(0, 3, -24, hall)).toBe(false) -- on the track
+		expect(LobbyIdle.inHall(112, 3, 10, hall)).toBe(false) -- through the end wall
+		expect(LobbyIdle.inHall(0, 3, 72, hall)).toBe(false) -- through the back wall
+		expect(LobbyIdle.inHall(0, -10, 10, hall)).toBe(false) -- fallen through
+		expect(LobbyIdle.inHall(0, 40, 10, hall)).toBe(false) -- up in the roof
+		expect(LobbyIdle.inHall(0 / 0, 3, 10, hall)).toBe(false)
+	end)
 end)

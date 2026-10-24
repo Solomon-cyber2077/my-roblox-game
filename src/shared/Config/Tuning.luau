@@ -413,6 +413,9 @@ local Tuning = {
 		PianoOut = 1, -- seconds for it to go back down on input
 		BedGain = 0.35, -- the DepotHall room tone's share while the piano is up
 		BedRestore = 1.2, -- seconds for the room tone to come back
+		-- The Depot Hall floor the crew can stand on, from World.LobbyOrigin (Builders/LobbyBuilder:
+		-- end walls at x = +-112, back wall at z = 72, platform edge at z = -21), kept a stud inside.
+		Hall = { HalfX = 111, MinZ = -21, MaxZ = 71, MinY = -4, MaxY = 30 },
 		ClearanceMargin = 0.6, -- studs kept between the near plane's corners and any geometry
 		ClearanceMinDistance = 2, -- closer than this the orbit is unavailable, never forced
 		ClearanceEaseOut = 6, -- studs per second the view may move back out after a pull-in

@@ -99,6 +99,11 @@ function Menu.setLobbyY(y: number)
 	lobbyY = y
 end
 
+-- True while the dropdown is showing.
+function Menu.isOpen(): boolean
+	return list ~= nil and list.Visible
+end
+
 function Menu.close()
 	if list then
 		list.Visible = false
