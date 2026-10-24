@@ -1,5 +1,15 @@
 # HANDOFF
 
+## 2026-10-23: STUDIO CHECK OF S10 AND S11
+1. Completed: played a place built from origin/claude/last-train-out (rojo build in a temp worktree; then Rojo-synced to the checkout for the two fixes below). Two fixes from it:
+- The hall's departure board (a SurfaceGui in PlayerGui) had ResetOnSpawn on, so it vanished at the first respawn after a lost run; now off (UI/Lobby).
+- The run ticket's stamp ran off the card's right edge for long words (ENTERED, NOT RECALLED; TRAIN LOST AT STOP n); it now starts further left by its length (UI/RunTicket).
+2. Verified in Studio (console: no errors; one existing warning, rbxassetid://203785492 "Asset type does not match"):
+- S10: Ping remote; PING button beside LOOK in a run; a ping makes the amber PingGlow (3.8 at 0.4 s, gone by 2 s) and plays PingWhistle; a second ping inside 3 s is dropped; own footsteps play muffled (EQ high -10); ArrivalHushAt set at the stop 1 dock.
+- S11: the five status items have no Brass price and carry their record (livery_royal two); the hall shows HANDS WANTED / RELIEF DEPARTS AT DUSK, THE DEPOT STANDS WHILE THE LINE RUNS, ROLL OF THE TERMINUS and the superintendent's Roll line; the departure board reads COLDHARBOUR DEPOT · THE RELIEF / RELIEF EN ROUTE and survives a respawn; the plaque KEPT LIT BY THOSE WHO WENT BEFORE hangs on a platform lamp post, welded (stop 2, Minehead); a lost run is stamped ENTERED, NOT RECALLED, on the card; payout 12 (6 doubled by the daily bonus) plus 50 milestone Brass = 62 in the lobby.
+- Not checked (Astra): Outfitter RECORD tags and the Ledger's Roll line on screen; crew slots with two players; Creator mode name tags; a stalker's creak; the plaque's dark lettering is low-contrast at night (CHOICE: lighter ink or a lit face).
+3. Next: Gate G1 (human).
+
 ## 2026-10-23: S11 / PROMPT 8 (ONE BRASS LOOP, LINE MASTERY AS THE RECORD, ERRANDS AS STORY, THE PREMISE)
 1. Completed
 - Record items: hat_lampcap (bestStation 8), trail_brass (clutchBoards 5), lantern_aurora (victories 3), hat_topper (victories 5) and livery_royal (longVictories 1 AND stationsDeparted 50) lost their Brass price and Rank gate. The rule lives in Config/Cosmetics `record`; Config/Progression builds the Line Mastery milestones from it (`all` for AND); Logic/Milestones.met/progress and Logic/Catalog.recordMet/recordText evaluate it. The Rank gate on Brass items is gone (Catalog.canBuyWithBrass has no rank argument). The other Brass items keep their prices; daily specials never pick a record item.
