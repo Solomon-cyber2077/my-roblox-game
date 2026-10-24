@@ -167,7 +167,9 @@ function Outfitter.mount(gui: ScreenGui)
 		TextSize = 14,
 		Color = Theme.Color.brassLight,
 		Position = UDim2.fromOffset(14, 318),
-		Size = UDim2.new(1, -28, 0, 18),
+		Size = UDim2.new(1, -28, 0, 54),
+		Wrapped = true,
+		YAlign = Enum.TextYAlignment.Top,
 	})
 	previewUnlock.ZIndex = 33
 	previewUnlock.Parent = preview
@@ -301,9 +303,12 @@ function Outfitter.mount(gui: ScreenGui)
 		previewRarity.Text = string.upper(def.rarity)
 		previewRarity.TextColor3 = Theme.Rarity[def.rarity]
 		previewDesc.Text = def.description
-		previewUnlock.Text = if canUse(profile.owned or {}, def.id)
+		local unlockText = if canUse(profile.owned or {}, def.id)
 			then "In your locker"
 			else Catalog.unlockText(def)
+		previewUnlock.Text = if def.category == "Uniform"
+			then `{unlockText}\nUniform required; Roblox clothes stay yours.`
+			else unlockText
 		local text, style, onClick = actionFor(def, profile)
 		action.Text = text
 		Ui.setButtonStyle(action, if style == "Primary" then "Primary" else "Secondary")

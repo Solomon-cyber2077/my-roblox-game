@@ -43,12 +43,25 @@ def face(name, side, size, pants=False):
     w, h = size
     seam = adjust(trousers if pants else base, 25)
     d.line([(3, 0), (3, h), (w-4, h), (w-4, 0)], fill=seam, width=1)
+    # Fine directional weave and broad panel shading keep the flat classic sheet
+    # readable at avatar distance without relying on a modern layered-clothing shader.
+    weave = adjust(trousers if pants else base, 12)
+    for x in range(7, w, 9):
+        d.line((x, 2, x - 4, h - 3), fill=weave, width=1)
+    for y in range(12, h, 18):
+        d.line((2, y, w - 3, y + 2), fill=adjust(weave, -7), width=1)
     if pants:
         if h == 128:
             d.rectangle((0, 95, w, h), fill=(31, 28, 25))
             d.line((0, 96, w, 96), fill=(94, 76, 54), width=2)
             d.line((4, 119, w-4, 119), fill=(62, 52, 40), width=2)
             d.line((w//2, 18, w//2-4, 85), fill=adjust(trousers,-12), width=2)
+            d.line((w//2 + 2, 21, w//2 - 2, 86), fill=adjust(trousers, 22), width=1)
+            d.line((8, 81, w-8, 81), fill=adjust(trousers, 18), width=1)
+            # Boot toes and laces are visible in the lower limb panels.
+            d.line((8, 111, w-8, 111), fill=(102, 78, 54), width=2)
+            for x in range(12, w - 8, 11):
+                d.line((x, 101, x + 5, 108), fill=(79, 61, 46), width=1)
         return im
     if side == 'front':
         # Waistcoat/apron silhouette with a broad contrasting neck opening.
@@ -59,19 +72,44 @@ def face(name, side, size, pants=False):
             d.rectangle((28,38,100,127), fill=trousers)
             d.line((35,0,35,48), fill=trousers,width=9)
             d.line((93,0,93,48), fill=trousers,width=9)
-            d.rectangle((42,53,86,79), outline=adjust(trousers,35),width=2)
-            d.line((64,53,64,79), fill=adjust(trousers,20))
-            for x in (35,93): d.ellipse((x-2,39,x+2,43),fill=metal)
+            d.line((31,39,31,121), fill=adjust(trousers,-18), width=2)
+            d.line((97,39,97,121), fill=adjust(trousers,25), width=2)
+            d.rounded_rectangle((42,53,86,82), radius=5, fill=adjust(trousers, -10), outline=adjust(trousers,42),width=2)
+            d.line((64,55,64,79), fill=adjust(trousers,28), width=2)
+            d.line((45,76,83,76), fill=adjust(trousers,-28), width=2)
+            for x in (35,93):
+                d.ellipse((x-3,39,x+3,45),fill=metal)
+                d.ellipse((x-1,41,x+1,43),fill=(234,205,135))
+            # asymmetric tool loop and pencil pocket
+            d.rectangle((78,87,96,111), outline=adjust(trousers,35), width=2)
+            d.line((81,91,91,91), fill=adjust(trousers,55), width=2)
         else:
             d.line((64,32,64,127), fill=adjust(base,-24),width=3)
             for y in (48,67,86,105):
-                xs = (51,77) if name.startswith('conductor') else (67,)
+                xs = (49,79) if name.startswith('conductor') else (67,)
                 for x in xs:
                     d.ellipse((x-2,y-2,x+2,y+2),fill=metal)
                     d.point((x-1,y-1), fill=(229,204,148))
             for x in (12,88):
                 d.rectangle((x,76,x+28,98),outline=adjust(base,-17),width=2)
                 d.line((x,77,x+28,77), fill=seam,width=2)
+                d.line((x+3,96,x+25,96), fill=adjust(base, 20), width=1)
+            if name.startswith('brakeman'):
+                d.polygon([(0,0),(20,0),(29,46),(13,55)], fill=adjust(base, -16))
+                d.line((13,4,26,45), fill=adjust(base, 34), width=2)
+                d.rectangle((93,45,117,65), outline=adjust(base, -18), width=2)
+            elif name.startswith('conductor'):
+                d.polygon([(57,0),(71,0),(66,35),(61,35)], fill=(70,25,31))
+                d.line((59,40,69,40), fill=metal, width=2)
+                d.arc((72,49,103,104), 50, 160, fill=(139,112,73), width=2)
+            elif name.startswith('trackwalker'):
+                d.polygon([(37,0),(91,0),(67,30),(58,30)], fill=(227,214,171))
+                d.rectangle((10,41,28,67), fill=adjust(base, -18), outline=adjust(base, 34), width=2)
+                d.line((15,47,23,47), fill=metal, width=2)
+            elif name.startswith('wayfarer'):
+                d.polygon([(80,0),(96,0),(33,126),(20,126)], fill=(48,33,29))
+                d.line((87,1,28,124), fill=(132,91,58), width=2)
+                d.rectangle((18,81,50,108), outline=(49,35,28), width=3)
         d.rectangle((0,117,127,125),fill=(39,31,24))
         d.rectangle((58,117,69,125),outline=metal,width=2)
         if name.endswith('veteran') or name.endswith('terminus'):
@@ -87,6 +125,9 @@ def face(name, side, size, pants=False):
         d.rectangle((0,103,w,127),fill=adjust(base,-22))
         d.line((0,104,w,104),fill=seam,width=2)
         d.rectangle((10,54,w-10,80),outline=adjust(base,-13),width=2)
+        for y in (58,64,70): d.line((14,y,w-14,y), fill=adjust(base,24), width=1)
+        if name.startswith('trackwalker'):
+            d.ellipse((w//2-17, 42, w//2+17, 88), fill=adjust(base, -17), outline=adjust(base, 30), width=2)
     return im
 
 def soot(im, seed):

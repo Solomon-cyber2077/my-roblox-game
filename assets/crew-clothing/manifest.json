@@ -16,7 +16,28 @@
         0
       ],
       "upload": "HUMAN pending",
-      "validated": false
+      "validated": false,
+      "gear": {
+        "name": "Gear",
+        "limb": "Torso",
+        "triangles": 372,
+        "mesh": "gear.obj",
+        "texture": "hat-atlas.png",
+        "size": [
+          1.4605,
+          1.7007,
+          0.2991
+        ],
+        "offset": [
+          0.0473,
+          0.1253,
+          -0.638
+        ],
+        "upload": "HUMAN pending",
+        "validated": false
+      },
+      "totalTriangles": 972,
+      "accessoryCount": 2
     },
     "brakeman": {
       "triangles": 600,
@@ -33,7 +54,28 @@
         0
       ],
       "upload": "HUMAN pending",
-      "validated": false
+      "validated": false,
+      "gear": {
+        "name": "Gear",
+        "limb": "Torso",
+        "triangles": 292,
+        "mesh": "gear.obj",
+        "texture": "hat-atlas.png",
+        "size": [
+          1.53,
+          1.63,
+          0.2725
+        ],
+        "offset": [
+          -0.0575,
+          0.075,
+          -0.6513
+        ],
+        "upload": "HUMAN pending",
+        "validated": false
+      },
+      "totalTriangles": 892,
+      "accessoryCount": 2
     },
     "conductor": {
       "triangles": 616,
@@ -50,7 +92,28 @@
         0
       ],
       "upload": "HUMAN pending",
-      "validated": false
+      "validated": false,
+      "gear": {
+        "name": "Gear",
+        "limb": "Torso",
+        "triangles": 160,
+        "mesh": "gear.obj",
+        "texture": "hat-atlas.png",
+        "size": [
+          1.56,
+          1.377,
+          0.194
+        ],
+        "offset": [
+          0.0,
+          0.2815,
+          -0.617
+        ],
+        "upload": "HUMAN pending",
+        "validated": false
+      },
+      "totalTriangles": 776,
+      "accessoryCount": 2
     },
     "trackwalker": {
       "triangles": 440,
@@ -67,7 +130,28 @@
         0
       ],
       "upload": "HUMAN pending",
-      "validated": false
+      "validated": false,
+      "gear": {
+        "name": "Gear",
+        "limb": "Torso",
+        "triangles": 133,
+        "mesh": "gear.obj",
+        "texture": "hat-atlas.png",
+        "size": [
+          1.5075,
+          1.695,
+          0.2775
+        ],
+        "offset": [
+          0.0737,
+          0.1325,
+          -0.6538
+        ],
+        "upload": "HUMAN pending",
+        "validated": false
+      },
+      "totalTriangles": 573,
+      "accessoryCount": 2
     },
     "wayfarer": {
       "triangles": 504,
@@ -84,7 +168,28 @@
         0
       ],
       "upload": "HUMAN pending",
-      "validated": false
+      "validated": false,
+      "gear": {
+        "name": "Gear",
+        "limb": "Torso",
+        "triangles": 166,
+        "mesh": "gear.obj",
+        "texture": "hat-atlas.png",
+        "size": [
+          1.5875,
+          1.745,
+          0.2725
+        ],
+        "offset": [
+          0.0637,
+          0.1075,
+          -0.6513
+        ],
+        "upload": "HUMAN pending",
+        "validated": false
+      },
+      "totalTriangles": 670,
+      "accessoryCount": 2
     },
     "stoker_veteran": {
       "triangles": 600,
@@ -101,7 +206,28 @@
         0
       ],
       "upload": "HUMAN pending",
-      "validated": false
+      "validated": false,
+      "gear": {
+        "name": "Gear",
+        "limb": "Torso",
+        "triangles": 372,
+        "mesh": "gear.obj",
+        "texture": "hat-atlas.png",
+        "size": [
+          1.4605,
+          1.7007,
+          0.2991
+        ],
+        "offset": [
+          0.0473,
+          0.1253,
+          -0.638
+        ],
+        "upload": "HUMAN pending",
+        "validated": false
+      },
+      "totalTriangles": 972,
+      "accessoryCount": 2
     },
     "conductor_terminus": {
       "triangles": 616,
@@ -118,7 +244,28 @@
         0
       ],
       "upload": "HUMAN pending",
-      "validated": false
+      "validated": false,
+      "gear": {
+        "name": "Gear",
+        "limb": "Torso",
+        "triangles": 180,
+        "mesh": "gear.obj",
+        "texture": "hat-atlas.png",
+        "size": [
+          1.56,
+          1.377,
+          0.194
+        ],
+        "offset": [
+          0.0,
+          0.2815,
+          -0.617
+        ],
+        "upload": "HUMAN pending",
+        "validated": false
+      },
+      "totalTriangles": 796,
+      "accessoryCount": 2
     }
   }
 }
