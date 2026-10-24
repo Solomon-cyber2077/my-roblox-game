@@ -767,6 +767,43 @@ local Tuning = {
 			Flicker = { { 0, 0.94 }, { 0.05, 0 }, { 0.11, 0.85 }, { 0.17, 0.1 }, { 0.24, 0.92 }, { 0.36, 0 } },
 		},
 	},
+
+	--[[
+		The void mist along the sinkhole edge (prompts/VM1-VM7, Logic/VoidMist). The edge zone is
+		the BufferDepth strip on the train side of each EdgeRail: it damages after EntryGrace and
+		its current takes away outward speed above CurrentMaxOut x (1 - depth), so you wade to a
+		stop at the rail. Every value is a starting point to tune in playtest.
+	]]
+	VoidMist = {
+		BufferDepth = 6, -- studs of edge zone in front of the rail
+		DamagePerSecond = 8, -- in the edge zone, after the grace (fog damage is its own)
+		TickInterval = 0.25,
+		EntryGrace = 0.5, -- seconds in the zone before the first tick
+		-- outward studs/s allowed at the zone's inner face, 0 at the rail: the crew's walk (Crew.WalkSpeed),
+		-- so a walk slows from the face on (the design's 12 assumed a 16 walk; at 21 it was a jolt)
+		CurrentMaxOut = 21,
+		ProximityRange = 8, -- studs over which the tint and hum come in
+		TintSaturation = -0.15, -- saturation added at full proximity
+		IdleSeconds = 12, -- no input this long, within IdleRange of the edge mist: it thickens
+		IdleRange = 10,
+		IdleFadeIn = 3, -- seconds the idle reaction takes to come in
+		IdleFadeOut = 0.5, -- and to go on any input
+		HumSmoothing = 1, -- per second: how fast the hum follows its target volume
+		IdleOpacityBoost = 0.15, -- transparency taken off the mist while idle near it
+		IdleHumMult = 1.5,
+		HumVolume = 0.3,
+		RescueDamage = 15,
+		SafeSampleInterval = 0.5, -- seconds between last-safe-spot samples
+		KillDrop = 40, -- studs under the station ground that count as fallen
+		WallHeight = 50, -- the EdgeRail's height: no jump clears it
+		Presets = {
+			Teal = { mist = { 58, 90, 94 }, tint = { 200, 222, 223 } },
+			Slate = { mist = { 74, 85, 96 }, tint = { 208, 214, 220 } },
+			Amber = { mist = { 107, 90, 58 }, tint = { 230, 220, 200 } },
+		},
+		DefaultPreset = "Teal",
+		Debug = false,
+	},
 }
 
 return table.freeze(Tuning)

@@ -34,6 +34,8 @@ local ORDER = {
 	"LobbyShellController",
 	"FootstepController",
 	"DetailController",
+	"VoidCurrentController",
+	"MistController",
 }
 
 local controllers: { { name: string, module: any } } = {}

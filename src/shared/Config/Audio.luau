@@ -134,6 +134,9 @@ local Cues: { [string]: Cue } = {
 	-- (77% in 250-500 Hz), so phone and laptop speakers that cannot play the body still hear the drone.
 	Drone = { id = 9112795295, volume = 0.42, loop = true, mix = "Outdoor" },
 	DroneHarmonic = { id = 9112795295, volume = 0.14, loop = true, pitch = 4, mix = "Outdoor" },
+	-- the void mist's hum (Controllers/MistController): the drone's recording at 2x, between its body
+	-- and its harmonic; MistController sets the volume (proximity, idle) every frame
+	MistHum = { id = 9112795295, volume = 0, loop = true, pitch = 2, mix = "Outdoor" },
 	Howl = { id = 9113286969, volume = 0.2, loop = true, pitch = 0.6, mix = "Outdoor" }, -- gusts that come and go
 	DistantBell = {
 		id = 9113804436,

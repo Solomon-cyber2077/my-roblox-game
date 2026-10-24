@@ -26,6 +26,7 @@ local Shared = ReplicatedStorage.Shared
 local Stations = require(Shared.Config.Stations)
 local Kit = require(Shared.Visual.Kit)
 local Tutorial = require(Shared.Config.Tutorial)
+local Tuning = require(Shared.Config.Tuning)
 
 export type Context = {
 	parent: Model,
@@ -1540,18 +1541,22 @@ end
 -- The sinkhole edge ---------------------------------------------------------------------------
 --[[
 	EdgeMark: one tile of the edge, the frame on the rail's line, -Z toward the train. An unseen
-	stop the crew cannot walk through (collision group EdgeRail: Hollows climb over it), marked by
-	a sagging rope on timber stakes so nobody walks into an invisible wall. The rope and stakes do
-	not collide; the stop does. It carries the SinkholeEdge tag the tutorial's edge prompt looks for.
+	stop the crew cannot walk or jump through (collision group EdgeRail: Hollows climb over it),
+	Tuning.VoidMist.WallHeight tall, marked by a sagging rope on timber stakes so nobody walks into
+	an invisible wall. The rope and stakes do not collide; the stop does. It carries the
+	SinkholeEdge tag the tutorial's edge prompt and the void mist (MistService,
+	VoidCurrentController, MistController) look for.
 ]]
 Builders.EdgeMark = function(ctx)
+	local height = Tuning.VoidMist.WallHeight
 	local stop = Kit.block(
 		ctx.parent,
-		Vector3.new(ctx.width, 3.6, 0.4),
-		f(ctx, 0, 1.8, 0),
+		Vector3.new(ctx.width, height, 0.4),
+		f(ctx, 0, height / 2, 0),
 		rgb(26, 24, 22),
 		{ name = "EdgeRail", transparency = 1, shadow = false }
 	)
+	stop.CanQuery = false -- tall and unseen: never in the way of the camera or a raycast
 	stop:AddTag(Tutorial.EdgeTag)
 	-- the marking: a stake at this tile's start and a rope along it at hip height
 	local half = ctx.width / 2

@@ -90,6 +90,7 @@ local Events: { [string]: EventDef } = table.freeze({
 	grasp_shortfall = event("GraspResult", "SecondsLeft", "Device"),
 	grasp_reach = event("GraspResult", "SecondsLeft", "Device"),
 	grasp_press_offset = event("GraspResult", "SecondsLeft", "Device"),
+	mist_rescue = event("Stop", "Device", false), -- value: ping in ms (MistService)
 	run_ended = event("RunOutcome", "CrewSize", "RunDuration"),
 	run_progress = event("RunOutcome", "CrewSize", "RouteLength"),
 	player_run_outcome = event("PlayerOutcome", "Device", "Experience"),
