@@ -2,9 +2,11 @@
 Run textures.py first, then blender --background --python tools/crew-clothing/build.py.
 Render resolution is explicitly 50%; sheets are review evidence, not engine validation.
 """
-import bpy, math, json
+import bpy, math, json, sys
 from pathlib import Path
 from mathutils import Vector
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+import gear
 
 ROOT=Path(__file__).resolve().parents[2]/'assets'/'crew-clothing'
 NAMES=['stoker','brakeman','conductor','trackwalker','wayfarer','stoker_veteran','conductor_terminus']
@@ -84,12 +86,8 @@ def hat(name,color):
             for i in range(16): faces.append((start,start+1+i,start+1+(i+1)%16)); slots.append(2)
     mesh=bpy.data.meshes.new(name+' hat'); mesh.from_pydata(verts,[],faces); mesh.update()
     ob=bpy.data.objects.new(name+' hat',mesh); bpy.context.collection.objects.link(ob)
-    mats=[material(name+' wool',color),dark,material(name+' brass',(.57,.39,.15)),material(name+' seam',tuple(c*1.3 for c in color))]
-    for m in mats: mesh.materials.append(m)
-    mesh.uv_layers.new()
-    for poly,slot in zip(mesh.polygons,slots):
-        poly.material_index=slot
-        for li in poly.loop_indices: mesh.uv_layers.active.data[li].uv=((slot+.5)/4,.5)
+    mesh.materials.append(gear.atlas_material(ROOT/name/'hat-atlas.png',name+' hat atlas'))
+    gear.assign_uv(mesh,slots)
     mesh.calc_loop_triangles(); count=len(mesh.loop_triangles)
     assert count<=1500,(name,count)
     # Normalize geometry to a unit bounding box for SpecialMesh.Scale = manifest size.
@@ -118,6 +116,11 @@ def mannequin(name,x,color,before=False):
         panel(ROOT/name/'torso-front.png',(0,-.502,3),2,2)
         back=panel(ROOT/name/'torso-back.png',(0,.502,3),2,2); back.rotation_euler.z=math.pi
         ob,stats=hat(name,color); ob.location.z=5.05+stats['size'][1]/2
+        _,equipment=gear.build(name,ROOT/name)
+        stats['gear']=equipment
+        stats['totalTriangles']=stats['triangles']+equipment['triangles']
+        assert stats['totalTriangles']<=1500,(name,stats['totalTriangles'])
+        stats['accessoryCount']=2
         manifest[name]=stats
     for ob in set(bpy.data.objects)-start: ob.location.x+=x
 

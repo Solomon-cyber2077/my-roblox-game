@@ -17,3 +17,8 @@ The Stoker crown was softened after the first review. The lineup separates dark 
 ## Rebuild
 
 Run `tools/crew-clothing/textures.py` with Python/Pillow, then Blender 5.2 with `--background --python tools/crew-clothing/build.py`. Sources are in those scripts and the packed `assets/crew-clothing/crew-clothing.blend`. Per-recipe folders contain classic clean/worn sheets, hat atlas, normalized OBJ and render crops. The manifest records measured accessory bounds and triangle totals (440–616 per outfit, one accessory).
+
+### Refinement references
+- Science Museum Group railway uniform collection: https://collection.sciencemuseumgroup.org.uk/search/categories/railway-uniform-%26-costume (cap proportions, restrained braid, workwear silhouettes).
+- Roblox classic clothing: https://create.roblox.com/docs/avatar/classic-clothing (template layout). Original textures and meshes, not copied collection imagery.
+- Before/after comparison: `assets/crew-clothing/stoker-v1.png`, `stoker-after.png`, `lineup-v1.png`, `lineup-after.png`.

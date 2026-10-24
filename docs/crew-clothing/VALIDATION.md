@@ -19,9 +19,15 @@ Implementation spans all six design steps, but the feature is **not release comp
 
 ## HUMAN pending: asset upload and engine acceptance
 
-1. Upload each original classic sheet and hat atlas under the owner's account. Import each `hat.obj` through Studio's 3D Importer; obtain the mesh content IDs. Use template image IDs for ShirtTemplate/PantsTemplate, not catalog clothing product IDs. Confirm permissions for the experience. No IDs have been invented.
-2. Bind clean/worn shirt/pants and accessory mesh/texture IDs in Config/CrewClothing. OBJ geometry is normalized; config size/offset come from manifest. Verify Roblox front (-Z), UV orientation, dimensions and hat attachment before marking each recipe validated. Importer rotation/scale must be checked against the render.
+1. Upload each original classic sheet and hat atlas under the owner's account. Import each `hat.obj` and `gear.obj` through Studio's 3D Importer; obtain the mesh content IDs. Use template image IDs for ShirtTemplate/PantsTemplate, not catalog clothing product IDs. Confirm permissions for the experience. No IDs have been invented.
+2. Bind clean/worn shirt/pants and accessory mesh/texture IDs in Config/CrewClothing. OBJ geometry is normalized; config size/offset come from manifest. Verify Roblox front (-Z), UV orientation, dimensions, hat attachment and torso gear fit before marking each recipe validated. Importer rotation/scale must be checked against the render.
 3. Validate Stoker first in an isolated Studio copy: idle/walk/run, every grab/struggle/pry pose, sitting, death, respawn, slow/failed preload, rapid A→B→A selection, profile load/reconnect, hair/face preservation and restoration. Confirm no duplicate instances, joint/hitbox changes or forbidden client equip. Then validate all other outfits.
 4. Review Outfitter previews, locks, selection feedback and keyboard/controller/touch navigation. Check lantern-lit darkness, fog, distance and four different crew bodies for readable silhouettes and clipping.
 5. Record four-client cold/warm asset-cache runs, transition timings, memory/instances and frame times on the target low-end device. Check stop-three wear, late join, respawn, outcome reset and next run. Enable WearEnabled only if those measurements pass; keep clean uniforms if it does not.
 6. Enable clothing only after uploaded recipes pass, rerun `lune run check`, start/console/screenshot/stop and record the visual/performance evidence. Task 021 stays in-progress until these acceptance items are complete.
+
+## Detail pass (2026-10-24)
+
+Original Blender equipment adds neck-hung Stoker goggles and belt pouch, Brakeman utility pouches, Conductor lapels/watch chain, Trackwalker folded scarf, and Wayfarer satchel. Classic sheets add fabric grain, seams, reinforcement and restrained scuffs. No body or joint geometry changes. Front-facing cloth normals are explicit for single-sided rendering.
+
+Compared `stoker-v1.png` with `stoker-after.png` and `lineup-v1.png` with `lineup-after.png` at half scale. The later render adds readable relief and distinct occupational details while retaining muted railway-workwear palettes. These are source-asset renders, not evidence of engine fit or performance. All seven outfits remain unvalidated until the upload/engine checklist above passes.
