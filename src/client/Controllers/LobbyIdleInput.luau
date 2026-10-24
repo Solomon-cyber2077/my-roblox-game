@@ -18,6 +18,14 @@ export type Observer = {
 	Destroy: (self: Observer) -> (),
 }
 
+-- Only these are held between InputBegan and InputEnded (a Focus begin never ends).
+local HOLDABLE: { [Enum.UserInputType]: boolean } = {
+	[Enum.UserInputType.Keyboard] = true,
+	[Enum.UserInputType.MouseButton1] = true,
+	[Enum.UserInputType.MouseButton2] = true,
+	[Enum.UserInputType.MouseButton3] = true,
+}
+
 local function finite(value: number): boolean
 	return value == value and value ~= math.huge and value ~= -math.huge
 end
@@ -74,7 +82,7 @@ function LobbyIdleInput.new(onActivity: () -> (), options: Options): Observer
 		end
 		if input.UserInputType == Enum.UserInputType.Touch then
 			touchHeld[input] = true
-		else
+		elseif HOLDABLE[input.UserInputType] then
 			held[input] = true
 		end
 		activity()

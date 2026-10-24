@@ -403,6 +403,12 @@ local Tuning = {
 
 	-- The Depot Hall idle view (docs/direction/2026-10-23_lobby-idle-final.md). Provisional.
 	LobbyIdle = {
+		Enabled = false, -- off until the owner's audition (design step 7)
+		Delay = 12, -- seconds of continuous quiet before the view drifts
+		YawSpeed = 2, -- degrees per second once up to speed (180 s a turn)
+		Ramp = 1.5, -- seconds to reach YawSpeed from still
+		StickDeadzone = 0.15,
+		MouseThreshold = 4, -- pixels of mouse travel in one event that count as intent
 		ClearanceMargin = 0.6, -- studs kept between the near plane's corners and any geometry
 		ClearanceMinDistance = 2, -- closer than this the orbit is unavailable, never forced
 		ClearanceEaseOut = 6, -- studs per second the view may move back out after a pull-in

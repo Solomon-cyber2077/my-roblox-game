@@ -69,4 +69,20 @@ function LobbyIdle.step(state: State, now: number, eligible: boolean, activeInpu
 	return true
 end
 
+-- Radians the idle view has turned after `elapsed` seconds: angular speed ramps linearly
+-- from still to `speed` degrees per second over `ramp` seconds, then holds.
+function LobbyIdle.orbitAngle(elapsed: number, speed: number, ramp: number): number
+	if not (finite(elapsed) and finite(speed) and finite(ramp)) or elapsed <= 0 then
+		return 0
+	end
+	local rate = math.rad(speed)
+	if ramp <= 0 then
+		return rate * elapsed
+	end
+	if elapsed < ramp then
+		return rate * elapsed * elapsed / (2 * ramp)
+	end
+	return rate * (elapsed - ramp / 2)
+end
+
 return LobbyIdle
