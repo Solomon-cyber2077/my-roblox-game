@@ -243,7 +243,9 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		text = data.stamp,
 		color = if data.won then WIN else Theme.Color.signal,
 		size = 26,
-		Position = UDim2.new(1, -PAD - 110, 1, -RunTicket.FOOT - 24),
+		-- a long stamp (ENTERED, NOT RECALLED; TRAIN LOST AT STOP 6) starts further left, so it stays
+		-- on the card: about 14 px a letter at size 26
+		Position = UDim2.new(1, -PAD - math.max(110, #data.stamp * 14), 1, -RunTicket.FOOT - 24),
 		ZIndex = z + 10,
 	})
 	stamp.Parent = ticket

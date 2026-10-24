@@ -502,6 +502,7 @@ function Lobby.mount(gui: ScreenGui)
 			CanvasSize = Vector2.new(1100, 400),
 			LightInfluence = 0,
 			Brightness = 1.6,
+			ResetOnSpawn = false, -- in PlayerGui: a respawn after a lost run must not take the board's words
 			Parent = gui.Parent,
 		})
 		boardHead = Ui.text({
