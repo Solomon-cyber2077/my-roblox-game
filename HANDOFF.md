@@ -25,6 +25,11 @@
 - Release (HUMAN): maturity questionnaire, store listing and thumbnails, account verification / Kids evaluation, ads gates, owner audio audition (PingWhistle, StalkCreak, StalkPebble, boots), private-server price.
 3. Next: S11, then Gate G1 (human).
 
+## 2026-10-23: Council workflow correction
+- Completed: recorded in AGENTS.md that Council handoffs require audit answers only; the Council owns designs and build prompts unless the owner explicitly requests otherwise.
+- Known issue: the previous lobby idle response overstepped by authoring and importing prompts; this correction does not alter that import.
+- Next: answer only the audit on the next Council handoff.
+
 ## 2026-10-23: MENU + FRIENDS MARK, HALL ROW, HALL LIGHT AT BOOT, TRAIN LANTERNS, DOOR BACKS, CORNICE, LEAK PAINT
 1. Completed
 - UI/Menu: one split box, MENU and a friends mark (two figures, one behind the other, drawn from frames) that opens the invite prompt while inviting is allowed (Menu.invite). INVITE FRIENDS and LINE MASTERY are out of the dropdown; Line Mastery is read at the honours board (its prompt).
@@ -38,6 +43,14 @@
 2. Verified: `lune run check` passed (Train audit 1800/1800 parts after trimming). Studio (a place built from this checkout with rojo build, since desktop control to press the Rojo plugin was declined): server Lighting at boot 13,10,7 / exposure -0.10; MENU box with the friends mark; no BOARD A CAR; lantern, door backs, cornice and arrows photographed; strongbox overlaps none; console clean.
 - NOT verified: the top-down camera glitch was not reproduced (it matches the fixed test camera used for Studio photos); the friends mark on a phone; the plain roof and cornice on every carriage type up close.
 3. Next: in the owner's Studio, connect the Rojo plugin to port 34872 (this checkout), not 34874.
+
+## 2026-10-23: Lobby idle camera Council final design
+1. Completed
+- Final design and seven ordered build prompts saved in `docs/direction/2026-10-23_lobby-idle-final.md` and imported into Council run `20261022-183550-a-3rd-person-animation-that-oc`; design only, no gameplay implementation.
+2. Verified / known gaps
+- Runtime behavior, real-device comfort, collision coverage and audio permission/audibility remain unverified. `lune run check` failed the visual audit: one target has 1909 parts against an 1800 budget (confirmed by standalone audit). `git diff --check` passed; no commit while the gate fails. Existing gameplay edits were left untouched.
+3. Next logical step
+- Run Prompt 1's contract/baseline checks before implementation.
 
 ## 2026-10-22: S9 / PROMPT 6 THE REST (STATION LOOK, LIGHTING LOCK) - run before Gate G1 at the owner's request
 1. Completed

@@ -17,6 +17,7 @@ Run: `rojo serve`, connect the Rojo plugin in Studio, press Play. Gate: `lune ru
   When the owner says "run S9", "do S9" or "prompt S9", read `prompts/S9.md` and follow it as the full prompt.
 - "TC" = The Council (free design models on the Zenbook). Fetch its packs and build prompts yourself with
   `tc pack` / `tc prompts` / `tc prompt <n>` (bash: `ssh solo@192.168.1.168 council ...`); never ask the owner to paste them.
+- Council handoffs: reply only to the audit. The Council authors designs and build prompts; do not author or rewrite those unless the owner explicitly asks, even if the Council pack requests a final draft and prompts.
 
 ## Features that exist now
 - Lobby, route vote, 11-phase run, stations with loot, fog/collapse hazards, left-behind rule
