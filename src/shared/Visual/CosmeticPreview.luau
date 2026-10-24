@@ -2,12 +2,50 @@
 -- ViewportFrames do not render ParticleEmitters: use a fixed, reusable set of parts.
 local Kit = require(script.Parent.Kit)
 local Cosmetics = require(script.Parent.Parent.Config.Cosmetics)
+local ClothingConfig = require(script.Parent.Parent.Config.CrewClothing)
+local ClothingRules = require(script.Parent.Parent.Logic.CrewClothing)
+local ClothingVisual = require(script.Parent.CrewClothing)
 local Preview = {}
 local METAL = { material = Enum.Material.Metal, collide = false }
 local DARK = Color3.fromRGB(30, 32, 38)
 local COUNT = 12
 
 function Preview.build(def: Cosmetics.CosmeticDef): Model?
+	if def.category == "Uniform" then
+		local recipe = ClothingConfig.ById[def.id]
+		if not recipe or not ClothingRules.available(recipe) then
+			return nil
+		end
+		local model = Kit.model("UniformPreview")
+		local body = Color3.fromRGB(202, 164, 132)
+		local root = Kit.block(model, Vector3.new(2, 2, 1), CFrame.new(0, 1.8, 0), body, { collide = false })
+		root.Name = "HumanoidRootPart"
+		root.Transparency = 1
+		local torso = Kit.block(model, Vector3.new(2, 2, 1), CFrame.new(0, 1.8, 0), DARK, { collide = false })
+		torso.Name = "Torso"
+		model.PrimaryPart = torso
+		local head = Kit.block(model, Vector3.new(2, 1, 1), CFrame.new(0, 3.3, 0), body, { collide = false })
+		head.Name = "Head"
+		local limbs: { { name: string, position: Vector3 } } = {
+			{ name = "Left Arm", position = Vector3.new(-1.5, 1.8, 0) },
+			{ name = "Right Arm", position = Vector3.new(1.5, 1.8, 0) },
+			{ name = "Left Leg", position = Vector3.new(-0.5, 0, 0) },
+			{ name = "Right Leg", position = Vector3.new(0.5, 0, 0) },
+		}
+		for _, item in limbs do
+			local part =
+				Kit.block(model, Vector3.new(1, 2, 1), CFrame.new(item.position), body, { collide = false })
+			part.Name = item.name
+		end
+		local humanoid = Instance.new("Humanoid")
+		humanoid.RigType = Enum.HumanoidRigType.R6
+		humanoid.Parent = model
+		if ClothingVisual.Apply(model, recipe) == nil then
+			model:Destroy()
+			return nil
+		end
+		return model
+	end
 	local look = def.look
 	if def.category == "Trail" then
 		if look.style == "None" then

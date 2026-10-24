@@ -1,4 +1,6 @@
 --!strict
+local ClothingConfig = require(game:GetService("ReplicatedStorage").Shared.Config.CrewClothing)
+local ClothingRules = require(game:GetService("ReplicatedStorage").Shared.Logic.CrewClothing)
 --[[
 	The Outfitter (cosmetic shop).
 
@@ -208,6 +210,9 @@ function Outfitter.mount(gui: ScreenGui)
 		elseif def.category == "Headwear" then
 			model = CosmeticModels.headwear(look, CFrame.new())
 			cam.CFrame = CFrame.lookAt(Vector3.new(3, 1.85, -4), Vector3.new(0, 0.65, 0))
+		elseif def.category == "Uniform" then
+			model = CosmeticPreview.build(def)
+			cam.CFrame = CFrame.lookAt(Vector3.new(3, 2, -9), Vector3.new(0, 1.5, 0))
 		else
 			model = CosmeticPreview.build(def)
 			cam.CFrame = if def.category == "Livery"
@@ -234,6 +239,12 @@ function Outfitter.mount(gui: ScreenGui)
 	): (string, string, (() -> ())?)
 		local owned = profile.owned or {}
 		local equipped = profile.equipped or {}
+		if
+			def.category == "Uniform"
+			and (not ClothingConfig.Enabled or not ClothingRules.available(ClothingConfig.ById[def.id]))
+		then
+			return "UNAVAILABLE", "Secondary", nil
+		end
 		if canUse(owned, def.id) then
 			if equipped[def.category] == def.id then
 				return "EQUIPPED", "Secondary", nil

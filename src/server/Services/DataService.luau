@@ -21,6 +21,7 @@ local Difficulty = require(Shared.Config.Difficulty)
 local Progression = require(Shared.Config.Progression)
 local Tuning = require(Shared.Config.Tuning)
 local NpcSave = require(Shared.Logic.NpcSave)
+local CrewClothing = require(Shared.Logic.CrewClothing)
 local Rank = require(Shared.Logic.Rank)
 local Retry = require(Shared.Logic.Retry)
 local Signal = require(Shared.Util.Signal)
@@ -85,6 +86,7 @@ local function reconcile(data: any): Profile
 		end
 	end
 	NpcSave.migrate(data)
+	CrewClothing.migrate(data)
 	data.version = SCHEMA_VERSION
 	return data :: Profile
 end

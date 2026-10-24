@@ -14,6 +14,9 @@ local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
 local Catalog = require(Shared.Logic.Catalog)
 local CosmeticModels = require(Shared.Visual.CosmeticModels)
+local CrewClothing = require(Shared.Visual.CrewClothing)
+local CrewClothingConfig = require(Shared.Config.CrewClothing)
+local CrewClothingRules = require(Shared.Logic.CrewClothing)
 
 local DataService = require(script.Parent.DataService)
 local Registry = require(script.Parent.Parent.Registry)
@@ -21,12 +24,20 @@ local Registry = require(script.Parent.Parent.Registry)
 local CosmeticService = {}
 local appliedSelections: { [Player]: string } = {}
 local appliedCharacters: { [Player]: Model } = {}
+local requestTokens: { [Player]: number } = {}
 
 local function selectionSignature(player: Player): string
 	local profile = DataService.GetProfile(player)
-	local equippedItems = if profile then profile.equipped else {}
+	local equippedItems: { [string]: string } = if profile then profile.equipped else {}
 	local parts = {}
-	for _, category in { "Lantern", "Headwear", "Trail", "Livery" } do
+	for _, category in { "Lantern", "Headwear", "Trail", "Livery", "Uniform" } do
+		if category == "Uniform" then
+			local chosen = if type(equippedItems.Uniform) == "string" then equippedItems.Uniform else nil
+			parts[#parts + 1] = category
+				.. ":"
+				.. tostring(CrewClothingRules.resolve(chosen, if profile then profile.owned else {}))
+			continue
+		end
 		local override = player:GetAttribute("DevCosmetic_" .. category)
 		parts[#parts + 1] = category
 			.. ":"
@@ -100,6 +111,7 @@ function CosmeticService.Start()
 	Players.PlayerRemoving:Connect(function(player)
 		appliedSelections[player] = nil
 		appliedCharacters[player] = nil
+		requestTokens[player] = nil
 	end)
 end
 
@@ -114,8 +126,27 @@ function CosmeticService.Apply(player: Player)
 	end
 	local signature = selectionSignature(player)
 	local old = character:FindFirstChild("Cosmetics")
+	requestTokens[player] = (requestTokens[player] or 0) + 1
+	local token = requestTokens[player]
 	if old and appliedCharacters[player] == character and appliedSelections[player] == signature then
 		return
+	end
+	local profile = DataService.GetProfile(player)
+	local uniformId = if profile then profile.equipped.Uniform else nil
+	local uniform = CrewClothingRules.resolve(uniformId, if profile then profile.owned else {})
+	local uniformRecipe = if uniform then CrewClothingConfig.ById[uniform] else nil
+	local hasUniformSelection = uniformRecipe ~= nil
+	if uniformRecipe and not CrewClothing.Preload(uniformRecipe) then
+		return
+	end
+	if player.Character ~= character or requestTokens[player] ~= token then
+		return
+	end
+	if uniformRecipe and CrewClothing.Apply(character, uniformRecipe) == nil then
+		return
+	end
+	if not hasUniformSelection then
+		CrewClothing.Restore(character)
 	end
 	appliedSelections[player] = signature
 	appliedCharacters[player] = character
@@ -141,7 +172,7 @@ function CosmeticService.Apply(player: Player)
 
 	local head = character:FindFirstChild("Head") :: BasePart?
 	local hat = equipped(player, "Headwear")
-	local coversHair = hat.look.style ~= "None" and hat.look.style ~= "Goggles"
+	local coversHair = uniformRecipe ~= nil or (hat.look.style ~= "None" and hat.look.style ~= "Goggles")
 	for _, accessory in character:GetChildren() do
 		if accessory:IsA("Accessory") and accessory.AccessoryType == Enum.AccessoryType.Hair then
 			for _, part in accessory:GetDescendants() do
@@ -156,7 +187,7 @@ function CosmeticService.Apply(player: Player)
 			end
 		end
 	end
-	if head and hat.look.style ~= "None" then
+	if head and uniformRecipe == nil and hat.look.style ~= "None" then
 		for _, accessory in character:GetChildren() do
 			if accessory:IsA("Accessory") and accessory.AccessoryType == Enum.AccessoryType.Hat then
 				accessory:Destroy()

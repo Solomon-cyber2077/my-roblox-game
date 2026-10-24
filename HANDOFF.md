@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-24: CREW CLOTHING SYSTEM (TC SIX-PROMPT IMPLEMENTATION, GATED)
+1. Completed: existing Outfitter/ShopEquip/profile integration, five free uniforms and two record awards, migration, server validation/preload with stale-request protection, reversible R6 visual application, and client baked soot from authoritative departures. Original Blender hats/classic textures, measured manifest and half-scale before/after/lineup renders in `assets/crew-clothing`; reproducible generators in `tools/crew-clothing`. References and acceptance report: `docs/crew-clothing/`.
+2. Verified: `lune run check` passed (553 tests, strict/lint/format, audit clean); Studio start/console/screenshot/stop with gate off retained the avatar and produced no new clothing errors. Existing warnings: unavailable unpublished DataStores/telemetry and wrong-type sound 203785492. Actual asset rendering, enabled application races/restoration, poses and four-player performance are NOT verified. Config IDs are zero; Enabled/WearEnabled/validated remain false. Task 021 remains in-progress. No unrelated dirty changes included.
+3. Next: HUMAN asset upload through Studio and classic-image upload, bind verified IDs, validate Stoker poses/fit first then all seven recipes; review Outfitter input/preview and four-client cold/warm performance before enabling. Detailed steps in `docs/crew-clothing/VALIDATION.md`. No push.
+
 ## 2026-10-23: STUDIO CHECK OF S10 AND S11
 1. Completed: played a place built from origin/claude/last-train-out (rojo build in a temp worktree; then Rojo-synced to the checkout for the two fixes below). Two fixes from it:
 - The hall's departure board (a SurfaceGui in PlayerGui) had ResetOnSpawn on, so it vanished at the first respawn after a lost run; now off (UI/Lobby).
