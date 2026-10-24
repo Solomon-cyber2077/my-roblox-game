@@ -82,6 +82,16 @@ local function damageInFog(state: Timeline, t: number)
 	end
 end
 
+-- The fog front's station-local z right now (past it is in the fog), or nil with no timeline.
+function HazardDirector.FogFront(): number?
+	local state = timeline
+	if state == nil or state.info.hazards.fogDps <= 0 then
+		return nil
+	end
+	local t = (state.frozenAt or Workspace:GetServerTimeNow()) - state.info.startedAt
+	return HazardSchedule.fogFront(state.info.hazards, state.geo, t)
+end
+
 local function step()
 	local state = timeline
 	if state == nil then

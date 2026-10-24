@@ -106,6 +106,31 @@
 - StationBuilder no longer calls Limewash.station (the pale band at the foot of every crate, cabinet and obstacle kind the owner flagged in phone screenshots). The canopy column feet and the plinth foot in StationDressing are stone (Slate) instead of pale plaster. Limewash.train (the train lining) is unchanged; Limewash.station is kept but unused until Prompt 6.
 - `lune run check` passed, audit clean. Studio: no pale parts within 4 studs of a container at Post Town.
 2. Not verified: a full sweep of every archetype in Studio.
+## 2026-10-22: VOID MIST, VM1-VM7 (Council run 20261022-131445; Claude, Astra verified VM2/VM3 partway)
+Branch `claude/void-mist` (worktree ../LTO-mist). Merged into claude/last-train-out and main 2026-10-23.
+1. Completed
+- prompts/VM1-VM7: the Council's seven generic prompts mapped onto this codebase (prompts/README.md).
+- VM1 Config/Tuning.VoidMist, Logic/VoidMist (+ spec). VM2 EdgeRail 50 tall, CanQuery off; MistService fall
+  rescue (station-local last safe spot, 15 dmg, Fx MistRescue, telemetry mist_rescue). VM3 edge-zone damage
+  (8 HP/s after 0.5 s, not on top of fog), attribute MistZone. VM4 VoidCurrentController: caps the walk's
+  outward share at render step after the controls (velocity alone was undone by the Humanoid), CurrentMaxOut
+  21 (the crew's walk; the Council's 12 assumed 16). VM5 Scenery/EdgeMist + MistController: beams on every
+  rail (veil, back rise, sea), preset via workspace MistPreset, half-way to grey so it never reads as water;
+  AtmosphereController.SetMistTint proximity tint. VM6 hum (drone at 2x, Outdoor mix) and the client-only idle
+  reaction. VM7 `mist preset|outlines|debug|summary`, session counts, docs/direction/void-mist/QA.md.
+- Renders before/after: docs/direction/void-mist/ (README lists them).
+2. Verified / known gaps
+- `lune run check` green at every commit. Studio evidence per line in QA.md and the commit messages.
+- HUMAN pending: replication lag 0.2/0.3 feel, 4-player 5-minute edge run (0 rescues), two-client idle check,
+  MicroProfiler on low-end hardware (570 beams), listening to the hum.
+- Sprinting (31) drops to 21 in one frame at the zone face (no jitter after). Station fog keeps its per-stop
+  tints (CHOICE). Lightning in the mist is LATER. One early VM3 run (CoalYard) showed ~5 HP extra damage at the
+  probe's spot that later runs did not repeat; unexplained.
+- Studio tooling: execute_luau replies can fail while the code still runs (re-firing `god` toggled it off);
+  tools/shot.ps1 cannot size the window with three Studios open.
+3. Next logical step
+- Merged into claude/last-train-out (owner approved the renders). Next: playtest the open questions and HUMAN lines in
+  docs/direction/void-mist/QA.md.
 
 ## 2026-10-22: PHONE HUD IN-RUN CHECKS (continues Astra's follow-up below)
 1. Completed

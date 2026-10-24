@@ -237,6 +237,9 @@ local function onFx(kind: string, data: { [string]: any }?)
 		audio("Hit")
 	elseif kind == "FogTick" then
 		Overlay.pulse(Color3.fromRGB(110, 120, 104), 0.35, 0.4)
+	elseif kind == "MistRescue" then
+		Overlay.pulse(Color3.fromRGB(58, 90, 94), 0.7, 1.2)
+		audio("Hit")
 	elseif kind == "HollowSpawn" then
 		burst(
 			d.position,

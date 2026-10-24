@@ -18,3 +18,16 @@ Copied from `docs/direction/2026-10-22_session-prompts.md` (that file stays the 
 | S9 | [S9.md](S9.md) | 6, the rest (materials, edge, grades, density, lighting lock) | Opus 5.5 / high | G1 | done before G1 at the owner's request (993d63f); interior doors pending (train part budget full: Blender mesh, HUMAN upload) |
 | S10 | [S10.md](S10.md) | 7, the rest, plus 9 (footsteps, ping, arrival silence, release plumbing) | Opus 5.5 / medium | G1, S8 | done (footsteps by slot, ping, arrival hush, stalk noise, Creator mode); Studio check pending Rojo |
 | S11 | [S11.md](S11.md) | 8 Brass loop, Line Mastery, premise | Opus 5.5 / high | G1, S7 | todo |
+
+## Void Mist (Council run 20261022-131445, branch `claude/void-mist`, worktree ../LTO-mist)
+Run in order; VM4 and VM5 need only VM1; VM6 needs VM5; VM7 comes last.
+
+| Session | File | Council prompt | Depends on | Status |
+|---|---|---|---|---|
+| VM1 | [VM1.md](VM1.md) | 01 Tuning and zone math | none | done |
+| VM2 | [VM2.md](VM2.md) | 02 Edge wall and fall rescue | VM1 | done |
+| VM3 | [VM3.md](VM3.md) | 03 Edge mist damage | VM2 | done |
+| VM4 | [VM4.md](VM4.md) | 04 Client current | VM1 | done |
+| VM5 | [VM5.md](VM5.md) | 05 Mist visuals and tint | VM1 | done (MicroProfiler HUMAN) |
+| VM6 | [VM6.md](VM6.md) | 06 Hum and idle | VM5 | done (two-client + listening HUMAN) |
+| VM7 | [VM7.md](VM7.md) | 07 Debug tools and QA | VM2-VM6 | done (QA lines 4,5,9,14,15 HUMAN) |

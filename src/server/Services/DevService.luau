@@ -27,6 +27,11 @@
 	                       creak and alarm as at the Emergency tier
 	  experiment <E1|E2> <arm|auto>  force an experiment's arm on the next runs (E1 Short|Long,
 	                       E2 Sighting|None); auto goes back to the hash (Config/Experiments)
+	  mist preset <Teal|Slate|Amber>  recolour the void mist on every client (2 s fade)
+	  mist outlines        toggle boxes round the edge rails and their mist zones
+	  mist debug           toggle the void mist's debug: the current's label on every client and
+	                       MistService's summary every 60 s
+	  mist summary         print the void mist's session counts now (docs/direction/void-mist/QA.md)
 
 	The sky commands set attributes on ReplicatedStorage that AtmosphereController reads in
 	Studio only (DevSkyHour, DevOmen, DevStrike); `sound` sets DevSound and DevSoundAt, read by
@@ -41,6 +46,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Experiments = require(Shared.Config.Experiments)
+local VoidMist = require(Shared.Logic.VoidMist)
 local Items = require(Shared.Config.Items)
 local Tuning = require(Shared.Config.Tuning)
 
@@ -299,6 +305,25 @@ Commands.sky = function(_, args)
 	local hour = tonumber(args[1])
 	ReplicatedStorage:SetAttribute("DevSkyHour", hour)
 	print(`[Dev] sky {if hour then `pinned at {hour}` else "follows the run"}`)
+end
+
+Commands.mist = function(_, args)
+	local sub = args[1]
+	if sub == "preset" then
+		local name = VoidMist.preset(args[2])
+		Workspace:SetAttribute("MistPreset", name)
+		print(`[Dev] mist preset {name}`)
+	elseif sub == "outlines" then
+		print(`[Dev] mist outlines {if Registry.MistService.ToggleOutlines() then "on" else "off"}`)
+	elseif sub == "debug" then
+		local on = not ReplicatedStorage:GetAttribute("DevMistDebug")
+		ReplicatedStorage:SetAttribute("DevMistDebug", on)
+		print(`[Dev] mist debug {if on then "on" else "off"}`)
+	elseif sub == "summary" then
+		Registry.MistService.PrintSummary()
+	else
+		print("[Dev] mist preset <name> | outlines | debug | summary")
+	end
 end
 
 Commands.omen = function(_, args)
