@@ -37,6 +37,7 @@ local ORDER = {
 	"VoidCurrentController",
 	"MistController",
 	"LobbyIdleController",
+	"CrewClothingController",
 }
 
 local controllers: { { name: string, module: any } } = {}

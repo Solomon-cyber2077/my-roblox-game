@@ -15,7 +15,7 @@
 	  npc         granted for finishing that resident's errand chain (Config/Npcs)
 ]]
 
-export type Category = "Lantern" | "Headwear" | "Trail" | "Livery"
+export type Category = "Lantern" | "Headwear" | "Trail" | "Livery" | "Uniform"
 export type Rarity = "Standard" | "Fine" | "Rare" | "Legendary"
 
 -- A lifetime stat (Config/Progression.Stats) reaching a goal.
@@ -351,6 +351,24 @@ local Catalog: { CosmeticDef } = {
 	},
 }
 
+-- Crew uniforms are intentionally gated until their classic-clothing and accessory
+-- assets have passed the visual/triangle audit. They still appear in the locker so
+-- a player can see the upcoming identities and their unlock paths.
+local CrewClothing = require(script.Parent.CrewClothing)
+for _, recipe in CrewClothing.List do
+	table.insert(Catalog, {
+		id = recipe.id,
+		name = recipe.name,
+		category = "Uniform",
+		rarity = if recipe.starter then "Standard" else "Rare",
+		description = "Crew issue uniform for the line.",
+		default = if recipe.starter then true else nil,
+		milestone = if recipe.record then recipe.id else nil,
+		record = recipe.record,
+		look = { uniform = recipe.id },
+	})
+end
+
 local ById: { [string]: CosmeticDef } = {}
 local Defaults: { [string]: string } = {}
 for _, def in Catalog do
@@ -365,6 +383,7 @@ for _, def in Catalog do
 		Defaults[def.category] = def.id
 	end
 end
+Defaults.Uniform = CrewClothing.Default
 
 return table.freeze({
 	-- One switch: virtual ownership for the developer and Studio; never persisted.
@@ -376,7 +395,7 @@ return table.freeze({
 	List = table.freeze(Catalog),
 	ById = table.freeze(ById),
 	Defaults = table.freeze(Defaults),
-	Categories = table.freeze({ "Lantern", "Headwear", "Trail", "Livery" }),
+	Categories = table.freeze({ "Lantern", "Headwear", "Trail", "Livery", "Uniform" }),
 	RarityOrder = table.freeze({ Standard = 1, Fine = 2, Rare = 3, Legendary = 4 }),
 	DailySpecialCount = 3,
 	DailySpecialDiscount = 0.2,

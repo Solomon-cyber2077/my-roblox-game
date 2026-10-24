@@ -6,6 +6,7 @@
 
 local Shared = script.Parent.Parent
 local Cosmetics = require(Shared.Config.Cosmetics)
+local CrewClothing = require(Shared.Logic.CrewClothing)
 local Progression = require(Shared.Config.Progression)
 local Rng = require(Shared.Util.Rng)
 
@@ -27,7 +28,14 @@ function Catalog.devUnlocked(userId: number, isStudio: boolean): boolean
 end
 
 function Catalog.canUse(owned: OwnedSet, id: string, userId: number, isStudio: boolean): boolean
-	return Cosmetics.ById[id] ~= nil and (Catalog.isOwned(owned, id) or Catalog.devUnlocked(userId, isStudio))
+	local def = Cosmetics.ById[id]
+	if def == nil then
+		return false
+	end
+	if def.category == "Uniform" then
+		return CrewClothing.canWear(id, owned)
+	end
+	return Catalog.isOwned(owned, id) or Catalog.devUnlocked(userId, isStudio)
 end
 
 function Catalog.dayNumber(unixSeconds: number): number

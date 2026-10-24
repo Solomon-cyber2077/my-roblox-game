@@ -1,0 +1,124 @@
+{
+  "status": "source assets; engine upload/pose validation pending",
+  "recipes": {
+    "stoker": {
+      "triangles": 600,
+      "mesh": "hat.obj",
+      "texture": "hat-atlas.png",
+      "size": [
+        2.6,
+        0.4108,
+        2.0595
+      ],
+      "offset": [
+        0,
+        0.7554,
+        0
+      ],
+      "upload": "HUMAN pending",
+      "validated": false
+    },
+    "brakeman": {
+      "triangles": 600,
+      "mesh": "hat.obj",
+      "texture": "hat-atlas.png",
+      "size": [
+        2.6,
+        0.445,
+        2.1295
+      ],
+      "offset": [
+        0,
+        0.7725,
+        0
+      ],
+      "upload": "HUMAN pending",
+      "validated": false
+    },
+    "conductor": {
+      "triangles": 616,
+      "mesh": "hat.obj",
+      "texture": "hat-atlas.png",
+      "size": [
+        2.6,
+        0.635,
+        2.1295
+      ],
+      "offset": [
+        0,
+        0.8675,
+        0
+      ],
+      "upload": "HUMAN pending",
+      "validated": false
+    },
+    "trackwalker": {
+      "triangles": 440,
+      "mesh": "hat.obj",
+      "texture": "hat-atlas.png",
+      "size": [
+        1.96,
+        0.7,
+        1.666
+      ],
+      "offset": [
+        0,
+        0.9,
+        0
+      ],
+      "upload": "HUMAN pending",
+      "validated": false
+    },
+    "wayfarer": {
+      "triangles": 504,
+      "mesh": "hat.obj",
+      "texture": "hat-atlas.png",
+      "size": [
+        2.26,
+        0.55,
+        1.921
+      ],
+      "offset": [
+        0,
+        0.825,
+        0
+      ],
+      "upload": "HUMAN pending",
+      "validated": false
+    },
+    "stoker_veteran": {
+      "triangles": 600,
+      "mesh": "hat.obj",
+      "texture": "hat-atlas.png",
+      "size": [
+        2.6,
+        0.4108,
+        2.0595
+      ],
+      "offset": [
+        0,
+        0.7554,
+        0
+      ],
+      "upload": "HUMAN pending",
+      "validated": false
+    },
+    "conductor_terminus": {
+      "triangles": 616,
+      "mesh": "hat.obj",
+      "texture": "hat-atlas.png",
+      "size": [
+        2.6,
+        0.635,
+        2.1295
+      ],
+      "offset": [
+        0,
+        0.8675,
+        0
+      ],
+      "upload": "HUMAN pending",
+      "validated": false
+    }
+  }
+}

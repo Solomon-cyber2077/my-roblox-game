@@ -126,6 +126,13 @@ local Milestones: { Milestone } = {
 	record("AuroraWatch", "Aurora Watch", "Reach the Terminus three times.", "lantern_aurora"),
 	record("Stationmaster", "Stationmaster", "Reach the Terminus five times.", "hat_topper"),
 	record("RoyalRoad", "Royal Road", "Finish the Long Line and depart 50 stops in all.", "livery_royal"),
+	record("uniform_stoker_veteran", "Veteran Stoker", "Depart 25 stations alive.", "uniform_stoker_veteran"),
+	record(
+		"uniform_conductor_terminus",
+		"Terminus Conductor",
+		"Finish the Long Line.",
+		"uniform_conductor_terminus"
+	),
 }
 
 local ById: { [string]: Milestone } = {}
