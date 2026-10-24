@@ -69,6 +69,23 @@ function LobbyIdle.step(state: State, now: number, eligible: boolean, activeInpu
 	return true
 end
 
+-- Moves a 0..1 envelope toward `target` linearly: a full rise takes `rise` seconds and a
+-- full fall `fall` seconds; a change of direction starts from where it is.
+function LobbyIdle.approach(current: number, target: number, rise: number, fall: number, dt: number): number
+	if not (finite(current) and finite(target) and finite(dt)) or dt <= 0 then
+		return if finite(current) then current else 0
+	end
+	local span = if target > current then rise else fall
+	if not finite(span) or span <= 0 then
+		return target
+	end
+	local step = dt / span
+	if target > current then
+		return math.min(current + step, target)
+	end
+	return math.max(current - step, target)
+end
+
 -- Radians the idle view has turned after `elapsed` seconds: angular speed ramps linearly
 -- from still to `speed` degrees per second over `ramp` seconds, then holds.
 function LobbyIdle.orbitAngle(elapsed: number, speed: number, ramp: number): number
