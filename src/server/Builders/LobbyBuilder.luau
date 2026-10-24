@@ -25,6 +25,7 @@ local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
 local IL = InteriorLight
 local Outfits = require(ReplicatedStorage.Shared.Config.Outfits)
 local OutfitKit = require(script.Parent.OutfitKit)
+local Premise = require(ReplicatedStorage.Shared.Config.Premise)
 local PosterArt = require(script.Parent.PosterArt)
 local TrainBuilder = require(script.Parent.TrainBuilder)
 
@@ -1091,7 +1092,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local kioskLamp = Kit.neon(model, Vector3.new(1, 1, 1), at(kx, 10, kz), C.warm, Enum.PartType.Ball)
 	fixtureLight(kioskLamp, IL.Hall.Kiosk)
 
-	-- Line Mastery: an honours board in a carved frame, the line painted on it in gilt -----------------
+	-- The Roll of the Terminus (Line Mastery): an honours board in a carved frame, gilt on it --------------
 	local lx, lz = -54, 36
 	block(Vector3.new(18, 13, 1.2), at(lx, 8.5, lz + 4.2), C.SHELL_MAHOGANY, Enum.Material.Wood)
 	block(
@@ -1150,19 +1151,13 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			return t
 		end
 		text(
-			"LINE MASTERY",
+			Premise.Roll,
 			Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold),
 			gold,
 			UDim2.fromScale(0.08, 0.04),
 			UDim2.fromScale(0.84, 0.17)
 		)
-		for i, line in
-			{
-				"Earn XP to raise your Crew Rank",
-				"Record stops cleared and crew rescued",
-				"Open the Ledger for your milestones",
-			}
-		do
+		for i, line in Premise.RollLines do
 			text(
 				line,
 				Font.new("rbxasset://fonts/families/Oswald.json"),
@@ -2140,8 +2135,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	line.TextScaled = true
 	line.TextWrapped = true
 	line.TextColor3 = Color3.fromRGB(30, 26, 22)
-	line.Text = "That is Line Mastery, the line's honours board. Every run, every stop cleared and every "
-		.. "crewmate pulled free is painted up there in gilt. Step up and read yours."
+	line.Text = "That is the Roll of the Terminus. Every Hand who came back from the end of the line is "
+		.. "painted up there in gilt, with their title and livery. Step up and read your record."
 	line.Parent = paper
 
 	local spawnPoints: { CFrame } = {}

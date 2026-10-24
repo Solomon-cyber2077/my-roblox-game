@@ -119,12 +119,10 @@ function ShopService.Start()
 			return
 		end
 		local day = Catalog.dayNumber(os.time())
-		local check, price =
-			Catalog.canBuyWithBrass(profile.owned, profile.brass, DataService.Rank(player), itemId, day)
+		local check, price = Catalog.canBuyWithBrass(profile.owned, profile.brass, itemId, day)
 		if check ~= "Ok" or price == nil then
 			local messages = {
 				Brass = "Not enough Brass yet. Finish runs to earn more.",
-				Rank = `Reach Crew Rank {(Cosmetics.ById[itemId] or {} :: any).rank or 1} to buy this.`,
 				Owned = "You already own that.",
 				NotForBrass = "That item is earned another way.",
 			}

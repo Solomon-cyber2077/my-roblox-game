@@ -22,7 +22,7 @@ describe("RunTicketModel", function()
 		expect(won.stamp).toBe("TERMINUS")
 		local lost = RunTicketModel.build({ outcome = "Wiped", log = log(1), nextStop = 1, me = "1" })
 		expect(lost.hero).toBe("THE CREW WAS LOST")
-		expect(lost.stamp).toBe("LOST AT STOP 1")
+		expect(lost.stamp).toBe("ENTERED, NOT RECALLED")
 	end)
 
 	it("never carries more than three supporting stats", function()

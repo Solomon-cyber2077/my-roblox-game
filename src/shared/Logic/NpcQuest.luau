@@ -26,7 +26,7 @@ export type RunQuest = {
 	found: boolean, -- Find: someone in the crew is carrying the item
 }
 
-export type Credit = { advance: boolean, brass: number }
+export type Credit = { advance: boolean, story: string? }
 
 local NpcQuest = {}
 
@@ -108,13 +108,13 @@ function NpcQuest.completesAtTerminus(rq: RunQuest): boolean
 	return Quests[rq.quest].kind == "Survive" and rq.status ~= "Done" and rq.status ~= "Failed"
 end
 
--- What finishing the errand gives one crew member, by their own saved stage.
-function NpcQuest.credit(rq: RunQuest, playerStage: number, helperBrass: number): Credit
-	local quest = Quests[rq.quest]
+-- What finishing the errand gives one crew member, by their own saved stage: the Hand at this
+-- stage moves on and hears its story; anyone else simply lent a hand.
+function NpcQuest.credit(rq: RunQuest, playerStage: number): Credit
 	if playerStage == rq.stage then
-		return { advance = true, brass = quest.brass }
+		return { advance = true, story = Quests[rq.quest].story }
 	end
-	return { advance = false, brass = helperBrass }
+	return { advance = false }
 end
 
 -- The tracker's line for this errand.

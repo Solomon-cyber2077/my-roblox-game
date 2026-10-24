@@ -6,12 +6,13 @@
 
 local Shared = script.Parent.Parent
 local Cosmetics = require(Shared.Config.Cosmetics)
+local Progression = require(Shared.Config.Progression)
 local Rng = require(Shared.Util.Rng)
 
 type CosmeticDef = Cosmetics.CosmeticDef
 type OwnedSet = { [string]: boolean }
 
-export type BuyCheck = "Ok" | "Unknown" | "Owned" | "NotForBrass" | "Rank" | "Brass"
+export type BuyCheck = "Ok" | "Unknown" | "Owned" | "NotForBrass" | "Brass"
 
 local Catalog = {}
 
@@ -62,13 +63,7 @@ function Catalog.brassPrice(id: string, day: number): number?
 	return def.brass
 end
 
-function Catalog.canBuyWithBrass(
-	owned: OwnedSet,
-	brass: number,
-	rank: number,
-	id: string,
-	day: number
-): (BuyCheck, number?)
+function Catalog.canBuyWithBrass(owned: OwnedSet, brass: number, id: string, day: number): (BuyCheck, number?)
 	local def = Cosmetics.ById[id]
 	if def == nil then
 		return "Unknown", nil
@@ -80,19 +75,46 @@ function Catalog.canBuyWithBrass(
 	if price == nil then
 		return "NotForBrass", nil
 	end
-	if def.rank and rank < def.rank then
-		return "Rank", price
-	end
 	if brass < price then
 		return "Brass", price
 	end
 	return "Ok", price
 end
 
+-- A status item's record, as the Outfitter and the Roll show it: "3 Terminus arrivals", and both
+-- halves of an AND ("1 Long Line finish + 50 stops departed").
+function Catalog.recordText(def: CosmeticDef): string?
+	local record = def.record
+	if record == nil then
+		return nil
+	end
+	local parts: { string } = {}
+	for _, req in record do
+		table.insert(parts, string.format(Progression.StatText[req.stat] or `{req.stat} %d`, req.goal))
+	end
+	return table.concat(parts, " + ")
+end
+
+-- Whether a profile's lifetime stats meet a status item's whole record (every requirement).
+function Catalog.recordMet(stats: { [string]: number }, def: CosmeticDef): boolean
+	local record = def.record
+	if record == nil then
+		return false
+	end
+	for _, req in record do
+		if (stats[req.stat] or 0) < req.goal then
+			return false
+		end
+	end
+	return true
+end
+
 -- Human-readable unlock path for locked items.
 function Catalog.unlockText(def: CosmeticDef): string
 	if def.default then
 		return "Owned by every crew member"
+	elseif def.record then
+		return `Line Mastery: {Catalog.recordText(def)}`
 	elseif def.milestone then
 		return "Line Mastery reward"
 	elseif def.charterStamps then
@@ -103,8 +125,6 @@ function Catalog.unlockText(def: CosmeticDef): string
 		return "Game pass"
 	elseif def.robux then
 		return "Robux"
-	elseif def.rank then
-		return `Crew Rank {def.rank}`
 	end
 	return "Outfitter"
 end

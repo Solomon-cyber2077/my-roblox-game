@@ -5,8 +5,10 @@
 
 	Unlock paths, checked in this order by Logic/Catalog:
 	  default     owned by every profile
-	  milestone   granted by Config/Progression milestones
-	  brass       bought in the Outfitter, optionally gated by Crew Rank
+	  milestone   granted by Config/Progression milestones; a status item (its name claims an
+	              achievement) carries `record`, the Line Mastery requirements that grant it, all
+	              of which must be met (Prompt 8; Config/Progression builds its milestone from it)
+	  brass       bought in the Outfitter: ordinary items only, never a status item
 	  robux       a developer product; productId is bound after publishing
 	  gamePass    a game pass; id is bound after publishing
 	  charter     earned with Charter Stamps from private-server runs
@@ -16,6 +18,9 @@
 export type Category = "Lantern" | "Headwear" | "Trail" | "Livery"
 export type Rarity = "Standard" | "Fine" | "Rare" | "Legendary"
 
+-- A lifetime stat (Config/Progression.Stats) reaching a goal.
+export type Requirement = { stat: string, goal: number }
+
 export type CosmeticDef = {
 	id: string,
 	name: string,
@@ -24,8 +29,8 @@ export type CosmeticDef = {
 	description: string,
 	default: boolean?,
 	brass: number?,
-	rank: number?,
 	milestone: string?,
+	record: { Requirement }?, -- a status item's Line Mastery requirements, all of them (AND)
 	robux: { productId: number?, price: number }?,
 	gamePass: { id: number?, price: number }?,
 	charterStamps: number?,
@@ -99,8 +104,8 @@ local Catalog: { CosmeticDef } = {
 		category = "Lantern",
 		rarity = "Legendary",
 		description = "Its flame drifts between teal and violet.",
-		brass = 1800,
-		rank = 15,
+		milestone = "AuroraWatch",
+		record = { { stat = "victories", goal = 3 } },
 		look = {
 			body = { 36, 34, 48 },
 			glass = { 90, 255, 230 },
@@ -189,8 +194,8 @@ local Catalog: { CosmeticDef } = {
 		category = "Headwear",
 		rarity = "Rare",
 		description = "A hard cap with a lamp that lights your path.",
-		brass = 1200,
-		rank = 8,
+		milestone = "DeepLine",
+		record = { { stat = "bestStation", goal = 8 } },
 		look = { style = "LampCap", primary = { 70, 66, 58 }, secondary = { 255, 230, 170 } },
 	},
 	{
@@ -199,8 +204,8 @@ local Catalog: { CosmeticDef } = {
 		category = "Headwear",
 		rarity = "Legendary",
 		description = "A tall hat for a tall reputation.",
-		brass = 2000,
-		rank = 20,
+		milestone = "Stationmaster",
+		record = { { stat = "victories", goal = 5 } },
 		look = { style = "TopHat", primary = { 26, 24, 26 }, secondary = { 132, 46, 52 } },
 	},
 
@@ -238,8 +243,8 @@ local Catalog: { CosmeticDef } = {
 		category = "Trail",
 		rarity = "Rare",
 		description = "Golden sparks off hobnailed boots.",
-		brass = 1500,
-		rank = 12,
+		milestone = "ClutchHand",
+		record = { { stat = "clutchBoards", goal = 5 } },
 		look = { style = "Sparks", color = { 255, 214, 120 }, color2 = { 201, 160, 82 } },
 	},
 	{
@@ -289,7 +294,8 @@ local Catalog: { CosmeticDef } = {
 		category = "Livery",
 		rarity = "Rare",
 		description = "Deep blue lined out in white metal.",
-		brass = 2400,
+		milestone = "RoyalRoad",
+		record = { { stat = "longVictories", goal = 1 }, { stat = "stationsDeparted", goal = 50 } },
 		look = {
 			body = { 30, 52, 104 },
 			trim = { 196, 206, 214 },
@@ -350,6 +356,10 @@ local Defaults: { [string]: string } = {}
 for _, def in Catalog do
 	def.look.rarity = def.rarity
 	assert(ById[def.id] == nil, `duplicate cosmetic id {def.id}`)
+	assert(
+		def.record == nil or (def.milestone ~= nil and def.brass == nil),
+		`{def.id}: a record item has no price`
+	)
 	ById[def.id] = def
 	if def.default then
 		Defaults[def.category] = def.id

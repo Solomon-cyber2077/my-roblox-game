@@ -1,7 +1,8 @@
 --!strict
 --[[
-	Mabel "Ticket" Orrin, ticket clerk. Cheerful and plain-spoken: short lines that say what to
-	do (the game has no puzzles; talking to her should feel friendly, not like a job).
+	Mabel "Ticket" Orrin, the Depot's clerk (LORE.md section 0): she issues the Relief's tickets and
+	counts who comes back. Cheerful and plain-spoken: short lines that say what to do (the game has no
+	puzzles; talking to her should feel friendly, not like a job). She never explains the Hollows.
 	Fifteen lines, picked by Logic/NpcDialogue. `when` narrows a line:
 	  status    the run's errand for her: "Offered" | "Active" | "Done"
 	  quest     the run's errand is this quest
@@ -16,18 +17,18 @@ local Lines = {
 	{
 		id = "mabel_greeting",
 		topic = "Greeting",
-		text = "Evening! I'm Mabel, I keep the tickets. Talk to me between stops if you fancy a job on the way.",
+		text = "Evening, Hand! I'm Mabel, I issue the Relief's tickets. Talk to me between stops if you fancy a job on the way.",
 	},
 	{
 		id = "mabel_smalltalk",
 		topic = "SmallTalk",
-		text = "Stick together, grab what you can carry, and be back aboard before the whistle. That's the whole trick.",
+		text = "Coal, parts, anything of value: strip it and be back aboard before the whistle. The Depot stands while the line runs.",
 	},
 	{
 		id = "mabel_lore",
 		topic = "Lore",
 		when = { stageMin = 2, seen = "mabel_smalltalk" },
-		text = "Funny thing: I punch more tickets than we have passengers. Never mind. Keep your lamp lit.",
+		text = "I count every ticket out and every Hand back in. The numbers never match. Never mind. Keep your lamp lit.",
 	},
 	{
 		id = "mabel_hint",
@@ -67,7 +68,7 @@ local Lines = {
 		id = "mabel_done",
 		topic = "QuestDone",
 		when = { status = "Done" },
-		text = "Lovely, thank you! You'll be paid at the end of the line.",
+		text = "Lovely, thank you! That one goes in the ledger.",
 	},
 	{
 		id = "mabel_failed",
@@ -93,7 +94,7 @@ local Lines = {
 	{
 		id = "mabel_terminus",
 		topic = "NearTerminus",
-		text = "Nearly at the Terminus. Hold on tight.",
+		text = "Nearly at the Terminus. Come back and I'll put your name on the Roll.",
 	},
 }
 

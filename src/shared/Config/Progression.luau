@@ -4,7 +4,14 @@
 
 	XP needed to reach rank L:  XP(L) = round(120 * (L - 1) ^ 1.55), capped at rank 60.
 	Milestones read lifetime stats from the profile; each grants once.
+	Line Mastery is the record (docs/FINAL-DESIGN.md Prompt 8): the status items' milestones are built
+	from their `record` in Config/Cosmetics, so the rule lives in one place. `all`, when present, lists
+	every requirement (AND); `stat`/`goal` is then its first.
 ]]
+
+local Cosmetics = require(script.Parent.Cosmetics)
+
+export type Requirement = Cosmetics.Requirement
 
 export type Milestone = {
 	id: string,
@@ -12,8 +19,25 @@ export type Milestone = {
 	description: string,
 	stat: string,
 	goal: number,
+	all: { Requirement }?,
 	reward: { brass: number?, cosmetic: string? },
 }
+
+-- A status item's milestone: its requirements are the item's `record`, its reward the item.
+local function record(id: string, name: string, description: string, cosmetic: string): Milestone
+	local def = Cosmetics.ById[cosmetic]
+	local all = def.record :: { Requirement }
+	assert(def.milestone == id, `{cosmetic} names milestone {def.milestone}, not {id}`)
+	return {
+		id = id,
+		name = name,
+		description = description,
+		stat = all[1].stat,
+		goal = all[1].goal,
+		all = if #all > 1 then all else nil,
+		reward = { cosmetic = cosmetic },
+	}
+end
 
 local Milestones: { Milestone } = {
 	{
@@ -96,6 +120,12 @@ local Milestones: { Milestone } = {
 		goal = 25,
 		reward = { brass = 300 },
 	},
+	-- the record: the status items, earned and never sold
+	record("DeepLine", "Deep Line", "Reach stop 8 in a single Relief.", "hat_lampcap"),
+	record("ClutchHand", "Clutch Hand", "Board in the final two seconds five times.", "trail_brass"),
+	record("AuroraWatch", "Aurora Watch", "Reach the Terminus three times.", "lantern_aurora"),
+	record("Stationmaster", "Stationmaster", "Reach the Terminus five times.", "hat_topper"),
+	record("RoyalRoad", "Royal Road", "Finish the Long Line and depart 50 stops in all.", "livery_royal"),
 }
 
 local ById: { [string]: Milestone } = {}
@@ -109,6 +139,17 @@ return table.freeze({
 	Milestones = table.freeze(Milestones),
 	ById = table.freeze(ById),
 	Rank = table.freeze({ Scale = 120, Exponent = 1.55, Max = 60 }),
+	-- how a requirement reads on the Outfitter and the Roll (%d is the goal)
+	StatText = table.freeze({
+		victories = "%d Terminus arrivals",
+		longVictories = "%d Long Line finish",
+		stationsDeparted = "%d stops departed",
+		bestStation = "Reach stop %d",
+		clutchBoards = "%d last-second boardings",
+		rescues = "%d flare rescues",
+		runs = "%d Reliefs",
+		rank = "Crew Rank %d",
+	} :: { [string]: string }),
 	-- Lifetime stats every profile carries (missing keys default to 0).
 	Stats = table.freeze({
 		"runs",

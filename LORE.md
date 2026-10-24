@@ -3,6 +3,24 @@
 Every change to story, names, signs, clothing, props or architecture follows this file. If a request conflicts with it,
 flag it rather than drift. The design source of truth for mechanics is still the blueprint linked in README.md.
 
+## 0. Premise
+
+- Coldharbour Depot is the last lit place. The Company sends its young down the dead line on the last train to strip
+  the stations for coal, parts and valuables. Nobody believes in rebuilding; the trips delay the end.
+- Players are Hands (the Company's Hands); a run is a Relief; the lobby is Coldharbour Depot. The game's title stays
+  Last Train Out. UI and copy take these names from `Config/Premise`; code identifiers stay as they are.
+- The Depot's departures are a standing order: "THE DEPOT STANDS WHILE THE LINE RUNS", "RELIEF DEPARTS AT DUSK. HANDS
+  REPORT TO THE CLERK".
+- Those who come back from the Terminus go on the Roll of the Terminus, with titles and liveries (the Line Mastery
+  record). Status is enough of a reward even at the end of the world. Those entered in the ledger as left behind are
+  not recalled ("ENTERED, NOT RECALLED").
+- The lamps are kept lit by those who went before: a brass plaque says so at every station, and nothing more. There
+  is no mystery mechanic behind it.
+- The next ticket is simply issued. No immortality text and no explanation of why a Hand rides again.
+- The Hollows stay unexplained (section 3); there is no explanatory twist.
+- Mabel: Mabel "Ticket" Orrin is a woman clerk in the post-collapse Depot. She issues the Relief's tickets and counts
+  who comes back; the counts never match, and she never says why.
+
 ## 1. Era and setting
 
 - **Year range: 1884-1892.** Late Victorian, after the gauge conversions (Minehead's branch went from broad to standard

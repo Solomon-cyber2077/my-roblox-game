@@ -41,7 +41,6 @@ local NpcService = {}
 local T = Tuning.Npc
 
 local runQuests: { [string]: NpcQuest.RunQuest } = {}
-local errands: { [Player]: number } = {}
 local startStages: { [Player]: { [string]: number } } = {} -- each player's stage when the run began
 local heard: { [Player]: { [string]: boolean } } = {} -- lines said to the player this run
 local talks: { [Player]: { [string]: number } } = {}
@@ -111,8 +110,7 @@ local function complete(rq: NpcQuest.RunQuest)
 	for _, player in Registry.CrewService.AlivePlayers() do
 		local stage = stageOf(player, rq.npc)
 		if stage then
-			local credit = NpcQuest.credit(rq, stage, T.HelperBrass)
-			errands[player] = (errands[player] or 0) + credit.brass
+			local credit = NpcQuest.credit(rq, stage)
 			if credit.advance then
 				DataService.Update(player, function(profile)
 					local entry = progress(profile, rq.npc)
@@ -123,13 +121,11 @@ local function complete(rq: NpcQuest.RunQuest)
 						profile.owned[def.cosmetic] = true
 					end
 				end)
+				if credit.story then
+					NetService.Fire("Notify", player, "Info", credit.story)
+				end
 			else
-				NetService.Fire(
-					"Notify",
-					player,
-					"Info",
-					`Lent a hand: +{credit.brass} Brass at the end of the line.`
-				)
+				NetService.Fire("Notify", player, "Info", `Lent {def.name} a hand.`)
 			end
 		end
 	end
@@ -139,7 +135,6 @@ end
 
 local function startRun()
 	table.clear(runQuests)
-	table.clear(errands)
 	table.clear(heard)
 	table.clear(startStages)
 	local crew = Registry.CrewService.MemberPlayers()
@@ -377,7 +372,6 @@ function NpcService.Start()
 		publish(player)
 	end)
 	Players.PlayerRemoving:Connect(function(player)
-		errands[player] = nil
 		startStages[player] = nil
 		heard[player] = nil
 		talks[player] = nil
@@ -389,13 +383,6 @@ function NpcService.Start()
 			Safe.call("NpcService.scan", scan)
 		end
 	end)
-end
-
--- Errand Brass owed to a player this run; ProgressionService adds it to the run summary.
-function NpcService.TakeErrands(player: Player): number
-	local amount = errands[player] or 0
-	errands[player] = nil
-	return amount
 end
 
 -- Studio developer console (DevService `npcreset`): wipes a player's story with one NPC, or

@@ -1,10 +1,12 @@
 --!strict
 -- Line Mastery: lifetime stats and milestone progress, read from the private profile.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
+local Premise = require(Shared.Config.Premise)
 local Progression = require(Shared.Config.Progression)
 local Milestones = require(Shared.Logic.Milestones)
 local Rank = require(Shared.Logic.Rank)
@@ -88,6 +90,21 @@ function Ledger.mount(gui: ScreenGui)
 		})
 		head.ZIndex = 33
 		head.Parent = stats
+		-- the Roll of the Terminus, profile-local: your name and livery once you have come back
+		local livery = Cosmetics.ById[(profile.equipped or {}).Livery or ""]
+		local roll = Ui.text({
+			Text = if (values.victories or 0) > 0
+				then `ON THE {Premise.Roll}: {string.upper(Players.LocalPlayer.DisplayName)}{if livery
+					then `  ·  {string.upper(livery.name)}`
+					else ""}`
+				else `NOT YET ON THE {Premise.Roll}`,
+			Font = Theme.Font.bodyBold,
+			TextSize = 14,
+			Color = Theme.Color.inkSoft,
+			LayoutOrder = 0,
+		})
+		roll.ZIndex = 33
+		roll.Parent = stats
 		for i, entry in STAT_LABELS do
 			local line = Ui.text({
 				Text = `{entry.label} {string.rep(".", 30 - #entry.label)} {Format.thousands(
