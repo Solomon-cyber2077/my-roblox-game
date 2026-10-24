@@ -14,6 +14,10 @@
 
 ## Final draft
 
+### Owner music selection
+
+The owner will choose the final song from paid-model suggestions with listening samples. No suggestion is approved automatically. The existing piano is the implementation baseline only. Suggested auditions: [Satie, Gnossienne No. 3](https://commons.wikimedia.org/wiki/File:Gnossienne_3_(Satie).ogg) for spare unease; [Chopin, Prelude in E minor, Op. 28 No. 4](https://www.youtube.com/watch?v=CU9RgI9j7Do) for a more mournful tone. These are listening references, not approved replacement uploads.
+
 ### Pitch
 
 When a player stops interacting in Depot Hall, the view may slowly circle their character while the hall piano comes forward and the lobby bed recedes. One deliberate input immediately returns camera control and gradually restores the normal mix. The effect adds a moment of stillness without interrupting menus, chat or readying up.
