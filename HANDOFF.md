@@ -1670,3 +1670,8 @@ Updated at the end of every task. Read this, AGENTS.md, and git diff to resume.
 1. Completed: `Logic/LobbyIdle` one-shot quiet timer on injected time (fresh eligibility interval, held-input reset, backward-clock reset, one attempt) with `tests/LobbyIdle.spec.luau`; `Controllers/LobbyIdleInput` disposable observer (IsHeld/IsBlocked/Destroy, never sinks input).
 2. Known: `lune run check` exit 0. The observer is not in the client boot list, so nothing runs in Studio until prompt 6 wires eligibility; hardware input behaviour is unverified.
 3. Next: prompt 3 (clearance) in Council order.
+
+## 2026-10-23 Lobby idle prompt 3 camera clearance (Council run 20261022-183550)
+1. Completed: `Logic/CameraClearance` (near-plane probe radius for FOV/aspect incl. corners; `resolve` returns a bounded distance or unavailable: in at once, out at `ClearanceEaseOut`, never forced through a wall below `ClearanceMinDistance`) with 8 specs; `Camera/IdleClearance` client caster (overlap at the focus, spherecast out, sweep from the last accepted pose; CanQuery parts block whatever their collision or transparency, own character excluded, other characters block). `Tuning.LobbyIdle` clearance numbers (provisional). Not booted; CameraController's train wallPull unchanged.
+2. Known: `lune run check` exit 0. Studio main-s1 played with the same pre-existing warnings, but that place looked unsynced (old LINE MASTERY button) and the helper is not wired, so real mesh hits are unverified until prompt 4. Streamed-out or CanQuery-off geometry is invisible to it; no universal clipping claim.
+3. Next: Council prompt 4 (integrate the interruptible orbit), which needs the Blender framing pass.

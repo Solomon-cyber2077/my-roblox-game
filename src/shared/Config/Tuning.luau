@@ -401,6 +401,13 @@ local Tuning = {
 		GlanceTouchGap = 8,
 	},
 
+	-- The Depot Hall idle view (docs/direction/2026-10-23_lobby-idle-final.md). Provisional.
+	LobbyIdle = {
+		ClearanceMargin = 0.6, -- studs kept between the near plane's corners and any geometry
+		ClearanceMinDistance = 2, -- closer than this the orbit is unavailable, never forced
+		ClearanceEaseOut = 6, -- studs per second the view may move back out after a pull-in
+	},
+
 	TrainCamera = {
 		OrbitNear = 45,
 		OrbitFar = 260,
