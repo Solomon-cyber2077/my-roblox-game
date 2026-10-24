@@ -20,6 +20,7 @@ local BuildingGen = require(Shared.Logic.BuildingGen)
 local Kit = require(Shared.Visual.Kit)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Loot = require(Shared.Config.Loot)
+local Premise = require(Shared.Config.Premise)
 local Stations = require(Shared.Config.Stations)
 local Surfaces = require(Shared.Config.Surfaces)
 
@@ -546,6 +547,51 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 			local light = Kit.pointLight(glass, glass.Color, D.Brightness, D.Range, false)
 			light.Name = "DangerLight"
 		end
+	end
+
+	-- One brass plaque on the platform lamp post nearest the dock (Prompt 8): the premise in the world.
+	local plaqueLens: BasePart? = nil
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d:HasTag("SafeLight") then
+			local lens = plaqueLens
+			if
+				lens == nil
+				or docked:PointToObjectSpace(d.CFrame.Position).Magnitude
+					< docked:PointToObjectSpace(lens.CFrame.Position).Magnitude
+			then
+				plaqueLens = d
+			end
+		end
+	end
+	if plaqueLens then
+		local P = Stations.Plaque
+		local plaque = Kit.block(
+			model,
+			Vector3.new(P.Width, P.Height, P.Depth),
+			plaqueLens.CFrame * CFrame.new(0, -P.Drop, -P.Out - P.Depth / 2),
+			Color3.fromRGB(150, 118, 62),
+			{ material = Enum.Material.Metal, collide = false }
+		)
+		plaque.Name = "Plaque"
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = Enum.NormalId.Front
+		gui.CanvasSize = Vector2.new(220, 120)
+		gui.LightInfluence = 1
+		gui.Parent = plaque
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.fromScale(0.88, 0.8)
+		label.Position = UDim2.fromScale(0.06, 0.1)
+		label.FontFace = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
+		label.Text = Premise.Plaque
+		label.TextColor3 = Color3.fromRGB(40, 30, 18)
+		label.TextScaled = true
+		label.TextWrapped = true
+		label.Parent = gui
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = plaque
+		weld.Part1 = plaqueLens
+		weld.Parent = plaque
 	end
 
 	-- Everything except Root moves with physics; Root holds the assembly when anchored.

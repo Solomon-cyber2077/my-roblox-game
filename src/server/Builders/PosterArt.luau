@@ -8,8 +8,8 @@
 	           the sea, a headland with a lighthouse and the train on its viaduct, the company footer
 	  fog      a bye-law notice on grey-green card: ruled border, NOTICE, the warning in
 	           blackletter, telegraph poles walking off into a fog bank, by order of
-	  coal     a letterpress bill on buff paper, many faces on one sheet: STOKERS WANTED for the
-	           night services, a woodcut of a shovel in a heap of coal, by order
+	  coal     a letterpress bill on buff paper, many faces on one sheet: HANDS WANTED for the
+	           Relief, a woodcut of a shovel in a heap of coal, the Depot's notice (Config/Premise)
 	  moon     a printed night notice: the blood moon and its halo over black hills, three of the
 	           TallOnes standing on the horizon, one lamp post still lit
 
@@ -17,6 +17,10 @@
 	No cream: paper is the line's grey-green card or a dark buff the lamps cannot turn cream.
 	PosterArt.draw(gui, kind) fills the gui; PosterArt.paper(kind) is the part's colour.
 ]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Premise = require(ReplicatedStorage.Shared.Config.Premise)
 
 local PosterArt = {}
 
@@ -277,8 +281,8 @@ function DRAW.coal(g: Instance)
 	words(g, "SEVERN & WESTERN COUNTIES RAILWAY", SERIF_BOLD, ink, 40, 34, 480, 26)
 	rule(g, ink, 40, 68, 480, 2)
 	words(g, "WANTED", OSWALD, red, 40, 76, 480, 108)
-	words(g, "S T O K E R S", BODONI, ink, 40, 188, 480, 62)
-	words(g, "for the Night Services", SERIF_ITALIC, ink, 80, 252, 400, 36)
+	words(g, Premise.Notice.Wanted, BODONI, ink, 40, 188, 480, 62)
+	words(g, Premise.Notice.For, SERIF_ITALIC, ink, 80, 252, 400, 36)
 	-- the woodcut: a shovel driven into a heap of coal
 	local woodcut = box(g, rgb(150, 122, 84), 140, 304, 280, 170)
 	woodcut.BackgroundTransparency = 0.4
@@ -297,10 +301,10 @@ function DRAW.coal(g: Instance)
 		)
 	end
 	rule(g, ink, 40, 496, 480, 2)
-	words(g, "Strong arms. A steady nerve.\nNo questions asked about the fog.", SERIF, ink, 60, 508, 440, 70)
-	words(g, "Every sack carried is a mile kept.", SERIF_ITALIC, red, 60, 584, 440, 30)
+	words(g, Premise.Notice.Body, SERIF_BOLD, ink, 60, 508, 440, 70)
+	words(g, Premise.Notice.Motto, SERIF_ITALIC, red, 40, 584, 480, 30)
 	rule(g, ink, 40, 626, 480, 1)
-	words(g, "Apply to the Locomotive Foreman, Platform 1.", SERIF, ink, 40, 636, 480, 24)
+	words(g, Premise.Notice.Apply, SERIF, ink, 40, 636, 480, 24)
 	words(g, "BY ORDER · 1889", SERIF_BOLD, ink, 40, 664, 480, 22)
 	worn(g, 1)
 end

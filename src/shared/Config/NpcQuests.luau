@@ -11,7 +11,8 @@
 	           and talks to them completes the errand.
 	  Survive  completes when the train reaches the Terminus; everyone aboard counts.
 
-	`brass` is paid on the run summary as "Crew errands" (Logic/Economy is untouched).
+	Errands pay story, not Brass (docs/FINAL-DESIGN.md Prompt 8): each stage tells its `story` line to
+	the Hand who finishes it, and the chain's last stage gives the resident's cosmetic (Config/Npcs).
 ]]
 
 export type QuestKind = "Find" | "Survive"
@@ -23,7 +24,7 @@ export type QuestDef = {
 	kind: QuestKind,
 	item: string?,
 	stops: { number }?, -- Find: first and last stop the item can turn up at
-	brass: number,
+	story: string, -- told to the Hand whose stage this was, when it is done
 	brief: string, -- the tracker line while the errand is open
 	carried: string?, -- the tracker line once the crew has the item
 }
@@ -36,7 +37,7 @@ local Quests: { [string]: QuestDef } = {
 		kind = "Find",
 		item = "UnclaimedValise",
 		stops = { 1, 3 },
-		brass = 25,
+		story = 'Mabel tags the valise and shelves it with the others. "Somebody comes back for every one. That\'s what I write on the tag."',
 		brief = "Find the unclaimed valise at one of the first three stops.",
 		carried = "Bring the valise to Mabel in the saloon.",
 	},
@@ -47,7 +48,7 @@ local Quests: { [string]: QuestDef } = {
 		kind = "Find",
 		item = "TicketStub",
 		stops = { 4, 7 },
-		brass = 30,
+		story = 'Mabel copies the name off the stub into the Relief\'s ledger. "Entered. Not recalled. But entered."',
 		brief = "Find a punched ticket stub at stops 4 to 7.",
 		carried = "Bring the ticket stub to Mabel in the saloon.",
 	},
@@ -56,7 +57,7 @@ local Quests: { [string]: QuestDef } = {
 		npc = "Mabel",
 		title = "The Final Manifest",
 		kind = "Survive",
-		brass = 40,
+		story = 'Mabel signs the manifest at the Terminus. "Every name that went out, and here are the ones that came back."',
 		brief = "Get Mabel and her final manifest to the Terminus.",
 	},
 }

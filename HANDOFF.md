@@ -1,5 +1,18 @@
 # HANDOFF
 
+## 2026-10-23: S11 / PROMPT 8 (ONE BRASS LOOP, LINE MASTERY AS THE RECORD, ERRANDS AS STORY, THE PREMISE)
+1. Completed
+- Record items: hat_lampcap (bestStation 8), trail_brass (clutchBoards 5), lantern_aurora (victories 3), hat_topper (victories 5) and livery_royal (longVictories 1 AND stationsDeparted 50) lost their Brass price and Rank gate. The rule lives in Config/Cosmetics `record`; Config/Progression builds the Line Mastery milestones from it (`all` for AND); Logic/Milestones.met/progress and Logic/Catalog.recordMet/recordText evaluate it. The Rank gate on Brass items is gone (Catalog.canBuyWithBrass has no rank argument). The other Brass items keep their prices; daily specials never pick a record item.
+- Outfitter: record items show `RECORD n/goal` and "Line Mastery: ..." with no price; existing owners keep them.
+- Errands: NpcQuests.brass removed; each stage tells its story line to the Hand who finishes it; Mabel's chain still gives her cap. NpcService no longer pays errand Brass (TakeErrands removed).
+- Baseline drift fixed: the daily first-run Brass bonus had been forced off since 38b14e1 (haul commit, no reason given); it is back as the design keeps it.
+- Premise copy (Config/Premise; LORE.md section 0 with the Mabel note): the hall's coal bill is now HANDS WANTED for the Relief with the Depot's notice and motto; the honours board is the ROLL OF THE TERMINUS (and the superintendent's paper); the departure board heads COLDHARBOUR DEPOT · THE RELIEF; a lost crew's ticket is stamped ENTERED, NOT RECALLED; the Ledger shows your place on the Roll (name and livery) once you have reached the Terminus; one brass plaque KEPT LIT BY THOSE WHO WENT BEFORE on the platform lamp post nearest each dock; Mabel's lines rewritten to the premise (the Hollows stay unexplained, no immortality text).
+2. Verified / known gaps
+- `lune run check` passed (all specs, audit clean). New tests/Record.spec: status items off Brass, one unlock path per cosmetic, both halves of livery_royal, once-only grants, no record item on special. Report check: run 1 (a wipe at stop 4, the day's first run) 138 Brass, run 2 (a Short Line finish) 428, cheapest Brass item 400: PASS. Two wipes in a row reach about 200, not 400; whether to lower hat_conductor is the owner's call.
+- NOT verified in Studio (Rojo not connected in main-s1; the desktop was in use by Codex). Manual: Play; Outfitter shows RECORD on the five items and BUY on the rest; the hall's bill, Roll and departure board read as above from spawn and the ready spot; finish an errand (story line, no Brass line); lose a run (ENTERED, NOT RECALLED); the plaque on a platform lamp at stop 1; Ledger Roll line.
+- Leftovers (Astra): Tuning.Npc.HelperBrass is now unused (left alone while Tuning was being edited by Codex); phone Outfitter row check at half scale; LORE plaque wording vs. the poster style is a CHOICE to review in Studio.
+3. Next: Gate G1 (human), then the owner's Studio pass over S10 and S11.
+
 ## 2026-10-23: DETAIL LEVEL FOLLOWS THE GRAPHICS SETTING
 1. Completed
 - Parts tagged "Detail" are finishing touches: Controllers/DetailController hides them (LocalTransparencyModifier 1) under Settings' Performance and shows them under Quality, catching parts that stream in later.

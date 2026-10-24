@@ -54,7 +54,7 @@ function ProgressionService.PayRun(
 		if profile then
 			local rankBefore = Rank.fromXp(profile.xp)
 			local tierBefore = profile.unlockedTier
-			local dailyBonus = false
+			local dailyBonus = profile.daily.lastBonusDay ~= day -- the first run of each UTC day
 			local payout = Economy.payout(tally, {
 				outcome = outcome,
 				dailyBonus = dailyBonus,
@@ -63,11 +63,6 @@ function ProgressionService.PayRun(
 			})
 			local brass = payout.brass
 			payout.xp += haul.xp
-			local errands = Registry.NpcService.TakeErrands(player)
-			if errands > 0 then
-				table.insert(payout.lines, { label = "Crew errands", amount = errands })
-				brass += errands
-			end
 			if charter then
 				local used = if profile.daily.charterBrassDay == day then profile.daily.charterBrass else 0
 				local capped = math.max(0, math.min(brass, e.CharterDailyBrassCap - used))

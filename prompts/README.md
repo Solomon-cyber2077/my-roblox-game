@@ -17,7 +17,7 @@ Copied from `docs/direction/2026-10-22_session-prompts.md` (that file stays the 
 | G1 | none | Closed playtest (docs/direction/2026-10-21_after-the-prompts.md, Stage 1) | human | S1–S8 | todo |
 | S9 | [S9.md](S9.md) | 6, the rest (materials, edge, grades, density, lighting lock) | Opus 5.5 / high | G1 | done before G1 at the owner's request (993d63f); interior doors pending (train part budget full: Blender mesh, HUMAN upload) |
 | S10 | [S10.md](S10.md) | 7, the rest, plus 9 (footsteps, ping, arrival silence, release plumbing) | Opus 5.5 / medium | G1, S8 | done (footsteps by slot, ping, arrival hush, stalk noise, Creator mode); Studio check pending Rojo |
-| S11 | [S11.md](S11.md) | 8 Brass loop, Line Mastery, premise | Opus 5.5 / high | G1, S7 | todo |
+| S11 | [S11.md](S11.md) | 8 Brass loop, Line Mastery, premise | Opus 5.5 / high | G1, S7 | done (record items off Brass, AND rule, errands as story, daily bonus restored, premise copy); Studio check pending |
 
 ## Void Mist (Council run 20261022-131445, branch `claude/void-mist`, worktree ../LTO-mist)
 Run in order; VM4 and VM5 need only VM1; VM6 needs VM5; VM7 comes last.

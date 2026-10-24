@@ -14,6 +14,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Premise = require(Shared.Config.Premise)
 local Tuning = require(Shared.Config.Tuning)
 local Rank = require(Shared.Logic.Rank)
 local RunRules = require(Shared.Logic.RunRules)
@@ -579,7 +580,7 @@ function Lobby.mount(gui: ScreenGui)
 		local readyCount, needed = readyLine()
 		local mine = State.Get({ "lobby", "ready", Session.userKey }) == true
 
-		local head, rows = "PLATFORM 1  ·  LAST TRAIN OUT", ""
+		local head, rows = Premise.BoardHead, ""
 		local stopCount = run.stopCount or Tuning.Run.StationCount
 		hallRow.Visible = panel.Visible and (phase == "Lobby" or phase == "Countdown")
 		if RunRules.isRunPhase(phase :: any) or phase == "RunEnd" then
@@ -591,7 +592,7 @@ function Lobby.mount(gui: ScreenGui)
 				else "Too far down the line. Next departure after this run."
 			readyButton.Text = "JOIN RUN"
 			Ui.setButtonEnabled(readyButton, joinable)
-			rows = `EN ROUTE  ·  STOP {stop} OF {stopCount}\nNEXT DEPARTURE AFTER THIS RUN`
+			rows = `RELIEF EN ROUTE  ·  STOP {stop} OF {stopCount}\nNEXT RELIEF AFTER THIS ONE`
 		elseif phase == "Countdown" then
 			local remaining = math.max((run.phaseEndsAt or now) - now, 0)
 			status.Text = `DEPARTING IN {Format.clock(remaining)}`

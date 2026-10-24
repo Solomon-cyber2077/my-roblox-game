@@ -20,6 +20,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
 local Catalog = require(Shared.Logic.Catalog)
+local Milestones = require(Shared.Logic.Milestones)
 local Rank = require(Shared.Logic.Rank)
 local Format = require(Shared.Util.Format)
 local CosmeticModels = require(Shared.Visual.CosmeticModels)
@@ -242,11 +243,7 @@ function Outfitter.mount(gui: ScreenGui)
 			end
 		end
 		if def.brass then
-			local rank = Rank.fromXp(profile.xp or 0)
-			local check, price = Catalog.canBuyWithBrass(owned, profile.brass or 0, rank, def.id, today())
-			if check == "Rank" then
-				return `CREW RANK {def.rank}`, "Secondary", nil
-			end
+			local check, price = Catalog.canBuyWithBrass(owned, profile.brass or 0, def.id, today())
 			return `BUY · {Format.thousands(price or def.brass)}`,
 				if check == "Ok" then "Primary" else "Secondary",
 				if check == "Ok"
@@ -441,6 +438,11 @@ function Outfitter.mount(gui: ScreenGui)
 					tagText = `TODAY {Format.thousands(price)}`
 					tagColor = Theme.Color.signalDark -- the bright signal red is too pale on card stock
 				end
+			elseif def.record and def.milestone then
+				-- a status item shows the record it waits on, never a price
+				local value, goal =
+					Milestones.progress(profile.stats or {}, Rank.fromXp(profile.xp or 0), def.milestone)
+				tagText, tagColor = `RECORD {value}/{goal}`, Theme.Color.inkSoft
 			elseif def.robux or def.gamePass then
 				tagText, tagColor = "ROBUX", Theme.Color.ink
 			else

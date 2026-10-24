@@ -19,6 +19,7 @@
 
 local Shared = script.Parent.Parent
 local MysteryConfig = require(Shared.Config.Mystery)
+local Premise = require(Shared.Config.Premise)
 local Types = require(Shared.Types)
 local Vote = require(script.Parent.Vote)
 
@@ -196,15 +197,18 @@ function RunLog.endStop(log: { Entry }?, nextStop: number?): number
 	return nextStop or 1
 end
 
--- "TERMINUS", "TRAIN LOST AT STOP 6" (a second breakdown), "LOST AT STOP 6" (the crew).
+-- "TERMINUS", "TRAIN LOST AT STOP 6" (a second breakdown), "ENTERED, NOT RECALLED" (the crew lost:
+-- the ledger's words for Hands left behind, Prompt 8; the stop shows under STOPS REACHED).
 -- `stop` is where the run ended (run.nextStop).
 -- The run ticket's stamp. A Short Line victory is stamped SHORT LINE (Prompt 10).
 function RunLog.final(outcome: Types.Outcome?, stop: number?, short: boolean?): string
 	if outcome == "Victory" then
 		return if short then "SHORT LINE" else "TERMINUS"
 	end
-	local verb = if outcome == "Derailed" then "TRAIN LOST" else "LOST"
-	return `{verb} AT STOP {stop or 1}`
+	if outcome == "Derailed" then
+		return `TRAIN LOST AT STOP {stop or 1}`
+	end
+	return Premise.NotRecalled
 end
 
 return table.freeze(RunLog)
