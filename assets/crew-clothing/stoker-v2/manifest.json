@@ -1,0 +1,36 @@
+{
+  "status": "candidate; no Roblox IDs assigned; engine fit pending",
+  "hat": {
+    "mesh": "hat.obj",
+    "triangles": 780,
+    "size": [
+      2.06,
+      0.62,
+      1.44
+    ],
+    "offset": [
+      0.0,
+      0.725,
+      -0.155
+    ],
+    "validated": false,
+    "upload": "HUMAN pending"
+  },
+  "gear": {
+    "mesh": "gear.obj",
+    "triangles": 52,
+    "size": [
+      1.625,
+      1.83,
+      0.231
+    ],
+    "offset": [
+      0.0425,
+      0.065,
+      -0.6155
+    ],
+    "validated": false,
+    "upload": "HUMAN pending"
+  },
+  "totalTriangles": 832
+}
