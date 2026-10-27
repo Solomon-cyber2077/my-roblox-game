@@ -2,31 +2,57 @@
 -- Fixed front view for the isolated pilot scene; no production controllers are loaded.
 local RunService = game:GetService("RunService")
 local ContentProvider = game:GetService("ContentProvider")
+local UserInputService = game:GetService("UserInputService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared.Config.CrewClothing)
 local Visual = require(Shared.Visual.CrewClothing)
 
 local camera = workspace.CurrentCamera
 camera.CameraType = Enum.CameraType.Scriptable
-camera.CFrame = CFrame.lookAt(Vector3.new(0, 4.2, -14), Vector3.new(0, 3.8, 0))
 camera.FieldOfView = 42
 
+local target = Vector3.new(0, 3.8, 0)
+local views: { [string]: Vector3 } = {
+	front = Vector3.new(0, 4.2, -14),
+	back = Vector3.new(0, 4.2, 14),
+	left = Vector3.new(-14, 4.2, 0),
+	right = Vector3.new(14, 4.2, 0),
+}
+local view = "front"
+camera.CFrame = CFrame.lookAt(views[view], target)
+
+UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessed: boolean)
+	if gameProcessed then
+		return
+	end
+	local nextView = ({
+		[Enum.KeyCode.One] = "front",
+		[Enum.KeyCode.Two] = "back",
+		[Enum.KeyCode.Three] = "left",
+		[Enum.KeyCode.Four] = "right",
+	} :: { [Enum.KeyCode]: string })[input.KeyCode]
+	if nextView ~= nil then
+		view = nextView
+		print("[CrewClothingPilot] camera view=" .. view)
+	end
+end)
+
 local shirtClean = Instance.new("Shirt")
-shirtClean.ShirtTemplate = "rbxassetid://97730629765220"
+shirtClean.ShirtTemplate = "rbxassetid://101979354774166"
 local shirtWorn = Instance.new("Shirt")
-shirtWorn.ShirtTemplate = "rbxassetid://103847740746022"
+shirtWorn.ShirtTemplate = "rbxassetid://90317117594409"
 local pantsClean = Instance.new("Pants")
-pantsClean.PantsTemplate = "rbxassetid://81737309623649"
+pantsClean.PantsTemplate = "rbxassetid://104204802579148"
 local pantsWorn = Instance.new("Pants")
-pantsWorn.PantsTemplate = "rbxassetid://105374856832482"
+pantsWorn.PantsTemplate = "rbxassetid://100087790691733"
 local hatMesh = Instance.new("SpecialMesh")
-hatMesh.MeshId = "rbxassetid://87294038906929"
-hatMesh.TextureId = "rbxassetid://99740939469532"
+hatMesh.MeshId = "rbxassetid://140353597411200"
+hatMesh.TextureId = "rbxassetid://85553773814164"
 local gearMesh = Instance.new("SpecialMesh")
-gearMesh.MeshId = "rbxassetid://93793321063305"
-gearMesh.TextureId = "rbxassetid://99740939469532"
+gearMesh.MeshId = "rbxassetid://90362864770621"
+gearMesh.TextureId = "rbxassetid://85553773814164"
 local atlas = Instance.new("Decal")
-atlas.Texture = "rbxassetid://99740939469532"
+atlas.Texture = "rbxassetid://85553773814164"
 local preloadItems = { shirtClean, shirtWorn, pantsClean, pantsWorn, hatMesh, gearMesh, atlas }
 for _, item in preloadItems do
 	local ok, status = pcall(function(): Enum.AssetFetchStatus
@@ -51,15 +77,21 @@ local recipe = table.clone(source)
 recipe.accessories = table.clone(source.accessories)
 recipe.accessories[1] = table.clone(source.accessories[1])
 recipe.accessories[2] = table.clone(source.accessories[2])
-recipe.shirt = 97730629765220
-recipe.pants = 81737309623649
-recipe.wornShirt = 103847740746022
-recipe.wornPants = 105374856832482
+recipe.shirt = 101979354774166
+recipe.pants = 104204802579148
+recipe.wornShirt = 90317117594409
+recipe.wornPants = 100087790691733
 recipe.validated = true
-recipe.accessories[1].mesh = 87294038906929
-recipe.accessories[1].texture = 99740939469532
-recipe.accessories[2].mesh = 93793321063305
-recipe.accessories[2].texture = 99740939469532
+recipe.accessories[1].yaw = 180
+recipe.accessories[1].mesh = 140353597411200
+recipe.accessories[1].texture = 85553773814164
+recipe.accessories[1].size = { 2.06, 0.62, 1.44 }
+recipe.accessories[1].offset = { 0, 0.725, -0.155 }
+recipe.accessories[2].yaw = 180
+recipe.accessories[2].mesh = 90362864770621
+recipe.accessories[2].texture = 85553773814164
+recipe.accessories[2].size = { 1.625, 1.83, 0.231 }
+recipe.accessories[2].offset = { 0.0425, 0.065, -0.6155 }
 assert(Visual.Preload(recipe), "[CrewClothingPilot] client Visual.Preload failed")
 print("[CrewClothingPilot] client Visual.Preload success")
 
@@ -67,5 +99,5 @@ RunService:BindToRenderStep("CrewClothingPilotCamera", Enum.RenderPriority.Camer
 	if workspace.CurrentCamera ~= camera then
 		return
 	end
-	camera.CFrame = CFrame.lookAt(Vector3.new(0, 4.2, -14), Vector3.new(0, 3.8, 0))
+	camera.CFrame = CFrame.lookAt(views[view], target)
 end)

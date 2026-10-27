@@ -7,6 +7,7 @@ export type Accessory = {
 	limb: string,
 	size: { number },
 	offset: { number },
+	yaw: number?, -- Degrees around the limb's local up axis; omitted means zero.
 	triangles: number,
 }
 

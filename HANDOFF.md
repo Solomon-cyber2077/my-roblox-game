@@ -1,5 +1,9 @@
 # HANDOFF
 
+## 2026-10-27 Stoker v2 upload and orientation checkpoint
+1. Completed: uploaded two meshes and five images (verified IDs in upload-status.json), repaired mesh normals, and added finite optional accessory yaw. Both pilot accessories use 180 degrees to correct OBJ import orientation. Rebuilt and ran validation-pilot.rbxlx in Studio: all seven assets fetched successfully; apply, idempotence, clean/worn creation and restoration checks passed. Front/back/side screenshots confirmed forward goggles, cap brim, collar and pouch. Full lune run check passed (556 tests, visual audit clean). Source before/after renders retained.
+2. Known: existing wrong-type asset 203785492 still reports errors. Movement, crouching, seated fit and multiplayer acceptance remain pending. Production Enabled/WearEnabled/validated remain false.
+3. Next: complete those fit/pose checks before production binding; remaining uniforms and release acceptance stay pending. No push.
 ## 2026-10-24: CREW CLOTHING DETAIL PASS
 1. Completed: refined fabric/seam/scuff textures and original Blender torso equipment for all seven outfits: goggles, pouches, lapels/watch chain, scarf and satchel. Recipes bind measured head + torso geometry (573-972 triangles, two accessories each). Half-scale v1/after renders retained. Outfitter explains required uniforms and retained Roblox clothing ownership.
 2. Verification: Blender exports/renders reviewed; full lune run check passed: 554 tests, zero failures, strict/lint/format and visual audit clean. Gated Studio start/console/screenshot/stop retained avatar, no clothing errors. Warnings: unpublished DataStores/telemetry, wrong-type audio 203785492 and missing audio 81504106. Source budget test does not establish engine rendering/lifecycle correctness. IDs zero and Enabled/WearEnabled/validated false.

@@ -8,6 +8,8 @@ References: [short waxed-canvas cap](https://randijofab.com/products/copy-of-wax
 
 Rebuild with Pillow Python running `tools/crew-clothing/stoker_textures.py`, then Blender 5.2 `--background --python tools/crew-clothing/stoker_v2.py`. The packed `stoker-v2.blend` preserves the candidate. `hat.obj` and `gear.obj` are unit-bounds exports; use manifest size/offset values after import. Combined mesh budget: 832 triangles.
 
-Validation: Blender export/render succeeded; `lune run check` passed. Classic sheets are 585 x 559; pants torso is transparent and worn sheets retain alpha. No new Roblox IDs, uploads or production configuration changes. Previous uploaded Stoker remains untouched. Blender's optional OS thumbnail cache write was denied; renders and blend saved successfully.
+Validation (2026-10-27): all seven uploaded assets fetched successfully in the rebuilt Studio pilot. Apply, repeated apply, clean/worn creation and restoration checks passed. Optional accessory yaw is 180 degrees for both imported meshes; front/back/side screenshots confirmed goggles, brim, collar and pouch face forward. Production remains disabled. Existing wrong-type asset 203785492 still logs errors.
 
-HUMAN pending: upload both meshes through Studio 3D Importer and five images; record fresh image/mesh IDs separately from previous uploads. Bind only the isolated pilot, restart Play, read Output and capture screenshots. Check front/back UVs, cap/head clearance, clean/worn clothing, running, crouching, seated poses, and arm movement before enabling production. Current Creator Hub automation remains policy-blocked.
+Full `lune run check` passed: 556 tests and visual audit clean.
+
+Remaining acceptance: cap clearance during running/crouching/seated poses and arm movement, followed by multiplayer checks. Source before/after renders are retained above; Blender previews do not replace these engine checks.
