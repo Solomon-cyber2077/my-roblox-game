@@ -21,15 +21,21 @@ local function pilotRecipe(): any
 	recipe.accessories = table.clone(source.accessories)
 	recipe.accessories[1] = table.clone(source.accessories[1])
 	recipe.accessories[2] = table.clone(source.accessories[2])
-	recipe.shirt = 97730629765220
-	recipe.pants = 81737309623649
-	recipe.wornShirt = 103847740746022
-	recipe.wornPants = 105374856832482
+	recipe.shirt = 101979354774166
+	recipe.pants = 104204802579148
+	recipe.wornShirt = 90317117594409
+	recipe.wornPants = 100087790691733
 	recipe.validated = true
-	recipe.accessories[1].mesh = 87294038906929
-	recipe.accessories[1].texture = 99740939469532
-	recipe.accessories[2].mesh = 93793321063305
-	recipe.accessories[2].texture = 99740939469532
+	recipe.accessories[1].yaw = 180
+	recipe.accessories[1].mesh = 140353597411200
+	recipe.accessories[1].texture = 85553773814164
+	recipe.accessories[1].size = { 2.06, 0.62, 1.44 }
+	recipe.accessories[1].offset = { 0, 0.725, -0.155 }
+	recipe.accessories[2].yaw = 180
+	recipe.accessories[2].mesh = 90362864770621
+	recipe.accessories[2].texture = 85553773814164
+	recipe.accessories[2].size = { 1.625, 1.83, 0.231 }
+	recipe.accessories[2].offset = { 0.0425, 0.065, -0.6155 }
 	return recipe
 end
 

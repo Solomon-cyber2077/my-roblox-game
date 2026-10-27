@@ -53,7 +53,17 @@ class Mesh:
         mesh=bpy.data.meshes.new(name); mesh.from_pydata(self.v,[],self.f); mesh.update()
         gear.assign_uv(mesh,self.slots)
         bm=bmesh.new(); bm.from_mesh(mesh)
-        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces)); bm.to_mesh(mesh); bm.free()
+        # Join coincident vertices so the OBJ importer sees a continuous shell.
+        # Keep the authored UV loop data while welding the geometric seams.
+        bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=1e-6)
+        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+        # The two collar cards are front-facing; force their normals toward -Y.
+        if name=='gear':
+            cards=list(bm.faces)[:2]
+            inward=[face for face in cards if face.normal.y > 0]
+            if inward: bmesh.ops.reverse_faces(bm, faces=inward)
+            bm.normal_update()
+        bm.to_mesh(mesh); bm.free()
         ob=bpy.data.objects.new(name,mesh); bpy.context.collection.objects.link(ob); mesh.materials.append(atlas)
         bounds=[(min(v.co[i] for v in mesh.vertices),max(v.co[i] for v in mesh.vertices)) for i in range(3)]
         dims=[b-a for a,b in bounds]; center=[(a+b)/2 for a,b in bounds]

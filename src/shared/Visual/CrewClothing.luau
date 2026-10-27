@@ -107,7 +107,9 @@ function Visual.Apply(character: Model, recipe: Config.Recipe): Folder?
 		part.CanTouch = false
 		part.CanQuery = false
 		part.Massless = true
-		part.CFrame = target.CFrame * CFrame.new(spec.offset[1], spec.offset[2], spec.offset[3])
+		part.CFrame = target.CFrame
+			* CFrame.new(spec.offset[1], spec.offset[2], spec.offset[3])
+			* CFrame.Angles(0, math.rad(spec.yaw or 0), 0)
 		local mesh = Instance.new("SpecialMesh")
 		mesh.MeshType = Enum.MeshType.FileMesh
 		mesh.MeshId = asset(spec.mesh)
