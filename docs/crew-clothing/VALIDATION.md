@@ -6,7 +6,7 @@ Implementation spans all six Council prompts, but the feature is **not release c
 
 1. Existing R6 lifecycle, authoritative ShopEquip, profile dictionaries and Outfitter reused; no extra remote or wardrobe service.
 2. Stoker Blender pilot, original classic textures and half-scale before/after renders; source exports and measured geometry manifest.
-3. Server-owned selection, migration, asset preloading, stale-request invalidation, idempotent apply and original-instance restoration. Face/hair identity retained; hair hidden under uniform hats using the existing cosmetic policy. R6 joints and hitboxes unchanged.
+3. Server-owned selection, migration, asset preloading, stale-request invalidation, idempotent apply and original-instance restoration. Player hats, hair and face accessories are retained. Uniform hats are deferred; recipes contain torso gear only. R6 joints and hitboxes unchanged.
 4. Five free identities and two record variants in the existing Uniform category. Invalid/unuploaded outfits cannot equip, including through developer unlocks.
 5. Clean/worn baked textures; client reads authoritative run stationsCleared and phase. Wear begins after three departures, persists through respawn, clears at RunEnd/lobby/start phases, never enters saves. Both feature switches remain off.
 6. Veteran Stoker: 25 lifetime stations departed; Terminus Conductor: one Long Line victory. Existing milestone reward/save path, with threshold and duplicate-grant tests.
@@ -19,8 +19,8 @@ Implementation spans all six Council prompts, but the feature is **not release c
 
 ## HUMAN pending: asset upload and engine acceptance
 
-1. Upload each original classic sheet and hat atlas under the owner's account. Import each `hat.obj` and `gear.obj` through Studio's 3D Importer; obtain the mesh content IDs. Use template image IDs for ShirtTemplate/PantsTemplate, not catalog clothing product IDs. Confirm permissions for the experience. No IDs have been invented.
-2. Bind clean/worn shirt/pants and accessory mesh/texture IDs in Config/CrewClothing. OBJ geometry is normalized; config size/offset come from manifest. Verify Roblox front (-Z), UV orientation, dimensions, hat attachment and torso gear fit before marking each recipe validated. Importer rotation/scale must be checked against the render.
+1. Stoker v2 clothing, atlas and torso mesh are uploaded (IDs in `assets/crew-clothing/stoker-v2/upload-status.json`). Upload the remaining outfits' original classic sheets, atlas and `gear.obj` under the owner's account. Hats are excluded. Use template image IDs for ShirtTemplate/PantsTemplate, not catalog clothing product IDs. Confirm permissions for the experience.
+2. Bind clean/worn shirt/pants and accessory mesh/texture IDs in Config/CrewClothing. OBJ geometry is normalized; config size/offset come from manifest. Verify Roblox front (-Z), UV orientation, dimensions and torso gear fit before marking each recipe validated. Importer rotation/scale must be checked against the render.
 3. Validate Stoker first in an isolated Studio copy: idle/walk/run, every grab/struggle/pry pose, sitting, death, respawn, slow/failed preload, rapid A→B→A selection, profile load/reconnect, hair/face preservation and restoration. Confirm no duplicate instances, joint/hitbox changes or forbidden client equip. Then validate all other outfits.
 4. Review Outfitter previews, locks, selection feedback and keyboard/controller/touch navigation. Check lantern-lit darkness, fog, distance and four different crew bodies for readable silhouettes and clipping.
 5. Record four-client cold/warm asset-cache runs, transition timings, memory/instances and frame times on the target low-end device. Check stop-three wear, late join, respawn, outcome reset and next run. Enable WearEnabled only if those measurements pass; keep clean uniforms if it does not.

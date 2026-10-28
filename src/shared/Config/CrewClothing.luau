@@ -25,16 +25,6 @@ export type Recipe = {
 	record: { RecordGoal }?,
 }
 
-local geometry = {
-	uniform_stoker = { size = { 2.6, 0.4108, 2.0595 }, offset = { 0, 0.7554, 0 }, triangles = 600 },
-	uniform_brakeman = { size = { 2.6, 0.445, 2.1295 }, offset = { 0, 0.7725, 0 }, triangles = 600 },
-	uniform_conductor = { size = { 2.6, 0.635, 2.1295 }, offset = { 0, 0.8675, 0 }, triangles = 616 },
-	uniform_trackwalker = { size = { 1.96, 0.7, 1.666 }, offset = { 0, 0.9, 0 }, triangles = 440 },
-	uniform_wayfarer = { size = { 2.26, 0.55, 1.921 }, offset = { 0, 0.825, 0 }, triangles = 504 },
-	uniform_stoker_veteran = { size = { 2.6, 0.4108, 2.0595 }, offset = { 0, 0.7554, 0 }, triangles = 600 },
-	uniform_conductor_terminus = { size = { 2.6, 0.635, 2.1295 }, offset = { 0, 0.8675, 0 }, triangles = 616 },
-}
-
 local gearGeometry: { [string]: { size: { number }, offset: { number }, triangles: number } } = {
 	uniform_stoker = {
 		size = { 1.4605, 1.7007, 0.2991 },
@@ -80,15 +70,6 @@ local function recipe(id: string, name: string, starter: boolean, record: { Reco
 		wornPants = 0,
 		validated = false,
 		accessories = {
-			{
-				name = "Hat",
-				mesh = 0,
-				texture = 0,
-				limb = "Head",
-				size = geometry[id].size,
-				offset = geometry[id].offset,
-				triangles = geometry[id].triangles,
-			},
 			{
 				name = "Gear",
 				mesh = 0,

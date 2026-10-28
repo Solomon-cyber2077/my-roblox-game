@@ -20,22 +20,16 @@ local function pilotRecipe(): any
 	local recipe = table.clone(source)
 	recipe.accessories = table.clone(source.accessories)
 	recipe.accessories[1] = table.clone(source.accessories[1])
-	recipe.accessories[2] = table.clone(source.accessories[2])
 	recipe.shirt = 101979354774166
 	recipe.pants = 104204802579148
 	recipe.wornShirt = 90317117594409
 	recipe.wornPants = 100087790691733
 	recipe.validated = true
 	recipe.accessories[1].yaw = 180
-	recipe.accessories[1].mesh = 140353597411200
+	recipe.accessories[1].mesh = 90362864770621
 	recipe.accessories[1].texture = 85553773814164
-	recipe.accessories[1].size = { 2.06, 0.62, 1.44 }
-	recipe.accessories[1].offset = { 0, 0.725, -0.155 }
-	recipe.accessories[2].yaw = 180
-	recipe.accessories[2].mesh = 90362864770621
-	recipe.accessories[2].texture = 85553773814164
-	recipe.accessories[2].size = { 1.625, 1.83, 0.231 }
-	recipe.accessories[2].offset = { 0.0425, 0.065, -0.6155 }
+	recipe.accessories[1].size = { 1.625, 1.83, 0.231 }
+	recipe.accessories[1].offset = { 0.0425, 0.065, -0.6155 }
 	return recipe
 end
 
@@ -82,6 +76,18 @@ local originalPants = Instance.new("Pants")
 originalPants.Name = "OriginalPants"
 originalPants.PantsTemplate = "rbxassetid://0"
 originalPants.Parent = clean
+local originalHat = Instance.new("Accessory")
+originalHat.Name = "OriginalHat"
+originalHat.AccessoryType = Enum.AccessoryType.Hat
+originalHat.Parent = clean
+local originalHair = Instance.new("Accessory")
+originalHair.Name = "OriginalHair"
+originalHair.AccessoryType = Enum.AccessoryType.Hair
+originalHair.Parent = clean
+local originalFaceAccessory = Instance.new("Accessory")
+originalFaceAccessory.Name = "OriginalFace"
+originalFaceAccessory.AccessoryType = Enum.AccessoryType.Face
+originalFaceAccessory.Parent = clean
 
 local head = clean:FindFirstChild("Head")
 check(head ~= nil and head:IsA("BasePart"), "R6 head remains present")
@@ -122,6 +128,15 @@ check(first == second, "second Apply is idempotent")
 local shirt = clean:FindFirstChildWhichIsA("Shirt")
 local pants = clean:FindFirstChildWhichIsA("Pants")
 check(shirt ~= nil and pants ~= nil, "classic garments exist")
+check(originalHat.Parent == clean and originalHair.Parent == clean, "Apply preserves player hat and hair")
+check(originalFaceAccessory.Parent == clean, "Apply preserves player face accessory")
+local appliedFolder = clean:FindFirstChild("CrewUniform")
+check(
+	appliedFolder ~= nil
+		and appliedFolder:FindFirstChild("Gear") ~= nil
+		and appliedFolder:FindFirstChild("Hat") == nil,
+	"Apply creates gear without a hat"
+)
 Visual.Restore(clean)
 check(clean:FindFirstChild("CrewUniform") == nil, "Restore removes generated uniform")
 check(
@@ -134,6 +149,11 @@ check(
 	originalShirt.Parent == clean and originalPants.Parent == clean,
 	"Restore preserves original garment identity"
 )
+check(
+	originalHat.Parent == clean and originalHair.Parent == clean,
+	"Restore preserves player hat and hair identity"
+)
+check(originalFaceAccessory.Parent == clean, "Restore preserves player face accessory identity")
 for _, snapshot in jointSnapshots do
 	check(
 		snapshot.instance.Parent == snapshot.parent

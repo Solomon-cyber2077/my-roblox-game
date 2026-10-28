@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-27 Hat-free clothing checkpoint
+1. Completed: deferred uniform hats in all recipes and the Stoker pilot; retained Blender hat sources for later. Preserved player hats, hair and face accessories; uniforms no longer request hidden hair. Added hat-free render and recipe regression check.
+2. Verification: hat-free Studio pilot fetched six assets and passed Apply/idempotence/Restore and accessory-preservation checks; front view inspected. Studio disconnected before the final CosmeticService hair-rule check. Manual: reconnect Rojo, enable a validated uniform in a test copy, Play, equip it with avatar hair/hat, and verify both remain visible, then unequip. Production remains disabled. Existing wrong-type audio 203785492 remains; movement, seated/crouch fit and multiplayer acceptance are pending.
+3. Full lune run check passed: 557 tests, zero failures, visual audit clean (working tree includes separate uncommitted visual fixes). Next: complete the remaining acceptance in docs/crew-clothing/VALIDATION.md before production binding. Commit, push and merge of this gated checkpoint authorized by owner.
+
 ## 2026-10-27 Stoker v2 upload and orientation checkpoint
 1. Completed: uploaded two meshes and five images (verified IDs in upload-status.json), repaired mesh normals, and added finite optional accessory yaw. Both pilot accessories use 180 degrees to correct OBJ import orientation. Rebuilt and ran validation-pilot.rbxlx in Studio: all seven assets fetched successfully; apply, idempotence, clean/worn creation and restoration checks passed. Front/back/side screenshots confirmed forward goggles, cap brim, collar and pouch. Full lune run check passed (556 tests, visual audit clean). Source before/after renders retained.
 2. Known: existing wrong-type asset 203785492 still reports errors. Movement, crouching, seated fit and multiplayer acceptance remain pending. Production Enabled/WearEnabled/validated remain false.
