@@ -361,4 +361,48 @@ function CrewPoses.grabbed(
 	return out
 end
 
+-- Presentation only: preserve the gait and all gameplay/root physics. Hidden arms stay
+-- in the rig; the server owns visibility. The survivor carries the lantern clear of
+-- the knees, with a small counter-roll instead of the normal two-arm swing.
+function CrewPoses.injured(
+	base: Pose,
+	missing: string,
+	arm: string?,
+	recoil: number,
+	regrow: number,
+	warning: number,
+	healing: number,
+	collapse: number
+): Pose
+	local out = table.clone(base)
+	local side = if missing == "L" then LEFT elseif missing == "R" then RIGHT else 0
+	local eventSide = if arm == "L" then LEFT elseif arm == "R" then RIGHT else 0
+	local kick = if recoil > 0 and recoil < 1 then math.sin(math.pi * recoil) * (1 - recoil) else 0
+	local grow = if regrow > 0 and regrow < 1 then math.sin(math.pi * regrow) else 0
+	local bend = (if missing ~= "" then 0.08 else grow * 0.08) + warning * 0.32 + healing * 0.10
+	local roll = side * 0.06 - eventSide * kick * 0.22
+	if missing ~= "" or kick > 0 or grow > 0 then
+		out.RootJoint = (out.RootJoint or CFrame.identity)
+			* body(bend - kick * 0.2, roll, eventSide * kick * 0.12)
+		out.Neck = (out.Neck or CFrame.identity) * head(warning * 0.22 + healing * 0.12, -roll * 0.6, 0)
+		if missing == "L" then
+			out["Right Shoulder"] = limb(RIGHT, 0.55 + kick * 0.25, 0.12, 0.08)
+		elseif missing == "R" then
+			out["Left Shoulder"] = limb(LEFT, 0.55 + kick * 0.25, 0.12, 0.08)
+		end
+		if grow > 0 and eventSide ~= 0 then
+			local key = if eventSide == RIGHT then "Right Shoulder" else "Left Shoulder"
+			out[key] = (out[key] or CFrame.identity):Lerp(limb(eventSide, 0.32, 0.48, 0.12), grow)
+		end
+	end
+	if collapse > 0 then
+		local down = smoothstep(0, 1, collapse)
+		out.RootJoint = (out.RootJoint or CFrame.identity):Lerp(body(0.12, 1.4, 0, -1.6, 0.2), down)
+		out.Neck = (out.Neck or CFrame.identity):Lerp(head(0.55, 0.18, 0), down)
+		out["Right Hip"] = limb(RIGHT, 0.12 * down, 0.05)
+		out["Left Hip"] = limb(LEFT, -0.08 * down, 0.05)
+	end
+	return out
+end
+
 return CrewPoses

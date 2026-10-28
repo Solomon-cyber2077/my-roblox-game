@@ -11,7 +11,7 @@
 	                 beats (Space / ButtonA / the PULL button) and sends each press with the
 	                 server time they saw; the victim sees who is pulling.
 	  the way back   with no arms off the train: the server-clock countdown and an arrow toward
-	                 the train. The last WarningSeconds change colour only: no flashing.
+	                 the train. The last WarningSeconds add posture and a subdued cue, no flashing.
 	  treatment      while a Tonic works on you, how long is left.
 
 	The missing arm itself is hidden by the server (its Transparency), so late joiners and
@@ -26,6 +26,8 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config.Injury)
+local Registry = require(script.Parent.Parent.Registry)
+local CrewPoses = require(script.Parent.Parent.Animation.CrewPoses)
 
 local Net = require(script.Parent.Parent.Net)
 local Overlay = require(script.Parent.Parent.UI.Overlay)
@@ -59,6 +61,48 @@ type Active = {
 	pressed: { [number]: boolean },
 }
 local active: Active? = nil
+type Motion = { arm: string?, torn: number?, restored: number?, died: number? }
+local motions: { [Model]: Motion } = setmetatable({}, { __mode = "k" }) :: any
+local warningCharacter: Model? = nil
+local warningDeadline: number? = nil
+local nextWarning = 0
+
+function InjuryController.Pose(character: Model, base: CrewPoses.Pose, now: number): CrewPoses.Pose
+	if ReplicatedStorage:GetAttribute("LimbLoss") ~= true then
+		motions[character] = nil
+		return base
+	end
+	local missing = character:GetAttribute("MissingArms")
+	if typeof(missing) ~= "string" then
+		return base
+	end
+	local motion: Motion = motions[character] or {}
+	motions[character] = motion
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.Health <= 0 and missing ~= "" then
+		motion.died = motion.died or now
+	end
+	-- Keep grab/grasp contact targets intact until the server releases them.
+	if character:GetAttribute("GrabStyle") ~= nil or character:GetAttribute("Grasp") ~= nil then
+		return base
+	end
+	local deadline = character:GetAttribute("ReturnBy")
+	local warning = if missing == "LR" and typeof(deadline) == "number"
+		then math.clamp(1 - (deadline - now) / Config.WarningSeconds, 0, 1)
+		else 0
+	local healing = if typeof(character:GetAttribute("Healing")) == "number" then 1 else 0
+	local p = Config.Presentation
+	return CrewPoses.injured(
+		base,
+		missing,
+		motion.arm,
+		if motion.torn then (now - motion.torn) / p.RecoilSeconds else 0,
+		if motion.restored then (now - motion.restored) / p.RegrowSeconds else 0,
+		warning,
+		healing,
+		if motion.died then math.clamp((now - motion.died) / p.CollapseSeconds, 0, 1) else 0
+	)
+end
 
 local function serverNow(): number
 	return Workspace:GetServerTimeNow()
@@ -245,6 +289,25 @@ local function startRescue(data: { [string]: any })
 end
 
 local function onFx(kind: string, data: any)
+	if ReplicatedStorage:GetAttribute("LimbLoss") ~= true then
+		return
+	end
+	if (kind == "ArmTorn" or kind == "ArmRestored") and type(data) == "table" then
+		local player = if typeof(data.userId) == "number" then Players:GetPlayerByUserId(data.userId) else nil
+		local character = player and player.Character
+		if character and (data.arm == "L" or data.arm == "R") then
+			local motion: Motion = motions[character] or {}
+			motions[character] = motion
+			motion.arm = data.arm
+			if kind == "ArmTorn" then
+				motion.torn = serverNow()
+				motion.restored = nil
+			else
+				motion.restored = serverNow()
+				motion.torn = nil
+			end
+		end
+	end
 	local me = Players.LocalPlayer.UserId
 	if kind == "ArmTorn" and type(data) == "table" then
 		spawnLimb(data.userId, data.arm, data.cframe)
@@ -298,6 +361,25 @@ local function step()
 	end
 	local character = Players.LocalPlayer.Character
 	local returnBy = character and character:GetAttribute("ReturnBy")
+	local now = serverNow()
+	local warning = ReplicatedStorage:GetAttribute("LimbLoss") == true
+		and character ~= nil
+		and character:GetAttribute("MissingArms") == "LR"
+		and typeof(returnBy) == "number"
+		and returnBy > now
+		and returnBy - now <= Config.WarningSeconds
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if warning and humanoid and humanoid.Health > 0 then
+		if warningCharacter ~= character or warningDeadline ~= returnBy then
+			warningCharacter, warningDeadline, nextWarning = character, returnBy :: number, 0
+		end
+		if now >= nextWarning and Registry.AudioController then
+			Registry.AudioController.Play("InjuryWarning")
+			nextWarning = now + Config.Presentation.WarningInterval
+		end
+	else
+		warningCharacter, warningDeadline, nextWarning = nil, nil, 0
+	end
 	if typeof(returnBy) == "number" then
 		local left = math.max(returnBy - serverNow(), 0)
 		returnPanel.Visible = true

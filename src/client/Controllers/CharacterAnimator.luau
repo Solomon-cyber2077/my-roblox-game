@@ -191,6 +191,9 @@ local function animate(rig: Rig, dt: number, now: number)
 			turn = rig.turn,
 		})
 	end
+	if Registry.InjuryController then
+		target = Registry.InjuryController.Pose(model, target, now)
+	end
 	if rig.mine then
 		stride.phase = rig.phase
 		stride.amount = if grounded

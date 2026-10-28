@@ -166,6 +166,8 @@ local Cues: { [string]: Cue } = {
 		mix = "Outdoor",
 	},
 	Heartbeat = { id = 9113570506, volume = 0.65, maxSeconds = 1, pitch = 0.42, mix = "Cues" },
+	-- Reuses the licensed heartbeat recording for one cue per armless return deadline.
+	InjuryWarning = { id = 9113570506, volume = 0.35, maxSeconds = 1, pitch = 0.55, mix = "Feedback" },
 	RailClack = { id = 15675059323, volume = 0.14, maxSeconds = 1, pitch = 0.45 },
 
 	-- The sky's omens (Logic/Omens), from the same recordings again
