@@ -132,11 +132,17 @@ local function struggle(mods, session, p, stopLevel, helpers)
 			-- after a first grab players learn to press a little early for their device
 			local lead = if firstGrab then 0 else device.latency * 0.5 * persona.skill
 			local press = idealPress(SkillCheck, check) + gauss(rng) * spread + persona.reaction * 0.04 - lead
-			local claimed = press + device.latency
+			-- touch: builds with SkillCheck.TouchLead stamp a tap on touch-down, earlier by the lead;
+			-- older ones fired the keycap on Activated, when the finger lifts (a whole tap late)
+			local touchShift = 0
+			if device.tap then
+				touchShift = if C.TouchLead then -C.TouchLead else device.tap
+			end
+			local claimed = press + device.latency + touchShift
 			local arrived = claimed + device.ping / 2
 			result = SkillCheck.judgePress(check, claimed, arrived, tolerance)
 			-- would the press have landed with no input latency? then the device cost it
-			if result == "Miss" and SkillCheck.judge(check, press, 0) ~= "Miss" then
+			if result == "Miss" and SkillCheck.judge(check, press + math.max(touchShift, 0), 0) ~= "Miss" then
 				lagMisses += 1
 			end
 			pressedAt = arrived

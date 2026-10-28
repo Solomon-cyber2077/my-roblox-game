@@ -158,6 +158,10 @@ return table.freeze({
 		GreatShare = 0.2, -- the great zone (the white block): this share of the zone, at its centre
 		LatencyBase = 0.05, -- seconds of press tolerance on top of half the player's round-trip ping
 		LatencyMax = 0.2, -- never more tolerance than this
+		-- a touch press is stamped this much earlier: the screen reports a tap late (digitiser and
+		-- frame), so the marker the player saw was already past it. The server still clamps the
+		-- stamp within LatencyMax of arrival, so this cannot buy more than the tolerance allows.
+		TouchLead = 0.04,
 		MinPressGap = 0.12, -- presses closer together than this are ignored
 		FinishByStop = table.freeze({ 12, 11.5, 11, 10.5, 10, 9.5, 9 }), -- the grab clock by stop
 		FinishMargin = 1, -- the clock always exceeds the time the minimum checks need by this

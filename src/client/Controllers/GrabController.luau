@@ -40,6 +40,7 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
 local RunRules = require(Shared.Logic.RunRules)
 local SkillCheck = require(Shared.Logic.SkillCheck)
@@ -106,8 +107,11 @@ local function press()
 		return
 	end
 	pressed = true
-	-- the instant the key went down, on the clock that draws the marker
+	-- the instant the key went down, on the clock that draws the marker (a tap arrives late)
 	local at = Workspace:GetServerTimeNow()
+	if UserInputService:GetLastInputType() == Enum.UserInputType.Touch then
+		at -= Difficulty.SkillCheck.TouchLead
+	end
 	Net.Fire("SkillCheck", current.id, at)
 	Struggle.result(SkillCheck.judge(current, at, 0))
 	struggle = math.min(struggle + 0.3, 1)

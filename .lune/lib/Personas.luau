@@ -23,6 +23,7 @@
 		awareness    how early they spot threats (camera control, screen size, frame rate)
 		hudMiss      extra chance a warning is covered or unread (thumbs over the HUD)
 		noPress      chance they cannot find the struggle button in time on their first grab
+		tap          touch only: seconds a tap is held (finger down to lift)
 		fps          frames a second, for the report
 ]]
 
@@ -36,6 +37,7 @@ export type Device = {
 	awareness: number,
 	hudMiss: number,
 	noPress: number,
+	tap: number?,
 	fps: number,
 }
 
@@ -96,6 +98,7 @@ local Devices: { [string]: Device } = {
 		awareness = 0.65,
 		hudMiss = 0.14,
 		noPress = 0.12,
+		tap = 0.08,
 		fps = 50,
 	},
 	Tablet = {
@@ -108,6 +111,7 @@ local Devices: { [string]: Device } = {
 		awareness = 0.8,
 		hudMiss = 0.06,
 		noPress = 0.06,
+		tap = 0.08,
 		fps = 60,
 	},
 	BudgetAndroid = {
@@ -120,6 +124,7 @@ local Devices: { [string]: Device } = {
 		awareness = 0.5,
 		hudMiss = 0.18,
 		noPress = 0.15,
+		tap = 0.08,
 		fps = 24,
 	},
 }

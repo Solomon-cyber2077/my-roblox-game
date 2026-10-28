@@ -194,10 +194,14 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	})
 	keyLabel.ZIndex = 23
 	keyLabel.Parent = keycap
-	keycap.Activated:Connect(function()
-		local handler = onPress
-		if handler then
-			handler()
+	-- on the press, not the release (Activated waits for the finger to lift: a whole tap late)
+	keycap.InputBegan:Connect(function(input: InputObject)
+		local kind = input.UserInputType
+		if kind == Enum.UserInputType.Touch or kind == Enum.UserInputType.MouseButton1 then
+			local handler = onPress
+			if handler then
+				handler()
+			end
 		end
 	end)
 	helpers = Ui.text({
