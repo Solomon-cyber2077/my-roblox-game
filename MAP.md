@@ -3,7 +3,7 @@
 Your own notes can go above or below the generated block.
 
 <!-- rbxmap:start -->
-_256 scripts. `~` = default description (add a header comment or .rbxmap/descriptions.json to replace it). Rebuilt by rbxmap; edit outside the markers._
+_257 scripts. `~` = default description (add a header comment or .rbxmap/descriptions.json to replace it). Rebuilt by rbxmap; edit outside the markers._
 
 - ReplicatedStorage > Shared > Config > Audio (ModuleScript) — `src/shared/Config/Audio.luau` — Sound cues. Every id is from Roblox's licensed audio library (Pro Sound Effects and Roblox's own uploads), so they are cleared for use in an…
 - ReplicatedStorage > Shared > Config > AudioPriority (ModuleScript) — `src/shared/Config/AudioPriority.luau` — The mix's priority table (docs/FINAL-DESIGN.md Prompt 7, Milestone 1 part). Data read by Controllers/AudioController.
@@ -38,6 +38,7 @@ _256 scripts. `~` = default description (add a header comment or .rbxmap/descrip
 - ReplicatedStorage > Shared > Logic > Breakdown (ModuleScript) — `src/shared/Logic/Breakdown.luau` — A breakdown (Difficulty.Breakdown): the hull drains to its floor (Difficulty.Hull.Floor) while the train runs.
 - ReplicatedStorage > Shared > Logic > BuildingGen (ModuleScript) — `src/shared/Logic/BuildingGen.luau` — Lays out and furnishes one enterable building (Config/Buildings).
 - ReplicatedStorage > Shared > Logic > CameraClearance (ModuleScript) — `src/shared/Logic/CameraClearance.luau` — Pure clearance rules for the lobby idle view.
+- ReplicatedStorage > Shared > Logic > CameraFacing (ModuleScript) — `src/shared/Logic/CameraFacing.luau` — Pure turning for the Locked camera's body facing: the body turns to the camera's heading (CameraController).
 - ReplicatedStorage > Shared > Logic > CarBoarding (ModuleScript) — `src/shared/Logic/CarBoarding.luau` — Boarding-car rules as pure functions. CarService owns the cars and the clock; this module decides who may get in or out and when a car leave…
 - ReplicatedStorage > Shared > Logic > Catalog (ModuleScript) — `src/shared/Logic/Catalog.luau` — Cosmetic ownership and purchase rules, shared by ShopService (authority) and the Outfitter UI (to explain why a button is disabled before as…
 - ReplicatedStorage > Shared > Logic > CrewChest (ModuleScript) — `src/shared/Logic/CrewChest.luau` — The crew chest in the stores car (Services/TrainService, UI/CrewChest): consumables the whole crew shares, stowed from a backpack and taken…
