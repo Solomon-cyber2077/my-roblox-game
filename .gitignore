@@ -39,3 +39,6 @@ assets/train/*_P_baked.blend
 assets/train/*_N_baked.blend
 assets/train/Doors_baked.blend
 assets/train/*_canvas.npz
+
+# bot playtest output
+/playtest/

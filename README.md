@@ -48,6 +48,17 @@ Last Train Out blueprint doc. The current design and implementation draft (promp
    git push
    ```
 
+## bot playtests
+
+Eight bot personas (kids, a veteran, a parent, a streamer, a lore hunter, a grinder) play whole runs on PC
+and mobile device profiles. They run headless on the game's own rules in `src/shared`, across this PC and
+the Zenbook. Each persona has its own skill, timing, greed, caution and patience. Each device has its own
+input lag, ping and screen awareness.
+
+Pieces: `.lune/playtest.luau` (runner),
+`.lune/lib/PlaytestSim.luau` (the play model), `.lune/lib/Personas.luau` and `.lune/playtest-report.luau`.
+These are simulated players: use them between human playtests, not instead of the last one.
+
 ## Playing
 
 | Key | Does |

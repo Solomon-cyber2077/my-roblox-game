@@ -1,0 +1,307 @@
+--[[
+	The bot playtesters (`lune run playtest`): who they are and what they play on.
+
+	Traits are 0..1 unless noted:
+		skill        how well they read the stop and pick a route through it
+		reaction     seconds from a cue (a Hollow, a collapse warning, the bell) to acting on it
+		jitter       spread of their skill-check presses, in seconds (one standard deviation)
+		greed        how much loot is worth to them against the clock
+		caution      how early they head back and how far from the fog they keep
+		explore      how much they wander into buildings and odd corners
+		teamwork     how often they stay to pry a crewmate free or wait at the door
+		panic        how much a grab shakes their timing
+		readsUi      how often they notice the HUD's warnings (the watch, the slate, the bell)
+		patience     how long dead time (spectating, waiting aboard) takes to bore them
+		tolerance    how much frustration they take before they quit the run
+		thrill       how much they want danger (a calm stop bores a high-thrill player)
+		runs         runs they have played before (0: a new hand, on the Short Line)
+
+	Devices change the body, not the mind:
+		latency      seconds from the press to the game seeing it (touch screens are slower)
+		ping         round trip to the server, in seconds
+		move         share of the ideal path speed they keep (a thumbstick wanders)
+		awareness    how early they spot threats (camera control, screen size, frame rate)
+		hudMiss      extra chance a warning is covered or unread (thumbs over the HUD)
+		noPress      chance they cannot find the struggle button in time on their first grab
+		fps          frames a second, for the report
+]]
+
+export type Device = {
+	id: string,
+	label: string,
+	platform: "PC" | "Mobile",
+	latency: number,
+	ping: number,
+	move: number,
+	awareness: number,
+	hudMiss: number,
+	noPress: number,
+	fps: number,
+}
+
+export type Persona = {
+	id: string,
+	name: string,
+	age: number,
+	device: string,
+	bio: string,
+	voice: string,
+	skill: number,
+	reaction: number,
+	jitter: number,
+	greed: number,
+	caution: number,
+	explore: number,
+	teamwork: number,
+	panic: number,
+	readsUi: number,
+	patience: number,
+	tolerance: number,
+	thrill: number,
+	runs: number,
+}
+
+local Devices: { [string]: Device } = {
+	Desktop = {
+		id = "Desktop",
+		label = "Gaming PC, keyboard and mouse",
+		platform = "PC",
+		latency = 0.012,
+		ping = 0.05,
+		move = 0.97,
+		awareness = 0.95,
+		hudMiss = 0.02,
+		noPress = 0,
+		fps = 144,
+	},
+	Laptop = {
+		id = "Laptop",
+		label = "School laptop with a trackpad",
+		platform = "PC",
+		latency = 0.025,
+		ping = 0.09,
+		move = 0.9,
+		awareness = 0.75,
+		hudMiss = 0.05,
+		noPress = 0.02,
+		fps = 40,
+	},
+	Phone = {
+		id = "Phone",
+		label = "iPhone, touch thumbstick",
+		platform = "Mobile",
+		latency = 0.05,
+		ping = 0.12,
+		move = 0.84,
+		awareness = 0.65,
+		hudMiss = 0.14,
+		noPress = 0.12,
+		fps = 50,
+	},
+	Tablet = {
+		id = "Tablet",
+		label = "iPad, touch",
+		platform = "Mobile",
+		latency = 0.045,
+		ping = 0.1,
+		move = 0.88,
+		awareness = 0.8,
+		hudMiss = 0.06,
+		noPress = 0.06,
+		fps = 60,
+	},
+	BudgetAndroid = {
+		id = "BudgetAndroid",
+		label = "Budget Android on mobile data",
+		platform = "Mobile",
+		latency = 0.08,
+		ping = 0.22,
+		move = 0.78,
+		awareness = 0.5,
+		hudMiss = 0.18,
+		noPress = 0.15,
+		fps = 24,
+	},
+}
+
+local List: { Persona } = {
+	{
+		id = "mia",
+		name = "Mia",
+		age = 11,
+		device = "Phone",
+		bio = "Plays on her mum's phone after school. Loves loot, hates losing it, wanders off.",
+		voice = "excited, short sentences, lots of caps when something happens, says 'lowkey' and 'no way'",
+		skill = 0.35,
+		reaction = 0.55,
+		jitter = 0.08,
+		greed = 0.9,
+		caution = 0.2,
+		explore = 0.6,
+		teamwork = 0.4,
+		panic = 0.7,
+		readsUi = 0.35,
+		patience = 0.3,
+		tolerance = 0.45,
+		thrill = 0.6,
+		runs = 0,
+	},
+	{
+		id = "dev",
+		name = "Dev",
+		age = 19,
+		device = "Desktop",
+		bio = "Sweaty horror-game veteran (Doors, Pressure). Min-maxes routes and sprint, wants a challenge.",
+		voice = "dry, precise, a bit smug, compares everything to Doors and Pressure, talks in numbers",
+		skill = 0.9,
+		reaction = 0.22,
+		jitter = 0.035,
+		greed = 0.6,
+		caution = 0.45,
+		explore = 0.3,
+		teamwork = 0.5,
+		panic = 0.15,
+		readsUi = 0.9,
+		patience = 0.35,
+		tolerance = 0.75,
+		thrill = 0.95,
+		runs = 12,
+	},
+	{
+		id = "ray",
+		name = "Ray",
+		age = 52,
+		device = "Laptop",
+		bio = "A dad playing with his kid. Careful, reads every prompt, slow with the camera.",
+		voice = "polite, a little lost, asks questions, says 'now hang on' and 'which button was that'",
+		skill = 0.4,
+		reaction = 0.6,
+		jitter = 0.07,
+		greed = 0.3,
+		caution = 0.85,
+		explore = 0.25,
+		teamwork = 0.85,
+		panic = 0.45,
+		readsUi = 0.95,
+		patience = 0.8,
+		tolerance = 0.6,
+		thrill = 0.2,
+		runs = 1,
+	},
+	{
+		id = "zoe",
+		name = "Zoe",
+		age = 16,
+		device = "Desktop",
+		bio = "Streams to 40 viewers. Plays for moments: clutch boards, screams, bits. Chaotic risk-taker.",
+		voice = "loud streamer energy, talks to chat, 'CHAT DID YOU SEE THAT', dramatic, funny",
+		skill = 0.65,
+		reaction = 0.3,
+		jitter = 0.06,
+		greed = 0.7,
+		caution = 0.1,
+		explore = 0.8,
+		teamwork = 0.55,
+		panic = 0.4,
+		readsUi = 0.6,
+		patience = 0.2,
+		tolerance = 0.65,
+		thrill = 1,
+		runs = 4,
+	},
+	{
+		id = "kai",
+		name = "Kai",
+		age = 14,
+		device = "Tablet",
+		bio = "Lore hunter. Opens every building, reads every note, cares about the world more than loot.",
+		voice = "curious, thoughtful, notices details, theorises about the lore, calm",
+		skill = 0.55,
+		reaction = 0.4,
+		jitter = 0.07,
+		greed = 0.35,
+		caution = 0.5,
+		explore = 1,
+		teamwork = 0.6,
+		panic = 0.35,
+		readsUi = 0.7,
+		patience = 0.75,
+		tolerance = 0.7,
+		thrill = 0.45,
+		runs = 3,
+	},
+	{
+		id = "sam",
+		name = "Sam",
+		age = 9,
+		device = "BudgetAndroid",
+		bio = "Brand new to Roblox horror. Easily scared, lag on mobile data, does not read much.",
+		voice = "young, scared, confused, 'what do i do', 'why did i die', short and simple words",
+		skill = 0.2,
+		reaction = 0.75,
+		jitter = 0.1,
+		greed = 0.5,
+		caution = 0.4,
+		explore = 0.3,
+		teamwork = 0.3,
+		panic = 0.9,
+		readsUi = 0.2,
+		patience = 0.25,
+		tolerance = 0.3,
+		thrill = 0.3,
+		runs = 0,
+	},
+	{
+		id = "priya",
+		name = "Priya",
+		age = 22,
+		device = "Phone",
+		bio = "Co-op lover who plays with friends on the bus. Always the one who comes back for you.",
+		voice = "warm, supportive, calls out to the crew, 'i got you', notices who is struggling",
+		skill = 0.7,
+		reaction = 0.32,
+		jitter = 0.06,
+		greed = 0.4,
+		caution = 0.6,
+		explore = 0.4,
+		teamwork = 1,
+		panic = 0.25,
+		readsUi = 0.75,
+		patience = 0.6,
+		tolerance = 0.7,
+		thrill = 0.5,
+		runs = 6,
+	},
+	{
+		id = "leo",
+		name = "Leo",
+		age = 13,
+		device = "Laptop",
+		bio = "Grinder. Plays for brass, unlocks and upgrades. Gets annoyed when a run feels like a waste.",
+		voice = "blunt, focused on rewards, 'is it worth it', 'that payout is mid', counts brass",
+		skill = 0.6,
+		reaction = 0.35,
+		jitter = 0.07,
+		greed = 0.85,
+		caution = 0.5,
+		explore = 0.2,
+		teamwork = 0.45,
+		panic = 0.3,
+		readsUi = 0.7,
+		patience = 0.45,
+		tolerance = 0.5,
+		thrill = 0.4,
+		runs = 9,
+	},
+}
+
+local byId: { [string]: Persona } = {}
+for _, persona in List do
+	byId[persona.id] = persona
+end
+
+return {
+	Devices = Devices,
+	List = List,
+	byId = byId,
+}
