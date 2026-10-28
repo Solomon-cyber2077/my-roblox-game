@@ -50,14 +50,25 @@ local function witness(character: Model)
 	running = true
 	local startedAt = os.clock()
 	local reduced = Players.LocalPlayer:GetAttribute("Motion") == "Reduced"
-	-- from where they were looking, a little higher, never further than the camera already was
+	-- Keep the standing-to-collapse silhouette inside one frame; reduced motion freezes
+	-- the target as well as the camera position (tracking the falling torso still pans).
 	local focus = root.Position
 	local back = camera.CFrame.Position - focus
 	local flat = Vector3.new(back.X, 0, back.Z)
 	local dir = if flat.Magnitude > 0.1 then flat.Unit else -root.CFrame.LookVector
-	local distance = math.clamp(back.Magnitude, 6, 12)
-	local from = focus + dir * distance + Vector3.yAxis * 4
-	local to = focus + dir * (distance * 0.75) + Vector3.yAxis * 3
+	local distance = math.clamp(back.Magnitude, W.DistanceMin, W.DistanceMax)
+	local look = focus - Vector3.yAxis * W.FocusDrop
+	local from = focus + dir * distance + Vector3.yAxis * W.Height
+	local to = focus + dir * (distance * (1 - W.PushFraction)) + Vector3.yAxis * W.Height
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character }
+	local function unobstructed(position: Vector3): Vector3
+		local offset = position - look
+		local hit = Workspace:Raycast(look, offset, params)
+		return if hit then hit.Position - offset.Unit * W.WallClearance else position
+	end
+	from, to = unobstructed(from), unobstructed(to)
 	ContextActionService:BindActionAtPriority(
 		ACTION,
 		function(_, state)
@@ -75,14 +86,16 @@ local function witness(character: Model)
 	)
 	RunService:BindToRenderStep(STEP, Enum.RenderPriority.Camera.Value + 2, function()
 		local age = os.clock() - startedAt
-		if age >= W.Seconds or character.Parent == nil then
+		if
+			age >= W.Seconds
+			or character.Parent == nil
+			or ReplicatedStorage:GetAttribute("LimbLoss") ~= true
+		then
 			stop()
 			return
 		end
 		local u = if reduced then 0 else age / W.Seconds
 		local eased = u * u * (3 - 2 * u)
-		local body = character:FindFirstChild("Torso") :: BasePart?
-		local look = if body then body.Position else focus
 		camera.CameraType = Enum.CameraType.Scriptable
 		camera.CFrame = CFrame.lookAt(from:Lerp(to, eased), look)
 	end)

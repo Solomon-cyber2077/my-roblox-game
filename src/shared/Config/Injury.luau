@@ -36,6 +36,15 @@ return table.freeze({
 	-- the run back to the train with no arms
 	ReturnSeconds = 35,
 	WarningSeconds = 5, -- the last seconds get posture and audio only: no slowdown, no flashing
+	Presentation = table.freeze({
+		RecoilSeconds = 0.85,
+		RegrowSeconds = 1.1,
+		CollapseSeconds = 1.0,
+		WarningInterval = 1.25,
+		LanternHandDown = 0.85,
+		LanternHandForward = 0.15,
+		BodyLanternBrightness = 0.65,
+	}),
 
 	-- presentation (client only, Controllers/InjuryController)
 	Limbs = table.freeze({
@@ -48,5 +57,11 @@ return table.freeze({
 	Witness = table.freeze({
 		Seconds = 2.5, -- at most, collapse included
 		SkipAfter = 0.5,
+		DistanceMin = 8,
+		DistanceMax = 12,
+		Height = 3,
+		FocusDrop = 1,
+		PushFraction = 0.12,
+		WallClearance = 0.3,
 	}),
 })

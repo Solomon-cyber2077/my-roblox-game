@@ -22,6 +22,7 @@ local DataService = require(script.Parent.DataService)
 local Registry = require(script.Parent.Parent.Registry)
 
 local CosmeticService = {}
+local InjuryPresentation = require(Shared.Config.Injury).Presentation
 local appliedSelections: { [Player]: string } = {}
 local appliedCharacters: { [Player]: Model } = {}
 local requestTokens: { [Player]: number } = {}
@@ -76,6 +77,67 @@ local function attach(model: Model, to: BasePart)
 			part.Anchored = false
 		end
 	end
+end
+
+local function attachLantern(model: Model, hip: BasePart, originalFrame: CFrame, character: Model)
+	type LanternRecord = {
+		part: BasePart,
+		relative: CFrame,
+		weld: Weld,
+		glow: PointLight?,
+		originalBrightness: number?,
+	}
+	local records: { LanternRecord } = {}
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			local weld = Instance.new("Weld")
+			weld.Name = "LanternWeld"
+			weld.Part1 = part
+			weld.C1 = CFrame.identity
+			weld.Parent = part
+			local glow = part:FindFirstChild("Glow")
+			local pointLight = if glow and glow:IsA("PointLight") then glow else nil
+			records[#records + 1] = {
+				part = part,
+				relative = originalFrame:ToObjectSpace(part.CFrame),
+				weld = weld,
+				glow = pointLight,
+				originalBrightness = if pointLight then pointLight.Brightness else nil,
+			}
+			part.Anchored = false
+		end
+	end
+	local hipOffset = hip.CFrame:ToObjectSpace(originalFrame)
+	local function updateMount()
+		local enabled = ReplicatedStorage:GetAttribute("LimbLoss") == true
+		local missing = if enabled then character:GetAttribute("MissingArms") else nil
+		local armName = if missing == "L" then "Right Arm" elseif missing == "R" then "Left Arm" else nil
+		local arm = if armName then character:FindFirstChild(armName) :: BasePart? else nil
+		local target = arm or hip
+		local offset = if arm
+			then CFrame.new(0, -InjuryPresentation.LanternHandDown, -InjuryPresentation.LanternHandForward)
+			else hipOffset
+		for _, record in records do
+			record.weld.Part0 = target
+			record.weld.C0 = offset * record.relative
+			if record.glow and record.originalBrightness then
+				record.glow.Brightness = record.originalBrightness
+					* (if enabled and missing == "LR" then InjuryPresentation.BodyLanternBrightness else 1)
+			end
+		end
+	end
+	updateMount()
+	local function changed()
+		if model.Parent then
+			updateMount()
+		end
+	end
+	local missingConnection = character:GetAttributeChangedSignal("MissingArms"):Connect(changed)
+	local flagConnection = ReplicatedStorage:GetAttributeChangedSignal("LimbLoss"):Connect(changed)
+	model.Destroying:Connect(function()
+		missingConnection:Disconnect()
+		flagConnection:Disconnect()
+	end)
 end
 
 function CosmeticService.Init() end
@@ -162,11 +224,9 @@ function CosmeticService.Apply(player: Player)
 	if hip then
 		-- at the belt: an R6 torso is one block, so its belt sits lower on it
 		local belt = if lower then -0.15 else -0.75
-		local lantern = CosmeticModels.lantern(
-			equipped(player, "Lantern").look,
-			hip.CFrame * CFrame.new(hip.Size.X / 2 + 0.4, belt, 0.05)
-		)
-		attach(lantern, hip)
+		local lanternFrame = hip.CFrame * CFrame.new(hip.Size.X / 2 + 0.4, belt, 0.05)
+		local lantern = CosmeticModels.lantern(equipped(player, "Lantern").look, lanternFrame)
+		attachLantern(lantern, hip, lanternFrame, character)
 		lantern.Parent = folder
 	end
 
