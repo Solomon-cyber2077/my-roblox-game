@@ -139,6 +139,22 @@ Commands.god = function(player)
 	print(`[Dev] god mode {if on then "on" else "off"} for {player.Name}`)
 end
 
+-- limb loss (Config/Injury): flip the feature flag for this Studio session, or tear an arm off
+-- without a rescue to look at the rest
+Commands.limbs = function()
+	local on = Registry.InjuryService.DevToggle()
+	print(`[Dev] limb loss {if on then "on" else "off"}`)
+end
+
+Commands.tear = function(player)
+	Registry.InjuryService.DevTear(player)
+	print(
+		`[Dev] tear: {player.Name} now missing "{player.Character and player.Character:GetAttribute(
+			"MissingArms"
+		) or ""}"`
+	)
+end
+
 Commands.search = function(player)
 	local ok = Registry.LootService.DevSearchNearest(player)
 	print(`[Dev] search nearest: {ok}`)

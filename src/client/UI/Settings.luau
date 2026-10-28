@@ -72,6 +72,13 @@ function SettingsUi.mount(gui: ScreenGui)
 			note = "Locked keeps the camera behind you at one distance and turns you to face where it looks; on a computer the mouse steers it in a run (hold Alt for the cursor). Free lets you zoom in and out.",
 		},
 		{
+			key = "Motion",
+			title = "CAMERA MOTION",
+			values = { "Full", "Reduced" },
+			toggle = false,
+			note = "Reduced keeps the camera still after you fall instead of drifting in.",
+		},
+		{
 			key = "Ambience",
 			title = "DRONE & AMBIENCE",
 			values = { "Full", "Half", "Low", "Off" },

@@ -13,6 +13,7 @@ describe("Settings", function()
 			Visibility = "24",
 			Ambience = "Low",
 			Camera = "Free",
+			Motion = "Reduced",
 		}
 		expect(Settings.read(saved)).toEqual(saved)
 	end)

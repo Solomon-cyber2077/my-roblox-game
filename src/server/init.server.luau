@@ -25,6 +25,7 @@ local ORDER = {
 	"HazardDirector",
 	"CrewService",
 	"GraspService",
+	"InjuryService",
 	"MistService",
 	"RouteService",
 	"CosmeticService",

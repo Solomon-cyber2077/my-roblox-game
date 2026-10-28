@@ -15,6 +15,8 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage.Shared
 local Items = require(Shared.Config.Items)
+local CarryPriority = require(Shared.Logic.CarryPriority)
+local InjuryConfig = require(Shared.Config.Injury)
 local Tuning = require(Shared.Config.Tuning)
 local Inventory = require(Shared.Logic.Inventory)
 local Format = require(Shared.Util.Format)
@@ -1018,6 +1020,23 @@ function Hud.mount(gui: ScreenGui)
 		local cursor = 0
 		local heavy = 0
 		local hasTool = false
+		-- limb loss (Config/Injury): leftmost is kept first. Mark what losing an arm would drop,
+		-- and give every item but the first a button that moves it one place left
+		local priority = ReplicatedStorage:GetAttribute("LimbLoss") == true
+		local wouldDrop: { [number]: boolean } = {}
+		if priority then
+			local items = state.items or {}
+			local _, dropped =
+				CarryPriority.overflow(items, math.max(capacity - InjuryConfig.OneArmPenalty, 0))
+			local fromRight = #items
+			for _ = 1, #dropped do
+				while fromRight > 0 and CarryPriority.protected(items[fromRight]) do
+					fromRight -= 1
+				end
+				wouldDrop[fromRight] = true
+				fromRight -= 1
+			end
+		end
 		for index, itemId in state.items or {} do
 			local def = Items[itemId]
 			if def then
@@ -1078,6 +1097,45 @@ function Hud.mount(gui: ScreenGui)
 				end
 				if def.kind == "Tool" then
 					hasTool = true
+				end
+				if priority and wouldDrop[index] then
+					local mark = Ui.text({
+						Text = "DROPS",
+						Font = Theme.Font.display,
+						TextSize = 10,
+						Color = Theme.Color.dangerText,
+						Position = UDim2.new(1, -4, 1, -2),
+						AnchorPoint = Vector2.new(1, 1),
+						Size = UDim2.fromOffset(40, 12),
+						XAlign = Enum.TextXAlignment.Right,
+					})
+					mark.ZIndex = 4
+					mark.Parent = button
+				end
+				if priority and index > 1 then
+					local left = Ui.new("TextButton", {
+						Name = "MoveLeft",
+						Text = "<",
+						FontFace = Theme.Font.display,
+						TextSize = 14,
+						TextColor3 = Theme.Color.bone,
+						BackgroundColor3 = Theme.Color.steel,
+						BackgroundTransparency = 0.15,
+						Size = UDim2.fromOffset(18, 18),
+						Position = UDim2.new(0, 2, 1, -20),
+						ZIndex = 5,
+						Parent = button,
+					})
+					Ui.corner(3).Parent = left
+					left.Activated:Connect(function()
+						local count = #(state.items or {})
+						local order = table.create(count, 0)
+						for i = 1, count do
+							order[i] = i
+						end
+						order[index - 1], order[index] = index, index - 1
+						Net.Fire("ReorderItems", order, (state :: any).revision or 0)
+					end)
 				end
 				button.Activated:Connect(function()
 					-- a click or tap holds a tool; on the one in hand it uses it (touch has no E)

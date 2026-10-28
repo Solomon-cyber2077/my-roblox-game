@@ -14,6 +14,7 @@ return {
 		Hud = "Show",
 		Visibility = tostring(Tuning.Visibility.Default), -- studs, as a string like every save key
 		Ambience = "Full", -- the drone and ambience volume (AmbienceLevels)
+		Motion = "Full", -- Reduced holds the death witness view still (Controllers/DeathCamController)
 		Camera = "Locked", -- Locked: third person at Tuning.Camera.LockZoom, body faces the view; Free: zoom in and out
 	},
 	-- the Ambience group's volume for each choice (AudioController); warnings, cues and footsteps
@@ -31,5 +32,6 @@ return {
 		Hud = { "Show", "Hide" },
 		Ambience = { "Full", "Half", "Low", "Off" },
 		Camera = { "Locked", "Free" },
+		Motion = { "Full", "Reduced" },
 	},
 }

@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
+local CarryPriority = require(Shared.Logic.CarryPriority)
 local Items = require(Shared.Config.Items)
 local Tuning = require(Shared.Config.Tuning)
 local Inventory = require(Shared.Logic.Inventory)
@@ -23,8 +24,16 @@ type InventoryState = Types.InventoryState
 local InventoryService = {}
 
 local inventories: { [Player]: InventoryState } = {}
+-- Items an arm's loss pushed out that could not be put down safely (no floor there): kept here,
+-- never deleted, and handed back or set down as soon as there is room (Refit).
+local held: { [Player]: { string } } = {}
 
 local function set(player: Player, inv: InventoryState)
+	local previous = inventories[player]
+	local stamped = table.clone(inv)
+	-- the hotbar's reorder requests name the revision they saw (CarryPriority.reorder)
+	stamped.revision = (if previous then previous.revision or 0 else 0) + 1
+	inv = stamped
 	inventories[player] = inv
 	StateService.SetPrivate(player, { "inventory" }, inv)
 	Registry.CrewService.SetLoad(player, Inventory.used(inv))
@@ -43,8 +52,27 @@ function InventoryService.Start()
 	end, function(player)
 		return Registry.CrewService.IsAlive(player)
 	end)
+	-- the player's new priority order for their backpack (leftmost kept first); feature flag only
+	NetService.Handle("ReorderItems", function(player, order: { number }, revision: number)
+		if not Registry.InjuryService.Enabled() then
+			return
+		end
+		local inv = InventoryService.Get(player)
+		local items, why = CarryPriority.reorder(inv.items, inv.revision or 0, order, revision)
+		if items == nil then
+			if why == "Stale" then
+				-- the backpack changed under them: resend it so the hotbar catches up
+				StateService.SetPrivate(player, { "inventory" }, inv)
+			end
+			return
+		end
+		set(player, { items = items, capacity = inv.capacity })
+	end, function(player)
+		return Registry.CrewService.IsAlive(player) and not Registry.HollowService.IsHeld(player)
+	end)
 	Players.PlayerRemoving:Connect(function(player)
 		inventories[player] = nil
+		held[player] = nil
 	end)
 end
 
@@ -61,20 +89,87 @@ function InventoryService.Capacity(): number
 	return Tuning.Crew.BackpackSlots + Registry.TrainService.Derived().extraSlots
 end
 
+-- This player's ordinary capacity: the train's, less what their missing arms cost (InjuryService).
+function InventoryService.CapacityFor(player: Player): number
+	return Registry.InjuryService.Capacity(player, InventoryService.Capacity())
+end
+
 function InventoryService.Reset(player: Player)
-	set(player, Inventory.new(InventoryService.Capacity()))
+	held[player] = nil
+	set(player, Inventory.new(InventoryService.CapacityFor(player)))
 end
 
 function InventoryService.Clear(player: Player)
-	set(player, Inventory.new(InventoryService.Capacity()))
+	held[player] = nil
+	set(player, Inventory.new(InventoryService.CapacityFor(player)))
+end
+
+--[[
+	Fits the backpack to the player's current capacity. When it shrank below what they carry,
+	whole rightmost entries are dropped first (CarryPriority.overflow) where they stand, with a
+	receipt. An item that cannot be put down safely is held for them (`held`) rather than lost,
+	and comes back as soon as there is room.
+]]
+function InventoryService.Refit(player: Player)
+	local inv = InventoryService.Get(player)
+	local capacity = InventoryService.CapacityFor(player)
+	local kept, dropped = CarryPriority.overflow(inv.items, capacity)
+	local waiting = held[player]
+	if #dropped == 0 and waiting == nil and inv.capacity == capacity then
+		return
+	end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local placed: { string } = {}
+	local keep: { string } = {}
+	for i, itemId in dropped do
+		local angle = i * 2.4
+		local spot = if root
+			then root.Position + Vector3.new(math.cos(angle) * 3, 0, math.sin(angle) * 3)
+			else nil
+		if spot and Registry.LootService.DropAt(itemId, spot) then
+			table.insert(placed, itemId)
+		else
+			table.insert(keep, itemId)
+		end
+	end
+	local nextInv: InventoryState = { items = kept, capacity = capacity }
+	-- held items come back first while there is room
+	if waiting then
+		local leftovers
+		nextInv, leftovers = Inventory.addMany(nextInv, waiting)
+		for _, itemId in leftovers do
+			table.insert(keep, itemId)
+		end
+	end
+	if #keep > 0 then
+		held[player] = keep
+	else
+		held[player] = nil
+	end
+	set(player, nextInv)
+	if #placed > 0 then
+		local names: { string } = {}
+		for _, itemId in placed do
+			local def = Items[itemId]
+			table.insert(names, if def then def.name else itemId)
+		end
+		NetService.Fire("Notify", player, "Warning", `Dropped where you stand: {table.concat(names, ", ")}.`)
+		NetService.Fire("Fx", player, "DropReceipt", { items = placed })
+	end
+	if #keep > 0 and #dropped > 0 then
+		NetService.Fire(
+			"Notify",
+			player,
+			"Info",
+			"Some things could not be set down here; you will get them back."
+		)
+	end
 end
 
 function InventoryService.RefreshCapacity()
-	local capacity = InventoryService.Capacity()
-	for player, inv in inventories do
-		if inv.capacity ~= capacity then
-			set(player, Inventory.withCapacity(inv, capacity))
-		end
+	for player in inventories do
+		InventoryService.Refit(player)
 	end
 end
 
@@ -151,7 +246,10 @@ function InventoryService.Use(player: Player, slot: number)
 	if humanoid == nil or root == nil then
 		return
 	end
-	if def.use == "Heal" then
+	if def.use == "Heal" and Registry.InjuryService.NeedsArm(player) then
+		-- an arm to bring back: a two-second treatment, spent only when it completes
+		Registry.InjuryService.BeginSelfHeal(player)
+	elseif def.use == "Heal" then
 		if humanoid.Health >= humanoid.MaxHealth then
 			NetService.Fire("Notify", player, "Warning", "You are already at full health.")
 			return

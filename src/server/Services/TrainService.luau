@@ -581,6 +581,29 @@ function TrainService.ChestTake(player: Player, itemId: string)
 	publish(true)
 end
 
+-- The crew chest's part (InjuryService puts "Treat wounds" on it) and its contents.
+function TrainService.ChestPart(): BasePart?
+	return if built then built.chest else nil
+end
+
+function TrainService.ChestItems(): { string }
+	return train.chest
+end
+
+-- Spends one `itemId` from the crew chest (InjuryService's treatment). False when none is left.
+function TrainService.ChestUse(itemId: string): boolean
+	local index = table.find(train.chest, itemId)
+	if index == nil then
+		return false
+	end
+	local nextTrain = table.clone(train)
+	nextTrain.chest = table.clone(train.chest)
+	table.remove(nextTrain.chest, index)
+	train = nextTrain
+	publish(true)
+	return true
+end
+
 -- Workbench "Repair hull": the server checks the run, the parts and the hull (Ledger.repairHull).
 function TrainService.RepairHull(player: Player)
 	if not RunRules.isRunPhase(Registry.RunDirector.Phase()) then

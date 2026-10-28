@@ -112,6 +112,7 @@ export type TrainState = {
 export type InventoryState = {
 	items: { string },
 	capacity: number,
+	revision: number?, -- bumped by every server change (InventoryService); reorders must name it
 }
 
 export type CrewEntry = {

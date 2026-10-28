@@ -24,6 +24,8 @@ local ORDER = {
 	"VisibilityController",
 	"UIController",
 	"GrabController",
+	"InjuryController",
+	"DeathCamController",
 	"TutorialController",
 	"LeakController",
 	"HullController",

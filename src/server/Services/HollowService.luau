@@ -59,6 +59,9 @@ local Grabs = require(Shared.Config.Grabs)
 local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
+local Injury = require(Shared.Logic.Injury)
+local InjuryConfig = require(Shared.Config.Injury)
+local Rescue = require(Shared.Logic.Rescue)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 local Sighting = require(Shared.Logic.Sighting)
 local Stalk = require(Shared.Logic.Stalk)
@@ -115,6 +118,7 @@ type Hold = {
 	link: ObjectValue,
 	pryAt: { [Player]: number },
 	lethal: boolean, -- the clock running out kills (not the tutorial's teaching grab)
+	rescue: Rescue.Session?, -- limb loss: the crew rescue opened when the clock ran out (Logic/Rescue)
 }
 
 type Hollow = {
@@ -185,6 +189,12 @@ local params: Types.HazardParams? = nil
 local woundRng = Random.new() -- where a bite marks the body: looks only, so not from the run seed
 local folder: Folder
 local rng = Random.new()
+local rescueSeq = 0
+-- the crew rescue's steps, defined beside finishHold (they call each other)
+local openRescue: (hollow: any) -> boolean
+local joinRescue: (hollow: any, ally: Player) -> ()
+local rescueTick: (hollow: any) -> ()
+local finishHold: (hollow: any) -> ()
 local sightParams = RaycastParams.new()
 sightParams.FilterType = Enum.RaycastFilterType.Exclude
 local roomParams = OverlapParams.new()
@@ -524,7 +534,7 @@ local function release(hollow: Hollow, why: string)
 			pcall(function()
 				hold.root:SetNetworkOwner(hold.victim)
 			end)
-			if why == "Escaped" or why == "Flash" or why == "Timeout" then
+			if why == "Escaped" or why == "Flash" or why == "Timeout" or why == "Rescued" then
 				local away = hold.root.Position - hollow.root.Position
 				local flat = Vector3.new(away.X, 0, away.Z)
 				local direction = if flat.Magnitude > 0.1 then flat.Unit else -hollow.root.CFrame.LookVector
@@ -573,6 +583,11 @@ local function release(hollow: Hollow, why: string)
 	elseif why == "Escaped" then
 		setState(hollow, "Recover")
 		NetService.FireAll("Notify", "Crew", `{hold.victim.DisplayName} fought free of a {hollow.kind}!`)
+	elseif why == "Rescued" then
+		-- the crew tore them loose: it reels with what it kept
+		hollow.reelUntil = os.clock() + InjuryConfig.Rescue.Stagger
+		hollow.noStalkUntil = os.clock() + InjuryConfig.Rescue.Stagger + Tuning.Stalk.StunExclusion
+		setState(hollow, "Reel")
 	elseif why == "Flash" then
 		setState(hollow, "Stunned")
 	else
@@ -691,11 +706,18 @@ local function seize(hollow: Hollow, target: Player): boolean
 		link = link,
 		pryAt = {},
 		lethal = hollow.scripted == nil,
+		rescue = nil,
 	}
 	hollow.hold = hold
 	prompt.Triggered:Connect(function(ally)
 		local allyRoot = characterRoot(ally)
 		local clock = os.clock()
+		if hold.rescue then
+			if hollow.hold == hold then
+				Safe.call("HollowService.joinRescue", joinRescue, hollow, ally)
+			end
+			return
+		end
 		if
 			ally ~= target
 			and hollow.hold == hold
@@ -751,11 +773,166 @@ local function judgeCheck(hollow: Hollow, result: SkillCheck.Result)
 	end
 end
 
--- The grab's clock ran out: it finishes them.
-local function finishHold(hollow: Hollow)
+-- The crew rescue (limb loss, Config/Injury) --------------------------------------------------
+
+-- Whether `ally` may rescue the held victim: alive, free, armed, within `reach`, in line of sight.
+local function canRescue(hold: Hold, ally: Player?, reach: number): boolean
+	if ally == nil or ally == hold.victim or ally.Parent == nil then
+		return false
+	end
+	local allyRoot = characterRoot(ally)
+	if
+		allyRoot == nil
+		or not Registry.CrewService.IsAlive(ally)
+		or holderOf(ally) ~= nil
+		or not Registry.InjuryService.CanUseItems(ally)
+	then
+		return false
+	end
+	local offset = hold.root.Position - allyRoot.Position
+	if offset.Magnitude > reach then
+		return false
+	end
+	local hit = Workspace:Raycast(allyRoot.Position, offset, sightParams)
+	local blocker = hit and hit.Instance
+	if blocker == nil or blocker:IsDescendantOf(hold.character) then
+		return true
+	end
+	local holder = holderOf(hold.victim)
+	return (ally.Character ~= nil and blocker:IsDescendantOf(ally.Character))
+		or (holder ~= nil and blocker:IsDescendantOf(holder.model))
+end
+
+local function roundTrip(player: Player): number
+	local value = 0
+	pcall(function()
+		value = player:GetNetworkPing() -- round trip, in seconds (as SkillCheck.tolerance reads it)
+	end)
+	return value
+end
+
+local function endRescue(hold: Hold, session: Rescue.Session)
+	hold.character:SetAttribute("RescueId", nil)
+	NetService.FireAll("Fx", "RescueEnd", {
+		id = session.id,
+		victim = hold.victim.UserId,
+		phase = session.phase,
+		why = session.why,
+	})
+end
+
+--[[
+	The clock ran out on someone who still has an arm, with a crewmate close enough to reach them
+	in the invitation: open one rescue instead of finishing them. False leaves the finish to run.
+]]
+function openRescue(hollow: Hollow): boolean
+	local hold = hollow.hold :: Hold
+	local victim = hold.victim
+	if not Registry.InjuryService.Enabled() or hollow.scripted then
+		return false
+	end
+	local side = hold.root.CFrame:PointToObjectSpace(hollow.root.Position).X
+	if Injury.targetArm(Registry.InjuryService.Get(victim), side) == nil then
+		return false -- already armless: the existing lethal rules
+	end
+	local reachable = InjuryConfig.Rescue.Reach + Tuning.Crew.WalkSpeed * InjuryConfig.Rescue.InviteMax
+	local slowest = 0
+	local any = false
+	for _, ally in Registry.CrewService.AlivePlayers() do
+		if ally ~= victim and canRescue(hold, ally, reachable) then
+			any = true
+			slowest = math.max(slowest, roundTrip(ally))
+		end
+	end
+	if not any then
+		return false -- nobody can get there: the existing death
+	end
+	rescueSeq += 1
+	local session = Rescue.new(rescueSeq, serverNow(), slowest)
+	hold.rescue = session
+	hold.check = nil
+	hold.character:SetAttribute("RescueId", session.id)
+	if hold.prompt then
+		hold.prompt.ActionText = "Rescue"
+		hold.prompt.MaxActivationDistance = InjuryConfig.Rescue.Reach
+	end
+	NetService.FireAll("Fx", "RescueOpen", {
+		id = session.id,
+		victim = victim.UserId,
+		endsAt = session.inviteEndsAt,
+	})
+	return true
+end
+
+-- A crewmate answered the invitation (the hold's prompt): the first valid one is the rescuer.
+function joinRescue(hollow: Hollow, ally: Player)
+	local hold = hollow.hold :: Hold
+	local session = hold.rescue
+	if session == nil or not canRescue(hold, ally, InjuryConfig.Rescue.Reach) then
+		return
+	end
+	if not Rescue.join(session, ally.UserId, serverNow(), roundTrip(ally)) then
+		return
+	end
+	if hold.prompt then
+		hold.prompt.Enabled = false
+	end
+	NetService.FireAll("Fx", "RescueStart", {
+		id = session.id,
+		victim = hold.victim.UserId,
+		rescuer = ally.UserId,
+		startsAt = session.startsAt,
+		beats = InjuryConfig.Rescue.Beats,
+		window = InjuryConfig.Rescue.Window,
+		endsAt = Rescue.endsAt(session),
+	})
+end
+
+-- One step of an open rescue: the rescuer must stay able, and it resolves exactly once.
+function rescueTick(hollow: Hollow)
+	local hold = hollow.hold
+	local session = hold and hold.rescue
+	if hold == nil or session == nil or Rescue.resolved(session) then
+		return
+	end
+	if session.rescuer then
+		-- a little slack on reach while they pull: they are braced against it
+		if
+			not canRescue(hold, Players:GetPlayerByUserId(session.rescuer), InjuryConfig.Rescue.Reach * 1.5)
+		then
+			Rescue.abandon(session)
+		end
+	end
+	local phase = Rescue.tick(session, serverNow())
+	if phase == "Rescued" then
+		endRescue(hold, session)
+		local side = hold.root.CFrame:PointToObjectSpace(hollow.root.Position).X
+		local victim = hold.victim
+		local arm = Injury.targetArm(Registry.InjuryService.Get(victim), side)
+		local rescuer = Players:GetPlayerByUserId(session.rescuer :: number)
+		release(hollow, "Rescued")
+		if arm then
+			Registry.InjuryService.Tear(victim, arm)
+		end
+		NetService.FireAll(
+			"Notify",
+			"Crew",
+			`{if rescuer then rescuer.DisplayName else "The crew"} tore {victim.DisplayName} free of a {hollow.kind}!`
+		)
+	elseif phase == "Failed" then
+		endRescue(hold, session)
+		finishHold(hollow)
+	end
+end
+
+-- The grab's clock ran out: it finishes them, unless the crew get one rescue first.
+function finishHold(hollow: Hollow)
 	local hold = hollow.hold :: Hold
 	if Registry.DevService.IsGod(hold.victim) or not hold.lethal then
 		release(hollow, "Timeout")
+		return
+	end
+	if hold.rescue == nil and openRescue(hollow) then
 		return
 	end
 	Registry.CrewService.TagDamage(hold.character, "Hollow")
@@ -845,6 +1022,8 @@ local function holdTick(hollow: Hollow)
 	publishEscape(hold)
 	if SkillCheck.freed(hold.progress) then
 		release(hollow, "Escaped")
+	elseif hold.rescue then
+		rescueTick(hollow)
 	elseif now >= hold.finishAt then
 		finishHold(hollow)
 	end
@@ -1862,6 +2041,20 @@ function HollowService.Start()
 			hollow,
 			SkillCheck.judgePress(hold.check :: SkillCheck.Check, pressedAt, now, SkillCheck.tolerance(ping))
 		)
+	end)
+	-- A rescuer's press for one beat, made at server time `pressedAt` on their screen (Logic/Rescue).
+	NetService.Handle("Rescue", function(player, id: number, beat: number, pressedAt: number)
+		for _, hollow in hollows do
+			local session = hollow.hold and hollow.hold.rescue
+			if session and session.id == id then
+				local result = Rescue.press(session, player.UserId, beat, pressedAt, serverNow())
+				NetService.Fire("Fx", player, "RescueBeat", { id = id, beat = beat, result = result })
+				Safe.call("HollowService.rescueTick", rescueTick, hollow)
+				return
+			end
+		end
+	end, function(player)
+		return Registry.CrewService.IsAlive(player)
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		graceUntil[player] = nil

@@ -13,6 +13,9 @@
 	  tier      integer 1..Difficulty.RunTier.Max
 	  check     integer 1..1e6, a skill check's id (Logic/SkillCheck)
 	  time      a finite number of seconds 0..1e10 (a server-clock instant the client claims)
+	  order     a list of up to 32 integers 1..32 (a backpack's new order; CarryPriority checks it)
+	  revision  integer 0..1e9 (the backpack revision the client saw)
+	  beat      integer 1..3, a rescue beat (Logic/Rescue)
 	  device    nil or a short word (Logic/Telemetry.device reads anything unlisted as unknown)
 ]]
 
@@ -63,6 +66,9 @@ local Remotes: { [string]: RemoteDef } = {
 	-- the crew chest in the stores car: stow a backpack slot's consumable, or take one by item id
 	ChestStow = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
 	ChestTake = { direction = "ToServer", args = { "id" }, rate = 6, burst = 6 },
+	-- limb loss (Config/Injury): the backpack's priority order, and a rescuer's beat press
+	ReorderItems = { direction = "ToServer", args = { "order", "revision" }, rate = 4, burst = 4 },
+	Rescue = { direction = "ToServer", args = { "check", "beat", "time" }, rate = 8, burst = 6 },
 
 	-- Server to client
 	Snapshot = { direction = "ToClient", args = {}, rate = 0, burst = 0 },
@@ -91,6 +97,23 @@ local Checks: { [ArgKind]: (any) -> boolean } = {
 	end,
 	check = function(value)
 		return isInteger(value, 1, 1e6)
+	end,
+	order = function(value)
+		if type(value) ~= "table" or #value > 32 then
+			return false
+		end
+		for key, index in value do
+			if type(key) ~= "number" or not isInteger(index, 1, 32) then
+				return false
+			end
+		end
+		return true
+	end,
+	revision = function(value)
+		return isInteger(value, 0, 1e9)
+	end,
+	beat = function(value)
+		return isInteger(value, 1, 3)
 	end,
 	time = function(value)
 		return type(value) == "number" and value == value and value >= 0 and value <= 1e10
