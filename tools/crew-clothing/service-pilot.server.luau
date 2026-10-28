@@ -128,6 +128,36 @@ local function runPlayer(player)
 	task.wait(0.2)
 	check(character:FindFirstChild("CrewUniform") ~= nil, "uniform can be restored")
 
+	-- rapid A -> B -> A: off and back on without waiting; only the last selection may stick
+	profile.equipped.Uniform = nil
+	CosmeticService.Apply(player)
+	profile.equipped.Uniform = "uniform_stoker"
+	CosmeticService.Apply(player)
+	task.wait(0.3)
+	local uniforms, shirts = 0, 0
+	for _, child in character:GetChildren() do
+		if child.Name == "CrewUniform" then
+			uniforms += 1
+		elseif child.Name == "CrewUniformShirt" then
+			shirts += 1
+		end
+	end
+	check(
+		uniforms == 1 and shirts == 1 and character:GetAttribute("CrewUniformId") == "uniform_stoker",
+		"rapid A->B->A ends on A with one uniform"
+	)
+
+	-- death while uniformed: nothing errors and the body keeps its clothing
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local died = pcall(function()
+		if humanoid then
+			humanoid.Health = 0
+		end
+		task.wait(0.5)
+		CosmeticService.Apply(player)
+	end)
+	check(died and character:FindFirstChild("CrewUniform") ~= nil, "death while uniformed is clean")
+
 	local description = Instance.new("HumanoidDescription")
 	local fresh = Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R6)
 	fresh.Name = player.Name
@@ -143,6 +173,23 @@ local function runPlayer(player)
 		"fresh character receives uniform"
 	)
 	check(freshHair.Parent == fresh, "fresh character keeps hair accessory")
+
+	-- reconnect: the profile loads again; the uniform is not rebuilt twice
+	local accessoriesBefore = #fresh:GetChildren()
+	DataService.SetProfile(player, table.clone(profile))
+	task.wait(0.5)
+	CosmeticService.Apply(player)
+	task.wait(0.3)
+	local reloaded = 0
+	for _, child in fresh:GetChildren() do
+		if child.Name == "CrewUniform" then
+			reloaded += 1
+		end
+	end
+	check(
+		reloaded == 1 and #fresh:GetChildren() == accessoriesBefore and freshHair.Parent == fresh,
+		"profile reload keeps one uniform and the hair"
+	)
 	print("[service-pilot] COMPLETE player=" .. player.Name)
 end
 

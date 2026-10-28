@@ -88,14 +88,66 @@ recipe.accessories[1].offset = { 0.0425, 0.065, -0.6155 }
 assert(Visual.Preload(recipe), "[CrewClothingPilot] client Visual.Preload failed")
 print("[CrewClothingPilot] client Visual.Preload success")
 
-type PoseSpec = { name: string, input: any }
+-- a failed fetch is reported, not swallowed: a recipe whose mesh does not exist must not preload
+local broken = table.clone(recipe)
+broken.accessories = { table.clone(recipe.accessories[1]) }
+broken.accessories[1].mesh = 1
+local failStarted = os.clock()
+local brokenLoaded = Visual.Preload(broken)
+print(
+	string.format(
+		"[CrewClothingPilot] %s client failed preload returns false (%.1f s)",
+		if brokenLoaded then "FAIL" else "PASS",
+		os.clock() - failStarted
+	)
+)
+
+type PoseSpec = { name: string, input: any, make: ((now: number, seed: number) -> any)? }
 local poses: { PoseSpec } = {
 	{ name = "Idle", input = { speed = 0, phase = 0 } },
 	{ name = "Walk", input = { speed = 4, phase = 0.8 } },
 	{ name = "Run", input = { speed = 16, phase = 1.1 } },
 	{ name = "Landing crouch", input = { speed = 0, phase = 0, crouching = true } },
 	{ name = "Sit", input = { speed = 0, phase = 0, sitting = true } },
+	{
+		name = "Hang",
+		input = {},
+		make = function(now, seed)
+			return CrewPoses.hang(now % 3, now, seed)
+		end,
+	},
+	{
+		name = "Haul",
+		input = {},
+		make = function(now, seed)
+			return CrewPoses.haul(now % 3, now, seed)
+		end,
+	},
+	{
+		name = "Fall short",
+		input = {},
+		make = function(now, seed)
+			return CrewPoses.fallShort(now % 3, now, seed)
+		end,
+	},
+	{
+		name = "Limp (death)",
+		input = {},
+		make = function(now, seed)
+			return CrewPoses.limp(now, seed)
+		end,
+	},
 }
+-- every grab, struggling hard (the pry and wrench poses)
+for _, style in { "Throttle", "Embrace", "Drag", "Pin", "Latch", "Ride", "Fist", "Shovel" } do
+	table.insert(poses, {
+		name = "Grab " .. style,
+		input = {},
+		make = function(now, seed)
+			return CrewPoses.grabbed(style, now % 3, 0.9, 1, now, seed)
+		end,
+	})
+end
 
 local gearOffsets: { [Model]: { [BasePart]: CFrame } } = {}
 
@@ -120,7 +172,7 @@ local function applyPose(rig: Model, spec: PoseSpec, seed: number, now: number?)
 	if spec.input.crouching then
 		input.landing = 0.85
 	end
-	local pose = CrewPoses.locomote(input)
+	local pose = if spec.make then spec.make(now or 0, seed) else CrewPoses.locomote(input)
 	local jointOrder = { "RootJoint", "Neck", "Right Shoulder", "Left Shoulder", "Right Hip", "Left Hip" }
 	local moved = 0
 	for _, jointName in jointOrder do

@@ -149,7 +149,12 @@ local pants = clean:FindFirstChildWhichIsA("Pants")
 check(shirt ~= nil and pants ~= nil, "classic garments exist")
 check(originalHat.Parent == clean and originalHair.Parent == clean, "Apply preserves player hat and hair")
 check(originalFaceAccessory.Parent == clean, "Apply preserves player face accessory")
-check(near(hatHandle.Transparency, 0.2) and near(hairHandle.Transparency, 0.35) and near(faceHandle.Transparency, 0.5), "Apply preserves accessory handle transparency")
+check(
+	near(hatHandle.Transparency, 0.2)
+		and near(hairHandle.Transparency, 0.35)
+		and near(faceHandle.Transparency, 0.5),
+	"Apply preserves accessory handle transparency"
+)
 local appliedFolder = clean:FindFirstChild("CrewUniform")
 check(
 	appliedFolder ~= nil
@@ -174,8 +179,18 @@ check(
 	"Restore preserves player hat and hair identity"
 )
 check(originalFaceAccessory.Parent == clean, "Restore preserves player face accessory identity")
-check(hatHandle.Parent == originalHat and hairHandle.Parent == originalHair and faceHandle.Parent == originalFaceAccessory, "Restore preserves accessory handles")
-check(near(hatHandle.Transparency, 0.2) and near(hairHandle.Transparency, 0.35) and near(faceHandle.Transparency, 0.5), "Restore preserves accessory handle transparency")
+check(
+	hatHandle.Parent == originalHat
+		and hairHandle.Parent == originalHair
+		and faceHandle.Parent == originalFaceAccessory,
+	"Restore preserves accessory handles"
+)
+check(
+	near(hatHandle.Transparency, 0.2)
+		and near(hairHandle.Transparency, 0.35)
+		and near(faceHandle.Transparency, 0.5),
+	"Restore preserves accessory handle transparency"
+)
 for _, snapshot in jointSnapshots do
 	check(
 		snapshot.instance.Parent == snapshot.parent
