@@ -4,8 +4,10 @@ local RunService = game:GetService("RunService")
 local ContentProvider = game:GetService("ContentProvider")
 local UserInputService = game:GetService("UserInputService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Animation = game:GetService("ReplicatedStorage"):WaitForChild("Animation")
 local Config = require(Shared.Config.CrewClothing)
 local Visual = require(Shared.Visual.CrewClothing)
+local CrewPoses = require(Animation.CrewPoses)
 
 local camera = workspace.CurrentCamera
 camera.CameraType = Enum.CameraType.Scriptable
@@ -13,10 +15,10 @@ camera.FieldOfView = 42
 
 local target = Vector3.new(0, 3.8, 0)
 local views: { [string]: Vector3 } = {
-	front = Vector3.new(0, 4.2, -14),
-	back = Vector3.new(0, 4.2, 14),
-	left = Vector3.new(-14, 4.2, 0),
-	right = Vector3.new(14, 4.2, 0),
+	front = Vector3.new(0, 4.2, -25),
+	back = Vector3.new(0, 4.2, 25),
+	left = Vector3.new(-25, 4.2, 0),
+	right = Vector3.new(25, 4.2, 0),
 }
 local view = "front"
 camera.CFrame = CFrame.lookAt(views[view], target)
@@ -85,6 +87,141 @@ recipe.accessories[1].size = { 1.625, 1.83, 0.231 }
 recipe.accessories[1].offset = { 0.0425, 0.065, -0.6155 }
 assert(Visual.Preload(recipe), "[CrewClothingPilot] client Visual.Preload failed")
 print("[CrewClothingPilot] client Visual.Preload success")
+
+type PoseSpec = { name: string, input: any }
+local poses: { PoseSpec } = {
+	{ name = "Idle", input = { speed = 0, phase = 0 } },
+	{ name = "Walk", input = { speed = 4, phase = 0.8 } },
+	{ name = "Run", input = { speed = 16, phase = 1.1 } },
+	{ name = "Landing crouch", input = { speed = 0, phase = 0, crouching = true } },
+	{ name = "Sit", input = { speed = 0, phase = 0, sitting = true } },
+}
+
+local gearOffsets: { [Model]: { [BasePart]: CFrame } } = {}
+
+local function applyPose(rig: Model, spec: PoseSpec, seed: number, now: number?)
+	local input = {
+		now = now or 0,
+		seed = seed,
+		speed = spec.input.speed or 0,
+		vertical = 0,
+		grounded = true,
+		phase = spec.input.phase or 0,
+		sitting = spec.input.sitting == true,
+		load = 0,
+		sprinting = false,
+		exhausted = false,
+		landing = spec.input.landing or 0,
+		lookYaw = 0,
+		lookPitch = 0,
+		dread = 0,
+		turn = 0,
+	}
+	if spec.input.crouching then
+		input.landing = 0.85
+	end
+	local pose = CrewPoses.locomote(input)
+	local jointOrder = { "RootJoint", "Neck", "Right Shoulder", "Left Shoulder", "Right Hip", "Left Hip" }
+	local moved = 0
+	for _, jointName in jointOrder do
+		local transform = pose[jointName]
+		local joint = rig:FindFirstChild(jointName, true)
+		if transform ~= nil and joint ~= nil and joint:IsA("Motor6D") then
+			local part0 = joint.Part0
+			local part1 = joint.Part1
+			if part0 ~= nil and part1 ~= nil then
+				local before = part1.Position
+				part1.CFrame = part0.CFrame * joint.C0 * transform * joint.C1:Inverse()
+				moved += (part1.Position - before).Magnitude
+			end
+		end
+	end
+	rig:SetAttribute("PilotJointDelta", moved)
+	local torso = rig:FindFirstChild("Torso")
+	if torso ~= nil and torso:IsA("BasePart") then
+		local offsets = gearOffsets[rig]
+		if offsets == nil then
+			offsets = {}
+			local uniform = rig:FindFirstChild("CrewUniform")
+			if uniform ~= nil then
+				for _, descendant in uniform:GetDescendants() do
+					if descendant:IsA("BasePart") then
+						offsets[descendant] = torso.CFrame:ToObjectSpace(descendant.CFrame)
+					end
+				end
+			end
+			gearOffsets[rig] = offsets
+		end
+		for part, offset in offsets do
+			part.CFrame = torso.CFrame * offset
+		end
+	end
+	rig:SetAttribute("PilotPose", spec.name)
+	local head = rig:FindFirstChild("Head")
+	if head ~= nil and head:IsA("BasePart") then
+		local label = head:FindFirstChild("PilotLabel")
+		if label == nil then
+			local billboard = Instance.new("BillboardGui")
+			billboard.Name = "PilotLabel"
+			billboard.Size = UDim2.fromOffset(140, 28)
+			billboard.StudsOffset = Vector3.new(0, 1.7, 0)
+			billboard.AlwaysOnTop = true
+			billboard.Parent = head
+			label = billboard
+		end
+		local text = label:FindFirstChild("Text")
+		if text == nil then
+			local textLabel = Instance.new("TextLabel")
+			textLabel.Name = "Text"
+			textLabel.Size = UDim2.fromScale(1, 1)
+			textLabel.BackgroundTransparency = 1
+			textLabel.TextColor3 = Color3.new(1, 1, 1)
+			textLabel.TextStrokeTransparency = 0.35
+			textLabel.TextScaled = true
+			textLabel.Parent = label
+			text = textLabel
+		end
+		(text :: TextLabel).Text = (if rig.Name:find("Worn") then "WORN " else "CLEAN ") .. spec.name
+	end
+end
+
+local cleanSource = workspace:WaitForChild("StokerClean") :: Model
+local wornSource = workspace:WaitForChild("StokerWorn") :: Model
+local function placeOnFloor(rig: Model, position: Vector3)
+	rig:PivotTo(CFrame.new(position))
+	local bounds, size = rig:GetBoundingBox()
+	local minimumY = bounds.Position.Y - size.Y / 2
+	rig:PivotTo(rig:GetPivot() + Vector3.new(0, 0.5 - minimumY, 0))
+end
+
+placeOnFloor(cleanSource, Vector3.new(-2.4, 0, 0))
+placeOnFloor(wornSource, Vector3.new(2.4, 0, 0))
+local lineup = {
+	{ rig = cleanSource, seed = 17 },
+	{ rig = wornSource, seed = 18 },
+}
+for _, entry in lineup do
+	applyPose(entry.rig, poses[1], entry.seed)
+end
+print("[CrewClothingPilot] phase=Idle moving=false")
+
+local elapsed = 0
+local phase = 1
+RunService.Heartbeat:Connect(function(delta)
+	elapsed += delta
+	if elapsed < 0.1 then
+		return
+	end
+	elapsed = 0
+	local nextPhase = math.floor(os.clock() / 3) % #poses + 1
+	if nextPhase ~= phase then
+		phase = nextPhase
+		print("[CrewClothingPilot] phase=" .. poses[phase].name .. " moving=true")
+	end
+	for _, entry in lineup do
+		applyPose(entry.rig, poses[phase], entry.seed, os.clock())
+	end
+end)
 
 RunService:BindToRenderStep("CrewClothingPilotCamera", Enum.RenderPriority.Camera.Value, function()
 	if workspace.CurrentCamera ~= camera then

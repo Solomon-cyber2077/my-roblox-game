@@ -3,7 +3,8 @@
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "Shared": {"$path": "../../src/shared"}
+      "Shared": {"$path": "../../src/shared"},
+      "Animation": {"$path": "../../src/client/Animation"}
     },
     "ServerScriptService": {
       "CrewClothingPilot": {"$path": "engine-pilot.server.luau"}

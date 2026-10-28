@@ -1,0 +1,12 @@
+{
+  "name": "visual-fixes-qa",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": { "Shared": { "$path": "../../src/shared" } },
+    "ServerScriptService": { "Server": { "$path": "../../src/server" } },
+    "StarterPlayer": { "StarterPlayerScripts": { "Client": { "$path": "../../src/client" }, "VisualFixesQA": { "$path": "visual-fixes-qa.client.luau" } } },
+    "Lighting": { "$properties": { "Technology": "Future", "Ambient": [0.051, 0.039, 0.027], "OutdoorAmbient": [0.051, 0.039, 0.031], "Brightness": 0, "ExposureCompensation": -0.1, "EnvironmentDiffuseScale": 0, "EnvironmentSpecularScale": 0.6, "GlobalShadows": true, "ClockTime": 19 } },
+    "Workspace": { "$properties": { "FallenPartsDestroyHeight": -500 } },
+    "Players": { "$properties": { "CharacterAutoLoads": false } }
+  }
+}

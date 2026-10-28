@@ -14,6 +14,10 @@ local function check(ok: boolean, message: string)
 	print("[CrewClothingPilot] PASS " .. message)
 end
 
+local function near(actual: number, expected: number): boolean
+	return math.abs(actual - expected) < 0.001
+end
+
 local function pilotRecipe(): any
 	local source = Config.ById.uniform_stoker
 	check(source ~= nil, "uniform_stoker recipe exists")
@@ -89,6 +93,21 @@ originalFaceAccessory.Name = "OriginalFace"
 originalFaceAccessory.AccessoryType = Enum.AccessoryType.Face
 originalFaceAccessory.Parent = clean
 
+local function addHandle(accessory: Accessory, transparency: number): BasePart
+	local handle = Instance.new("Part")
+	handle.Name = "Handle"
+	handle.Size = Vector3.new(0.2, 0.2, 0.2)
+	handle.Transparency = transparency
+	handle.Massless = true
+	handle.CanCollide = false
+	handle.Parent = accessory
+	return handle
+end
+
+local hatHandle = addHandle(originalHat, 0.2)
+local hairHandle = addHandle(originalHair, 0.35)
+local faceHandle = addHandle(originalFaceAccessory, 0.5)
+
 local head = clean:FindFirstChild("Head")
 check(head ~= nil and head:IsA("BasePart"), "R6 head remains present")
 local originalHead = head :: BasePart
@@ -130,6 +149,7 @@ local pants = clean:FindFirstChildWhichIsA("Pants")
 check(shirt ~= nil and pants ~= nil, "classic garments exist")
 check(originalHat.Parent == clean and originalHair.Parent == clean, "Apply preserves player hat and hair")
 check(originalFaceAccessory.Parent == clean, "Apply preserves player face accessory")
+check(near(hatHandle.Transparency, 0.2) and near(hairHandle.Transparency, 0.35) and near(faceHandle.Transparency, 0.5), "Apply preserves accessory handle transparency")
 local appliedFolder = clean:FindFirstChild("CrewUniform")
 check(
 	appliedFolder ~= nil
@@ -154,6 +174,8 @@ check(
 	"Restore preserves player hat and hair identity"
 )
 check(originalFaceAccessory.Parent == clean, "Restore preserves player face accessory identity")
+check(hatHandle.Parent == originalHat and hairHandle.Parent == originalHair and faceHandle.Parent == originalFaceAccessory, "Restore preserves accessory handles")
+check(near(hatHandle.Transparency, 0.2) and near(hairHandle.Transparency, 0.35) and near(faceHandle.Transparency, 0.5), "Restore preserves accessory handle transparency")
 for _, snapshot in jointSnapshots do
 	check(
 		snapshot.instance.Parent == snapshot.parent
@@ -177,3 +199,7 @@ wornRecipe.shirt = recipe.wornShirt
 wornRecipe.pants = recipe.wornPants
 check(Visual.Apply(worn, wornRecipe) ~= nil, "worn Apply creates uniform")
 check(Visual.Apply(clean, recipe) ~= nil, "side-by-side clean uniform creates")
+local cleanUniform = clean:FindFirstChild("CrewUniform")
+local wornUniform = worn:FindFirstChild("CrewUniform")
+check(cleanUniform ~= nil and #cleanUniform:GetChildren() == 1, "clean uniform has one built gear item")
+check(wornUniform ~= nil and #wornUniform:GetChildren() == 1, "worn uniform has one built gear item")

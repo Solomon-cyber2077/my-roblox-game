@@ -4,6 +4,7 @@ local Shared = script.Parent.Parent
 local Config = require(Shared.Config.CrewClothing)
 local Rules = require(Shared.Logic.CrewClothing)
 local ContentProvider = game:GetService("ContentProvider")
+local RunService = game:GetService("RunService")
 local Visual = {}
 type Snapshot = { originals: Folder, cleanup: RBXScriptConnection }
 local snapshots: { [Model]: Snapshot } = {}
@@ -13,6 +14,11 @@ end
 function Visual.Preload(recipe: Config.Recipe): boolean
 	if not Rules.available(recipe) then
 		return false
+	end
+	if RunService:IsServer() then
+		-- PreloadAsync never returns on the server (Studio service pilot, 2026-10-27), which held
+		-- CosmeticService.Apply forever. Clients fetch the replicated garments (CrewClothingController).
+		return true
 	end
 	local items: { Instance } = {}
 	local expected = {}

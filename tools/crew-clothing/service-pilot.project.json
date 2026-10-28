@@ -1,0 +1,33 @@
+{
+  "name": "crew-clothing-service-pilot",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$path": "../../src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Server": {
+        "$className": "Folder",
+        "Registry": {
+          "$path": "service-pilot-registry.luau"
+        },
+        "Services": {
+          "$className": "Folder",
+          "DataService": {
+            "$path": "service-pilot-data.luau"
+          },
+          "CosmeticService": {
+            "$path": "../../src/server/Services/CosmeticService.luau"
+          }
+        },
+        "ServicePilot": {
+          "$path": "service-pilot.server.luau"
+        }
+      }
+    }
+  }
+}
