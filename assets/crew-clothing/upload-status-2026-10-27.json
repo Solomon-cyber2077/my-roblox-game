@@ -1,0 +1,15 @@
+{
+  "uploaded": "2026-10-27",
+  "by": "Studio Asset Manager / 3D Importer under the owner's account, owner-authorized",
+  "ownerUserId": 11744048795,
+  "note": "Images uploaded as Image assets; gear OBJ uploaded as a Model, mesh IDs read from the loaded MeshPart. Hats deferred.",
+  "assets": {
+    "brakeman": {"shirtClean": 112789250534983, "shirtWorn": 88364378516986, "pantsClean": 133444423059437, "pantsWorn": 83025738769589, "atlas": 73098642897981, "gearModel": 84570387079856, "gearMesh": 129711792940345},
+    "conductor": {"shirtClean": 132931422870812, "shirtWorn": 88363184328424, "pantsClean": 136251956896552, "pantsWorn": 122461917996135, "atlas": 133559151521048, "gearModel": 115945778134122, "gearMesh": 93831794818197},
+    "trackwalker": {"shirtClean": 83300755079874, "shirtWorn": 77599111384776, "pantsClean": 90720365454594, "pantsWorn": 74628556269207, "atlas": 93042891306063, "gearModel": 117894943828201, "gearMesh": 74122752836758},
+    "wayfarer": {"shirtClean": 87086586640518, "shirtWorn": 80004653176848, "pantsClean": 114066066747644, "pantsWorn": 120076054608094, "atlas": 134935301395876, "gearModel": 88105639051923, "gearMesh": 73985586909190},
+    "stoker_veteran": {"shirtClean": 87136116614881, "shirtWorn": 139012054263592, "pantsClean": 83261280185759, "pantsWorn": 92422689087541, "atlas": 90209561549507, "gearModel": 76452698594125, "gearMesh": 84211775439801},
+    "conductor_terminus": {"shirtClean": 125500198052270, "shirtWorn": 87142690985158, "pantsClean": 126840229838470, "pantsWorn": 129150281398733, "atlas": 82130306433456, "gearModel": 120866276293246, "gearMesh": 101602380673627}
+  },
+  "productionEnabled": false
+}

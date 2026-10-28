@@ -1,0 +1,12 @@
+{
+  "name": "crew-clothing-lineup-pilot",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": { "$className": "ReplicatedStorage", "Shared": { "$path": "../../src/shared" } },
+    "ServerScriptService": { "$className": "ServerScriptService", "LineupPilot": { "$path": "lineup-pilot.server.luau" } },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": { "$className": "StarterPlayerScripts", "LineupCamera": { "$path": "lineup-pilot.client.luau" } }
+    }
+  }
+}

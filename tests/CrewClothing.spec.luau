@@ -36,9 +36,17 @@ describe("CrewClothing", function()
 			end
 			return result
 		end
-		expect(
-			Rules.available(copy({ validated = true, shirt = 1, pants = 1, wornShirt = 1, wornPants = 1 }))
-		).toBe(false)
+		-- gear with no uploaded mesh
+		local unmeshed = table.clone(base.accessories[1])
+		unmeshed.mesh = 0
+		expect(Rules.available(copy({
+			validated = true,
+			shirt = 1,
+			pants = 1,
+			wornShirt = 1,
+			wornPants = 1,
+			accessories = { unmeshed },
+		}))).toBe(false)
 		expect(Rules.available(copy({
 			validated = true,
 			shirt = 1,
