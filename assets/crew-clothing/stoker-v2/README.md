@@ -1,6 +1,6 @@
 # Stoker v2 — local design candidate
 
-Compact work cap with parked goggles, olive chore jacket, leather apron and brass clasp.
+Olive chore jacket, leather apron and brass clasp. Uniform hats are deferred; the cap source and upload are retained for later work, but current recipes and the pilot do not use them. `hat-free.png` is the current half-scale source render.
 References: [short waxed-canvas cap](https://randijofab.com/products/copy-of-waxed-canvas-cap),
 [work apron construction](https://www.hardmill.com/collections/aprons). Original geometry and textures; no reference images embedded.
 
@@ -12,4 +12,6 @@ Validation (2026-10-27): all seven uploaded assets fetched successfully in the r
 
 Full `lune run check` passed: 556 tests and visual audit clean.
 
-Remaining acceptance: cap clearance during running/crouching/seated poses and arm movement, followed by multiplayer checks. Source before/after renders are retained above; Blender previews do not replace these engine checks.
+Hat-free follow-up (2026-10-27): rebuilt and played the isolated pilot. All six remaining asset loads and Visual.Preload succeeded. Apply/Restore, original hat/hair/face accessory identity, head/face, joints and part properties passed. Front screenshot showed clean/worn clothes and torso gear with no generated hats. The existing wrong-type asset warning remains. See HANDOFF.md for the final full-check result.
+
+Remaining release acceptance: torso gear fit during running/crouching/seated poses and arm movement, followed by multiplayer checks. Hats are excluded. Source before/after renders are retained above; Blender previews do not replace these engine checks.

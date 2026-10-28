@@ -128,8 +128,9 @@ function Visual.Apply(character: Model, recipe: Config.Recipe): Folder?
 		for _, child in character:GetChildren() do
 			local garment = child:IsA("Shirt") or child:IsA("Pants") or child:IsA("ShirtGraphic")
 			local conflict = child:IsA("Accessory")
-				and child.AccessoryType ~= Enum.AccessoryType.Face
+				and child.AccessoryType ~= Enum.AccessoryType.Hat
 				and child.AccessoryType ~= Enum.AccessoryType.Hair
+				and child.AccessoryType ~= Enum.AccessoryType.Face
 			if garment or conflict then
 				child.Parent = originals
 			end

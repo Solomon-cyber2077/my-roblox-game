@@ -172,7 +172,7 @@ function CosmeticService.Apply(player: Player)
 
 	local head = character:FindFirstChild("Head") :: BasePart?
 	local hat = equipped(player, "Headwear")
-	local coversHair = uniformRecipe ~= nil or (hat.look.style ~= "None" and hat.look.style ~= "Goggles")
+	local coversHair = uniformRecipe == nil and (hat.look.style ~= "None" and hat.look.style ~= "Goggles")
 	for _, accessory in character:GetChildren() do
 		if accessory:IsA("Accessory") and accessory.AccessoryType == Enum.AccessoryType.Hair then
 			for _, part in accessory:GetDescendants() do

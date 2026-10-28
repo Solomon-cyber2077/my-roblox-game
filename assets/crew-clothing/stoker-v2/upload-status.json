@@ -1,7 +1,8 @@
 {
-  "status": "uploaded; isolated Studio loading, lifecycle and front orientation verified; pose acceptance pending",
+  "status": "hat-free pilot: six assets loaded; Apply/Restore, hat/hair/face preservation and front view verified; movement and multiplayer acceptance pending",
   "ownerUserId": 11744048795,
   "hatMesh": 140353597411200,
+  "hatDeferred": true,
   "gearMesh": 90362864770621,
   "atlasImage": 85553773814164,
   "shirtCleanImage": 101979354774166,
