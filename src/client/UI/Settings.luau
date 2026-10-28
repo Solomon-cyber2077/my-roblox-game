@@ -69,7 +69,7 @@ function SettingsUi.mount(gui: ScreenGui)
 			title = "CAMERA",
 			values = { "Locked", "Free" },
 			toggle = false,
-			note = "Locked keeps the camera behind you at one distance and turns you to face where it looks. Free lets you zoom in and out.",
+			note = "Locked keeps the camera behind you at one distance and turns you to face where it looks; on a computer the mouse steers it in a run (hold Alt for the cursor). Free lets you zoom in and out.",
 		},
 		{
 			key = "Ambience",

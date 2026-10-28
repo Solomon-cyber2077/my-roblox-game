@@ -305,6 +305,7 @@ function Lobby.mount(gui: ScreenGui)
 		BackgroundTransparency = 0.06,
 		Parent = container,
 	})
+	Ui.freeCursor(panel) -- START and the crew list are clicked, so the hall always shows the cursor
 	local headStrip = Ui.new("Frame", {
 		Name = "Head",
 		Size = UDim2.new(1, 0, 0, 20),

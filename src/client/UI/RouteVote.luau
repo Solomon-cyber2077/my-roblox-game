@@ -42,6 +42,7 @@ function RouteVote.mount(gui: ScreenGui)
 		Visible = false,
 		Parent = gui,
 	})
+	Ui.freeCursor(container) -- the tickets are clicked, so the cursor shows while the ballot is up
 	-- on a phone the ballot is drawn smaller, a strip along the top rather than a third of the screen
 	local phoneScale = Ui.new("UIScale", { Scale = 1, Parent = container })
 	local function fit()

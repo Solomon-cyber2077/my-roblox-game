@@ -78,6 +78,22 @@ function Ui.new(className: string, props: { [any]: any }?, children: { Instance 
 	return instance
 end
 
+-- While `parent` shows, the mouse is free and the cursor visible, even in first person or with
+-- the Locked camera's mouse lock (an invisible GuiButton.Modal; the engine frees the mouse while
+-- any visible one exists). Every menu that wants clicking carries one.
+function Ui.freeCursor(parent: GuiObject): TextButton
+	return Ui.new("TextButton", {
+		Name = "FreeCursor",
+		Modal = true,
+		Size = UDim2.fromOffset(0, 0),
+		BackgroundTransparency = 1,
+		Text = "",
+		Selectable = false,
+		AutoButtonColor = false,
+		Parent = parent,
+	})
+end
+
 function Ui.corner(radius: number?): UICorner
 	return Ui.new("UICorner", { CornerRadius = UDim.new(0, radius or Theme.Corner) })
 end

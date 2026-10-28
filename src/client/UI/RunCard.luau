@@ -167,6 +167,7 @@ function RunCard.mount(gui: ScreenGui)
 		BackgroundTransparency = 0.35,
 		Text = "",
 		AutoButtonColor = false,
+		Modal = true, -- the cursor shows over the card, first person included
 		Visible = false,
 		ZIndex = Z,
 		Parent = gui,

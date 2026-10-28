@@ -166,6 +166,7 @@ function Menu.mount(gui: ScreenGui)
 	Ui.padding(6, 6).Parent = drop
 	Ui.list(Enum.FillDirection.Vertical, GAP).Parent = drop
 	list = drop
+	Ui.freeCursor(drop) -- the cursor shows while the dropdown is open
 
 	local function build()
 		for _, child in drop:GetChildren() do

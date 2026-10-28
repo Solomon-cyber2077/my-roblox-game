@@ -53,6 +53,7 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 			BackgroundTransparency = 0.25,
 			Text = "",
 			AutoButtonColor = false,
+			Modal = true, -- the cursor shows over any open window, first person included
 			Visible = false,
 			ZIndex = 30,
 			Parent = gui,

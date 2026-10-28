@@ -13,7 +13,9 @@
 	body turns to face where the camera looks (AutoRotate off while it does), as in Evade.
 	The facing pauses, holding the body still, through a LOOK glance, a Hollow's grip, the
 	train camera, spectating, a seat and the lobby idle orbit; it hands AutoRotate back when
-	dead, climbing or swimming, or when the setting is Free.
+	dead, climbing or swimming, or when the setting is Free. On a PC in a run, Locked also holds
+	the mouse at the centre so it steers the view with no button held; Left Alt frees it, and
+	every menu frees it while open (Ui.freeCursor).
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -291,6 +293,36 @@ function CameraController.Start()
 		root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, yaw, 0)
 	end
 
+	-- Locked on a PC in a run: the mouse is held at the centre and steers the view without a
+	-- held button, as in Evade. Left Alt frees it while held; menus free it themselves
+	-- (Ui.freeCursor, GuiButton.Modal). The hall, the train camera, a grab and spectating keep
+	-- their own mouse. `mouseHeld` means this module locked it and owes it back.
+	local mouseHeld = false
+	local function holdMouse(camera: Camera)
+		local humanoid = ownHumanoid()
+		local character = player.Character
+		local trainCam = Registry.TrainCamController
+		local want = player:GetAttribute("Camera") ~= "Free"
+			and UserInputService.MouseEnabled
+			and Session.isMember()
+			and humanoid ~= nil
+			and humanoid.Health > 0
+			and camera.CameraType == Enum.CameraType.Custom
+			and camera.CameraSubject == humanoid
+			and spectateTarget == nil
+			and (character :: Model):GetAttribute("GrabStyle") == nil
+			and not (trainCam and trainCam.Active())
+			and UserInputService:GetFocusedTextBox() == nil
+			and not UserInputService:IsKeyDown(Enum.KeyCode.LeftAlt)
+		if want then
+			mouseHeld = true
+			UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+		elseif mouseHeld then
+			mouseHeld = false
+			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+		end
+	end
+
 	local lastJoint = 0
 	local secondKickAt = math.huge
 	local kick = 0
@@ -384,6 +416,7 @@ function CameraController.Start()
 		end
 		-- before this frame's shake and glance go on, so the body follows the steady view
 		faceBody(camera, dt)
+		holdMouse(camera)
 		-- View-only yaw: never change Humanoid movement or the character's root facing.
 		offset *= CFrame.Angles(0, math.rad(CAM.GlanceDegrees) * glance, 0)
 		if offset ~= CFrame.identity then
