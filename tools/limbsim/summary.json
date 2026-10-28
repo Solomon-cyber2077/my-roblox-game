@@ -7,9 +7,9 @@
       "sessions": 45
     },
     "Halt": {
-      "armless": 0,
-      "died": 17,
-      "returned": 0,
+      "armless": 1,
+      "died": 16,
+      "returned": 1,
       "sessions": 42
     },
     "Infirmary": {
@@ -67,298 +67,298 @@
       "device": "Laptop",
       "own": false,
       "persona": "mia",
-      "rate": 0.353,
+      "rate": 0.629,
       "rttMs": 90
     },
     {
       "device": "Desktop",
       "own": false,
       "persona": "mia",
-      "rate": 0.383,
+      "rate": 0.669,
       "rttMs": 50
     },
     {
       "device": "Phone",
       "own": true,
       "persona": "mia",
-      "rate": 0.285,
+      "rate": 0.587,
       "rttMs": 120
     },
     {
       "device": "BudgetAndroid",
       "own": false,
       "persona": "mia",
-      "rate": 0.215,
+      "rate": 0.452,
       "rttMs": 220
     },
     {
       "device": "Tablet",
       "own": false,
       "persona": "mia",
-      "rate": 0.304,
-      "rttMs": 100
-    },
-    {
-      "device": "Laptop",
-      "own": false,
-      "persona": "dev",
-      "rate": 0.948,
-      "rttMs": 90
-    },
-    {
-      "device": "Desktop",
-      "own": true,
-      "persona": "dev",
-      "rate": 0.98,
-      "rttMs": 50
-    },
-    {
-      "device": "Phone",
-      "own": false,
-      "persona": "dev",
-      "rate": 0.825,
-      "rttMs": 120
-    },
-    {
-      "device": "BudgetAndroid",
-      "own": false,
-      "persona": "dev",
-      "rate": 0.437,
-      "rttMs": 220
-    },
-    {
-      "device": "Tablet",
-      "own": false,
-      "persona": "dev",
-      "rate": 0.859,
-      "rttMs": 100
-    },
-    {
-      "device": "Laptop",
-      "own": true,
-      "persona": "ray",
-      "rate": 0.517,
-      "rttMs": 90
-    },
-    {
-      "device": "Desktop",
-      "own": false,
-      "persona": "ray",
       "rate": 0.581,
-      "rttMs": 50
-    },
-    {
-      "device": "Phone",
-      "own": false,
-      "persona": "ray",
-      "rate": 0.376,
-      "rttMs": 120
-    },
-    {
-      "device": "BudgetAndroid",
-      "own": false,
-      "persona": "ray",
-      "rate": 0.237,
-      "rttMs": 220
-    },
-    {
-      "device": "Tablet",
-      "own": false,
-      "persona": "ray",
-      "rate": 0.418,
       "rttMs": 100
     },
     {
       "device": "Laptop",
       "own": false,
-      "persona": "zoe",
-      "rate": 0.642,
+      "persona": "dev",
+      "rate": 1,
       "rttMs": 90
     },
     {
       "device": "Desktop",
       "own": true,
-      "persona": "zoe",
-      "rate": 0.704,
+      "persona": "dev",
+      "rate": 1,
       "rttMs": 50
     },
     {
       "device": "Phone",
       "own": false,
-      "persona": "zoe",
-      "rate": 0.485,
+      "persona": "dev",
+      "rate": 0.998,
       "rttMs": 120
     },
     {
       "device": "BudgetAndroid",
       "own": false,
-      "persona": "zoe",
-      "rate": 0.281,
+      "persona": "dev",
+      "rate": 0.931,
       "rttMs": 220
     },
     {
       "device": "Tablet",
       "own": false,
-      "persona": "zoe",
-      "rate": 0.521,
+      "persona": "dev",
+      "rate": 0.994,
       "rttMs": 100
     },
     {
       "device": "Laptop",
+      "own": true,
+      "persona": "ray",
+      "rate": 0.82,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
       "own": false,
-      "persona": "kai",
+      "persona": "ray",
+      "rate": 0.845,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": false,
+      "persona": "ray",
+      "rate": 0.688,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "ray",
       "rate": 0.546,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "ray",
+      "rate": 0.727,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": false,
+      "persona": "zoe",
+      "rate": 0.9,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": true,
+      "persona": "zoe",
+      "rate": 0.937,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": false,
+      "persona": "zoe",
+      "rate": 0.818,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "zoe",
+      "rate": 0.659,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "zoe",
+      "rate": 0.832,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": false,
+      "persona": "kai",
+      "rate": 0.833,
       "rttMs": 90
     },
     {
       "device": "Desktop",
       "own": false,
       "persona": "kai",
-      "rate": 0.594,
+      "rate": 0.866,
       "rttMs": 50
     },
     {
       "device": "Phone",
       "own": false,
       "persona": "kai",
-      "rate": 0.398,
+      "rate": 0.708,
       "rttMs": 120
     },
     {
       "device": "BudgetAndroid",
       "own": false,
       "persona": "kai",
-      "rate": 0.245,
+      "rate": 0.58,
       "rttMs": 220
     },
     {
       "device": "Tablet",
       "own": true,
       "persona": "kai",
-      "rate": 0.424,
+      "rate": 0.755,
       "rttMs": 100
     },
     {
       "device": "Laptop",
       "own": false,
       "persona": "sam",
-      "rate": 0.207,
+      "rate": 0.425,
       "rttMs": 90
     },
     {
       "device": "Desktop",
       "own": false,
       "persona": "sam",
-      "rate": 0.209,
+      "rate": 0.448,
       "rttMs": 50
     },
     {
       "device": "Phone",
       "own": false,
       "persona": "sam",
-      "rate": 0.163,
+      "rate": 0.356,
       "rttMs": 120
     },
     {
       "device": "BudgetAndroid",
       "own": true,
       "persona": "sam",
-      "rate": 0.121,
+      "rate": 0.3,
       "rttMs": 220
     },
     {
       "device": "Tablet",
       "own": false,
       "persona": "sam",
-      "rate": 0.165,
+      "rate": 0.377,
       "rttMs": 100
     },
     {
       "device": "Laptop",
       "own": false,
       "persona": "priya",
-      "rate": 0.68,
+      "rate": 0.914,
       "rttMs": 90
     },
     {
       "device": "Desktop",
       "own": false,
       "persona": "priya",
-      "rate": 0.719,
+      "rate": 0.953,
       "rttMs": 50
     },
     {
       "device": "Phone",
       "own": true,
       "persona": "priya",
-      "rate": 0.503,
+      "rate": 0.834,
       "rttMs": 120
     },
     {
       "device": "BudgetAndroid",
       "own": false,
       "persona": "priya",
-      "rate": 0.291,
+      "rate": 0.688,
       "rttMs": 220
     },
     {
       "device": "Tablet",
       "own": false,
       "persona": "priya",
-      "rate": 0.532,
+      "rate": 0.858,
       "rttMs": 100
     },
     {
       "device": "Laptop",
       "own": true,
       "persona": "leo",
-      "rate": 0.564,
+      "rate": 0.831,
       "rttMs": 90
     },
     {
       "device": "Desktop",
       "own": false,
       "persona": "leo",
-      "rate": 0.634,
+      "rate": 0.891,
       "rttMs": 50
     },
     {
       "device": "Phone",
       "own": false,
       "persona": "leo",
-      "rate": 0.41,
+      "rate": 0.741,
       "rttMs": 120
     },
     {
       "device": "BudgetAndroid",
       "own": false,
       "persona": "leo",
-      "rate": 0.234,
+      "rate": 0.57,
       "rttMs": 220
     },
     {
       "device": "Tablet",
       "own": false,
       "persona": "leo",
-      "rate": 0.424,
+      "rate": 0.736,
       "rttMs": 100
     }
   ],
   "sessions": 400,
   "totals": {
-    "armless": 0,
-    "beatHits": 46,
+    "armless": 1,
+    "beatHits": 50,
     "beatMisses": 0,
-    "died": 177,
+    "died": 176,
     "drops": 0,
-    "escapes": 247,
-    "grabs": 437,
+    "escapes": 248,
+    "grabs": 439,
     "heals": 81,
     "leftBehind": 1,
     "noRescuer": 153,
-    "rescueFails": 24,
-    "rescues": 13,
-    "returned": 0,
-    "tears": 13
+    "rescueFails": 23,
+    "rescues": 15,
+    "returned": 1,
+    "tears": 15
   }
 }

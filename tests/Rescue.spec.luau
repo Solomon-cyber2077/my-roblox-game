@@ -49,9 +49,9 @@ describe("Rescue", function()
 		end
 	end)
 
-	it("holds within the window at 500ms without jitter, and fails with 60ms of jitter", function()
+	it("holds within the window at 500ms without jitter, and fails with 80ms of late jitter", function()
 		expect(play(0.5, 0)).toBe("Rescued")
-		expect(play(0.5, 0, { 0, 0.06, 0 })).toBe("Failed")
+		expect(play(0.5, 0, { 0, 0.08, 0 })).toBe("Failed")
 	end)
 
 	it("fails a press outside the window", function()

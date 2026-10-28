@@ -18,7 +18,7 @@ return table.freeze({
 		InviteMax = 2.5, -- never longer than this, whatever the measured delay
 		Reach = 6, -- studs from the rescuer's root to the victim's
 		Beats = table.freeze({ 0.7, 1.2, 1.7 }), -- seconds after the sequence starts (0.5 lead-in first)
-		Window = 0.12, -- a press counts within this many seconds either side of its beat
+		Window = 0.17, -- a press counts within this many seconds either side of its beat (0.12 was too hard on touch: sim)
 		CompensationMax = 0.15, -- the most arrival delay a press may be credited
 		Length = 2.0, -- the sequence ends this long after it starts; no extensions
 		Stagger = 1.2, -- the Hollow reels this long after a successful rescue

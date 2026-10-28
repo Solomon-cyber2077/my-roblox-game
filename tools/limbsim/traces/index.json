@@ -40,9 +40,14 @@
     "title": "failed at Viaduct: Leo, Ray"
   },
   {
-    "file": "rescued-halt-1132.json",
-    "id": "rescued-halt-1132",
-    "title": "rescued at Halt: Dev, Sam, Ray, Kai"
+    "file": "armless-halt-1132.json",
+    "id": "armless-halt-1132",
+    "title": "armless at Halt: Dev, Sam, Ray, Kai"
+  },
+  {
+    "file": "rescued-viaduct-1137.json",
+    "id": "rescued-viaduct-1137",
+    "title": "rescued at Viaduct: Dev, Priya, Ray, Sam"
   },
   {
     "file": "scripted-armless-market-50013.json",
