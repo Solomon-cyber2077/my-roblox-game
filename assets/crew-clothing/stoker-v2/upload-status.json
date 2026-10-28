@@ -1,0 +1,14 @@
+{
+  "status": "hat-free pilot: six assets loaded; Apply/Restore, hat/hair/face preservation and front view verified; movement and multiplayer acceptance pending",
+  "ownerUserId": 11744048795,
+  "hatMesh": 140353597411200,
+  "hatDeferred": true,
+  "gearMesh": 90362864770621,
+  "atlasImage": 85553773814164,
+  "shirtCleanImage": 101979354774166,
+  "shirtWornImage": 90317117594409,
+  "pantsCleanImage": 104204802579148,
+  "pantsWornImage": 100087790691733,
+  "evidence": "Mesh IDs read from Studio-saved imported-pilot.rbxlx; image IDs read in Studio Asset Manager after successful imports",
+  "productionEnabled": false
+}

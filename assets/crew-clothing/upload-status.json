@@ -1,0 +1,41 @@
+{
+  "updated": "2026-10-24",
+  "status": "pilot_engine_preload_verified_fit_pending",
+  "featureEnabled": false,
+  "assets": {
+    "stoker": {
+      "hat": {
+        "source": "assets/crew-clothing/stoker/hat.obj",
+        "sha256": "1d33c6544801b7459e0ef752734118499a4b2bdbcac6545dd7589b5863e71dc3",
+        "meshId": "87294038906929",
+        "modelId": "99852248363441",
+        "importedBounds": [1, 1, 1],
+        "textureUploaded": false,
+        "fitAccepted": false,
+        "engineAccepted": true
+      },
+      "gear": {
+        "source": "assets/crew-clothing/stoker/gear.obj",
+        "sha256": "12c260744a87a8866c940c9df84288e217325c316b6d89728151315c8986a118",
+        "meshId": "93793321063305",
+        "modelId": "86685436571312",
+        "importedBounds": [1, 1, 1],
+        "textureUploaded": false,
+        "fitAccepted": false,
+        "engineAccepted": true
+      },
+      "textures": {
+        "hatAtlas": {"source": "assets/crew-clothing/stoker/hat-atlas.png", "sha256": "2a4a578e5c7706dcb252c719233bec8959aecd52a73a376e7ea3516354ee3d67", "decalId": "113724205298535", "imageId": "99740939469532", "uploaded": true, "engineCompatible": true},
+        "shirtClean": {"source": "assets/crew-clothing/stoker/shirt-clean.png", "sha256": "2721196b9c896235f75aad059eb0ee2aeb9fdacb9f6bc0e04a5adb68e2f6242b", "decalId": "76830544021188", "imageId": "97730629765220", "uploaded": true, "engineCompatible": true},
+        "shirtWorn": {"source": "assets/crew-clothing/stoker/shirt-worn.png", "sha256": "30b3c1e10bade861afcab21da9127b4bc1b01acb17513338cdd2853331e999b0", "decalId": "71683875851695", "imageId": "103847740746022", "uploaded": true, "engineCompatible": true},
+        "pantsClean": {"source": "assets/crew-clothing/stoker/pants-clean.png", "sha256": "5858a6dabd7a7c0ab52480e32f47e03fdc6da3b611648d81845a42d0e32fb5b3", "decalId": "94713837527434", "imageId": "81737309623649", "uploaded": true, "engineCompatible": true},
+        "pantsWorn": {"source": "assets/crew-clothing/stoker/pants-worn.png", "sha256": "4c33d12587baa082960cc2f12f29cba1f6648fbffc313848fb4d805174b7513f", "decalId": "70521609296011", "imageId": "105374856832482", "uploaded": true, "engineCompatible": true}
+      }
+    }
+  },
+  "evidence": {
+    "scene": "clothing-import-qa.rbxlx",
+    "property": "MeshPart.MeshId and InitialSize",
+    "notes": "Engine pilot verified all seven Stoker content IDs load successfully; Apply idempotence and Restore identity checks pass. Hat brim and gear fit/pose/animation acceptance remain pending."
+  }
+}

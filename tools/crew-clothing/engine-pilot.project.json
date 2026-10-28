@@ -1,0 +1,26 @@
+{
+  "name": "crew-clothing-engine-pilot",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {"$path": "../../src/shared"}
+    },
+    "ServerScriptService": {
+      "CrewClothingPilot": {"$path": "engine-pilot.server.luau"}
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "CrewClothingPilotCamera": {"$path": "engine-pilot.client.luau"}
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "Technology": "Future",
+        "Brightness": 2,
+        "Ambient": [0.25, 0.25, 0.25],
+        "OutdoorAmbient": [0.4, 0.4, 0.4],
+        "ClockTime": 14
+      }
+    }
+  }
+}

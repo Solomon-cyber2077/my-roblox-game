@@ -76,16 +76,41 @@ local function watch(model: Model)
 		task.defer(function()
 			Safe.call("CrewClothingPreload", function()
 				local success = true
-				ContentProvider:PreloadAsync({
-					asset(recipe.shirt),
-					asset(recipe.pants),
-					asset(recipe.wornShirt),
-					asset(recipe.wornPants),
-				}, function(_, status)
-					if status ~= Enum.AssetFetchStatus.Success then
+				local items: { Instance } = {}
+				local expected = {}
+				local function expect(assetId: number)
+					expected[tostring(assetId)] = false
+				end
+				for _, assetId in { recipe.shirt, recipe.pants, recipe.wornShirt, recipe.wornPants } do
+					local garment = if #items % 2 == 0 then Instance.new("Shirt") else Instance.new("Pants")
+					if garment:IsA("Shirt") then
+						garment.ShirtTemplate = asset(assetId)
+					else
+						garment.PantsTemplate = asset(assetId)
+					end
+					expect(assetId)
+					table.insert(items, garment)
+				end
+				local ok = pcall(function()
+					ContentProvider:PreloadAsync(items, function(contentId, status)
+						local contentKey = string.match(tostring(contentId), "%d+")
+						if contentKey ~= nil and expected[contentKey] ~= nil then
+							expected[contentKey] = status == Enum.AssetFetchStatus.Success
+						end
+						if status ~= Enum.AssetFetchStatus.Success then
+							success = false
+						end
+					end)
+				end)
+				for _, item in items do
+					item:Destroy()
+				end
+				for _, successValue in expected do
+					if not successValue then
 						success = false
 					end
-				end)
+				end
+				success = ok and success
 				if success and tokens[model] == token and model.Parent ~= nil then
 					loaded = true
 					apply(model, recipe, Rules.wear(stop, phase))

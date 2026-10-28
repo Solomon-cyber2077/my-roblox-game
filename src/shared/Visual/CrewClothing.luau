@@ -14,19 +14,48 @@ function Visual.Preload(recipe: Config.Recipe): boolean
 	if not Rules.available(recipe) then
 		return false
 	end
-	local ids = { asset(recipe.shirt), asset(recipe.pants) }
+	local items: { Instance } = {}
+	local expected = {}
+	local function expect(id: number)
+		expected[tostring(id)] = false
+	end
+	local shirt = Instance.new("Shirt")
+	shirt.ShirtTemplate = asset(recipe.shirt)
+	expect(recipe.shirt)
+	table.insert(items, shirt)
+	local pants = Instance.new("Pants")
+	pants.PantsTemplate = asset(recipe.pants)
+	expect(recipe.pants)
+	table.insert(items, pants)
 	for _, spec in recipe.accessories do
-		table.insert(ids, asset(spec.mesh))
-		table.insert(ids, asset(spec.texture))
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshId = asset(spec.mesh)
+		mesh.TextureId = asset(spec.texture)
+		mesh.MeshType = Enum.MeshType.FileMesh
+		expect(spec.mesh)
+		expect(spec.texture)
+		table.insert(items, mesh)
 	end
 	local fetched = true
 	local ok = pcall(function()
-		ContentProvider:PreloadAsync(ids, function(_id, status)
+		ContentProvider:PreloadAsync(items, function(contentId, status)
+			local id = string.match(tostring(contentId), "%d+")
+			if id ~= nil and expected[id] ~= nil then
+				expected[id] = status == Enum.AssetFetchStatus.Success
+			end
 			if status ~= Enum.AssetFetchStatus.Success then
 				fetched = false
 			end
 		end)
 	end)
+	for _, item in items do
+		item:Destroy()
+	end
+	for _, loaded in expected do
+		if not loaded then
+			fetched = false
+		end
+	end
 	return ok and fetched
 end
 local function removeGenerated(character: Model)
@@ -78,7 +107,9 @@ function Visual.Apply(character: Model, recipe: Config.Recipe): Folder?
 		part.CanTouch = false
 		part.CanQuery = false
 		part.Massless = true
-		part.CFrame = target.CFrame * CFrame.new(spec.offset[1], spec.offset[2], spec.offset[3])
+		part.CFrame = target.CFrame
+			* CFrame.new(spec.offset[1], spec.offset[2], spec.offset[3])
+			* CFrame.Angles(0, math.rad(spec.yaw or 0), 0)
 		local mesh = Instance.new("SpecialMesh")
 		mesh.MeshType = Enum.MeshType.FileMesh
 		mesh.MeshId = asset(spec.mesh)
@@ -97,8 +128,9 @@ function Visual.Apply(character: Model, recipe: Config.Recipe): Folder?
 		for _, child in character:GetChildren() do
 			local garment = child:IsA("Shirt") or child:IsA("Pants") or child:IsA("ShirtGraphic")
 			local conflict = child:IsA("Accessory")
-				and child.AccessoryType ~= Enum.AccessoryType.Face
+				and child.AccessoryType ~= Enum.AccessoryType.Hat
 				and child.AccessoryType ~= Enum.AccessoryType.Hair
+				and child.AccessoryType ~= Enum.AccessoryType.Face
 			if garment or conflict then
 				child.Parent = originals
 			end

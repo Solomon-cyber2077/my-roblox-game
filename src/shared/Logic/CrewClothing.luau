@@ -39,6 +39,9 @@ function Rules.available(recipe: Config.Recipe?): boolean
 	end
 	local triangles = 0
 	for _, accessory in recipe.accessories do
+		if accessory.yaw ~= nil and not finite(accessory.yaw) then
+			return false
+		end
 		if not positiveInteger(accessory.mesh) or not positiveInteger(accessory.texture) then
 			return false
 		end
