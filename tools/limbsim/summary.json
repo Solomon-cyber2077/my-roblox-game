@@ -1,0 +1,364 @@
+{
+  "byStation": {
+    "CoalYard": {
+      "armless": 0,
+      "died": 23,
+      "returned": 0,
+      "sessions": 45
+    },
+    "Halt": {
+      "armless": 0,
+      "died": 17,
+      "returned": 0,
+      "sessions": 42
+    },
+    "Infirmary": {
+      "armless": 0,
+      "died": 20,
+      "returned": 0,
+      "sessions": 46
+    },
+    "Market": {
+      "armless": 0,
+      "died": 16,
+      "returned": 0,
+      "sessions": 33
+    },
+    "Minehead": {
+      "armless": 0,
+      "died": 13,
+      "returned": 0,
+      "sessions": 39
+    },
+    "PostTown": {
+      "armless": 0,
+      "died": 11,
+      "returned": 0,
+      "sessions": 36
+    },
+    "RailwayHotel": {
+      "armless": 0,
+      "died": 20,
+      "returned": 0,
+      "sessions": 35
+    },
+    "Schoolhouse": {
+      "armless": 0,
+      "died": 23,
+      "returned": 0,
+      "sessions": 45
+    },
+    "SignalWorks": {
+      "armless": 0,
+      "died": 15,
+      "returned": 0,
+      "sessions": 39
+    },
+    "Viaduct": {
+      "armless": 0,
+      "died": 19,
+      "returned": 0,
+      "sessions": 40
+    }
+  },
+  "note": "Simulated on the game's own rules (lib/LimbSim); not player or network data.",
+  "rescue": [
+    {
+      "device": "Laptop",
+      "own": false,
+      "persona": "mia",
+      "rate": 0.353,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": false,
+      "persona": "mia",
+      "rate": 0.383,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": true,
+      "persona": "mia",
+      "rate": 0.285,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "mia",
+      "rate": 0.215,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "mia",
+      "rate": 0.304,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": false,
+      "persona": "dev",
+      "rate": 0.948,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": true,
+      "persona": "dev",
+      "rate": 0.98,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": false,
+      "persona": "dev",
+      "rate": 0.825,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "dev",
+      "rate": 0.437,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "dev",
+      "rate": 0.859,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": true,
+      "persona": "ray",
+      "rate": 0.517,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": false,
+      "persona": "ray",
+      "rate": 0.581,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": false,
+      "persona": "ray",
+      "rate": 0.376,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "ray",
+      "rate": 0.237,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "ray",
+      "rate": 0.418,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": false,
+      "persona": "zoe",
+      "rate": 0.642,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": true,
+      "persona": "zoe",
+      "rate": 0.704,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": false,
+      "persona": "zoe",
+      "rate": 0.485,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "zoe",
+      "rate": 0.281,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "zoe",
+      "rate": 0.521,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": false,
+      "persona": "kai",
+      "rate": 0.546,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": false,
+      "persona": "kai",
+      "rate": 0.594,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": false,
+      "persona": "kai",
+      "rate": 0.398,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "kai",
+      "rate": 0.245,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": true,
+      "persona": "kai",
+      "rate": 0.424,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": false,
+      "persona": "sam",
+      "rate": 0.207,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": false,
+      "persona": "sam",
+      "rate": 0.209,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": false,
+      "persona": "sam",
+      "rate": 0.163,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": true,
+      "persona": "sam",
+      "rate": 0.121,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "sam",
+      "rate": 0.165,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": false,
+      "persona": "priya",
+      "rate": 0.68,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": false,
+      "persona": "priya",
+      "rate": 0.719,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": true,
+      "persona": "priya",
+      "rate": 0.503,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "priya",
+      "rate": 0.291,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "priya",
+      "rate": 0.532,
+      "rttMs": 100
+    },
+    {
+      "device": "Laptop",
+      "own": true,
+      "persona": "leo",
+      "rate": 0.564,
+      "rttMs": 90
+    },
+    {
+      "device": "Desktop",
+      "own": false,
+      "persona": "leo",
+      "rate": 0.634,
+      "rttMs": 50
+    },
+    {
+      "device": "Phone",
+      "own": false,
+      "persona": "leo",
+      "rate": 0.41,
+      "rttMs": 120
+    },
+    {
+      "device": "BudgetAndroid",
+      "own": false,
+      "persona": "leo",
+      "rate": 0.234,
+      "rttMs": 220
+    },
+    {
+      "device": "Tablet",
+      "own": false,
+      "persona": "leo",
+      "rate": 0.424,
+      "rttMs": 100
+    }
+  ],
+  "sessions": 400,
+  "totals": {
+    "armless": 0,
+    "beatHits": 46,
+    "beatMisses": 0,
+    "died": 177,
+    "drops": 0,
+    "escapes": 247,
+    "grabs": 437,
+    "heals": 81,
+    "leftBehind": 1,
+    "noRescuer": 153,
+    "rescueFails": 24,
+    "rescues": 13,
+    "returned": 0,
+    "tears": 13
+  }
+}

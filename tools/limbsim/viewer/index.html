@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LTO Limb Sim</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+	<h1>Last Train Out · Limb Sim</h1>
+	<select id="pick" title="Trace"></select>
+	<label class="file">Open file…<input id="file" type="file" accept=".json,application/json"></label>
+	<span id="source" class="muted"></span>
+</header>
+<p id="note" class="note"></p>
+<main>
+	<section id="stage">
+		<canvas id="map" width="900" height="640"></canvas>
+		<div id="controls">
+			<button id="play" title="Play / pause (Space)">▶</button>
+			<input id="scrub" type="range" min="0" max="1000" value="0" step="1">
+			<span id="clock">0.0s</span>
+			<select id="speed" title="Speed">
+				<option value="0.5">0.5×</option>
+				<option value="1">1×</option>
+				<option value="2" selected>2×</option>
+				<option value="4">4×</option>
+				<option value="8">8×</option>
+			</select>
+			<label><input id="trails" type="checkbox" checked> trails</label>
+		</div>
+		<div id="marks"></div>
+		<div id="legend"></div>
+	</section>
+	<aside>
+		<h2 id="title">No trace</h2>
+		<p id="meta" class="muted"></p>
+		<div id="problems" class="problems"></div>
+		<h3>Crew</h3>
+		<table id="crew"></table>
+		<h3>Events</h3>
+		<ol id="events"></ol>
+		<h3>Trace result</h3>
+		<p id="result" class="muted"></p>
+	</aside>
+</main>
+<section id="summary">
+	<h2>All sessions (summary.json)</h2>
+	<div id="summaryBody" class="muted">Not loaded.</div>
+</section>
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
