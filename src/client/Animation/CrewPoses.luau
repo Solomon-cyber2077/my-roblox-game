@@ -405,4 +405,68 @@ function CrewPoses.injured(
 	return out
 end
 
+--[[
+	The rescuer braced to tear a crewmate free. side: where the victim's arm is as the rescuer
+	sees it (LEFT/RIGHT). u: 0..1 across the sequence. tug: 0..1, rising and falling once a beat.
+	A lean in to take hold, the weight back on the rear leg, a sharp tug each beat and a stagger
+	back as it gives. Blends in from `base`; the RootJoint only turns.
+]]
+function CrewPoses.rescuePull(base: Pose, side: number, u: number, tug: number): Pose
+	local out = table.clone(base)
+	local w = smoothstep(0, 0.1, u)
+	local reach = smoothstep(0, 0.3, u)
+	local brace = smoothstep(0.2, 0.4, u)
+	local recoil = smoothstep(0.85, 1, u)
+	local pull = clamp01(tug) * (1 - recoil)
+	-- forward to take hold, then back on the heels, further back on every tug and as it gives
+	local lean = 0.18 * reach * (1 - brace) - 0.28 * brace - 0.14 * pull - 0.12 * recoil
+	local yaw = -side * 0.22 * reach * (1 - 0.4 * recoil)
+	-- both hands ahead and a little up at the arm; each tug draws them down and in
+	local lift = 1.7 - 0.35 * pull - 0.5 * recoil
+	local near = limb(side, lift, 0.1, 0.25 * reach)
+	local far = limb(-side, lift - 0.1, 0.1, -0.3 * reach)
+	-- the hips follow the lean so the feet stay planted: the arm's side leads, the other braces
+	local front = limb(side, lean + 0.45 * brace, 0.06)
+	local rear = limb(-side, lean - 0.3 * brace - 0.1 * pull - 0.15 * recoil, 0.08)
+	local rightArm, leftArm = near, far
+	local rightLeg, leftLeg = front, rear
+	if side == LEFT then
+		rightArm, leftArm = far, near
+		rightLeg, leftLeg = rear, front
+	end
+	local id = CFrame.identity
+	set(
+		out,
+		(base["Right Shoulder"] or id):Lerp(rightArm, w),
+		(base["Left Shoulder"] or id):Lerp(leftArm, w),
+		(base["Right Hip"] or id):Lerp(rightLeg, w),
+		(base["Left Hip"] or id):Lerp(leftLeg, w)
+	)
+	out.RootJoint = (base.RootJoint or id):Lerp(body(lean, side * 0.06 * brace, yaw), w)
+	local nod = 0.12 * reach + 0.1 * pull - 0.2 * recoil
+	out.Neck = (base.Neck or id):Lerp(head(nod, 0, -side * 0.1 * reach), w)
+	return out
+end
+
+--[[
+	The held victim's counter-pull: the arm on `side` (LEFT/RIGHT, their own) stretched to the
+	rescuer, the shoulder hauled up tighter as u (0..1) rises, the torso turned to lead with it.
+	The legs and the RootJoint's position stay the Hollow's hold.
+]]
+function CrewPoses.rescueReach(base: Pose, side: number, u: number): Pose
+	local out = table.clone(base)
+	local w = smoothstep(0, 0.15, u)
+	local tension = smoothstep(0.1, 1, u)
+	local tremor = math.sin(u * 40) * 0.04 * tension
+	local key = if side == LEFT then "Left Shoulder" else "Right Shoulder"
+	local arm = limb(side, 1.45 + 0.3 * tension + tremor, 0.08 + 0.12 * tension, 0.05)
+	out[key] = (base[key] or CFrame.identity):Lerp(arm, w)
+	-- turned so the reaching shoulder leads (the head turns back to the rescuer); rotation only,
+	-- so the root stays where the hold put it
+	out.RootJoint = (base.RootJoint or CFrame.identity)
+		* body(0.08 * tension * w, -side * 0.05 * tension * w, side * 0.2 * w)
+	out.Neck = (base.Neck or CFrame.identity):Lerp(head(-0.1 * tension, 0, -side * 0.25), w)
+	return out
+end
+
 return CrewPoses

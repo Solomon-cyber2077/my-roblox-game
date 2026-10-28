@@ -63,6 +63,56 @@ type Active = {
 local active: Active? = nil
 type Motion = { arm: string?, torn: number?, restored: number?, died: number? }
 local motions: { [Model]: Motion } = setmetatable({}, { __mode = "k" }) :: any
+-- every client's view of the rescues in progress, for the pre-tear poses (id -> who and when)
+type Pull = { victim: number, rescuer: number, startsAt: number, endsAt: number, beats: { number } }
+local pulls: { [number]: Pull } = {}
+
+-- 1 at a beat, falling away within a tenth of a second either side: the rescuer's tug
+local function tugAt(pull: Pull, now: number): number
+	local tug = 0
+	for _, offset in pull.beats do
+		local d = (now - (pull.startsAt + offset)) / 0.08
+		tug = math.max(tug, math.exp(-d * d))
+	end
+	return tug
+end
+
+-- -1 or 1: which side of `from` (in its own frame) `to` is on
+local function sideOf(from: Model, to: Model): number
+	local a = from:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local b = to:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if a == nil or b == nil then
+		return 1
+	end
+	return if a.CFrame:PointToObjectSpace(b.Position).X >= 0 then 1 else -1
+end
+
+-- The pre-tear choreography (CrewPoses.rescuePull / rescueReach) while a rescue runs.
+local function pullPose(character: Model, base: CrewPoses.Pose, now: number): CrewPoses.Pose?
+	local player = Players:GetPlayerFromCharacter(character)
+	if player == nil then
+		return nil
+	end
+	for id, pull in pulls do
+		if now > pull.endsAt + 0.5 then
+			pulls[id] = nil
+		else
+			local u = math.clamp((now - pull.startsAt) / math.max(pull.endsAt - pull.startsAt, 0.01), 0, 1)
+			local victim = Players:GetPlayerByUserId(pull.victim)
+			local rescuer = Players:GetPlayerByUserId(pull.rescuer)
+			local other = if player.UserId == pull.victim
+				then rescuer and rescuer.Character
+				elseif player.UserId == pull.rescuer then victim and victim.Character
+				else nil
+			if other and player.UserId == pull.victim then
+				return CrewPoses.rescueReach(base, sideOf(character, other), u)
+			elseif other then
+				return CrewPoses.rescuePull(base, sideOf(character, other), u, tugAt(pull, now))
+			end
+		end
+	end
+	return nil
+end
 local warningCharacter: Model? = nil
 local warningDeadline: number? = nil
 local nextWarning = 0
@@ -71,6 +121,10 @@ function InjuryController.Pose(character: Model, base: CrewPoses.Pose, now: numb
 	if ReplicatedStorage:GetAttribute("LimbLoss") ~= true then
 		motions[character] = nil
 		return base
+	end
+	local pulled = if next(pulls) then pullPose(character, base, now) else nil
+	if pulled then
+		return pulled
 	end
 	local missing = character:GetAttribute("MissingArms")
 	if typeof(missing) ~= "string" then
@@ -322,6 +376,13 @@ local function onFx(kind: string, data: any)
 			)
 		end
 	elseif kind == "RescueStart" and type(data) == "table" then
+		pulls[data.id] = {
+			victim = data.victim,
+			rescuer = data.rescuer,
+			startsAt = data.startsAt,
+			endsAt = data.endsAt,
+			beats = data.beats,
+		}
 		if data.rescuer == me then
 			startRescue(data)
 		elseif data.victim == me then
@@ -336,6 +397,7 @@ local function onFx(kind: string, data: any)
 			end
 		end
 	elseif kind == "RescueEnd" and type(data) == "table" then
+		pulls[data.id] = nil
 		local session = active
 		if session and session.id == data.id then
 			stopRescue()
