@@ -274,7 +274,11 @@ local function onFx(kind: string, data: { [string]: any }?)
 	elseif kind == "Eliminated" then
 		Spectate.showElimination(d.cause, d.canRescue == true)
 		Registry.CameraController.Shake(0.5)
-		audio("Eliminated")
+		-- Humanoid.Died owns the local death cue. The server event has no ordering
+		-- guarantee, so only eliminations without a physical death use this cue.
+		if d.cause == "LeftBehind" then
+			audio("Eliminated")
+		end
 	elseif kind == "Rescued" then
 		Overlay.blink(0.4)
 		task.delay(0.8, function()

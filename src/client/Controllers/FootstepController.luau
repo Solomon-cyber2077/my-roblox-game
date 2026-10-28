@@ -31,10 +31,47 @@ local FootstepController = {}
 type Walker = { nextAt: number, count: number }
 
 local walkers: { [Model]: Walker } = {}
+local deathBound: { [Model]: boolean } = {}
+local deathWatch: { [Model]: RBXScriptConnection } = {}
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 local snowy = false
 local breath = 0 -- 0..1: how hard the local player is breathing
+
+local function suppressDefaultDeathSound(instance: Instance)
+	if not instance:IsA("Sound") then
+		return
+	end
+	local name = string.lower(instance.Name)
+	if name == "died" or name == "death" or name == "deathsound" then
+		instance:Stop()
+		instance.SoundId = ""
+		instance.Volume = 0
+	end
+end
+
+local function bindDeath(character: Model)
+	if deathBound[character] then
+		return
+	end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid == nil then
+		return
+	end
+	deathBound[character] = true
+	for _, descendant in character:GetDescendants() do
+		suppressDefaultDeathSound(descendant)
+	end
+	deathWatch[character] = character.DescendantAdded:Connect(suppressDefaultDeathSound)
+	humanoid.Died:Connect(function()
+		local root = character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local position = if root then root.Position else nil
+		local audio = Registry.AudioController
+		if audio then
+			audio.Play("Death", position)
+		end
+	end)
+end
 
 local function station(): Model?
 	for _, child in Workspace:GetChildren() do
@@ -127,6 +164,9 @@ function FootstepController.Start()
 			local characters: { Instance } = {}
 			for _, player in Players:GetPlayers() do
 				if player.Character then
+					bindDeath(player.Character)
+				end
+				if player.Character then
 					table.insert(characters, player.Character)
 				end
 			end
@@ -140,11 +180,19 @@ function FootstepController.Start()
 						walkers[character] = nil
 					end
 				end
+				for character, connection in deathWatch do
+					if character.Parent == nil then
+						connection:Disconnect()
+						deathWatch[character] = nil
+						deathBound[character] = nil
+					end
+				end
 			end
 			for _, character in characters do
 				local model = character :: Model
 				local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
 				local humanoid = model:FindFirstChildOfClass("Humanoid")
+				bindDeath(model)
 				if root and humanoid and humanoid.Health > 0 then
 					step(model, root, humanoid, now)
 				end

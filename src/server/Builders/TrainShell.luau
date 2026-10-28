@@ -471,6 +471,11 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 			-- the eave in long stripes, so it is plain matte roof colour
 			if piece.livery == "Roof" then
 				part.Material = Enum.Material.SmoothPlastic
+			elseif piece.livery == "Trim" then
+				-- The shared atlas paints pale bands across doorway trim. Keep the
+				-- moulded geometry in aged brass instead of baking those stripes back in.
+				part.Color = CORNICE_GILT
+				part.Material = Enum.Material.Metal
 			else
 				look(looks, piece.look, part)
 			end

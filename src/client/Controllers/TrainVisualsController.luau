@@ -475,11 +475,14 @@ function TrainVisualsController.Start()
 			end
 			local doorsOpen = rig.model:GetAttribute("DoorsOpen") == true
 			rig.doorOpen = MathX.approach(rig.doorOpen, if doorsOpen then 1 else 0, dt * 1.6)
+			-- All fittings share the train's slide axis, including rotated diagonal braces.
+			local origin = rig.model:GetAttribute("Origin")
+			local slideAxis = (if typeof(origin) == "CFrame" then origin else rig.model:GetPivot()).RightVector
 			for _, door in rig.doors do
 				table.insert(spinParts, door.part)
 				table.insert(
 					spinFrames,
-					door.base * CFrame.new(door.slide * MathX.smoothstep(0, 1, rig.doorOpen), 0, 0)
+					door.base + slideAxis * (door.slide * MathX.smoothstep(0, 1, rig.doorOpen))
 				)
 			end
 			local fittings = rig.cabFittings

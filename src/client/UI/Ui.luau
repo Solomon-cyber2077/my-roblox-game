@@ -160,16 +160,15 @@ function Ui.text(props: TextProps): TextLabel
 	})
 end
 
--- Soot-iron plate in a blackened-brass rim: the baked panel nine-slice over BackgroundColor3,
--- so callers recolour the material (leather, lacquer) and keep the shading and the rim.
+-- Warm ticket-office leather in a brass rim, shared by lobby cards, prompts and the run HUD.
 function Ui.panel(props: { [any]: any }): ImageLabel
 	local frame = Ui.new("ImageLabel", props)
-	frame.BackgroundColor3 = props.BackgroundColor3 or Theme.Color.steel
+	frame.BackgroundColor3 = props.BackgroundColor3 or Theme.Color.leather
 	frame.BackgroundTransparency = props.BackgroundTransparency or 0.04
 	frame.BorderSizePixel = 0
-	frame.Image = Theme.Image.panel.id
+	frame.Image = Theme.Image.cardLeather.id
 	frame.ScaleType = Enum.ScaleType.Slice
-	frame.SliceCenter = Theme.Image.panel.slice
+	frame.SliceCenter = Theme.Image.cardLeather.slice
 	frame.SliceScale = props.SliceScale or Theme.Slice.panel
 	Ui.corner().Parent = frame
 	return frame

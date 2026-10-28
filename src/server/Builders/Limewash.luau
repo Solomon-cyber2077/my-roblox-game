@@ -9,10 +9,8 @@
 	    darkened by the grade's grime (Surfaces.Grime). No longer called (2026-10-22): the white
 	    bands read as clutter on every crate and cabinet (owner's phone screenshots; Prompt 6
 	    removes the station path). Kept for the visibility harness until Prompt 6 lands.
-	  train(model, origin): a pale lining along the foot and the waist of the platform side's lower
-	    panels, and the brass there polished. Kept out of TrainBuilder (the exterior rework
-	    owns it); TrainService and the harnesses call it after TrainBuilder.build. The lining
-	    carries no Livery attribute, so a livery never repaints it.
+	train(model, origin): polishes the brass on the platform side. Decorative pale foot and waist
+	strips were removed because they read as repeated white trim across every car.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -258,7 +256,6 @@ end
 -- brass. `origin` is the frame TrainBuilder.build was given. Returns how many parts it added.
 function Limewash.train(model: Model, origin: CFrame): number
 	local spec = Surfaces.Train
-	local lining = Kit.rgb(spec.lining)
 	local brassFrom = Kit.rgb(spec.brassFrom)
 	local function localBox(part: BasePart): (Vector3, Vector3)
 		local cf = origin:ToObjectSpace(part.CFrame)
@@ -283,37 +280,9 @@ function Limewash.train(model: Model, origin: CFrame): number
 		if not part:IsA("BasePart") or part.Name == "Lining" then
 			continue
 		end
-		local lo, hi = localBox(part)
+		local _, hi = localBox(part)
 		if part.Color == brassFrom and hi.Z >= side - 0.1 then
 			part.Color = Kit.rgb(spec.brass)
-		end
-		-- the lower body panels: collidable, standing on the floor, face flush with the side
-		if
-			part.CanCollide
-			and math.abs(hi.Z - side) < 0.05
-			and part.Material ~= Enum.Material.Glass
-			and hi.Y - lo.Y >= 2
-			and math.abs(lo.Y) < 0.05
-		then
-			local x = (lo.X + hi.X) / 2
-			local bands =
-				{ { y = lo.Y + spec.foot / 2, h = spec.foot }, { y = hi.Y - spec.waist / 2, h = spec.waist } }
-			for _, band in bands do
-				local strip = Kit.block(
-					part.Parent,
-					Vector3.new(hi.X - lo.X, band.h, spec.thickness),
-					origin * CFrame.new(x, band.y, side + spec.thickness / 2 + 0.01),
-					lining,
-					{
-						material = Enum.Material.SmoothPlastic,
-						collide = false,
-						shadow = false,
-						name = "Lining",
-					}
-				)
-				Kit.weld(strip, part)
-				count += 1
-			end
 		end
 	end
 	return count

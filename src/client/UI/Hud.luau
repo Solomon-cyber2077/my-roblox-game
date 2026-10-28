@@ -999,16 +999,16 @@ function Hud.mount(gui: ScreenGui)
 		-- on a phone the empty wells are faint, so an empty backpack is not a row of boxes
 		local faint = gui:GetAttribute("Compact") == true
 		for i = 1, capacity do
-			-- an empty slot: a sunken soot well in a blackened-brass bezel
+			-- an empty slot: a sunken leather well in a blackened-brass bezel
 			local cell = Ui.new("ImageLabel", {
 				Name = "Cell",
 				Size = UDim2.fromOffset(CELL, CELL),
 				Position = UDim2.fromOffset((i - 1) * (CELL + GAP), 0),
 				BackgroundColor3 = Theme.Color.steel,
 				BackgroundTransparency = if faint then 0.8 else 0.2,
-				Image = Theme.Image.panel.id,
+				Image = Theme.Image.cardLeather.id,
 				ScaleType = Enum.ScaleType.Slice,
-				SliceCenter = Theme.Image.panel.slice,
+				SliceCenter = Theme.Image.cardLeather.slice,
 				SliceScale = 0.16,
 				ImageTransparency = if faint then 0.75 else 0.1,
 				Parent = backpack,

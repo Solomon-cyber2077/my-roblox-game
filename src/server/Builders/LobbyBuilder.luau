@@ -325,9 +325,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	-- black ground far under the hall, so no gap or opening shows the grey void
 	decor(Vector3.new(2 * HALF_X + 400, 1, 600), at(0, -20, 0), C.void, Enum.Material.SmoothPlastic)
 
-	-- Platform edge: coping, the whitewashed line (a cool white, so the lamps leave it white) and the brick face
+	-- Platform edge: stone coping and the brick face. The decorative whitewashed line was removed.
 	block(Vector3.new(2 * HALF_X, 0.3, 1.4), at(0, 0.15, EDGE_Z + 0.7), C.stone, Enum.Material.Concrete)
-	decor(Vector3.new(2 * HALF_X, 0.06, 0.7), at(0, 0.03, EDGE_Z + 2.4), Color3.fromRGB(192, 202, 208))
 	block(Vector3.new(2 * HALF_X, 7.25, 0.6), at(0, -7.25 / 2, EDGE_Z - 0.3), C.brick, Enum.Material.Brick)
 
 	-- The display road -----------------------------------------------------------------------------
@@ -458,9 +457,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 		plinth:SetAttribute("LobbySurface", "Stone")
 	end)
-	-- a dado of green glazed tiles above the plinth, capped by a row of cream bullnose, on the back
-	-- wall and along both end walls of the platform (a hair off the brick, so nothing set against
-	-- the wall shares its plane)
+	-- A dado of green glazed tiles above the plinth on the back wall and both end walls.
+	-- The decorative cream bullnose caps were removed with the other white trim.
 	local DADO_LOW, DADO_TOP = 1.2, 5.2
 	backStrip(function(x0, x1)
 		local dado = decor(
@@ -470,13 +468,6 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.Material.CeramicTiles
 		)
 		dado:SetAttribute("LobbySurface", "Tile")
-		local cap = decor(
-			Vector3.new(x1 - x0, 0.4, 0.3),
-			at((x0 + x1) / 2, DADO_TOP + 0.2, BACK_Z - 0.17),
-			C.SHELL_CREAM,
-			Enum.Material.CeramicTiles
-		)
-		cap:SetAttribute("LobbySurface", "Tile")
 	end)
 	for _, side in { -1, 1 } do
 		local dado = decor(
@@ -486,13 +477,6 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.Material.CeramicTiles
 		)
 		dado:SetAttribute("LobbySurface", "Tile")
-		local cap = decor(
-			Vector3.new(0.3, 0.4, BACK_Z - 0.32 - EDGE_Z),
-			at(side * (HALF_X - 0.17), DADO_TOP + 0.2, (EDGE_Z + BACK_Z - 0.32) / 2),
-			C.SHELL_CREAM,
-			Enum.Material.CeramicTiles
-		)
-		cap:SetAttribute("LobbySurface", "Tile")
 	end
 	for _, x in WIN_XS do
 		local midY, height = (WIN_LOW + WIN_HIGH) / 2, WIN_HIGH - WIN_LOW
@@ -546,20 +530,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			Enum.Material.Limestone
 		)
 	end
-	-- High plaster panels, a stone string course and cornice leave all signs and windows clear.
-	decor(
-		Vector3.new(2 * HALF_X, 0.65, 0.55),
-		at(0, 21.75, BACK_Z - 0.3),
-		C.SHELL_CREAM,
-		Enum.Material.Limestone
-	)
+	-- High plaster panels remain; the pale horizontal trim strips are omitted.
 	for _, side in { -1, 1 } do
-		decor(
-			Vector3.new(86, 0.45, 0.4),
-			at(side * 68, 21.0, BACK_Z - 0.23),
-			C.SHELL_CREAM,
-			Enum.Material.Limestone
-		)
 		decor(
 			Vector3.new(15, 6.4, 0.12),
 			at(side * 45, 16.2, BACK_Z - 0.08),

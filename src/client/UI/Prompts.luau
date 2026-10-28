@@ -65,14 +65,14 @@ local function build(
 		chip.BackgroundColor3 = Theme.Color.steelLight
 		Ui.stroke(Theme.Color.brass, 2, 0.05).Parent = chip
 	end
-	-- an iron plate in a blackened-brass rim, like every other panel
+	-- a warm leather plate in a blackened-brass rim, matching the other panels
 	Ui.new("ImageLabel", {
 		Name = "Plate",
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
-		Image = Theme.Image.panel.id,
+		Image = Theme.Image.cardLeather.id,
 		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Theme.Image.panel.slice,
+		SliceCenter = Theme.Image.cardLeather.slice,
 		SliceScale = 0.2,
 		ZIndex = 0,
 		Parent = chip,

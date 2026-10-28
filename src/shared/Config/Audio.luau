@@ -80,6 +80,17 @@ local Cues: { [string]: Cue } = {
 	FlareBurst = { id = 9114361763, volume = 0.7, spatial = true, maxSeconds = 3 },
 	Toll = { id = 9113804436, volume = 0.35, maxSeconds = 4 },
 	Eliminated = { id = 9126213744, volume = 0.7, mix = "Feedback" },
+	-- A low, mournful loss cue (the same cleared library recording as Eliminated,
+	-- slowed into a dark bell-like fall; the client adds the character's position).
+	Death = {
+		id = 9126213744,
+		volume = 0.82,
+		maxSeconds = 4.5,
+		pitch = 0.62,
+		spatial = true,
+		rollOff = 90,
+		mix = "Cues",
+	},
 	Rumble = { id = 9113218938, volume = 0.7, spatial = true, maxSeconds = 2.5 },
 	Thunder = { id = 9113218938, volume = 0.55, maxSeconds = 4, pitch = 0.62 },
 	Collapse = { id = 9118582680, volume = 0.9, spatial = true, maxSeconds = 3 },

@@ -69,6 +69,8 @@ local HUNTING = { Hunt = true, Windup = true, Grab = true, Recover = true }
 local LAMP_TAG = "LTO_BuildingLamp"
 
 type StationLight = { light: Light, brightness: number, range: number, building: boolean }
+type LanternEntry = { light: PointLight, character: Model }
+type TrainVolume = { cframe: CFrame, half: Vector3 }
 
 local chase = Visibility.chaseStart()
 local look: Visibility.ChaseLook = Visibility.chaseLook(chase, 0)
@@ -80,9 +82,11 @@ local cone: SpotLight? = nil
 local rims: { Highlight } = {}
 local rimStation: Model? = nil
 local rimTargets: { Model } = {}
-local lanterns: { PointLight } = {}
+local lanterns: { LanternEntry } = {}
 local ownLantern: PointLight? = nil
 local lanternColor = WARM
+local trainVolumes: { TrainVolume } = {}
+local displayTrainVolumes: { TrainVolume } = {}
 
 local function performance(): boolean
 	return Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
@@ -120,13 +124,70 @@ local function scan()
 	for _, player in Players:GetPlayers() do
 		local light = player.Character and lanternLight(player.Character)
 		if light then
-			table.insert(lanterns, light)
+			table.insert(lanterns, { light = light, character = player.Character :: Model })
 			if player == Players.LocalPlayer then
 				ownLantern = light
 				lanternColor = light.Color
 			end
 		end
 	end
+end
+
+local function refreshTrainVolumes()
+	local folder = ReplicatedStorage:FindFirstChild("TrainVolumes")
+	if folder then
+		local nextVolumes: { TrainVolume } = {}
+		for _, name in { "Car", "Cab" } do
+			local cframe = folder:GetAttribute(name .. "CFrame")
+			local size = folder:GetAttribute(name .. "Size")
+			if typeof(cframe) == "CFrame" and typeof(size) == "Vector3" then
+				table.insert(nextVolumes, { cframe = cframe, half = size * 0.5 })
+			end
+		end
+		if #nextVolumes == 2 then
+			trainVolumes = nextVolumes
+		end
+	end
+	table.clear(displayTrainVolumes)
+	if #trainVolumes == 2 then
+		local live = Workspace:FindFirstChild("Train")
+		local hall = Workspace:FindFirstChild("DepotHall")
+		local display = hall and hall:FindFirstChild("DisplayTrain")
+		local liveOrigin = live and live:IsA("Model") and live:GetAttribute("Origin")
+		local displayOrigin = display and display:IsA("Model") and display:GetAttribute("Origin")
+		if typeof(liveOrigin) == "CFrame" and typeof(displayOrigin) == "CFrame" then
+			for _, volume in trainVolumes do
+				table.insert(displayTrainVolumes, {
+					cframe = displayOrigin * liveOrigin:ToObjectSpace(volume.cframe),
+					half = volume.half,
+				})
+			end
+		end
+	end
+end
+
+local function insideTrain(position: Vector3): boolean
+	for _, volume in trainVolumes do
+		local localPosition = volume.cframe:PointToObjectSpace(position)
+		if
+			math.abs(localPosition.X) <= volume.half.X
+			and math.abs(localPosition.Y) <= volume.half.Y
+			and math.abs(localPosition.Z) <= volume.half.Z
+		then
+			return true
+		end
+	end
+	for _, volume in displayTrainVolumes do
+		local localPosition = volume.cframe:PointToObjectSpace(position)
+		if
+			math.abs(localPosition.X) <= volume.half.X
+			and math.abs(localPosition.Y) <= volume.half.Y
+			and math.abs(localPosition.Z) <= volume.half.Z
+		then
+			return true
+		end
+	end
+	return false
 end
 
 local function coneFor(root: BasePart): SpotLight
@@ -385,6 +446,7 @@ function VisibilityController.Start()
 	local nextRim = 0
 	local function frame()
 		local clock = os.clock()
+		refreshTrainVolumes()
 		if clock >= nextScan then
 			nextScan = clock + SCAN_SECONDS
 			scan()
@@ -400,6 +462,7 @@ function VisibilityController.Start()
 		local character = Players.LocalPlayer.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		local inLobby = root == nil or (root.Position - LOBBY).Magnitude < LOBBY_RADIUS
+		local playerInsideTrain = root ~= nil and insideTrain(root.Position)
 
 		-- the chase
 		local hunted = root ~= nil and not inLobby and Session.isRunActive() and chased(root :: BasePart)
@@ -414,8 +477,14 @@ function VisibilityController.Start()
 		local reach = radius * MathX.lerp(1, CHASE.LightRange, look.dim)
 		local simple = performance()
 		local eye = Workspace.CurrentCamera.CFrame.Position
-		for _, light in lanterns do
+		for _, entry in lanterns do
+			local light = entry.light
 			if light:GetAttribute("PayrollAttached") then
+				light.Enabled = false
+				continue
+			end
+			local ownerRoot = entry.character:FindFirstChild("HumanoidRootPart")
+			if ownerRoot and ownerRoot:IsA("BasePart") and insideTrain(ownerRoot.Position) then
 				light.Enabled = false
 				continue
 			end
@@ -429,7 +498,12 @@ function VisibilityController.Start()
 					or (lens.Position - eye).Magnitude <= BUDGET.LanternCull
 			end
 		end
-		if root and not inLobby and not root.Parent:GetAttribute("PayrollCarriers") then
+		if
+			root
+			and not inLobby
+			and not playerInsideTrain
+			and not root.Parent:GetAttribute("PayrollCarriers")
+		then
 			local light = coneFor(root)
 			light.Enabled = true
 			light.Color = lanternColor

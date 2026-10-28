@@ -46,7 +46,7 @@ local label: TextLabel? = nil
 local notice: TextLabel? = nil
 local noticeAt = -math.huge -- os.clock() the Last Light notice started
 local chevronFolder: Folder? = nil
-type Chevron = { part: BasePart, gui: SurfaceGui, paint: CanvasGroup }
+type Chevron = { part: BasePart, gui: SurfaceGui, strokes: { { frame: Frame, transparency: number } } }
 local chevrons: { Chevron } = {}
 
 local function buildPlate(slot: Frame)
@@ -104,13 +104,17 @@ local function chevron(seed: number): Chevron
 	gui.CanvasSize = Vector2.new(CANVAS, CANVAS)
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
 	gui.LightInfluence = 1 -- paint, lit by the lamps, never glowing
+	gui.Brightness = 1
 	gui.ClipsDescendants = true
 	gui.Adornee = part
 	gui.Parent = part
-	local paint = Instance.new("CanvasGroup")
+	-- Plain transparent frames avoid a composited rectangular canvas on the floor.
+	local paint = Instance.new("Frame")
 	paint.Size = UDim2.fromScale(1, 1)
 	paint.BackgroundTransparency = 1
+	paint.BorderSizePixel = 0
 	paint.Parent = gui
+	local strokes = {}
 	-- the point sits near the canvas's top edge (turned to lead in updateChevrons)
 	for _, side in { -1, 1 } do
 		local arm = Instance.new("Frame")
@@ -121,6 +125,7 @@ local function chevron(seed: number): Chevron
 		arm.BackgroundColor3 = PAINT
 		arm.BorderSizePixel = 0
 		arm.Parent = paint
+		table.insert(strokes, { frame = arm, transparency = 0 })
 		local fade = Instance.new("UIGradient")
 		fade.Transparency = FEATHER -- soft across the stroke, as a can leaves it
 		fade.Parent = arm
@@ -136,11 +141,12 @@ local function chevron(seed: number): Chevron
 		speck.BackgroundTransparency = rng:NextNumber(0.45, 0.75)
 		speck.BorderSizePixel = 0
 		speck.Parent = paint
+		table.insert(strokes, { frame = speck, transparency = speck.BackgroundTransparency })
 		local round = Instance.new("UICorner")
 		round.CornerRadius = UDim.new(0.5, 0)
 		round.Parent = speck
 	end
-	return { part = part, gui = gui, paint = paint }
+	return { part = part, gui = gui, strokes = strokes }
 end
 
 local function buildChevrons()
@@ -294,7 +300,10 @@ local function updateChevrons(on: boolean, root: BasePart?)
 			-- a Top-face canvas's top edge lies along the part's -X: turn it so the point leads
 			made.part.CFrame = CFrame.lookAt(at, at + look) * CFrame.Angles(0, math.rad(-90), 0)
 			-- the farther ones fade
-			made.paint.GroupTransparency = 0.1 + 0.6 * (index - 1) / A.Count
+			local fade = 0.1 + 0.6 * (index - 1) / A.Count
+			for _, stroke in made.strokes do
+				stroke.frame.BackgroundTransparency = 1 - (1 - stroke.transparency) * (1 - fade)
+			end
 		end
 	end
 	folder.Parent = Workspace.CurrentCamera

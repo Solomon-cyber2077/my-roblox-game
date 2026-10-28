@@ -14,7 +14,7 @@ local Theme = {}
 
 Theme.Color = table.freeze({
 	-- dark material
-	steel = Color3.fromRGB(17, 18, 21), -- soot iron
+	steel = Color3.fromRGB(44, 25, 19), -- warm worn leather beneath panel art
 	steelLight = Color3.fromRGB(38, 34, 32), -- raised iron, warm in the lamp
 	steelLine = Color3.fromRGB(78, 64, 50), -- engraved rule (blackened brass)
 	leather = Color3.fromRGB(52, 16, 15), -- oxblood
@@ -35,7 +35,7 @@ Theme.Color = table.freeze({
 	go = Color3.fromRGB(132, 190, 128),
 	goInk = Color3.fromRGB(30, 82, 46), -- success printed on card stock (go is too pale to read there)
 	caution = Color3.fromRGB(232, 158, 60),
-	sky = Color3.fromRGB(120, 186, 196),
+	sky = Color3.fromRGB(196, 154, 78),
 	white = Color3.fromRGB(232, 220, 196), -- bone: text on dark, never a fill
 	bone = Color3.fromRGB(232, 211, 168), -- lamplit text on the ticket-office pieces
 	boneDim = Color3.fromRGB(190, 168, 128), -- secondary text there; still reads on leather
@@ -114,14 +114,14 @@ Theme.Slice = table.freeze({ panel = 0.22, panelLarge = 0.3, card = 0.35 })
 Theme.Rarity = table.freeze({
 	Standard = Color3.fromRGB(160, 150, 134),
 	Fine = Color3.fromRGB(132, 190, 128),
-	Rare = Color3.fromRGB(110, 170, 236),
+	Rare = Color3.fromRGB(224, 162, 74),
 	Legendary = Color3.fromRGB(232, 182, 84),
 })
 
 Theme.Status = table.freeze({
 	Aboard = { text = "ABOARD", color = Color3.fromRGB(132, 190, 128) },
 	Afield = { text = "AFIELD", color = Color3.fromRGB(224, 162, 74) },
-	Straggler = { text = "RUNNING", color = Color3.fromRGB(120, 196, 220) },
+	Straggler = { text = "RUNNING", color = Color3.fromRGB(224, 162, 74) },
 	Eliminated = { text = "LOST", color = Color3.fromRGB(214, 64, 48) },
 	Lobby = { text = "DEPOT", color = Color3.fromRGB(168, 152, 128) },
 })
