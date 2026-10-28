@@ -1,0 +1,32 @@
+local CameraFacing = require(Shared.Logic.CameraFacing)
+
+describe("CameraFacing", function()
+	it("reads the heading of a look vector as CFrame.Angles yaw", function()
+		expect(CameraFacing.yaw(0, -1)).toBe(0)
+		expect(math.abs((CameraFacing.yaw(-1, 0) :: number) - math.pi / 2) < 1e-9).toBe(true)
+		expect(math.abs(math.abs(CameraFacing.yaw(0, 1) :: number) - math.pi) < 1e-9).toBe(true)
+	end)
+
+	it("has no heading looking straight up or down", function()
+		expect(CameraFacing.yaw(0, 0)).toBe(nil)
+		expect(CameraFacing.yaw(0.0001, 0.0001)).toBe(nil)
+	end)
+
+	it("turns the short way across the seam", function()
+		local d = CameraFacing.delta(math.pi - 0.1, -math.pi + 0.1)
+		expect(math.abs(d - 0.2) < 1e-9).toBe(true)
+		expect(math.abs(CameraFacing.delta(0.1, -0.1) + 0.2) < 1e-9).toBe(true)
+	end)
+
+	it("closes the gap without snapping and the same at any frame rate", function()
+		local once = CameraFacing.turn(0, 1, 0.1, 18)
+		expect(once > 0.8 and once < 1).toBe(true)
+		local twice = CameraFacing.turn(CameraFacing.turn(0, 1, 0.05, 18), 1, 0.05, 18)
+		expect(math.abs(once - twice) < 1e-9).toBe(true)
+	end)
+
+	it("holds still with no time or no rate", function()
+		expect(CameraFacing.turn(0.5, 2, 0, 18)).toBe(0.5)
+		expect(CameraFacing.turn(0.5, 2, 0.1, 0)).toBe(0.5)
+	end)
+end)

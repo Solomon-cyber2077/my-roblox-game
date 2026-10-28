@@ -14,7 +14,7 @@ return {
 		Hud = "Show",
 		Visibility = tostring(Tuning.Visibility.Default), -- studs, as a string like every save key
 		Ambience = "Full", -- the drone and ambience volume (AmbienceLevels)
-		Camera = "Locked", -- Locked: third person at Tuning.Camera.LockZoom; Free: zoom in and out
+		Camera = "Locked", -- Locked: third person at Tuning.Camera.LockZoom, body faces the view; Free: zoom in and out
 	},
 	-- the Ambience group's volume for each choice (AudioController); warnings, cues and footsteps
 	-- are not in it, so they stay at full

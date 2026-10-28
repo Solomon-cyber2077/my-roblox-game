@@ -66,13 +66,25 @@ local function moving(): boolean
 	return humanoid.MoveDirection.Magnitude > 0.1 or root.AssemblyLinearVelocity.Magnitude > MOVING
 end
 
+local orbiting: () -> boolean = function()
+	return false
+end
+
 function LobbyIdleController.Init() end
+
+-- Whether the idle view is turning now (CameraController holds the Locked body still meanwhile).
+function LobbyIdleController.Orbiting(): boolean
+	return orbiting()
+end
 
 function LobbyIdleController.Start()
 	if not IDLE.Enabled then
 		return
 	end
 	local orbit = IdleOrbit.new(IdleClearance.new())
+	orbiting = function()
+		return orbit:Active()
+	end
 	local stirred = false
 	local observer = LobbyIdleInput.new(function()
 		stirred = true

@@ -91,7 +91,9 @@ function IdleOrbit.new(clearance: IdleClearance.Clearance): Orbit
 			or humanoid.Health <= 0
 			or camera.CameraType ~= Enum.CameraType.Custom
 			or camera.CameraSubject ~= humanoid
-			or Players.LocalPlayer:GetAttribute("Camera") ~= "Free"
+			-- the Locked setting only pins the zoom, so it turns too (owner, 2026-10-27); shift lock
+			-- would turn the body with the view, so not then
+			or UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
 			or UserInputService.VREnabled
 			or GuiService.ReducedMotionEnabled
 			or (camera.CFrame.Position - camera.Focus.Position).Magnitude < FIRST_PERSON

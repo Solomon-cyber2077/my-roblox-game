@@ -9,7 +9,11 @@
 	the humanoid as subject, zoom clamped to Tuning.Camera and a close start,
 	so a camera left Scriptable by anything (a test command, a plugin) can
 	never stick. With the Camera setting Locked (the default) the zoom is pinned at
-	Tuning.Camera.LockZoom: third person, no pinch or wheel zoom, never first person.
+	Tuning.Camera.LockZoom: third person, no pinch or wheel zoom, never first person, and the
+	body turns to face where the camera looks (AutoRotate off while it does), as in Evade.
+	The facing pauses, holding the body still, through a LOOK glance, a Hollow's grip, the
+	train camera, spectating, a seat and the lobby idle orbit; it hands AutoRotate back when
+	dead, climbing or swimming, or when the setting is Free.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -20,6 +24,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local CameraFacing = require(Shared.Logic.CameraFacing)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local MathX = require(Shared.Util.MathX)
 local Tuning = require(Shared.Config.Tuning)
@@ -224,6 +229,68 @@ function CameraController.Start()
 		end
 	end)
 
+	-- Locked camera: the body faces the view. `facing` means this module turned AutoRotate off
+	-- and owes it back; a pause keeps it off so the body holds still instead of turning to walk.
+	local facing = false
+	local function release()
+		if facing then
+			facing = false
+			local humanoid = ownHumanoid()
+			if humanoid then
+				humanoid.AutoRotate = true
+			end
+		end
+	end
+	player:GetAttributeChangedSignal("Camera"):Connect(release)
+	player.CharacterAdded:Connect(function()
+		facing = false -- a new humanoid starts with AutoRotate on
+	end)
+	local function faceBody(camera: Camera, dt: number)
+		local character = player.Character
+		local humanoid = ownHumanoid()
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local state = humanoid and humanoid:GetState()
+		if
+			player:GetAttribute("Camera") == "Free"
+			or humanoid == nil
+			or root == nil
+			or humanoid.Health <= 0
+			or state == Enum.HumanoidStateType.Climbing
+			or state == Enum.HumanoidStateType.Swimming
+			or state == Enum.HumanoidStateType.Dead
+		then
+			release()
+			return
+		end
+		local trainCam = Registry.TrainCamController
+		local idle = Registry.LobbyIdleController
+		if
+			glance > 0
+			or focusPoint ~= nil
+			or spectateTarget ~= nil
+			or camera.CameraType ~= Enum.CameraType.Custom
+			or camera.CameraSubject ~= humanoid
+			or humanoid.Sit
+			or humanoid.PlatformStand
+			or (character :: Model):GetAttribute("GrabStyle") ~= nil
+			or (trainCam and trainCam.Active())
+			or (idle and idle.Orbiting())
+		then
+			return
+		end
+		local look = camera.CFrame.LookVector
+		local target = CameraFacing.yaw(look.X, look.Z)
+		if target == nil then
+			return
+		end
+		facing = true
+		humanoid.AutoRotate = false
+		local now = root.CFrame.LookVector
+		local current = CameraFacing.yaw(now.X, now.Z) or target
+		local yaw = CameraFacing.turn(current, target, dt, CAM.FaceTurnRate)
+		root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, yaw, 0)
+	end
+
 	local lastJoint = 0
 	local secondKickAt = math.huge
 	local kick = 0
@@ -315,6 +382,8 @@ function CameraController.Start()
 			local step = dt / CAM.GlanceSeconds
 			glance += math.clamp(goal - glance, -step, step)
 		end
+		-- before this frame's shake and glance go on, so the body follows the steady view
+		faceBody(camera, dt)
 		-- View-only yaw: never change Humanoid movement or the character's root facing.
 		offset *= CFrame.Angles(0, math.rad(CAM.GlanceDegrees) * glance, 0)
 		if offset ~= CFrame.identity then
