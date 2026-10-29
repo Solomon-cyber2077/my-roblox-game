@@ -630,7 +630,14 @@ function LimbSim.run(mods, cfg)
 					p.state,
 					Injury.attribute(p.arms),
 					#p.items,
-					{ round(m.fear), round(m.frustration), round(m.fun), round(m.boredom), round(m.fatigue) },
+					{
+						round(m.fear),
+						round(m.frustration),
+						round(m.fun),
+						round(m.boredom),
+						round(m.fatigue),
+						round(m.energy),
+					},
 				}
 			end
 			for _, hol in hollows do
@@ -742,12 +749,13 @@ function LimbSim.run(mods, cfg)
 					p.h,
 					DT,
 					if alive(p) then threat else 0,
-					p.state == "Aboard" or p.state == "Dead"
+					p.state == "Aboard" or p.state == "Dead",
+					p.state == "Aboard"
 				)
 				if p.state == "Dead" and p.h.mood.boredom > 0.6 then
 					say(p, "boring_wait", 240)
 				end
-				if alive(p) and p.h.mood.fatigue > 0.65 then
+				if alive(p) and Humans.tired(p.h) > 0.65 then
 					say(p, "tired", 240)
 				end
 				if alive(p) and p.h.mood.fear > 0.35 and p.h.mood.fun > 0.45 and rng:next() < 0.002 then
@@ -959,7 +967,7 @@ function LimbSim.run(mods, cfg)
 		end
 		t += RIDE_SECONDS
 		for _, p in crew do
-			Humans.drift(p.h, RIDE_SECONDS, 0, true)
+			Humans.drift(p.h, RIDE_SECONDS, 0, true, true)
 		end
 	until not any or stopN >= maxStops
 
@@ -985,6 +993,8 @@ function LimbSim.run(mods, cfg)
 			deaths = p.h.deaths,
 			quit = p.quit,
 			returnChance = math.floor(chance * 100) / 100,
+			tired = math.floor(Humans.tired(p.h) * 100) / 100,
+			energy = math.floor(p.h.mood.energy * 100) / 100,
 		})
 	end
 	local complaints = {}

@@ -1,222 +1,225 @@
 {
   "byConnection": {
     "ethernet": {
-      "deathsPerPlayer": 0.407,
-      "players": 81,
-      "quitShare": 0.23,
-      "rescueSuccess": 0.75,
-      "rescueTries": 4,
-      "returnChance": 0.304
+      "deathsPerPlayer": 0.373,
+      "players": 83,
+      "quitShare": 0.18,
+      "rescueSuccess": 1,
+      "rescueTries": 3,
+      "returnChance": 0.347
     },
     "mobile": {
-      "deathsPerPlayer": 0.792,
-      "players": 125,
-      "quitShare": 0.08,
-      "rescueSuccess": 0,
-      "rescueTries": 4,
-      "returnChance": 0.27
+      "deathsPerPlayer": 0.769,
+      "players": 139,
+      "quitShare": 0.06,
+      "rescueSuccess": 0.33,
+      "rescueTries": 6,
+      "returnChance": 0.31
     },
     "wifi": {
-      "deathsPerPlayer": 0.589,
-      "players": 674,
-      "quitShare": 0.14,
-      "rescueSuccess": 0.65,
-      "rescueTries": 40,
-      "returnChance": 0.305
+      "deathsPerPlayer": 0.571,
+      "players": 658,
+      "quitShare": 0.12,
+      "rescueSuccess": 0.77,
+      "rescueTries": 22,
+      "returnChance": 0.324
     }
   },
   "byDevice": {
     "Console": {
-      "deathsPerPlayer": 0.443,
-      "players": 79,
-      "quitShare": 0.15,
-      "rescueSuccess": 0,
-      "rescueTries": 2,
-      "returnChance": 0.325
+      "deathsPerPlayer": 0.447,
+      "players": 76,
+      "quitShare": 0.19,
+      "rescueSuccess": 0.8,
+      "rescueTries": 5,
+      "returnChance": 0.376
     },
     "Desktop": {
-      "deathsPerPlayer": 0.342,
-      "players": 114,
-      "quitShare": 0.26,
-      "rescueSuccess": 0.62,
-      "rescueTries": 8,
-      "returnChance": 0.309
+      "deathsPerPlayer": 0.291,
+      "players": 120,
+      "quitShare": 0.15,
+      "rescueSuccess": 0.75,
+      "rescueTries": 4,
+      "returnChance": 0.337
     },
     "Laptop": {
-      "deathsPerPlayer": 0.538,
-      "players": 117,
-      "quitShare": 0.16,
-      "rescueSuccess": 0.78,
-      "rescueTries": 14,
-      "returnChance": 0.328
+      "deathsPerPlayer": 0.464,
+      "players": 127,
+      "quitShare": 0.14,
+      "rescueSuccess": 1,
+      "rescueTries": 3,
+      "returnChance": 0.347
     },
     "Phone": {
-      "deathsPerPlayer": 0.714,
-      "players": 466,
-      "quitShare": 0.1,
-      "rescueSuccess": 0.47,
-      "rescueTries": 17,
-      "returnChance": 0.287
+      "deathsPerPlayer": 0.734,
+      "players": 448,
+      "quitShare": 0.08,
+      "rescueSuccess": 0.56,
+      "rescueTries": 16,
+      "returnChance": 0.302
     },
     "Tablet": {
-      "deathsPerPlayer": 0.567,
-      "players": 104,
-      "quitShare": 0.13,
-      "rescueSuccess": 0.71,
-      "rescueTries": 7,
-      "returnChance": 0.296
+      "deathsPerPlayer": 0.522,
+      "players": 109,
+      "quitShare": 0.16,
+      "rescueSuccess": 1,
+      "rescueTries": 3,
+      "returnChance": 0.336
     }
   },
   "byHour": {
     "afternoon (12-17)": {
-      "deathsPerPlayer": 0.623,
-      "players": 138,
-      "quitShare": 0.1,
-      "rescueSuccess": 0.5,
-      "rescueTries": 10,
-      "returnChance": 0.308
+      "deathsPerPlayer": 0.577,
+      "players": 135,
+      "quitShare": 0.08,
+      "rescueSuccess": 0.66,
+      "rescueTries": 6,
+      "returnChance": 0.329
     },
     "evening (17-21)": {
-      "deathsPerPlayer": 0.579,
-      "players": 373,
-      "quitShare": 0.13,
-      "rescueSuccess": 0.73,
-      "rescueTries": 19,
-      "returnChance": 0.313
+      "deathsPerPlayer": 0.582,
+      "players": 374,
+      "quitShare": 0.1,
+      "rescueSuccess": 0.62,
+      "rescueTries": 8,
+      "returnChance": 0.333
     },
     "late night (0-6)": {
-      "deathsPerPlayer": 0.697,
-      "players": 43,
-      "quitShare": 0.06,
+      "deathsPerPlayer": 0.583,
+      "players": 48,
+      "quitShare": 0.16,
       "rescueSuccess": 1,
-      "rescueTries": 2,
-      "returnChance": 0.28
+      "rescueTries": 4,
+      "returnChance": 0.333
     },
     "morning (6-12)": {
-      "deathsPerPlayer": 0.694,
-      "players": 59,
-      "quitShare": 0.13,
-      "rescueSuccess": 0.33,
-      "rescueTries": 3,
-      "returnChance": 0.3
+      "deathsPerPlayer": 0.616,
+      "players": 60,
+      "quitShare": 0.1,
+      "rescueSuccess": 0.5,
+      "rescueTries": 2,
+      "returnChance": 0.293
     },
     "night (21-24)": {
-      "deathsPerPlayer": 0.584,
-      "players": 267,
-      "quitShare": 0.19,
-      "rescueSuccess": 0.5,
-      "rescueTries": 14,
-      "returnChance": 0.28
+      "deathsPerPlayer": 0.581,
+      "players": 263,
+      "quitShare": 0.15,
+      "rescueSuccess": 0.72,
+      "rescueTries": 11,
+      "returnChance": 0.315
     }
   },
   "byStation": {
     "CoalYard": {
-      "stops": 171
+      "stops": 161
     },
     "Halt": {
-      "stops": 177
+      "stops": 158
     },
     "Infirmary": {
-      "stops": 159
+      "stops": 158
     },
     "Market": {
-      "stops": 156
+      "stops": 147
     },
     "Minehead": {
-      "stops": 178
+      "stops": 163
     },
     "PostTown": {
-      "stops": 150
-    },
-    "RailwayHotel": {
-      "stops": 179
-    },
-    "Schoolhouse": {
-      "stops": 162
-    },
-    "SignalWorks": {
       "stops": 167
     },
+    "RailwayHotel": {
+      "stops": 199
+    },
+    "Schoolhouse": {
+      "stops": 167
+    },
+    "SignalWorks": {
+      "stops": 160
+    },
     "Viaduct": {
-      "stops": 150
+      "stops": 180
     }
   },
   "features": [
     {
       "evidence": [
-        "13% of failed holds had a crewmate close enough to be offered the rescue (74 of 550)",
-        "39% of offered rescues succeeded; 3 crewmates were offered one they could not reach in time",
-        "beats hit 99% of the time"
+        "10% of failed holds had a crewmate close enough to be offered the rescue (58 of 528)",
+        "37% of offered rescues succeeded; 3 crewmates were offered one they could not reach in time",
+        "beats hit 100% of the time"
       ],
       "name": "Crew rescue",
       "numbers": {
-        "failed": 45,
-        "holdsFailed": 550,
-        "offered": 74,
-        "rescued": 29,
+        "failed": 36,
+        "holdsFailed": 528,
+        "offered": 58,
+        "rescued": 22,
         "unreachable": 3
       },
       "verdict": "rarely available"
     },
     {
       "evidence": [
-        "9 items dropped by arm loss across 300 sessions",
-        "0 players were surprised by the drop; 6 understood it"
+        "3 items dropped by arm loss across 300 sessions",
+        "3 players were surprised by the drop; 0 understood it"
       ],
       "name": "Carry priority and overflow",
       "numbers": {
-        "drops": 9,
-        "surprised": 0,
-        "understood": 6
+        "drops": 3,
+        "surprised": 3,
+        "understood": 0
       },
-      "verdict": "understood"
+      "verdict": "confusing"
     },
     {
       "evidence": [
-        "54 arms regrown for 29 torn (plus arms lost at earlier stops)"
+        "58 arms regrown for 22 torn (plus arms lost at earlier stops)"
       ],
       "name": "Tonic regrowth",
       "numbers": {
-        "heals": 54,
-        "tears": 29
+        "heals": 58,
+        "tears": 22
       },
       "verdict": "used"
     },
     {
       "evidence": [
-        "2 players lost both arms; 2 made it back aboard",
+        "0 players lost both arms; 0 made it back aboard",
         "0 ran out of time within 1.5 s of the train",
         "0 did not understand the countdown"
       ],
       "name": "Armless return",
       "numbers": {
-        "armless": 2,
+        "armless": 0,
         "doorDeaths": 0,
-        "returned": 2
+        "returned": 0
       },
-      "verdict": "fair"
+      "verdict": "rarely triggered"
     },
     {
       "evidence": [
-        "64 lag complaints in 300 sessions",
-        "rescue alone: Desktop/ethernet 87% vs Phone/mobile at 280 ms 70%"
+        "68 lag complaints in 300 sessions",
+        "rescue alone: Desktop/ethernet 86% vs Phone/mobile at 280 ms 72%"
       ],
       "name": "Fairness on slow connections",
       "numbers": {
-        "lagComplaints": 64
+        "lagComplaints": 68
       },
       "verdict": "lag hurts"
     },
     {
       "evidence": [
-        "125 left mid-run in 300 sessions: 3 frustrated or bored, the rest out of time or tired",
-        "average come-back score 30% (relative: compare hours and devices, not a retention forecast)"
+        "106 left mid-run in 300 sessions: 0 frustrated or bored, the rest out of time or tired",
+        "average come-back score 32% (relative: compare hours and devices, not a retention forecast)",
+        "at the end: tired 43%, energy 78%"
       ],
       "name": "Sessions and mood",
       "numbers": {
-        "quits": 125,
-        "quitsUnhappy": 3,
-        "returnChance": 0.3
+        "energy": 0.784,
+        "quits": 106,
+        "quitsUnhappy": 0,
+        "returnChance": 0.324,
+        "tired": 0.439
       },
       "verdict": "few rage-quit, but runs end flat"
     }
@@ -227,7 +230,7 @@
         "count": 3,
         "example": {
           "needSeconds": 2,
-          "studs": 27.1,
+          "studs": 34.6,
           "windowSeconds": 1.9
         },
         "text": "The rescue prompt was offered to me but I could not reach them in time",
@@ -236,183 +239,184 @@
     ],
     "complaints": {
       "boring_wait": {
-        "count": 555,
+        "count": 595,
         "examples": [
           "spectating is boring",
-          "how long till the next run",
           "waiting...",
-          "How long till the next run",
-          "Spectating is boring"
+          "how long till the next run",
+          "Waiting...",
+          "How long till the next run"
         ]
       },
       "hollow_again": {
-        "count": 44,
+        "count": 61,
         "examples": [
+          "just escaped and it's back on me",
           "it grabbed me again right away",
           "Just escaped and it's back on me",
-          "just escaped and it's back on me",
           "It grabbed me again right away"
         ]
       },
+      "items_lost": {
+        "count": 3,
+        "examples": [
+          "it dropped my tonic, i needed that",
+          "Lost half my loot when my arm came off??",
+          "lost half my loot when my arm came off??"
+        ]
+      },
       "lag": {
-        "count": 64,
+        "count": 68,
         "examples": [
           "LAG",
           "ping spike right on the beat",
-          "Ping spike right on the beat",
+          "that was lag i swear",
           "my wifi is dying",
-          "that was lag i swear"
+          "My wifi is dying"
         ]
       },
       "nobody_near": {
-        "count": 476,
+        "count": 470,
         "examples": [
+          "where was everyone",
           "nobody was near me, just died",
-          "solo grab = death, cool",
-          "Where was everyone",
           "Nobody was near me, just died",
-          "Solo grab = death, cool"
+          "Solo grab = death, cool",
+          "solo grab = death, cool"
         ]
       },
       "rescue_unreachable": {
         "count": 3,
         "examples": [
-          "how am i supposed to get there in 2 seconds",
-          "it said rescue but i was way too far",
-          "couldn't reach them, the prompt was useless"
-        ]
-      },
-      "touch_button": {
-        "count": 1,
-        "examples": [
-          "my thumb was on the button and it didn't count"
+          "How am i supposed to get there in 2 seconds",
+          "couldn't reach them, the prompt was useless",
+          "how am i supposed to get there in 2 seconds"
         ]
       }
     },
     "praise": {
-      "healed": 54,
-      "items_lost_understood": 6,
-      "praise_escape": 913,
-      "praise_rescue": 29,
-      "praise_tension": 208
+      "healed": 58,
+      "praise_escape": 952,
+      "praise_rescue": 22,
+      "praise_tension": 212
     }
   },
   "note": "Simulated people on the game's own rules (lib/LimbSim, lib/Humans); a model to rank risks, not real player data.",
   "population": {
     "ages": {
-      "13-17": 319,
-      "18-24": 234,
-      "25+": 104,
-      "under 13": 223
+      "13-17": 327,
+      "18-24": 226,
+      "25+": 94,
+      "under 13": 233
     },
     "connections": {
-      "ethernet": 81,
-      "mobile": 125,
-      "wifi": 674
+      "ethernet": 83,
+      "mobile": 139,
+      "wifi": 658
     },
     "devices": {
-      "Console": 79,
-      "Desktop": 114,
-      "Laptop": 117,
-      "Phone": 466,
-      "Tablet": 104
+      "Console": 76,
+      "Desktop": 120,
+      "Laptop": 127,
+      "Phone": 448,
+      "Tablet": 109
     },
     "hours": {
-      "afternoon (12-17)": 138,
-      "evening (17-21)": 373,
-      "late night (0-6)": 43,
-      "morning (6-12)": 59,
-      "night (21-24)": 267
+      "afternoon (12-17)": 135,
+      "evening (17-21)": 374,
+      "late night (0-6)": 48,
+      "morning (6-12)": 60,
+      "night (21-24)": 263
     },
     "motives": {
-      "chill": 126,
-      "explore": 142,
-      "mastery": 110,
-      "social": 270,
-      "thrill": 232
+      "chill": 127,
+      "explore": 139,
+      "mastery": 124,
+      "social": 278,
+      "thrill": 212
     },
     "players": 880,
     "regions": {
-      "Asia": 82,
-      "EU": 230,
-      "LatAm": 113,
-      "NA": 390,
-      "Oceania": 65
+      "Asia": 63,
+      "EU": 223,
+      "LatAm": 104,
+      "NA": 415,
+      "Oceania": 75
     }
   },
   "rescue": [
     {
       "connection": "ethernet",
       "device": "Desktop",
-      "rate": 0.873,
+      "rate": 0.868,
       "rttMs": 50
     },
     {
       "connection": "wifi",
       "device": "Desktop",
-      "rate": 0.856,
+      "rate": 0.879,
       "rttMs": 90
     },
     {
       "connection": "wifi",
       "device": "Laptop",
-      "rate": 0.83,
+      "rate": 0.84,
       "rttMs": 90
     },
     {
       "connection": "wifi",
       "device": "Console",
-      "rate": 0.823,
+      "rate": 0.811,
       "rttMs": 100
     },
     {
       "connection": "wifi",
       "device": "Tablet",
-      "rate": 0.79,
+      "rate": 0.777,
       "rttMs": 100
     },
     {
       "connection": "wifi",
       "device": "Phone",
-      "rate": 0.768,
+      "rate": 0.771,
       "rttMs": 120
     },
     {
       "connection": "mobile",
       "device": "Phone",
-      "rate": 0.713,
+      "rate": 0.708,
       "rttMs": 180
     },
     {
       "connection": "mobile",
       "device": "Phone",
-      "rate": 0.708,
+      "rate": 0.721,
       "rttMs": 280
     }
   ],
   "sessions": 300,
   "totals": {
-    "armless": 2,
-    "beatHits": 101,
-    "beatMisses": 1,
-    "died": 523,
-    "drops": 9,
-    "escapes": 1016,
-    "grabs": 1566,
-    "heals": 54,
-    "holdsFailed": 550,
-    "leftAfterDeath": 247,
+    "armless": 0,
+    "beatHits": 71,
+    "beatMisses": 0,
+    "died": 508,
+    "drops": 3,
+    "escapes": 1062,
+    "grabs": 1590,
+    "heals": 58,
+    "holdsFailed": 528,
+    "leftAfterDeath": 249,
     "leftBehind": 8,
-    "noRescuer": 476,
-    "quits": 125,
-    "quitsUnhappy": 3,
-    "rescueFails": 45,
-    "rescueOpened": 74,
-    "rescues": 29,
-    "returned": 2,
-    "says": 4690,
-    "stops": 1649,
-    "tears": 29,
+    "noRescuer": 470,
+    "quits": 106,
+    "quitsUnhappy": 0,
+    "rescueFails": 36,
+    "rescueOpened": 58,
+    "rescues": 22,
+    "returned": 0,
+    "says": 4131,
+    "stops": 1660,
+    "tears": 22,
     "unreachable": 3
   }
 }

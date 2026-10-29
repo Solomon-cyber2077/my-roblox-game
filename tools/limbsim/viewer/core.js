@@ -9,14 +9,14 @@
 //   meta.crew[i].profile { age, platform, device, connection, region, rttMs, localHour, weekday, sessionMinutes,
 //                          runsBefore, traits, motive }
 //   meta.stops [{ n, station, startT, endT }]; frames[k].stop = stop number; p[id][5] = mood
-//   mood   [fear, frustration, fun, boredom, fatigue], each 0..1
+//   mood   [fear, frustration, fun, boredom, fatigue, energy], each 0..1 (energy from v3.1)
 //   events say{who, kind, topic, text, detail?} stop{n, station} quit{who, text} mood{who, text}
 //   summary + { quits, complaints: { topic: n }, bugs: [{ topic, detail }] }
 (function (root) {
 	"use strict";
 
 	const STATES = ["Aboard", "Afield", "Looting", "Held", "Dead", "LeftBehind", "Left"]; // Left = quit the game
-	const MOODS = ["fear", "frustration", "fun", "boredom", "fatigue"];
+	const MOODS = ["fear", "frustration", "fun", "boredom", "fatigue", "energy"];
 	const SAY_KINDS = ["complaint", "bug", "confusion", "praise", "social", "quit"];
 
 	function isNum(v) {
@@ -173,7 +173,7 @@
 				state: pa[2],
 				armsLost: typeof pa[3] === "string" ? pa[3] : "",
 				items: isNum(pa[4]) ? pa[4] : 0,
-				mood: isMood(pa[5]) ? (isMood(pb && pb[5]) ? pa[5].slice(0, 5).map((v, j) => lerp(v, pb[5][j], k)) : pa[5].slice(0, 5)) : null,
+				mood: isMood(pa[5]) ? (isMood(pb && pb[5]) ? pa[5].slice(0, 6).map((v, j) => lerp(v, pb[5][j] ?? v, k)) : pa[5].slice(0, 6)) : null,
 			});
 		}
 		// Hollows carry no ids, so blend only when the count is unchanged.

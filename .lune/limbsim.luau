@@ -345,6 +345,12 @@ table.insert(features, {
 local comeBack = mean(players, function(p)
 	return p.returnChance
 end) or 0
+local endTired = mean(players, function(p)
+	return p.tired
+end) or 0
+local endEnergy = mean(players, function(p)
+	return p.energy
+end) or 0
 table.insert(features, {
 	name = "Sessions and mood",
 	-- rage and boredom quits say "unhappy"; a low come-back score alone means the runs end flat
@@ -355,8 +361,15 @@ table.insert(features, {
 	evidence = {
 		`{T("quits")} left mid-run in {opts.sessions} sessions: {T("quitsUnhappy")} frustrated or bored, the rest out of time or tired`,
 		`average come-back score {math.floor(comeBack * 100)}% (relative: compare hours and devices, not a retention forecast)`,
+		`at the end: tired {math.floor(endTired * 100)}%, energy {math.floor(endEnergy * 100)}%`,
 	},
-	numbers = { quits = T("quits"), quitsUnhappy = T("quitsUnhappy"), returnChance = comeBack },
+	numbers = {
+		quits = T("quits"),
+		quitsUnhappy = T("quitsUnhappy"),
+		returnChance = comeBack,
+		tired = endTired,
+		energy = endEnergy,
+	},
 })
 
 local bugList = {}

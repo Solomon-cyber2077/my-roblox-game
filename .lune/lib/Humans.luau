@@ -11,7 +11,7 @@
 	  - when they play: school-age players on weekdays after school into the evening, later and longer
 	    on weekends; adults in the evening and late night
 	  - reaction and timing: slower and looser for the youngest and with fatigue; tighter with practice
-	  - emotions: fear, frustration, fun, boredom and fatigue (0..1) move with what happens in the run
+	  - emotions: fear, frustration, fun, boredom, fatigue (sleepiness) and energy (0..1) move with what happens in the run
 	    and change behaviour: fear tightens caution and loosens timing, frustration and fatigue loosen
 	    timing and raise the chance of quitting, boredom raises risk-taking, fun keeps them playing
 	This is a model of people, not people: it cannot discover what nobody thought to model. Use it to
@@ -250,6 +250,7 @@ function Humans.new(rng, id: number)
 			fun = 0.35 + rng:next() * 0.2,
 			boredom = 0.1,
 			fatigue = startFatigue(age, hour, weekday),
+			energy = 0.85 - startFatigue(age, hour, weekday) * 0.3 + rng:next() * 0.1,
 		},
 		deaths = 0,
 		streak = 0, -- deaths in a row (tilt)
@@ -279,14 +280,21 @@ function Humans.profile(h)
 	}
 end
 
--- Effective timing spread for a press right now: traits, fear, fatigue and frustration all loosen it.
+-- How tired they feel (0..1): sleepiness (the clock, `fatigue`) plus how drained the run has left them
+-- (`energy`, which good moments and calm rides restore).
+function Humans.tired(h): number
+	local m = h.mood
+	return clamp(m.fatigue * 0.55 + (1 - m.energy) * 0.45, 0, 1)
+end
+
+-- Effective timing spread for a press right now: traits, fear, tiredness and frustration all loosen it.
 function Humans.jitter(h): number
 	local m = h.mood
-	return h.traits.jitter * (1 + h.traits.panic * m.fear * 0.8 + m.fatigue * 0.5 + m.frustration * 0.3)
+	return h.traits.jitter * (1 + h.traits.panic * m.fear * 0.8 + Humans.tired(h) * 0.5 + m.frustration * 0.3)
 end
 
 function Humans.reaction(h): number
-	return h.traits.reaction * (1 + h.mood.fatigue * 0.6 + h.mood.fear * 0.2)
+	return h.traits.reaction * (1 + Humans.tired(h) * 0.6 + h.mood.fear * 0.2)
 end
 
 -- A press's one-way trip this instant: the round trip's half plus this connection's spread, sometimes a spike.
@@ -303,9 +311,14 @@ end
 Humans.nudge = nudge
 
 -- Mood drift every tick: fear decays, boredom grows when nothing happens, fatigue creeps up over the
--- session they meant to play (a late start begins tired, so it tips over sooner).
-function Humans.drift(h, dt: number, threat: number, idle: boolean)
+-- session they meant to play (a late start begins tired, so it tips over sooner). Energy drains slowly,
+-- faster under sustained high threat or boredom, and comes back while resting somewhere safe (aboard,
+-- the ride between stops), less so when sleepy.
+function Humans.drift(h, dt: number, threat: number, idle: boolean, resting: boolean?)
 	local m = h.mood
+	local drain = 0.0004 + math.max(threat - 0.6, 0) * 0.006 + m.boredom * 0.0015
+	local recover = if resting then 0.004 * (1 - m.fatigue * 0.5) else 0
+	m.energy = clamp(m.energy + (recover - drain) * dt, 0, 1)
 	m.fear = clamp(m.fear + (threat * 0.5 - m.fear * 0.25) * dt, 0, 1)
 	m.boredom = clamp(m.boredom + (if idle then 0.004 * (1 - h.traits.thrill * 0.5) else -0.01) * dt, 0, 1)
 	m.fatigue = clamp(m.fatigue + 0.55 / (h.sessionMinutes * 60) * dt, 0, 1)
@@ -320,17 +333,17 @@ end
 -- How the player feels about an event (and so what they do next).
 local REACTIONS = {
 	grabbed = { fear = 0.35, fun = 0.03 },
-	escaped = { fear = -0.15, fun = 0.15, frustration = -0.05 },
-	rescued = { fun = 0.12, frustration = 0.08, fear = -0.1 },
-	rescuedOther = { fun = 0.2, frustration = -0.05 },
-	rescueFailedOther = { frustration = 0.18, fun = -0.05 },
+	escaped = { fear = -0.15, fun = 0.15, frustration = -0.05, energy = 0.12 },
+	rescued = { fun = 0.12, frustration = 0.08, fear = -0.1, energy = 0.05 },
+	rescuedOther = { fun = 0.2, frustration = -0.05, energy = 0.15 },
+	rescueFailedOther = { frustration = 0.18, fun = -0.05, energy = -0.05 },
 	armLost = { frustration = 0.12, fear = 0.15 },
-	itemsLost = { frustration = 0.15 },
-	healed = { fun = 0.08, frustration = -0.08 },
-	died = { frustration = 0.3, fun = -0.12, fear = -0.2 },
-	lagMiss = { frustration = 0.25 },
-	loot = { fun = 0.04, boredom = -0.05 },
-	boarded = { fear = -0.2, fun = 0.03 },
+	itemsLost = { frustration = 0.15, energy = -0.03 },
+	healed = { fun = 0.08, frustration = -0.08, energy = 0.05 },
+	died = { frustration = 0.3, fun = -0.12, fear = -0.2, energy = -0.08 },
+	lagMiss = { frustration = 0.25, energy = -0.04 },
+	loot = { fun = 0.04, boredom = -0.05, energy = 0.03 },
+	boarded = { fear = -0.2, fun = 0.03, energy = 0.06 },
 	crewDied = { frustration = 0.08, fear = 0.08 },
 }
 
@@ -352,20 +365,21 @@ end
 -- Do they leave after this stop? (reason or nil)
 function Humans.quits(rng, h, minutesPlayed: number): string?
 	local m = h.mood
+	local tired = Humans.tired(h)
 	if minutesPlayed >= h.sessionMinutes then
-		return if m.fatigue > 0.5 then "tired" else "time"
+		return if tired > 0.5 then "tired" else "time"
 	end
 	local p = 0.01
 		+ m.frustration * 0.2 * (1.3 - h.traits.tolerance)
 		+ m.boredom * 0.18
-		+ math.max(m.fatigue - 0.5, 0) * 0.4
+		+ math.max(tired - 0.5, 0) * 0.4
 		+ h.streak * 0.04
 		- m.fun * 0.15
 	if rng:next() < clamp(p, 0, 0.9) then
 		return if m.frustration > m.boredom and m.frustration > 0.4
 			then "frustrated"
 			elseif m.boredom > 0.4 then "bored"
-			elseif m.fatigue > 0.5 then "tired"
+			elseif tired > 0.5 then "tired"
 			else "time" -- called away, dinner, a friend online elsewhere: not the game's doing
 	end
 	return nil
@@ -379,7 +393,7 @@ function Humans.returnChance(h): number
 		+ m.fun * 0.6
 		- m.frustration * 0.55
 		- m.boredom * 0.3
-		- math.max(m.fatigue - 0.6, 0) * 0.3
+		- math.max(Humans.tired(h) - 0.6, 0) * 0.3
 		+ social
 	return clamp(x, 0.02, 0.98)
 end

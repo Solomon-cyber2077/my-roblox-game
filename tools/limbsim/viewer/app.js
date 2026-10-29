@@ -22,8 +22,8 @@
 		quit: "#ff7a59", mood: "#c792ea", stop: "#e0b354", game: "#8b919c",
 	};
 	const KIND_LABELS = { complaint: "complaint", bug: "bug", praise: "praise", confusion: "confusion", social: "chat", quit: "quit", mood: "mood", stop: "stop", game: "game" };
-	const MOOD_COLORS = ["#b07cf0", "#f2a65a", "#7bd389", "#8b919c", "#5aa9e6"];
-	const MOOD_SHORT = ["fear", "frustr.", "fun", "bored", "tired"];
+	const MOOD_COLORS = ["#b07cf0", "#f2a65a", "#7bd389", "#8b919c", "#5aa9e6", "#f2d45a"];
+	const MOOD_SHORT = ["fear", "frustr.", "fun", "bored", "sleepy", "energy"];
 	const MARK_COLORS = {
 		death: "#e5544b", tear: "#f2a65a", grab: "#c792ea", rescueOpen: "#7bd389", rescueJoin: "#7bd389",
 		returnStart: "#e0b354", heal: "#4dd0e1", outcome: "#ffffff", quit: "#ff7a59",
@@ -322,7 +322,7 @@
 			ui.card.classList.toggle("gone", !p || p.state === "Left" || p.state === "LeftBehind");
 			ui.st.textContent = quit || (p && p.state === "Left") ? "left the game" : p && p.state === "LeftBehind" ? "left behind" : p ? p.state + (p.armsLost ? " · −" + p.armsLost + " arm" : "") + (p.items ? " · " + p.items + " item" + (p.items > 1 ? "s" : "") : "") : quit ? "left the game" : "–";
 			ui.bars.forEach((fill, j) => {
-				const v = p && p.mood ? p.mood[j] : 0;
+				const v = p && p.mood ? p.mood[j] ?? 0 : 0;
 				fill.style.width = Math.round(v * 100) + "%";
 				fill.parentElement.title = C.MOODS[j] + " " + (p && p.mood ? v.toFixed(2) : "–");
 			});
