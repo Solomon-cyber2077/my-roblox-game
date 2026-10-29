@@ -1,0 +1,320 @@
+{
+ "sessions": 400,
+ "note": "HAND-MADE SAMPLE: invented numbers that only exercise the viewer. Not sim output and not player data.",
+ "population": {
+  "platform": {
+   "PC": 168,
+   "Mobile": 196,
+   "Console": 36
+  },
+  "connection": {
+   "wifi": 231,
+   "mobile": 112,
+   "ethernet": 57
+  },
+  "motive": {
+   "social": 121,
+   "thrill": 98,
+   "mastery": 64,
+   "explore": 71,
+   "chill": 46
+  },
+  "ageBand": {
+   "9-12": 102,
+   "13-15": 141,
+   "16-18": 88,
+   "19-25": 46,
+   "26+": 23
+  },
+  "medianSessionMinutes": 27
+ },
+ "totals": {
+  "stops": 1460,
+  "grabs": 612,
+  "rescues": 188,
+  "armsLost": 241,
+  "deaths": 130,
+  "quits": 74
+ },
+ "byStation": {
+  "Halt": {
+   "sessions": 140,
+   "died": 30,
+   "armless": 41,
+   "returned": 33
+  },
+  "Viaduct": {
+   "sessions": 132,
+   "died": 51,
+   "armless": 49,
+   "returned": 31
+  },
+  "Market": {
+   "sessions": 128,
+   "died": 49,
+   "armless": 38,
+   "returned": 27
+  }
+ },
+ "rescue": [
+  {
+   "persona": "ana",
+   "device": "Desktop",
+   "rttMs": 35,
+   "own": true,
+   "rate": 0.81
+  },
+  {
+   "persona": "dee",
+   "device": "BudgetAndroid",
+   "rttMs": 230,
+   "own": false,
+   "rate": 0.52
+  }
+ ],
+ "feedback": {
+  "complaints": {
+   "lag": {
+    "count": 58,
+    "examples": [
+     "everything is lagging so bad",
+     "my taps register late"
+    ]
+   },
+   "struggle on touch": {
+    "count": 44,
+    "examples": [
+     "i cant tap fast enough on my phone"
+    ]
+   },
+   "rescue reach": {
+    "count": 31,
+    "examples": [
+     "too far, i can't get there in time",
+     "nobody could reach me"
+    ]
+   },
+   "spectating": {
+    "count": 22,
+    "examples": [
+     "spectating is boring, can't do anything"
+    ]
+   },
+   "arm loss": {
+    "count": 17,
+    "examples": [
+     "bro my arm is GONE"
+    ]
+   }
+  },
+  "bugs": [
+   {
+    "topic": "deadline at the door",
+    "count": 9,
+    "example": {
+     "deadlineLeft": 0.6,
+     "distanceToDoor": 2.1,
+     "station": "Viaduct"
+    }
+   },
+   {
+    "topic": "item out of reach",
+    "count": 3,
+    "example": {
+     "item": "Lantern",
+     "cell": 57,
+     "station": "Market",
+     "note": "dropped inside a blocked cell"
+    }
+   }
+  ],
+  "praise": {
+   "atmosphere": {
+    "count": 40,
+    "examples": [
+     "the fog rolling in over the platform is sick"
+    ]
+   },
+   "rescue": {
+    "count": 27,
+    "examples": [
+     "GOT YOU. that pull was so close"
+    ]
+   },
+   "regrowth": {
+    "count": 12,
+    "examples": [
+     "ARM'S BACK lets gooo"
+    ]
+   }
+  }
+ },
+ "features": [
+  {
+   "name": "Crew rescue",
+   "verdict": "works, hard on phones",
+   "evidence": [
+    "PC rescuers succeed 81% (sample)",
+    "budget Android rescuers 52% (sample)"
+   ],
+   "numbers": {
+    "attempts": 188,
+    "success": 0.68,
+    "phoneSuccess": 0.57
+   }
+  },
+  {
+   "name": "Armless return",
+   "verdict": "fair",
+   "evidence": [
+    "most armless players reach the train"
+   ],
+   "numbers": {
+    "armless": 241,
+    "returned": 0.74,
+    "medianSecondsLeft": 6.2
+   }
+  },
+  {
+   "name": "Spectating after death",
+   "verdict": "boring, fix",
+   "evidence": [
+    "22 complaints, 0 praise"
+   ],
+   "numbers": {
+    "deaths": 130,
+    "quitAfterDeath": 0.31
+   }
+  }
+ ],
+ "byHour": {
+  "0": {
+   "sessions": 4,
+   "quitRate": 0.1
+  },
+  "1": {
+   "sessions": 2,
+   "quitRate": 0.12
+  },
+  "2": {
+   "sessions": 1,
+   "quitRate": 0.14
+  },
+  "3": {
+   "sessions": 1,
+   "quitRate": 0.16
+  },
+  "4": {
+   "sessions": 0,
+   "quitRate": 0.17
+  },
+  "5": {
+   "sessions": 0,
+   "quitRate": 0.18
+  },
+  "6": {
+   "sessions": 1,
+   "quitRate": 0.18
+  },
+  "7": {
+   "sessions": 3,
+   "quitRate": 0.18
+  },
+  "8": {
+   "sessions": 6,
+   "quitRate": 0.17
+  },
+  "9": {
+   "sessions": 9,
+   "quitRate": 0.16
+  },
+  "10": {
+   "sessions": 11,
+   "quitRate": 0.14
+  },
+  "11": {
+   "sessions": 14,
+   "quitRate": 0.12
+  },
+  "12": {
+   "sessions": 17,
+   "quitRate": 0.1
+  },
+  "13": {
+   "sessions": 19,
+   "quitRate": 0.08
+  },
+  "14": {
+   "sessions": 22,
+   "quitRate": 0.06
+  },
+  "15": {
+   "sessions": 28,
+   "quitRate": 0.04
+  },
+  "16": {
+   "sessions": 34,
+   "quitRate": 0.03
+  },
+  "17": {
+   "sessions": 38,
+   "quitRate": 0.02
+  },
+  "18": {
+   "sessions": 41,
+   "quitRate": 0.02
+  },
+  "19": {
+   "sessions": 40,
+   "quitRate": 0.02
+  },
+  "20": {
+   "sessions": 36,
+   "quitRate": 0.03
+  },
+  "21": {
+   "sessions": 30,
+   "quitRate": 0.05
+  },
+  "22": {
+   "sessions": 22,
+   "quitRate": 0.06
+  },
+  "23": {
+   "sessions": 11,
+   "quitRate": 0.08
+  }
+ },
+ "byDevice": {
+  "Desktop": {
+   "sessions": 120,
+   "deaths": 0.22,
+   "quitRate": 0.09,
+   "fun": 0.71
+  },
+  "Laptop": {
+   "sessions": 48,
+   "deaths": 0.25,
+   "quitRate": 0.12,
+   "fun": 0.66
+  },
+  "Phone": {
+   "sessions": 142,
+   "deaths": 0.34,
+   "quitRate": 0.2,
+   "fun": 0.58
+  },
+  "BudgetAndroid": {
+   "sessions": 54,
+   "deaths": 0.41,
+   "quitRate": 0.31,
+   "fun": 0.47
+  },
+  "Console": {
+   "sessions": 36,
+   "deaths": 0.28,
+   "quitRate": 0.14,
+   "fun": 0.62
+  }
+ }
+}

@@ -5,28 +5,39 @@
 <title>LTO Limb Sim</title>
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="mode-live">
 <header>
 	<h1>Last Train Out · Limb Sim</h1>
-	<select id="pick" title="Trace"></select>
-	<label class="file">Open file…<input id="file" type="file" accept=".json,application/json"></label>
+	<nav id="tabs" role="tablist">
+		<button data-mode="live" role="tab" title="Spectate sessions one after another">Live</button>
+		<button data-mode="replay" role="tab" title="Scrub through one session">Replay</button>
+		<button data-mode="reports" role="tab" title="All sessions: features, complaints, bugs, population">Reports</button>
+	</nav>
+	<select id="pick" class="replay-only" title="Trace"></select>
+	<label class="file replay-only">Open file…<input id="file" type="file" accept=".json,application/json"></label>
+	<button id="newSession" class="ticket-btn" title="Simulate one fresh session on this laptop and play it">＋ New session</button>
 	<span id="source" class="muted"></span>
+	<span class="sim-badge" title="Every person, line and number here comes from the simulation (lib/LimbSim), not from real players">SIMULATED · not real players</span>
 </header>
 <p id="note" class="note"></p>
-<main>
+<div id="toasts" aria-live="polite"></div>
+<main id="watch">
 	<section id="stage">
+		<div id="board" class="live-only"><span id="boardNow">NOW PLAYING</span><span id="boardStops"></span><span id="boardNext"></span></div>
 		<canvas id="map" width="900" height="640"></canvas>
 		<div id="controls">
 			<button id="play" title="Play / pause (Space)">▶</button>
+			<button id="skip" class="live-only" title="Next session (N)">⏭</button>
 			<input id="scrub" type="range" min="0" max="1000" value="0" step="1">
 			<span id="clock">0.0s</span>
 			<select id="speed" title="Speed">
 				<option value="0.5">0.5×</option>
-				<option value="1">1×</option>
-				<option value="2" selected>2×</option>
+				<option value="1" selected>1×</option>
+				<option value="2">2×</option>
 				<option value="4">4×</option>
 				<option value="8">8×</option>
 			</select>
+			<label><input id="bubbles" type="checkbox" checked> speech</label>
 			<label><input id="trails" type="checkbox" checked> trails</label>
 		</div>
 		<div id="marks"></div>
@@ -35,20 +46,27 @@
 	<aside>
 		<h2 id="title">No trace</h2>
 		<p id="meta" class="muted"></p>
+		<p id="stopline" class="stopline"></p>
 		<div id="problems" class="problems"></div>
 		<h3>Crew</h3>
-		<table id="crew"></table>
-		<h3>Events</h3>
+		<div id="crew"></div>
+		<h3><span class="live-only">Feed</span><span class="replay-only">Events</span></h3>
+		<div id="feedKey" class="feedkey"></div>
 		<ol id="events"></ol>
 		<h3>Trace result</h3>
 		<p id="result" class="muted"></p>
 	</aside>
 </main>
-<section id="summary">
-	<h2>All sessions (summary.json)</h2>
+<section id="reports" hidden>
+	<div class="sim-banner">Simulated players, not real people. Every person, line and number below comes from the
+		simulation running the game's rules (lib/LimbSim on the HP). <span id="repSource"></span></div>
+	<div id="repNotice"></div>
+	<div id="repBody"></div>
+	<h2 class="rep-h">Limb sim totals</h2>
 	<div id="summaryBody" class="muted">Not loaded.</div>
 </section>
 <script src="core.js"></script>
+<script src="reports.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

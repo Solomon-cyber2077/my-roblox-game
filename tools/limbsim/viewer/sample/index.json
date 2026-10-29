@@ -3,5 +3,19 @@
     "file": "sample-tear.json",
     "id": "sample-tear",
     "title": "Hand-made sample: arm torn in a rescue, rescuer dies"
+  },
+  {
+    "file": "sample-v3-run.json",
+    "id": "sample-v3-run",
+    "title": "Hand-made v3 sample: three stops, a rescue, a quit",
+    "kind": "sample",
+    "crew": [
+      "Ana",
+      "Bo",
+      "Cy",
+      "Dee"
+    ],
+    "stops": 3,
+    "outcome": "2 of 4 aboard"
   }
 ]
