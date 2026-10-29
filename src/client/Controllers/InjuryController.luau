@@ -647,10 +647,33 @@ end
 
 function InjuryController.Init() end
 
+-- The "Give Tonic" prompt on your own body is for your crewmates: hide it from yourself (the server
+-- ignores a self-trigger anyway, so all it did was offer a button that does nothing).
+local function hideOwnTreatPrompts(character: Model)
+	local root = character:WaitForChild("HumanoidRootPart", 10)
+	if root == nil then
+		return
+	end
+	local function hide(child: Instance)
+		if child:IsA("ProximityPrompt") and child:GetAttribute("Action") == "Treat" then
+			child.Enabled = false
+		end
+	end
+	for _, child in root:GetChildren() do
+		hide(child)
+	end
+	root.ChildAdded:Connect(hide)
+end
+
 function InjuryController.Start()
 	build()
 	Net.On("Fx", onFx)
 	RunService.RenderStepped:Connect(step)
+	local player = Players.LocalPlayer
+	player.CharacterAdded:Connect(hideOwnTreatPrompts)
+	if player.Character then
+		task.spawn(hideOwnTreatPrompts, player.Character)
+	end
 end
 
 return InjuryController
