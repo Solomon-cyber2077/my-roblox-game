@@ -43,7 +43,9 @@ describe("RunTicketModel", function()
 	end)
 
 	it("never promises a solo player a crewmate", function()
-		for _, cause in { "Taken", "Smothered", "Fell", "Wrecked", "LeftBehind", "Other", "Disconnected" } do
+		for _, cause in
+			{ "Taken", "Smothered", "Fell", "Wrecked", "Stranded", "LeftBehind", "Other", "Disconnected" }
+		do
 			local data = RunTicketModel.build({
 				outcome = "Wiped",
 				log = log(1),

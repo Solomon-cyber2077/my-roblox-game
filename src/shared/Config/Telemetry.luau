@@ -41,7 +41,16 @@ local Vocab = table.freeze({
 	-- around them still standing (derailed, aborted)
 	PlayerOutcome = list({ "victory", "eliminated", "derailed", "aborted" }),
 	Bell = list({ "none", "all", "half" }),
-	Cause = list({ "LeftBehind", "Taken", "Smothered", "Fell", "Wrecked", "Disconnected", "Other" }),
+	Cause = list({
+		"LeftBehind",
+		"Taken",
+		"Smothered",
+		"Fell",
+		"Wrecked",
+		"Stranded",
+		"Disconnected",
+		"Other",
+	}),
 	HeldBy = list({ "Stalker", "Crawler", "Brute", "none" }),
 	TellBucket = list({ "0", "0-1.5", "1.5-3", "3+" }),
 	CrewNear = list({ "0", "1", "2+" }),

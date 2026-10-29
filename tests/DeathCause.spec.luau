@@ -6,6 +6,7 @@ describe("DeathCause", function()
 		expect(DeathCause.fromDeath("Fog", 100, 101, false)).toBe("Smothered")
 		expect(DeathCause.fromDeath("Fall", 100, 101, false)).toBe("Fell")
 		expect(DeathCause.fromDeath("Train", 100, 101, false)).toBe("Wrecked")
+		expect(DeathCause.fromDeath("Stranded", 100, 101, false)).toBe("Stranded")
 	end)
 
 	it("never blames a Hollow for a death it had no part in", function()
@@ -27,12 +28,18 @@ describe("DeathCause", function()
 
 	it("has its own words for every cause", function()
 		local seen = {}
-		for _, cause in { "LeftBehind", "Taken", "Smothered", "Fell", "Wrecked", "Disconnected", "Other" } do
+		for _, cause in
+			{ "LeftBehind", "Taken", "Smothered", "Fell", "Wrecked", "Stranded", "Disconnected", "Other" }
+		do
 			local words = DeathCause.line(cause)
 			expect(words.title ~= "").toBe(true)
 			expect(seen[words.line]).toBe(nil)
 			seen[words.line] = true
 		end
+		expect(DeathCause.line("Stranded").title).toBe("STRANDED")
+		expect(DeathCause.line("Stranded").line).toBe(
+			"You lost both arms and could not get back aboard in time."
+		)
 		expect(DeathCause.line("Nonsense").title).toBe(DeathCause.Lines.Other.title)
 		expect(DeathCause.line(nil).title).toBe(DeathCause.Lines.Other.title)
 	end)

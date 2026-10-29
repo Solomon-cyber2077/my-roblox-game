@@ -403,7 +403,7 @@ local function step()
 			then
 				local humanoid = humanoidOf(player)
 				if humanoid and humanoid.Health > 0 then
-					Registry.CrewService.TagDamage(player.Character :: Model, "Hollow")
+					Registry.CrewService.TagDamage(player.Character :: Model, "Stranded")
 					humanoid.Health = 0
 					NetService.FireAll("Notify", "Crew", `{player.DisplayName} did not make it back.`)
 				end
