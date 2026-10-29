@@ -4,7 +4,7 @@
 	HUD's leak slot (UI/Hud: it yields to every modal and full-screen UI and never draws over
 	anything) naming the nearest leak's car and distance, a small red "!" at every leak (seen
 	from anywhere aboard, and from outside the train only when you are near it; the Last
-	Light's too), and chevrons painted flat on the floor (Logic/LeakRoute): aboard, down the
+	Light's too), and a low trail of steam drifting along the floor (Logic/LeakRoute): aboard, down the
 	aisle car to car to the nearest leak and curving to the wall at it; on the platform while
 	the train stands at a station, to the Last Light's door when it is leaking. All come from
 	the leak objects (anchors TrainService tags Leak), so the moment the last leak is patched
@@ -45,9 +45,14 @@ local plate: Frame? = nil
 local label: TextLabel? = nil
 local notice: TextLabel? = nil
 local noticeAt = -math.huge -- os.clock() the Last Light notice started
-local chevronFolder: Folder? = nil
-type Chevron = { part: BasePart, gui: SurfaceGui, strokes: { { frame: Frame, transparency: number } } }
-local chevrons: { Chevron } = {}
+local mistFolder: Folder? = nil
+type Wisp = {
+	part: BasePart,
+	gui: BillboardGui,
+	puffs: { { frame: Frame, transparency: number } },
+	phase: number,
+}
+local wisps: { Wisp } = {}
 
 local function buildPlate(slot: Frame)
 	local panel = Ui.new("Frame", {
@@ -76,89 +81,65 @@ local function buildPlate(slot: Frame)
 	label = text
 end
 
--- A chevron sprayed on the floor through a stencil, its point along -Z: two arms in a V with
--- feathered edges and a little overspray, in safety yellow lit by the car's lamps (not neon).
-local PAINT = Color3.fromRGB(224, 176, 52)
-local CANVAS = 96 -- pixels on a side
-local SIZE = 1.5 -- studs on a side
-local ARM_ANGLE = 40
-local FEATHER = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 1),
-	NumberSequenceKeypoint.new(0.3, 0.12),
-	NumberSequenceKeypoint.new(0.7, 0.12),
-	NumberSequenceKeypoint.new(1, 1),
-})
+-- A wisp of the leak's steam drifting low along the floor toward it: a few soft, overlapping
+-- puffs facing the camera, pale grey and lit by the car's lamps (never glowing), each wisp
+-- breathing and lifting a little on its own rhythm so the trail reads as mist, not markers.
+local MIST = Color3.fromRGB(214, 218, 222)
+local PUFFS = { -- offset (studs, x up), diameter (studs), opacity
+	{ x = 0, y = 0, d = 1.5, a = 0.16 },
+	{ x = -0.45, y = 0.1, d = 1.0, a = 0.14 },
+	{ x = 0.5, y = 0.15, d = 1.1, a = 0.12 },
+	{ x = 0.1, y = 0.35, d = 0.7, a = 0.1 },
+}
 
-local function chevron(seed: number): Chevron
+local function wisp(seed: number): Wisp
 	local part = Instance.new("Part")
-	part.Name = "LeakChevron"
-	part.Size = Vector3.new(SIZE, 0.05, SIZE)
+	part.Name = "LeakMist"
+	part.Size = Vector3.new(0.2, 0.2, 0.2)
 	part.Transparency = 1
 	part.Anchored = true
 	part.CanCollide = false
 	part.CanQuery = false
 	part.CanTouch = false
 	part.CastShadow = false
-	local gui = Instance.new("SurfaceGui")
-	gui.Face = Enum.NormalId.Top
-	gui.CanvasSize = Vector2.new(CANVAS, CANVAS)
-	gui.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
-	gui.LightInfluence = 1 -- paint, lit by the lamps, never glowing
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.fromScale(2.4, 1.4) -- studs
+	gui.LightInfluence = 1
 	gui.Brightness = 1
-	gui.ClipsDescendants = true
 	gui.Adornee = part
 	gui.Parent = part
-	-- Plain transparent frames avoid a composited rectangular canvas on the floor.
-	local paint = Instance.new("Frame")
-	paint.Size = UDim2.fromScale(1, 1)
-	paint.BackgroundTransparency = 1
-	paint.BorderSizePixel = 0
-	paint.Parent = gui
-	local strokes = {}
-	-- the point sits near the canvas's top edge (turned to lead in updateChevrons)
-	for _, side in { -1, 1 } do
-		local arm = Instance.new("Frame")
-		arm.AnchorPoint = Vector2.new(0.5, 0.5)
-		arm.Position = UDim2.fromOffset(CANVAS / 2 + side * 15, CANVAS / 2 - 2)
-		arm.Size = UDim2.fromOffset(16, 52)
-		arm.Rotation = -side * ARM_ANGLE
-		arm.BackgroundColor3 = PAINT
-		arm.BorderSizePixel = 0
-		arm.Parent = paint
-		table.insert(strokes, { frame = arm, transparency = 0 })
-		local fade = Instance.new("UIGradient")
-		fade.Transparency = FEATHER -- soft across the stroke, as a can leaves it
-		fade.Parent = arm
-	end
-	-- overspray: a few faint specks round the strokes, the same on every chevron of a seat
 	local rng = Random.new(seed)
-	for _ = 1, 9 do
-		local speck = Instance.new("Frame")
-		local d = rng:NextInteger(2, 4)
-		speck.Size = UDim2.fromOffset(d, d)
-		speck.Position = UDim2.fromOffset(rng:NextInteger(14, CANVAS - 18), rng:NextInteger(18, CANVAS - 20))
-		speck.BackgroundColor3 = PAINT
-		speck.BackgroundTransparency = rng:NextNumber(0.45, 0.75)
-		speck.BorderSizePixel = 0
-		speck.Parent = paint
-		table.insert(strokes, { frame = speck, transparency = speck.BackgroundTransparency })
-		local round = Instance.new("UICorner")
-		round.CornerRadius = UDim.new(0.5, 0)
-		round.Parent = speck
+	local puffs = {}
+	for _, spec in PUFFS do
+		-- each puff is two rounds, a faint wide one under a denser core, so the edge is soft
+		for _, layer in { { scale = 1, a = spec.a * 0.5 }, { scale = 0.6, a = spec.a } } do
+			local puff = Instance.new("Frame")
+			local d = spec.d * layer.scale * rng:NextNumber(0.85, 1.15)
+			puff.AnchorPoint = Vector2.new(0.5, 0.5)
+			puff.Position = UDim2.fromScale(0.5 + spec.x / 2.4, 0.62 - spec.y / 1.4)
+			puff.Size = UDim2.fromScale(d / 2.4, d / 1.4)
+			puff.BackgroundColor3 = MIST
+			puff.BorderSizePixel = 0
+			puff.Parent = gui
+			local round = Instance.new("UICorner")
+			round.CornerRadius = UDim.new(0.5, 0)
+			round.Parent = puff
+			table.insert(puffs, { frame = puff, transparency = 1 - layer.a })
+		end
 	end
-	return { part = part, gui = gui, strokes = strokes }
+	return { part = part, gui = gui, puffs = puffs, phase = rng:NextNumber(0, math.pi * 2) }
 end
 
-local function buildChevrons()
+local function buildMist()
 	local folder = Instance.new("Folder")
-	folder.Name = "LeakArrows"
+	folder.Name = "LeakMist"
 	for index = 1, A.Count do
-		local made = chevron(index)
+		local made = wisp(index)
 		made.part.Parent = folder
-		table.insert(chevrons, made)
+		table.insert(wisps, made)
 	end
 	folder.Parent = nil
-	chevronFolder = folder
+	mistFolder = folder
 end
 
 -- A small red exclamation mark at the leak: a painted "!" with a soot outline, no plate.
@@ -220,7 +201,7 @@ local function leaks(): { LeakAlert.Leak }
 	return out
 end
 
--- The path the chevrons follow now, in train-local studs, and the train's frame; nil for none.
+-- The path the mist follows now, in train-local studs, and the train's frame; nil for none.
 local function route(root: BasePart): ({ LeakRoute.Point }?, CFrame?, Model?)
 	local train: Model? = nil
 	local origin: CFrame? = nil
@@ -270,8 +251,8 @@ local FEET = 3 -- an R6 root stands this far over the floor
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
-local function updateChevrons(on: boolean, root: BasePart?)
-	local folder = chevronFolder
+local function updateMist(on: boolean, root: BasePart?)
+	local folder = mistFolder
 	if folder == nil then
 		return
 	end
@@ -283,26 +264,28 @@ local function updateChevrons(on: boolean, root: BasePart?)
 		folder.Parent = nil
 		return
 	end
-	local placed = LeakRoute.place(path, os.clock() * A.Scroll)
+	local now = os.clock()
+	local placed = LeakRoute.place(path, now * A.Scroll)
 	rayParams.FilterDescendantsInstances = { folder, root.Parent :: Instance }
 	local rootY = origin:PointToObjectSpace(root.Position).Y
 	for index = 1, A.Count do
 		local spot = placed[index]
-		local made = chevrons[index]
+		local made = wisps[index]
 		made.gui.Enabled = spot ~= nil
 		if spot then
-			-- painted on whatever floor is under it: carriage boards or the platform
+			-- hugging whatever floor is under it: carriage boards or the platform
 			-- (never on a seat or a crate: anything above your feet is passed under)
 			local feet = origin * Vector3.new(spot.x, rootY - FEET, spot.z)
 			local hit = Workspace:Raycast(feet + origin.UpVector * 0.5, -origin.UpVector * 6, rayParams)
-			local at = (if hit then hit.Position else feet) + origin.UpVector * 0.03
-			local look = origin:VectorToWorldSpace(Vector3.new(spot.dx, 0, spot.dz))
-			-- a Top-face canvas's top edge lies along the part's -X: turn it so the point leads
-			made.part.CFrame = CFrame.lookAt(at, at + look) * CFrame.Angles(0, math.rad(-90), 0)
-			-- the farther ones fade
-			local fade = 0.1 + 0.6 * (index - 1) / A.Count
-			for _, stroke in made.strokes do
-				stroke.frame.BackgroundTransparency = 1 - (1 - stroke.transparency) * (1 - fade)
+			local t = now * 1.3 + made.phase
+			local lift = 0.35 + 0.12 * math.sin(t)
+			made.part.Position = (if hit then hit.Position else feet) + origin.UpVector * lift
+			made.gui.Size = UDim2.fromScale(2.4 * (1 + 0.08 * math.sin(t * 0.7)), 1.4)
+			-- thin near your feet and far ahead, thickest a few studs on
+			local u = (index - 1) / A.Count
+			local fade = math.clamp(1 - index / 3, 0, 1) * 0.6 + 0.7 * u
+			for _, puff in made.puffs do
+				puff.frame.BackgroundTransparency = 1 - (1 - puff.transparency) * (1 - math.min(fade, 1))
 			end
 		end
 	end
@@ -363,7 +346,7 @@ local function step()
 	local me = if root then { x = root.Position.X, y = root.Position.Y, z = root.Position.Z } else nil
 	local show = Session.isRunActive() and Session.isMember() and Session.isAlive()
 	local markersOn = BrokenThingMarkers.visible()
-	-- the marks and arrows in the world hide while the train camera looks out
+	-- the marks and mist in the world hide while the train camera looks out
 	local inWorld = markersOn and not BrokenThingMarkers.suppressed()
 	local view = if show then LeakAlert.view(leaks(), me, markersOn) else nil
 	updateMarks(show and inWorld, root)
@@ -373,7 +356,7 @@ local function step()
 			label.Text = view.text
 		end
 	end
-	updateChevrons(view ~= nil and inWorld, root)
+	updateMist(view ~= nil and inWorld, root)
 	updateNotice(show and markersOn, Hud.leakSlot())
 end
 
@@ -387,7 +370,7 @@ function LeakController.Start()
 	else
 		warn("LeakController: the HUD has no leak slot")
 	end
-	buildChevrons()
+	buildMist()
 	RunService.RenderStepped:Connect(function()
 		Safe.call("LeakController.step", step)
 	end)
