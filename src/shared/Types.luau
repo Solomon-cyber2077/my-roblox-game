@@ -24,7 +24,8 @@ export type Cause =
 	| "Stranded"
 	| "Disconnected"
 	| "Other"
-export type Outcome = "Victory" | "Wiped" | "Derailed"
+-- CashedOut: the last living crew member took the stop-five cash-out (Logic/CashOut)
+export type Outcome = "Victory" | "Wiped" | "Derailed" | "CashedOut"
 export type Zone = "Safe" | "Near" | "Mid" | "Far" | "Village"
 
 export type RouteOption = {
@@ -140,7 +141,15 @@ export type RunStats = {
 }
 
 -- How one stop ended for the run: departed with the crew aboard, or the run ended there.
-export type StopOutcome = "Cleared" | "Victory" | "Wiped" | "Derailed"
+export type StopOutcome = "Cleared" | "Victory" | "Wiped" | "Derailed" | "CashedOut"
+
+-- run.cashOut: the stop-five cash-out while it is open (Logic/CashOut); keys are user ids as strings
+export type CashOutOffer = {
+	stop: number,
+	endsAt: number, -- server time the offer closes (the junction's end)
+	eligible: { [string]: boolean },
+	taken: { [string]: boolean },
+}
 
 -- What the crew brought aboard and lost over one stop (since the previous stop resolved).
 export type StopHaul = { coal: number, parts: number, relics: number, downs: number }

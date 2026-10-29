@@ -35,11 +35,11 @@ local Vocab = table.freeze({
 	RouteLength = list({ "short", "long" }),
 	Stop = stops(),
 	Archetype = Stations.Order,
-	StopOutcome = list({ "cleared", "wiped", "derailed", "aborted" }),
-	RunOutcome = list({ "victory", "wiped", "derailed", "aborted" }),
+	StopOutcome = list({ "cleared", "wiped", "derailed", "aborted", "cashedout" }),
+	RunOutcome = list({ "victory", "wiped", "derailed", "aborted", "cashedout" }),
 	-- a player's own end of a run: reached the Terminus, went down (any cause), or the run ended
 	-- around them still standing (derailed, aborted)
-	PlayerOutcome = list({ "victory", "eliminated", "derailed", "aborted" }),
+	PlayerOutcome = list({ "victory", "eliminated", "derailed", "aborted", "cashed_out" }),
 	Bell = list({ "none", "all", "half" }),
 	Cause = list({
 		"LeftBehind",
@@ -112,6 +112,8 @@ local Events: { [string]: EventDef } = table.freeze({
 	invite_prompted = event("InviteSource", "Device", "Experience"),
 	-- stop 1's scripted sighting on a first run: each player's line-of-sight seconds (Prompt 5, E2)
 	sighting_exposure = event("TellBucket", "Device", "Experience"),
+	-- a player took the stop-five cash-out (Logic/CashOut); value: minutes in the run
+	player_cashed_out = event("Stop", "Device", "Experience"),
 })
 
 -- Funnel name -> its step names, in order. `onboarding` goes through LogOnboardingFunnelStepEvent;

@@ -53,6 +53,7 @@ local pendingJoin: { [Player]: boolean } = {}
 local downs = 0 -- eliminations this run, for the run log's per-stop haul
 local missingAtLastCall: { [Player]: boolean } = {} -- not aboard when the whistle blew (T-0)
 local spawnGeneration: { [Player]: number } = {}
+local cashedOut: { [Player]: boolean } = {} -- took this run's stop-five cash-out: no rejoining it
 
 local REGEN_SHARE = 0.01 -- of max health per second, as the default Health script gave
 local descriptions: { [number]: HumanoidDescription } = {}
@@ -310,6 +311,11 @@ function CrewService.Start()
 	NetService.Handle("JoinInProgress", function(player)
 		CrewService.RequestJoin(player)
 	end)
+	NetService.Handle("CashOut", function(player)
+		CrewService.CashOut(player)
+	end, function()
+		return Registry.RunDirector.Phase() == "Junction"
+	end)
 	-- the co-op ping: every client flares the pinger's lantern, points its watch at them and
 	-- whistles (FxController); never in the hall; NetService allows one every 3 s
 	NetService.Handle("Ping", function(player)
@@ -323,6 +329,7 @@ function CrewService.Start()
 
 	Players.PlayerRemoving:Connect(function(player)
 		pendingJoin[player] = nil
+		cashedOut[player] = nil
 		spawnGeneration[player] = nil
 		local member = members[player]
 		if member then
@@ -439,6 +446,7 @@ function CrewService.BeginRun(players: { Player })
 	downs = 0
 	table.clear(members)
 	table.clear(pendingJoin)
+	table.clear(cashedOut)
 	for i, player in players do
 		local member: Member = {
 			player = player,
@@ -648,6 +656,15 @@ function CrewService.RequestJoin(player: Player)
 	if members[player] or pendingJoin[player] then
 		return
 	end
+	if cashedOut[player] then
+		NetService.Fire(
+			"Notify",
+			player,
+			"Info",
+			"You cashed out of this run. The next one leaves once this crew is done."
+		)
+		return
+	end
 	local phase = Registry.RunDirector.Phase()
 	if
 		not RunRules.isRunPhase(phase)
@@ -704,6 +721,50 @@ function CrewService.MarkTerminus()
 			member.tally.reachedTerminus = true
 		end
 	end
+end
+
+-- The stop-five cash-out (Logic/CashOut): pays what this player has earned, takes them off the crew
+-- and back to the Depot Hall. The last living member to go ends the run as CashedOut.
+function CrewService.CashOut(player: Player): (boolean, string?)
+	local member = members[player]
+	if member == nil or not isAliveStatus(member.status) then
+		return false, "not_crew"
+	end
+	local why = Registry.RunDirector.ClaimCashOut(player, member.status == "Aboard")
+	if why then
+		return false, why
+	end
+	local crewCount = 0
+	for _ in members do
+		crewCount += 1
+	end
+	Registry.ProgressionService.CashOut(
+		player,
+		table.clone(member.tally),
+		crewCount,
+		Registry.RunDirector.StationsCleared(),
+		Registry.RunDirector.RunTier(),
+		Registry.RunDirector.Route(),
+		Registry.RunDirector.RunId()
+	)
+	Registry.TelemetryService.CashedOut(player)
+	Registry.GraspService.Cleanup(player)
+	Registry.InventoryService.Clear(player)
+	members[player] = nil
+	cashedOut[player] = true
+	unpublish(player)
+	print(`[Crew] {player.Name} cashed out at stop {Tuning.Run.CashOutStop}`)
+	NetService.FireAll(
+		"Notify",
+		"Station",
+		`{player.DisplayName} cashed out at stop {Tuning.Run.CashOutStop} and stays behind.`
+	)
+	spawnGeneration[player] = (spawnGeneration[player] or 0) + 1
+	task.spawn(Registry.LobbyService.Spawn, player)
+	if CrewService.AliveCount() == 0 then
+		Registry.RunDirector.EndRun("CashedOut")
+	end
+	return true, nil
 end
 
 function CrewService.Tallies(): { [Player]: Types.CrewTally }

@@ -46,6 +46,8 @@ local Remotes: { [string]: RemoteDef } = {
 	Invited = { direction = "ToServer", args = { "id" }, rate = 2, burst = 3 },
 	SetRunTier = { direction = "ToServer", args = { "tier" }, rate = 4, burst = 4 }, -- host only
 	CastVote = { direction = "ToServer", args = { "option" }, rate = 4, burst = 4 },
+	-- the stop-five cash-out: no payload, the server checks the offer (Logic/CashOut)
+	CashOut = { direction = "ToServer", args = {}, rate = 1, burst = 2 },
 	UseItem = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
 	DropItem = { direction = "ToServer", args = { "slot" }, rate = 6, burst = 6 },
 	BuyUpgrade = { direction = "ToServer", args = { "id" }, rate = 3, burst = 3 },

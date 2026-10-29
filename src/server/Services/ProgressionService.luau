@@ -104,21 +104,27 @@ function ProgressionService.BankStop(runId: string, stop: number, tallies: { [Pl
 	end
 end
 
-function ProgressionService.PayRun(
+-- One crew member's end of a run, as PayRun or CashOut settles it.
+type Settlement = {
 	outcome: Types.Outcome,
-	tallies: { [Player]: Types.CrewTally },
+	haul: Types.HaulReceipt,
 	stationsCleared: number,
 	tier: number,
 	route: string?,
-	runId: string?
-)
-	local day = Catalog.dayNumber(os.time())
-	local charter = isCharter()
-	local crewCount = crewCountOf(tallies)
-	local e = Tuning.Economy
-	local haul = Registry.HaulService.Settle(outcome == "Victory")
+	runId: string?,
+	crewCount: number,
+	day: number,
+	charter: boolean,
+}
 
-	for player, tally in tallies do
+-- Pays one crew member their run: what the stops have not banked yet, the Terminus line on a victory,
+-- the tier and first-run-of-the-day bonuses; then stats and milestones.
+local function settle(player: Player, tally: Types.CrewTally, run: Settlement)
+	local outcome, haul, tier, route, day, charter =
+		run.outcome, run.haul, run.tier, run.route, run.day, run.charter
+	local stationsCleared, runId, crewCount = run.stationsCleared, run.runId, run.crewCount
+	local e = Tuning.Economy
+	do
 		local profile = DataService.GetProfile(player)
 		if profile then
 			local held = banks[player]
@@ -127,12 +133,13 @@ function ProgressionService.PayRun(
 			local rankBefore = Rank.fromXp(if bank then bank.startXp else profile.xp)
 			local tierBefore = profile.unlockedTier
 			local dailyBonus = profile.daily.lastBonusDay ~= day -- the first run of each UTC day
-			local payout = Economy.payout(tally, {
-				outcome = outcome,
+			local options: Economy.Options = {
+				outcome = run.outcome,
 				dailyBonus = dailyBonus,
 				soloCharter = charter and crewCount == 1,
 				tier = tier,
-			})
+			}
+			local payout = Economy.payout(tally, options)
 			payout.xp += haul.xp
 			-- what the stops already banked is not paid twice
 			local brass, xp = StopBank.remainder(bank, payout.brass, payout.xp)
@@ -230,6 +237,54 @@ function ProgressionService.PayRun(
 			})
 		end
 	end
+end
+
+function ProgressionService.PayRun(
+	outcome: Types.Outcome,
+	tallies: { [Player]: Types.CrewTally },
+	stationsCleared: number,
+	tier: number,
+	route: string?,
+	runId: string?
+)
+	local run: Settlement = {
+		outcome = outcome,
+		haul = Registry.HaulService.Settle(outcome == "Victory"),
+		stationsCleared = stationsCleared,
+		tier = tier,
+		route = route,
+		runId = runId,
+		crewCount = crewCountOf(tallies),
+		day = Catalog.dayNumber(os.time()),
+		charter = isCharter(),
+	}
+	for player, tally in tallies do
+		settle(player, tally, run)
+	end
+end
+
+-- The stop-five cash-out (Logic/CashOut): this player's run ends here, paid as earned. No Terminus
+-- line and no share of the haul: those settle at the run's end, for whoever is still aboard.
+function ProgressionService.CashOut(
+	player: Player,
+	tally: Types.CrewTally,
+	crewCount: number,
+	stationsCleared: number,
+	tier: number,
+	route: string?,
+	runId: string?
+)
+	settle(player, tally, {
+		outcome = "CashedOut",
+		haul = { valuables = {}, trophies = {}, xp = 0 },
+		stationsCleared = stationsCleared,
+		tier = tier,
+		route = route,
+		runId = runId,
+		crewCount = crewCount,
+		day = Catalog.dayNumber(os.time()),
+		charter = isCharter(),
+	})
 end
 
 return ProgressionService

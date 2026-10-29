@@ -107,6 +107,9 @@ Theme.Image = table.freeze({
 	-- the departure slate: chalk slate in an oak frame with brass corners (tools/uiart/render_slate.py,
 	-- 1120 x 144, drawn at 280 x 36); empty until uploaded, the slate then stays a flat panel
 	slate = table.freeze({ id = "", slice = Rect.new(30, 30, 1090, 114), scale = 0.25 }),
+	-- the stop-five cash-out's pay packet (tools/uiart/render_pay_packet.py, 256 px, baked colour);
+	-- empty until uploaded, the card then shows text and buttons alone
+	payPacket = "",
 })
 
 -- Each resident speaks through their own window (keyed by Config/Npcs id); none means no picture.

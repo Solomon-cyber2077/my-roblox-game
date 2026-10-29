@@ -20,6 +20,7 @@
 local Shared = script.Parent.Parent
 local MysteryConfig = require(Shared.Config.Mystery)
 local Premise = require(Shared.Config.Premise)
+local Tuning = require(Shared.Config.Tuning)
 local Types = require(Shared.Types)
 local Vote = require(script.Parent.Vote)
 
@@ -207,6 +208,9 @@ function RunLog.final(outcome: Types.Outcome?, stop: number?, short: boolean?): 
 	end
 	if outcome == "Derailed" then
 		return `TRAIN LOST AT STOP {stop or 1}`
+	end
+	if outcome == "CashedOut" then
+		return `CASHED OUT AT STOP {Tuning.Run.CashOutStop}`
 	end
 	return Premise.NotRecalled
 end

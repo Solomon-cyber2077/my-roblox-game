@@ -28,6 +28,9 @@ local Tuning = {
 		-- the doors never close sooner than this after they open, whatever rings the bell
 		-- (launch hardening step 3; provisional, tune in playtest)
 		MinDwellSeconds = 30,
+		-- after this stop departs, on a line that runs past it, each living crew member aboard may cash
+		-- out through the junction (Logic/CashOut; launch hardening step 4)
+		CashOutStop = 5,
 		TerminusSeconds = 8,
 		RunEndSeconds = 12,
 		JoinInProgressMaxStation = 6,

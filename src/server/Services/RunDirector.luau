@@ -30,6 +30,7 @@ local DepartureBell = require(Shared.Logic.DepartureBell)
 local Format = require(Shared.Util.Format)
 local Rng = require(Shared.Util.Rng)
 local Safe = require(Shared.Util.Safe)
+local CashOut = require(Shared.Logic.CashOut)
 local Signal = require(Shared.Util.Signal)
 local Types = require(Shared.Types)
 
@@ -52,6 +53,7 @@ type RunState = {
 	nextStop: number,
 	stationsCleared: number,
 	runTier: number,
+	cashOut: Types.CashOutOffer?, -- the stop-five cash-out while the junction after it runs
 	lastArchetype: string?,
 	chosen: Types.RouteOption?,
 	cruiseSeconds: number,
@@ -87,6 +89,7 @@ local state: RunState = {
 	nextStop = 1,
 	stationsCleared = 0,
 	runTier = 1,
+	cashOut = nil,
 	lastArchetype = nil,
 	chosen = nil,
 	cruiseSeconds = 30,
@@ -184,6 +187,8 @@ local function cleanupRun()
 	Registry.CrewService.EndRun()
 	state.info, state.plan, state.params, state.chosen = nil, nil, nil, nil
 	state.village = nil
+	state.cashOut = nil
+	StateService.Set({ "run", "cashOut" }, nil)
 	StateService.Set({ "run", "station" }, nil)
 	StateService.Set({ "run", "destination" }, nil)
 end
@@ -290,6 +295,25 @@ end
 
 Enter.Junction = function()
 	openBallot()
+	-- the stop-five cash-out: offered to each living crew member aboard as the stop departed
+	local departed = state.nextStop - 1
+	if CashOut.offered(state.stopCount, departed) then
+		local ids: { number } = {}
+		for _, player in Registry.CrewService.AlivePlayers() do
+			if Registry.CrewService.IsAboard(player) then
+				table.insert(ids, player.UserId)
+			end
+		end
+		local seconds = RunRules.duration("Junction", context()) or Tuning.Run.JunctionSeconds
+		state.cashOut = CashOut.open(departed, ids, now() + seconds)
+		StateService.Set({ "run", "cashOut" }, state.cashOut)
+	end
+end
+
+Exit.Junction = function()
+	-- no answer by the end of the junction means ride on
+	state.cashOut = nil
+	StateService.Set({ "run", "cashOut" }, nil)
 end
 
 Enter.Cruise = function()
@@ -595,6 +619,7 @@ Enter.RunEnd = function(previous, outcome)
 	local text = {
 		Victory = "The train reached the Terminus.",
 		Wiped = "The whole crew was lost.",
+		CashedOut = "The last of the crew cashed out. The line closes behind them.",
 		Derailed = "The train broke down for good and was lost.",
 	}
 	NetService.FireAll("Notify", "RunEnd", text[finalOutcome])
@@ -837,6 +862,25 @@ end
 -- Dev `experiment <id> <arm|auto>`: the arm later runs use (nil: back to the hash).
 function RunDirector.DevForceArm(id: string, arm: string?)
 	state.forcedArms[id] = arm :: any -- nil clears it
+end
+
+function RunDirector.RunTier(): number
+	return state.runTier
+end
+
+function RunDirector.RunId(): string
+	return state.runId
+end
+
+-- The stop-five cash-out: nil when `player` may take it now (and it is recorded), else why not.
+function RunDirector.ClaimCashOut(player: Player, aboard: boolean): string?
+	local offer = state.cashOut
+	local why = CashOut.check(offer, player.UserId, aboard, now())
+	if why == nil and offer then
+		CashOut.take(offer, player.UserId)
+		StateService.Set({ "run", "cashOut" }, offer)
+	end
+	return why
 end
 
 function RunDirector.StationsCleared(): number

@@ -75,6 +75,7 @@ type Participant = {
 	deepest: number, -- deepest stop whose doors opened while they were in the run
 	terminal: boolean, -- player_progress sent
 	eliminations: number,
+	cashedOut: boolean, -- took the stop-five cash-out: their run ended there, not at run end
 }
 
 type Run = {
@@ -343,6 +344,7 @@ local function participate(current: Run, player: Player, entry: string): Partici
 		deepest = 0,
 		terminal = false,
 		eliminations = 0,
+		cashedOut = false,
 	}
 	current.byPlayer[player] = participant
 	table.insert(current.order, participant)
@@ -510,7 +512,7 @@ local function endRun(current: Run)
 	})
 	for _, participant in current.order do
 		local player = participant.player
-		if connected(player) then
+		if connected(player) and not participant.cashedOut then
 			local alive = Registry.CrewService.IsAlive(player)
 			local mine = if outcome == "victory" and alive
 				then "victory"
@@ -711,6 +713,25 @@ function TelemetryService.Eliminated(player: Player, cause: string)
 		{ cause, stop, heldBy(player, cause) }
 	)
 	setOutcome(player, "eliminated")
+end
+
+-- A crew member took the stop-five cash-out (CrewService.CashOut, before it forgets them).
+function TelemetryService.CashedOut(player: Player)
+	local current = run
+	local participant = current and current.byPlayer[player]
+	if current == nil or participant == nil then
+		return
+	end
+	participant.cashedOut = true
+	local minutesIn = (os.clock() - participant.joinedAt) / 60
+	TelemetryService.Event(
+		player,
+		"player_cashed_out",
+		round(minutesIn, 2),
+		playerFields(participant, tostring(Tuning.Run.CashOutStop))
+	)
+	setOutcome(player, "cashed_out")
+	sendProgress(current, participant)
 end
 
 -- A crew member is leaving the game (CrewService's PlayerRemoving, before it forgets them).
