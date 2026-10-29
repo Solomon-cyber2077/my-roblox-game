@@ -61,6 +61,17 @@ function Rescue.inviteSeconds(slowestRoundTrip: any): number
 	return math.min(C.Invite + rtt / 2, C.InviteMax)
 end
 
+--[[
+	How far from the victim a crewmate moving at `speed` (studs/s) with this round trip can be and
+	still arrive inside an invitation of `inviteSeconds`: Reach plus the walk left after reacting
+	(ReactAllowance) and their join's one-way trip. Offering the rescue to anyone further away only
+	promises what cannot happen.
+]]
+function Rescue.arrivalRadius(speed: number, inviteSeconds: number, roundTrip: any): number
+	local rtt = if finite(roundTrip) and roundTrip > 0 then roundTrip else 0
+	return C.Reach + speed * math.max(inviteSeconds - C.ReactAllowance - rtt / 2, 0)
+end
+
 function Rescue.new(id: number, now: number, slowestRoundTrip: any): Session
 	return {
 		id = id,

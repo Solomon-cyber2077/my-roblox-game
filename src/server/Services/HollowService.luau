@@ -835,13 +835,22 @@ function openRescue(hollow: Hollow): boolean
 	if Injury.targetArm(Registry.InjuryService.Get(victim), side) == nil then
 		return false -- already armless: the existing lethal rules
 	end
-	local reachable = InjuryConfig.Rescue.Reach + Tuning.Crew.WalkSpeed * InjuryConfig.Rescue.InviteMax
+	-- only crewmates who could still arrive inside the invitation are offered it (Rescue.arrivalRadius)
+	local outer = InjuryConfig.Rescue.Reach + Tuning.Crew.WalkSpeed * InjuryConfig.Rescue.InviteMax
+	local candidates = {}
 	local slowest = 0
-	local any = false
 	for _, ally in Registry.CrewService.AlivePlayers() do
-		if ally ~= victim and canRescue(hold, ally, reachable) then
+		if ally ~= victim and canRescue(hold, ally, outer) then
+			local rtt = roundTrip(ally)
+			table.insert(candidates, { ally = ally, rtt = rtt })
+			slowest = math.max(slowest, rtt)
+		end
+	end
+	local invite = Rescue.inviteSeconds(slowest)
+	local any = false
+	for _, c in candidates do
+		if canRescue(hold, c.ally, Rescue.arrivalRadius(Tuning.Crew.WalkSpeed, invite, c.rtt)) then
 			any = true
-			slowest = math.max(slowest, roundTrip(ally))
 		end
 	end
 	if not any then

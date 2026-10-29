@@ -1,67 +1,174 @@
 [
   {
-    "file": "calm-minehead-1001.json",
-    "id": "calm-minehead-1001",
-    "title": "calm at Minehead: Zoe, Mia"
+    "crew": [
+      "Cleo",
+      "Sam"
+    ],
+    "file": "quit-2001.json",
+    "id": "quit-2001",
+    "kind": "quit",
+    "outcome": "5 stops; 3 grabs, 2 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 0 of 2 aboard at the end; would come back 39%",
+    "stops": 5,
+    "title": "quit: Cleo, Sam (5 stops)"
   },
   {
-    "file": "calm-signalworks-1004.json",
-    "id": "calm-signalworks-1004",
-    "title": "calm at SignalWorks: Dev, Leo, Mia"
+    "crew": [
+      "Kai",
+      "Maya"
+    ],
+    "file": "quit-2002.json",
+    "id": "quit-2002",
+    "kind": "quit",
+    "outcome": "6 stops; 2 grabs, 2 fought free, 0 rescued, 0 rescue failed, 0 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 2 quit; 0 of 2 aboard at the end; would come back 27%",
+    "stops": 6,
+    "title": "quit: Kai, Maya (6 stops)"
   },
   {
-    "file": "rescued-railwayhotel-1016.json",
-    "id": "rescued-railwayhotel-1016",
-    "title": "rescued at RailwayHotel: Dev, Ray, Leo"
+    "crew": [
+      "Nia",
+      "Ezra",
+      "Ivy",
+      "Jude"
+    ],
+    "file": "quit-2003.json",
+    "id": "quit-2003",
+    "kind": "quit",
+    "outcome": "6 stops; 3 grabs, 2 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 3 quit; 0 of 4 aboard at the end; would come back 28%",
+    "stops": 6,
+    "title": "quit: Nia, Ezra, Ivy, Jude (6 stops)"
   },
   {
-    "file": "failed-railwayhotel-1031.json",
-    "id": "failed-railwayhotel-1031",
-    "title": "failed at RailwayHotel: Mia, Priya, Kai, Zoe"
+    "crew": [
+      "Tess",
+      "Eli",
+      "Priya"
+    ],
+    "file": "deaths-2005.json",
+    "id": "deaths-2005",
+    "kind": "deaths",
+    "outcome": "6 stops; 9 grabs, 8 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 2 of 3 aboard at the end; would come back 21%",
+    "stops": 6,
+    "title": "deaths: Tess, Eli, Priya (6 stops)"
   },
   {
-    "file": "rescued-halt-1069.json",
-    "id": "rescued-halt-1069",
-    "title": "rescued at Halt: Mia, Sam"
+    "crew": [
+      "Leo",
+      "Jade"
+    ],
+    "file": "deaths-2006.json",
+    "id": "deaths-2006",
+    "kind": "deaths",
+    "outcome": "2 stops; 4 grabs, 2 fought free, 0 rescued, 0 rescue failed, 2 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 0 of 2 aboard at the end; would come back 41%",
+    "stops": 2,
+    "title": "deaths: Leo, Jade (2 stops)"
   },
   {
-    "file": "failed-market-1079.json",
-    "id": "failed-market-1079",
-    "title": "failed at Market: Mia, Leo, Zoe, Dev"
+    "crew": [
+      "Remy",
+      "Luna",
+      "Diego",
+      "Zoe"
+    ],
+    "file": "rescue-failed-2010.json",
+    "id": "rescue-failed-2010",
+    "kind": "rescue failed",
+    "outcome": "6 stops; 3 grabs, 1 fought free, 0 rescued, 1 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 1 of 4 aboard at the end; would come back 17%",
+    "stops": 6,
+    "title": "rescue failed: Remy, Luna, Diego, Zoe (6 stops)"
   },
   {
-    "file": "rescued-signalworks-1093.json",
-    "id": "rescued-signalworks-1093",
-    "title": "rescued at SignalWorks: Priya, Dev, Sam, Mia"
+    "crew": [
+      "Maya",
+      "Arlo",
+      "Nia"
+    ],
+    "file": "rescue-failed-2013.json",
+    "id": "rescue-failed-2013",
+    "kind": "rescue failed",
+    "outcome": "5 stops; 5 grabs, 3 fought free, 0 rescued, 1 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 0 of 3 aboard at the end; would come back 27%",
+    "stops": 5,
+    "title": "rescue failed: Maya, Arlo, Nia (5 stops)"
   },
   {
-    "file": "failed-viaduct-1113.json",
-    "id": "failed-viaduct-1113",
-    "title": "failed at Viaduct: Leo, Ray"
+    "crew": [
+      "Eli",
+      "Priya",
+      "Leo",
+      "Jade"
+    ],
+    "file": "rescue-failed-2016.json",
+    "id": "rescue-failed-2016",
+    "kind": "rescue failed",
+    "outcome": "5 stops; 3 grabs, 1 fought free, 0 rescued, 1 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 2 quit; 0 of 4 aboard at the end; would come back 17%",
+    "stops": 5,
+    "title": "rescue failed: Eli, Priya, Leo, Jade (5 stops)"
   },
   {
-    "file": "armless-halt-1132.json",
-    "id": "armless-halt-1132",
-    "title": "armless at Halt: Dev, Sam, Ray, Kai"
+    "crew": [
+      "Ravi",
+      "Ruby",
+      "Omar",
+      "Mia"
+    ],
+    "file": "rescued-2028.json",
+    "id": "rescued-2028",
+    "kind": "rescued",
+    "outcome": "6 stops; 8 grabs, 4 fought free, 1 rescued, 0 rescue failed, 3 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 0 quit; 1 of 4 aboard at the end; would come back 18%",
+    "stops": 6,
+    "title": "rescued: Ravi, Ruby, Omar, Mia (6 stops)"
   },
   {
-    "file": "rescued-viaduct-1137.json",
-    "id": "rescued-viaduct-1137",
-    "title": "rescued at Viaduct: Dev, Priya, Ray, Sam"
+    "crew": [
+      "Aria",
+      "Remy",
+      "Luna",
+      "Diego"
+    ],
+    "file": "rescued-2031.json",
+    "id": "rescued-2031",
+    "kind": "rescued",
+    "outcome": "6 stops; 4 grabs, 1 fought free, 1 rescued, 0 rescue failed, 2 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 1 quit; 1 of 4 aboard at the end; would come back 16%",
+    "stops": 6,
+    "title": "rescued: Aria, Remy, Luna, Diego (6 stops)"
   },
   {
-    "file": "scripted-armless-market-50013.json",
-    "id": "scripted-armless-market-50013",
-    "title": "Scripted: second arm lost at Market, run back to the train"
+    "crew": [
+      "Maya",
+      "Arlo",
+      "Nia"
+    ],
+    "file": "rescued-2045.json",
+    "id": "rescued-2045",
+    "kind": "rescued",
+    "outcome": "6 stops; 10 grabs, 9 fought free, 1 rescued, 0 rescue failed, 0 with nobody near; 1 items dropped, 1 arms regrown; 0 armless, 0 made it back; 3 quit; 0 of 3 aboard at the end; would come back 28%",
+    "stops": 6,
+    "title": "rescued: Maya, Arlo, Nia (6 stops)"
   },
   {
-    "file": "scripted-armless-schoolhouse-50016.json",
-    "id": "scripted-armless-schoolhouse-50016",
-    "title": "Scripted: second arm lost at Schoolhouse, run back to the train"
+    "crew": [
+      "Ezra",
+      "Ivy",
+      "Jude",
+      "Ava"
+    ],
+    "file": "rescued-2046.json",
+    "id": "rescued-2046",
+    "kind": "rescued",
+    "outcome": "6 stops; 11 grabs, 7 fought free, 1 rescued, 0 rescue failed, 3 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 0 quit; 1 of 4 aboard at the end; would come back 15%",
+    "stops": 6,
+    "title": "rescued: Ezra, Ivy, Jude, Ava (6 stops)"
   },
   {
-    "file": "scripted-armless-halt-50034.json",
-    "id": "scripted-armless-halt-50034",
-    "title": "Scripted: second arm lost at Halt, run back to the train"
+    "crew": [
+      "Leo",
+      "Jade",
+      "Ravi"
+    ],
+    "file": "calm-2102.json",
+    "id": "calm-2102",
+    "kind": "calm",
+    "outcome": "6 stops; 3 grabs, 3 fought free, 0 rescued, 0 rescue failed, 0 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 3 of 3 aboard at the end; would come back 25%",
+    "stops": 6,
+    "title": "calm: Leo, Jade, Ravi (6 stops)"
   }
 ]

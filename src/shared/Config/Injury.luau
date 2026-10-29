@@ -17,6 +17,9 @@ return table.freeze({
 		Invite = 1.8, -- seconds the invitation stays open before any delay allowance
 		InviteMax = 2.5, -- never longer than this, whatever the measured delay
 		Reach = 6, -- studs from the rescuer's root to the victim's
+		-- seconds a crewmate needs to notice the prompt and react; the rescue is only offered to those
+		-- who could still arrive inside the invitation (Rescue.arrivalRadius). An assumption to measure.
+		ReactAllowance = 0.4,
 		Beats = table.freeze({ 0.7, 1.2, 1.7 }), -- seconds after the sequence starts (0.5 lead-in first)
 		Window = 0.17, -- a press counts within this many seconds either side of its beat (0.12 was too hard on touch: sim)
 		CompensationMax = 0.15, -- the most arrival delay a press may be credited
