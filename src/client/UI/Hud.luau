@@ -1113,8 +1113,22 @@ function Hud.mount(gui: ScreenGui)
 					mark.Parent = button
 				end
 				if priority and index > 1 then
-					local left = Ui.new("TextButton", {
-						Name = "MoveLeft",
+					-- on a phone the 18 px mark is a hard tap: the same mark inside an invisible 32 px
+					-- target in the slot's corner, so a near miss still moves the item
+					local compact = gui:GetAttribute("Compact") == true
+					local left = if compact
+						then Ui.new("TextButton", {
+							Name = "MoveLeft",
+							Text = "",
+							BackgroundTransparency = 1,
+							Size = UDim2.fromOffset(32, 32),
+							Position = UDim2.new(0, 0, 1, -32),
+							ZIndex = 5,
+							Parent = button,
+						})
+						else nil
+					local mark = Ui.new(if compact then "TextLabel" else "TextButton", {
+						Name = if compact then "Mark" else "MoveLeft",
 						Text = "<",
 						FontFace = Theme.Font.display,
 						TextSize = 14,
@@ -1122,11 +1136,12 @@ function Hud.mount(gui: ScreenGui)
 						BackgroundColor3 = Theme.Color.steel,
 						BackgroundTransparency = 0.15,
 						Size = UDim2.fromOffset(18, 18),
-						Position = UDim2.new(0, 2, 1, -20),
+						Position = if compact then UDim2.fromOffset(2, 12) else UDim2.new(0, 2, 1, -20),
 						ZIndex = 5,
-						Parent = button,
+						Parent = left or button,
 					})
-					Ui.corner(3).Parent = left
+					Ui.corner(3).Parent = mark
+					left = left or mark
 					left.Activated:Connect(function()
 						local count = #(state.items or {})
 						local order = table.create(count, 0)

@@ -7,18 +7,23 @@
 	back to the existing spectate flow (CameraController) or the report. A living player's
 	camera is never touched.
 
-	Skip with the usual confirm (Space, ButtonA, a click or a tap) from Witness.SkipAfter. The
-	Motion setting "Reduced" holds the frame still instead of the slow push-in.
+	Skip with the usual confirm (Space, ButtonA, a click or a tap) from Witness.SkipAfter, when a
+	quiet hint names the input in use. The Motion setting "Reduced" holds the frame still instead of
+	the slow push-in.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config.Injury)
+local Registry = require(script.Parent.Parent.Registry)
+local Theme = require(script.Parent.Parent.UI.Theme)
+local Ui = require(script.Parent.Parent.UI.Ui)
 
 local DeathCamController = {}
 
@@ -27,12 +32,23 @@ local ACTION = "DeathCamSkip"
 local W = Config.Witness
 
 local running = false
+local hint: TextLabel
+
+-- How to skip, in the words of the input in use (any of them works).
+local function hintText(): string
+	local kind = UserInputService:GetLastInputType()
+	return if kind == Enum.UserInputType.Touch
+		then "TAP TO SKIP"
+		elseif kind.Name:sub(1, 7) == "Gamepad" then "A TO SKIP"
+		else "SPACE OR CLICK TO SKIP"
+end
 
 local function stop()
 	if not running then
 		return
 	end
 	running = false
+	hint.Visible = false
 	RunService:UnbindFromRenderStep(STEP)
 	ContextActionService:UnbindAction(ACTION)
 	local camera = Workspace.CurrentCamera
@@ -94,6 +110,10 @@ local function witness(character: Model)
 			stop()
 			return
 		end
+		if age >= W.SkipAfter and not hint.Visible then
+			hint.Text = hintText()
+			hint.Visible = true
+		end
 		local u = if reduced then 0 else age / W.Seconds
 		local eased = u * u * (3 - 2 * u)
 		camera.CameraType = Enum.CameraType.Scriptable
@@ -121,6 +141,27 @@ function DeathCamController.Init() end
 
 function DeathCamController.Start()
 	local player = Players.LocalPlayer
+	local gui = Ui.new("ScreenGui", {
+		Name = "DeathCam",
+		ResetOnSpawn = false,
+		DisplayOrder = 31,
+		Parent = player:WaitForChild("PlayerGui"),
+	})
+	-- above the spectate bar, quiet: the moment is the body, not the prompt
+	hint = Ui.text({
+		Name = "SkipHint",
+		Font = Theme.Font.display,
+		TextSize = 15,
+		Color = Theme.Color.boneDim,
+		XAlign = Enum.TextXAlignment.Center,
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -84),
+		Size = UDim2.fromOffset(320, 20),
+	})
+	hint.TextStrokeTransparency = 0.5
+	hint.Visible = false
+	hint.Parent = gui
+	Ui.phoneScale(hint, Registry.UIController.Gui(), 0.75)
 	player.CharacterAdded:Connect(function(character)
 		stop()
 		watch(character)

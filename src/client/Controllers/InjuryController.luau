@@ -19,13 +19,16 @@
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config.Injury)
+local Difficulty = require(Shared.Config.Difficulty)
 local Registry = require(script.Parent.Parent.Registry)
 local CrewPoses = require(script.Parent.Parent.Animation.CrewPoses)
 
@@ -47,7 +50,11 @@ local rescuePanel: Frame
 local rescueTitle: TextLabel
 local rescueTrack: Frame
 local rescueMarker: Frame
+local rescueHint: TextLabel
+local pullButton: TextButton
 local notches: { Frame } = {}
+local HINT = "PRESS ON EACH MARK"
+local hintUntil = 0
 local returnPanel: Frame
 local returnText: TextLabel
 local returnArrow: TextLabel
@@ -284,12 +291,25 @@ local function stopRescue()
 	ContextActionService:UnbindAction(ACTION)
 end
 
-local function press()
+-- The button's own words for the input in use: touch taps it, the others press a key.
+local function labelPull()
+	local kind = UserInputService:GetLastInputType()
+	pullButton.Text = if kind == Enum.UserInputType.Touch
+		then "PULL"
+		elseif kind.Name:sub(1, 7) == "Gamepad" then "A"
+		else "SPACE"
+end
+
+local function press(touch: boolean)
 	local session = active
 	if session == nil then
 		return
 	end
+	-- the instant the key went down, on the clock that draws the marker (a tap arrives late)
 	local at = serverNow()
+	if touch then
+		at -= Difficulty.SkillCheck.TouchLead
+	end
 	-- the nearest beat not pressed yet
 	local best, bestGap = nil :: number?, math.huge
 	for i, offset in session.beats do
@@ -301,13 +321,21 @@ local function press()
 	if best == nil then
 		return
 	end
+	-- nowhere near a mark (a press in the lead-in, a double tap, a jump): the server would judge
+	-- it a miss and end the rescue, so it stays here as a hint instead
+	if bestGap > Config.Rescue.Window + Config.Rescue.CompensationMax then
+		rescueHint.Text = "WAIT FOR THE MARK"
+		rescueHint.TextColor3 = Theme.Color.caution
+		hintUntil = os.clock() + 0.6
+		return
+	end
 	session.pressed[best] = true
 	Net.Fire("Rescue", session.id, best, at)
 end
 
 local function onAction(_: string, state: Enum.UserInputState): Enum.ContextActionResult
 	if state == Enum.UserInputState.Begin then
-		press()
+		press(false)
 	end
 	return Enum.ContextActionResult.Sink
 end
@@ -322,6 +350,10 @@ local function startRescue(data: { [string]: any })
 		pressed = {},
 	}
 	rescueTitle.Text = `PULL {string.upper(nameOf(data.victim))} FREE`
+	rescueHint.Text = HINT
+	rescueHint.TextColor3 = Theme.Color.boneDim
+	hintUntil = 0
+	labelPull()
 	local length = data.endsAt - data.startsAt
 	for i, notch in notches do
 		local offset = beats[i]
@@ -332,6 +364,8 @@ local function startRescue(data: { [string]: any })
 		end
 	end
 	rescuePanel.Visible = true
+	-- a selected button (gamepad UI navigation) would take A before the beats could
+	GuiService.SelectedObject = nil
 	ContextActionService:BindActionAtPriority(
 		ACTION,
 		onAction,
@@ -419,6 +453,11 @@ local function step()
 		rescueMarker.Position = UDim2.fromScale(math.clamp(u, 0, 1), 0.5)
 		if u > 1.5 then
 			stopRescue() -- the end never arrived (a missed event): let go of the controls
+		end
+		if hintUntil > 0 and os.clock() >= hintUntil then
+			hintUntil = 0
+			rescueHint.Text = HINT
+			rescueHint.TextColor3 = Theme.Color.boneDim
 		end
 	end
 	local character = Players.LocalPlayer.Character
@@ -523,7 +562,7 @@ local function build()
 		Parent = rescueTrack,
 	})
 	-- touch: a big button, read on the press (not the release, which comes a tap late)
-	local pull = Ui.new("TextButton", {
+	pullButton = Ui.new("TextButton", {
 		Name = "Pull",
 		Text = "PULL",
 		FontFace = Theme.Font.display,
@@ -533,23 +572,29 @@ local function build()
 		Size = UDim2.fromOffset(100, 60),
 		Position = UDim2.new(1, -116, 0, 38),
 		AutoButtonColor = true,
+		Selectable = false, -- gamepad presses A for the beats; the button is for touch and mouse
 		Parent = rescuePanel,
 	}, { Ui.corner(6) :: Instance })
-	pull.InputBegan:Connect(function(input: InputObject)
+	pullButton.InputBegan:Connect(function(input: InputObject)
 		local kind = input.UserInputType
 		if kind == Enum.UserInputType.Touch or kind == Enum.UserInputType.MouseButton1 then
-			press()
+			press(kind == Enum.UserInputType.Touch)
 		end
 	end)
-	Ui.text({
-		Text = "PRESS ON EACH MARK",
+	UserInputService.LastInputTypeChanged:Connect(function()
+		if rescuePanel.Visible then
+			labelPull()
+		end
+	end)
+	rescueHint = Ui.text({
+		Text = HINT,
 		Font = Theme.Font.type,
 		TextSize = 13,
 		Color = Theme.Color.boneDim,
 		Size = UDim2.new(1, -150, 0, 16),
 		Position = UDim2.fromOffset(20, 84),
-	}).Parent =
-		rescuePanel
+	})
+	rescueHint.Parent = rescuePanel
 
 	returnPanel = Ui.panel({
 		Name = "Return",
@@ -587,11 +632,17 @@ local function build()
 		Color = Theme.Color.go,
 		XAlign = Enum.TextXAlignment.Center,
 		Size = UDim2.fromOffset(240, 26),
-		Position = UDim2.new(0.5, 0, 1, -210),
+		Position = UDim2.new(0.5, 0, 1, -292), -- above the rescue panel, never under it
 		AnchorPoint = Vector2.new(0.5, 1),
 		Visible = false,
 	})
 	healText.Parent = gui
+
+	-- this ScreenGui is not under the main one's UIScale: shrink with it on a phone held sideways
+	local main = Registry.UIController.Gui()
+	Ui.phoneScale(rescuePanel, main, 0.75)
+	Ui.phoneScale(returnPanel, main, 0.75)
+	Ui.phoneScale(healText, main, 0.75)
 end
 
 function InjuryController.Init() end
