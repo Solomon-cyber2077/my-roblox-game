@@ -119,6 +119,7 @@ type Hold = {
 	pryAt: { [Player]: number },
 	lethal: boolean, -- the clock running out kills (not the tutorial's teaching grab)
 	rescue: Rescue.Session?, -- limb loss: the crew rescue opened when the clock ran out (Logic/Rescue)
+	rescueSettled: boolean?, -- its outcome has been acted on (a press can resolve it before a tick sees it)
 }
 
 type Hollow = {
@@ -901,10 +902,10 @@ end
 function rescueTick(hollow: Hollow)
 	local hold = hollow.hold
 	local session = hold and hold.rescue
-	if hold == nil or session == nil or Rescue.resolved(session) then
+	if hold == nil or session == nil or hold.rescueSettled then
 		return
 	end
-	if session.rescuer then
+	if session.rescuer and not Rescue.resolved(session) then
 		-- a little slack on reach while they pull: they are braced against it
 		if
 			not canRescue(hold, Players:GetPlayerByUserId(session.rescuer), InjuryConfig.Rescue.Reach * 1.5)
@@ -913,6 +914,9 @@ function rescueTick(hollow: Hollow)
 		end
 	end
 	local phase = Rescue.tick(session, serverNow())
+	if phase == "Rescued" or phase == "Failed" then
+		hold.rescueSettled = true
+	end
 	if phase == "Rescued" then
 		endRescue(hold, session)
 		local side = hold.root.CFrame:PointToObjectSpace(hollow.root.Position).X
