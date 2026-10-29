@@ -657,6 +657,12 @@ local function hideOwnTreatPrompts(character: Model)
 	local function hide(child: Instance)
 		if child:IsA("ProximityPrompt") and child:GetAttribute("Action") == "Treat" then
 			child.Enabled = false
+			-- the server turns it off while you are held and back on after: keep it off here
+			child:GetPropertyChangedSignal("Enabled"):Connect(function()
+				if child.Enabled then
+					child.Enabled = false
+				end
+			end)
 		end
 	end
 	for _, child in root:GetChildren() do

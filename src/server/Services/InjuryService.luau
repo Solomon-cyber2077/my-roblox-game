@@ -338,6 +338,11 @@ local function syncPrompts()
 				prompts[character] = prompt
 			end
 		end
+		-- held: the hold's Pull free / Rescue prompt shares this part and key, and only one shows
+		local prompt = prompts[character]
+		if prompt then
+			prompt.Enabled = not Registry.HollowService.IsHeld(patient)
+		end
 	end
 	local chest = Registry.TrainService.ChestPart()
 	if InjuryService.Enabled() and chest and chestPrompt == nil then
