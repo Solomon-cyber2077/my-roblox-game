@@ -1099,30 +1099,34 @@ function Hud.mount(gui: ScreenGui)
 					hasTool = true
 				end
 				if priority and wouldDrop[index] then
+					-- a phone scales the HUD to about 0.7: 10 px would read as 7
+					local small = gui:GetAttribute("Compact") ~= true
 					local mark = Ui.text({
 						Text = "DROPS",
 						Font = Theme.Font.display,
-						TextSize = 10,
+						TextSize = if small then 10 else 12,
 						Color = Theme.Color.dangerText,
-						Position = UDim2.new(1, -4, 1, -2),
+						Position = UDim2.new(1, -3, 1, -2),
 						AnchorPoint = Vector2.new(1, 1),
-						Size = UDim2.fromOffset(40, 12),
+						Size = if small then UDim2.fromOffset(40, 12) else UDim2.fromOffset(40, 14),
 						XAlign = Enum.TextXAlignment.Right,
 					})
 					mark.ZIndex = 4
 					mark.Parent = button
 				end
 				if priority and index > 1 then
-					-- on a phone the 18 px mark is a hard tap: the same mark inside an invisible 32 px
-					-- target in the slot's corner, so a near miss still moves the item
+					-- on a phone the 18 px mark is a hard tap: a bigger mark inside an invisible target
+					-- in the slot's corner, so a near miss still moves the item. The HUD is scaled to
+					-- about 0.7 there, so 40x36 lands near 28x25 on screen; the top band of the slot
+					-- stays free for tapping the slot itself
 					local compact = gui:GetAttribute("Compact") == true
 					local left = if compact
 						then Ui.new("TextButton", {
 							Name = "MoveLeft",
 							Text = "",
 							BackgroundTransparency = 1,
-							Size = UDim2.fromOffset(32, 32),
-							Position = UDim2.new(0, 0, 1, -32),
+							Size = UDim2.fromOffset(40, 36),
+							Position = UDim2.new(0, 0, 1, -36),
 							ZIndex = 5,
 							Parent = button,
 						})
@@ -1131,12 +1135,12 @@ function Hud.mount(gui: ScreenGui)
 						Name = if compact then "Mark" else "MoveLeft",
 						Text = "<",
 						FontFace = Theme.Font.display,
-						TextSize = 14,
+						TextSize = if compact then 18 else 14,
 						TextColor3 = Theme.Color.bone,
 						BackgroundColor3 = Theme.Color.steel,
 						BackgroundTransparency = 0.15,
-						Size = UDim2.fromOffset(18, 18),
-						Position = if compact then UDim2.fromOffset(2, 12) else UDim2.new(0, 2, 1, -20),
+						Size = if compact then UDim2.fromOffset(22, 22) else UDim2.fromOffset(18, 18),
+						Position = if compact then UDim2.fromOffset(1, 12) else UDim2.new(0, 2, 1, -20),
 						ZIndex = 5,
 						Parent = left or button,
 					})
