@@ -53,7 +53,8 @@ local pendingJoin: { [Player]: boolean } = {}
 local downs = 0 -- eliminations this run, for the run log's per-stop haul
 local missingAtLastCall: { [Player]: boolean } = {} -- not aboard when the whistle blew (T-0)
 local spawnGeneration: { [Player]: number } = {}
-local cashedOut: { [Player]: boolean } = {} -- took this run's stop-five cash-out: no rejoining it
+-- took this run's stop-five cash-out, by UserId so leaving and coming back cannot rejoin it; cleared when a run starts
+local cashedOut: { [number]: boolean } = {}
 
 local REGEN_SHARE = 0.01 -- of max health per second, as the default Health script gave
 local descriptions: { [number]: HumanoidDescription } = {}
@@ -329,7 +330,6 @@ function CrewService.Start()
 
 	Players.PlayerRemoving:Connect(function(player)
 		pendingJoin[player] = nil
-		cashedOut[player] = nil
 		spawnGeneration[player] = nil
 		local member = members[player]
 		if member then
@@ -656,7 +656,7 @@ function CrewService.RequestJoin(player: Player)
 	if members[player] or pendingJoin[player] then
 		return
 	end
-	if cashedOut[player] then
+	if cashedOut[player.UserId] then
 		NetService.Fire(
 			"Notify",
 			player,
@@ -751,7 +751,7 @@ function CrewService.CashOut(player: Player): (boolean, string?)
 	Registry.GraspService.Cleanup(player)
 	Registry.InventoryService.Clear(player)
 	members[player] = nil
-	cashedOut[player] = true
+	cashedOut[player.UserId] = true
 	unpublish(player)
 	print(`[Crew] {player.Name} cashed out at stop {Tuning.Run.CashOutStop}`)
 	NetService.FireAll(
