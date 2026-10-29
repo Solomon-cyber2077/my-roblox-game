@@ -1,231 +1,233 @@
 {
   "byConnection": {
     "ethernet": {
-      "deathsPerPlayer": 0.37,
+      "deathsPerPlayer": 0.407,
       "players": 81,
-      "quitShare": 0.44,
-      "rescueSuccess": 0.66,
-      "rescueTries": 3,
-      "returnChance": 0.248
+      "quitShare": 0.23,
+      "rescueSuccess": 0.75,
+      "rescueTries": 4,
+      "returnChance": 0.304
     },
     "mobile": {
-      "deathsPerPlayer": 0.72,
+      "deathsPerPlayer": 0.792,
       "players": 125,
-      "quitShare": 0.24,
-      "rescueSuccess": 0.5,
+      "quitShare": 0.08,
+      "rescueSuccess": 0,
       "rescueTries": 4,
-      "returnChance": 0.216
+      "returnChance": 0.27
     },
     "wifi": {
-      "deathsPerPlayer": 0.583,
+      "deathsPerPlayer": 0.589,
       "players": 674,
-      "quitShare": 0.28,
-      "rescueSuccess": 0.88,
-      "rescueTries": 17,
-      "returnChance": 0.238
+      "quitShare": 0.14,
+      "rescueSuccess": 0.65,
+      "rescueTries": 40,
+      "returnChance": 0.305
     }
   },
   "byDevice": {
     "Console": {
-      "deathsPerPlayer": 0.506,
+      "deathsPerPlayer": 0.443,
       "players": 79,
-      "quitShare": 0.29,
+      "quitShare": 0.15,
       "rescueSuccess": 0,
-      "rescueTries": 1,
-      "returnChance": 0.239
+      "rescueTries": 2,
+      "returnChance": 0.325
     },
     "Desktop": {
-      "deathsPerPlayer": 0.263,
+      "deathsPerPlayer": 0.342,
       "players": 114,
-      "quitShare": 0.5,
-      "rescueSuccess": 1,
-      "rescueTries": 3,
-      "returnChance": 0.261
+      "quitShare": 0.26,
+      "rescueSuccess": 0.62,
+      "rescueTries": 8,
+      "returnChance": 0.309
     },
     "Laptop": {
-      "deathsPerPlayer": 0.581,
+      "deathsPerPlayer": 0.538,
       "players": 117,
-      "quitShare": 0.27,
-      "rescueSuccess": 0.85,
-      "rescueTries": 7,
-      "returnChance": 0.261
+      "quitShare": 0.16,
+      "rescueSuccess": 0.78,
+      "rescueTries": 14,
+      "returnChance": 0.328
     },
     "Phone": {
-      "deathsPerPlayer": 0.673,
+      "deathsPerPlayer": 0.714,
       "players": 466,
-      "quitShare": 0.24,
-      "rescueSuccess": 0.81,
-      "rescueTries": 11,
-      "returnChance": 0.226
+      "quitShare": 0.1,
+      "rescueSuccess": 0.47,
+      "rescueTries": 17,
+      "returnChance": 0.287
     },
     "Tablet": {
-      "deathsPerPlayer": 0.586,
+      "deathsPerPlayer": 0.567,
       "players": 104,
-      "quitShare": 0.28,
-      "rescueSuccess": 0.5,
-      "rescueTries": 2,
-      "returnChance": 0.225
+      "quitShare": 0.13,
+      "rescueSuccess": 0.71,
+      "rescueTries": 7,
+      "returnChance": 0.296
     }
   },
   "byHour": {
     "afternoon (12-17)": {
-      "deathsPerPlayer": 0.543,
+      "deathsPerPlayer": 0.623,
       "players": 138,
-      "quitShare": 0.26,
-      "rescueSuccess": 0.8,
-      "rescueTries": 5,
-      "returnChance": 0.248
+      "quitShare": 0.1,
+      "rescueSuccess": 0.5,
+      "rescueTries": 10,
+      "returnChance": 0.308
     },
     "evening (17-21)": {
-      "deathsPerPlayer": 0.63,
+      "deathsPerPlayer": 0.579,
       "players": 373,
-      "quitShare": 0.24,
-      "rescueSuccess": 0.7,
-      "rescueTries": 10,
-      "returnChance": 0.232
+      "quitShare": 0.13,
+      "rescueSuccess": 0.73,
+      "rescueTries": 19,
+      "returnChance": 0.313
     },
     "late night (0-6)": {
-      "deathsPerPlayer": 0.441,
+      "deathsPerPlayer": 0.697,
       "players": 43,
-      "quitShare": 0.37,
-      "rescueSuccess": 0,
-      "rescueTries": 1,
-      "returnChance": 0.25
+      "quitShare": 0.06,
+      "rescueSuccess": 1,
+      "rescueTries": 2,
+      "returnChance": 0.28
     },
     "morning (6-12)": {
-      "deathsPerPlayer": 0.711,
+      "deathsPerPlayer": 0.694,
       "players": 59,
-      "quitShare": 0.2,
-      "rescueTries": 0,
-      "returnChance": 0.222
+      "quitShare": 0.13,
+      "rescueSuccess": 0.33,
+      "rescueTries": 3,
+      "returnChance": 0.3
     },
     "night (21-24)": {
-      "deathsPerPlayer": 0.531,
+      "deathsPerPlayer": 0.584,
       "players": 267,
-      "quitShare": 0.38,
-      "rescueSuccess": 1,
-      "rescueTries": 8,
-      "returnChance": 0.236
+      "quitShare": 0.19,
+      "rescueSuccess": 0.5,
+      "rescueTries": 14,
+      "returnChance": 0.28
     }
   },
   "byStation": {
     "CoalYard": {
-      "stops": 169
+      "stops": 171
     },
     "Halt": {
-      "stops": 161
+      "stops": 177
     },
     "Infirmary": {
-      "stops": 160
+      "stops": 159
     },
     "Market": {
-      "stops": 143
+      "stops": 156
     },
     "Minehead": {
-      "stops": 171
+      "stops": 178
     },
     "PostTown": {
       "stops": 150
     },
     "RailwayHotel": {
-      "stops": 157
+      "stops": 179
     },
     "Schoolhouse": {
-      "stops": 174
+      "stops": 162
     },
     "SignalWorks": {
-      "stops": 151
+      "stops": 167
     },
     "Viaduct": {
-      "stops": 152
+      "stops": 150
     }
   },
   "features": [
     {
       "evidence": [
-        "10% of failed holds had a crewmate close enough to be offered the rescue (57 of 520)",
-        "33% of offered rescues succeeded; 9 crewmates were offered one they could not reach in time",
-        "beats hit 100% of the time"
+        "13% of failed holds had a crewmate close enough to be offered the rescue (74 of 550)",
+        "39% of offered rescues succeeded; 3 crewmates were offered one they could not reach in time",
+        "beats hit 99% of the time"
       ],
       "name": "Crew rescue",
       "numbers": {
-        "failed": 38,
-        "holdsFailed": 520,
-        "offered": 57,
-        "rescued": 19,
-        "unreachable": 9
+        "failed": 45,
+        "holdsFailed": 550,
+        "offered": 74,
+        "rescued": 29,
+        "unreachable": 3
       },
       "verdict": "rarely available"
     },
     {
       "evidence": [
-        "4 items dropped by arm loss across 300 sessions",
-        "1 players were surprised by the drop; 3 understood it"
+        "9 items dropped by arm loss across 300 sessions",
+        "0 players were surprised by the drop; 6 understood it"
       ],
       "name": "Carry priority and overflow",
       "numbers": {
-        "drops": 4,
-        "surprised": 1,
-        "understood": 3
+        "drops": 9,
+        "surprised": 0,
+        "understood": 6
       },
       "verdict": "understood"
     },
     {
       "evidence": [
-        "43 arms regrown for 19 torn (plus arms lost at earlier stops)"
+        "54 arms regrown for 29 torn (plus arms lost at earlier stops)"
       ],
       "name": "Tonic regrowth",
       "numbers": {
-        "heals": 43,
-        "tears": 19
+        "heals": 54,
+        "tears": 29
       },
       "verdict": "used"
     },
     {
       "evidence": [
-        "0 players lost both arms; 0 made it back aboard",
+        "2 players lost both arms; 2 made it back aboard",
         "0 ran out of time within 1.5 s of the train",
         "0 did not understand the countdown"
       ],
       "name": "Armless return",
       "numbers": {
-        "armless": 0,
+        "armless": 2,
         "doorDeaths": 0,
-        "returned": 0
+        "returned": 2
       },
-      "verdict": "rarely triggered"
+      "verdict": "fair"
     },
     {
       "evidence": [
-        "61 lag complaints in 300 sessions",
+        "64 lag complaints in 300 sessions",
         "rescue alone: Desktop/ethernet 87% vs Phone/mobile at 280 ms 70%"
       ],
       "name": "Fairness on slow connections",
       "numbers": {
-        "lagComplaints": 61
+        "lagComplaints": 64
       },
       "verdict": "lag hurts"
     },
     {
       "evidence": [
-        "257 quit mid-run in 300 sessions",
-        "average come-back score 23% (relative: compare hours and devices, not a retention forecast)"
+        "125 left mid-run in 300 sessions: 3 frustrated or bored, the rest out of time or tired",
+        "average come-back score 30% (relative: compare hours and devices, not a retention forecast)"
       ],
       "name": "Sessions and mood",
       "numbers": {
-        "quits": 257,
-        "returnChance": 0.236
+        "quits": 125,
+        "quitsUnhappy": 3,
+        "returnChance": 0.3
       },
-      "verdict": "players leave unhappy"
+      "verdict": "few rage-quit, but runs end flat"
     }
   ],
   "feedback": {
     "bugs": [
       {
-        "count": 9,
+        "count": 3,
         "example": {
-          "needSeconds": 2.1,
-          "studs": 33.1,
+          "needSeconds": 2,
+          "studs": 27.1,
           "windowSeconds": 1.9
         },
         "text": "The rescue prompt was offered to me but I could not reach them in time",
@@ -234,65 +236,65 @@
     ],
     "complaints": {
       "boring_wait": {
-        "count": 540,
+        "count": 555,
         "examples": [
           "spectating is boring",
-          "waiting...",
-          "Waiting...",
           "how long till the next run",
+          "waiting...",
+          "How long till the next run",
           "Spectating is boring"
         ]
       },
       "hollow_again": {
-        "count": 37,
+        "count": 44,
         "examples": [
-          "Just escaped and it's back on me",
           "it grabbed me again right away",
-          "It grabbed me again right away",
-          "just escaped and it's back on me"
-        ]
-      },
-      "items_lost": {
-        "count": 1,
-        "examples": [
-          "wait where did my stuff go"
+          "Just escaped and it's back on me",
+          "just escaped and it's back on me",
+          "It grabbed me again right away"
         ]
       },
       "lag": {
-        "count": 61,
+        "count": 64,
         "examples": [
-          "ping spike right on the beat",
-          "That was lag i swear",
-          "that was lag i swear",
           "LAG",
-          "My wifi is dying"
+          "ping spike right on the beat",
+          "Ping spike right on the beat",
+          "my wifi is dying",
+          "that was lag i swear"
         ]
       },
       "nobody_near": {
-        "count": 463,
+        "count": 476,
         "examples": [
           "nobody was near me, just died",
-          "where was everyone",
-          "Where was everyone",
           "solo grab = death, cool",
-          "Nobody was near me, just died"
+          "Where was everyone",
+          "Nobody was near me, just died",
+          "Solo grab = death, cool"
         ]
       },
       "rescue_unreachable": {
-        "count": 9,
+        "count": 3,
         "examples": [
-          "couldn't reach them, the prompt was useless",
           "how am i supposed to get there in 2 seconds",
-          "it said rescue but i was way too far"
+          "it said rescue but i was way too far",
+          "couldn't reach them, the prompt was useless"
+        ]
+      },
+      "touch_button": {
+        "count": 1,
+        "examples": [
+          "my thumb was on the button and it didn't count"
         ]
       }
     },
     "praise": {
-      "healed": 43,
-      "items_lost_understood": 3,
-      "praise_escape": 811,
-      "praise_rescue": 19,
-      "praise_tension": 185
+      "healed": 54,
+      "items_lost_understood": 6,
+      "praise_escape": 913,
+      "praise_rescue": 29,
+      "praise_tension": 208
     }
   },
   "note": "Simulated people on the game's own rules (lib/LimbSim, lib/Humans); a model to rank risks, not real player data.",
@@ -390,26 +392,27 @@
   ],
   "sessions": 300,
   "totals": {
-    "armless": 0,
-    "beatHits": 59,
-    "beatMisses": 0,
-    "died": 503,
-    "drops": 4,
-    "escapes": 895,
-    "grabs": 1415,
-    "heals": 43,
-    "holdsFailed": 520,
-    "leftAfterDeath": 295,
-    "leftBehind": 12,
-    "noRescuer": 463,
-    "quits": 257,
-    "rescueFails": 38,
-    "rescueOpened": 57,
-    "rescues": 19,
-    "returned": 0,
-    "says": 5469,
-    "stops": 1588,
-    "tears": 19,
-    "unreachable": 9
+    "armless": 2,
+    "beatHits": 101,
+    "beatMisses": 1,
+    "died": 523,
+    "drops": 9,
+    "escapes": 1016,
+    "grabs": 1566,
+    "heals": 54,
+    "holdsFailed": 550,
+    "leftAfterDeath": 247,
+    "leftBehind": 8,
+    "noRescuer": 476,
+    "quits": 125,
+    "quitsUnhappy": 3,
+    "rescueFails": 45,
+    "rescueOpened": 74,
+    "rescues": 29,
+    "returned": 2,
+    "says": 4690,
+    "stops": 1649,
+    "tears": 29,
+    "unreachable": 3
   }
 }

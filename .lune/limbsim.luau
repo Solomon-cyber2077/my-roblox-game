@@ -347,12 +347,16 @@ local comeBack = mean(players, function(p)
 end) or 0
 table.insert(features, {
 	name = "Sessions and mood",
-	verdict = if comeBack < 0.45 then "players leave unhappy" else "players mostly leave content",
+	-- rage and boredom quits say "unhappy"; a low come-back score alone means the runs end flat
+	verdict = if T("quitsUnhappy") > #players * 0.15
+		then "players leave unhappy"
+		elseif comeBack < 0.45 then "few rage-quit, but runs end flat"
+		else "players mostly leave content",
 	evidence = {
-		`{T("quits")} quit mid-run in {opts.sessions} sessions`,
+		`{T("quits")} left mid-run in {opts.sessions} sessions: {T("quitsUnhappy")} frustrated or bored, the rest out of time or tired`,
 		`average come-back score {math.floor(comeBack * 100)}% (relative: compare hours and devices, not a retention forecast)`,
 	},
-	numbers = { quits = T("quits"), returnChance = comeBack },
+	numbers = { quits = T("quits"), quitsUnhappy = T("quitsUnhappy"), returnChance = comeBack },
 })
 
 local bugList = {}

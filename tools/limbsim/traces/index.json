@@ -4,12 +4,12 @@
       "Cleo",
       "Sam"
     ],
-    "file": "quit-2001.json",
-    "id": "quit-2001",
-    "kind": "quit",
-    "outcome": "5 stops; 3 grabs, 2 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 0 of 2 aboard at the end; would come back 39%",
-    "stops": 5,
-    "title": "quit: Cleo, Sam (5 stops)"
+    "file": "deaths-2001.json",
+    "id": "deaths-2001",
+    "kind": "deaths",
+    "outcome": "6 stops; 6 grabs, 5 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 1 of 2 aboard at the end; would come back 29%",
+    "stops": 6,
+    "title": "deaths: Cleo, Sam (6 stops)"
   },
   {
     "crew": [
@@ -19,9 +19,9 @@
     "file": "quit-2002.json",
     "id": "quit-2002",
     "kind": "quit",
-    "outcome": "6 stops; 2 grabs, 2 fought free, 0 rescued, 0 rescue failed, 0 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 2 quit; 0 of 2 aboard at the end; would come back 27%",
-    "stops": 6,
-    "title": "quit: Kai, Maya (6 stops)"
+    "outcome": "4 stops; 2 grabs, 1 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 0 of 2 aboard at the end; would come back 31%",
+    "stops": 4,
+    "title": "quit: Kai, Maya (4 stops)"
   },
   {
     "crew": [
@@ -33,9 +33,23 @@
     "file": "quit-2003.json",
     "id": "quit-2003",
     "kind": "quit",
-    "outcome": "6 stops; 3 grabs, 2 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 3 quit; 0 of 4 aboard at the end; would come back 28%",
+    "outcome": "6 stops; 5 grabs, 5 fought free, 0 rescued, 0 rescue failed, 0 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 3 of 4 aboard at the end; would come back 42%",
     "stops": 6,
     "title": "quit: Nia, Ezra, Ivy, Jude (6 stops)"
+  },
+  {
+    "crew": [
+      "Jude",
+      "Ava",
+      "Owen",
+      "Tess"
+    ],
+    "file": "quit-2004.json",
+    "id": "quit-2004",
+    "kind": "quit",
+    "outcome": "6 stops; 6 grabs, 4 fought free, 0 rescued, 0 rescue failed, 2 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 1 of 4 aboard at the end; would come back 43%",
+    "stops": 6,
+    "title": "quit: Jude, Ava, Owen, Tess (6 stops)"
   },
   {
     "crew": [
@@ -46,21 +60,9 @@
     "file": "deaths-2005.json",
     "id": "deaths-2005",
     "kind": "deaths",
-    "outcome": "6 stops; 9 grabs, 8 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 2 of 3 aboard at the end; would come back 21%",
+    "outcome": "6 stops; 4 grabs, 3 fought free, 0 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 2 of 3 aboard at the end; would come back 30%",
     "stops": 6,
     "title": "deaths: Tess, Eli, Priya (6 stops)"
-  },
-  {
-    "crew": [
-      "Leo",
-      "Jade"
-    ],
-    "file": "deaths-2006.json",
-    "id": "deaths-2006",
-    "kind": "deaths",
-    "outcome": "2 stops; 4 grabs, 2 fought free, 0 rescued, 0 rescue failed, 2 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 0 of 2 aboard at the end; would come back 41%",
-    "stops": 2,
-    "title": "deaths: Leo, Jade (2 stops)"
   },
   {
     "crew": [
@@ -69,39 +71,37 @@
       "Diego",
       "Zoe"
     ],
-    "file": "rescue-failed-2010.json",
-    "id": "rescue-failed-2010",
-    "kind": "rescue failed",
-    "outcome": "6 stops; 3 grabs, 1 fought free, 0 rescued, 1 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 1 of 4 aboard at the end; would come back 17%",
+    "file": "rescued-2010.json",
+    "id": "rescued-2010",
+    "kind": "rescued",
+    "outcome": "6 stops; 9 grabs, 5 fought free, 2 rescued, 1 rescue failed, 1 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 1 quit; 1 of 4 aboard at the end; would come back 27%",
     "stops": 6,
-    "title": "rescue failed: Remy, Luna, Diego, Zoe (6 stops)"
+    "title": "rescued: Remy, Luna, Diego, Zoe (6 stops)"
   },
   {
     "crew": [
-      "Maya",
-      "Arlo",
-      "Nia"
+      "Omar",
+      "Mia",
+      "Theo"
     ],
-    "file": "rescue-failed-2013.json",
-    "id": "rescue-failed-2013",
-    "kind": "rescue failed",
-    "outcome": "5 stops; 5 grabs, 3 fought free, 0 rescued, 1 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 1 quit; 0 of 3 aboard at the end; would come back 27%",
-    "stops": 5,
-    "title": "rescue failed: Maya, Arlo, Nia (5 stops)"
+    "file": "rescued-2018.json",
+    "id": "rescued-2018",
+    "kind": "rescued",
+    "outcome": "6 stops; 8 grabs, 7 fought free, 1 rescued, 0 rescue failed, 0 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 0 quit; 3 of 3 aboard at the end; would come back 46%",
+    "stops": 6,
+    "title": "rescued: Omar, Mia, Theo (6 stops)"
   },
   {
     "crew": [
-      "Eli",
-      "Priya",
-      "Leo",
-      "Jade"
+      "Ivy",
+      "Jude"
     ],
-    "file": "rescue-failed-2016.json",
-    "id": "rescue-failed-2016",
-    "kind": "rescue failed",
-    "outcome": "5 stops; 3 grabs, 1 fought free, 0 rescued, 1 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 2 quit; 0 of 4 aboard at the end; would come back 17%",
-    "stops": 5,
-    "title": "rescue failed: Eli, Priya, Leo, Jade (5 stops)"
+    "file": "armless-2025.json",
+    "id": "armless-2025",
+    "kind": "armless",
+    "outcome": "6 stops; 3 grabs, 2 fought free, 1 rescued, 0 rescue failed, 0 with nobody near; 2 items dropped, 0 arms regrown; 1 armless, 1 made it back; 1 quit; 1 of 2 aboard at the end; would come back 37%",
+    "stops": 6,
+    "title": "armless: Ivy, Jude (6 stops)"
   },
   {
     "crew": [
@@ -113,23 +113,36 @@
     "file": "rescued-2028.json",
     "id": "rescued-2028",
     "kind": "rescued",
-    "outcome": "6 stops; 8 grabs, 4 fought free, 1 rescued, 0 rescue failed, 3 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 0 quit; 1 of 4 aboard at the end; would come back 18%",
+    "outcome": "6 stops; 15 grabs, 10 fought free, 1 rescued, 1 rescue failed, 3 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 0 quit; 0 of 4 aboard at the end; would come back 29%",
     "stops": 6,
     "title": "rescued: Ravi, Ruby, Omar, Mia (6 stops)"
   },
   {
     "crew": [
-      "Aria",
-      "Remy",
-      "Luna",
-      "Diego"
+      "Max",
+      "Hana",
+      "Noah"
     ],
-    "file": "rescued-2031.json",
-    "id": "rescued-2031",
-    "kind": "rescued",
-    "outcome": "6 stops; 4 grabs, 1 fought free, 1 rescued, 0 rescue failed, 2 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 1 quit; 1 of 4 aboard at the end; would come back 16%",
+    "file": "rescue-failed-2030.json",
+    "id": "rescue-failed-2030",
+    "kind": "rescue failed",
+    "outcome": "6 stops; 6 grabs, 5 fought free, 0 rescued, 1 rescue failed, 0 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 2 of 3 aboard at the end; would come back 27%",
     "stops": 6,
-    "title": "rescued: Aria, Remy, Luna, Diego (6 stops)"
+    "title": "rescue failed: Max, Hana, Noah (6 stops)"
+  },
+  {
+    "crew": [
+      "Nia",
+      "Ezra",
+      "Ivy",
+      "Jude"
+    ],
+    "file": "rescue-failed-2035.json",
+    "id": "rescue-failed-2035",
+    "kind": "rescue failed",
+    "outcome": "5 stops; 6 grabs, 2 fought free, 0 rescued, 1 rescue failed, 3 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 0 quit; 0 of 4 aboard at the end; would come back 18%",
+    "stops": 5,
+    "title": "rescue failed: Nia, Ezra, Ivy, Jude (5 stops)"
   },
   {
     "crew": [
@@ -140,35 +153,46 @@
     "file": "rescued-2045.json",
     "id": "rescued-2045",
     "kind": "rescued",
-    "outcome": "6 stops; 10 grabs, 9 fought free, 1 rescued, 0 rescue failed, 0 with nobody near; 1 items dropped, 1 arms regrown; 0 armless, 0 made it back; 3 quit; 0 of 3 aboard at the end; would come back 28%",
+    "outcome": "6 stops; 4 grabs, 2 fought free, 1 rescued, 0 rescue failed, 1 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 1 quit; 1 of 3 aboard at the end; would come back 30%",
     "stops": 6,
     "title": "rescued: Maya, Arlo, Nia (6 stops)"
   },
   {
     "crew": [
-      "Ezra",
-      "Ivy",
-      "Jude",
-      "Ava"
+      "Diego",
+      "Zoe",
+      "Finn"
     ],
-    "file": "rescued-2046.json",
-    "id": "rescued-2046",
-    "kind": "rescued",
-    "outcome": "6 stops; 11 grabs, 7 fought free, 1 rescued, 0 rescue failed, 3 with nobody near; 0 items dropped, 1 arms regrown; 0 armless, 0 made it back; 0 quit; 1 of 4 aboard at the end; would come back 15%",
+    "file": "rescue-failed-2064.json",
+    "id": "rescue-failed-2064",
+    "kind": "rescue failed",
+    "outcome": "6 stops; 7 grabs, 5 fought free, 0 rescued, 1 rescue failed, 1 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 1 of 3 aboard at the end; would come back 22%",
     "stops": 6,
-    "title": "rescued: Ezra, Ivy, Jude, Ava (6 stops)"
+    "title": "rescue failed: Diego, Zoe, Finn (6 stops)"
   },
   {
     "crew": [
-      "Leo",
-      "Jade",
-      "Ravi"
+      "Priya",
+      "Leo"
     ],
-    "file": "calm-2102.json",
-    "id": "calm-2102",
+    "file": "calm-2091.json",
+    "id": "calm-2091",
     "kind": "calm",
-    "outcome": "6 stops; 3 grabs, 3 fought free, 0 rescued, 0 rescue failed, 0 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 3 of 3 aboard at the end; would come back 25%",
+    "outcome": "6 stops; 3 grabs, 3 fought free, 0 rescued, 0 rescue failed, 0 with nobody near; 0 items dropped, 0 arms regrown; 0 armless, 0 made it back; 0 quit; 2 of 2 aboard at the end; would come back 43%",
     "stops": 6,
-    "title": "calm: Leo, Jade, Ravi (6 stops)"
+    "title": "calm: Priya, Leo (6 stops)"
+  },
+  {
+    "crew": [
+      "Zoe",
+      "Finn",
+      "Cleo"
+    ],
+    "file": "armless-2107.json",
+    "id": "armless-2107",
+    "kind": "armless",
+    "outcome": "6 stops; 4 grabs, 1 fought free, 2 rescued, 0 rescue failed, 1 with nobody near; 1 items dropped, 1 arms regrown; 1 armless, 1 made it back; 1 quit; 1 of 3 aboard at the end; would come back 43%",
+    "stops": 6,
+    "title": "armless: Zoe, Finn, Cleo (6 stops)"
   }
 ]

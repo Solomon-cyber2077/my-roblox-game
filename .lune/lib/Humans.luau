@@ -302,12 +302,13 @@ local function nudge(m, key, by)
 end
 Humans.nudge = nudge
 
--- Mood drift every tick: fear decays, boredom grows when nothing happens, fatigue creeps up.
+-- Mood drift every tick: fear decays, boredom grows when nothing happens, fatigue creeps up over the
+-- session they meant to play (a late start begins tired, so it tips over sooner).
 function Humans.drift(h, dt: number, threat: number, idle: boolean)
 	local m = h.mood
 	m.fear = clamp(m.fear + (threat * 0.5 - m.fear * 0.25) * dt, 0, 1)
 	m.boredom = clamp(m.boredom + (if idle then 0.004 * (1 - h.traits.thrill * 0.5) else -0.01) * dt, 0, 1)
-	m.fatigue = clamp(m.fatigue + 0.0007 * dt, 0, 1)
+	m.fatigue = clamp(m.fatigue + 0.55 / (h.sessionMinutes * 60) * dt, 0, 1)
 	m.frustration = clamp(m.frustration - 0.004 * dt, 0, 1)
 	m.fun = clamp(
 		m.fun + ((threat > 0.2 and threat < 0.8) and 0.004 or -0.002) * dt * (0.5 + h.traits.thrill),
@@ -364,7 +365,8 @@ function Humans.quits(rng, h, minutesPlayed: number): string?
 		return if m.frustration > m.boredom and m.frustration > 0.4
 			then "frustrated"
 			elseif m.boredom > 0.4 then "bored"
-			else "tired"
+			elseif m.fatigue > 0.5 then "tired"
+			else "time" -- called away, dinner, a friend online elsewhere: not the game's doing
 	end
 	return nil
 end

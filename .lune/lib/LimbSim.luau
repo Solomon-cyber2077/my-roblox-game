@@ -84,6 +84,7 @@ function LimbSim.run(mods, cfg)
 		died = 0,
 		leftBehind = 0,
 		quits = 0,
+		quitsUnhappy = 0,
 		beatHits = 0,
 		beatMisses = 0,
 		stops = 0,
@@ -940,6 +941,9 @@ function LimbSim.run(mods, cfg)
 					-- a dead or stranded player leaving is not a mid-run quit; a living one is
 					if p.state == "Aboard" then
 						stats.quits += 1
+						if reason == "frustrated" or reason == "bored" then
+							stats.quitsUnhappy += 1
+						end
 						p.quit = reason
 					else
 						stats.leftAfterDeath = (stats.leftAfterDeath or 0) + 1
@@ -996,6 +1000,7 @@ function LimbSim.run(mods, cfg)
 		died = stats.died,
 		returned = stats.returned,
 		quits = stats.quits,
+		quitsUnhappy = stats.quitsUnhappy,
 		complaints = complaints,
 		bugs = bugs,
 		text = string.format(
