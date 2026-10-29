@@ -201,6 +201,10 @@ local Tuning = {
 		StaminaRegenPerSecond = 22,
 		StaminaRegenDelay = 0.9,
 		ExhaustedResume = 0.35, -- run dry and you cannot sprint again until this share is back
+		-- a tapped sprint (touch RUN, gamepad stick click) survives running dry and resumes at
+		-- ExhaustedResume, as a held Shift does; false: it switches off and must be tapped again
+		ToggleSprintResumes = true,
+		SprintMinPush = 0.5, -- a tapped sprint with the stick pushed this far or more is a full sprint
 		WindedSeconds = 1.6, -- running dry leaves you winded: slower for this long
 		WindedMultiplier = 0.85,
 		SprintFov = 9, -- degrees the camera widens at full sprint

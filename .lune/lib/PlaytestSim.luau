@@ -233,11 +233,26 @@ local function speedOf(mods, p, sprinting)
 	if p.winded and p.winded > 0 then
 		base *= crew.WindedMultiplier
 	end
-	return base * mods.Inventory.speedMultiplier(p.inv) * p.device.move * (0.9 + 0.1 * p.persona.skill)
+	-- a thumbstick rarely sits at the rim: builds with SprintMinPush make a tapped sprint full speed,
+	-- leaving only the path's wobble
+	local move = p.device.move
+	if sprinting and p.device.toggleSprint and crew.SprintMinPush then
+		move = math.max(move, 0.95)
+	end
+	return base * mods.Inventory.speedMultiplier(p.inv) * move * (0.9 + 0.1 * p.persona.skill)
 end
 
 local function stepStamina(mods, p, sprinting, dt)
 	local crew = mods.Tuning.Crew
+	-- a touch RUN toggle that switched off when they ran dry: no sprint until they tap it again
+	if p.rearmIn then
+		p.rearmIn -= dt
+		if p.rearmIn > 0 then
+			sprinting = false
+		else
+			p.rearmIn = nil
+		end
+	end
 	if sprinting and not p.exhausted then
 		p.stamina -= crew.StaminaDrainPerSecond * dt
 		p.restFor = crew.StaminaRegenDelay
@@ -245,6 +260,12 @@ local function stepStamina(mods, p, sprinting, dt)
 			p.stamina = 0
 			p.exhausted = true
 			p.winded = crew.WindedSeconds
+			if p.device.toggleSprint and not crew.ToggleSprintResumes then
+				-- finding RUN again under pressure: after the breath is back, plus a fumble
+				local resume = crew.StaminaRegenDelay
+					+ crew.StaminaMax * crew.ExhaustedResume / crew.StaminaRegenPerSecond
+				p.rearmIn = resume + p.persona.reaction + p.rng:range(0.3, 1.5) * (1 + p.persona.panic)
+			end
 		end
 		return true
 	end

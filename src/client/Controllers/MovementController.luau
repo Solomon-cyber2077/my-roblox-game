@@ -10,7 +10,9 @@
 
 	Shift is held to sprint. The touch RUN button and the gamepad's stick click toggle it
 	instead (one thumb is on the stick, the other turns the camera); a toggled sprint ends
-	when you stand still for TOGGLE_IDLE seconds or run out of breath.
+	when you stand still for TOGGLE_IDLE seconds. Running dry pauses it like a held Shift
+	(Tuning.Crew.ToggleSprintResumes): it picks up again once the breath is back, so a phone
+	player mid-chase does not have to find the RUN button again.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -131,7 +133,8 @@ function MovementController.Start()
 			elseif stillSince == nil then
 				stillSince = clock
 			end
-			if exhausted or (stillSince ~= nil and clock - stillSince > TOGGLE_IDLE) then
+			local dry = exhausted and not Tuning.Crew.ToggleSprintResumes
+			if dry or (stillSince ~= nil and clock - stillSince > TOGGLE_IDLE) then
 				sprintHeld, sprintToggled, stillSince = false, false, nil
 				ContextActionService:SetTitle("LTO_Sprint", "RUN")
 			end
@@ -174,7 +177,15 @@ function MovementController.Start()
 		local slow = if clock < slowUntil then crew.HitSlowMultiplier else 1
 		local winded = if clock < windedUntil then crew.WindedMultiplier else 1
 		local base = if sprinting then crew.SprintSpeed else crew.WalkSpeed
-		humanoid.WalkSpeed = if immobilized then 0 else base * carry * slow * winded
+		-- a stick moves you at WalkSpeed times how far it is pushed; a thumb rarely holds it at
+		-- the rim, so a tapped sprint with the stick past SprintMinPush runs at full sprint speed
+		local push = humanoid.MoveDirection.Magnitude
+		local reach = if sprinting
+				and sprintToggled
+				and push > 0.1
+			then 1 / math.clamp(push, crew.SprintMinPush, 1)
+			else 1
+		humanoid.WalkSpeed = if immobilized then 0 else base * carry * slow * winded * reach
 		humanoid.UseJumpPower = false
 		humanoid.JumpHeight = if immobilized
 			then 0

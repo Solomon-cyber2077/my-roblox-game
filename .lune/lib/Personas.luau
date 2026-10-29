@@ -24,6 +24,7 @@
 		hudMiss      extra chance a warning is covered or unread (thumbs over the HUD)
 		noPress      chance they cannot find the struggle button in time on their first grab
 		tap          touch only: seconds a tap is held (finger down to lift)
+		toggleSprint sprints with a tapped RUN button rather than a held key
 		fps          frames a second, for the report
 ]]
 
@@ -38,6 +39,7 @@ export type Device = {
 	hudMiss: number,
 	noPress: number,
 	tap: number?,
+	toggleSprint: boolean?,
 	fps: number,
 }
 
@@ -99,6 +101,7 @@ local Devices: { [string]: Device } = {
 		hudMiss = 0.14,
 		noPress = 0.12,
 		tap = 0.08,
+		toggleSprint = true,
 		fps = 50,
 	},
 	Tablet = {
@@ -112,6 +115,7 @@ local Devices: { [string]: Device } = {
 		hudMiss = 0.06,
 		noPress = 0.06,
 		tap = 0.08,
+		toggleSprint = true,
 		fps = 60,
 	},
 	BudgetAndroid = {
@@ -125,6 +129,7 @@ local Devices: { [string]: Device } = {
 		hudMiss = 0.18,
 		noPress = 0.15,
 		tap = 0.08,
+		toggleSprint = true,
 		fps = 24,
 	},
 }
