@@ -541,6 +541,14 @@ Exit.Departure = function(nextPhase)
 		-- not count as cleared
 		local cleared = Registry.CrewService.AliveCount() > 0
 		logStop(if cleared then "Cleared" else "Wiped", closeCalls)
+		-- the stop's rewards are banked now, so leaving later keeps them (Logic/StopBank)
+		Safe.call(
+			"RunDirector.bankStop",
+			Registry.ProgressionService.BankStop,
+			state.runId,
+			state.nextStop,
+			Registry.CrewService.Tallies()
+		)
 		if cleared then
 			state.stationsCleared += 1
 		end
@@ -580,7 +588,8 @@ Enter.RunEnd = function(previous, outcome)
 		Registry.CrewService.Tallies(),
 		state.stationsCleared,
 		state.runTier,
-		state.route
+		state.route,
+		state.runId
 	)
 	local text = {
 		Victory = "The train reached the Terminus.",

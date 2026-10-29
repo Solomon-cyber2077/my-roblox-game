@@ -127,7 +127,7 @@ local Funnels: { [string]: { string } } = table.freeze({
 -- Brass through LogEconomyEvent: transaction types (Enum.AnalyticsEconomyTransactionType names) and SKUs.
 local Economy = table.freeze({
 	Currency = "Brass",
-	Sources = table.freeze({ run_payout = "Gameplay", milestone = "Gameplay" }),
+	Sources = table.freeze({ run_payout = "Gameplay", stop_payout = "Gameplay", milestone = "Gameplay" }),
 	SinkType = "Shop", -- a Brass purchase; its SKU is the catalog item id (Config/Cosmetics)
 })
 
