@@ -56,6 +56,51 @@ return table.freeze({
 		RemoveSeconds = 8,
 	}),
 
+	-- the moment an arm comes away (client only: Controllers/InjuryController, Logic/TearFeedback).
+	-- Pain and panic, short of gore: a wet tear and a bone snap, a cry, the view whiting out and
+	-- flooding dark from the torn side, the world going muffled under a ringing in the ears, a racing
+	-- heart and gasps. Crewmates nearby hear it where it happened and see a dark burst at the shoulder.
+	Tear = table.freeze({
+		ShockSeconds = 3.4, -- how long the shock (muffle, ring, tunnel) lasts on the victim
+		CryDelay = 0.07, -- the cry starts this long after the tear (the snap first)
+		-- every player keeps one voice: a cry picked from Config/Audio PainCry* and a pitch in this range
+		VoicePitchLow = 0.9,
+		VoicePitchHigh = 1.16,
+		-- the world going muffled (AudioController.Shock): starts after the impact, holds, lets go
+		MuffleDelay = 0.12,
+		MuffleAttack = 0.3,
+		MuffleHold = 1.1, -- seconds at full depth after the attack
+		MuffleHighDb = -30, -- EqualizerSoundEffect gains on the main mix at full depth
+		MuffleMidDb = -12,
+		MuffleVolume = 0.55, -- the main mix's volume share kept at full depth
+		-- the ringing in the ears (its own group, so the muffle leaves it alone)
+		RingPeakAt = 0.55,
+		RingVolume = 0.2,
+		-- the racing heart: gaps between beats from Fast to Settled over the shock
+		HeartFast = 0.36,
+		HeartSettled = 0.7,
+		BreathAt = 1.2, -- ragged panting from here to the end of the shock (skipped during a rush,
+		-- which pants already: GrabController)
+		-- the body: camera shake, a kick, the screen (UI/Trauma), a controller rumble
+		Shake = 1.1,
+		Kick = 0.7,
+		KickSeconds = 0.35,
+		Haptic = 1,
+		HapticSeconds = 0.4,
+		-- crewmates: full reaction within NearStuds, nothing past FarStuds
+		NearStuds = 14,
+		FarStuds = 60,
+		OnlookerShake = 0.6, -- shake is squared and rotation only: about 0.7 degrees
+		OnlookerPulse = 0.35,
+		CryRollOff = 150, -- studs the tear and the cry carry
+		-- the burst at the shoulder and the stump's brief drip (every client)
+		Droplets = 26,
+		DropletSpeed = 14,
+		Mist = 9,
+		StumpSeconds = 1.8,
+		StumpRate = 16,
+	}),
+
 	-- the dead player's witness view (Controllers/DeathCamController)
 	Witness = table.freeze({
 		Seconds = 2.5, -- at most, collapse included

@@ -164,6 +164,7 @@ local Tuning = {
 		VeinSeconds = 1.4, -- a bite's vein cracks fade over this
 		StressBlur = 3, -- BlurEffect.Size while held
 		HitBlur = 12, -- and added at a bite's instant
+		TornBlur = 16, -- an arm coming away: this at its white-out instant, a third of it through the shock
 		WoundsPerLimb = 3, -- marks a limb can carry before new ones replace the oldest
 		SeverImpulse = 18, -- studs/s a severed limb is thrown at
 	},

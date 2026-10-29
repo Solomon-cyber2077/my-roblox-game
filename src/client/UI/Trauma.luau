@@ -10,6 +10,9 @@
 	  adrenaline  after you tear free: everything snaps sharp and over-bright, your heart races
 	              and slowly settles and you gasp for breath, for Tuning.Trauma.AdrenalineSeconds
 	  death       in its grip: the tunnel shuts to black-red
+	  torn        an arm comes away (InjuryController): the view whites out for an instant, the
+	              dark floods in hardest from the torn side, the colour all but goes and the world
+	              swims, veins crack in from that side; it ebbs over the shock (Config/Injury Tear)
 
 	It owns its own frames, a ColorCorrection and a Blur on the camera; nothing here touches
 	Lighting (AtmosphereController owns that).
@@ -20,6 +23,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local TearFeedback = require(ReplicatedStorage.Shared.Logic.TearFeedback)
 
 local Ui = require(script.Parent.Ui)
 
@@ -38,7 +42,7 @@ local EDGE_SPECS = {
 }
 
 local layer: Frame
-local edges: { { frame: Frame, horizontal: boolean } } = {}
+local edges: { { frame: Frame, horizontal: boolean, side: number } } = {}
 local veins: Frame
 local grade: ColorCorrectionEffect? = nil
 local blur: BlurEffect? = nil
@@ -49,6 +53,9 @@ local hit = 0 -- 0..1, spikes on a bite and falls away fast
 local beat = 0 -- 0..1, the last heartbeat's throb
 local rush = 0 -- 0..1, adrenaline after an escape
 local dead = 0 -- 0..1, the tunnel shutting at a death in its grip
+local tornAt: number? = nil -- os.clock() an arm came away (its shock: Logic/TearFeedback.shock)
+local flash = 0 -- 0..1, its white-out instant, gone in a fraction of a second
+local tornSide = 0 -- -1 the left arm, 1 the right (the screen edge the dark floods from)
 local nextRushBeat = 0
 local rng = Random.new()
 
@@ -73,8 +80,9 @@ local function effects(): (ColorCorrectionEffect, BlurEffect)
 end
 
 -- A dark vein crack that reaches in from a random point on the screen's edge and fades.
-local function crack()
-	local side = rng:NextInteger(1, 4)
+-- One vein cracking in from a screen edge (1 top, 2 bottom, 3 left, 4 right; random if nil).
+local function crack(from: number?)
+	local side = from or rng:NextInteger(1, 4)
 	local along = rng:NextNumber(0.1, 0.9)
 	local pos = if side == 1
 		then UDim2.fromScale(along, 0)
@@ -130,23 +138,32 @@ local function step(dt: number)
 	if dead > 0 then
 		dead = math.min(dead + dt / 1.2, 1)
 	end
+	flash *= math.exp(-dt * 6)
+	local shock = if tornAt then TearFeedback.shock(os.clock() - tornAt) else 0
+	if tornAt and shock <= 0 and os.clock() - tornAt > 0.1 then
+		tornAt = nil
+	end
 
 	local reach = 0.18 * stress + 0.06 * beat * stress + 0.08 * hit + 0.08 * rush * beat + 0.5 * dead
 	local alpha =
 		math.clamp(0.55 * stress + 0.25 * beat * stress + 0.3 * hit + 0.3 * rush * beat + dead, 0, 1)
 	for _, edge in edges do
-		edge.frame.Size = if edge.horizontal then UDim2.fromScale(1, reach) else UDim2.fromScale(reach, 1)
-		edge.frame.BackgroundTransparency = 1 - alpha
+		-- the torn side floods deepest; the rest closes in a little
+		local flood = if edge.side ~= 0 and edge.side == tornSide then 0.42 else 0.13
+		local r = reach + flood * shock
+		local a = math.clamp(alpha + (0.35 + flood) * shock, 0, 1)
+		edge.frame.Size = if edge.horizontal then UDim2.fromScale(1, r) else UDim2.fromScale(r, 1)
+		edge.frame.BackgroundTransparency = 1 - a
 	end
-	layer.Visible = alpha > 0.005 or #veins:GetChildren() > 0
+	layer.Visible = alpha > 0.005 or shock > 0.005 or #veins:GetChildren() > 0
 
 	local g, b = effects()
-	g.Saturation = -0.45 * stress - 0.3 * hit + 0.28 * rush - 0.6 * dead
-	g.Contrast = 0.22 * stress + 0.18 * hit + 0.16 * rush
-	g.Brightness = 0.22 * hit + 0.05 * rush * beat - 0.1 * dead
-	g.TintColor = Color3.new(1, 1, 1):Lerp(STRESS_TINT, stress):Lerp(RUSH_TINT, rush)
-	g.Enabled = stress > 0.01 or hit > 0.01 or rush > 0.01 or dead > 0
-	b.Size = T.StressBlur * stress + T.HitBlur * hit
+	g.Saturation = math.max(-0.45 * stress - 0.3 * hit + 0.28 * rush - 0.6 * dead - 0.75 * shock, -1)
+	g.Contrast = 0.22 * stress + 0.18 * hit + 0.16 * rush + 0.25 * shock
+	g.Brightness = 0.22 * hit + 0.05 * rush * beat - 0.1 * dead + 0.55 * flash - 0.06 * shock
+	g.TintColor = Color3.new(1, 1, 1):Lerp(STRESS_TINT, stress):Lerp(RUSH_TINT, rush):Lerp(STRESS_TINT, shock)
+	g.Enabled = stress > 0.01 or hit > 0.01 or rush > 0.01 or dead > 0 or shock > 0.01 or flash > 0.01
+	b.Size = T.StressBlur * stress + T.HitBlur * hit + T.TornBlur * (0.35 * shock + flash)
 	b.Enabled = b.Size > 0.2
 end
 
@@ -180,7 +197,8 @@ function Trauma.mount(gui: ScreenGui)
 			}),
 			Parent = frame,
 		})
-		table.insert(edges, { frame = frame, horizontal = spec.horizontal })
+		local side = if spec.horizontal then 0 elseif spec.anchor.X > 0.5 then 1 else -1
+		table.insert(edges, { frame = frame, horizontal = spec.horizontal, side = side })
 	end
 	veins = Ui.new("Frame", {
 		Name = "Veins",
@@ -213,6 +231,20 @@ function Trauma.beat(strength: number)
 	beat = math.max(beat, math.clamp(strength, 0, 1))
 end
 
+-- An arm came away: `side` -1 the left, 1 the right (its shock: Logic/TearFeedback.shock).
+function Trauma.torn(side: number)
+	tornSide = if side < 0 then -1 else 1
+	tornAt = os.clock()
+	flash = 1
+	hit = 1
+	local from = if tornSide < 0 then 3 else 4
+	for _ = 1, 4 do
+		crack(from)
+	end
+	crack()
+	crack()
+end
+
 -- The hold ended. `alive`: you tore free (the adrenaline rush) rather than died in its grip.
 function Trauma.release(alive: boolean)
 	stressTarget = 0
@@ -231,7 +263,8 @@ end
 
 -- A new body: the screen clears at once.
 function Trauma.clear()
-	stress, stressTarget, hit, beat, rush, dead = 0, 0, 0, 0, 0, 0
+	stress, stressTarget, hit, beat, rush, dead, flash = 0, 0, 0, 0, 0, 0, 0
+	tornAt = nil
 	for _, vein in veins:GetChildren() do
 		vein:Destroy()
 	end

@@ -7,6 +7,13 @@
 	                 wearer's shirt) that swings out and falls; no collision, no queries, no
 	                 touch, no gameplay meaning. At most Limbs.MaxPerClient at once (the oldest
 	                 goes first), at rest by SettleSeconds, gone by RemoveSeconds.
+	  pain, panic    the same moment (Config/Injury Tear, Logic/TearFeedback): a wet tear, a
+	                 snap and the wearer's own cry; a dark burst at the shoulder and a brief drip
+	                 from it, short of gore. The one who lost it gets the shock: the view whites
+	                 out and floods dark from that side (UI/Trauma), the world goes dull under a
+	                 ringing (AudioController.Shock), a racing heart, panting, a shake, a kick and a
+	                 controller rumble. Crewmates nearby flinch with it. Camera Motion "Reduced"
+	                 (or the system's reduced motion) keeps the camera still.
 	  the rescue     the invited crew see who is going under; the one rescuer gets the three
 	                 beats (Space / ButtonA / the PULL button) and sends each press with the
 	                 server time they saw; the victim sees who is pulling.
@@ -19,7 +26,9 @@
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
+local Debris = game:GetService("Debris")
 local GuiService = game:GetService("GuiService")
+local HapticService = game:GetService("HapticService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -31,10 +40,12 @@ local Config = require(Shared.Config.Injury)
 local Difficulty = require(Shared.Config.Difficulty)
 local Registry = require(script.Parent.Parent.Registry)
 local CrewPoses = require(script.Parent.Parent.Animation.CrewPoses)
+local TearFeedback = require(Shared.Logic.TearFeedback)
 
 local Net = require(script.Parent.Parent.Net)
 local Overlay = require(script.Parent.Parent.UI.Overlay)
 local Theme = require(script.Parent.Parent.UI.Theme)
+local Trauma = require(script.Parent.Parent.UI.Trauma)
 local Ui = require(script.Parent.Parent.UI.Ui)
 
 local InjuryController = {}
@@ -283,6 +294,229 @@ local function spawnLimb(userId: number, arm: string, from: CFrame?)
 	end)
 end
 
+-- Pain and panic -----------------------------------------------------------------------------
+
+local TEAR = Config.Tear
+local PAIN_CRIES = { "PainCry1", "PainCry2", "PainCry3" }
+local SMOKE = "rbxasset://textures/particles/smoke_main.dds"
+local BLOOD = Color3.fromRGB(70, 6, 9) -- dark, dried rather than bright (as UI/Trauma's veins)
+local GRIT = Color3.fromRGB(58, 44, 36) -- torn cloth and dust
+
+local function reducedMotion(): boolean
+	return Players.LocalPlayer:GetAttribute("Motion") == "Reduced" or GuiService.ReducedMotionEnabled
+end
+
+local function play(cue: string, position: Vector3?, gain: number?, pitch: number?)
+	local audio = Registry.AudioController
+	if audio then
+		audio.Play(cue, position, gain, pitch)
+	end
+end
+
+-- A controller's rumble, when the input in use is a gamepad that has one.
+local function rumble(strength: number, seconds: number)
+	local input = UserInputService:GetLastInputType()
+	if input.Name:sub(1, 7) ~= "Gamepad" then
+		return
+	end
+	pcall(function()
+		if HapticService:IsMotorSupported(input, Enum.VibrationMotor.Large) then
+			HapticService:SetMotor(input, Enum.VibrationMotor.Large, strength)
+		end
+		if HapticService:IsMotorSupported(input, Enum.VibrationMotor.Small) then
+			HapticService:SetMotor(input, Enum.VibrationMotor.Small, strength * 0.6)
+		end
+	end)
+	task.delay(seconds, function()
+		pcall(function()
+			HapticService:SetMotor(input, Enum.VibrationMotor.Large, 0)
+			HapticService:SetMotor(input, Enum.VibrationMotor.Small, 0)
+		end)
+	end)
+end
+
+local function emitter(props: { [string]: any }): ParticleEmitter
+	local made = Instance.new("ParticleEmitter")
+	made.Texture = SMOKE
+	made.Rate = 0
+	made.LightInfluence = 1
+	for key, value in props do
+		(made :: any)[key] = value
+	end
+	return made
+end
+
+-- Where the arm met the body, in the world (the arm's own frame from the server when it has one).
+local function shoulderOf(character: Model, arm: string, from: CFrame?): Vector3?
+	if from then
+		return (from * CFrame.new(0, 0.8, 0)).Position
+	end
+	local torso = character:FindFirstChild("Torso") :: BasePart?
+	return if torso
+		then (torso.CFrame * CFrame.new(if arm == "L" then -1.1 else 1.1, 0.75, 0)).Position
+		else nil
+end
+
+-- Every client: a dark burst where the arm came away and a brief drip from the shoulder.
+local function burst(character: Model, arm: string, at: Vector3)
+	local torso = character:FindFirstChild("Torso") :: BasePart?
+	local outward = if torso
+		then (if arm == "L" then -torso.CFrame.RightVector else torso.CFrame.RightVector)
+		else Vector3.xAxis
+	local holder = Instance.new("Part")
+	holder.Name = "TearBurst"
+	holder.Size = Vector3.one * 0.2
+	holder.Transparency = 1
+	holder.Anchored = true
+	holder.CanCollide = false
+	holder.CanQuery = false
+	holder.CanTouch = false
+	holder.CastShadow = false
+	holder.CFrame = CFrame.lookAt(at, at + outward)
+	local droplets = emitter({
+		Color = ColorSequence.new(BLOOD),
+		Lifetime = NumberRange.new(0.45, 0.9),
+		Speed = NumberRange.new(TEAR.DropletSpeed * 0.45, TEAR.DropletSpeed),
+		SpreadAngle = Vector2.new(38, 38),
+		EmissionDirection = Enum.NormalId.Front,
+		Acceleration = Vector3.new(0, -Workspace.Gravity * 0.45, 0),
+		Drag = 2.5,
+		Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.2),
+			NumberSequenceKeypoint.new(1, 0.08),
+		}),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.05),
+			NumberSequenceKeypoint.new(0.75, 0.2),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+		Rotation = NumberRange.new(0, 360),
+	})
+	droplets.Parent = holder
+	local mist = emitter({
+		Color = ColorSequence.new(BLOOD, GRIT),
+		Lifetime = NumberRange.new(0.5, 0.95),
+		Speed = NumberRange.new(2, 5),
+		SpreadAngle = Vector2.new(70, 70),
+		EmissionDirection = Enum.NormalId.Front,
+		Drag = 4,
+		Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.4),
+			NumberSequenceKeypoint.new(1, 1.5),
+		}),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.45),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+		Rotation = NumberRange.new(0, 360),
+		RotSpeed = NumberRange.new(-40, 40),
+	})
+	mist.Parent = holder
+	holder.Parent = Workspace
+	droplets:Emit(TEAR.Droplets)
+	mist:Emit(TEAR.Mist)
+	Debris:AddItem(holder, 2.5)
+	-- the drip follows the body for a moment
+	if torso then
+		local attach = Instance.new("Attachment")
+		attach.Name = "TearDrip"
+		attach.Parent = torso
+		attach.WorldPosition = at
+		local drip = emitter({
+			Color = ColorSequence.new(BLOOD),
+			Rate = TEAR.StumpRate,
+			Lifetime = NumberRange.new(0.35, 0.6),
+			Speed = NumberRange.new(0.5, 1.5),
+			SpreadAngle = Vector2.new(25, 25),
+			EmissionDirection = Enum.NormalId.Bottom,
+			Acceleration = Vector3.new(0, -Workspace.Gravity * 0.4, 0),
+			Size = NumberSequence.new(0.09),
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.1),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+		})
+		drip.Parent = attach
+		task.delay(TEAR.StumpSeconds, function()
+			drip.Enabled = false
+		end)
+		Debris:AddItem(attach, TEAR.StumpSeconds + 1)
+	end
+end
+
+-- The one who lost it: the shock, the heart and the breath.
+local function shock(side: number, cry: string, pitch: number)
+	play("LimbRip")
+	play("LimbThud")
+	task.delay(TEAR.CryDelay, play, cry, nil, 1, pitch)
+	Trauma.torn(side)
+	Overlay.pulse(Theme.Color.signalDark, 1, 1.2)
+	local audio = Registry.AudioController
+	if audio then
+		audio.Shock()
+	end
+	local still = reducedMotion()
+	local camera = Registry.CameraController
+	if camera and not still then
+		camera.Shake(TEAR.Shake)
+		camera.ShakeFor(TEAR.Kick, TEAR.KickSeconds)
+	end
+	rumble(TEAR.Haptic, TEAR.HapticSeconds)
+	-- a rescue's rush already pants (GrabController); otherwise the panting is ours
+	if Trauma.rush() < 0.25 then
+		task.delay(TEAR.BreathAt, play, "TornBreath")
+	end
+	task.spawn(function()
+		local started = os.clock()
+		while true do
+			local since = os.clock() - started
+			if since >= TEAR.ShockSeconds then
+				break
+			end
+			local strength = 1 - 0.5 * since / TEAR.ShockSeconds
+			play("Heartbeat", nil, strength)
+			Trauma.beat(strength)
+			if camera and not still then
+				camera.Pulse(0.3 * strength)
+			end
+			task.wait(TearFeedback.heartGap(since))
+		end
+	end)
+end
+
+-- ArmTorn on every client: where it happened, what it sounded like, and how it hits you.
+local function painAndPanic(userId: number, arm: string, from: CFrame?)
+	local player = Players:GetPlayerByUserId(userId)
+	local character = player and player.Character
+	if character == nil then
+		return
+	end
+	local index, pitch = TearFeedback.voice(userId, #PAIN_CRIES)
+	local cry = PAIN_CRIES[index]
+	local at = shoulderOf(character, arm, from)
+	if at then
+		burst(character, arm, at)
+	end
+	if player == Players.LocalPlayer then
+		shock(if arm == "L" then -1 else 1, cry, pitch)
+		return
+	end
+	if at == nil then
+		return
+	end
+	play("LimbRip", at)
+	task.delay(TEAR.CryDelay, play, cry, at, 1, pitch)
+	local camera = Workspace.CurrentCamera
+	local near = if camera then TearFeedback.nearby((camera.Focus.Position - at).Magnitude) else 0
+	if near > 0 then
+		Overlay.pulse(Theme.Color.signalDark, TEAR.OnlookerPulse * near, 0.7)
+		local shaker = Registry.CameraController
+		if shaker and not reducedMotion() then
+			shaker.Shake(TEAR.OnlookerShake * near)
+		end
+	end
+end
+
 -- The rescue -------------------------------------------------------------------------------------
 
 local function stopRescue()
@@ -399,6 +633,9 @@ local function onFx(kind: string, data: any)
 	local me = Players.LocalPlayer.UserId
 	if kind == "ArmTorn" and type(data) == "table" then
 		spawnLimb(data.userId, data.arm, data.cframe)
+		if typeof(data.userId) == "number" and (data.arm == "L" or data.arm == "R") then
+			painAndPanic(data.userId, data.arm, if typeof(data.cframe) == "CFrame" then data.cframe else nil)
+		end
 	elseif kind == "RescueOpen" and type(data) == "table" then
 		if data.victim == me then
 			Overlay.alert("HOLD ON: YOUR CREW CAN STILL REACH YOU", Theme.Color.caution, 2)

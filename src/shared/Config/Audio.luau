@@ -168,6 +168,50 @@ local Cues: { [string]: Cue } = {
 	Heartbeat = { id = 9113570506, volume = 0.65, maxSeconds = 1, pitch = 0.42, mix = "Cues" },
 	-- Reuses the licensed heartbeat recording for one cue per armless return deadline.
 	InjuryWarning = { id = 9113570506, volume = 0.35, maxSeconds = 1, pitch = 0.55, mix = "Feedback" },
+	-- an arm coming away (Config/Injury Tear; Pro Sound Effects "Gore - Rips & Tears" and "Voices -
+	-- Screams", checked loading 2026-10-29). Spatial, so crewmates hear it where it happened; the
+	-- victim hears them flat (no position). The ring sits in the Warnings group, beside the main
+	-- mix: the shock's muffle (AudioController.Shock) dulls everything else and leaves it ringing.
+	LimbRip = { -- Squishy Bone Cracks 10: wet, ligament, scraping cracks (2.2 s)
+		id = 9119560180,
+		volume = 0.95,
+		maxSeconds = 1.7,
+		spatial = true,
+		rollOff = 150,
+		mix = "Cues",
+		with = "LimbSnap",
+	},
+	LimbSnap = { id = 9113542363, volume = 0.8, spatial = true, rollOff = 110, mix = "Cues" }, -- Bone Cracks 10
+	LimbThud = { id = 9113570506, volume = 0.9, maxSeconds = 0.5, pitch = 0.55, mix = "Feedback" },
+	-- Male Screams In Pain Injury Yells Agony 1, 3, 6; each player keeps one, at a pitch of their own
+	PainCry1 = {
+		id = 9116454870,
+		volume = 0.75,
+		maxSeconds = 2.1,
+		spatial = true,
+		rollOff = 150,
+		mix = "Cues",
+	},
+	PainCry2 = {
+		id = 9116454961,
+		volume = 0.75,
+		maxSeconds = 2.1,
+		spatial = true,
+		rollOff = 150,
+		mix = "Cues",
+	},
+	PainCry3 = {
+		id = 9116455270,
+		volume = 0.75,
+		maxSeconds = 2.1,
+		spatial = true,
+		rollOff = 150,
+		mix = "Cues",
+	},
+	-- the panting after it: the Breath recording, once, cut short with a fade
+	TornBreath = { id = 100147087354736, volume = 0.6, maxSeconds = 2.4, pitch = 1.08, mix = "Feedback" },
+	-- Accelerating Tone Piercing High Pitch Ring 1: its rising first seconds, shaped by the shock
+	ShockRing = { id = 9113031196, volume = 1, maxSeconds = 4, group = "Warnings" },
 	RailClack = { id = 15675059323, volume = 0.14, maxSeconds = 1, pitch = 0.45 },
 
 	-- The sky's omens (Logic/Omens), from the same recordings again

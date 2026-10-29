@@ -42,10 +42,12 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Audio = require(Shared.Config.Audio)
 local AudioPriority = require(Shared.Config.AudioPriority)
+local InjuryConfig = require(Shared.Config.Injury)
 local SettingsConfig = require(Shared.Config.Settings)
 local Tuning = require(Shared.Config.Tuning)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
 local LobbyIdle = require(Shared.Logic.LobbyIdle)
+local TearFeedback = require(Shared.Logic.TearFeedback)
 local MathX = require(Shared.Util.MathX)
 
 local Registry = require(script.Parent.Parent.Registry)
@@ -60,6 +62,10 @@ local groups: { [string]: SoundGroup } = {}
 local duckUntil = 0
 local hushUntil = 0 -- the Intent hush (Config/AudioPriority.IntentHush)
 local arrivalUntil = 0 -- the near-silence after the arrival brakes (Tuning.Footsteps.ArrivalHush*)
+-- the shock of losing an arm (Shock): the main mix dulled and dipped, a ring in the ears above it
+local shockAt: number? = nil
+local shockEq: EqualizerSoundEffect
+local shockRing: Sound? = nil
 local tierOf: { [string]: number } = {} -- SoundGroup name -> its priority tier
 local voices: { [number]: number } = {} -- one-shots playing per tier
 local anchorPart: Part
@@ -268,6 +274,11 @@ function AudioController.Init()
 	walls.Name = "Walls"
 	walls.LowGain, walls.MidGain, walls.HighGain = 0, 0, 0
 	walls.Parent = outdoor
+	shockEq = Instance.new("EqualizerSoundEffect")
+	shockEq.Name = "Shock"
+	shockEq.LowGain, shockEq.MidGain, shockEq.HighGain = 0, 0, 0
+	shockEq.Enabled = false
+	shockEq.Parent = group
 	-- the other tiers' groups, under the main group (so the Hush still drains them); Warnings is a
 	-- group of its own beside the main one, so the Hush and the departure dip leave it alone
 	for _, name in { "Cues", "Steps", "Feedback", "Piano" } do
@@ -480,6 +491,28 @@ function AudioController.Start()
 
 		local duck = if os.clock() < duckUntil then 1 - Tuning.Departure.DuckShare else 1
 		group.Volume = (1 - (1 - HUSH_FLOOR) * hush) * duck
+		-- the shock of losing an arm: the world dulls and dips under the ring (Logic/TearFeedback)
+		if shockAt then
+			local since = os.clock() - shockAt
+			local tear = InjuryConfig.Tear
+			local muffle = TearFeedback.muffle(since)
+			shockEq.Enabled = muffle > 0.001
+			shockEq.MidGain = tear.MuffleMidDb * muffle
+			shockEq.HighGain = tear.MuffleHighDb * muffle
+			group.Volume *= 1 - (1 - tear.MuffleVolume) * muffle
+			local ring = shockRing
+			if ring then
+				ring.Volume = Audio.ShockRing.volume * tear.RingVolume * TearFeedback.ring(since)
+			end
+			if since >= tear.ShockSeconds then
+				shockAt = nil
+				shockEq.Enabled = false
+				if ring then
+					ring:Destroy()
+					shockRing = nil
+				end
+			end
+		end
 		-- the Intent hush: ambience and steps dip for its 0.4 s (warnings and threat untouched)
 		local intent = AudioPriority.IntentHush
 		local hushing = os.clock() < hushUntil
@@ -725,6 +758,22 @@ end
 -- Dips the main mix (not cues with a group of their own) for a moment, under a bell or a whistle.
 function AudioController.Duck(seconds: number)
 	duckUntil = math.max(duckUntil, os.clock() + seconds)
+end
+
+-- You just lost an arm (Config/Injury Tear): for the shock's length the main mix goes dull and
+-- dips (Logic/TearFeedback.muffle) while your ears ring above it (the ShockRing cue, in the
+-- Warnings group so the muffle leaves it alone). A second tear restarts it.
+function AudioController.Shock()
+	shockAt = os.clock()
+	if shockRing then
+		(shockRing :: Sound):Destroy()
+	end
+	local ring = makeSound("ShockRing", SoundService)
+	if ring then
+		ring.Volume = 0
+		ring:Play()
+	end
+	shockRing = ring
 end
 
 -- Starts a keyed loop attached to a part (machinery, leaks). Stop it with StopLoop.
