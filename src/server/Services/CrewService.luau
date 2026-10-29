@@ -63,6 +63,7 @@ local CAUSE_TEXT: { [string]: string } = {
 	Smothered = "was lost in the fog",
 	Fell = "fell into the dark",
 	Wrecked = "went down with the train",
+	Stranded = "could not get back aboard in time",
 	Disconnected = "left the line",
 	Other = "was lost on the line",
 }
