@@ -29,6 +29,7 @@ local FEED_KINDS: { [string]: Color3 } = {
 	LastCall = Theme.Color.signal,
 	Upgrade = Theme.Color.go,
 	RunEnd = Theme.Color.brass,
+	Banked = Theme.Color.brass, -- a stop's Brass banked (ProgressionService.BankStop)
 }
 
 local feed: Frame
@@ -300,6 +301,42 @@ function Overlay.feed(kind: string, text: string)
 	})
 	local label =
 		Ui.text({ Text = text, TextSize = 15, Color = color, AutoX = true, Size = UDim2.fromScale(0, 1) })
+	if kind == "Banked" and Theme.Image.brassToken ~= "" then
+		-- the fare token drops in beside the line, a beat before it settles
+		Ui.new("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal,
+			VerticalAlignment = Enum.VerticalAlignment.Center,
+			Padding = UDim.new(0, 6),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Parent = row,
+		})
+		local holder = Ui.new("Frame", {
+			Size = UDim2.fromOffset(22, 22),
+			BackgroundTransparency = 1,
+			LayoutOrder = 1,
+			Parent = row,
+		})
+		local token = Ui.new("ImageLabel", {
+			Image = Theme.Image.brassToken,
+			BackgroundTransparency = 1,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(12, 12),
+			Rotation = -25,
+			Parent = holder,
+		})
+		Ui.tween(
+			token,
+			{ Size = UDim2.fromOffset(22, 22), Rotation = 0 },
+			TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		)
+		label.LayoutOrder = 2
+		task.delay(7, function()
+			if token.Parent then
+				Ui.tween(token, { ImageTransparency = 1 }, TweenInfo.new(0.6))
+			end
+		end)
+	end
 	label.Parent = row
 	local items = {}
 	for _, child in feed:GetChildren() do

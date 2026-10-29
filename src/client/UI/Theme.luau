@@ -101,6 +101,9 @@ Theme.Image = table.freeze({
 	lampDark = "rbxassetid://106873137646986",
 	knobLeft = "rbxassetid://75210740058253",
 	knobRight = "rbxassetid://77927799742001",
+	-- the fare token beside a stop's banked Brass (tools/uiart/render_brass_token.py, 256 px, baked colour);
+	-- empty until the image is uploaded: the feed line then shows text alone
+	brassToken = "",
 })
 
 -- Each resident speaks through their own window (keyed by Config/Npcs id); none means no picture.
