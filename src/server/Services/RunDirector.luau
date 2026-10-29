@@ -441,6 +441,7 @@ Enter.Dwell = function()
 	local plan = state.plan :: LayoutGen.Plan
 	Registry.StationService.Dock()
 	-- The doors open now: re-anchor the station clock to this exact moment.
+	info.dwell = math.max(info.dwell, Tuning.Run.MinDwellSeconds)
 	info.startedAt = now()
 	info.departAt = info.startedAt + info.dwell
 	info.originalDwell = info.dwell
@@ -688,7 +689,7 @@ function RunDirector.ShortenStop(_player: Player): (boolean, string?)
 	if branch == nil then
 		return false, "ineligible"
 	end
-	local proposed = DepartureBell.proposed(info.departAt, now())
+	local proposed = DepartureBell.proposed(info.departAt, now(), info.startedAt + Tuning.Run.MinDwellSeconds)
 	if proposed == nil then
 		return false, "already_shortened"
 	end

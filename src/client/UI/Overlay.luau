@@ -142,8 +142,25 @@ function Overlay.mount(gui: ScreenGui)
 		Visible = false,
 		Parent = gui,
 	})
-	Ui.corner(3).Parent = slate
-	Ui.stroke(SLATE_WOOD, 3, 0).Parent = slate
+	local art = Theme.Image.slate
+	if art.id ~= "" then
+		-- the rendered slate: oak frame and brass corners keep their size, the stone stretches
+		slate.BackgroundTransparency = 1
+		Ui.new("ImageLabel", {
+			Name = "Board",
+			Image = art.id,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = art.slice,
+			SliceScale = art.scale,
+			BackgroundTransparency = 1,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 0, -- under the chalk
+			Parent = slate,
+		})
+	else
+		Ui.corner(3).Parent = slate
+		Ui.stroke(SLATE_WOOD, 3, 0).Parent = slate
+	end
 	slateLabel = Ui.text({
 		Name = "Chalk",
 		Text = "",

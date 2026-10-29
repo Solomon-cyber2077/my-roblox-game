@@ -103,6 +103,9 @@ function DepartureSchedule.slate(milestone: Milestone): string?
 		return `HALFWAY - {span} LEFT`
 	elseif milestone.kind == "warning" then
 		return `{math.floor(milestone.left + 0.5)} SECONDS`
+	elseif milestone.kind == "escalated" then
+		-- the final warning is said on screen too, for players with the sound off
+		return `{math.floor(milestone.left + 0.5)} SECONDS - ALL ABOARD`
 	end
 	return nil
 end

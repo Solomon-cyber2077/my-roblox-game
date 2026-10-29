@@ -6,8 +6,9 @@
 	  branch     u = (serverNow - doorsOpenAt) / the ORIGINAL params.dwell (LastCall included). "all":
 	             every living crew member aboard and u >= 0.40; "half": at least ceil(living / 2)
 	             aboard and u >= 0.60. Solo is its own crew; eliminated players do not count
-	  proposed   departAt = min(departAt, now + 30), only if that strictly shortens: a bell never
-	             extends or restarts a clock, and a second pull changes nothing
+	  proposed   departAt = min(departAt, now + 30), never before `earliest` (the stop's minimum
+	             dwell), and only if that strictly shortens: a bell never extends or restarts a
+	             clock, and a second pull changes nothing
 ]]
 
 local DepartureBell = {}
@@ -21,8 +22,8 @@ function DepartureBell.share(elapsed: number, originalDwell: number): number
 	return if originalDwell > 0 then elapsed / originalDwell else 0
 end
 
-function DepartureBell.proposed(existing: number, serverNow: number): number?
-	local candidate = math.min(existing, serverNow + LEAD)
+function DepartureBell.proposed(existing: number, serverNow: number, earliest: number?): number?
+	local candidate = math.max(math.min(existing, serverNow + LEAD), earliest or -math.huge)
 	return if candidate < existing then candidate else nil
 end
 

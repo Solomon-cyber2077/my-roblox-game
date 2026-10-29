@@ -25,6 +25,9 @@ local Tuning = {
 		CruiseSecondsPerKm = 6,
 		ArrivalSeconds = 10,
 		LastCallSeconds = 15,
+		-- the doors never close sooner than this after they open, whatever rings the bell
+		-- (launch hardening step 3; provisional, tune in playtest)
+		MinDwellSeconds = 30,
 		TerminusSeconds = 8,
 		RunEndSeconds = 12,
 		JoinInProgressMaxStation = 6,

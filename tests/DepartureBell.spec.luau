@@ -43,6 +43,10 @@ describe("DepartureBell clock", function()
 		expect(Bell.proposed(100, 60)).toBe(90)
 		expect(Bell.proposed(100, 70)).toBe(nil) -- now + 30 = 100: not strictly shorter
 		expect(Bell.proposed(100, 80)).toBe(nil) -- would extend: refused
+		-- the minimum dwell: a pull never brings departure before the floor
+		expect(Bell.proposed(100, 20, 70)).toBe(70)
+		expect(Bell.proposed(100, 60, 70)).toBe(90)
+		expect(Bell.proposed(100, 20, 100)).toBe(nil) -- the floor is the departure: nothing to shorten
 	end)
 
 	it("is idempotent: a second pull right after the first changes nothing", function()
