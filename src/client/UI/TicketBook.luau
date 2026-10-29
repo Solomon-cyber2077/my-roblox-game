@@ -7,6 +7,7 @@
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
+local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local RunLog = require(ReplicatedStorage.Shared.Logic.RunLog)
@@ -267,8 +268,12 @@ function TicketBook.mount(gui: ScreenGui)
 			render()
 		end
 	end)
-	ContextActionService:BindAction("LTO_TicketBook", function(_, inputState)
+	ContextActionService:BindAction("LTO_TicketBook", function(_, inputState, input)
 		if inputState ~= Enum.UserInputState.Begin then
+			return Enum.ContextActionResult.Pass
+		end
+		-- while gamepad UI navigation is on, DPad left moves the selection (the hotbar's "<")
+		if input.KeyCode == Enum.KeyCode.DPadLeft and GuiService.SelectedObject ~= nil then
 			return Enum.ContextActionResult.Pass
 		end
 		if modal:isOpen() then

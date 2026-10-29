@@ -8,6 +8,7 @@
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
+local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -980,6 +981,8 @@ function Hud.mount(gui: ScreenGui)
 	end
 
 	local renderBackpack: (inv: { [string]: any }?) -> ()
+	-- gamepad: the slot a "<" press moved an item to, kept selected once the server's reorder lands
+	local refocus: { slot: number, revision: any }? = nil
 	local function hold(slot: number?)
 		local inv = State.GetPrivate({ "inventory" })
 		handSlot = slot
@@ -988,6 +991,16 @@ function Hud.mount(gui: ScreenGui)
 	end
 
 	function renderBackpack(inv: { [string]: any }?)
+		-- a gamepad selection inside the backpack would be left on a destroyed button: note its slot
+		local selected = GuiService.SelectedObject
+		local keep: { slot: number, left: boolean }? = nil
+		if selected and selected:IsDescendantOf(backpack) then
+			local item = if selected.Name == "Item" then selected else selected:FindFirstAncestor("Item")
+			local slot = item and item:GetAttribute("Slot")
+			if type(slot) == "number" then
+				keep = { slot = slot, left = selected ~= item }
+			end
+		end
 		for _, child in backpack:GetChildren() do
 			if child.Name == "Cell" or child.Name == "Item" then
 				child:Destroy()
@@ -1054,6 +1067,7 @@ function Hud.mount(gui: ScreenGui)
 					ZIndex = 2,
 					Parent = backpack,
 				})
+				button:SetAttribute("Slot", index)
 				Ui.corner(2).Parent = button
 				local inHand = index == handSlot
 				Ui.stroke(
@@ -1153,6 +1167,9 @@ function Hud.mount(gui: ScreenGui)
 							order[i] = i
 						end
 						order[index - 1], order[index] = index, index - 1
+						if GuiService.SelectedObject == left then
+							refocus = { slot = index - 1, revision = (state :: any).revision }
+						end
 						Net.Fire("ReorderItems", order, (state :: any).revision or 0)
 					end)
 				end
@@ -1176,6 +1193,21 @@ function Hud.mount(gui: ScreenGui)
 					end
 				end)
 				cursor += def.slots
+			end
+		end
+		if keep then
+			-- follow the moved item once the reorder lands, else stay on the same slot
+			local pending = refocus
+			if pending and pending.revision ~= (state :: any).revision then
+				keep = { slot = pending.slot, left = true }
+				refocus = nil
+			end
+			for _, child in backpack:GetChildren() do
+				if child.Name == "Item" and child:GetAttribute("Slot") == keep.slot then
+					GuiService.SelectedObject = (
+						keep.left and child:FindFirstChild("MoveLeft") or child
+					) :: GuiObject
+				end
 			end
 		end
 		local hints = {}
