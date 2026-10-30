@@ -42,6 +42,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Audio = require(Shared.Config.Audio)
 local AudioPriority = require(Shared.Config.AudioPriority)
+local Foley = require(Shared.Config.Foley)
 local InjuryConfig = require(Shared.Config.Injury)
 local SettingsConfig = require(Shared.Config.Settings)
 local Tuning = require(Shared.Config.Tuning)
@@ -408,6 +409,9 @@ function AudioController.Start()
 	local danger = 0 -- 0..1: the drone's danger, eased
 	local night = 0 -- 0..1: how much of the night layer is playing on the line
 	local nextDistant = 0
+	local nextCreak = 0
+	local nextChain = 0
+	local crowed: number? = nil -- the stop (its startedAt) whose crow has called
 	local nextNight = 0
 	local nextBeat = 0
 	local railJoint = 0
@@ -630,6 +634,57 @@ function AudioController.Start()
 			nextNight = clock + wait * (1.6 - night)
 		elseif night <= 0.3 then
 			nextNight = 0
+		end
+
+		-- life aboard: the car's boards creak as it runs, now and then the saloon's cups rattle
+		local aboard = riding and shelter > 0.5 and pace > 0.2
+		if aboard and clock >= nextCreak then
+			if nextCreak > 0 then
+				local cue = if math.random() < Foley.CupShare
+					then "CupRattle"
+					elseif math.random() < 0.5 then "CarCreak1"
+					else "CarCreak2"
+				local at = focus
+					+ Vector3.new(
+						(math.random() - 0.5) * 12,
+						3 + math.random() * 3,
+						(math.random() - 0.5) * 12
+					)
+				AudioController.Play(cue, at, 0.6 + 0.5 * pace, 0.9 + 0.2 * math.random())
+			end
+			nextCreak = clock
+				+ Foley.CreakEvery[1]
+				+ math.random() * (Foley.CreakEvery[2] - Foley.CreakEvery[1])
+		elseif not aboard then
+			nextCreak = 0
+		end
+
+		-- life at a stop: a sign's chain out in the yard; the first time you walk out, a crow calls
+		local outside = atStop and shelter < 0.5
+		if outside and clock >= nextChain then
+			if nextChain > 0 then
+				local angle = math.random() * math.pi * 2
+				local away = Foley.ChainRange[1] + math.random() * (Foley.ChainRange[2] - Foley.ChainRange[1])
+				local at = focus
+					+ Vector3.new(math.cos(angle) * away, 6 + math.random() * 6, math.sin(angle) * away)
+				AudioController.Play("ChainCreak", at, 0.7 + 0.5 * math.random(), 0.85 + 0.3 * math.random())
+			end
+			nextChain = clock
+				+ Foley.ChainEvery[1]
+				+ math.random() * (Foley.ChainEvery[2] - Foley.ChainEvery[1])
+		elseif not outside then
+			nextChain = 0
+		end
+		if outside and station and crowed ~= station.startedAt then
+			local train = Workspace:FindFirstChild("Train")
+			if train and (focus - train:GetPivot().Position).Magnitude > Foley.CrowFrom then
+				crowed = station.startedAt
+				local look = Workspace.CurrentCamera.CFrame.LookVector
+				local flat = Vector3.new(look.X, 0, look.Z)
+				local ahead = if flat.Magnitude > 0.1 then flat.Unit else Vector3.new(0, 0, 1)
+				local at = focus + ahead * (15 + math.random() * 10) + Vector3.new(0, 8, 0)
+				AudioController.Play(if math.random() < 0.5 then "CrowCall" else "CrowCall2", at)
+			end
 		end
 
 		-- a heartbeat when a Hollow is near, lub and dub, faster the nearer it is; past

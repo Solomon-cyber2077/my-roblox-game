@@ -26,4 +26,18 @@ return table.freeze({
 	SprintFrom = 27,
 	SprintRearm = 23,
 	ScuffGain = 1.5,
+	-- life aboard: a creak somewhere in the car every CreakEvery seconds while it runs (louder with
+	-- speed); CupShare of them are the saloon's cups instead
+	CreakEvery = { 4, 9 },
+	CupShare = 0.25,
+	-- life at a stop: a sign's chain out in the yard every ChainEvery seconds, ChainRange studs away;
+	-- the first time you walk CrowFrom studs from the train at a stop, a crow calls ahead of you
+	ChainEvery = { 10, 20 },
+	ChainRange = { 25, 50 },
+	CrowFrom = 35,
+	-- a stalking Hollow's breath by kind (HollowAnimator): the Brute deepest, the Crawler thin
+	BreathPitch = { Stalker = 0.85, Crawler = 1.3, Brute = 0.6 },
+	-- the crew pass counting up a gain: a tick a share, at most XpTicks, over XpTickSeconds
+	XpTicks = 10,
+	XpTickSeconds = 0.7,
 })

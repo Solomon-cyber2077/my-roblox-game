@@ -47,6 +47,7 @@ local Cues: { [string]: Cue } = {
 		spatial = true,
 		rollOff = 180,
 		mix = "Feedback",
+		with = "LanternRattle", -- the lantern's brass rattles as it goes up
 	},
 	-- a stalking Hollow between cover: now and then a board creaks or a pebble skips (Prompt 7)
 	StalkCreak = {
@@ -462,6 +463,77 @@ local Cues: { [string]: Cue } = {
 	},
 	-- a window opening and closing (UI/Modal): card handled ("Paper Movement Cu Handling 14")
 	ModalOpen = { id = 9125722939, volume = 0.3, maxSeconds = 0.35, mix = "Feedback", gap = 0.2 },
+	-- the tool in hand (UI/Hud): leather and a light metal clink ("Briefcase Handling 11")
+	ItemEquip = { id = 9113590176, volume = 0.35, maxSeconds = 0.35, mix = "Feedback", gap = 0.1 },
+	ItemStow = { id = 9113590176, volume = 0.26, maxSeconds = 0.3, pitch = 0.82, mix = "Feedback", gap = 0.1 },
+	-- the lantern raised to ping: its brass and glass rattle ("Metal Lid Small Incense Burner 4")
+	LanternRattle = {
+		id = 9116739536,
+		volume = 0.3,
+		spatial = true,
+		rollOff = 60,
+		maxSeconds = 0.6,
+		mix = "Feedback",
+	},
+	-- the crew pass counting up XP (UI/Lobby): a brass tick a share, and a bell on a new rank ("Bell Rings 6")
+	XpTick = { id = 9117028601, volume = 0.22, maxSeconds = 0.2, pitch = 1.4, mix = "Feedback" },
+	RankUp = { id = 9113421863, volume = 0.4, maxSeconds = 2.5, mix = "Feedback", gap = 1 },
+	-- Life aboard and at the stops (AudioController, timing in Config/Foley). Aboard: the car's boards
+	-- ("Floor Creaks Short Med Wood Creaks 24", "Floor Creaks 2") and the saloon's cups ("Tea Cup Detach 6");
+	-- out at a stop: a sign's chain ("Swing Set Swing 11") and a crow ("Raven 5", "Raven 13")
+	CarCreak1 = {
+		id = 9114496277,
+		volume = 0.35,
+		spatial = true,
+		rollOff = 40,
+		maxSeconds = 1.6,
+		mix = "Ambience",
+	},
+	CarCreak2 = {
+		id = 9114493393,
+		volume = 0.35,
+		spatial = true,
+		rollOff = 40,
+		maxSeconds = 1.4,
+		mix = "Ambience",
+	},
+	CupRattle = {
+		id = 9119922594,
+		volume = 0.18,
+		spatial = true,
+		rollOff = 30,
+		maxSeconds = 1.2,
+		mix = "Ambience",
+		gap = 8,
+	},
+	ChainCreak = {
+		id = 9119688363,
+		volume = 0.3,
+		spatial = true,
+		rollOff = 90,
+		maxSeconds = 1.3,
+		pitch = 0.8,
+		mix = "Outdoor",
+	},
+	CrowCall = {
+		id = 9118066003,
+		volume = 0.5,
+		spatial = true,
+		rollOff = 120,
+		maxSeconds = 1,
+		mix = "Outdoor",
+	},
+	CrowCall2 = {
+		id = 9118067220,
+		volume = 0.5,
+		spatial = true,
+		rollOff = 120,
+		maxSeconds = 1,
+		mix = "Outdoor",
+	},
+	-- a stalking Hollow's breath (HollowAnimator; pitch by kind in Config/Foley): deep, throaty
+	-- ("Creature Growls Lion 2")
+	HollowBreath = { id = 9113971433, volume = 0.55, loop = true, mix = "Cues" },
 	ModalClose = {
 		id = 9125722939,
 		volume = 0.22,

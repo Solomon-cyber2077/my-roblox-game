@@ -956,6 +956,10 @@ function Hud.mount(gui: ScreenGui)
 	local refocus: { slot: number, revision: any }? = nil
 	local function hold(slot: number?)
 		local inv = State.GetPrivate({ "inventory" })
+		-- taking a tool in hand or putting it away is felt (Config/Audio ItemEquip, ItemStow)
+		if slot ~= handSlot and Registry.AudioController then
+			Registry.AudioController.Play(if slot then "ItemEquip" else "ItemStow")
+		end
 		handSlot = slot
 		handId = if slot and inv and inv.items then inv.items[slot] else nil
 		renderBackpack(inv)

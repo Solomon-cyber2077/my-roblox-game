@@ -36,6 +36,7 @@ local Shared = ReplicatedStorage.Shared
 local HollowMotion = require(Shared.Logic.HollowMotion)
 local Audio = require(Shared.Config.Audio)
 local AudioPriority = require(Shared.Config.AudioPriority)
+local Foley = require(Shared.Config.Foley)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
 local Safe = require(Shared.Util.Safe)
@@ -226,10 +227,11 @@ local function breathe(rig: Rig, on: boolean)
 	if on and sound == nil then
 		local made = Instance.new("Sound")
 		made.Name = "StalkBreath"
-		made.SoundId = `rbxassetid://{Audio.Breath.id}`
+		made.SoundId = `rbxassetid://{Audio.HollowBreath.id}`
 		made.Looped = true
-		made.Volume = Audio.Breath.volume
-		made.PlaybackSpeed = 0.7 + (rig.seed % 20) / 100
+		made.Volume = Audio.HollowBreath.volume
+		-- each kind breathes in its own register (Config/Foley), each Hollow a little apart
+		made.PlaybackSpeed = (Foley.BreathPitch[rig.kind] or 0.85) * (0.95 + (rig.seed % 10) / 100)
 		made.RollOffMode = Enum.RollOffMode.Linear
 		made.RollOffMinDistance = Tuning.Stalk.BreathNear * Tuning.Stalk.ReferenceRadius
 		made.RollOffMaxDistance = Tuning.Stalk.BreathFar * Tuning.Stalk.ReferenceRadius

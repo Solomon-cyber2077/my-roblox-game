@@ -14,6 +14,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Foley = require(Shared.Config.Foley)
 local Premise = require(Shared.Config.Premise)
 local Tuning = require(Shared.Config.Tuning)
 local Rank = require(Shared.Logic.Rank)
@@ -553,11 +554,37 @@ function Lobby.mount(gui: ScreenGui)
 		return readyCount, RunRules.requiredReady(math.max(inLobby, 1))
 	end
 
+	-- a gain counts up in brass ticks, and a new rank rings (Config/Foley XpTicks)
+	local lastXp: number? = nil
+	local prevRank: number? = nil
+	local function countUp(gained: number, rankedUp: boolean)
+		local audio = Registry.AudioController
+		if audio == nil then
+			return
+		end
+		local ticks = math.min(Foley.XpTicks, gained)
+		for i = 1, ticks do
+			task.delay((i - 1) * Foley.XpTickSeconds / ticks, function()
+				audio.Play("XpTick", nil, 1, 1 + 0.03 * i)
+			end)
+		end
+		if rankedUp then
+			task.delay(Foley.XpTickSeconds, function()
+				audio.Play("RankUp")
+			end)
+		end
+	end
+
 	local function renderProfile(profile)
 		if profile == nil then
 			return
 		end
 		local rank, into, span = Rank.progress(profile.xp or 0)
+		local xp = profile.xp or 0
+		if lastXp ~= nil and xp > lastXp then
+			countUp(xp - lastXp, prevRank ~= nil and rank > prevRank)
+		end
+		lastXp, prevRank = xp, rank
 		badge.Text = tostring(rank)
 		rankLabel.Text = if span > 0 then `{into} / {span} XP` else "MAX RANK"
 		setXp(if span > 0 then into / span else 1)

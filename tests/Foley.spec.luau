@@ -53,4 +53,44 @@ describe("Handling sounds", function()
 		expect(Audio.Winded.id ~= heartbeat).toBe(true)
 		expect(Audio.HollowSlam.id ~= Audio.Rumble.id).toBe(true)
 	end)
+
+	it(
+		"has a cue for the life aboard, at the stops, the lantern, the tool in hand and the crew pass",
+		function()
+			for _, name in
+				{
+					"CarCreak1",
+					"CarCreak2",
+					"CupRattle",
+					"ChainCreak",
+					"CrowCall",
+					"CrowCall2",
+					"LanternRattle",
+					"ItemEquip",
+					"ItemStow",
+					"XpTick",
+					"RankUp",
+				}
+			do
+				expect(Audio[name] ~= nil).toBe(true)
+			end
+			expect(Audio.PingWhistle.with).toBe("LanternRattle")
+			expect(Audio.HollowBreath.loop).toBe(true)
+			expect(Audio.HollowBreath.mix).toBe("Cues")
+		end
+	)
+
+	it("gives every Hollow kind a breath of its own and keeps the timings sane", function()
+		local Tuning = require(Shared.Config.Tuning)
+		local Timing = require(Shared.Config.Foley)
+		for kind in Tuning.HollowKinds do
+			expect(Timing.BreathPitch[kind] ~= nil).toBe(true)
+		end
+		expect(Timing.BreathPitch.Brute).toBeLessThan(Timing.BreathPitch.Stalker)
+		expect(Timing.BreathPitch.Stalker).toBeLessThan(Timing.BreathPitch.Crawler)
+		for _, range in { Timing.CreakEvery, Timing.ChainEvery, Timing.ChainRange } do
+			expect(range[1]).toBeLessThan(range[2])
+		end
+		expect(Timing.XpTicks > 0 and Timing.XpTickSeconds > 0).toBe(true)
+	end)
 end)
