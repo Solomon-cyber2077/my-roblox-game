@@ -29,6 +29,9 @@ local C = Config.Rescue
 
 export type Phase = "Invite" | "Sequence" | "Rescued" | "Failed"
 
+-- Downed passes easier rules (Config/Downed.Rescue); the ordinary rescue keeps Config/Injury.Rescue.
+export type Rules = { Beats: { number }, Window: number, Length: number, CompensationMax: number }
+
 export type Session = {
 	id: number,
 	phase: Phase,
@@ -39,20 +42,25 @@ export type Session = {
 	compensation: number, -- the rescuer's credited arrival delay
 	hits: { [number]: boolean }, -- beat index -> hit (present once judged)
 	why: string?, -- why it failed: "Empty", "Miss", "Late", "Gone"
+	rules: Rules, -- this session's beats and window
 }
 
 local Rescue = {}
 
-Rescue.BeatCount = #C.Beats
+Rescue.BeatCount = #C.Beats -- the ordinary rescue's
+
+function Rescue.beatCount(session: Session): number
+	return #session.rules.Beats
+end
 
 local function finite(value: any): boolean
 	return type(value) == "number" and value == value and math.abs(value) ~= math.huge
 end
 
 -- One-way delay from a measured round trip (Player:GetNetworkPing, seconds), capped.
-function Rescue.compensation(roundTrip: any): number
+function Rescue.compensation(roundTrip: any, cap: number?): number
 	local rtt = if finite(roundTrip) and roundTrip > 0 then roundTrip else 0
-	return math.min(rtt / 2, C.CompensationMax)
+	return math.min(rtt / 2, cap or C.CompensationMax)
 end
 
 -- The invitation's length given the slowest eligible crewmate's round trip.
@@ -72,7 +80,7 @@ function Rescue.arrivalRadius(speed: number, inviteSeconds: number, roundTrip: a
 	return C.Reach + speed * math.max(inviteSeconds - C.ReactAllowance - rtt / 2, 0)
 end
 
-function Rescue.new(id: number, now: number, slowestRoundTrip: any): Session
+function Rescue.new(id: number, now: number, slowestRoundTrip: any, rules: Rules?): Session
 	return {
 		id = id,
 		phase = "Invite",
@@ -83,11 +91,12 @@ function Rescue.new(id: number, now: number, slowestRoundTrip: any): Session
 		compensation = 0,
 		hits = {},
 		why = nil,
+		rules = rules or C,
 	}
 end
 
 function Rescue.beatAt(session: Session, beat: number): number?
-	local offset = C.Beats[beat]
+	local offset = session.rules.Beats[beat]
 	if session.startsAt == nil or offset == nil then
 		return nil
 	end
@@ -95,7 +104,7 @@ function Rescue.beatAt(session: Session, beat: number): number?
 end
 
 function Rescue.endsAt(session: Session): number?
-	return if session.startsAt then (session.startsAt :: number) + C.Length else nil
+	return if session.startsAt then (session.startsAt :: number) + session.rules.Length else nil
 end
 
 function Rescue.resolved(session: Session): boolean
@@ -119,7 +128,7 @@ function Rescue.join(session: Session, userId: number, now: number, roundTrip: a
 	session.rescuer = userId
 	session.phase = "Sequence"
 	session.startsAt = now
-	session.compensation = Rescue.compensation(roundTrip)
+	session.compensation = Rescue.compensation(roundTrip, session.rules.CompensationMax)
 	return true
 end
 
@@ -148,7 +157,7 @@ function Rescue.press(session: Session, userId: number, beat: any, claimed: any,
 	if session.rescuer ~= userId then
 		return "NotRescuer"
 	end
-	if type(beat) ~= "number" or beat % 1 ~= 0 or C.Beats[beat] == nil then
+	if type(beat) ~= "number" or beat % 1 ~= 0 or session.rules.Beats[beat] == nil then
 		return "Beat"
 	end
 	if session.hits[beat] ~= nil then
@@ -162,14 +171,14 @@ function Rescue.press(session: Session, userId: number, beat: any, claimed: any,
 	if at == nil then
 		return "Time"
 	end
-	local hit = math.abs(at - (Rescue.beatAt(session, beat) :: number)) <= C.Window
+	local hit = math.abs(at - (Rescue.beatAt(session, beat) :: number)) <= session.rules.Window
 	session.hits[beat] = hit
 	if not hit then
 		fail(session, "Miss")
 		return "Miss"
 	end
 	local all = true
-	for i = 1, Rescue.BeatCount do
+	for i = 1, Rescue.beatCount(session) do
 		if session.hits[i] ~= true then
 			all = false
 		end
@@ -195,9 +204,9 @@ function Rescue.tick(session: Session, now: number): Phase
 		end
 		return session.phase
 	end
-	for beat = 1, Rescue.BeatCount do
+	for beat = 1, Rescue.beatCount(session) do
 		local at = Rescue.beatAt(session, beat) :: number
-		if session.hits[beat] == nil and now > at + C.Window + session.compensation then
+		if session.hits[beat] == nil and now > at + session.rules.Window + session.compensation then
 			fail(session, "Late")
 			return session.phase
 		end

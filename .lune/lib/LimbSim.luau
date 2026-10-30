@@ -91,6 +91,17 @@ function LimbSim.run(mods, cfg)
 		says = 0,
 		holdsFailed = 0,
 		rescueOpened = 0,
+		-- Downed (cfg.downed = { bleed = seconds }; Logic/Downed): entries, results and the waiting it causes
+		downedEntries = 0,
+		downedRescued = 0,
+		downedTaken = 0,
+		downedFailed = 0,
+		downedRetries = 0, -- misses that reopened the slot
+		downedSeconds = 0, -- time spent Downed
+		downedHopeless = 0, -- of that, time with no rescuer who would arrive in time
+		downedExcluded = {}, -- reason -> lethal holds that did not become Downed
+		downedByDevice = {}, -- device -> { entries, rescued }
+		spectateSeconds = 0, -- time crew spent dead before the run ended
 		complaints = {},
 		bugs = {},
 		praise = {},
@@ -296,16 +307,27 @@ function LimbSim.run(mods, cfg)
 		end
 
 		local function speedOf(p, hunted)
+			local adrenaline = mods.DownedConfig and mods.DownedConfig.Adrenaline
+			local buffed = adrenaline ~= nil and p.adrenalineUntil ~= nil and t < p.adrenalineUntil
 			local sprint = p.state == "Afield"
 				and p.stamina > 10
 				and (Injury.armless(p.arms) or hunted or p.fleeing)
 			if sprint then
 				p.stamina -= crewTuning.StaminaDrainPerSecond * DT
 			else
-				p.stamina = math.min(crewTuning.StaminaMax, p.stamina + crewTuning.StaminaRegenPerSecond * DT)
+				p.stamina = math.min(
+					crewTuning.StaminaMax,
+					p.stamina
+						+ crewTuning.StaminaRegenPerSecond
+							* DT
+							* (if buffed then adrenaline.StaminaRegenMult else 1)
+				)
 			end
 			local carry = mods.Inventory.speedMultiplier({ items = p.items, capacity = 99 })
-			return (if sprint then crewTuning.SprintSpeed else crewTuning.WalkSpeed) * p.h.device.move * carry
+			return (if sprint then crewTuning.SprintSpeed else crewTuning.WalkSpeed)
+				* p.h.device.move
+				* carry
+				* (if buffed then adrenaline.SpeedMult else 1)
 		end
 		local function walk(p, hunted)
 			local budget = speedOf(p, hunted) * DT
@@ -334,6 +356,7 @@ function LimbSim.run(mods, cfg)
 
 		local function die(p, why)
 			p.state = "Dead"
+			p.deadAt = t
 			p.heal = nil
 			stats.died += 1
 			Humans.feel(p.h, "died")
@@ -380,10 +403,139 @@ function LimbSim.run(mods, cfg)
 			return false, finish, lagged
 		end
 
+		-- Downed (Logic/Downed): up to two rescue attempts under a fixed bleed deadline while the Hollow drags the victim
+		-- away; every living, free, armed crewmate sees the automatic marker (aboard ones too). Returns the outcome,
+		-- the rescuer and when it ends, or nil when the hold does not qualify (the caller falls back to the short
+		-- invitation, as the game will)
+		local Downed = mods.Downed
+		local function downedRescue(p, at)
+			local bleed = cfg.downed.bleed
+			local DownedConfig = mods.DownedConfig
+			local cands = {}
+			local crawling = rng:next() < 0.55 + 0.3 * p.h.traits.readsUi - 0.3 * p.h.mood.fear
+			local session = Downed.new(stats.downedEntries + 1, p.id, at, bleed)
+			local net = Downed.drag(session, crawling)
+			for _, q in crew do
+				if
+					q ~= p
+					and alive(q)
+					and q.state ~= "Held"
+					and not q.rescuing
+					and Injury.canUseItems(q.arms)
+				then
+					local gap = dist(q.x, q.z, p.x, p.z)
+					local closing = crewTuning.WalkSpeed * q.h.device.move - net
+					local arriveIn = if closing > 0
+						then Humans.reaction(q.h)
+							+ (1 - q.h.traits.readsUi) * 1.5 -- reading the marker
+							+ math.max(gap - Config.Rescue.Reach, 0) / closing
+							+ q.h.rtt / 2
+						else math.huge
+					table.insert(cands, { q = q, arriveIn = arriveIn })
+				end
+			end
+			local rescuers = {}
+			for _, c in cands do
+				table.insert(
+					rescuers,
+					{ id = c.q.id, alive = true, free = true, hasArm = true, arriveIn = c.arriveIn }
+				)
+			end
+			local ok, why = Downed.eligible(
+				{ downed = true, injury = true },
+				{ hasArm = true },
+				rescuers,
+				bleed
+			)
+			if not ok then
+				stats.downedExcluded[why :: string] = (stats.downedExcluded[why :: string] or 0) + 1
+				return nil
+			end
+			stats.downedEntries += 1
+			local dev = p.h.deviceId or "?"
+			local byDev = stats.downedByDevice[dev] or { entries = 0, rescued = 0 }
+			stats.downedByDevice[dev] = byDev
+			byDev.entries += 1
+			event({ t = at, type = "downed", who = p.id, deadline = round(session.deadline) })
+			-- the first willing crewmate who arrives with a whole sequence to spare joins; a miss with enough
+			-- bleed left reopens the slot once, and whoever is willing and nearest tries again
+			local from = at
+			while true do
+				local first, firstAt = nil, math.huge
+				for _, c in cands do
+					local q = c.q
+					if rng:next() < 0.3 + 0.7 * q.h.traits.teamwork * (1 - q.h.mood.fear * 0.4) then
+						-- the last rescuer is at the victim's side; the others keep closing on the drag
+						local arrive = if q == c.last
+							then from + Humans.reaction(q.h)
+							else math.max(at + c.arriveIn, from)
+						if arrive < firstAt and Downed.canJoin(session, arrive) then
+							first, firstAt = q, arrive
+						end
+					end
+				end
+				if first == nil or not Downed.join(session, first.id, firstAt) then
+					Downed.tick(session, session.deadline)
+					stats.downedTaken += 1
+					stats.downedSeconds += bleed
+					stats.downedHopeless += bleed
+					return "Taken", nil, session.deadline
+				end
+				-- the Downed beats, from the rescuer's hands (Logic/Rescue), starting as they join
+				local r = Rescue.new(session.id, firstAt, first.h.rtt, DownedConfig.Rescue)
+				Rescue.join(r, first.id, firstAt, first.h.rtt)
+				for beat = 1, Rescue.beatCount(r) do
+					local beatAt = Rescue.beatAt(r, beat)
+					local claimed = beatAt + gauss(rng) * Humans.jitter(first.h) + first.h.device.latency
+					local oneWay = Humans.oneWay(rng, first.h)
+					local arrive = claimed + oneWay
+					Rescue.tick(r, arrive)
+					if Rescue.resolved(r) then
+						break
+					end
+					local result = Rescue.press(r, first.id, beat, claimed, arrive)
+					if result == "Hit" then
+						stats.beatHits += 1
+					elseif result == "Miss" then
+						stats.beatMisses += 1
+					end
+				end
+				local endsAt = Rescue.endsAt(r) :: number
+				Rescue.tick(r, endsAt + 1)
+				if r.phase == "Rescued" then
+					stats.downedSeconds += endsAt - at
+					Downed.settle(session, "Rescued", endsAt)
+					stats.downedRescued += 1
+					byDev.rescued += 1
+					local until_ = endsAt + DownedConfig.Adrenaline.Seconds
+					p.adrenalineUntil, first.adrenalineUntil = until_, until_
+					return "Rescued", first, endsAt
+				end
+				if not Downed.miss(session, endsAt) then
+					-- a failed last chance resolves at once
+					stats.downedSeconds += endsAt - at
+					Downed.settle(session, "RescueFailed", endsAt)
+					stats.downedFailed += 1
+					return "Failed", first, endsAt
+				end
+				stats.downedRetries += 1
+				from = endsAt
+				for _, c in cands do
+					c.last = c.q == first and first or nil
+				end
+			end
+		end
+
 		-- the hold's clock ran out on `p` at time `at`: the crew's one rescue
 		local function rescue(p, at)
 			if Injury.targetArm(p.arms, 1) == nil then
 				return "Armless", nil
+			end
+			if cfg.downed then
+				local outcome, rescuer, endsAt = downedRescue(p, at)
+				if outcome then
+					return outcome, rescuer, endsAt
+				end
 			end
 			-- as the server offers it (HollowService.openRescue): only to those who could still arrive
 			local outer = Config.Rescue.Reach + crewTuning.WalkSpeed * Config.Rescue.InviteMax
@@ -541,8 +693,8 @@ function LimbSim.run(mods, cfg)
 				return
 			end
 			stats.holdsFailed += 1
-			local outcome, rescuer = rescue(p, heldAt + seconds)
-			p.releaseAt = if rescuer then heldAt + seconds + 3 else heldAt + seconds
+			local outcome, rescuer, endsAt = rescue(p, heldAt + seconds)
+			p.releaseAt = endsAt or (if rescuer then heldAt + seconds + 3 else heldAt + seconds)
 			p.after = function()
 				if outcome == "Rescued" then
 					stats.rescues += 1
@@ -609,6 +761,7 @@ function LimbSim.run(mods, cfg)
 						if outcome == "Empty"
 							then "Nobody near enough to rescue"
 							elseif outcome == "Armless" then "Taken with no arms left"
+							elseif outcome == "Taken" then "Bled out while Downed"
 							else "The rescue failed"
 					)
 					hol.reelUntil = t + 2.6
@@ -1035,6 +1188,11 @@ function LimbSim.run(mods, cfg)
 	table.sort(trace.events, function(a, b)
 		return a.t < b.t
 	end)
+	for _, p in crew do
+		if p.deadAt then
+			stats.spectateSeconds += math.max(t - p.deadAt, 0)
+		end
+	end
 	return { trace = trace, stats = stats }
 end
 

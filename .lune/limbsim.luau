@@ -33,6 +33,7 @@ local mods = {
 	DifficultyModel = load(Shared.Logic.DifficultyModel),
 	Rng = load(Shared.Util.Rng),
 	InjuryConfig = load(Shared.Config.Injury),
+	Downed = load(Shared.Logic.Downed),
 	Difficulty = load(Shared.Config.Difficulty),
 	Stations = load(Shared.Config.Stations),
 	Tuning = load(Shared.Config.Tuning),
