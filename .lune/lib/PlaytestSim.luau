@@ -34,7 +34,7 @@ local function tapMiss(mm: number): number
 end
 
 -- what the game sees of a press: the device's input lag plus ~1.5 frames before it is read and shown
-local function lag(device): number
+local function inputLag(device): number
 	return device.latency + 1.5 / device.fps
 end
 
@@ -145,7 +145,7 @@ local function struggle(mods, session, p, stopLevel, helpers)
 		else
 			local spread = persona.jitter * (1 + persona.panic * 0.5)
 			-- after a first grab players learn to press a little early for their device
-			local lead = if firstGrab then 0 else lag(device) * 0.5 * persona.skill
+			local lead = if firstGrab then 0 else inputLag(device) * 0.5 * persona.skill
 			local press = idealPress(SkillCheck, check) + gauss(rng) * spread + persona.reaction * 0.04 - lead
 			-- touch: builds with SkillCheck.TouchLead stamp a tap on touch-down, earlier by the lead;
 			-- older ones fired the keycap on Activated, when the finger lifts (a whole tap late)
@@ -153,7 +153,7 @@ local function struggle(mods, session, p, stopLevel, helpers)
 			if device.tap then
 				touchShift = if C.TouchLead then -C.TouchLead else device.tap
 			end
-			local claimed = press + lag(device) + touchShift
+			local claimed = press + inputLag(device) + touchShift
 			local arrived = claimed + device.ping / 2
 			result = SkillCheck.judgePress(check, claimed, arrived, tolerance)
 			-- would the press have landed with no input latency? then the device cost it
