@@ -162,6 +162,11 @@ return table.freeze({
 		-- frame), so the marker the player saw was already past it. The server still clamps the
 		-- stamp within LatencyMax of arrival, so this cannot buy more than the tolerance allows.
 		TouchLead = 0.04,
+		-- every press is also stamped one frame earlier: the marker the player timed it against was
+		-- drawn a frame ago, which is ~7 ms at 144 fps and ~36 ms on a 28 fps phone (the bot playtests'
+		-- phone grab gap). Capped; the server's LatencyMax clamp still bounds any stamp
+		FrameLead = 1, -- frames
+		FrameLeadMax = 0.05, -- seconds
 		MinPressGap = 0.12, -- presses closer together than this are ignored
 		FinishByStop = table.freeze({ 12, 11.5, 11, 10.5, 10, 9.5, 9 }), -- the grab clock by stop
 		FinishMargin = 1, -- the clock always exceeds the time the minimum checks need by this

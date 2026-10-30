@@ -154,6 +154,10 @@ local function struggle(mods, session, p, stopLevel, helpers)
 				touchShift = if C.TouchLead then -C.TouchLead else device.tap
 			end
 			local claimed = press + inputLag(device) + touchShift
+			-- builds with SkillCheck.frameLead stamp a press a frame earlier (the marker was drawn a frame ago)
+			if session.frameLead and mods.SkillCheck.frameLead then
+				claimed -= mods.SkillCheck.frameLead(1 / device.fps)
+			end
 			local arrived = claimed + device.ping / 2
 			result = SkillCheck.judgePress(check, claimed, arrived, tolerance)
 			-- would the press have landed with no input latency? then the device cost it
@@ -543,6 +547,16 @@ local function playStop(mods, session, crew, train, stopInfo)
 						p.stats.chases += 1
 						p.threatened = true
 						local spotted = p.rng:chance(p.device.awareness * (1 - persona.reaction / 1.6))
+						-- the hunted cue (Tuning.HuntedCue, phones only): an off-screen Hollow that starts hunting
+						-- shows as eyes at the screen's edge; a player who reads the edges, with no thumb over it, sees it
+						if
+							not spotted
+							and session.huntedCue
+							and p.device.platform == "Mobile"
+							and p.device.id ~= "Tablet"
+						then
+							spotted = p.rng:chance((0.4 + 0.6 * persona.readsUi) * (1 - p.device.hudMiss))
+						end
 						local gap = if spotted then SPOT_HEAD_START else LATE_HEAD_START
 						if p.target and (p.state == "Go" or p.state == "Search") then
 							p.target.taken = false
@@ -797,6 +811,8 @@ function Sim.run(mods, cfg)
 		events = {},
 		tally = mods.Economy.emptyTally(),
 		actionButton = cfg.actionButton ~= false,
+		huntedCue = cfg.huntedCue ~= false,
+		frameLead = cfg.frameLead ~= false,
 	}
 	local train = mods.Ledger.newTrain()
 	local runSeed = cfg.seed

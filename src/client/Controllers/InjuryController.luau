@@ -38,10 +38,12 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Config = require(Shared.Config.Injury)
 local Difficulty = require(Shared.Config.Difficulty)
+local SkillCheck = require(Shared.Logic.SkillCheck)
 local Registry = require(script.Parent.Parent.Registry)
 local CrewPoses = require(script.Parent.Parent.Animation.CrewPoses)
 local TearFeedback = require(Shared.Logic.TearFeedback)
 
+local FrameTime = require(script.Parent.Parent.FrameTime)
 local Net = require(script.Parent.Parent.Net)
 local Overlay = require(script.Parent.Parent.UI.Overlay)
 local Theme = require(script.Parent.Parent.UI.Theme)
@@ -540,7 +542,7 @@ local function press(touch: boolean)
 		return
 	end
 	-- the instant the key went down, on the clock that draws the marker (a tap arrives late)
-	local at = serverNow()
+	local at = serverNow() - SkillCheck.frameLead(FrameTime.get())
 	if touch then
 		at -= Difficulty.SkillCheck.TouchLead
 	end

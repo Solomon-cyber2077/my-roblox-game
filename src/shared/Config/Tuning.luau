@@ -52,6 +52,18 @@ local Tuning = {
 		FogDensity = 0.08, -- extra Atmosphere density at full warning
 	},
 
+	-- The hunted cue (Logic/HuntedCue, UI/HuntedCue): a Hollow hunting you from off-screen shows as a pair of
+	-- eyes glinting at the screen's edge, toward it. Phones only: a small screen shows less around you, which the
+	-- bot playtests measured as the mobile chase gap (`lune run phone-report`).
+	HuntedCue = {
+		Enabled = true,
+		CompactOnly = true, -- phones (the Compact layout); tablets and PCs see enough around them
+		Range = 70, -- studs: no cue past this
+		FullAt = 14, -- studs: full strength this close
+		Inset = 0.06, -- share of the screen kept clear at the edge; a Hollow inside it counts as seen
+		Size = 72, -- px, the eyes' mark
+	},
+
 	-- The train's door threshold, per player (Logic/Threshold, Controllers/ThresholdController).
 	-- Crossing it never blocks controls or darkens the screen: light and sound only crossfade.
 	Threshold = {

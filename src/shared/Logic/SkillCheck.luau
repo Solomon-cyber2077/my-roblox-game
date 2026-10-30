@@ -132,6 +132,16 @@ function SkillCheck.endsAt(check: Check): number
 	return check.startsAt + check.sweep + C.LatencyMax
 end
 
+-- Seconds to stamp a press earlier for the player's own frame time (the marker they saw is a frame old).
+function SkillCheck.frameLead(frameSeconds: number?): number
+	local f = if type(frameSeconds) == "number"
+			and frameSeconds == frameSeconds
+			and frameSeconds > 0
+		then frameSeconds
+		else 0
+	return math.min(f * C.FrameLead, C.FrameLeadMax)
+end
+
 function SkillCheck.tolerance(ping: number?): number
 	local p = if type(ping) == "number" and ping == ping and ping > 0 then ping else 0
 	return math.min(C.LatencyBase + p / 2, C.LatencyMax)

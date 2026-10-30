@@ -8,6 +8,7 @@
 	           lune run playtest --build=baseline         (label stored in every session)
 	           lune run playtest --device=LowPhone --first=1   (first session on a low-end phone)
 	           lune run playtest --route=Long --chip=1     (force the Long Line; old touch prompts)
+	           lune run playtest --cue=0 --framelead=0     (before the hunted cue and frame-stamped presses)
 
 ]]
 
@@ -111,6 +112,8 @@ for i = 0, sessions - 1 do
 		first = first,
 		route = route,
 		actionButton = actionButton,
+		huntedCue = args.cue ~= "0", -- --cue=0 replays the build before the hunted cue
+		frameLead = args.framelead ~= "0", -- --framelead=0 replays presses without the frame stamp
 	})
 	if ok then
 		table.insert(results, session)

@@ -45,6 +45,7 @@ local Grabs = require(Shared.Config.Grabs)
 local RunRules = require(Shared.Logic.RunRules)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 
+local FrameTime = require(script.Parent.Parent.FrameTime)
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
@@ -108,7 +109,7 @@ local function press()
 	end
 	pressed = true
 	-- the instant the key went down, on the clock that draws the marker (a tap arrives late)
-	local at = Workspace:GetServerTimeNow()
+	local at = Workspace:GetServerTimeNow() - SkillCheck.frameLead(FrameTime.get())
 	if UserInputService:GetLastInputType() == Enum.UserInputType.Touch then
 		at -= Difficulty.SkillCheck.TouchLead
 	end

@@ -184,3 +184,13 @@ describe("SkillCheck", function()
 		expect(SkillCheck.angleAt(check, 20 + C.SweepSeconds)).toBeCloseTo(360)
 	end)
 end)
+
+describe("SkillCheck.frameLead", function()
+	it("stamps a press one frame earlier, capped", function()
+		expect(SkillCheck.frameLead(1 / 144)).toBeCloseTo(1 / 144)
+		expect(SkillCheck.frameLead(1 / 28)).toBeCloseTo(1 / 28)
+		expect(SkillCheck.frameLead(0.5)).toBe(C.FrameLeadMax) -- a frozen frame cannot buy more
+		expect(SkillCheck.frameLead(nil)).toBe(0)
+		expect(SkillCheck.frameLead(0 / 0)).toBe(0)
+	end)
+end)
