@@ -252,7 +252,7 @@ local function pooled(cueName: string, gain: number): Sound?
 	local sound = pool.sounds[pool.next]
 	pool.next = pool.next % #pool.sounds + 1
 	sound.Volume = Audio[cueName].volume * gain
-	sound.TimePosition = 0
+	sound.TimePosition = Audio[cueName].start or 0 -- past the take's opening silence
 	sound:Play()
 	return sound
 end
@@ -781,6 +781,8 @@ function AudioController.Play(
 	end
 	sound.Volume = cue.volume * (gain or 1)
 	sound.PlaybackSpeed = (cue.pitch or 1) * (pitch or 1)
+	-- many library takes open on silence or room tone: start where the sound does (Config/Audio start)
+	sound.TimePosition = cue.start or 0
 	if shape then
 		if shape.rollOff and cue.spatial then
 			sound.RollOffMaxDistance = shape.rollOff
@@ -842,7 +844,7 @@ function AudioController.Tap(cueName: string)
 	if sound and cut then
 		task.delay(cut, function()
 			-- stop only this press's take: a quicker press may already have restarted the sound
-			if sound.IsPlaying and sound.TimePosition >= cut * 0.5 then
+			if sound.IsPlaying and sound.TimePosition - (Audio[cueName].start or 0) >= cut * 0.5 then
 				sound:Stop()
 			end
 		end)

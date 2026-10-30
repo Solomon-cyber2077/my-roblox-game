@@ -11,6 +11,8 @@
 	group      a SoundGroup of its own (beside the main one, so ducking the mix leaves it alone)
 	rollOff    studs a spatial cue carries before it falls silent (default 220)
 	with       another cue played together with this one (a layered sound)
+	start      seconds into the recording where its sound begins (measured; many library takes open on
+	           silence or room tone, which a short maxSeconds would otherwise play instead of the sound)
 	gap        seconds before the same cue may play again (a burst of the same event is one sound)
 	voices     the most copies of this cue playing at once, inside its tier's cap (so one busy
 	           source, a pack of Hollows or a collapsing yard, cannot fill the tier by itself)
@@ -32,16 +34,18 @@ export type Cue = {
 	rollOff: number?,
 	mix: string?,
 	with: string?,
+	start: number?,
 	gap: number?,
 	voices: number?,
 }
 
 local Cues: { [string]: Cue } = {
-	Whistle = { id = 9119628070, volume = 0.7, maxSeconds = 4 },
+	Whistle = { id = 9119628070, start = 0.23, volume = 9.94, maxSeconds = 4 },
 	-- the co-op ping: a soft whistle from the pinger (the engine's whistle, high and short)
 	PingWhistle = {
 		id = 9119628070,
-		volume = 0.35,
+		start = 0.23,
+		volume = 6.26,
 		maxSeconds = 0.9,
 		pitch = 1.9,
 		spatial = true,
@@ -52,7 +56,8 @@ local Cues: { [string]: Cue } = {
 	-- a stalking Hollow between cover: now and then a board creaks or a pebble skips (Prompt 7)
 	StalkCreak = {
 		id = 9114129572,
-		volume = 0.22,
+		start = 0.08,
+		volume = 1.96,
 		maxSeconds = 0.9,
 		pitch = 0.55,
 		spatial = true,
@@ -61,67 +66,90 @@ local Cues: { [string]: Cue } = {
 	},
 	StalkPebble = {
 		id = 15675059323,
-		volume = 0.16,
+		volume = 1.77,
 		maxSeconds = 0.4,
 		pitch = 2.1,
 		spatial = true,
 		rollOff = 35,
 		mix = "Cues",
 	},
-	Departure = { id = 9119628064, volume = 0.75, maxSeconds = 5 },
-	Brakes = { id = 9114659986, volume = 0.6 },
-	DoorsOpen = { id = 9120301474, volume = 0.5 },
+	Departure = { id = 9119628064, volume = 7.07, maxSeconds = 5 },
+	Brakes = { id = 9114659986, volume = 1.55 },
+	DoorsOpen = { id = 9120301474, volume = 2.37 },
 	-- crossing the carriage door (Controllers/ThresholdController): a heavy door, muffled (ProSoundEffects
 	-- "Door Bang Rattle 8", heavy double doors, Creator Store)
-	DoorThud = { id = 9114129572, volume = 0.5, maxSeconds = 1.2, pitch = 0.78 },
-	Alarm = { id = 9113085203, volume = 0.45, maxSeconds = 2.5, mix = "Cues" },
-	Deposit = { id = 9113849492, volume = 0.6, mix = "Feedback" },
-	Loot = { id = 17208319162, volume = 0.6, mix = "Feedback" },
-	Heal = { id = 9114171855, volume = 0.6, mix = "Feedback" },
+	DoorThud = { id = 9114129572, start = 0.08, volume = 1.96, maxSeconds = 1.2, pitch = 0.78 },
+	Alarm = { id = 9113085203, start = 1.21, volume = 3.18, maxSeconds = 2.5, mix = "Cues" },
+	Deposit = { id = 9113849492, volume = 4.64, mix = "Feedback" },
+	Loot = { id = 17208319162, volume = 1.99, mix = "Feedback" },
+	Heal = { id = 9114171855, volume = 7.35, mix = "Feedback" },
 	-- a Hollow's blow landing on you ("Punch Some Crack And Thud 2")
-	Hit = { id = 9117971636, volume = 0.8, maxSeconds = 0.6, mix = "Feedback" },
-	HollowSpawn = { id = 9125475729, volume = 0.9, spatial = true, mix = "Cues" },
-	HollowStrike = { id = 9125471724, volume = 0.9, spatial = true, mix = "Cues" },
-	Flash = { id = 9113024908, volume = 0.8, spatial = true, mix = "Feedback" },
-	FlareLaunch = { id = 12222095, volume = 0.8, spatial = true, maxSeconds = 3 },
-	FlareBurst = { id = 9114361763, volume = 0.7, spatial = true, maxSeconds = 3 },
-	Toll = { id = 9113804436, volume = 0.35, maxSeconds = 4 },
-	Eliminated = { id = 9126213744, volume = 0.7, mix = "Feedback" },
+	Hit = { id = 9117971636, start = 0.18, volume = 2.51, maxSeconds = 0.6, mix = "Feedback" },
+	HollowSpawn = { id = 9125475729, volume = 4.98, spatial = true, mix = "Cues" },
+	HollowStrike = { id = 9125471724, volume = 1.14, spatial = true, mix = "Cues" },
+	Flash = { id = 9113024908, volume = 2.84, spatial = true, mix = "Feedback" },
+	FlareLaunch = { id = 12222095, start = 0.1, volume = 0.91, spatial = true, maxSeconds = 3 },
+	FlareBurst = { id = 9114361763, volume = 0.94, spatial = true, maxSeconds = 3 },
+	Toll = { id = 9113804436, start = 0.07, volume = 2.46, maxSeconds = 4 },
+	Eliminated = { id = 9126213744, volume = 1.71, mix = "Feedback" },
 	-- A low, mournful loss cue (the same cleared library recording as Eliminated,
 	-- slowed into a dark bell-like fall; the client adds the character's position).
 	Death = {
 		id = 9126213744,
-		volume = 0.82,
+		volume = 1.62,
 		maxSeconds = 4.5,
 		pitch = 0.62,
 		spatial = true,
 		rollOff = 90,
 		mix = "Cues",
 	},
-	Rumble = { id = 9113218938, volume = 0.7, spatial = true, maxSeconds = 2.5, gap = 1, voices = 2 },
+	Rumble = { id = 9113218938, volume = 1.83, spatial = true, maxSeconds = 2.5, gap = 1, voices = 2 },
 	-- deep booms rolling far off ("Artillery Distant 2", listed for thunder), not the slam's rumble
-	Thunder = { id = 9113169432, volume = 0.6, maxSeconds = 5, pitch = 0.9 },
-	Collapse = { id = 9118582680, volume = 0.9, spatial = true, maxSeconds = 3, gap = 0.6, voices = 3 },
-	SteamLeak = { id = 9116496074, volume = 0.6, spatial = true, loop = true },
-	Victory = { id = 9112766203, volume = 0.5, maxSeconds = 6 },
-	Purchase = { id = 9113728042, volume = 0.6, mix = "Feedback" },
-	Clutch = { id = 9125573009, volume = 0.6, maxSeconds = 2, mix = "Feedback" },
-	Click = { id = 15675059323, volume = 0.4, mix = "Feedback" },
+	Thunder = { id = 9113169432, start = 0.35, volume = 4.91, maxSeconds = 5, pitch = 0.9 },
+	Collapse = {
+		id = 9118582680,
+		start = 0.9,
+		volume = 1.97,
+		spatial = true,
+		maxSeconds = 3,
+		gap = 0.6,
+		voices = 3,
+	},
+	SteamLeak = { id = 9116496074, volume = 1.5, spatial = true, loop = true },
+	Victory = { id = 9112766203, volume = 3.62, maxSeconds = 6 },
+	Purchase = { id = 9113728042, volume = 0.95, mix = "Feedback" },
+	Clutch = { id = 9125573009, start = 0.61, volume = 5.97, maxSeconds = 2, mix = "Feedback" },
+	Click = { id = 15675059323, volume = 1.76, mix = "Feedback" },
 	-- UI sounds, Creator Store (ProSoundEffects), chosen 2026-10-17 for audition (HANDOFF.md lists them)
-	MenuClick = { id = 9120300134, volume = 0.3, maxSeconds = 0.25, pitch = 0.9, mix = "Feedback" }, -- "Typewriter Key 2"
+	MenuClick = { id = 9120300134, volume = 1.01, maxSeconds = 0.25, pitch = 0.9, mix = "Feedback" }, -- "Typewriter Key 2"
 	-- a vote lands: heavy paper, then the brass clip ("Paper Tear Heavy Paper Bag Slow Rustle 5")
-	TicketStamp = { id = 9125725195, volume = 0.45, maxSeconds = 0.7, with = "BrassClick", mix = "Feedback" },
-	BrassClick = { id = 9117028601, volume = 0.35, maxSeconds = 0.3, pitch = 0.85, mix = "Feedback" }, -- "Moviola Toggle Switch 6"
+	TicketStamp = {
+		id = 9125725195,
+		start = 0.61,
+		volume = 1.54,
+		maxSeconds = 0.7,
+		with = "BrassClick",
+		mix = "Feedback",
+	},
+	BrassClick = { id = 9117028601, volume = 2.52, maxSeconds = 0.3, pitch = 0.85, mix = "Feedback" }, -- "Moviola Toggle Switch 6"
 	-- the ticket's stamp coming down ("Table Hit Hand Smacks On Wood Table 14")
-	TicketPunch = { id = 9119909448, volume = 0.6, maxSeconds = 0.6, pitch = 0.8, mix = "Feedback" },
+	TicketPunch = { id = 9119909448, volume = 0.87, maxSeconds = 0.6, pitch = 0.8, mix = "Feedback" },
 
 	-- Departure warnings (Controllers/DepartureClock), from the recordings above
-	WarnTick = { id = 15675059323, volume = 0.1, maxSeconds = 0.4, pitch = 1.7, group = "Warnings" },
-	WarnBell = { id = 9113804436, volume = 0.35, maxSeconds = 4, pitch = 1.15, group = "Warnings" },
+	WarnTick = { id = 15675059323, volume = 1.76, maxSeconds = 0.4, pitch = 1.7, group = "Warnings" },
+	WarnBell = {
+		id = 9113804436,
+		start = 0.07,
+		volume = 2.45,
+		maxSeconds = 4,
+		pitch = 1.15,
+		group = "Warnings",
+	},
 	-- whistles from the locomotive's chimney, heard across the whole stop
 	WarnWhistle = {
 		id = 9119628070,
-		volume = 0.8,
+		start = 0.23,
+		volume = 10,
 		maxSeconds = 3,
 		pitch = 0.8,
 		spatial = true,
@@ -130,7 +158,8 @@ local Cues: { [string]: Cue } = {
 	},
 	WarnWhistleLong = {
 		id = 9119628070,
-		volume = 1,
+		start = 0.23,
+		volume = 10,
 		maxSeconds = 6,
 		pitch = 0.9,
 		spatial = true,
@@ -139,27 +168,28 @@ local Cues: { [string]: Cue } = {
 	},
 
 	-- Beds
-	TrainRun = { id = 9120247081, volume = 0.55, loop = true, mix = "Ambience" },
-	Wind = { id = 9113286969, volume = 0.4, loop = true, mix = "Outdoor" },
-	StationEerie = { id = 9125440141, volume = 0.35, loop = true, mix = "Outdoor" },
-	DepotHall = { id = 9114872503, volume = 0.3, loop = true, mix = "Ambience" },
+	TrainRun = { id = 9120247081, volume = 1.74, loop = true, mix = "Ambience" },
+	Wind = { id = 9113286969, volume = 7.95, loop = true, mix = "Outdoor" },
+	StationEerie = { id = 9125440141, volume = 10, loop = true, mix = "Outdoor" },
+	DepotHall = { id = 9114872503, volume = 3.29, loop = true, mix = "Ambience" },
 	-- Satie, Gnossienne No. 3 (APM Music), from the lobby piano (Builders/LobbyBuilder)
-	LobbyPiano = { id = 1837474268, volume = 0.48, loop = true, spatial = true, mix = "Piano" },
+	LobbyPiano = { id = 1837474268, volume = 3.45, loop = true, spatial = true, mix = "Piano" },
 
 	-- The stops' soundscape: the same recordings slowed and shaped (AudioController
 	-- adds the filters and reverb), so nothing new needs clearing.
 	-- the stop's drone (ProSoundEffects "Hollow Rumble 1", Creator Store): measured in Studio (AudioAnalyzer)
 	-- at 86% of its energy in 60-120 Hz, 6% below. The same recording at 4x is its harmonic layer
 	-- (77% in 250-500 Hz), so phone and laptop speakers that cannot play the body still hear the drone.
-	Drone = { id = 9112795295, volume = 0.42, loop = true, mix = "Outdoor" },
-	DroneHarmonic = { id = 9112795295, volume = 0.14, loop = true, pitch = 4, mix = "Outdoor" },
+	Drone = { id = 9112795295, volume = 1.48, loop = true, mix = "Outdoor" },
+	DroneHarmonic = { id = 9112795295, volume = 0.58, loop = true, pitch = 4, mix = "Outdoor" },
 	-- the void mist's hum (Controllers/MistController): the drone's recording at 2x, between its body
 	-- and its harmonic; MistController sets the volume (proximity, idle) every frame
 	MistHum = { id = 9112795295, volume = 0, loop = true, pitch = 2, mix = "Outdoor" },
-	Howl = { id = 9113286969, volume = 0.2, loop = true, pitch = 0.6, mix = "Outdoor" }, -- gusts that come and go
+	Howl = { id = 9113286969, volume = 9.42, loop = true, pitch = 0.6, mix = "Outdoor" }, -- gusts that come and go
 	DistantBell = {
 		id = 9113804436,
-		volume = 0.26,
+		start = 0.07,
+		volume = 0.71,
 		maxSeconds = 7,
 		pitch = 0.62,
 		spatial = true,
@@ -167,34 +197,36 @@ local Cues: { [string]: Cue } = {
 	},
 	DistantCry = {
 		id = 9125475729,
-		volume = 0.24,
+		volume = 1.39,
 		maxSeconds = 4,
 		pitch = 0.48,
 		spatial = true,
 		mix = "Outdoor",
 	},
-	Heartbeat = { id = 9113570506, volume = 0.65, maxSeconds = 1, pitch = 0.42, mix = "Cues" },
+	Heartbeat = { id = 9113570506, volume = 1.83, maxSeconds = 1, pitch = 0.42, mix = "Cues" },
 	-- Reuses the licensed heartbeat recording for one cue per armless return deadline.
-	InjuryWarning = { id = 9113570506, volume = 0.35, maxSeconds = 1, pitch = 0.55, mix = "Feedback" },
+	InjuryWarning = { id = 9113570506, volume = 1.82, maxSeconds = 1, pitch = 0.55, mix = "Feedback" },
 	-- an arm coming away (Config/Injury Tear; Pro Sound Effects "Gore - Rips & Tears" and "Voices -
 	-- Screams", checked loading 2026-10-29). Spatial, so crewmates hear it where it happened; the
 	-- victim hears them flat (no position). The ring sits in the Warnings group, beside the main
 	-- mix: the shock's muffle (AudioController.Shock) dulls everything else and leaves it ringing.
 	LimbRip = { -- Squishy Bone Cracks 10: wet, ligament, scraping cracks (2.2 s)
 		id = 9119560180,
-		volume = 0.95,
+		start = 0.18,
+		volume = 2.66,
 		maxSeconds = 1.7,
 		spatial = true,
 		rollOff = 150,
 		mix = "Cues",
 		with = "LimbSnap",
 	},
-	LimbSnap = { id = 9113542363, volume = 0.8, spatial = true, rollOff = 110, mix = "Cues" }, -- Bone Cracks 10
-	LimbThud = { id = 9113570506, volume = 0.9, maxSeconds = 0.5, pitch = 0.55, mix = "Feedback" },
+	LimbSnap = { id = 9113542363, volume = 1.45, spatial = true, rollOff = 110, mix = "Cues" }, -- Bone Cracks 10
+	LimbThud = { id = 9113570506, volume = 1.82, maxSeconds = 0.5, pitch = 0.55, mix = "Feedback" },
 	-- Male Screams In Pain Injury Yells Agony 1, 3, 6; each player keeps one, at a pitch of their own
 	PainCry1 = {
 		id = 9116454870,
-		volume = 0.75,
+		start = 0.18,
+		volume = 3.48,
 		maxSeconds = 2.1,
 		spatial = true,
 		rollOff = 150,
@@ -202,7 +234,8 @@ local Cues: { [string]: Cue } = {
 	},
 	PainCry2 = {
 		id = 9116454961,
-		volume = 0.75,
+		start = 0.57,
+		volume = 3.74,
 		maxSeconds = 2.1,
 		spatial = true,
 		rollOff = 150,
@@ -210,7 +243,8 @@ local Cues: { [string]: Cue } = {
 	},
 	PainCry3 = {
 		id = 9116455270,
-		volume = 0.75,
+		start = 0.85,
+		volume = 2.52,
 		maxSeconds = 2.1,
 		spatial = true,
 		rollOff = 150,
@@ -219,22 +253,22 @@ local Cues: { [string]: Cue } = {
 	-- the panting after it: the Breath recording, once, cut short with a fade
 	TornBreath = { id = 100147087354736, volume = 0.6, maxSeconds = 2.4, pitch = 1.08, mix = "Feedback" },
 	-- Accelerating Tone Piercing High Pitch Ring 1: its rising first seconds, shaped by the shock
-	ShockRing = { id = 9113031196, volume = 1, maxSeconds = 4, group = "Warnings" },
+	ShockRing = { id = 9113031196, volume = 8.49, maxSeconds = 4, group = "Warnings" },
 	-- a rail joint under the wheels: one metal hit, low and short ("Prison Bar Hits 8"), not the UI click
-	RailClack = { id = 9117905219, volume = 0.3, maxSeconds = 0.45, pitch = 0.55 },
+	RailClack = { id = 9117905219, volume = 8.13, maxSeconds = 0.45, pitch = 0.55 },
 
 	-- The sky's omens (Logic/Omens), from the same recordings again
-	SkyToll = { id = 9113804436, volume = 0.55, maxSeconds = 9, pitch = 0.36 }, -- a bell the size of the sky
-	SkyGroan = { id = 9113218938, volume = 0.6, maxSeconds = 6, pitch = 0.3 }, -- the sky groans
-	SkyHeart = { id = 9113570506, volume = 0.75, maxSeconds = 1.5, pitch = 0.28 }, -- the Eye's pulse
+	SkyToll = { id = 9113804436, start = 0.07, volume = 2.43, maxSeconds = 9, pitch = 0.36 }, -- a bell the size of the sky
+	SkyGroan = { id = 9113218938, volume = 1.84, maxSeconds = 6, pitch = 0.3 }, -- the sky groans
+	SkyHeart = { id = 9113570506, volume = 1.82, maxSeconds = 1.5, pitch = 0.28 }, -- the Eye's pulse
 
 	-- weather
-	Rain = { id = 9116496074, volume = 0.34, loop = true, pitch = 0.55, mix = "Outdoor" }, -- the steam hiss slowed into rain
+	Rain = { id = 9116496074, volume = 1.5, loop = true, pitch = 0.55, mix = "Outdoor" }, -- the steam hiss slowed into rain
 	-- the storm outside the Depot Hall's back windows (Controllers/LobbyStorm); ProSoundEffects library
-	LobbyRain = { id = 9112855439, volume = 0.5, loop = true, spatial = true, rollOff = 170, pitch = 0.92 },
+	LobbyRain = { id = 9112855439, volume = 1.34, loop = true, spatial = true, rollOff = 170, pitch = 0.92 },
 	LobbyThunder = {
 		id = 9116282646,
-		volume = 0.8,
+		volume = 1.38,
 		spatial = true,
 		rollOff = 420,
 		maxSeconds = 10,
@@ -242,7 +276,7 @@ local Cues: { [string]: Cue } = {
 	},
 	LobbyThunderFar = {
 		id = 9113218938,
-		volume = 0.7,
+		volume = 1.83,
 		spatial = true,
 		rollOff = 420,
 		maxSeconds = 5,
@@ -250,12 +284,19 @@ local Cues: { [string]: Cue } = {
 	},
 
 	-- the fog: a scream slowed until it is many voices whispering, out where the fog lies
-	FogWhisper = { id = 9125475729, volume = 0.5, loop = true, spatial = true, pitch = 0.36, mix = "Outdoor" },
+	FogWhisper = {
+		id = 9125475729,
+		volume = 1.18,
+		loop = true,
+		spatial = true,
+		pitch = 0.36,
+		mix = "Outdoor",
+	},
 
 	-- the Hollows, layered from the same few recordings at other speeds
 	HollowScream = {
 		id = 9125475729,
-		volume = 1,
+		volume = 5.02,
 		spatial = true,
 		pitch = 1.3,
 		maxSeconds = 2.2,
@@ -263,7 +304,7 @@ local Cues: { [string]: Cue } = {
 	},
 	HollowWake = {
 		id = 9125475729,
-		volume = 0.85,
+		volume = 5.07,
 		spatial = true,
 		pitch = 0.72,
 		maxSeconds = 3,
@@ -271,17 +312,26 @@ local Cues: { [string]: Cue } = {
 	},
 	HollowSwipe = {
 		id = 9125471724,
-		volume = 0.85,
+		volume = 1.14,
 		spatial = true,
 		pitch = 1.35,
 		maxSeconds = 1,
 		mix = "Cues",
 	},
 	-- a heavy blow on wood or ground ("Wood Impact 4", hollow and powerful)
-	HollowSlam = { id = 9120900308, volume = 1, spatial = true, pitch = 0.8, maxSeconds = 2, mix = "Cues" },
+	HollowSlam = {
+		id = 9120900308,
+		start = 0.45,
+		volume = 0.87,
+		spatial = true,
+		pitch = 0.8,
+		maxSeconds = 2,
+		mix = "Cues",
+	},
 	HollowScrabble = {
 		id = 9118582680,
-		volume = 0.55,
+		start = 0.9,
+		volume = 1.97,
 		spatial = true,
 		pitch = 1.7,
 		maxSeconds = 1.2,
@@ -293,7 +343,8 @@ local Cues: { [string]: Cue } = {
 	},
 	HollowStep = {
 		id = 9113218938,
-		volume = 0.35,
+		start = 0.95,
+		volume = 0.84,
 		spatial = true,
 		pitch = 1.6,
 		maxSeconds = 0.5,
@@ -304,14 +355,15 @@ local Cues: { [string]: Cue } = {
 	-- building interactions
 	DoorForce = {
 		id = 9118582680,
-		volume = 0.75,
+		start = 0.9,
+		volume = 1.97,
 		spatial = true,
 		pitch = 1.25,
 		maxSeconds = 1.5,
 		mix = "Cues",
 	},
 	-- out of breath ("Gasp Trouble Breathing 4")
-	Winded = { id = 9114555843, volume = 0.45, maxSeconds = 0.9, mix = "Feedback" },
+	Winded = { id = 9114555843, volume = 3.41, maxSeconds = 0.9, mix = "Feedback" },
 
 	-- Footsteps by surface (Logic/Footsteps, Controllers/FootstepController): Creator Store
 	-- uploads, free, chosen 2026-10-15 for audition (HANDOFF.md lists them with their sources).
@@ -397,7 +449,7 @@ local Cues: { [string]: Cue } = {
 	-- surface's own step takes, both feet; a hard one adds the thud. ProSoundEffects, Creator Store.
 	Jump = { -- "Cloth Flap 19": a coat's heavy whump as you push off
 		id = 9113820125,
-		volume = 0.45,
+		volume = 2.21,
 		spatial = true,
 		rollOff = 45,
 		maxSeconds = 0.45,
@@ -406,7 +458,7 @@ local Cues: { [string]: Cue } = {
 	},
 	LandHard = { -- "Body Fall Master 12": its first impact only
 		id = 9113472109,
-		volume = 0.75,
+		volume = 1.8,
 		spatial = true,
 		rollOff = 70,
 		maxSeconds = 0.4,
@@ -415,7 +467,8 @@ local Cues: { [string]: Cue } = {
 	-- an item put down at a stop (Services/InventoryService.Drop): "Bag Dull Sprinkling Impact 3", the drop
 	ItemDrop = {
 		id = 9113246398,
-		volume = 0.4,
+		start = 0.74,
+		volume = 2.19,
 		spatial = true,
 		rollOff = 50,
 		maxSeconds = 0.5,
@@ -426,16 +479,17 @@ local Cues: { [string]: Cue } = {
 	-- Piece 11"), a relic or a valuable a small high bell ("Bell Rings 10", its first ring)
 	PickupCoal = {
 		id = 9117273725,
-		volume = 0.45,
+		start = 0.58,
+		volume = 3.79,
 		maxSeconds = 0.45,
 		pitch = 1.1,
 		mix = "Feedback",
 		gap = 0.15,
 	},
-	PickupParts = { id = 9116672975, volume = 0.5, maxSeconds = 0.6, mix = "Feedback", gap = 0.15 },
+	PickupParts = { id = 9116672975, volume = 1.63, maxSeconds = 0.6, mix = "Feedback", gap = 0.15 },
 	PickupRelic = {
 		id = 9113421363,
-		volume = 0.3,
+		volume = 4.58,
 		maxSeconds = 0.7,
 		pitch = 1.6,
 		mix = "Feedback",
@@ -445,47 +499,63 @@ local Cues: { [string]: Cue } = {
 	-- into the bin ("Ammo Shell Drop 2", a run of metal clinks); either joins the Deposit chime
 	DepositCoal = {
 		id = 9117273725,
-		volume = 0.6,
+		start = 0.58,
+		volume = 3.83,
 		maxSeconds = 1.4,
 		pitch = 0.78,
 		mix = "Feedback",
 		gap = 0.3,
 	},
-	DepositParts = { id = 9113106424, volume = 0.5, maxSeconds = 1.1, mix = "Feedback", gap = 0.3 },
+	DepositParts = {
+		id = 9113106424,
+		start = 0.4,
+		volume = 1.29,
+		maxSeconds = 1.1,
+		mix = "Feedback",
+		gap = 0.3,
+	},
 	-- a use the server turned down (full health, nothing to do): one dull knock ("Window Knocks 5")
-	Deny = { id = 9120758253, volume = 0.35, maxSeconds = 0.3, pitch = 0.75, mix = "Feedback", gap = 0.25 },
+	Deny = { id = 9120758253, volume = 10, maxSeconds = 0.3, pitch = 0.75, mix = "Feedback", gap = 0.25 },
 	-- an interact prompt coming into reach (UI/Prompts): a small metal tick ("Toggle Switch Metal 81")
 	PromptShow = {
 		id = 9120099510,
-		volume = 0.14,
+		volume = 10,
 		maxSeconds = 0.25,
 		pitch = 1.2,
 		mix = "Feedback",
 		gap = 0.25,
 	},
 	-- a window opening and closing (UI/Modal): card handled ("Paper Movement Cu Handling 14")
-	ModalOpen = { id = 9125722939, volume = 0.3, maxSeconds = 0.35, mix = "Feedback", gap = 0.2 },
+	ModalOpen = {
+		id = 9125722939,
+		start = 0.44,
+		volume = 3.08,
+		maxSeconds = 0.35,
+		mix = "Feedback",
+		gap = 0.2,
+	},
 	-- the tool in hand (UI/Hud): leather and a light metal clink ("Briefcase Handling 11")
-	ItemEquip = { id = 9113590176, volume = 0.35, maxSeconds = 0.35, mix = "Feedback", gap = 0.1 },
-	ItemStow = { id = 9113590176, volume = 0.26, maxSeconds = 0.3, pitch = 0.82, mix = "Feedback", gap = 0.1 },
+	ItemEquip = { id = 9113590176, volume = 7, maxSeconds = 0.35, mix = "Feedback", gap = 0.1 },
+	ItemStow = { id = 9113590176, volume = 7.04, maxSeconds = 0.3, pitch = 0.82, mix = "Feedback", gap = 0.1 },
 	-- the lantern raised to ping: its brass and glass rattle ("Metal Lid Small Incense Burner 4")
 	LanternRattle = {
 		id = 9116739536,
-		volume = 0.3,
+		volume = 4.55,
 		spatial = true,
 		rollOff = 60,
 		maxSeconds = 0.6,
 		mix = "Feedback",
 	},
 	-- the crew pass counting up XP (UI/Lobby): a brass tick a share, and a bell on a new rank ("Bell Rings 6")
-	XpTick = { id = 9117028601, volume = 0.22, maxSeconds = 0.2, pitch = 1.4, mix = "Feedback" },
-	RankUp = { id = 9113421863, volume = 0.4, maxSeconds = 2.5, mix = "Feedback", gap = 1 },
+	XpTick = { id = 9117028601, volume = 2.54, maxSeconds = 0.2, pitch = 1.4, mix = "Feedback" },
+	RankUp = { id = 9113421863, volume = 5.22, maxSeconds = 2.5, mix = "Feedback", gap = 1 },
 	-- Life aboard and at the stops (AudioController, timing in Config/Foley). Aboard: the car's boards
 	-- ("Floor Creaks Short Med Wood Creaks 24", "Floor Creaks 2") and the saloon's cups ("Tea Cup Detach 6");
 	-- out at a stop: a sign's chain ("Swing Set Swing 11") and a crow ("Raven 5", "Raven 13")
 	CarCreak1 = {
 		id = 9114496277,
-		volume = 0.35,
+		start = 0.33,
+		volume = 3.95,
 		spatial = true,
 		rollOff = 40,
 		maxSeconds = 1.6,
@@ -493,7 +563,7 @@ local Cues: { [string]: Cue } = {
 	},
 	CarCreak2 = {
 		id = 9114493393,
-		volume = 0.35,
+		volume = 10,
 		spatial = true,
 		rollOff = 40,
 		maxSeconds = 1.4,
@@ -501,7 +571,8 @@ local Cues: { [string]: Cue } = {
 	},
 	CupRattle = {
 		id = 9119922594,
-		volume = 0.18,
+		start = 0.13,
+		volume = 1.01,
 		spatial = true,
 		rollOff = 30,
 		maxSeconds = 1.2,
@@ -510,7 +581,8 @@ local Cues: { [string]: Cue } = {
 	},
 	ChainCreak = {
 		id = 9119688363,
-		volume = 0.3,
+		start = 0.2,
+		volume = 2.06,
 		spatial = true,
 		rollOff = 90,
 		maxSeconds = 1.3,
@@ -519,7 +591,8 @@ local Cues: { [string]: Cue } = {
 	},
 	CrowCall = {
 		id = 9118066003,
-		volume = 0.5,
+		start = 0.07,
+		volume = 0.68,
 		spatial = true,
 		rollOff = 120,
 		maxSeconds = 1,
@@ -527,7 +600,7 @@ local Cues: { [string]: Cue } = {
 	},
 	CrowCall2 = {
 		id = 9118067220,
-		volume = 0.5,
+		volume = 0.67,
 		spatial = true,
 		rollOff = 120,
 		maxSeconds = 1,
@@ -537,20 +610,21 @@ local Cues: { [string]: Cue } = {
 	-- quickened into the lantern's flame, which gutters louder as a Hollow comes near (a tell)
 	FireboxRoar = {
 		id = 9112780743,
-		volume = 0.5,
+		volume = 1.48,
 		loop = true,
 		spatial = true,
 		rollOff = 35,
 		pitch = 0.5,
 		mix = "Ambience",
 	},
-	LanternFlame = { id = 9112780743, volume = 0.3, loop = true, pitch = 1.6, mix = "Feedback" },
+	LanternFlame = { id = 9112780743, volume = 2.41, loop = true, pitch = 1.6, mix = "Feedback" },
 	-- a stalking Hollow's breath (HollowAnimator; pitch by kind in Config/Foley): deep, throaty
 	-- ("Creature Growls Lion 2")
-	HollowBreath = { id = 9113971433, volume = 0.55, loop = true, mix = "Cues" },
+	HollowBreath = { id = 9113971433, volume = 1.31, loop = true, mix = "Cues" },
 	ModalClose = {
 		id = 9125722939,
-		volume = 0.22,
+		start = 0.44,
+		volume = 5.73,
 		maxSeconds = 0.25,
 		pitch = 0.82,
 		mix = "Feedback",

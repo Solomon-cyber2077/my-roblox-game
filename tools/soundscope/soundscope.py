@@ -89,6 +89,8 @@ def db(x: float, floor: float = -150.0) -> float:
 
 
 def note_of(hz: float) -> str:
+    if not hz or hz <= 0:  # no pitch found (noise, a click): there is no note to name
+        return "-"
     n = round(12 * math.log2(hz / 440.0)) + 57
     return f"{NOTE_NAMES[n % 12]}{n // 12}"
 
