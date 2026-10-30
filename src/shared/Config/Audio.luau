@@ -250,8 +250,10 @@ local Cues: { [string]: Cue } = {
 		rollOff = 150,
 		mix = "Cues",
 	},
-	-- the panting after it: the Breath recording, once, cut short with a fade
-	TornBreath = { id = 100147087354736, volume = 0.6, maxSeconds = 2.4, pitch = 1.08, mix = "Feedback" },
+	-- the panting after it: the Breath recording, once, cut short with a fade. Measured in Studio
+	-- (2026-10-30): at 0.6 it peaked about 30x under the cry and below the rain bed, then the shock's
+	-- muffle dulled it further; 2.4 (+12 dB) puts it level with the bed as the muffle lets go.
+	TornBreath = { id = 100147087354736, volume = 2.4, maxSeconds = 2.4, pitch = 1.08, mix = "Feedback" },
 	-- Accelerating Tone Piercing High Pitch Ring 1: its rising first seconds, shaped by the shock
 	ShockRing = { id = 9113031196, volume = 8.49, maxSeconds = 4, group = "Warnings" },
 	-- a rail joint under the wheels: one metal hit, low and short ("Prison Bar Hits 8"), not the UI click
