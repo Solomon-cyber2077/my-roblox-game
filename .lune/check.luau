@@ -4,8 +4,9 @@
 	  lune run check
 
 	Steps, in order: formatting (StyLua), lint (selene), a fresh Rojo sourcemap,
-	strict type checking (luau-lsp), the unit tests and the visual audit (every
-	model the game builds, checked for z-fighting, clashes and budgets). The first
+	strict type checking (luau-lsp), the unit tests, the touch layout (lune run layout)
+	and the visual audit (every model the game builds, checked for z-fighting, clashes
+	and budgets). The first
 	failure stops the run with that tool's exit code. The Roblox type definitions
 	luau-lsp needs are downloaded into .tooling/ the first time.
 ]]
@@ -36,6 +37,8 @@ local STEPS: { Step } = {
 		args = { "analyze", "--sourcemap=sourcemap.json", `--definitions=@roblox={DEFINITIONS}`, "src" },
 	},
 	{ name = "tests", program = "lune", args = { "run", "test" } },
+	-- every touch target on the phones and tablets meets the thumb minimum and none overlap (lib/TouchLayout)
+	{ name = "touch layout", program = "lune", args = { "run", "layout" } },
 	{ name = "audit", program = "lune", args = { "run", "audit" } },
 }
 
