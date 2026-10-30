@@ -45,6 +45,10 @@ end
 function TouchButtons.apply()
 	local cluster = TouchButtons.layout()
 	for key, action in CAS do
+		-- not bound yet (the HUD places the watch before PING is bound): asking for its button would warn
+		if next(ContextActionService:GetBoundActionInfo(action)) == nil then
+			continue
+		end
 		local button = ContextActionService:GetButton(action)
 		local parent = button and button.Parent
 		if button and parent and parent:IsA("GuiObject") and parent.AbsoluteSize.X > 0 then
