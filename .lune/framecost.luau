@@ -11,8 +11,12 @@
 
 	Without probes it prints each scene's load and the phones' GPU ratios only (nothing is guessed).
 
+	The free 3DMark Demo has no Wild Life Extreme, so `--snl=<score>` takes the machine's Steel Nomad Light score
+	instead and converts it (WLE_PER_SNL, from phones UL lists with both scores).
+
 	Run with:  lune run framecost
 	           lune run framecost --probes=playtest/probes --ref=6000
+	           lune run framecost --probes=playtest/probes --snl=2400
 ]]
 
 local fs = require("@lune/fs")
@@ -46,6 +50,11 @@ local PHONES = {
 	{ id = "iPad10", label = "iPad 10th gen (A14)", wle = nil, source = "no score found" },
 }
 local BUDGET_MS = 1000 / 30 -- a playable floor
+-- Wild Life Extreme per Steel Nomad Light point, benchmarks.ul.com: Galaxy A15 5G 337/132 = 2.55, iPhone 15 Pro
+-- 3586/1397 = 2.57, iPhone 16 3841/1596 = 2.41 (mean 2.51)
+local WLE_PER_SNL = 2.51
+-- This HP (Intel Arc 140V): Steel Nomad Light 1571 on 2026-10-29 with Studio and other work running (UL's median
+-- for the same hardware is 2675); rerun on an idle machine before trusting phone estimates from it.
 
 -- 1. scene loads from the audit
 local audit = process.exec("lune", { "run", "audit" })
@@ -174,6 +183,7 @@ elseif #probes > 0 then
 	say(`Only {#probes} probe(s): the fit needs {#FEATURES + 1} scenes or more.`)
 end
 local ref = tonumber(args.ref)
+	or (if tonumber(args.snl) then tonumber(args.snl) :: number * WLE_PER_SNL else nil)
 
 -- 3. the table
 say("")
@@ -234,7 +244,10 @@ if not scaled then
 	say(
 		"No phone frame times yet: pass `--probes=<dir>` (5+ scenes measured with tools/studio/perf-probe.luau)"
 	)
-	say("and `--ref=<score>`, the measuring machine's 3DMark Wild Life Extreme score.")
+	say(
+		"and `--ref=<score>` (the measuring machine's 3DMark Wild Life Extreme score) or `--snl=<score>` (its Steel"
+	)
+	say("Nomad Light score, from the free 3DMark Demo).")
 elseif #slow > 0 then
 	say("")
 	say("Under 30 fps (GPU-bound estimate; CPU-bound work makes it slower, not faster):")
