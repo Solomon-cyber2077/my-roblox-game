@@ -239,13 +239,42 @@ for _, d in L.Devices do
 			)
 		)
 		local predicted = { jump = jump, run = run, look = look, ping = ping, action = action }
+		-- Studio's Device Emulator frames the screen its own way: a notched phone's viewport loses both side
+		-- insets, nothing is lifted off the home bar, and Android keeps a system bar out of the viewport. The
+		-- controls hang off the bottom-right corner, so the whole cluster then sits shifted by exactly the
+		-- viewport's difference plus those insets. Such a shift is the emulator, not the layout; any other shift,
+		-- or a button moved within the cluster, fails.
+		local shiftX, shiftY = 0, 0
+		if dump.jump then
+			local jx = dump.jump[1] + dump.inset[1] - jump.x
+			local jy = dump.jump[2] + dump.inset[2] - jump.y
+			local sides = d.safe.left + d.safe.right
+			local lostSides = sides > 0 and dump.viewport[1] <= d.w - sides + 2
+			local jumpX = dump.viewport[1] - d.w + (if lostSides then d.safe.right else 0)
+			local wantY = dump.viewport[2] - d.h + d.safe.bottom
+			if
+				(math.abs(jx) > 2 or math.abs(jy) > 2)
+				and math.abs(jx - jumpX) <= 3
+				and math.abs(jy - wantY) <= 3
+			then
+				shiftX, shiftY = jx, jy
+				table.insert(
+					notes,
+					string.format(
+						"whole cluster shifted %+.0f, %+.0f: how Studio's emulator frames this screen (compared after removing it)",
+						jx,
+						jy
+					)
+				)
+			end
+		end
 		for _, key in { "jump", "run", "look", "ping", "action" } do
 			local live = dump[key]
 			local p = predicted[key]
 			if live then
 				-- AbsolutePosition space starts below the top inset
-				local dx = live[1] + dump.inset[1] - p.x
-				local dy = live[2] + dump.inset[2] - p.y
+				local dx = live[1] + dump.inset[1] - shiftX - p.x
+				local dy = live[2] + dump.inset[2] - shiftY - p.y
 				local off =
 					math.max(math.abs(dx), math.abs(dy), math.abs(live[3] - p.w), math.abs(live[4] - p.h))
 				if off > 2 then
