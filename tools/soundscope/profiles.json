@@ -1,0 +1,160 @@
+{
+ "spotify": {
+  "name": "Spotify music", "kind": "standard",
+  "source": "Spotify loudness normalization: plays at -14 LUFS, asks for true peak at or below -1 dBTP",
+  "targets": {
+   "integrated_lufs": {"min": -16, "ideal": -14, "max": -12, "why": "anything louder is turned down to -14"},
+   "true_peak_dbtp": {"max": -1, "why": "headroom for lossy encoding"},
+   "plr_db": {"min": 8, "why": "very low PLR means over-limited"}
+  }
+ },
+ "apple-music": {
+  "name": "Apple Music", "kind": "standard",
+  "source": "Apple Sound Check: about -16 LUFS, true peak at or below -1 dBTP",
+  "targets": {
+   "integrated_lufs": {"min": -18, "ideal": -16, "max": -14},
+   "true_peak_dbtp": {"max": -1}
+  }
+ },
+ "youtube": {
+  "name": "YouTube", "kind": "standard",
+  "source": "YouTube normalizes to about -14 LUFS",
+  "targets": {
+   "integrated_lufs": {"min": -16, "ideal": -14, "max": -13},
+   "true_peak_dbtp": {"max": -1}
+  }
+ },
+ "podcast": {
+  "name": "Podcast / spoken word", "kind": "standard",
+  "source": "Apple Podcasts guidance: -16 LUFS +/-1, true peak at or below -1 dBTP",
+  "targets": {
+   "integrated_lufs": {"min": -17, "ideal": -16, "max": -15},
+   "true_peak_dbtp": {"max": -1},
+   "noise_floor_dbfs": {"max": -60, "why": "room noise between words"},
+   "lra_lu": {"max": 8, "why": "voices should stay even"}
+  }
+ },
+ "ebu-r128": {
+  "name": "EBU R128 broadcast", "kind": "standard",
+  "source": "EBU R128: -23 LUFS +/-0.5 (file delivery), true peak at or below -1 dBTP",
+  "targets": {
+   "integrated_lufs": {"min": -23.5, "ideal": -23, "max": -22.5},
+   "true_peak_dbtp": {"max": -1},
+   "lra_lu": {"max": 20}
+  }
+ },
+ "atsc-a85": {
+  "name": "US TV (ATSC A/85)", "kind": "standard",
+  "source": "ATSC A/85: -24 LKFS +/-2, true peak at or below -2 dBTP",
+  "targets": {
+   "integrated_lufs": {"min": -26, "ideal": -24, "max": -22},
+   "true_peak_dbtp": {"max": -2}
+  }
+ },
+ "film-streaming": {
+  "name": "Film / series stream mix", "kind": "standard",
+  "source": "Netflix-style spec: -27 LKFS +/-2 dialogue-gated, true peak at or below -2 dBTP",
+  "notes": "the spec gates on dialogue; this tool measures the full mix, so treat loudness as approximate",
+  "targets": {
+   "integrated_lufs": {"min": -29, "ideal": -27, "max": -25},
+   "true_peak_dbtp": {"max": -2},
+   "lra_lu": {"min": 8, "max": 22, "why": "films keep wide dynamics"}
+  }
+ },
+ "game-console": {
+  "name": "Game mix, console / PC", "kind": "standard",
+  "source": "Sony ASWG-R001 loudness: home console -24 LUFS +/-2, true peak at or below -1 dBTP",
+  "targets": {
+   "integrated_lufs": {"min": -26, "ideal": -24, "max": -22},
+   "true_peak_dbtp": {"max": -1}
+  }
+ },
+ "game-mobile": {
+  "name": "Game mix, mobile", "kind": "standard",
+  "source": "Sony ASWG-R001 loudness: portable -18 LUFS +/-2, true peak at or below -1 dBTP",
+  "targets": {
+   "integrated_lufs": {"min": -20, "ideal": -18, "max": -16},
+   "true_peak_dbtp": {"max": -1}
+  }
+ },
+ "roblox-music": {
+  "name": "Roblox background music", "kind": "house",
+  "source": "house target (not an official Roblox spec): sits under SFX and voice, mixes for phones",
+  "targets": {
+   "integrated_lufs": {"min": -21, "ideal": -18, "max": -16, "why": "leave room for SFX on top"},
+   "true_peak_dbtp": {"max": -1},
+   "lra_lu": {"max": 10, "why": "phone speakers lose quiet passages"},
+   "band_sub_pct": {"max": 15, "why": "phone speakers cannot play sub; it eats headroom"},
+   "loop_seam_db": {"max": 2, "why": "loops should not jump in level"},
+   "sample_rate": {"min": 44100, "max": 48000}
+  }
+ },
+ "roblox-ambience": {
+  "name": "Roblox horror ambience loop", "kind": "house",
+  "source": "house target for Last Train Out: dark, quiet, seamless beds under everything",
+  "targets": {
+   "integrated_lufs": {"min": -34, "ideal": -28, "max": -24},
+   "true_peak_dbtp": {"max": -3},
+   "centroid_hz": {"min": 150, "max": 1800, "why": "dark and low reads as dread"},
+   "lra_lu": {"min": 3, "max": 15, "why": "slow swells, no sudden jumps"},
+   "loop_seam_db": {"max": 1.5},
+   "trailing_silence_ms": {"max": 20, "why": "gaps break the loop"},
+   "leading_silence_ms": {"max": 20},
+   "duration_s": {"min": 10, "why": "short loops are easy to notice"}
+  }
+ },
+ "roblox-ui": {
+  "name": "Roblox UI click / blip", "kind": "house",
+  "source": "house target: short, instant, clear on phone speakers",
+  "targets": {
+   "duration_s": {"min": 0.03, "max": 0.4},
+   "leading_silence_ms": {"max": 5, "why": "any delay feels laggy"},
+   "attack_ms": {"max": 8},
+   "momentary_max_lufs": {"min": -22, "ideal": -16, "max": -12},
+   "true_peak_dbtp": {"max": -1},
+   "centroid_hz": {"min": 1200, "max": 6000, "why": "phone speakers live in the mids and highs"},
+   "band_sub_pct": {"max": 5},
+   "channels": {"max": 1, "why": "UI sounds are centred; mono halves the size"}
+  }
+ },
+ "roblox-impact": {
+  "name": "Roblox hit / impact", "kind": "house",
+  "source": "house target: punchy transient, weight, short tail",
+  "targets": {
+   "leading_silence_ms": {"max": 10},
+   "attack_ms": {"max": 12},
+   "momentary_max_lufs": {"min": -18, "ideal": -12, "max": -8},
+   "true_peak_dbtp": {"max": -0.5},
+   "crest_db": {"min": 10, "why": "the transient must stand out"},
+   "tail_ms": {"min": 120, "max": 1500},
+   "band_bass_pct": {"min": 15, "why": "weight"},
+   "channels": {"max": 1, "why": "3D sounds are spatialized from mono"}
+  }
+ },
+ "roblox-footstep": {
+  "name": "Roblox footstep", "kind": "house",
+  "source": "house target: quick, soft, repeatable without fatigue",
+  "targets": {
+   "duration_s": {"min": 0.08, "max": 0.6},
+   "leading_silence_ms": {"max": 8},
+   "attack_ms": {"max": 10},
+   "momentary_max_lufs": {"min": -26, "ideal": -20, "max": -15},
+   "true_peak_dbtp": {"max": -2},
+   "centroid_hz": {"min": 300, "max": 3500},
+   "channels": {"max": 1}
+  }
+ },
+ "voice-dialogue": {
+  "name": "Voice line / dialogue", "kind": "house",
+  "source": "common dialogue practice: clean floor, intelligible presence, controlled peaks",
+  "targets": {
+   "short_term_max_lufs": {"min": -22, "ideal": -18, "max": -14},
+   "true_peak_dbtp": {"max": -1},
+   "noise_floor_dbfs": {"max": -55},
+   "centroid_hz": {"min": 600, "max": 3200},
+   "band_sub_pct": {"max": 4, "why": "rumble, not voice"},
+   "band_highmid_pct": {"min": 3, "why": "consonant clarity"},
+   "clipped_runs": {"max": 0}
+  }
+ }
+}
