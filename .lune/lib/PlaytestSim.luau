@@ -366,9 +366,16 @@ local function playStop(mods, session, crew, train, stopInfo)
 			p.inv = mods.Inventory.new(mods.Tuning.Crew.BackpackSlots)
 			p.threatened = false
 			p.headHome = false
-			-- how many seconds late they read the departure clock (missed the watch, the slate)
+			-- how many seconds late they read the departure clock: the watch and the slates are seen or not;
+			-- with the sound on, the T-30 bell and the T-10 whistle catch most who missed them (SIM-CALIBRATION 5)
 			local readChance = p.persona.readsUi * (1 - p.device.hudMiss)
-			p.lateBy = if rng:chance(readChance) then 0 else rng:range(4, 22)
+			if rng:chance(readChance) then
+				p.lateBy = 0
+			elseif p.soundOn and rng:chance(0.85) then
+				p.lateBy = rng:range(0, 4)
+			else
+				p.lateBy = rng:range(4, 22)
+			end
 			table.insert(active, p)
 		end
 	end
@@ -797,6 +804,7 @@ function Sim.run(mods, cfg)
 		if cfg.device then
 			p.device = assert(Personas.Devices[cfg.device], "unknown device " .. cfg.device)
 		end
+		p.soundOn = not p.rng:chance(p.device.soundOff or 0)
 		table.insert(crew, p)
 		anyNew = anyNew or cfg.first == true or mods.Routes.isNew(persona.runs)
 	end
@@ -821,6 +829,17 @@ function Sim.run(mods, cfg)
 	local prev = nil
 	local outcome, cause = "Wipe", "Everyone was lost"
 	local stopsReached = 0
+
+	-- the first two minutes: on a first session some players leave before the first stop (GameAnalytics 2025:
+	-- casual Roblox players leave in under 2 minutes); the impatient and the unthrilled most (SIM-CALIBRATION 6)
+	for _, p in crew do
+		local first = cfg.first == true or p.persona.runs == 0
+		if first and p.rng:chance(0.18 * (1 - p.persona.patience) * (1 - 0.5 * p.persona.thrill)) then
+			p.status = "Quit"
+			p.quitStop, p.quitReason = 0, "left in the first two minutes"
+			event(session, 0, p, "quit", p.quitReason)
+		end
+	end
 
 	for leg = 1, stopCount + 1 do
 		local alive = 0
@@ -969,7 +988,11 @@ function Sim.run(mods, cfg)
 			quitStop = p.quitStop,
 			quitReason = p.quitReason,
 			rating = rating,
-			wouldReplay = rating >= 6,
+			-- AGAIN now and back tomorrow, as chances that rise with the rating (SIM-CALIBRATION 6: real day-1
+			-- returns sit ~12-24%, so a yes/no at rating 6 was ~4x too rosy)
+			wouldReplay = p.rng:chance(math.clamp(0.08 + 0.09 * (rating - 5), 0.02, 0.6)),
+			returnsTomorrow = p.rng:chance(math.clamp(0.04 + 0.045 * (rating - 5), 0.01, 0.35)),
+			soundOn = p.soundOn,
 			fun = math.floor(p.fun * 100) / 100,
 			frustration = math.floor(p.frustration * 100) / 100,
 			boredom = math.floor(p.boredom * 100) / 100,

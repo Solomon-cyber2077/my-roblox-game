@@ -67,3 +67,12 @@ disagree or are old, use as a range.
   group it detects gaps of ~10 points or more; more players narrow it.
 - **Fed back:** PlaytestSim's world-chip size now uses our UI scale per device (layout check) and the button its
   real 60 units: old chips miss 27.5 per 100 searches on a LowPhone vs 3.2 with the button.
+
+## 9. Applied (2026-10-30)
+- Section 5: `Device.soundOff` per device (PC 10%, laptop 20%, phones 45-50%, tablet 35%); a player who misses the
+  watch and the slates but has the sound on is caught by the T-30 bell / T-10 whistle 85% of the time.
+- Section 6: AGAIN and day-1 return are chances that rise with the rating (`wouldReplay`, `returnsTomorrow`); a mixed
+  300-session run gives back tomorrow 17.7% (real band 12-24%). First sessions lose ~4% in the first two minutes.
+- Section 4: Dev's reaction 0.22 -> 0.30 s (no choice reaction under ~0.30 s).
+- Section 7: the PC-vs-touch inversion is gone with the frame-time input lag (skill-check miss: PC 43.8%, LowPhone
+  44.2%, same crews); the report shows the device a persona was played on and no longer says to replace the sim.

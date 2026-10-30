@@ -141,6 +141,7 @@ local function summarise(sessions: { any })
 			S.players += 1
 			S.rating += c.rating
 			S.replay += if c.wouldReplay then 1 else 0
+			S.tomorrow = (S.tomorrow or 0) + (if c.returnsTomorrow then 1 else 0)
 			local lost = c.status == "Dead" or c.status == "LeftBehind"
 			if c.status == "Dead" then
 				S.deaths += 1
@@ -158,6 +159,9 @@ local function summarise(sessions: { any })
 				g.players += 1
 				g.rating += c.rating
 				g.replay += if c.wouldReplay then 1 else 0
+				-- the device each was played on (a forced --device overrides the persona's own)
+				g.devices = g.devices or {}
+				g.devices[c.device] = (g.devices[c.device] or 0) + 1
 				g.quits += if c.quitReason then 1 else 0
 				g.deaths += if lost then 1 else 0
 				g.Great += c.stats.Great
@@ -204,7 +208,8 @@ local function headline(S)
 		{ "Breakdown rate %", pct(S.breakdowns, S.sessions) },
 		{ "Avg stops reached", S.stops / math.max(S.sessions, 1) },
 		{ "Avg rating (1-10)", S.rating / math.max(S.players, 1) },
-		{ "Would replay %", pct(S.replay, S.players) },
+		{ "Would replay (AGAIN) %", pct(S.replay, S.players) },
+		{ "Back tomorrow %", pct(S.tomorrow or 0, S.players) },
 		{ "Quit mid-run %", pct(S.quits, S.players) },
 		{ "Died %", pct(S.deaths, S.players) },
 		{ "Left behind %", pct(S.left, S.players) },
@@ -357,13 +362,23 @@ w("## Personas")
 w("")
 w("| Persona | Device | Players | Rating | Replay % | Quit % | Lost % | Miss % | Outran % | Top problem |")
 w("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |")
+-- the device a persona was mostly played on in these sessions
+local function playedOn(g, default: string): string
+	local best, n = default, 0
+	for id, count in g.devices or {} do
+		if count > n and Personas.Devices[id] then
+			best, n = id, count
+		end
+	end
+	return best
+end
 for _, p in Personas.List do
 	local g = S.byPersona[p.id]
 	if g then
 		local n = math.max(g.Great + g.Good + g.Miss, 1)
 		local why = top(g.quitReasons, 1)[1] or top(g.causes, 1)[1]
 		w(
-			`| {p.name}, {p.age} | {Personas.Devices[p.device].label} | {g.players} | {f1(
+			`| {p.name}, {p.age} | {Personas.Devices[playedOn(g, p.device)].label} | {g.players} | {f1(
 				g.rating / g.players
 			)} | {f1(pct(g.replay, g.players))} | {f1(pct(g.quits, g.players))} | {f1(
 				pct(g.deaths, g.players)
@@ -409,7 +424,7 @@ if not any then
 end
 w("")
 w(
-	"_Simulated players, not people: use this to catch regressions and balance problems between human playtests, not to replace the last one before release._"
+	"_Simulated players calibrated to published research (docs/SIM-CALIBRATION.md); `lune run sim-fit` fits them to live telemetry once real players exist._"
 )
 
 if not fs.isDir(outDir) then
