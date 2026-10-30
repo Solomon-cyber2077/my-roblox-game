@@ -6,6 +6,8 @@
 	           lune run playtest --sessions=500 --seed=1000 --out=playtest/out/hp.json
 	           lune run playtest --crew=mia,dev           (that crew every session)
 	           lune run playtest --build=baseline         (label stored in every session)
+	           lune run playtest --device=LowPhone --first=1   (first session on a low-end phone)
+	           lune run playtest --route=Long --chip=1     (force the Long Line; old touch prompts)
 
 ]]
 
@@ -41,6 +43,7 @@ local mods = {
 	StationReach = load(Shared.Logic.StationReach),
 	Vote = load(Shared.Logic.Vote),
 	Rng = load(Shared.Util.Rng),
+	CashOut = load(Shared.Logic.CashOut),
 }
 
 local args: { [string]: string } = {}
@@ -56,6 +59,10 @@ local firstSeed = tonumber(args.seed) or 1
 local out = args.out or "playtest/out/local.json"
 local build = args.build or "current"
 local fixedCrew = if args.crew then string.split(args.crew, ",") else nil
+local device = args.device -- every player on this device (Personas.Devices), e.g. LowPhone
+local first = args.first == "1" -- a first session: the new-hand route and onboarding rules
+local route = args.route -- Short | Long, overriding the vote
+local actionButton = args.chip ~= "1" -- --chip=1 replays the old tap-the-world-chip touch prompts
 
 -- crew size weights: solo 20%, duo 35%, trio 25%, full 20%
 local SIZES = { 0.2, 0.35, 0.25, 0.2 }
@@ -86,7 +93,15 @@ local results = {}
 local started = os.clock()
 for i = 0, sessions - 1 do
 	local seed = firstSeed + i
-	local ok, session = pcall(Sim.run, mods, { seed = seed, crew = crewFor(seed), build = build })
+	local ok, session = pcall(Sim.run, mods, {
+		seed = seed,
+		crew = crewFor(seed),
+		build = build,
+		device = device,
+		first = first,
+		route = route,
+		actionButton = actionButton,
+	})
 	if ok then
 		table.insert(results, session)
 	else

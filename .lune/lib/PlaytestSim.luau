@@ -23,6 +23,9 @@ local SLEEPER_RATE = 0.02 -- extra a second per sleeper while searching its buil
 local SPOT_HEAD_START = 14 -- studs between player and Hollow when the player sees it first
 local LATE_HEAD_START = 4
 local GRAB_REACH = 1.5
+-- touch prompts: a missed tap costs a retry; the fixed action button keeps this share of the misses
+local ACTION_BUTTON_SHARE = 0.35
+local PROMPT_RETRY = 1.2 -- seconds lost to a missed tap
 
 local function clamp(x, lo, hi)
 	return math.max(lo, math.min(hi, x))
@@ -43,7 +46,7 @@ local function newPlayer(persona, rng)
 		device = device,
 		rng = rng,
 		hp = 100,
-		status = "Playing", -- Playing | Dead | LeftBehind | Quit
+		status = "Playing", -- Playing | Dead | LeftBehind | Quit | CashedOut
 		fun = 0,
 		frustration = 0,
 		boredom = 0,
@@ -62,6 +65,7 @@ local function newPlayer(persona, rng)
 			closeCalls = 0,
 			pries = 0,
 			fogSeconds = 0,
+			promptMisses = 0,
 		},
 		grabsSeen = 0,
 	}
@@ -391,6 +395,15 @@ local function playStop(mods, session, crew, train, stopInfo)
 					local startZ = p.z
 					if math.abs(s.dist - p.d) <= step then
 						p.d, p.z, p.state, p.searchLeft = s.dist, s.z, "Search", s.hold
+						local miss = p.device.promptMiss
+						if miss and p.device.tap then
+							local share = if session.actionButton then ACTION_BUTTON_SHARE else 1
+							if p.rng:chance(miss * share * (1.3 - p.persona.skill)) then
+								p.searchLeft += PROMPT_RETRY
+								p.stats.promptMisses += 1
+								feel(p, "confusion", 0.02)
+							end
+						end
 					else
 						p.d += if s.dist > p.d then step else -step
 						p.z = startZ
@@ -752,10 +765,13 @@ function Sim.run(mods, cfg)
 	for i, id in cfg.crew do
 		local persona = Personas.byId[id]
 		local p = newPlayer(persona, rng:fork("player", i))
+		if cfg.device then
+			p.device = assert(Personas.Devices[cfg.device], "unknown device " .. cfg.device)
+		end
 		table.insert(crew, p)
-		anyNew = anyNew or mods.Routes.isNew(persona.runs)
+		anyNew = anyNew or cfg.first == true or mods.Routes.isNew(persona.runs)
 	end
-	local route = mods.Routes.decide(anyNew, nil, 0, 1)
+	local route = cfg.route or mods.Routes.decide(anyNew, nil, 0, 1)
 	local stopCount = mods.Routes.length(route)
 	local session = {
 		seed = cfg.seed,
@@ -767,6 +783,7 @@ function Sim.run(mods, cfg)
 		trips = {},
 		events = {},
 		tally = mods.Economy.emptyTally(),
+		actionButton = cfg.actionButton ~= false,
 	}
 	local train = mods.Ledger.newTrain()
 	local runSeed = cfg.seed
@@ -831,6 +848,41 @@ function Sim.run(mods, cfg)
 		stopsReached = leg
 		prev = option.archetype
 
+		-- the stop-five cash-out (Logic/CashOut): each living crew member aboard chooses at the junction;
+		-- a missed card means ride on
+		if mods.CashOut and mods.CashOut.offered(stopCount, leg) then
+			local left = 0
+			for _, p in crew do
+				if p.status == "Playing" then
+					local persona = p.persona
+					local sawIt = not p.rng:chance(p.device.hudMiss * (1 - persona.readsUi))
+					local want = clamp(
+						0.12
+							+ persona.caution * 0.35
+							+ p.frustration * 0.5
+							- persona.thrill * 0.25
+							- persona.greed * 0.15,
+						0.02,
+						0.9
+					)
+					if not sawIt then
+						p.stats.missedCashOut = true
+						event(session, leg, p, "confused", "missed the cash-out card at the junction")
+					elseif p.rng:chance(want) then
+						p.status = "CashedOut"
+						event(session, leg, p, "cashout", "cashed out at the junction")
+					end
+					if p.status == "Playing" then
+						left += 1
+					end
+				end
+			end
+			if left == 0 then
+				outcome, cause = "CashedOut", "Everyone cashed out at stop " .. leg
+				break
+			end
+		end
+
 		-- after the stop: dead crew spectate (boredom), and anyone may quit
 		for _, p in crew do
 			local persona = p.persona
@@ -879,6 +931,7 @@ function Sim.run(mods, cfg)
 			name = persona.name,
 			device = p.device.id,
 			platform = p.device.platform,
+			frameMs = math.floor(1000 / p.device.fps * 10 + 0.5) / 10,
 			status = p.status,
 			cause = p.cause,
 			deathStop = p.deathStop,
