@@ -118,8 +118,13 @@ Theme.Image = table.freeze({
 	-- 512 x 176, drawn at 168 x 58); empty until uploaded, the enamel Primary button stands in
 	-- the hunted cue: a Hollow's eyes glinting in the dark (tools/uiart/render_hunted_eyes.py, 256 px, baked
 	-- colour, transparent); empty until uploaded, two small pale lights stand in
-	huntedEyes = "",
-	actionPlate = table.freeze({ up = "", down = "", slice = Rect.new(60, 60, 452, 116), scale = 0.33 }),
+	huntedEyes = "rbxassetid://93696436305565",
+	actionPlate = table.freeze({
+		up = "rbxassetid://76294304130590",
+		down = "rbxassetid://114475537613963",
+		slice = Rect.new(60, 60, 452, 116),
+		scale = 0.33,
+	}),
 })
 
 -- Each resident speaks through their own window (keyed by Config/Npcs id); none means no picture.
