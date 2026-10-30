@@ -96,6 +96,20 @@ local Tuning = {
 		ArrivalWaitSeconds = 20, -- a car's server waits this long for the whole car to arrive
 		PromptDistance = 8,
 		CameraZoom = 4.5, -- the camera's distance cap aboard: a car is narrower than the default zoom
+		-- The cross-server crew queue (Services/MatchmakingService, Logic/CrewQueue, Logic/Matchmaking;
+		-- chosen in the server simulation, `lune run servers`): every occupied car is a party in one
+		-- queue across all hall servers, so a lone rider finds a crew from another hall and two part cars couple.
+		CrossServer = true,
+		QueueTtl = 45, -- seconds a ticket lives in MemoryStore without a refresh (a dead server's car drops out)
+		QueueRefresh = 4, -- seconds between a hall's ticket refreshes
+		QueueRead = 200, -- tickets the matcher reads per pass
+		LockSeconds = 6, -- the matcher's lease; one hall matches at a time
+		MatchTick = 2, -- seconds between matcher passes
+		MatchTtl = 60, -- seconds a crew's match record waits for its halls to send their cars
+		StaleClaim = 10, -- seconds after which a claim with no match record (a pass that failed) is released
+		TeleportTries = 3, -- attempts at a matched teleport before the car opens again
+		FallbackAfter = 12, -- seconds past a car's countdown with no match before it leaves on its own
+		HealthySeconds = 15, -- the queue counts as working this long after its last good MemoryStore call
 	},
 
 	Motion = {

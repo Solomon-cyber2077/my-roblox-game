@@ -17,6 +17,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
 local CarBoarding = require(Shared.Logic.CarBoarding)
+local CrewQueue = require(Shared.Logic.CrewQueue)
 local Safe = require(Shared.Util.Safe)
 
 local LobbyService = require(script.Parent.LobbyService)
@@ -30,6 +31,8 @@ type Car = {
 	players: { Player },
 	startedAt: number?,
 	departing: boolean,
+	since: number?, -- unix seconds the first rider boarded (the crew queue's order, MatchmakingService)
+	generation: number, -- bumped each time the car empties: a fresh queue ticket per crew
 	inside: CFrame, -- on the aisle at standing height, facing the door
 	outside: CFrame, -- on the platform before the door, facing away from it
 }
@@ -83,6 +86,10 @@ local function remove(player: Player)
 	if at then
 		table.remove(car.players, at)
 	end
+	if #car.players == 0 then
+		car.since = nil
+		car.generation += 1
+	end
 	if not car.departing then
 		car.startedAt = CarBoarding.afterLeave(rules(car), now())
 	elseif #car.players == 0 then
@@ -104,6 +111,9 @@ local function board(player: Player, index: number)
 	end
 	table.insert(car.players, player)
 	aboard[player] = index
+	if #car.players == 1 then
+		car.since = DateTime.now().UnixTimestampMillis / 1000
+	end
 	LobbyService.ClearReady(player)
 	car.startedAt = CarBoarding.afterEnter(rules(car), now())
 	place(player, slot(car, #car.players))
@@ -119,16 +129,22 @@ local function leave(player: Player, index: number)
 	place(player, car.outside * CFrame.new((math.random() - 0.5) * 3, 0, 0))
 end
 
--- Teleports the car's players to a fresh reserved server, where the run starts on arrival.
-local function teleport(crew: { Player }): boolean
+-- Teleports the car's players to a fresh reserved server, where the run starts on arrival; or, for a crew the
+-- cross-server queue formed (MatchmakingService), into that crew's shared reserved server.
+local function teleport(crew: { Player }, match: CrewQueue.Match?): boolean
 	local userIds = {}
 	for _, player in crew do
 		table.insert(userIds, player.UserId)
 	end
 	local ok, err = pcall(function()
 		local options = Instance.new("TeleportOptions")
-		options.ShouldReserveServer = true
-		options:SetTeleportData({ carRun = true, crew = userIds })
+		if match then
+			options.ReservedServerAccessCode = match.code
+			options:SetTeleportData({ carRun = true, crew = match.crew, matchId = match.matchId })
+		else
+			options.ShouldReserveServer = true
+			options:SetTeleportData({ carRun = true, crew = userIds })
+		end
 		TeleportService:TeleportAsync(game.PlaceId, crew, options)
 	end)
 	if not ok then
@@ -137,13 +153,32 @@ local function teleport(crew: { Player }): boolean
 	return ok
 end
 
-local function depart(index: number)
+-- A matched teleport that failed: try again a few times before the car opens up.
+local function retry(crew: { Player }, match: CrewQueue.Match): boolean
+	for _ = 2, Tuning.Cars.TeleportTries do
+		task.wait(1)
+		if teleport(crew, match) then
+			return true
+		end
+	end
+	return false
+end
+
+local function depart(index: number, match: CrewQueue.Match?)
 	local car = cars[index]
 	car.departing = true
 	publish()
 	task.delay(Tuning.Cars.FadeSeconds, function()
 		Safe.call("CarService.depart", function()
 			local crew = table.clone(car.players)
+			if match then
+				-- only the riders the match counted: someone who boarded since waits for the next crew
+				for i = #crew, 1, -1 do
+					if not table.find(match.crew, crew[i].UserId) then
+						table.remove(crew, i)
+					end
+				end
+			end
 			if #crew == 0 then
 				car.departing = false
 				publish()
@@ -166,8 +201,10 @@ local function depart(index: number)
 					"Warning",
 					"A run is underway on this server. Try again after it."
 				)
-			elseif teleport(crew) then
+			elseif teleport(crew, match) then
 				return -- they stay aboard, black, until they leave the server
+			elseif match and retry(crew, match) then
+				return
 			else
 				NetService.FireList("Notify", crew, "Warning", "The train could not leave. Try again.")
 			end
@@ -219,7 +256,9 @@ local function launchOnArrival()
 	local first = Players:GetPlayers()[1] or Players.PlayerAdded:Wait()
 	local data = first:GetJoinData().TeleportData
 	local expected = if type(data) == "table" and type(data.crew) == "table" then #data.crew else 1
-	local deadline = os.clock() + Tuning.Cars.ArrivalWaitSeconds
+	-- a crew the queue formed comes from several halls: give the last car a little longer
+	local matched = type(data) == "table" and data.matchId ~= nil
+	local deadline = os.clock() + Tuning.Cars.ArrivalWaitSeconds + (if matched then 10 else 0)
 	while #Players:GetPlayers() < expected and os.clock() < deadline do
 		task.wait(0.25)
 	end
@@ -246,6 +285,8 @@ function CarService.Init()
 			players = {},
 			startedAt = nil,
 			departing = false,
+			since = nil,
+			generation = 1,
 			inside = aisle,
 			-- out on the platform clear of the door, so the camera has room behind
 			outside = ground * CFrame.new(0, 3, 7) * CFrame.Angles(0, math.pi, 0),
@@ -287,7 +328,16 @@ function CarService.Start()
 	RunService.Heartbeat:Connect(function()
 		local t = now()
 		for index, car in cars do
-			if CarBoarding.shouldDepart(rules(car), t) then
+			-- a part car waits for the cross-server queue to couple it (MatchmakingService) until the
+			-- fallback; a full car, or any car while the queue is down, leaves on its own countdown
+			local full = #car.players >= Tuning.Cars.MaxPlayers
+			local deadline = (car.startedAt or t) + Tuning.Cars.CountdownSeconds
+			local queue = Registry.MatchmakingService
+			local healthy = queue ~= nil and queue.Healthy()
+			if
+				CarBoarding.shouldDepart(rules(car), t)
+				and not CrewQueue.holdLocal(full, healthy, deadline, t)
+			then
 				depart(index)
 			end
 		end
@@ -305,6 +355,50 @@ function CarService.Start()
 			end
 		end)
 	end
+end
+
+-- Occupied cars for the crew queue (MatchmakingService): who is aboard, since when, and the unix time the
+-- car's countdown ends (or would, for a lone rider: CountdownSeconds after boarding).
+function CarService.Queueing(): {
+	{
+		index: number,
+		generation: number,
+		members: { number },
+		since: number,
+		deadline: number,
+	}
+}
+	local out = {}
+	local t, u = now(), DateTime.now().UnixTimestampMillis / 1000
+	for index, car in cars do
+		local since = car.since
+		if since and not car.departing and #car.players > 0 and #car.players < Tuning.Cars.MaxPlayers then
+			local members = {}
+			for _, player in car.players do
+				table.insert(members, player.UserId)
+			end
+			local deadline = if car.startedAt
+				then u + (car.startedAt + Tuning.Cars.CountdownSeconds - t)
+				else since + Tuning.Cars.CountdownSeconds
+			table.insert(out, {
+				index = index,
+				generation = car.generation,
+				members = members,
+				since = since,
+				deadline = deadline,
+			})
+		end
+	end
+	return out
+end
+
+-- The queue matched this car (MatchmakingService): send its riders to the crew's shared reserved server.
+function CarService.DepartMatched(index: number, generation: number, match: CrewQueue.Match)
+	local car = cars[index]
+	if car == nil or car.generation ~= generation or car.departing or #car.players == 0 then
+		return
+	end
+	depart(index, match)
 end
 
 function CarService.IsAboard(player: Player): boolean

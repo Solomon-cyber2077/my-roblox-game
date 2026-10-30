@@ -116,6 +116,9 @@ Theme.Image = table.freeze({
 	payPacket = "rbxassetid://82844215011448",
 	-- the touch action button: a brass push-plate, up and pressed (tools/uiart/render_action_plate.py,
 	-- 512 x 176, drawn at 168 x 58); empty until uploaded, the enamel Primary button stands in
+	-- the crew queue's block instrument (tools/uiart/render_queue_dial.py, 256 px, baked colour): face and a
+	-- needle the car panel swings; empty until uploaded, the panel shows text alone
+	queueDial = table.freeze({ face = "", needle = "" }),
 	-- the hunted cue: a Hollow's eyes glinting in the dark (tools/uiart/render_hunted_eyes.py, 256 px, baked
 	-- colour, transparent); empty until uploaded, two small pale lights stand in
 	huntedEyes = "rbxassetid://93696436305565",

@@ -5,6 +5,8 @@
 	and gamepad but a tap on touch, the green glow round each car's floor, the
 	countdown for the car you are in, and the black screen while it leaves. In a
 	car's reserved server the teleport screen stays up until you are on the train.
+	While the cross-server crew queue (MatchmakingService) looks for riders from other halls, a block
+	instrument's needle swings where the countdown sits and the panel says how many are waiting.
 ]]
 
 local Players = game:GetService("Players")
@@ -131,6 +133,26 @@ function CarBoardingUi.mount(gui: ScreenGui)
 		Size = UDim2.new(1, 0, 0, 20),
 		XAlign = Enum.TextXAlignment.Center,
 	}))
+
+	-- The block instrument: shown while the crew queue searches (Theme.Image.queueDial, rendered)
+	local dialArt = Theme.Image.queueDial
+	local dial = Ui.new("ImageLabel", {
+		Name = "QueueDial",
+		Image = dialArt.face,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(64, 64),
+		Position = UDim2.fromScale(0.5, 0),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Visible = false,
+		Parent = panel,
+	})
+	local needle = Ui.new("ImageLabel", {
+		Name = "Needle",
+		Image = dialArt.needle,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Parent = dial,
+	})
 
 	-- Black screen: its own top layer, over the top bar too ----------------------------------------
 	local blackGui = Ui.new("ScreenGui", {
@@ -291,7 +313,25 @@ function CarBoardingUi.mount(gui: ScreenGui)
 		local remaining = CarBoarding.remaining(r, now)
 		local exitLeft = CarBoarding.exitRemaining(r, now)
 		local seats = `{#car.occupants}/{Tuning.Cars.MaxPlayers} ABOARD`
-		if car.departing then
+		-- the crew queue is live when the hall publishes its waiting count (MatchmakingService)
+		local queue = State.Get({ "lobby", "queue" })
+		local waiting = if type(queue) == "table" then queue.waiting else nil
+		local searching = waiting ~= nil and not car.departing and (remaining == nil or remaining <= 0)
+		dial.Visible = searching and dialArt.face ~= ""
+		if dial.Visible then
+			-- the needle hunts between LINE BLOCKED and TRAIN ON LINE while it looks
+			needle.Rotation = math.sin(os.clock() * 1.6) * 55
+		end
+		if searching then
+			count.Text = ""
+			if remaining == nil then
+				headline.Text = `FINDING A CREW  ·  {seats}`
+				hint.Text = `{waiting} waiting across the line`
+			else
+				headline.Text = `COUPLING  ·  {seats}`
+				hint.Text = "Looking for another car to join yours"
+			end
+		elseif car.departing then
 			count.Text = "0"
 			headline.Text = "ALL ABOARD"
 			hint.Text = "Departing..."

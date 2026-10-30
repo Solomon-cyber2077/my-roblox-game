@@ -37,6 +37,7 @@ local ORDER = {
 	"BreakdownService",
 	"RunDirector",
 	"CarService",
+	"MatchmakingService",
 	"DevService",
 	"SettingsService",
 }
