@@ -69,7 +69,7 @@ for _, d in L.Devices do
 	if compact then
 		local C = COMPACT_CARD
 		local left = area.x + C.margin
-		local w = math.min(C.maxWidth, action.x - C.margin * 1.5 - left)
+		local w = math.min(C.maxWidth, TouchCluster.left(cluster) - C.margin * 1.5 - left)
 		local top = area.y + area.h - C.margin - C.height
 		card = { x = left, y = top, w = w, h = C.height }
 		local bw = (w - 3 * C.pad) / 2
@@ -125,6 +125,12 @@ for _, d in L.Devices do
 		{ "PING", ping },
 		{ "Action button", action },
 	}
+	if compact then
+		-- the phone tool belt and bag (UI/ToolBelt)
+		table.insert(targets, { "Tool belt 1", cluster.belt[1] })
+		table.insert(targets, { "Tool belt 2", cluster.belt[2] })
+		table.insert(targets, { "Bag", cluster.bag })
+	end
 	for _, t in targets do
 		local r = t[2]
 		local small = math.min(mm(d, r.w), mm(d, r.h))
@@ -192,6 +198,32 @@ for _, d in L.Devices do
 	for _, t in targets do
 		if L.overlap(ballot, t[2]) then
 			table.insert(notes, `{t[1]} sits over the route ballot (touch buttons draw on top)`)
+		end
+	end
+	-- the hotbar row (UI/Hud CELL 58 under our UIScale) is tapped only off phones; on phones the bag sheet's cells are
+	local cell = mm(d, 58 * s)
+	if not compact and cell < L.MinTapMm then
+		failures += 1
+		table.insert(notes, string.format("**hotbar cell %.1f mm, under the thumb minimum**", cell))
+	end
+	if compact then
+		local sheet = TouchCluster.sheet(cluster, area, 6)
+		for i, r in sheet.cells do
+			local small = math.min(mm(d, r.w), mm(d, r.h))
+			if small < L.MinTapMm - 0.05 then
+				failures += 1
+				table.insert(notes, string.format("**bag sheet cell %d only %.1f mm**", i, small))
+			end
+			for _, t in { { "Bag", cluster.bag }, { "PING", ping }, { "Action button", action } } do
+				if L.overlap(r, t[2]) then
+					failures += 1
+					table.insert(notes, `**bag sheet cell {i} overlaps {t[1]}**`)
+				end
+			end
+		end
+		if sheet.frame.y < area.y or sheet.frame.y + sheet.frame.h > area.y + area.h then
+			failures += 1
+			table.insert(notes, "**bag sheet runs off the screen**")
 		end
 	end
 	local face = math.min(mm(d, TICKET.w * s), mm(d, TICKET.h * s))

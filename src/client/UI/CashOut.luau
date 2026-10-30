@@ -174,7 +174,8 @@ function CashOut.mount(gui: ScreenGui)
 		local C = COMPACT
 		local origin, area = gui.AbsolutePosition, gui.AbsoluteSize
 		local left = origin.X + C.margin
-		local w = math.min(C.maxWidth, TouchButtons.layout().action.x - C.margin * 1.5 - left)
+		-- clear of every touch button, the phone tool belt and bag too (Logic/TouchCluster.left)
+		local w = math.min(C.maxWidth, TouchCluster.left(TouchButtons.layout()) - C.margin * 1.5 - left)
 		local bottom = origin.Y + area.Y - C.margin
 		card.AnchorPoint = Vector2.new(0, 1)
 		card.Position = UDim2.fromOffset(u(left - origin.X), u(bottom - origin.Y))

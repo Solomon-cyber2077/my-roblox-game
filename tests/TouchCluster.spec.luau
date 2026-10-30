@@ -33,8 +33,32 @@ describe("TouchCluster", function()
 		end
 	end)
 
+	it(
+		"puts the phone tool belt and bag clear of everything, and the bag sheet clear of the cluster",
+		function()
+			for _, screen in { { 667, 375 }, { 852, 393 }, { 945, 436 } } do
+				local c = TouchCluster.place(TouchCluster.jump(screen[1], screen[2]))
+				local all = { c.run, c.look, c.ping, c.action, c.belt[1], c.belt[2], c.bag }
+				for i = 1, #all do
+					for j = i + 1, #all do
+						expect(overlap(all[i], all[j])).toBe(false)
+					end
+					expect(all[i].x >= screen[1] * 0.4).toBe(true) -- right of the thumbstick zone
+				end
+				local sheet = TouchCluster.sheet(c, { x = 0, y = 58, w = screen[1], h = screen[2] - 58 }, 6)
+				for _, cell in sheet.cells do
+					expect(cell.w >= 60).toBe(true)
+					expect(overlap(cell, c.ping) or overlap(cell, c.action) or overlap(cell, c.run)).toBe(
+						false
+					)
+				end
+				expect(sheet.frame.y >= 58).toBe(true)
+			end
+		end
+	)
+
 	it("reports the leftmost edge for the cash-out card to keep clear of", function()
 		local c = TouchCluster.place(TouchCluster.jump(667, 375))
-		expect(TouchCluster.left(c)).toBe(c.action.x)
+		expect(TouchCluster.left(c)).toBe(math.min(c.action.x, c.belt[1].x, c.bag.x))
 	end)
 end)

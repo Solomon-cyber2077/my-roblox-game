@@ -9,6 +9,7 @@
 
 local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
+local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -964,6 +965,11 @@ function Hud.mount(gui: ScreenGui)
 		handId = if slot and inv and inv.items then inv.items[slot] else nil
 		renderBackpack(inv)
 	end
+	-- the phone tool belt and bag sheet (UI/ToolBelt) take and read the hand through these
+	Hud.hold = hold
+	Hud.handSlot = function(): number?
+		return handSlot
+	end
 
 	function renderBackpack(inv: { [string]: any }?)
 		-- a gamepad selection inside the backpack would be left on a destroyed button: note its slot
@@ -1044,6 +1050,12 @@ function Hud.mount(gui: ScreenGui)
 				})
 				button:SetAttribute("Slot", index)
 				Ui.corner(2).Parent = button
+				-- on a phone this row only shows what you carry: the tool belt and the bag sheet (UI/ToolBelt)
+				-- are the thumb-sized ways to hold, use, move and drop
+				local phoneRow = gui:GetAttribute("Compact") == true and UserInputService.TouchEnabled
+				if phoneRow then
+					button.Interactable = false
+				end
 				local inHand = index == handSlot
 				Ui.stroke(
 					if inHand
@@ -1135,6 +1147,10 @@ function Hud.mount(gui: ScreenGui)
 					})
 					Ui.corner(3).Parent = mark
 					left = left or mark
+					if gui:GetAttribute("Compact") == true and UserInputService.TouchEnabled then
+						left.Interactable = false
+						left.Visible = false
+					end
 					left.Activated:Connect(function()
 						local count = #(state.items or {})
 						local order = table.create(count, 0)

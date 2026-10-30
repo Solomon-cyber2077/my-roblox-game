@@ -119,6 +119,9 @@ Theme.Image = table.freeze({
 	-- the crew queue's block instrument (tools/uiart/render_queue_dial.py, 256 px, baked colour): face and a
 	-- needle the car panel swings; empty until uploaded, the panel shows text alone
 	queueDial = table.freeze({ face = "", needle = "" }),
+	-- the phone bag button's icon: a conductor's leather satchel (tools/uiart/render_bag.py, 256 px, baked colour);
+	-- empty until uploaded, the button says BAG
+	bagIcon = "",
 	-- the hunted cue: a Hollow's eyes glinting in the dark (tools/uiart/render_hunted_eyes.py, 256 px, baked
 	-- colour, transparent); empty until uploaded, two small pale lights stand in
 	huntedEyes = "rbxassetid://93696436305565",
