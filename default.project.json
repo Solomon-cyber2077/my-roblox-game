@@ -1,5 +1,6 @@
 {
   "name": "my-roblox-game",
+  "globIgnorePaths": ["**/~syncthing~*", "**/.syncthing.*", "**/*.tmp"],
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {

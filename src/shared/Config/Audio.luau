@@ -99,7 +99,8 @@ local Cues: { [string]: Cue } = {
 		mix = "Cues",
 	},
 	Rumble = { id = 9113218938, volume = 0.7, spatial = true, maxSeconds = 2.5, gap = 1, voices = 2 },
-	Thunder = { id = 9113218938, volume = 0.55, maxSeconds = 4, pitch = 0.62 },
+	-- deep booms rolling far off ("Artillery Distant 2", listed for thunder), not the slam's rumble
+	Thunder = { id = 9113169432, volume = 0.6, maxSeconds = 5, pitch = 0.9 },
 	Collapse = { id = 9118582680, volume = 0.9, spatial = true, maxSeconds = 3, gap = 0.6, voices = 3 },
 	SteamLeak = { id = 9116496074, volume = 0.6, spatial = true, loop = true },
 	Victory = { id = 9112766203, volume = 0.5, maxSeconds = 6 },
@@ -219,7 +220,8 @@ local Cues: { [string]: Cue } = {
 	TornBreath = { id = 100147087354736, volume = 0.6, maxSeconds = 2.4, pitch = 1.08, mix = "Feedback" },
 	-- Accelerating Tone Piercing High Pitch Ring 1: its rising first seconds, shaped by the shock
 	ShockRing = { id = 9113031196, volume = 1, maxSeconds = 4, group = "Warnings" },
-	RailClack = { id = 15675059323, volume = 0.14, maxSeconds = 1, pitch = 0.45 },
+	-- a rail joint under the wheels: one metal hit, low and short ("Prison Bar Hits 8"), not the UI click
+	RailClack = { id = 9117905219, volume = 0.3, maxSeconds = 0.45, pitch = 0.55 },
 
 	-- The sky's omens (Logic/Omens), from the same recordings again
 	SkyToll = { id = 9113804436, volume = 0.55, maxSeconds = 9, pitch = 0.36 }, -- a bell the size of the sky
@@ -531,6 +533,18 @@ local Cues: { [string]: Cue } = {
 		maxSeconds = 1,
 		mix = "Outdoor",
 	},
+	-- fire ("Fireworks Hiss 2", a burning crackle): slowed into the firebox's roar on the footplate, and
+	-- quickened into the lantern's flame, which gutters louder as a Hollow comes near (a tell)
+	FireboxRoar = {
+		id = 9112780743,
+		volume = 0.5,
+		loop = true,
+		spatial = true,
+		rollOff = 35,
+		pitch = 0.5,
+		mix = "Ambience",
+	},
+	LanternFlame = { id = 9112780743, volume = 0.3, loop = true, pitch = 1.6, mix = "Feedback" },
 	-- a stalking Hollow's breath (HollowAnimator; pitch by kind in Config/Foley): deep, throaty
 	-- ("Creature Growls Lion 2")
 	HollowBreath = { id = 9113971433, volume = 0.55, loop = true, mix = "Cues" },

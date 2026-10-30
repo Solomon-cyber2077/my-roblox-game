@@ -93,4 +93,11 @@ describe("Handling sounds", function()
 		end
 		expect(Timing.XpTicks > 0 and Timing.XpTickSeconds > 0).toBe(true)
 	end)
+
+	it("gives thunder, the rail joints and fire recordings of their own", function()
+		expect(Audio.Thunder.id ~= Audio.Rumble.id).toBe(true)
+		expect(Audio.RailClack.id ~= Audio.Click.id).toBe(true)
+		expect(Audio.FireboxRoar.loop and Audio.FireboxRoar.spatial).toBe(true)
+		expect(Audio.LanternFlame.loop).toBe(true)
+	end)
 end)

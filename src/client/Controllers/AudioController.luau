@@ -363,6 +363,21 @@ function AudioController.Start()
 		end
 		playerGui.DescendantAdded:Connect(key)
 	end)
+	-- the firebox roaring on the footplate, heard from its own spot in the train (TrainInterior "Firebox")
+	task.spawn(function()
+		for _ = 1, 60 do
+			local train = Workspace:FindFirstChild("Train")
+			local firebox = train and train:FindFirstChild("Firebox", true)
+			if firebox and firebox:IsA("BasePart") then
+				local roar = makeSound("FireboxRoar", firebox)
+				if roar then
+					roar:Play()
+				end
+				return
+			end
+			task.wait(1)
+		end
+	end)
 	Registry.SceneryController.TunnelAhead:Connect(function()
 		AudioController.Play("Whistle")
 	end)
@@ -372,7 +387,9 @@ function AudioController.Start()
 		AudioController.Play("DoorThud", nil, if inside then 1 else 0.8, if inside then 1 else 1.06)
 	end)
 
-	for _, name in { "TrainRun", "Wind", "StationEerie", "DepotHall", "Drone", "DroneHarmonic", "Howl" } do
+	for _, name in
+		{ "TrainRun", "Wind", "StationEerie", "DepotHall", "Drone", "DroneHarmonic", "Howl", "LanternFlame" }
+	do
 		local sound = makeSound(name, SoundService)
 		if sound then
 			sound.Volume = 0
@@ -569,6 +586,8 @@ function AudioController.Start()
 				* (math.max(ambience * (0.4 + 0.6 * danger), NIGHT_DRONE * night) + 0.4 * swell)
 				* swayHigh,
 			Howl = Audio.Howl.volume * (ambience * (0.4 + 0.6 * tension) + 0.5 * swell),
+			-- your lantern's flame gutters as a Hollow comes near, out in the open (the lean's sound)
+			LanternFlame = if inLobby then 0 else Audio.LanternFlame.volume * dread * (1 - shelter),
 		}
 		-- the idle piano: up only once it is really playing, so the room never dips into silence
 		local piano = idleSound
