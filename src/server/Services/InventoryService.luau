@@ -293,8 +293,11 @@ function InventoryService.Drop(player: Player, slot: number)
 	if root == nil then
 		return
 	end
-	if Registry.LootService.DropAt(itemId, root.Position + root.CFrame.LookVector * 3) then
+	local at = root.Position + root.CFrame.LookVector * 3
+	if Registry.LootService.DropAt(itemId, at) then
 		set(player, nextInv)
+		-- heard by everyone near where it landed (Config/Audio ItemDrop)
+		NetService.FireAll("Fx", "Sound", { cue = "ItemDrop", position = at - Vector3.new(0, 2.5, 0) })
 	end
 end
 

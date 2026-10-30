@@ -42,6 +42,36 @@ describe("Footsteps", function()
 	end)
 end)
 
+describe("Jumps and landings", function()
+	local Foley = require(Shared.Config.Foley)
+
+	it("keeps a step off a ledge quiet and makes a default jump a soft landing", function()
+		expect(Footsteps.landing(20)).toBe(nil) -- off a one-stud ledge
+		local jump = Footsteps.landing(53) -- a default 7.2-stud jump coming down
+		expect(jump ~= nil and jump.kind == "Soft").toBe(true)
+	end)
+
+	it("makes a long fall hard and caps its level", function()
+		local fall = Footsteps.landing(90)
+		expect(fall ~= nil and fall.kind == "Hard").toBe(true)
+		expect(fall and fall.gain).toBe(Foley.LandGainMax)
+		local soft = Footsteps.landing(Foley.LandSoft)
+		expect(soft and soft.gain).toBe(Foley.LandGainMin)
+	end)
+
+	it("sounds a jump only on a real push-off, once per hop", function()
+		expect(Footsteps.jumped(50, 1)).toBe(true)
+		expect(Footsteps.jumped(8, 1)).toBe(false) -- a bump or a ramp
+		expect(Footsteps.jumped(50, Foley.JumpGap / 2)).toBe(false)
+	end)
+
+	it("has a cue for every new foley sound", function()
+		for _, name in { "Jump", "LandHard", "ItemDrop" } do
+			expect(Audio[name] ~= nil and Audio[name].spatial == true).toBe(true)
+		end
+	end)
+end)
+
 describe("Crew-slot boots", function()
 	it("gives a joiner the lowest free slot and never moves anyone", function()
 		expect(Footsteps.freeSlot({})).toBe(1)

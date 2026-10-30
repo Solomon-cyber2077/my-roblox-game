@@ -11,9 +11,11 @@
 	  Gravel      the rest: the yard's ground, cobbles, cinders, stone
 ]]
 
+local Foley = require(script.Parent.Parent.Config.Foley)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 export type Surface = "TrainFloor" | "Snow" | "Plank" | "Gravel"
+export type Landing = { kind: "Soft" | "Hard", gain: number }
 export type Ground = {
 	material: string, -- Enum.Material name
 	onTrain: boolean,
@@ -75,6 +77,25 @@ function Footsteps.cue(surface: string, count: number): string
 	local takes = Tuning.Footsteps.Takes[surface] or 1
 	local prefix = if surface == "TrainFloor" then "StepTrain" else "Step" .. surface
 	return prefix .. tostring(count % takes + 1)
+end
+
+-- How a fall coming down at `speed` studs a second lands (Config/Foley): nil below LandSoft, Soft
+-- up to LandHard, Hard from it; the level over the step takes rises with the speed and stops there.
+function Footsteps.landing(speed: number): Landing?
+	if speed < Foley.LandSoft then
+		return nil
+	end
+	local u = math.clamp((speed - Foley.LandSoft) / (Foley.LandHard - Foley.LandSoft), 0, 1)
+	return {
+		kind = if speed >= Foley.LandHard then "Hard" else "Soft",
+		gain = Foley.LandGainMin + (Foley.LandGainMax - Foley.LandGainMin) * u,
+	}
+end
+
+-- Whether leaving the ground at `rise` studs a second upward is a jump worth a sound, `since`
+-- seconds after this body's last one.
+function Footsteps.jumped(rise: number, since: number): boolean
+	return rise >= Foley.JumpRise and since >= Foley.JumpGap
 end
 
 return table.freeze(Footsteps)

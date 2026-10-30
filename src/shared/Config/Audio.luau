@@ -377,6 +377,34 @@ local Cues: { [string]: Cue } = {
 	},
 	-- heavy breathing while stamina is spent (MovementController.IsExhausted), not tied to combat
 	Breath = { id = 100147087354736, volume = 0.5, loop = true, mix = "Feedback" },
+	-- Jumping and landing (Controllers/FootstepController, numbers in Config/Foley). A landing is the
+	-- surface's own step takes, both feet; a hard one adds the thud. ProSoundEffects, Creator Store.
+	Jump = { -- "Cloth Flap 19": a coat's heavy whump as you push off
+		id = 9113820125,
+		volume = 0.22,
+		spatial = true,
+		rollOff = 45,
+		maxSeconds = 0.45,
+		pitch = 1.1,
+		mix = "Steps",
+	},
+	LandHard = { -- "Body Fall Master 12": its first impact only
+		id = 9113472109,
+		volume = 0.4,
+		spatial = true,
+		rollOff = 70,
+		maxSeconds = 0.4,
+		mix = "Steps",
+	},
+	-- an item put down at a stop (Services/InventoryService.Drop): "Bag Dull Sprinkling Impact 3", the drop
+	ItemDrop = {
+		id = 9113246398,
+		volume = 0.4,
+		spatial = true,
+		rollOff = 50,
+		maxSeconds = 0.5,
+		mix = "Feedback",
+	},
 }
 
 for _, cue in Cues do
