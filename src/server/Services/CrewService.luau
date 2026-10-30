@@ -749,6 +749,7 @@ function CrewService.CashOut(player: Player): (boolean, string?)
 	)
 	Registry.TelemetryService.CashedOut(player)
 	Registry.GraspService.Cleanup(player)
+	Registry.HaulService.Drop(player)
 	Registry.InventoryService.Clear(player)
 	members[player] = nil
 	cashedOut[player.UserId] = true

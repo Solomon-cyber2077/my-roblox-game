@@ -424,12 +424,15 @@ function Service.Init()
 	prompt(box, "Deposit valuables", deposit)
 	prompt(marker, "Deliver sealed payroll", deliver)
 end
+-- Takes a player off the crate and the lamp, as when they leave the game (a cash-out, CrewService).
+function Service.Drop(player: Player)
+	leave(player.UserId)
+	grabbed[player] = nil
+end
+
 function Service.Start()
 	Registry.StationService.Cleared:Connect(clearCrate)
-	Players.PlayerRemoving:Connect(function(player)
-		leave(player.UserId)
-		grabbed[player] = nil
-	end)
+	Players.PlayerRemoving:Connect(Service.Drop)
 	local elapsed = 0
 	RunService.Heartbeat:Connect(function(dt)
 		elapsed += dt
