@@ -139,20 +139,10 @@ local Tuning = {
 		Reach = 10, -- studs from the chest a player may stow or take
 	},
 
-	-- The floor mist trail to a leak (Logic/LeakRoute, Controllers/LeakController), in train-local
-	-- studs (x along the train, z across it, the aisle at z = 0, TrainBuilder's layout).
+	-- Leak guidance (Controllers/LeakController): the Last Light's leak anchor and the line that fades in at the
+	-- top of the screen when it starts leaking. The "!" and the HUD plate do the rest.
 	LeakArrows = {
-		Spacing = 2.4, -- studs between mist wisps
-		Count = 24, -- at most this many ahead of you
-		Lead = 2, -- the first wisp this far ahead of your feet
-		Scroll = 1.6, -- studs per second the mist drifts toward the leak
-		CurveIn = 4.5, -- the aisle line turns toward the wall this far before the leak
-		WallInset = 4.2, -- and ends this far from the train's middle (the wall is at 6.5)
 		CabAnchor = "CAB", -- the Last Light's leak anchor: reached from the platform, not the cars
-		CabDoorX = 58, -- the Last Light's door, on the platform (+z) side
-		CabDoorZ = 7,
-		PlatformApproach = 3.5, -- the platform line runs this far out from the cab door
-		PlatformReach = 140, -- farther than this from the cab door, no platform mist
 		-- the notice at the top of the screen when the Last Light starts leaking
 		NoticeText = "Steam leak in the Last Light car",
 		NoticeIn = 0.25, -- seconds to fade in
