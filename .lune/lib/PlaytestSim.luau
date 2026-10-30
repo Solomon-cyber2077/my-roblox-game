@@ -25,8 +25,10 @@ local LATE_HEAD_START = 4
 local GRAB_REACH = 1.5
 -- touch prompts (docs/SIM-CALIBRATION.md section 3): a tap misses ~3% of the time on a target of 9.6 mm or more,
 -- rising to ~25% at 4 mm, and 1.6x on a target that moves with the camera. The world chip is 64 pt drawn at 0.72 and
--- moves; the action button (UI/ActionButton) is 64 pt and fixed. A missed tap costs a retry.
-local CHIP_PT, BUTTON_PT, MOVING = 64 * 0.72, 64, 1.6
+-- then at our UI's scale on that screen (UI_SCALE, from `lune run layout`), and it moves; the action button is
+-- Logic/TouchCluster.Size units in screen space (it counter-scales) and fixed. A missed tap costs a retry.
+local CHIP_PT, BUTTON_PT, MOVING = 64 * 0.72, 60, 1.6
+local UI_SCALE = { Phone = 0.73, LowPhone = 0.67, BudgetAndroid = 0.79, Tablet = 0.86 } -- iPhone 15, SE, Moto E13, iPad
 local PROMPT_RETRY = 1.2 -- seconds lost to a missed tap
 
 local function tapMiss(mm: number): number
@@ -414,7 +416,7 @@ local function playStop(mods, session, crew, train, stopInfo)
 						if ptMm and p.device.tap then
 							local miss = if session.actionButton
 								then tapMiss(BUTTON_PT * ptMm)
-								else tapMiss(CHIP_PT * ptMm) * MOVING
+								else tapMiss(CHIP_PT * (UI_SCALE[p.device.id] or 1) * ptMm) * MOVING
 							if p.rng:chance(miss * (1.3 - p.persona.skill)) then
 								p.searchLeft += PROMPT_RETRY
 								p.stats.promptMisses += 1
