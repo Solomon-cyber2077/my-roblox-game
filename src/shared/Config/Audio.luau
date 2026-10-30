@@ -11,6 +11,9 @@
 	group      a SoundGroup of its own (beside the main one, so ducking the mix leaves it alone)
 	rollOff    studs a spatial cue carries before it falls silent (default 220)
 	with       another cue played together with this one (a layered sound)
+	gap        seconds before the same cue may play again (a burst of the same event is one sound)
+	voices     the most copies of this cue playing at once, inside its tier's cap (so one busy
+	           source, a pack of Hollows or a collapsing yard, cannot fill the tier by itself)
 	mix        where it sits in the mix (AudioController; tiers in Config/AudioPriority): "Ambience"
 	           (the beds the Settings volume turns down), "Outdoor" (ambience out in the night,
 	           muffled by the carriage walls), "Cues" (threat: everything below ducks hard under
@@ -29,6 +32,8 @@ export type Cue = {
 	rollOff: number?,
 	mix: string?,
 	with: string?,
+	gap: number?,
+	voices: number?,
 }
 
 local Cues: { [string]: Cue } = {
@@ -72,7 +77,8 @@ local Cues: { [string]: Cue } = {
 	Deposit = { id = 9113849492, volume = 0.6, mix = "Feedback" },
 	Loot = { id = 17208319162, volume = 0.6, mix = "Feedback" },
 	Heal = { id = 9114171855, volume = 0.6, mix = "Feedback" },
-	Hit = { id = 9113570506, volume = 0.8, mix = "Feedback" },
+	-- a Hollow's blow landing on you ("Punch Some Crack And Thud 2")
+	Hit = { id = 9117971636, volume = 0.8, maxSeconds = 0.6, mix = "Feedback" },
 	HollowSpawn = { id = 9125475729, volume = 0.9, spatial = true, mix = "Cues" },
 	HollowStrike = { id = 9125471724, volume = 0.9, spatial = true, mix = "Cues" },
 	Flash = { id = 9113024908, volume = 0.8, spatial = true, mix = "Feedback" },
@@ -91,9 +97,9 @@ local Cues: { [string]: Cue } = {
 		rollOff = 90,
 		mix = "Cues",
 	},
-	Rumble = { id = 9113218938, volume = 0.7, spatial = true, maxSeconds = 2.5 },
+	Rumble = { id = 9113218938, volume = 0.7, spatial = true, maxSeconds = 2.5, gap = 1, voices = 2 },
 	Thunder = { id = 9113218938, volume = 0.55, maxSeconds = 4, pitch = 0.62 },
-	Collapse = { id = 9118582680, volume = 0.9, spatial = true, maxSeconds = 3 },
+	Collapse = { id = 9118582680, volume = 0.9, spatial = true, maxSeconds = 3, gap = 0.6, voices = 3 },
 	SteamLeak = { id = 9116496074, volume = 0.6, spatial = true, loop = true },
 	Victory = { id = 9112766203, volume = 0.5, maxSeconds = 6 },
 	Purchase = { id = 9113728042, volume = 0.6, mix = "Feedback" },
@@ -268,7 +274,8 @@ local Cues: { [string]: Cue } = {
 		maxSeconds = 1,
 		mix = "Cues",
 	},
-	HollowSlam = { id = 9113218938, volume = 1, spatial = true, pitch = 0.8, maxSeconds = 2, mix = "Cues" },
+	-- a heavy blow on wood or ground ("Wood Impact 4", hollow and powerful)
+	HollowSlam = { id = 9120900308, volume = 1, spatial = true, pitch = 0.8, maxSeconds = 2, mix = "Cues" },
 	HollowScrabble = {
 		id = 9118582680,
 		volume = 0.55,
@@ -276,6 +283,10 @@ local Cues: { [string]: Cue } = {
 		pitch = 1.7,
 		maxSeconds = 1.2,
 		mix = "Cues",
+		-- a running Hollow's every stride scrabbles (HollowAnimator): measured at 27 a second with a
+		-- pack near, all in the Threat tier, which ducks everything under it; a few at once say it
+		voices = 3,
+		gap = 0.1,
 	},
 	HollowStep = {
 		id = 9113218938,
@@ -284,6 +295,7 @@ local Cues: { [string]: Cue } = {
 		pitch = 1.6,
 		maxSeconds = 0.5,
 		mix = "Steps",
+		voices = 3, -- a pack's steps never crowd out the player's own (Feedback cap 10)
 	},
 
 	-- building interactions
@@ -295,7 +307,8 @@ local Cues: { [string]: Cue } = {
 		maxSeconds = 1.5,
 		mix = "Cues",
 	},
-	Winded = { id = 9113570506, volume = 0.45, maxSeconds = 0.8, pitch = 0.5 },
+	-- out of breath ("Gasp Trouble Breathing 4")
+	Winded = { id = 9114555843, volume = 0.45, maxSeconds = 0.9, mix = "Feedback" },
 
 	-- Footsteps by surface (Logic/Footsteps, Controllers/FootstepController): Creator Store
 	-- uploads, free, chosen 2026-10-15 for audition (HANDOFF.md lists them with their sources).
@@ -381,7 +394,7 @@ local Cues: { [string]: Cue } = {
 	-- surface's own step takes, both feet; a hard one adds the thud. ProSoundEffects, Creator Store.
 	Jump = { -- "Cloth Flap 19": a coat's heavy whump as you push off
 		id = 9113820125,
-		volume = 0.22,
+		volume = 0.45,
 		spatial = true,
 		rollOff = 45,
 		maxSeconds = 0.45,
@@ -390,7 +403,7 @@ local Cues: { [string]: Cue } = {
 	},
 	LandHard = { -- "Body Fall Master 12": its first impact only
 		id = 9113472109,
-		volume = 0.4,
+		volume = 0.75,
 		spatial = true,
 		rollOff = 70,
 		maxSeconds = 0.4,
@@ -404,6 +417,58 @@ local Cues: { [string]: Cue } = {
 		rollOff = 50,
 		maxSeconds = 0.5,
 		mix = "Feedback",
+	},
+	-- Handling (Logic/Foley picks which). ProSoundEffects, Creator Store.
+	-- picking up: coal is lumps ("Pebbles On Wood 10"), parts a clanky piece ("Metal Impact Dropping Clanky
+	-- Piece 11"), a relic or a valuable a small high bell ("Bell Rings 10", its first ring)
+	PickupCoal = {
+		id = 9117273725,
+		volume = 0.45,
+		maxSeconds = 0.45,
+		pitch = 1.1,
+		mix = "Feedback",
+		gap = 0.15,
+	},
+	PickupParts = { id = 9116672975, volume = 0.5, maxSeconds = 0.6, mix = "Feedback", gap = 0.15 },
+	PickupRelic = {
+		id = 9113421363,
+		volume = 0.3,
+		maxSeconds = 0.7,
+		pitch = 1.6,
+		mix = "Feedback",
+		gap = 0.15,
+	},
+	-- delivering to the train: coal poured into the bunker (the lumps, slower and longer), parts tipped
+	-- into the bin ("Ammo Shell Drop 2", a run of metal clinks); either joins the Deposit chime
+	DepositCoal = {
+		id = 9117273725,
+		volume = 0.6,
+		maxSeconds = 1.4,
+		pitch = 0.78,
+		mix = "Feedback",
+		gap = 0.3,
+	},
+	DepositParts = { id = 9113106424, volume = 0.5, maxSeconds = 1.1, mix = "Feedback", gap = 0.3 },
+	-- a use the server turned down (full health, nothing to do): one dull knock ("Window Knocks 5")
+	Deny = { id = 9120758253, volume = 0.35, maxSeconds = 0.3, pitch = 0.75, mix = "Feedback", gap = 0.25 },
+	-- an interact prompt coming into reach (UI/Prompts): a small metal tick ("Toggle Switch Metal 81")
+	PromptShow = {
+		id = 9120099510,
+		volume = 0.14,
+		maxSeconds = 0.25,
+		pitch = 1.2,
+		mix = "Feedback",
+		gap = 0.25,
+	},
+	-- a window opening and closing (UI/Modal): card handled ("Paper Movement Cu Handling 14")
+	ModalOpen = { id = 9125722939, volume = 0.3, maxSeconds = 0.35, mix = "Feedback", gap = 0.2 },
+	ModalClose = {
+		id = 9125722939,
+		volume = 0.22,
+		maxSeconds = 0.25,
+		pitch = 0.82,
+		mix = "Feedback",
+		gap = 0.2,
 	},
 }
 

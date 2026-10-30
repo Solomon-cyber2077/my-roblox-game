@@ -236,6 +236,8 @@ function InventoryService.Use(player: Player, slot: number)
 	local character = player.Character
 	local carriers = if character then character:GetAttribute("PayrollCarriers") else nil
 	if typeof(carriers) == "number" and carriers == 1 and def.kind == "Tool" and def.use ~= nil then
+		-- both hands on the payroll crate: the dull knock says no (Config/Audio Deny)
+		NetService.Fire("Fx", player, "Sound", { cue = "Deny" })
 		return
 	end
 	if def.kind ~= "Tool" then
@@ -252,6 +254,7 @@ function InventoryService.Use(player: Player, slot: number)
 	elseif def.use == "Heal" then
 		if humanoid.Health >= humanoid.MaxHealth then
 			NetService.Fire("Notify", player, "Warning", "You are already at full health.")
+			NetService.Fire("Fx", player, "Sound", { cue = "Deny" })
 			return
 		end
 		set(player, (Inventory.removeAt(inv, slot)))

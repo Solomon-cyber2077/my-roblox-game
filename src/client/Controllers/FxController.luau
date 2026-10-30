@@ -12,6 +12,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
+local Foley = require(Shared.Logic.Foley)
 local Items = require(Shared.Config.Items)
 local Tuning = require(Shared.Config.Tuning)
 local Format = require(Shared.Util.Format)
@@ -203,6 +204,10 @@ local function onFx(kind: string, data: { [string]: any }?)
 			Overlay.popup(`+{d.relicBrass} BRASS BANKED`, Theme.Color.go)
 		end
 		audio("Deposit")
+		-- and what was delivered: coal poured into the bunker, parts tipped into the bin
+		for _, cue in Foley.deposit(d.coal or 0, d.parts or 0) do
+			audio(cue)
+		end
 	elseif kind == "Found" then
 		local names = {}
 		for _, itemId in d.items or {} do
@@ -217,7 +222,9 @@ local function onFx(kind: string, data: { [string]: any }?)
 				`Backpack full: {#d.leftovers} item{if #d.leftovers > 1 then "s" else ""} left on the ground.`
 			)
 		end
-		audio("Loot")
+		-- what it sounds like in the hand: the first item found sets it (coal, a part, a relic)
+		local first = d.items and d.items[1]
+		audio(if type(first) == "string" then Foley.pickup(first) else "Loot")
 	elseif kind == "Heal" then
 		Overlay.pulse(Theme.Color.go, 0.5, 0.8)
 		audio("Heal")

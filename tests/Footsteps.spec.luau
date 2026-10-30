@@ -65,6 +65,21 @@ describe("Jumps and landings", function()
 		expect(Footsteps.jumped(50, Foley.JumpGap / 2)).toBe(false)
 	end)
 
+	it("scuffs once when a body breaks into a run, and re-arms only after slowing down", function()
+		local fast, broke = Footsteps.sprint(false, 31)
+		expect(fast).toBe(true)
+		expect(broke).toBe(true)
+		fast, broke = Footsteps.sprint(true, 31)
+		expect(broke).toBe(false) -- still running: no second scuff
+		fast, broke = Footsteps.sprint(true, 25) -- easing off a little keeps it armed off
+		expect(fast).toBe(true)
+		expect(broke).toBe(false)
+		fast, broke = Footsteps.sprint(true, 21) -- back to a walk
+		expect(fast).toBe(false)
+		expect(select(2, Footsteps.sprint(fast, 31))).toBe(true)
+		expect(Foley.SprintRearm).toBeLessThan(Foley.SprintFrom)
+	end)
+
 	it("has a cue for every new foley sound", function()
 		for _, name in { "Jump", "LandHard", "ItemDrop" } do
 			expect(Audio[name] ~= nil and Audio[name].spatial == true).toBe(true)

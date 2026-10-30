@@ -98,4 +98,16 @@ function Footsteps.jumped(rise: number, since: number): boolean
 	return rise >= Foley.JumpRise and since >= Foley.JumpGap
 end
 
+-- Breaking into a sprint: whether a body `wasFast` is fast now at `speed`, and whether this is the
+-- moment it broke into a run (one scuff). Between SprintRearm and SprintFrom it keeps what it was.
+function Footsteps.sprint(wasFast: boolean, speed: number): (boolean, boolean)
+	if speed >= Foley.SprintFrom then
+		return true, not wasFast
+	end
+	if speed < Foley.SprintRearm then
+		return false, false
+	end
+	return wasFast, false
+end
+
 return table.freeze(Footsteps)

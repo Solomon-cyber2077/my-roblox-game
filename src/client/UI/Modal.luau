@@ -12,6 +12,7 @@
 local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
 
+local Registry = require(script.Parent.Parent.Registry)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
 
@@ -32,6 +33,13 @@ local Modal = {}
 
 local current: Modal? = nil
 local backdrop: Frame? = nil
+
+-- the card handled as a window opens or closes (Config/Audio ModalOpen, ModalClose)
+local function rustle(cue: string)
+	if Registry.AudioController then
+		Registry.AudioController.Play(cue)
+	end
+end
 
 local function bindClose()
 	ContextActionService:BindActionAtPriority("LTO_CloseModal", function(_, inputState)
@@ -178,6 +186,9 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 			if backdrop then
 				backdrop.Visible = true
 			end
+			if not frame.Visible then
+				rustle("ModalOpen")
+			end
 			frame.Visible = true
 			-- never larger than the screen: on a phone the window shrinks to fit the safe area
 			local fit = 1
@@ -204,6 +215,7 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 				return
 			end
 			frame.Visible = false
+			rustle("ModalClose")
 			if current == self then
 				current = nil
 				if backdrop then

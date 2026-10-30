@@ -13,12 +13,17 @@ return table.freeze({
 	LandSoft = 24,
 	LandHard = 66,
 	-- the landing's level over the step takes, from LandSoft up to LandHard
-	LandGainMin = 0.75,
-	LandGainMax = 1.4,
+	LandGainMin = 1.1,
+	LandGainMax = 1.8,
 	-- seconds between the two feet of a landing
 	LandFootGap = 0.06,
 	-- a push-off counts as a jump from this upward speed (studs a second); a bump or a ramp is slower
 	JumpRise = 20,
 	-- seconds before the same body's jump can sound again (a bunny hop is one whump a jump, not a chatter)
 	JumpGap = 0.3,
+	-- breaking into a sprint (walk 21, sprint 31): crossing SprintFrom plays one harder step, a scuff
+	-- as the boots dig in; it re-arms once the body slows under SprintRearm
+	SprintFrom = 27,
+	SprintRearm = 23,
+	ScuffGain = 1.5,
 })

@@ -68,6 +68,8 @@ local shockEq: EqualizerSoundEffect
 local shockRing: Sound? = nil
 local tierOf: { [string]: number } = {} -- SoundGroup name -> its priority tier
 local voices: { [number]: number } = {} -- one-shots playing per tier
+local cueVoices: { [string]: number } = {} -- copies playing per cue that has its own `voices`
+local lastPlayed: { [string]: number } = {} -- when each cue last started (its `gap`)
 local anchorPart: Part
 local beds: { [string]: Sound } = {}
 local loops: { [string]: Sound } = {}
@@ -336,6 +338,30 @@ function AudioController.Start()
 			end)
 		end)
 	end
+	-- every other button on the screen sounds the same typewriter key as Ui.button's (which marks
+	-- itself Keyed and taps on its own): the hotbar, the touch buttons, tabs and slots. The movement
+	-- stick and jump (Roblox's TouchGui) stay silent.
+	task.spawn(function()
+		local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+		local function key(button: Instance)
+			if
+				not button:IsA("GuiButton")
+				or button:GetAttribute("Keyed")
+				or button:FindFirstAncestor("TouchGui")
+			then
+				return
+			end
+			button.MouseButton1Down:Connect(function()
+				if not button:GetAttribute("Keyed") then
+					AudioController.Tap("MenuClick")
+				end
+			end)
+		end
+		for _, descendant in playerGui:GetDescendants() do
+			key(descendant)
+		end
+		playerGui.DescendantAdded:Connect(key)
+	end)
 	Registry.SceneryController.TunnelAhead:Connect(function()
 		AudioController.Play("Whistle")
 	end)
@@ -648,6 +674,16 @@ function AudioController.Play(
 	if cue == nil then
 		return
 	end
+	-- a cue's own limits (Config/Audio gap, voices): a burst of one event is one sound, and one busy
+	-- source cannot fill its tier
+	local now = os.clock()
+	if cue.gap and now - (lastPlayed[cueName] or -math.huge) < cue.gap then
+		return
+	end
+	if cue.voices and (cueVoices[cueName] or 0) >= cue.voices then
+		return
+	end
+	lastPlayed[cueName] = now
 	local parent: Instance = SoundService
 	local holder: Attachment? = nil
 	if cue.spatial and position then
@@ -680,6 +716,18 @@ function AudioController.Play(
 		end
 	end
 	sound:Play()
+	if cue.voices then
+		cueVoices[cueName] = (cueVoices[cueName] or 0) + 1
+		local counted = true
+		local function release()
+			if counted then
+				counted = false
+				cueVoices[cueName] = math.max((cueVoices[cueName] or 1) - 1, 0)
+			end
+		end
+		sound.Ended:Once(release)
+		sound.Destroying:Once(release)
+	end
 	if rank then
 		local tier: number = rank
 		local counted = true

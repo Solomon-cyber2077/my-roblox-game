@@ -304,6 +304,8 @@ function Ui.button(
 		Selectable = true,
 		SelectionImageObject = brackets(),
 	})
+	-- it sounds its own key below; AudioController keys every other button on the screen
+	button:SetAttribute("Keyed", true)
 	Ui.corner(2).Parent = button
 	Ui.new("UIPadding", { PaddingBottom = UDim.new(0, KEEL - 1), Parent = button })
 	-- fired enamel: lit from the lamp above, darker toward the keel, a bright lip along the top

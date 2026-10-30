@@ -31,7 +31,8 @@ local StationSnow = require(script.Parent.Parent.Scenery.StationSnow)
 local FootstepController = {}
 
 -- aloft: off the ground last frame; fall: the fastest it came down since; jumpAt: its last jump sound
-type Walker = { nextAt: number, count: number, aloft: boolean, fall: number, jumpAt: number }
+-- fast: running (Logic/Footsteps.sprint)
+type Walker = { nextAt: number, count: number, aloft: boolean, fall: number, jumpAt: number, fast: boolean }
 
 local walkers: { [Model]: Walker } = {}
 local deathBound: { [Model]: boolean } = {}
@@ -88,7 +89,7 @@ end
 local function walkerOf(character: Model, now: number): Walker
 	local walker = walkers[character]
 	if walker == nil then
-		walker = { nextAt = now, count = 0, aloft = false, fall = 0, jumpAt = -math.huge }
+		walker = { nextAt = now, count = 0, aloft = false, fall = 0, jumpAt = -math.huge, fast = false }
 		walkers[character] = walker
 	end
 	return walker
@@ -201,7 +202,20 @@ local function step(character: Model, root: BasePart, humanoid: Humanoid, now: n
 	local grounded = humanoid.FloorMaterial ~= Enum.Material.Air
 	if interval == nil or not grounded or humanoid.Sit or character:GetAttribute("GrabStyle") ~= nil then
 		walker.nextAt = math.max(walker.nextAt, now + (Tuning.Footsteps.MinInterval :: number))
+		walker.fast = false
 		return
+	end
+	-- breaking into a run: one harder step at once, the boots digging in, and the stride from there
+	local fast, broke = Footsteps.sprint(walker.fast, speed)
+	walker.fast = fast
+	if broke then
+		local hit, surface = underfoot(root)
+		if hit then
+			walker.count += 1
+			walker.nextAt = now + interval
+			play(character, Footsteps.cue(surface, walker.count), hit.Position, Foley.ScuffGain, true)
+			return
+		end
 	end
 	if now < walker.nextAt then
 		return

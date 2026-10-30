@@ -242,6 +242,10 @@ function Prompts.mount(gui: ScreenGui)
 			return
 		end
 		local billboard = build(container, prompt, inputType)
+		-- a small tick as it comes into reach (its `gap` keeps a row of seats to one)
+		if Registry.AudioController then
+			Registry.AudioController.Play("PromptShow")
+		end
 		-- PromptHidden does not reliably fire when the server destroys a prompt (a patched leak's),
 		-- which left its chip on screen: it also goes when the prompt leaves the game
 		local connections: { RBXScriptConnection } = {}
