@@ -60,6 +60,9 @@ export type Opts = {
 	onVote: (() -> ())?,
 	onFlap: (() -> ())?,
 	flapOpen: boolean?,
+	-- the whole ticket face casts the vote (touch screens: the vote button alone is under a thumb's
+	-- width at our UI scale; the flap and the button stay on top and keep their own taps)
+	wholeTap: boolean?,
 	LayoutOrder: number?,
 }
 
@@ -497,6 +500,20 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	warning.Size = UDim2.new(1, -PAD * 2, 0, 13)
 	shrink(warning, 10, 7)
 	warning.Visible = false
+
+	if opts.wholeTap and opts.onVote then
+		Ui.new("TextButton", {
+			Name = "Face",
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			AutoButtonColor = false,
+			Text = "",
+			Selectable = false,
+			ZIndex = 4, -- over the print, under the vote button (5) and the flap
+			Parent = paper,
+		}).Activated
+			:Connect(opts.onVote)
+	end
 
 	-- The vote button and the fold-out flap that lays out the dossier
 	local button = Ui.button(opts.buttonText or "TAKE THIS LINE", "Secondary", opts.onVote, {

@@ -33,6 +33,7 @@ local Modal = require(script.Parent.Modal)
 local Overlay = require(script.Parent.Overlay)
 local Operators = require(script.Parent.Operators)
 local Theme = require(script.Parent.Theme)
+local TouchButtons = require(script.Parent.TouchButtons)
 local Ui = require(script.Parent.Ui)
 
 local Hud = {}
@@ -163,39 +164,9 @@ function Hud.mount(gui: ScreenGui)
 		local compact = gui:GetAttribute("Compact") == true
 		clusterScale.Scale = if compact then COMPACT_WATCH else 1
 		local lift = 0
-		local look = ContextActionService:GetButton("LTO_Glance")
-		local run = ContextActionService:GetButton("LTO_Sprint")
-		-- LOOK sits beside RUN, to its left on the same row, so the right thumb reaches both
-		-- and the pocket watch does not have to climb over a stack of buttons
-		if look and run and look.Parent and look.Parent:IsA("GuiObject") then
-			local parent = look.Parent
-			local size = parent.AbsoluteSize
-			if size.X > 0 and size.Y > 0 then
-				look.AnchorPoint = Vector2.zero
-				look.Position = UDim2.fromScale(
-					(
-						run.AbsolutePosition.X
-						- Tuning.Camera.GlanceTouchGap
-						- look.AbsoluteSize.X
-						- parent.AbsolutePosition.X
-					) / size.X,
-					(run.AbsolutePosition.Y - parent.AbsolutePosition.Y) / size.Y
-				)
-				-- PING beside LOOK, further left on the same row
-				local pingButton = ContextActionService:GetButton("LTO_Ping")
-				if pingButton and pingButton.Parent == parent then
-					pingButton.AnchorPoint = Vector2.zero
-					pingButton.Position = UDim2.fromScale(
-						(
-							run.AbsolutePosition.X
-							- 2 * (Tuning.Camera.GlanceTouchGap + look.AbsoluteSize.X)
-							- parent.AbsolutePosition.X
-						) / size.X,
-						(run.AbsolutePosition.Y - parent.AbsolutePosition.Y) / size.Y
-					)
-				end
-			end
-		end
+		-- RUN, LOOK and PING around Roblox's jump button at a thumb-sized 60 units (UI/TouchButtons,
+		-- Logic/TouchCluster; `lune run layout` checks it on real screens)
+		TouchButtons.apply()
 		local top = touchTop(nil)
 		local scale = gui:FindFirstChildOfClass("UIScale")
 		if top and scale and scale.Scale > 0 then

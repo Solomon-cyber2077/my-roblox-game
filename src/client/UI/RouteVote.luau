@@ -11,6 +11,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage.Shared
 local Ledger = require(Shared.Logic.Ledger)
@@ -229,6 +230,7 @@ function RouteVote.mount(gui: ScreenGui)
 					onVote = function()
 						castVote(index)
 					end,
+					wholeTap = UserInputService.TouchEnabled,
 					onFlap = function()
 						openIndex = if openIndex == index then nil else index
 						render()

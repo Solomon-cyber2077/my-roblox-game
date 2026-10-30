@@ -20,14 +20,10 @@ local Shared = ReplicatedStorage.Shared
 local TouchAction = require(Shared.Logic.TouchAction)
 
 local Theme = require(script.Parent.Theme)
+local TouchButtons = require(script.Parent.TouchButtons)
 local Ui = require(script.Parent.Ui)
 
 local ActionButton = {}
-
-local SIZE = Vector2.new(168, 58)
--- left of RUN (MovementController puts it at 1,-170 / 1,-150), clear of the jump button
-local POSITION = UDim2.new(1, -262, 1, -96)
-local COMPACT_SCALE = 0.86
 
 function ActionButton.mount(gui: ScreenGui)
 	local state = TouchAction.new()
@@ -70,17 +66,19 @@ function ActionButton.mount(gui: ScreenGui)
 		button = enamel
 		label = enamel :: any
 	end
-	button.Size = UDim2.fromOffset(SIZE.X, SIZE.Y)
-	button.AnchorPoint = Vector2.new(0.5, 0.5)
-	button.Position = POSITION
+	button.AnchorPoint = Vector2.zero
 	button.Visible = false
-	button.Selectable = false -- gamepad uses X on the prompt itself
-	local scale = Ui.new("UIScale", { Parent = button })
-	local function fit()
-		scale.Scale = if gui:GetAttribute("Compact") then COMPACT_SCALE else 1
+	-- left of Roblox's jump button at a thumb-sized height (Logic/TouchCluster), in screen units: our
+	-- UIScale would otherwise shrink it under ~9 mm on a phone, so place and size it against the scale
+	local uiScale = gui:FindFirstChildOfClass("UIScale")
+	local function place()
+		local r = TouchButtons.layout().action
+		local s = if uiScale and uiScale.Scale > 0 then uiScale.Scale else 1
+		local origin = gui.AbsolutePosition
+		button.Position = UDim2.fromOffset((r.x - origin.X) / s, (r.y - origin.Y) / s)
+		button.Size = UDim2.fromOffset(r.w / s, r.h / s)
 	end
-	fit()
-	gui:GetAttributeChangedSignal("Compact"):Connect(fit)
+	button.Selectable = false -- gamepad uses X on the prompt itself
 
 	local bar = Ui.new("Frame", {
 		Name = "Hold",
@@ -103,6 +101,7 @@ function ActionButton.mount(gui: ScreenGui)
 		local target = TouchAction.target(state)
 		button.Visible = target ~= nil
 		if target then
+			place()
 			label.Text = TouchAction.label(target.action, target.object)
 		end
 	end
