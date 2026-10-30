@@ -2,7 +2,9 @@
 --[[
 	Custom ProximityPrompt presentation. Every prompt in the game uses
 	Style = Custom; this draws a ticket-styled chip in the world with the input
-	glyph, action, object and a hold-progress rule. Touch players tap the chip.
+	glyph, action, object and a hold-progress rule. On touch the chip is a label only: the one
+	fixed action button by the thumb (UI/ActionButton, Logic/TouchAction) acts on it, so a phone
+	never has to hit a chip moving about the world, and the chip never eats a camera drag.
 	Prompts tagged with an Action attribute open UI on trigger (workshop, shop).
 ]]
 
@@ -20,7 +22,7 @@ local function glyph(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInp
 	if inputType == Enum.ProximityPromptInputType.Gamepad then
 		return "X"
 	elseif inputType == Enum.ProximityPromptInputType.Touch then
-		return "TAP"
+		return "USE" -- the action button
 	end
 	return prompt.KeyboardKeyCode.Name
 end
@@ -42,7 +44,7 @@ local function build(
 		StudsOffset = Vector3.new(0, 2.6, 0),
 		LightInfluence = 0,
 		ResetOnSpawn = false,
-		Active = true,
+		Active = inputType ~= Enum.ProximityPromptInputType.Touch,
 		Adornee = prompt.Parent,
 		Parent = gui,
 	})
@@ -52,6 +54,8 @@ local function build(
 		BackgroundTransparency = 0.06,
 		AutoButtonColor = false,
 		Text = "",
+		Active = inputType ~= Enum.ProximityPromptInputType.Touch,
+		Interactable = inputType ~= Enum.ProximityPromptInputType.Touch,
 		Parent = billboard,
 	})
 	Ui.corner(3).Parent = chip
@@ -208,7 +212,7 @@ local function build(
 			Ui.tween(needle, { Rotation = -135 }, TweenInfo.new(0.25, Enum.EasingStyle.Quad))
 		end
 	end)
-	if inputType == Enum.ProximityPromptInputType.Touch or prompt.ClickablePrompt then
+	if inputType ~= Enum.ProximityPromptInputType.Touch and prompt.ClickablePrompt then
 		chip.InputBegan:Connect(function(input)
 			if
 				input.UserInputType == Enum.UserInputType.Touch
