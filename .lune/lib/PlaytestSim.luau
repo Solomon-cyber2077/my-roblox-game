@@ -23,9 +23,20 @@ local SLEEPER_RATE = 0.02 -- extra a second per sleeper while searching its buil
 local SPOT_HEAD_START = 14 -- studs between player and Hollow when the player sees it first
 local LATE_HEAD_START = 4
 local GRAB_REACH = 1.5
--- touch prompts: a missed tap costs a retry; the fixed action button keeps this share of the misses
-local ACTION_BUTTON_SHARE = 0.35
+-- touch prompts (docs/SIM-CALIBRATION.md section 3): a tap misses ~3% of the time on a target of 9.6 mm or more,
+-- rising to ~25% at 4 mm, and 1.6x on a target that moves with the camera. The world chip is 64 pt drawn at 0.72 and
+-- moves; the action button (UI/ActionButton) is 64 pt and fixed. A missed tap costs a retry.
+local CHIP_PT, BUTTON_PT, MOVING = 64 * 0.72, 64, 1.6
 local PROMPT_RETRY = 1.2 -- seconds lost to a missed tap
+
+local function tapMiss(mm: number): number
+	return math.clamp(0.03 + (9.6 - mm) / (9.6 - 4) * 0.22, 0.03, 0.25)
+end
+
+-- what the game sees of a press: the device's input lag plus ~1.5 frames before it is read and shown
+local function lag(device): number
+	return device.latency + 1.5 / device.fps
+end
 
 local function clamp(x, lo, hi)
 	return math.max(lo, math.min(hi, x))
@@ -134,7 +145,7 @@ local function struggle(mods, session, p, stopLevel, helpers)
 		else
 			local spread = persona.jitter * (1 + persona.panic * 0.5)
 			-- after a first grab players learn to press a little early for their device
-			local lead = if firstGrab then 0 else device.latency * 0.5 * persona.skill
+			local lead = if firstGrab then 0 else lag(device) * 0.5 * persona.skill
 			local press = idealPress(SkillCheck, check) + gauss(rng) * spread + persona.reaction * 0.04 - lead
 			-- touch: builds with SkillCheck.TouchLead stamp a tap on touch-down, earlier by the lead;
 			-- older ones fired the keycap on Activated, when the finger lifts (a whole tap late)
@@ -142,7 +153,7 @@ local function struggle(mods, session, p, stopLevel, helpers)
 			if device.tap then
 				touchShift = if C.TouchLead then -C.TouchLead else device.tap
 			end
-			local claimed = press + device.latency + touchShift
+			local claimed = press + lag(device) + touchShift
 			local arrived = claimed + device.ping / 2
 			result = SkillCheck.judgePress(check, claimed, arrived, tolerance)
 			-- would the press have landed with no input latency? then the device cost it
@@ -395,10 +406,12 @@ local function playStop(mods, session, crew, train, stopInfo)
 					local startZ = p.z
 					if math.abs(s.dist - p.d) <= step then
 						p.d, p.z, p.state, p.searchLeft = s.dist, s.z, "Search", s.hold
-						local miss = p.device.promptMiss
-						if miss and p.device.tap then
-							local share = if session.actionButton then ACTION_BUTTON_SHARE else 1
-							if p.rng:chance(miss * share * (1.3 - p.persona.skill)) then
+						local ptMm = p.device.ptMm
+						if ptMm and p.device.tap then
+							local miss = if session.actionButton
+								then tapMiss(BUTTON_PT * ptMm)
+								else tapMiss(CHIP_PT * ptMm) * MOVING
+							if p.rng:chance(miss * (1.3 - p.persona.skill)) then
 								p.searchLeft += PROMPT_RETRY
 								p.stats.promptMisses += 1
 								feel(p, "confusion", 0.02)

@@ -66,6 +66,7 @@ local actionButton = args.chip ~= "1" -- --chip=1 replays the old tap-the-world-
 
 -- crew size weights: solo 20%, duo 35%, trio 25%, full 20%
 local SIZES = { 0.2, 0.35, 0.25, 0.2 }
+local MOBILE_SHARE = 0.78
 
 local function crewFor(seed: number): { string }
 	if fixedCrew then
@@ -81,12 +82,21 @@ local function crewFor(seed: number): { string }
 			break
 		end
 	end
-	local pool = {}
+	-- each seat is a phone or tablet player MOBILE_SHARE of the time (Roblox's device mix,
+	-- docs/SIM-CALIBRATION.md section 1), drawn without repeats from that platform's personas
+	local pools = { Mobile = {}, PC = {} }
 	for _, persona in Personas.List do
-		table.insert(pool, persona.id)
+		table.insert(pools[Personas.Devices[persona.device].platform], persona.id)
 	end
-	rng:shuffle(pool)
-	return table.move(pool, 1, size, 1, {})
+	rng:shuffle(pools.Mobile)
+	rng:shuffle(pools.PC)
+	local crew = {}
+	for _ = 1, size do
+		local want = if rng:next() < MOBILE_SHARE then "Mobile" else "PC"
+		local pool = if #pools[want] > 0 then pools[want] else pools[if want == "PC" then "Mobile" else "PC"]
+		table.insert(crew, table.remove(pool))
+	end
+	return crew
 end
 
 local results = {}

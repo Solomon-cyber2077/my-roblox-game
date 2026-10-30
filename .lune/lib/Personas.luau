@@ -26,8 +26,7 @@
 		tap          touch only: seconds a tap is held (finger down to lift)
 		toggleSprint sprints with a tapped RUN button rather than a held key
 		fps          frames a second, for the report
-	promptMiss   touch only: chance a tap on a world prompt chip misses (the chip moves with the camera);
-	             the fixed action button (UI/ActionButton) cuts it to ACTION_BUTTON_SHARE of that
+	ptMm         touch only: millimetres per UI point on this screen (an on-screen target's real size)
 ]]
 
 export type Device = {
@@ -43,7 +42,7 @@ export type Device = {
 	tap: number?,
 	toggleSprint: boolean?,
 	fps: number,
-	promptMiss: number?,
+	ptMm: number?,
 }
 
 export type Persona = {
@@ -106,7 +105,7 @@ local Devices: { [string]: Device } = {
 		tap = 0.08,
 		toggleSprint = true,
 		fps = 50,
-		promptMiss = 0.1,
+		ptMm = 0.156,
 	},
 	Tablet = {
 		id = "Tablet",
@@ -121,7 +120,7 @@ local Devices: { [string]: Device } = {
 		tap = 0.08,
 		toggleSprint = true,
 		fps = 60,
-		promptMiss = 0.05,
+		ptMm = 0.19,
 	},
 	BudgetAndroid = {
 		id = "BudgetAndroid",
@@ -136,7 +135,7 @@ local Devices: { [string]: Device } = {
 		tap = 0.08,
 		toggleSprint = true,
 		fps = 24,
-		promptMiss = 0.16,
+		ptMm = 0.16,
 	},
 	-- the launch floor for a first session (iPhone SE 2020 / Snapdragon 670 class), only used when a run
 	-- forces it (`lune run playtest --device=LowPhone`)
@@ -153,7 +152,7 @@ local Devices: { [string]: Device } = {
 		tap = 0.09,
 		toggleSprint = true,
 		fps = 28,
-		promptMiss = 0.15,
+		ptMm = 0.156,
 	},
 }
 local List: { Persona } = {
