@@ -137,9 +137,7 @@ for _, ccu in CCUS do
 	)
 end
 say("")
-say(
-	"Rule (build nothing unless the data justifies it): the queue is justified when it cuts players lost"
-)
+say("Rule (build nothing unless the data justifies it): the queue is justified when it cuts players lost")
 say("before their first run by 5 points or more, or the median wait by 60 s or more.")
 say("")
 for _, v in verdicts do
