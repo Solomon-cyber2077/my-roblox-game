@@ -2,19 +2,22 @@
 --[[
 	Player profiles with session locking.
 
-	A profile is loaded with UpdateAsync, which stamps a lock { job, time }.
+	A profile is loaded with UpdateAsync, which stamps a lock { job, time } and a
+	session id that stays after the lock is released.
 	Another server that finds a fresh lock retries with backoff, and takes the
 	profile over once the lock is older than LockTimeoutSeconds or the last
 	retry comes up, about 30 seconds in. That way a server that died or failed
-	its last save can't leave the player on an unsaved session; a late save
-	from the old server is refused. Saves run every AutosaveSeconds, on leave
-	(releasing the lock) and on shutdown.
+	its last save can't leave the player on an unsaved session. A late save
+	from the old server is refused (Logic/SaveLock): it reports failure and that
+	session stops saving, so nothing downstream takes it as saved. Saves run
+	every AutosaveSeconds, on leave (releasing the lock) and on shutdown.
 
 	When DataStores are unavailable (an unpublished Studio place, an outage),
 	the player gets an in-memory profile and the UI shows "Progress not saved".
 ]]
 
 local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -27,6 +30,7 @@ local NpcSave = require(Shared.Logic.NpcSave)
 local CrewClothing = require(Shared.Logic.CrewClothing)
 local Rank = require(Shared.Logic.Rank)
 local Retry = require(Shared.Logic.Retry)
+local SaveLock = require(Shared.Logic.SaveLock)
 local Signal = require(Shared.Util.Signal)
 local Types = require(Shared.Types)
 
@@ -34,7 +38,15 @@ local StateService = require(script.Parent.StateService)
 
 type Profile = Types.Profile
 -- loaded: the profile came from the store (false when it failed to load or there is no store)
-type Session = { profile: Profile, online: boolean, loaded: boolean, dirty: boolean, released: boolean }
+-- token: this session's id in the store, nil when it never reached the store
+type Session = {
+	profile: Profile,
+	online: boolean,
+	loaded: boolean,
+	dirty: boolean,
+	released: boolean,
+	token: string?,
+}
 
 local SCHEMA_VERSION = NpcSave.VERSION -- 2: profile.npcs (Logic/NpcSave)
 
@@ -117,11 +129,12 @@ local function keyFor(player: Player): string
 	return `u_{player.UserId}`
 end
 
-local function tryLoad(player: Player): (Profile?, boolean)
+local function tryLoad(player: Player): (Profile?, boolean, string?)
 	if store == nil then
-		return nil, false
+		return nil, false, nil
 	end
 	local now = os.time()
+	local token = HttpService:GenerateGUID(false)
 	for attempt = 1, Tuning.Data.LoadRetries do
 		local lockedElsewhere = false
 		local ok, result = pcall(function()
@@ -138,20 +151,21 @@ local function tryLoad(player: Player): (Profile?, boolean)
 					return nil -- cancel the write and retry
 				end
 				data.lock = { job = game.JobId, time = now }
+				data.session = token
 				return data
 			end)
 		end)
 		if not ok then
 			warn(`[DataService] load failed for {player.Name}: {result}`)
-			return nil, false
+			return nil, false, nil
 		end
 		if not lockedElsewhere then
 			local data = result :: any
-			return reconcile(data and data.profile), true
+			return reconcile(data and data.profile), true, token
 		end
 		task.wait(2 ^ attempt)
 	end
-	return nil, false
+	return nil, false, nil
 end
 
 local function save(player: Player, release: boolean): boolean
@@ -160,11 +174,14 @@ local function save(player: Player, release: boolean): boolean
 		return false
 	end
 	local profile = session.profile
+	local token = session.token
+	local refused = false
 	local ok, err = Retry.run(function()
 		return (store :: DataStore):UpdateAsync(keyFor(player), function(old: any)
 			local data = if type(old) == "table" then old else {}
-			if data.lock and data.lock.job ~= game.JobId then
-				return nil -- another server owns this profile now; never overwrite it
+			refused = token == nil or not SaveLock.owns(data, game.JobId, token)
+			if refused then
+				return nil -- another session owns this profile now; never overwrite it
 			end
 			data.profile = profile
 			data.lock = if release then nil else { job = game.JobId, time = os.time() }
@@ -176,12 +193,21 @@ local function save(player: Player, release: boolean): boolean
 		warn(`[DataService] save failed for {player.Name}: {err}`)
 		return false
 	end
+	if refused then
+		-- stays dirty, and "not saving" shows: this session can't save again
+		warn(`[DataService] save refused for {player.Name}: a newer session owns the profile`)
+		session.online = false
+		if not session.released then
+			publish(player)
+		end
+		return false
+	end
 	session.dirty = false
 	return true
 end
 
 local function onPlayerAdded(player: Player)
-	local profile, online = tryLoad(player)
+	local profile, online, token = tryLoad(player)
 	if player.Parent == nil then
 		return
 	end
@@ -191,6 +217,7 @@ local function onPlayerAdded(player: Player)
 		loaded = profile ~= nil,
 		dirty = false,
 		released = false,
+		token = token,
 	}
 	sessions[player] = session
 	publish(player)

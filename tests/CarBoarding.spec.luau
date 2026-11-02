@@ -27,6 +27,28 @@ describe("CarBoarding", function()
 		expect(CarBoarding.afterLeave(car(Cars.MinPlayers - 1, 2), 7)).toBe(nil)
 	end)
 
+	it("sends a lone rider off solo after the wait", function()
+		local function alone(soloSince, departing)
+			return { count = 1, departing = departing == true, soloSince = soloSince }
+		end
+		local wait = CarBoarding.SoloWaitSeconds
+		expect(wait > Cars.CountdownSeconds + Cars.FallbackAfter).toBe(true)
+		expect(CarBoarding.soloRemaining(alone(10), 20)).toBe(wait - 10)
+		expect(CarBoarding.soloRemaining(car(1), 20)).toBe(nil)
+		expect(CarBoarding.shouldDepart(alone(0), wait - 1)).toBe(false)
+		expect(CarBoarding.shouldDepart(alone(0), wait)).toBe(true)
+		expect(CarBoarding.shouldDepart(alone(0, true), wait)).toBe(false)
+	end)
+
+	it("runs the lone wait only while someone is alone", function()
+		expect(CarBoarding.afterChange(car(1), 5)).toBe(5)
+		expect(CarBoarding.afterChange({ count = 1, departing = false, soloSince = 2 }, 5)).toBe(2)
+		expect(CarBoarding.afterChange({ count = Cars.MinPlayers, departing = false, soloSince = 2 }, 5)).toBe(
+			nil
+		)
+		expect(CarBoarding.afterChange({ count = 0, departing = false, soloSince = 2 }, 5)).toBe(nil)
+	end)
+
 	it("opens the door before the countdown and in its first seconds only", function()
 		expect(CarBoarding.canExit(car(1), 100)).toBe(true)
 		expect(CarBoarding.canExit(car(2, 0), Cars.ExitWindowSeconds - 0.1)).toBe(true)
@@ -39,6 +61,7 @@ describe("CarBoarding", function()
 		expect(CarBoarding.shouldDepart(car(2, 0), Cars.CountdownSeconds - 1)).toBe(false)
 		expect(CarBoarding.shouldDepart(car(2, 0), Cars.CountdownSeconds)).toBe(true)
 		expect(CarBoarding.shouldDepart(car(1), 1e6)).toBe(false)
+		expect(CarBoarding.shouldDepart(car(0), 1e6)).toBe(false)
 		expect(CarBoarding.shouldDepart(car(Cars.MaxPlayers, 0, true), 0)).toBe(false)
 	end)
 

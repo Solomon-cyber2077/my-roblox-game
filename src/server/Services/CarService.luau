@@ -4,8 +4,9 @@
 	is a party room for 2-4 players. Hold E (tap on touch) at the door to board or to
 	get out; rules in Logic/CarBoarding. A full car, or one whose countdown runs out,
 	goes black and teleports its players to a reserved server, where the run starts
-	at once. In Studio, where teleports fail, the run starts here instead.
-	Solo players keep the hall's Ready button (LobbyService).
+	at once. In Studio, where teleports fail, the run starts here instead. A rider
+	left alone leaves solo after a wait; the hall's Ready button still starts a solo
+	run straight away (LobbyService).
 ]]
 
 local Players = game:GetService("Players")
@@ -33,6 +34,7 @@ type Car = {
 	startedAt: number?,
 	departing: boolean,
 	since: number?, -- unix seconds the first rider boarded (the crew queue's order, MatchmakingService)
+	soloSince: number?, -- when the rider was left alone (Logic/CarBoarding)
 	generation: number, -- bumped each time the car empties: a fresh queue ticket per crew
 	inside: CFrame, -- on the aisle at standing height, facing the door
 	outside: CFrame, -- on the platform before the door, facing away from it
@@ -49,7 +51,12 @@ local function now(): number
 end
 
 local function rules(car: Car): CarBoarding.Car
-	return { count = #car.players, startedAt = car.startedAt, departing = car.departing }
+	return {
+		count = #car.players,
+		startedAt = car.startedAt,
+		departing = car.departing,
+		soloSince = car.soloSince,
+	}
 end
 
 local function publish()
@@ -59,7 +66,12 @@ local function publish()
 		for _, player in car.players do
 			table.insert(occupants, tostring(player.UserId))
 		end
-		out[i] = { occupants = occupants, startedAt = car.startedAt, departing = car.departing }
+		out[i] = {
+			occupants = occupants,
+			startedAt = car.startedAt,
+			departing = car.departing,
+			soloSince = car.soloSince,
+		}
 	end
 	StateService.Set({ "lobby", "cars" }, out)
 end
@@ -97,6 +109,7 @@ local function remove(player: Player)
 		car.departing = false
 		car.startedAt = nil
 	end
+	car.soloSince = CarBoarding.afterChange(rules(car), now())
 	publish()
 end
 
@@ -117,6 +130,7 @@ local function board(player: Player, index: number)
 	end
 	LobbyService.ClearReady(player)
 	car.startedAt = CarBoarding.afterEnter(rules(car), now())
+	car.soloSince = CarBoarding.afterChange(rules(car), now())
 	place(player, slot(car, #car.players))
 	publish()
 end
@@ -192,7 +206,7 @@ local function depart(index: number, match: CrewQueue.Match?)
 						aboard[player] = nil
 					end
 					table.clear(car.players)
-					car.departing, car.startedAt = false, nil
+					car.departing, car.startedAt, car.soloSince = false, nil, nil
 					publish()
 					return
 				end
@@ -211,6 +225,8 @@ local function depart(index: number, match: CrewQueue.Match?)
 			end
 			car.departing = false
 			car.startedAt = CarBoarding.afterLeave(rules(car), now())
+			car.soloSince = nil -- a lone rider waits again before the next try
+			car.soloSince = CarBoarding.afterChange(rules(car), now())
 			publish()
 		end)
 	end)
@@ -373,14 +389,15 @@ function CarService.Start()
 		local t = now()
 		for index, car in cars do
 			-- a part car waits for the cross-server queue to couple it (MatchmakingService) until the
-			-- fallback; a full car, or any car while the queue is down, leaves on its own countdown
+			-- fallback; a full car, or any car while the queue is down, leaves on its own countdown.
+			-- A lone rider's wait already outlasts the fallback, so it isn't held again.
 			local full = #car.players >= Tuning.Cars.MaxPlayers
 			local deadline = (car.startedAt or t) + Tuning.Cars.CountdownSeconds
 			local queue = Registry.MatchmakingService
 			local healthy = queue ~= nil and queue.Healthy()
 			if
 				CarBoarding.shouldDepart(rules(car), t)
-				and not CrewQueue.holdLocal(full, healthy, deadline, t)
+				and (car.soloSince ~= nil or not CrewQueue.holdLocal(full, healthy, deadline, t))
 			then
 				depart(index)
 			end

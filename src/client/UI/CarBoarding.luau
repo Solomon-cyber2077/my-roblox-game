@@ -31,7 +31,7 @@ local GLOW = Color3.fromRGB(96, 214, 150) -- signal-lamp green, not neon
 local STRIP = 0.35 -- glow strip width
 local CORNER = 1.4 -- corner square size
 
-type CarState = { occupants: { string }, startedAt: number?, departing: boolean }
+type CarState = { occupants: { string }, startedAt: number?, departing: boolean, soloSince: number? }
 
 -- The index and state of the car the local player is in, if any.
 function CarBoardingUi.MyCar(): (number?, CarState?)
@@ -45,7 +45,12 @@ function CarBoardingUi.MyCar(): (number?, CarState?)
 end
 
 local function rules(car: CarState): CarBoarding.Car
-	return { count = #car.occupants, startedAt = car.startedAt, departing = car.departing }
+	return {
+		count = #car.occupants,
+		startedAt = car.startedAt,
+		departing = car.departing,
+		soloSince = car.soloSince,
+	}
 end
 
 -- Green strips round the edges of a car's floor with a brighter square in each corner.
@@ -312,6 +317,7 @@ function CarBoardingUi.mount(gui: ScreenGui)
 		local r = rules(car)
 		local remaining = CarBoarding.remaining(r, now)
 		local exitLeft = CarBoarding.exitRemaining(r, now)
+		local solo = CarBoarding.soloRemaining(r, now)
 		local seats = `{#car.occupants}/{Tuning.Cars.MaxPlayers} ABOARD`
 		-- the crew queue is live when the hall publishes its waiting count (MatchmakingService)
 		local queue = State.Get({ "lobby", "queue" })
@@ -326,7 +332,9 @@ function CarBoardingUi.mount(gui: ScreenGui)
 			count.Text = ""
 			if remaining == nil then
 				headline.Text = `FINDING A CREW  ·  {seats}`
-				hint.Text = `{waiting} waiting across the line`
+				hint.Text = if solo
+					then `Leaving solo in {math.ceil(solo)}s if no crew joins`
+					else `{waiting} waiting across the line`
 			else
 				headline.Text = `COUPLING  ·  {seats}`
 				hint.Text = "Looking for another car to join yours"
@@ -338,7 +346,9 @@ function CarBoardingUi.mount(gui: ScreenGui)
 		elseif remaining == nil then
 			count.Text = ""
 			headline.Text = `CAR {mine}  ·  {seats}`
-			hint.Text = `Waiting for {Tuning.Cars.MinPlayers - #car.occupants} more to start the countdown`
+			hint.Text = if solo
+				then `Leaving solo in {math.ceil(solo)}s if no crew joins`
+				else `Waiting for {Tuning.Cars.MinPlayers - #car.occupants} more to start the countdown`
 		else
 			count.Text = tostring(math.ceil(remaining))
 			headline.Text = `DEPARTING  ·  {seats}`
