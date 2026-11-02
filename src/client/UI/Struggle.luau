@@ -32,6 +32,7 @@ local keyScale: UIScale
 local rootScale: UIScale
 local fill: Frame
 local helpers: TextLabel
+local coach: TextLabel? = nil
 local onPress: (() -> ())? = nil
 local verdictUntil = 0
 
@@ -217,6 +218,27 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	helpers.TextStrokeTransparency = 0.3
 	helpers.ZIndex = 21
 	helpers.Parent = root
+	local hint = Ui.text({
+		Text = "",
+		Font = FONT,
+		TextSize = 15,
+		Color = BONE,
+		Position = UDim2.fromOffset(-40, KEY_Y + 32),
+		Size = UDim2.new(1, 80, 0, 18),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	hint.TextStrokeColor3 = INK
+	hint.TextStrokeTransparency = 0.25
+	hint.ZIndex = 21
+	hint.Parent = root
+	coach = hint
+end
+
+-- The tutorial's line under the check (Controllers/TutorialController), "" for none.
+function Struggle.coach(text: string)
+	if coach then
+		coach.Text = text
+	end
 end
 
 -- `crewmates`: another living crewmate is in the run, so the check says they can pull you free.

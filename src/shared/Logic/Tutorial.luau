@@ -6,6 +6,7 @@
 	crewTier(list)    the crew rides at its least experienced player's tier. This is the NPC
 	                  errands' rule for the crew's lowest stage (Logic/NpcQuest.runStage): the
 	                  lowest count among the crew still inside the tutorial decides
+	inline(id, tier)  the prompt its own screen draws on this tier (Config/Tutorial `inline`), or nil
 
 	Counting (profile.tutorialRuns, Services/TutorialService): a run counts once it ends,
 	for each player who stepped off the train at least once in it. A profile that failed to
@@ -64,6 +65,18 @@ function Tutorial.afterRun(loaded: boolean, stored: any, steppedOff: boolean): n
 	end
 	local done = count(stored)
 	return if done < T.Runs then done + 1 else nil
+end
+
+function Tutorial.inline(id: string, tier: number?): TutorialConfig.Prompt?
+	if tier == nil or tier < 1 then
+		return nil
+	end
+	for _, prompt in T.Prompts do
+		if prompt.id == id and prompt.inline == true and tier <= prompt.tier then
+			return prompt
+		end
+	end
+	return nil
 end
 
 -- The tier's settings, or nil past the tutorial.

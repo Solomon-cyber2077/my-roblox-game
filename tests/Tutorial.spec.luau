@@ -3,6 +3,19 @@ local NpcQuest = require(Shared.Logic.NpcQuest)
 local Tutorial = require(Shared.Logic.Tutorial)
 
 describe("Tutorial tiers", function()
+	it("teaches the grab and the vote on their own screens from the first run", function()
+		for tier = 1, 2 do
+			expect(Tutorial.inline("SkillCheck", tier) ~= nil).toBe(true)
+		end
+		expect(Tutorial.inline("SkillCheck", 3)).toBe(nil)
+		for tier = 1, 3 do
+			expect(Tutorial.inline("Voting", tier) ~= nil).toBe(true)
+		end
+		expect(Tutorial.inline("Voting", 0)).toBe(nil)
+		expect(Tutorial.inline("Voting", nil)).toBe(nil)
+		expect(Tutorial.inline("Move", 1)).toBe(nil)
+	end)
+
 	it("is tier 1, 2, 3 on a player's first three runs, then over", function()
 		expect(Tutorial.tier(0)).toBe(1)
 		expect(Tutorial.tier(1)).toBe(2)

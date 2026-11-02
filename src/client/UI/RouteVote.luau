@@ -16,6 +16,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage.Shared
 local Ledger = require(Shared.Logic.Ledger)
 local TicketModel = require(Shared.Logic.TicketModel)
+local Tutorial = require(Shared.Logic.Tutorial)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
@@ -268,7 +269,11 @@ function RouteVote.mount(gui: ScreenGui)
 			handle.setFlap(openIndex == index)
 		end
 		updateStamps(votes)
-		tieNote.Text = if chosen then "" else TicketModel.tieNote(votes, options) or ""
+		-- a new hand's first votes: the strip says what the tickets are for until the vote is in
+		local teach = if mine == nil then Tutorial.inline("Voting", State.Get({ "run", "tutorial" })) else nil
+		tieNote.Text = if chosen
+			then ""
+			else TicketModel.tieNote(votes, options) or (if teach then teach.text else "")
 		tieNote.Visible = tieNote.Text ~= ""
 
 		-- Lock-in: the winner is punched, the rest go slack

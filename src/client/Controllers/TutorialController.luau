@@ -2,7 +2,9 @@
 --[[
 	The tutorial's prompts (Config/Tutorial Prompts, a rough draft the owner edits there): short
 	contextual lines in the HUD's tutorial slot (UI/Hud), each shown once per run when its moment
-	first comes, on runs of its tier (run.tutorial, the crew's tier from TutorialService).
+	first comes, on runs of its tier (run.tutorial, the crew's tier from TutorialService). The
+	skill check's prompt sits under the check itself (UI/Struggle) on every grab, from the first
+	run: the slot is out of the player's eye then. The vote's sits on the ballot (UI/RouteVote).
 
 	One at a time, queued in the data's order. The slot yields like the leak slot: it hides while
 	a modal or full-screen UI is open, and a prompt's time does not run down while it is hidden.
@@ -18,11 +20,13 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
+local Tutorial = require(Shared.Logic.Tutorial)
 local Safe = require(Shared.Util.Safe)
 
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local Hud = require(script.Parent.Parent.UI.Hud)
+local Struggle = require(script.Parent.Parent.UI.Struggle)
 local Theme = require(script.Parent.Parent.UI.Theme)
 local Ui = require(script.Parent.Parent.UI.Ui)
 
@@ -172,6 +176,7 @@ local function step(dt: number)
 	if not Session.isRunActive() or not Session.isMember() or tier < 1 then
 		queue = {}
 		showing = nil
+		Struggle.coach("")
 		if panel then
 			panel.Visible = false
 		end
@@ -193,8 +198,15 @@ local function step(dt: number)
 	if offSince == nil and (status == "Afield" or status == "Straggler") then
 		offSince = os.clock()
 	end
+	local grabbed = happening("Grabbed", run) and Tutorial.inline("SkillCheck", tier) ~= nil
+	Struggle.coach(if grabbed then textOf("SkillCheck") else "")
 	for _, prompt in T.Prompts do
-		if prompt.tier == tier and not seen[prompt.id] and happening(prompt.when, run) then
+		if
+			prompt.tier == tier
+			and not prompt.inline
+			and not seen[prompt.id]
+			and happening(prompt.when, run)
+		then
 			seen[prompt.id] = true
 			table.insert(queue, prompt.id)
 		end

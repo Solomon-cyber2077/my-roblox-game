@@ -42,7 +42,9 @@ export type PostGrab = { immunity: number, stagger: boolean }
 	  Carrying    your backpack holds something
 ]]
 -- touch: the wording on a phone or tablet (the keys in `text` mean nothing there)
-export type Prompt = { id: string, tier: number, when: string, text: string, touch: string? }
+-- inline: drawn on its own screen from tier 1 up to `tier`, because the HUD slot is out of sight at that moment
+export type Prompt =
+	{ id: string, tier: number, when: string, text: string, touch: string?, inline: boolean? }
 
 export type Tier = {
 	stop1Cap: number?,
@@ -216,7 +218,9 @@ return table.freeze({
 			id = "SkillCheck",
 			tier = 2,
 			when = "Grabbed",
-			text = "Press {KEY} when the marker is on the white.",
+			text = "Press {KEY} when the marker is on the amber.",
+			touch = "Tap the key when the marker is on the amber.",
+			inline = true,
 		},
 		-- run 3: the hull, leaks, stamina, voting
 		{
@@ -241,7 +245,8 @@ return table.freeze({
 			id = "Voting",
 			tier = 3,
 			when = "Junction",
-			text = "Vote for the next stop. More danger, better loot.",
+			text = "Choose a ticket to vote for the next stop. More danger, better loot.",
+			inline = true,
 		},
 	} :: { Prompt }),
 	PromptSeconds = 7, -- each prompt stays this long (time behind another screen does not count)
