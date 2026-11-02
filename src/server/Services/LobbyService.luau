@@ -441,6 +441,18 @@ function LobbyService.HoldCountdown(): boolean
 	return Again.hold(card, presentIds(), readyIds(), os.clock())
 end
 
+-- After a run in a car server: the players to send to a public hall now (Logic/Again).
+function LobbyService.CarLeavers(waitOver: boolean): { Player }
+	local readied = readyIds()
+	local out: { Player } = {}
+	for _, player in Players:GetPlayers() do
+		if Again.leaves(card, player.UserId, readied, waitOver) then
+			table.insert(out, player)
+		end
+	end
+	return out
+end
+
 function LobbyService.ClearReady(player: Player)
 	ready[player] = nil
 	publishReady()

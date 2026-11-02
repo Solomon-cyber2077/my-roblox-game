@@ -10,11 +10,14 @@
 	  hold       while an AGAIN group is waiting, the hall does not count down: it goes once every
 	             present eligible member who has not chosen DEPOT is ready, or once FallbackSeconds
 	             have passed since the first applied press with at least one of them ready
+	  car server after the run, AGAIN stays for another run with the same crew; DEPOT goes to a
+	             public hall at once, and anyone undecided follows once FallbackSeconds have passed
 ]]
 
 local Again = {}
 
 Again.FallbackSeconds = 20 -- FIXED
+Again.HallRetrySeconds = 15 -- a car server's teleport to the hall: try again if the player is still here
 
 export type Card = {
 	eligible: { [number]: boolean }, -- userIds
@@ -114,6 +117,17 @@ function Again.hold(
 		return false
 	end
 	return now - card.firstAppliedAt < Again.FallbackSeconds
+end
+
+-- Whether a car server sends `id` to a public hall now. `waitOver`: FallbackSeconds have passed in the Lobby.
+function Again.leaves(card: Card?, id: number, ready: { [number]: boolean }, waitOver: boolean): boolean
+	if card == nil or card.declined[id] then
+		return true
+	end
+	if ready[id] or card.queued[id] then
+		return false
+	end
+	return waitOver
 end
 
 -- How many of the group are ready, and how many it waits for (the card's count).

@@ -16,6 +16,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
+local Again = require(Shared.Logic.Again)
 local CarBoarding = require(Shared.Logic.CarBoarding)
 local CrewQueue = require(Shared.Logic.CrewQueue)
 local Safe = require(Shared.Util.Safe)
@@ -267,6 +268,49 @@ local function launchOnArrival()
 	Registry.RunDirector.Launch(Players:GetPlayers())
 end
 
+-- A car server after a run, while the AGAIN crew readies: sends the rest to a public Depot Hall. The hall's
+-- own countdown (Logic/Again, RunDirector) then starts the crew's next run here.
+local function settleAfterRun()
+	local waitEnds = os.clock() + Again.FallbackSeconds
+	local sentAt: { [Player]: number } = {}
+	local function waiting(): boolean
+		local phase = Registry.RunDirector.Phase()
+		return phase == "Lobby" or phase == "Countdown"
+	end
+	while true do
+		local t = os.clock()
+		local open = waiting()
+		local due: { Player } = {}
+		if open then
+			due = LobbyService.CarLeavers(t >= waitEnds)
+		else
+			-- the crew has left: a failed teleport must not strand anyone here for the run
+			for player in sentAt do
+				if player.Parent == nil or Registry.CrewService.IsMember(player) then
+					sentAt[player] = nil
+				else
+					table.insert(due, player)
+				end
+			end
+			if next(sentAt) == nil then
+				return
+			end
+		end
+		local leaving: { Player } = {}
+		for _, player in due do
+			local sent = sentAt[player]
+			if sent == nil or t - sent >= Again.HallRetrySeconds then
+				sentAt[player] = t
+				table.insert(leaving, player)
+			end
+		end
+		if #leaving > 0 then
+			task.spawn(pcall, TeleportService.TeleportAsync, TeleportService, game.PlaceId, leaving)
+		end
+		task.wait(0.25)
+	end
+end
+
 function CarService.Init()
 	local display = LobbyService.DisplayTrain()
 	local folder = Instance.new("Folder")
@@ -345,13 +389,10 @@ function CarService.Start()
 
 	if IS_CAR_SERVER then
 		task.spawn(Safe.call, "CarService.launchOnArrival", launchOnArrival)
-		-- the run over, everyone goes back to a public Depot Hall
+		-- the run over: the AGAIN crew stays for another, everyone else goes back to a public Depot Hall
 		Registry.RunDirector.PhaseChanged:Connect(function(nextPhase: string, previous: string)
 			if nextPhase == "Lobby" and previous ~= "Lobby" and previous ~= "Countdown" then
-				local everyone = Players:GetPlayers()
-				if #everyone > 0 then
-					pcall(TeleportService.TeleportAsync, TeleportService, game.PlaceId, everyone)
-				end
+				task.spawn(Safe.call, "CarService.settleAfterRun", settleAfterRun)
 			end
 		end)
 	end
