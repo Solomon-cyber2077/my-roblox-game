@@ -890,7 +890,7 @@ local function onPlayerAdded(player: Player)
 	if profile == nil or not connected(player) then
 		return
 	end
-	local first = profile.telemetry.visits == 0 and (profile.stats.runs or 0) == 0
+	local first = Telemetry.firstSession(profile.telemetry.visits, profile.stats.runs or 0, IS_CAR_SERVER)
 	visitor.firstVisit = first
 	DataService.Update(player, function(p)
 		if p.telemetry.visits == 0 then

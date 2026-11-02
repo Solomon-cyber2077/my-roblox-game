@@ -27,6 +27,12 @@ local function bucket(value: number, edges: { number }, labels: { string }): str
 	return labels[#labels]
 end
 
+-- Still the first session? The hall counts its visit before the queue sends a new player to a car
+-- server, so a car server's first visit shows one visit already.
+function Telemetry.firstSession(visits: number, runs: number, isCarServer: boolean): boolean
+	return runs == 0 and (visits == 0 or (isCarServer and visits == 1))
+end
+
 function Telemetry.runDuration(minutes: number): string
 	return bucket(minutes, Config.Buckets.RunMinutes, Config.Vocab.RunDuration)
 end

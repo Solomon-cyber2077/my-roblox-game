@@ -4,8 +4,11 @@
 
 	A profile is loaded with UpdateAsync, which stamps a lock { job, time }.
 	Another server that finds a fresh lock retries with backoff, and takes the
-	profile over only after the lock is older than LockTimeoutSeconds. Saves
-	run every AutosaveSeconds, on leave (releasing the lock) and on shutdown.
+	profile over once the lock is older than LockTimeoutSeconds or the last
+	retry comes up, about 30 seconds in. That way a server that died or failed
+	its last save can't leave the player on an unsaved session; a late save
+	from the old server is refused. Saves run every AutosaveSeconds, on leave
+	(releasing the lock) and on shutdown.
 
 	When DataStores are unavailable (an unpublished Studio place, an outage),
 	the player gets an in-memory profile and the UI shows "Progress not saved".
