@@ -276,6 +276,7 @@ local function buildRain()
 	rainSound.Looped = true
 	rainSound.Volume = 0
 	rainSound.PlaybackSpeed = cue.pitch or 1
+	rainSound.SoundGroup = Registry.AudioController and Registry.AudioController.Group(cue.mix)
 	rainSound.Parent = rainFolder
 	rainMuffle = Instance.new("EqualizerSoundEffect")
 	rainMuffle.LowGain = 2
@@ -318,7 +319,6 @@ local function updateRain(dt: number, camera: Vector3, ground: number, rain: num
 	splashPart.CFrame = CFrame.new(camera.X, ground + 0.15, camera.Z)
 	splashEmitter.Rate = if wind > 20 then 0 else 240 * near
 	rainSound.Volume = Audio.Rain.volume * rainShown * (if sheltered then 0.55 else 1)
-	rainMuffle.HighGain = if sheltered then -30 else 0
 	-- a wet sheen on every surface while it pours
 	Lighting.EnvironmentSpecularScale = 0.6 + 0.45 * rainShown
 end
