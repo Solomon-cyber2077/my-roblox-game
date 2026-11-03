@@ -30,6 +30,10 @@ describe("Telemetry vocabulary", function()
 				"session_ended",
 				"quit_after_outcome",
 				"first_session_timing",
+				"client_fps",
+				"client_fps_low",
+				"client_memory",
+				"client_load",
 				"cohort_assigned",
 				"invite_prompted",
 			}
@@ -54,6 +58,37 @@ describe("Telemetry vocabulary", function()
 	it("puts runTier on run_started and route length on run_progress", function()
 		expect(Config.Events.run_started.fields[2]).toBe("RunTier")
 		expect(Config.Events.run_progress.fields[3]).toBe("RouteLength")
+	end)
+end)
+
+describe("Telemetry health and visit numbers", function()
+	it("counts a first visit from the hall join, within limits", function()
+		expect(Telemetry.visitOffset(1000, 1090, 1800)).toBe(90)
+		expect(Telemetry.visitOffset(nil, 1090, 1800)).toBe(0)
+		expect(Telemetry.visitOffset(1090, 1090, 1800)).toBe(0)
+		expect(Telemetry.visitOffset(1000, 4000, 1800)).toBe(0)
+		expect(Telemetry.visitOffset(5000, 1000, 1800)).toBe(0)
+	end)
+
+	it("buckets health readings on their edges", function()
+		expect(Telemetry.fps(29.9)).toBe("25-30")
+		expect(Telemetry.fps(30)).toBe("30-45")
+		expect(Telemetry.fps(0)).toBe("<15")
+		expect(Telemetry.fps(120)).toBe("58+")
+		expect(Telemetry.memory(1999)).toBe("1600-2200")
+		expect(Telemetry.load(61)).toBe("60+")
+	end)
+
+	it("sends only vocabulary fields from every phase", function()
+		for _, phase in Config.Vocab.Phase do
+			local scene = Telemetry.scene(phase)
+			expect((Telemetry.check("client_fps", { Telemetry.fps(30), "phone", scene }))).toBe(true)
+			expect((Telemetry.check("client_memory", { Telemetry.memory(900), "phone", scene }))).toBe(true)
+		end
+		expect(Telemetry.scene("Countdown")).toBe("hall")
+		expect(Telemetry.scene("LastCall")).toBe("stop")
+		expect(Telemetry.scene("Cruise")).toBe("train")
+		expect((Telemetry.check("client_load", { Telemetry.load(12), "phone", "car" }))).toBe(true)
 	end)
 end)
 

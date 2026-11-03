@@ -224,6 +224,7 @@ export type Profile = {
 -- profile.telemetry: what lets funnels span visits (Services/TelemetryService).
 export type TelemetryProfile = {
 	visits: number,
+	firstSeenAt: number?, -- Unix seconds of the first join, so a car server can time the whole first visit
 	onboarding: boolean, -- in the onboarding funnel: a new player, set on their first visit
 	steps: { [string]: boolean }, -- funnel steps already sent, "<funnel>/<step>"
 	funnels: { [string]: string }, -- funnel session ids, kept so a later visit can finish the funnel

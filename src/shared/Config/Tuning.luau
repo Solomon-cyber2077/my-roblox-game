@@ -700,6 +700,11 @@ local Tuning = {
 		StudioPrint = true, -- Studio diagnostic output: one line per call
 		TabletShortSide = 600, -- touch-only screens this many pixels or more on the short side are tablets
 		TakenGrabSeconds = 30, -- a Taken death this soon after a grab is that kind's (heldBy)
+		FirstVisitMaxSeconds = 1800, -- a car server counts first-visit time from the hall join within this long
+		HealthFirstSeconds = 60, -- first client_health report, after this long in the server
+		HealthEverySeconds = 300, -- then one report this often
+		HealthMaxReports = 12, -- reports the server keeps per player per server
+		HealthMinSeconds = 10, -- a shorter frame sample is not reported (the window lost focus)
 	},
 
 	-- The train's residents (Config/Npcs) and their errands (Config/NpcQuests).

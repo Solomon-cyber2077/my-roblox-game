@@ -17,6 +17,7 @@
 	  revision  integer 0..1e9 (the backpack revision the client saw)
 	  beat      integer 1..3, a rescue beat (Logic/Rescue)
 	  device    nil or a short word (Logic/Telemetry.device reads anything unlisted as unknown)
+	  reading   a finite number 0..1e6 (a client's own measurement, used only for telemetry)
 ]]
 
 local Tuning = require(script.Parent.Parent.Config.Tuning)
@@ -35,6 +36,13 @@ local Remotes: { [string]: RemoteDef } = {
 	-- Client to server intents
 	-- asks for a state snapshot; carries the client's device once (Services/TelemetryService)
 	ClientReady = { direction = "ToServer", args = { "device" }, rate = 1, burst = 2 },
+	-- the client health report: fps, worst second's fps, memory MB, load seconds (0 after the first)
+	ClientHealth = {
+		direction = "ToServer",
+		args = { "reading", "reading", "reading", "reading" },
+		rate = 1 / 20,
+		burst = 2,
+	},
 	SetReady = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
 	-- the run card: true AGAIN (ready the same crew), false DEPOT (stay unready); Logic/Again
 	Again = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
@@ -119,6 +127,9 @@ local Checks: { [ArgKind]: (any) -> boolean } = {
 	end,
 	time = function(value)
 		return type(value) == "number" and value == value and value >= 0 and value <= 1e10
+	end,
+	reading = function(value)
+		return type(value) == "number" and value == value and value >= 0 and value <= 1e6
 	end,
 	device = function(value)
 		return value == nil

@@ -74,6 +74,10 @@ local Vocab = table.freeze({
 	Milestone = list({ "control", "run_start", "first_stop", "first_hollow_seen" }),
 	Entry = list({ "hall", "car", "join_in_progress" }),
 	InviteSource = list({ "depot", "runcard" }),
+	Scene = list({ "hall", "train", "stop" }), -- where a client health report was taken
+	FpsBucket = list({ "<15", "15-25", "25-30", "30-45", "45-58", "58+" }),
+	MemoryBucket = list({ "<800", "800-1200", "1200-1600", "1600-2200", "2200-3000", "3000+" }), -- MB
+	LoadBucket = list({ "<5", "5-10", "10-20", "20-30", "30-60", "60+" }), -- seconds
 	ExperimentId = list({ "E1", "E2" }), -- Config/Experiments
 	Arm = list({ "A", "B" }), -- an experiment's arms[1], arms[2]
 })
@@ -114,6 +118,11 @@ local Events: { [string]: EventDef } = table.freeze({
 	sighting_exposure = event("TellBucket", "Device", "Experience"),
 	-- a player took the stop-five cash-out (Logic/CashOut); value: minutes in the run
 	player_cashed_out = event("Stop", "Device", "Experience"),
+	-- the client health report (Controllers/HealthController); values: frames a second, MB, seconds
+	client_fps = event("FpsBucket", "Device", "Scene"), -- average over the report's window
+	client_fps_low = event("FpsBucket", "Device", "Scene"), -- the window's worst whole second
+	client_memory = event("MemoryBucket", "Device", "Scene"),
+	client_load = event("LoadBucket", "Device", "Entry"), -- once per server
 })
 
 -- Funnel name -> its step names, in order. `onboarding` goes through LogOnboardingFunnelStepEvent;
@@ -139,6 +148,9 @@ local Buckets = table.freeze({
 	DoorsOpenSeconds = table.freeze({ 90, 150, 210 }),
 	TellSeconds = table.freeze({ 1.5, 3 }), -- 0 exactly is its own bucket
 	SecondsLeft = table.freeze({ 1, 2 }),
+	Fps = table.freeze({ 15, 25, 30, 45, 58 }),
+	MemoryMb = table.freeze({ 800, 1200, 1600, 2200, 3000 }),
+	LoadSeconds = table.freeze({ 5, 10, 20, 30, 60 }),
 	CrewNearStuds = 20,
 })
 

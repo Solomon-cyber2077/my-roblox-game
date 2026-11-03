@@ -33,6 +33,41 @@ function Telemetry.firstSession(visits: number, runs: number, isCarServer: boole
 	return runs == 0 and (visits == 0 or (isCarServer and visits == 1))
 end
 
+-- Seconds a first visit had already run when the player reached this server: 0 on the join that set
+-- `firstSeenAt`, or when it is missing or too old to be the same visit.
+function Telemetry.visitOffset(firstSeenAt: number?, joinedAt: number, maxSeconds: number): number
+	if firstSeenAt == nil then
+		return 0
+	end
+	local offset = joinedAt - firstSeenAt
+	return if offset > 0 and offset <= maxSeconds then offset else 0
+end
+
+function Telemetry.fps(framesPerSecond: number): string
+	return bucket(framesPerSecond, Config.Buckets.Fps, Config.Vocab.FpsBucket)
+end
+
+function Telemetry.memory(megabytes: number): string
+	return bucket(megabytes, Config.Buckets.MemoryMb, Config.Vocab.MemoryBucket)
+end
+
+function Telemetry.load(seconds: number): string
+	return bucket(seconds, Config.Buckets.LoadSeconds, Config.Vocab.LoadBucket)
+end
+
+-- Where a run phase puts the player, for a client health report.
+function Telemetry.scene(phase: string): string
+	if phase == "Lobby" or phase == "Countdown" then
+		return "hall"
+	end
+	return if phase == "Dwell"
+			or phase == "LastCall"
+			or phase == "Departure"
+			or phase == "Terminus"
+		then "stop"
+		else "train"
+end
+
 function Telemetry.runDuration(minutes: number): string
 	return bucket(minutes, Config.Buckets.RunMinutes, Config.Vocab.RunDuration)
 end

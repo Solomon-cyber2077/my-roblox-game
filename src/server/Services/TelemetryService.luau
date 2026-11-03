@@ -59,6 +59,8 @@ type Visitor = {
 	device: string,
 	deviceReported: boolean,
 	firstVisit: boolean?, -- nil until the profile has loaded
+	visitOffset: number, -- seconds the first visit had already run before this server (Telemetry.visitOffset)
+	healthReports: number, -- client health reports kept from this server
 	timings: { [string]: number }, -- first_session_timing milestones waiting for the profile and device
 	buffer: TelemetrySink.Buffer,
 	flushing: boolean,
@@ -265,6 +267,16 @@ local function experienceOf(player: Player): string
 	return if runs > 0 then "returning" else "first_run"
 end
 
+-- How this player reached this server, for the events that care.
+local function entryOf(player: Player): string
+	local current = run
+	local participant = current and current.byPlayer[player]
+	if participant then
+		return participant.entry
+	end
+	return if IS_CAR_SERVER then "car" else "hall"
+end
+
 -- First-session timing (first visit only), sent once the profile and the device report are in.
 local function sendTimings(player: Player)
 	local visitor = visitors[player]
@@ -279,18 +291,13 @@ local function sendTimings(player: Player)
 	if not visitor.firstVisit then
 		return
 	end
-	local entry = if IS_CAR_SERVER then "car" else "hall"
-	local current = run
-	local participant = current and current.byPlayer[player]
-	if participant then
-		entry = participant.entry
-	end
+	local entry = entryOf(player)
 	for name, seconds in timings do
 		if once(`timing|{player.UserId}|{name}`) then
 			TelemetryService.Event(
 				player,
 				"first_session_timing",
-				round(seconds, 2),
+				round(seconds + visitor.visitOffset, 2),
 				{ name, visitor.device, entry }
 			)
 		end
@@ -784,6 +791,45 @@ function TelemetryService.ReportDevice(player: Player, report: any)
 	end
 end
 
+-- One client health report (Controllers/HealthController): its own numbers, bucketed here and capped
+-- per server, so a bad client costs a few events and nothing else.
+function TelemetryService.ClientHealth(
+	player: Player,
+	fps: number,
+	lowFps: number,
+	memoryMb: number,
+	loadSeconds: number
+)
+	local visitor = visitors[player]
+	if visitor == nil or visitor.healthReports >= T.HealthMaxReports then
+		return
+	end
+	visitor.healthReports += 1
+	local device = visitor.device
+	local scene = Telemetry.scene(Registry.RunDirector.Phase())
+	TelemetryService.Event(player, "client_fps", round(fps, 1), { Telemetry.fps(fps), device, scene })
+	TelemetryService.Event(
+		player,
+		"client_fps_low",
+		round(lowFps, 1),
+		{ Telemetry.fps(lowFps), device, scene }
+	)
+	TelemetryService.Event(
+		player,
+		"client_memory",
+		round(memoryMb, 0),
+		{ Telemetry.memory(memoryMb), device, scene }
+	)
+	if loadSeconds > 0 and once(`load|{player.UserId}`) then
+		TelemetryService.Event(
+			player,
+			"client_load",
+			round(loadSeconds, 1),
+			{ Telemetry.load(loadSeconds), device, entryOf(player) }
+		)
+	end
+end
+
 -- The sink ---------------------------------------------------------------------------------
 
 local function flush(player: Player, visitor: Visitor): boolean
@@ -867,6 +913,8 @@ local function onPlayerAdded(player: Player)
 		device = "unknown",
 		deviceReported = false,
 		firstVisit = nil,
+		visitOffset = 0,
+		healthReports = 0,
 		timings = {},
 		buffer = TelemetrySink.newBuffer(),
 		flushing = false,
@@ -891,10 +939,16 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	local first = Telemetry.firstSession(profile.telemetry.visits, profile.stats.runs or 0, IS_CAR_SERVER)
+	local joinedAt = os.time() - (os.clock() - visitor.joinedAt)
+	if first then
+		visitor.visitOffset =
+			Telemetry.visitOffset(profile.telemetry.firstSeenAt, joinedAt, T.FirstVisitMaxSeconds)
+	end
 	visitor.firstVisit = first
 	DataService.Update(player, function(p)
 		if p.telemetry.visits == 0 then
 			p.telemetry.onboarding = first
+			p.telemetry.firstSeenAt = math.floor(joinedAt)
 		end
 		p.telemetry.visits += 1
 	end)
@@ -974,6 +1028,9 @@ function TelemetryService.Init()
 end
 
 function TelemetryService.Start()
+	Registry.NetService.Handle("ClientHealth", function(player, fps, lowFps, memoryMb, loadSeconds)
+		TelemetryService.ClientHealth(player, fps, lowFps, memoryMb, loadSeconds)
+	end)
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	Players.PlayerRemoving:Connect(onPlayerRemoving)
 	for _, player in Players:GetPlayers() do

@@ -143,6 +143,16 @@ function UIController.Start()
 	QuestTracker.mount(gui)
 	Dialogue.mount(gui)
 
+	-- a run starting takes the hall's windows with it: nobody boards behind a menu
+	local lastPhase: string? = nil
+	Registry.StateController.Observe("public", { "run", "phase" }, function(phase: string?)
+		if phase == "Boarding" and lastPhase ~= "Boarding" then
+			Modal.closeAll()
+			require(script.Parent.Parent.UI.Menu).close()
+		end
+		lastPhase = phase
+	end)
+
 	UserInputService.InputBegan:Connect(function(input, processed)
 		-- ignored while typing in a text box
 		if input.KeyCode ~= UNSTICK_KEY or processed or UserInputService:GetFocusedTextBox() then
