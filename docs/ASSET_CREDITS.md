@@ -11,6 +11,8 @@ Every UI texture in `assets/ui` was made for this project; nothing third-party i
 | stamp_company, ticket_tab, grain_wood (and the plate clean-up) | Python/NumPy/Pillow; stamp lettering in Special Elite and Oswald (OFL, from Roblox's content/fonts) | `tools/uiart/make_booth.py` | see `Theme.Image` | own work |
 | brass_token, departure_slate, pay_packet | Blender 5.2 (Cycles) | `tools/uiart/render_brass_token.py`, `render_slate.py`, `render_pay_packet.py` | see `Theme.Image` (brassToken, slate, payPacket) | own work |
 | action_plate_up, action_plate_down, hunted_eyes | Blender 5.2 (Cycles) | `tools/uiart/render_action_plate.py`, `render_hunted_eyes.py` | see `Theme.Image` (actionPlate, huntedEyes) | own work |
+| queue_dial_face, queue_dial_needle | Blender 5.2 (Cycles) | `tools/uiart/render_queue_dial.py` | `91999834340119`, `140628221566719` | own work |
+| bag_icon | Blender 5.2 (Cycles) | `tools/uiart/render_bag.py` | `134010831548560` | own work |
 
 Train exterior (`assets/train`, see `docs/train-exterior/REFERENCES.md`): meshes modelled in
 Blender 5.2 by `tools/trainshell/*.py`, maps baked in Cycles and painted procedurally in NumPy
