@@ -99,12 +99,21 @@ local function refresh(s: CrewQueue.Stores)
 		local key = CrewQueue.ticket(game.JobId, car.index, car.generation)
 		live[key] = true
 		local entry = CrewQueue.entry(car.members, car.since, car.deadline)
+		-- every new ticket is written only after the match store says this car has no match: a matched
+		-- ticket the matcher removed, or a car reopened by a failed teleport, must not queue again
+		local gone = false
 		local ok = pcall(s.queue.update, key, function(old: any): any
-			if type(old) == "table" and old.matched ~= nil then
-				return nil -- a crew is forming with this car: leave the claim alone
-			end
-			return entry
+			gone = old == nil
+			return CrewQueue.rewrite(old, entry, true)
 		end, C.QueueTtl)
+		if ok and gone then
+			local read, match = pcall(s.matches.get, key)
+			if read and match == nil then
+				ok = pcall(s.queue.update, key, function(old: any): any
+					return CrewQueue.rewrite(old, entry, false)
+				end, C.QueueTtl)
+			end
+		end
 		if ok then
 			mine[key] = { index = car.index, generation = car.generation }
 		end

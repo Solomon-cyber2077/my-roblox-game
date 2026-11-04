@@ -20,6 +20,9 @@
 	                                        harmlessly: a car is never matched twice, and a claim a failed pass
 	                                        left behind is released after StaleClaim (or, if its match record
 	                                        was written, the ticket is cleared: that car is on its way).
+	  rewrite(old, entry, known)            a hall's refresh of one ticket: never over a claim, and never re-creating
+	                                        a ticket it wrote before that is gone (the matcher removes a ticket only
+	                                        after recording its match, so the hall checks the match first)
 	  holdLocal(full, healthy, deadline, now)
 	                                        whether a car must wait for the queue instead of leaving on its own
 ]]
@@ -181,6 +184,19 @@ function CrewQueue.matchStep(
 		return count
 	end)
 	return if ok then sent else 0
+end
+
+-- A hall's refresh of its own ticket. `known`: the hall wrote this ticket before. Nil leaves the store as
+-- it is: a claimed ticket belongs to the forming crew, and a known ticket that is gone was either matched
+-- (the match record says so) or expired; the caller checks the match before writing it again.
+function CrewQueue.rewrite(old: any, entry: Entry, known: boolean): any
+	if type(old) == "table" and old.matched ~= nil then
+		return nil
+	end
+	if old == nil and known then
+		return nil
+	end
+	return entry
 end
 
 function CrewQueue.holdLocal(full: boolean, healthy: boolean, deadline: number, now: number): boolean

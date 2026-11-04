@@ -146,4 +146,25 @@ describe("CrewQueue", function()
 		expect(CrewQueue.holdLocal(true, true, 100, 101)).toBe(false)
 		expect(CrewQueue.holdLocal(false, false, 100, 101)).toBe(false) -- the queue is down: leave as before
 	end)
+	it("never matches a car twice when its hall refreshes before collecting the match", function()
+		local s = stores()
+		local now = 1000
+		local a = CrewQueue.ticket("hallA", 1, 1)
+		local entryA = CrewQueue.entry({ 1 }, 0, now - 1)
+		s.queue.set(a, entryA, C.QueueTtl, 0)
+		s.queue.set(CrewQueue.ticket("hallB", 1, 1), CrewQueue.entry({ 2 }, 1, now - 1), C.QueueTtl, 1)
+		expect(CrewQueue.matchStep(s, "m", now, reserve, newId)).toBe(1)
+		local first = s.matches.get(a).matchId
+		-- hall A refreshes the ticket it wrote before; the matcher has already removed it
+		s.queue.update(a, function(old)
+			return CrewQueue.rewrite(old, entryA, true)
+		end, C.QueueTtl)
+		expect(s.queue.get(a)).toBe(nil)
+		s.queue.set(CrewQueue.ticket("hallC", 1, 1), CrewQueue.entry({ 3 }, 2, now - 1), C.QueueTtl, 2)
+		expect(CrewQueue.matchStep(s, "m", now + 2, reserve, newId)).toBe(0)
+		expect(s.matches.get(a).matchId).toBe(first)
+		-- a ticket that is new to the hall, or expired with no match, is written
+		expect(CrewQueue.rewrite(nil, entryA, false)).toBe(entryA)
+		expect(CrewQueue.rewrite({ members = { 1 }, deadline = 1, matched = "x" }, entryA, false)).toBe(nil)
+	end)
 end)
