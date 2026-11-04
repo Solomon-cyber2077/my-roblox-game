@@ -386,8 +386,9 @@ end
 Defaults.Uniform = CrewClothing.Default
 
 return table.freeze({
-	-- One switch: virtual ownership for the developer and Studio; never persisted.
-	DevUnlock = table.freeze({ Enabled = true, UserId = 11744048795 }),
+	-- Virtual ownership for Studio, and for the developer's account in live servers while Live is on;
+	-- never persisted. Live is off for launch (owner, 2026-11-04) so that account shops like any other.
+	DevUnlock = table.freeze({ Enabled = true, Live = false, UserId = 11744048795 }),
 	-- every lantern's lens (glass, and light2 where the lens cycles to it) and light must clear
 	-- these linear Rec. 709 luminances, so a crewmate's lamp reads at 3:1 on a dim screen
 	-- (docs/visibility/gates_45_fix1.md; tests/LanternLuminance.spec)

@@ -24,7 +24,7 @@ end
 
 function Catalog.devUnlocked(userId: number, isStudio: boolean): boolean
 	local unlock = Cosmetics.DevUnlock
-	return unlock.Enabled and (isStudio or userId == unlock.UserId)
+	return unlock.Enabled and (isStudio or (unlock.Live and userId == unlock.UserId))
 end
 
 function Catalog.canUse(owned: OwnedSet, id: string, userId: number, isStudio: boolean): boolean
