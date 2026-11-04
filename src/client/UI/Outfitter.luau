@@ -44,8 +44,10 @@ local modal: Modal.Modal
 local selectedCategory = "Lantern"
 local selectedId: string? = nil
 
+-- The server's clock, not the device's: ShopService prices by the server's day, so a phone with a
+-- wrong clock (or a purchase near UTC midnight) still shows the price it will be charged.
 local function today(): number
-	return Catalog.dayNumber(os.time())
+	return Catalog.dayNumber(math.floor(workspace:GetServerTimeNow()))
 end
 
 local function canUse(owned: { [string]: boolean }, id: string): boolean
