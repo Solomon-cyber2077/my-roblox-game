@@ -53,7 +53,7 @@ local HERO: { [string]: string } = {
 local MADE_IT = { title = "MADE IT", line = "You rode it to the end of the line." }
 local CASHED_OUT = {
 	title = "CASHED OUT",
-	line = `You took your pay at stop {Tuning.Run.CashOutStop} and stayed behind.`,
+	line = `You walked away at stop {Tuning.Run.CashOutStop} with your pay and your life.`,
 }
 
 -- Up to two capital letters for a display name: "Tame Giant" and "TameGiant" are both TG.
