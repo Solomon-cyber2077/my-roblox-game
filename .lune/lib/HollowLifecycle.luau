@@ -398,7 +398,7 @@ local function run(): string
 		allyRoot.CFrame = root.CFrame
 		clock += tuning.Grab.PryInterval + 0.01
 		rescue.trigger(ally)
-		tick(0.08)
+		tick(0.04) -- the helper taps 5 times a second
 	end
 	check(not service.IsHeld(victim) and not root.Anchored, "a nearby crewmate can complete a rescue")
 	service.Clear()
