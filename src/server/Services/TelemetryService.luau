@@ -65,6 +65,7 @@ type Visitor = {
 	buffer: TelemetrySink.Buffer,
 	flushing: boolean,
 	again: boolean, -- records arrived for a flush while one was running; run it once more after
+	left: boolean, -- the player has left; unsent records wait in `departed`
 	lastOutcome: string?,
 	lastOutcomeAt: number?,
 	lastGrab: { kind: string, at: number, escaped: boolean }?,
@@ -99,6 +100,7 @@ type Run = {
 local TelemetryService = {}
 
 local visitors: { [Player]: Visitor } = {}
+local departed: { [Player]: Visitor } = {} -- left with records the sink has not taken yet
 local early: { [Player]: any } = {} -- device reports that came in before the player's visit began
 local sent: { [string]: boolean } = {}
 local run: Run? = nil
@@ -833,9 +835,26 @@ end
 
 -- The sink ---------------------------------------------------------------------------------
 
+-- A player who has left keeps their unsent records here until a later flush (the timer or
+-- shutdown) lands them, so a leave flush that fails every retry loses nothing.
+local function settle(player: Player, visitor: Visitor)
+	if not visitor.left then
+		return
+	end
+	if #visitor.buffer.pending > 0 then
+		departed[player] = visitor
+	else
+		departed[player] = nil
+	end
+end
+
 local function flush(player: Player, visitor: Visitor): boolean
 	local store = sinkStore
-	if store == nil or #visitor.buffer.pending == 0 then
+	if store == nil then
+		return true
+	end
+	if #visitor.buffer.pending == 0 then
+		settle(player, visitor)
 		return true
 	end
 	if visitor.flushing then
@@ -878,11 +897,15 @@ local function flush(player: Player, visitor: Visitor): boolean
 		visitor.again = false
 		return flush(player, visitor) and ok
 	end
+	settle(player, visitor)
 	return ok
 end
 
 function TelemetryService.FlushAll()
 	for player, visitor in visitors do
+		task.spawn(flush, player, visitor)
+	end
+	for player, visitor in departed do
 		task.spawn(flush, player, visitor)
 	end
 end
@@ -934,6 +957,7 @@ local function onPlayerAdded(player: Player)
 		buffer = TelemetrySink.newBuffer(),
 		flushing = false,
 		again = false,
+		left = false,
 		lastOutcome = nil,
 		lastOutcomeAt = nil,
 		lastGrab = nil,
@@ -997,6 +1021,7 @@ local function onPlayerRemoving(player: Player)
 		)
 	end
 	-- after CrewService's own PlayerRemoving hook has had its turn, keep the records and let go
+	visitor.left = true
 	task.defer(function()
 		flush(player, visitor)
 		visitors[player] = nil
@@ -1071,7 +1096,17 @@ function TelemetryService.Start()
 		TelemetryService.FlushAll()
 		task.wait() -- let every flush start
 		local deadline = os.clock() + T.ShutdownWaitSeconds
-		while inFlight > 0 and os.clock() < deadline do
+		local retried = false
+		while os.clock() < deadline do
+			if inFlight == 0 then
+				if retried or next(departed) == nil then
+					break
+				end
+				-- one more try for players whose leave flush failed while shutdown began
+				retried = true
+				TelemetryService.FlushAll()
+				task.wait()
+			end
 			task.wait(0.1)
 		end
 	end)
