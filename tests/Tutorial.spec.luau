@@ -55,19 +55,31 @@ describe("Tutorial tiers", function()
 	end)
 
 	it("counts a run for a player who stepped off the train, once it ends", function()
-		expect(Tutorial.afterRun(true, 0, true)).toBe(1)
-		expect(Tutorial.afterRun(true, 2, true)).toBe(3)
+		expect(Tutorial.afterRun(true, 0, true, 1)).toBe(1)
+		expect(Tutorial.afterRun(true, 2, true, 3)).toBe(3)
 		-- never off the train: the run does not count
-		expect(Tutorial.afterRun(true, 0, false)).toBe(nil)
+		expect(Tutorial.afterRun(true, 0, false, 1)).toBe(nil)
 		-- the tutorial is behind them: nothing to write
-		expect(Tutorial.afterRun(true, 3, true)).toBe(nil)
+		expect(Tutorial.afterRun(true, 3, true, 0)).toBe(nil)
+	end)
+
+	it("keeps a newcomer's tier when they joined a run under way at a harder tier", function()
+		-- a first-timer who joined a veterans' run, or a tier-2 run: their first run is still ahead
+		expect(Tutorial.afterRun(true, 0, true, 0)).toBe(nil)
+		expect(Tutorial.afterRun(true, 0, true, 2)).toBe(nil)
+		expect(Tutorial.afterRun(true, 1, true, 3)).toBe(nil)
+		-- riding at a newer Hand's (easier) tier still counts, as it always has
+		expect(Tutorial.afterRun(true, 1, true, 1)).toBe(2)
+		expect(Tutorial.afterRun(true, 2, true, 1)).toBe(3)
+		expect(Tutorial.counts(0, 1)).toBe(true)
+		expect(Tutorial.counts(3, 1)).toBe(false)
 	end)
 
 	it("plays a profile that failed to load as a finished tutorial and writes nothing", function()
 		expect(Tutorial.runs(false, 0, nil)).toBe(Difficulty.Tutorial.Runs)
 		expect(Tutorial.tier(Tutorial.runs(false, 0, nil))).toBe(0)
-		expect(Tutorial.afterRun(false, 0, true)).toBe(nil)
-		expect(Tutorial.afterRun(false, nil, true)).toBe(nil)
+		expect(Tutorial.afterRun(false, 0, true, 1)).toBe(nil)
+		expect(Tutorial.afterRun(false, nil, true, 1)).toBe(nil)
 		-- a loaded profile plays by its count; the owner's dev setting wins over both
 		expect(Tutorial.runs(true, 1, nil)).toBe(1)
 		expect(Tutorial.runs(true, nil, nil)).toBe(Difficulty.Tutorial.Runs)

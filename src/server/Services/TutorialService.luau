@@ -108,6 +108,7 @@ function TutorialService.AnnouncePace(players: { Player }, crewTier: number)
 end
 
 local function countRun()
+	local runTier = Registry.RunDirector.TutorialTier()
 	for player, off in steppedOff do
 		local ended = endedOverrides[player]
 		if ended ~= nil then
@@ -118,12 +119,16 @@ local function countRun()
 			local override = overrides[player]
 			if override ~= nil then
 				-- an owner dev setting on a profile that did not load: this session only
-				if off then
+				if off and Tutorial.counts(override, runTier) then
 					overrides[player] = math.min(override + 1, Difficulty.Tutorial.Runs)
 				end
 			else
-				local nextRuns =
-					Tutorial.afterRun(DataService.IsLoaded(player), profile and profile.tutorialRuns, off)
+				local nextRuns = Tutorial.afterRun(
+					DataService.IsLoaded(player),
+					profile and profile.tutorialRuns,
+					off,
+					runTier
+				)
 				if nextRuns then
 					DataService.Update(player, function(p)
 						p.tutorialRuns = nextRuns

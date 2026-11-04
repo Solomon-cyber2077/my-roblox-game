@@ -910,6 +910,11 @@ function RunDirector.ClaimCashOut(player: Player, aboard: boolean): string?
 	return why
 end
 
+-- The crew's tutorial tier this run was played at (fixed at Boarding), 0 past the tutorial.
+function RunDirector.TutorialTier(): number
+	return state.tutorial
+end
+
 function RunDirector.StationsCleared(): number
 	return state.stationsCleared
 end
