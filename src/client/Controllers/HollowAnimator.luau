@@ -73,6 +73,7 @@ type Rig = {
 	embers: PointLight?,
 	quietStep: boolean, -- a stalking Hollow sounds every other footfall
 	breath: Sound?, -- its stalk breath
+	frozenAt: number?, -- clock when a look froze it, nil while it moves
 	intent: boolean, -- its replicated Intent last frame (the hush starts on the rising edge)
 	aim: number, -- the head's yaw now (Logic/HollowMotion)
 	lean: number, -- the torso's lean now
@@ -222,7 +223,8 @@ local function ground(rig: Rig): Vector3
 end
 
 -- A stalking or coiling Hollow's breath: full within 0.5r, gone past 1.0r (r = 30, Logic/Tells).
-local function breathe(rig: Rig, on: boolean)
+-- Frozen under a look it swells and carries further, eased in and out (Tuning.Stalk).
+local function breathe(rig: Rig, on: boolean, frozen: boolean, dt: number)
 	local sound = rig.breath
 	if on and sound == nil then
 		local made = Instance.new("Sound")
@@ -240,6 +242,14 @@ local function breathe(rig: Rig, on: boolean)
 		made.Parent = rig.root
 		rig.breath = made
 		sound = made
+	end
+	if sound then
+		local S = Tuning.Stalk
+		local ease = 1 - math.exp(-S.FrozenBreathResponse * dt)
+		local volume = Audio.HollowBreath.volume * (if frozen then S.FrozenBreathGain else 1)
+		local reach = S.BreathFar * S.ReferenceRadius * (if frozen then S.FrozenBreathReach else 1)
+		sound.Volume += (volume - sound.Volume) * ease
+		sound.RollOffMaxDistance += (reach - sound.RollOffMaxDistance) * ease
 	end
 	if sound and sound.IsPlaying ~= on then
 		if on then
@@ -324,6 +334,10 @@ local function plantStep(rig: Rig, speed: number)
 		audio(if speed > 10 then "HollowScrabble" else "HollowStep", position, 0.3, 1.9)
 	else
 		audio("HollowStep", position, 0.5, 1.15 + rig.stepSide * 0.05)
+		-- the Stalker's dragging leg pulls its torn coat along the ground
+		if rig.kind == "Stalker" and rig.stepSide > 0 then
+			audio("StalkCoat", position, 1, 0.8 + math.random() * 0.1)
+		end
 	end
 	-- stalking between cover, now and then a board creaks or a pebble skips under it (Prompt 7)
 	if rig.state == "Stalk" and math.random() < STALK_NOISE then
@@ -387,7 +401,12 @@ local function animate(
 	rig.intent = intent
 	local kindDef = (Tuning.HollowKinds :: any)[rig.kind]
 	local windup = H.WindupSeconds * (if kindDef then kindDef.windup else 1)
-	breathe(rig, stalking or coiled)
+	breathe(rig, stalking or coiled, frozen, dt)
+	if frozen then
+		rig.frozenAt = rig.frozenAt or clock
+	else
+		rig.frozenAt = nil
+	end
 	-- ordinary changes blend; the coil, the windup and the lunge snap
 	local poseKey = if coiled then "Coil" elseif lunging then "Lunge" else state
 	if poseKey ~= rig.poseKey then
@@ -478,6 +497,9 @@ local function animate(
 		grime = grime,
 		coil = coiled,
 		frozen = frozen,
+		tilt = if rig.frozenAt
+			then HollowMotion.frozenTilt(rig.kind, clock - rig.frozenAt, rig.seed)
+			else nil,
 	})
 	if
 		state == "Recover"
@@ -597,6 +619,7 @@ local function register(model: Instance)
 		embers = if chest then chest:FindFirstChild("EmberGlow") :: PointLight? else nil,
 		quietStep = false,
 		breath = nil,
+		frozenAt = nil,
 		intent = false,
 		aim = 0,
 		lean = 0,

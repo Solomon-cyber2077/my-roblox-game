@@ -72,6 +72,17 @@ function HollowMotion.easeOut(t: number): number
 	return 1 - u * u * u
 end
 
+-- A frozen Stalker's head roll after `frozenFor` seconds held by a look: nothing for the delay,
+-- then a smoothstep to the full tilt, held. The seed picks the side. Other kinds don't tilt.
+function HollowMotion.frozenTilt(kind: string, frozenFor: number, seed: number): number
+	if kind ~= "Stalker" then
+		return 0
+	end
+	local t = math.clamp((frozenFor - M.FrozenTiltDelay) / M.FrozenTiltSeconds, 0, 1)
+	local side = if seed % 2 == 0 then 1 else -1
+	return side * M.FrozenTilt * t * t * (3 - 2 * t)
+end
+
 local TAU = 2 * math.pi
 
 -- Whether the angle `at` (mod 2 pi) was crossed going from `before` to `after` (after >= before).

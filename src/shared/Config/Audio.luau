@@ -54,6 +54,17 @@ local Cues: { [string]: Cue } = {
 		with = "LanternRattle", -- the lantern's brass rattles as it goes up
 	},
 	-- a stalking Hollow between cover: now and then a board creaks or a pebble skips (Prompt 7)
+	-- the Stalker's torn coat dragging on its limping step (HollowAnimator): the same "Cloth Flap 19"
+	-- take as Jump, low and quiet, cut short
+	StalkCoat = {
+		id = 9113820125,
+		volume = 0.9,
+		spatial = true,
+		rollOff = 30,
+		maxSeconds = 0.35,
+		pitch = 0.75,
+		mix = "Steps",
+	},
 	StalkCreak = {
 		id = 9114129572,
 		start = 0.08,

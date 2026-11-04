@@ -553,6 +553,11 @@ local Tuning = {
 		BlendSeconds = 0.28, -- Prowl, Stalk, Hunt, Recover and Repelled blend over this (0.2-0.35, FIXED range)
 		FullMotion = 6, -- the nearest this many Hollows get look-at, lean and coat motion
 		SimpleBeyond = 60, -- studs: further than this, no secondary motion
+		-- a Stalker held by a look (Stalk, Frozen): after FrozenTiltDelay seconds still, its head rolls
+		-- FrozenTilt radians to one side over FrozenTiltSeconds and holds there, a slow, curious tilt
+		FrozenTilt = 0.38,
+		FrozenTiltDelay = 0.8,
+		FrozenTiltSeconds = 2.4,
 		StumbleFrom = 0.18, -- seconds into Recover the strike ends and the stumble begins
 		StripCount = { 3, 5 }, -- the Stalker's coat strips, by stop progression
 	},
@@ -666,6 +671,9 @@ local Tuning = {
 		LampPool = 22, -- studs: a station lamp's pool a shadow point stays out of
 		BreathNear = 0.5, -- stalk breath full at 0.5r, gone at 1.0r
 		BreathFar = 1.0,
+		FrozenBreathGain = 1.35, -- frozen under a look, the breath swells by this...
+		FrozenBreathReach = 1.3, -- ...and carries this much further, eased in at FrozenBreathResponse
+		FrozenBreathResponse = 2,
 		LeanRadius = 1.0, -- lantern lean and flicker within 1.0r
 		WatchRadius = 1.2, -- watch stutter within 1.2r
 		FlickerMax = 0.15, -- at most this share off the lantern's brightness

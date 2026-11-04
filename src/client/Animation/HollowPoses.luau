@@ -14,7 +14,8 @@
 	           the Crawler's spider walk on planted hands and feet), sleeping, emerging,
 	           the windup and the strike, cowering, reeling, and three grabs per kind
 	           (Config/Grabs), each squeezing on the grab's own rhythm
-	  stalk    (Prompt 3) the prowl's body; frozen under a look it sways and breathes in place
+	  stalk    (Prompt 3) the prowl's body; frozen under a look it sways and breathes in place, and
+	           the Stalker's head slowly tilts to one side
 	  coil     a hunter's Intent or its first-strike warning: shoulders back, head low, knees
 	           bent, the Crawler's haunches drawn under it. Snapped, never blended
 	  follow   a missed strike over-reaches, then stumbles until RecoverSeconds
@@ -56,6 +57,7 @@ export type Input = {
 	grime: number?, -- shared stop progression; original Brute silhouette stays unchanged
 	coil: boolean?, -- Hunt with Intent or the first-strike warning: the coil pose
 	frozen: boolean?, -- Stalk under a look: still, swaying and breathing
+	tilt: number?, -- frozen, the head's slow roll to one side (Logic/HollowMotion.frozenTilt)
 }
 
 local HollowPoses = {}
@@ -980,6 +982,7 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		local breath = math.sin(input.now * 1.7 + input.seed * 0.5) * 0.045
 		frozen.RootJoint = (frozen.RootJoint or I) * CFrame.new(0, breath * 0.6, 0) * A(0, 0, sway)
 		frozen.Waist = (frozen.Waist or I) * A(breath, 0, 0)
+		frozen.Neck = (frozen.Neck or I) * A(0, 0, input.tilt or 0)
 		return frozen
 	end
 	local stride = math.min(input.speed / 12, 1.4)
