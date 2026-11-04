@@ -98,4 +98,37 @@ describe("RunTicketModel", function()
 		)
 		expect(RunTicketModel.nextLine(Rank.xpFor(1000))).toBe(nil)
 	end)
+	it("tells a player who cashed out apart from the crew who were lost", function()
+		local cashed = { ["2"] = "Tame Giant" }
+		local crew = { ["1"] = { name = "Ann Bell", status = "Eliminated", cause = "Taken" } }
+		local mine = RunTicketModel.build({
+			outcome = "Wiped",
+			log = log(5),
+			me = "2",
+			crew = crew,
+			cashedOut = cashed,
+		})
+		expect(mine.causeTitle).toBe("CASHED OUT")
+		expect(mine.stats[3].value).toBe("AB · TG")
+		local theirs = RunTicketModel.build({
+			outcome = "Wiped",
+			log = log(5),
+			me = "1",
+			crew = crew,
+			cashedOut = cashed,
+		})
+		expect(theirs.causeTitle == "CASHED OUT").toBe(false)
+		local won = RunTicketModel.build({
+			outcome = "Victory",
+			log = log(10),
+			me = "2",
+			crew = {},
+			cashedOut = cashed,
+		})
+		expect(won.causeTitle).toBe("CASHED OUT")
+		local last =
+			RunTicketModel.build({ outcome = "CashedOut", log = log(5), me = "2", cashedOut = cashed })
+		expect(last.hero).toBe("THE CREW CASHED OUT")
+		expect(last.crew[1].lost).toBe(false)
+	end)
 end)

@@ -35,6 +35,7 @@ export type Input = {
 	stopCount: number?, -- run.stopCount: a Short Line's victory stamps SHORT LINE
 	runId: string?,
 	crew: { [string]: CrewEntry }?,
+	cashedOut: { [string]: string }?, -- run.cashedOut: user id -> display name; no longer in `crew`
 	me: string,
 }
 
@@ -46,9 +47,14 @@ local HERO: { [string]: string } = {
 	Victory = "REACHED THE TERMINUS",
 	Wiped = "THE CREW WAS LOST",
 	Derailed = "THE TRAIN WAS LOST",
+	CashedOut = "THE CREW CASHED OUT",
 }
 
 local MADE_IT = { title = "MADE IT", line = "You rode it to the end of the line." }
+local CASHED_OUT = {
+	title = "CASHED OUT",
+	line = `You took your pay at stop {Tuning.Run.CashOutStop} and stayed behind.`,
+}
 
 -- Up to two capital letters for a display name: "Tame Giant" and "TameGiant" are both TG.
 function RunTicketModel.initials(name: string?): string
@@ -72,12 +78,21 @@ function RunTicketModel.build(input: Input): Data
 	local outcome = input.outcome or "Wiped"
 	local won = outcome == "Victory"
 	local totals = RunLog.totals(input.log :: any)
-	local crew: { [string]: CrewEntry } = input.crew or {}
+	local crew: { [string]: CrewEntry } = table.clone(input.crew or {})
+	local cashedOut: { [string]: string } = input.cashedOut or {}
+	-- whoever cashed out left the crew list; they rode with this crew all the same
+	for key, name in cashedOut do
+		if crew[key] == nil then
+			crew[key] = { name = name, status = "CashedOut" }
+		end
+	end
 
 	-- your own line: how you went down, or that you made it
 	local mine = crew[input.me]
 	local words: { title: string, line: string }
-	if won and not (mine and mine.status == "Eliminated") then
+	if cashedOut[input.me] then
+		words = CASHED_OUT
+	elseif won and not (mine and mine.status == "Eliminated") then
 		words = MADE_IT
 	elseif mine and mine.cause then
 		-- how you went down; or Wrecked, still aboard when the train failed

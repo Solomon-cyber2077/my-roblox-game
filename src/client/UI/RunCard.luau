@@ -62,6 +62,7 @@ local function runData(): RunTicketModel.Data
 		runId = State.Get({ "run", "runId" }),
 		xp = State.GetPrivate({ "profile", "xp" }),
 		crew = State.Get({ "crew" }),
+		cashedOut = State.Get({ "run", "cashedOut" }),
 		me = Session.userKey,
 	})
 end

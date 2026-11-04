@@ -54,6 +54,7 @@ type RunState = {
 	stationsCleared: number,
 	runTier: number,
 	cashOut: Types.CashOutOffer?, -- the stop-five cash-out while the junction after it runs
+	cashedOut: { [string]: string }, -- user id -> display name of everyone who cashed out this run
 	lastArchetype: string?,
 	chosen: Types.RouteOption?,
 	cruiseSeconds: number,
@@ -90,6 +91,7 @@ local state: RunState = {
 	stationsCleared = 0,
 	runTier = 1,
 	cashOut = nil,
+	cashedOut = {},
 	lastArchetype = nil,
 	chosen = nil,
 	cruiseSeconds = 30,
@@ -190,6 +192,8 @@ local function cleanupRun()
 	state.village = nil
 	state.cashOut = nil
 	StateService.Set({ "run", "cashOut" }, nil)
+	state.cashedOut = {}
+	StateService.Set({ "run", "cashedOut" }, nil)
 	StateService.Set({ "run", "station" }, nil)
 	StateService.Set({ "run", "destination" }, nil)
 end
@@ -244,6 +248,8 @@ Enter.Boarding = function()
 	state.stationsCleared = 0
 	state.lastArchetype = nil
 	state.outcome = nil
+	state.cashedOut = {}
+	StateService.Set({ "run", "cashedOut" }, nil)
 	state.mystery = Mystery.newHistory()
 	state.sealed = false
 	state.pending = nil
@@ -897,6 +903,9 @@ function RunDirector.ClaimCashOut(player: Player, aboard: boolean): string?
 	if why == nil and offer then
 		CashOut.take(offer, player.UserId)
 		StateService.Set({ "run", "cashOut" }, offer)
+		-- kept to the run's end: the run ticket tells them apart from the crew who were lost
+		state.cashedOut[tostring(player.UserId)] = player.DisplayName
+		StateService.Set({ "run", "cashedOut" }, table.clone(state.cashedOut))
 	end
 	return why
 end
