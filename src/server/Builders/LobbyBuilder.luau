@@ -1040,8 +1040,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	block(Vector3.new(14.6, 0.4, 4.6), at(kx, 4.2, kz), C.brass, Enum.Material.Metal)
 	for _, x in { -6.5, 6.5 } do
 		Kit.post(model, 11, 0.6, at(kx + x, 5.5, kz - 1.5), C.iron, { material = Enum.Material.Metal })
-		-- the awning's back edge rests on a slim post standing on the low back wall
-		Kit.post(model, 7.6, 0.4, at(kx + x, 8.2, kz + 5.6), C.iron, { material = Enum.Material.Metal })
+		-- the awning's back edge rests on a slim post standing on the floor (nothing is built under it)
+		Kit.post(model, 11.8, 0.4, at(kx + x, 6.1, kz + 5.6), C.iron, { material = Enum.Material.Metal })
+		Kit.post(model, 0.3, 0.7, at(kx + x, 0.15, kz + 5.6), C.iron, { material = Enum.Material.Metal })
 	end
 	for i = 0, 6 do
 		decor(
