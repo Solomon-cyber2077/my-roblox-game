@@ -90,6 +90,13 @@ function Ledger.legCoalCost(train: Train, km: number): number
 	return round1(km * Tuning.Train.BurnPerKm * Ledger.derived(train).burnMultiplier)
 end
 
+-- Firebox Baffles fitted mid-leg: the coal still to burn (`cost` - `burned`) shrinks by `levels` more
+-- of the upgrade, so it works at once. Returns the leg's new total cost.
+function Ledger.refitLegCost(cost: number, burned: number, levels: number): number
+	local left = math.max(cost - burned, 0)
+	return burned + left * UpgradesConfig.Effects.BurnMultiplierPerLevel ^ levels
+end
+
 function Ledger.deposit(train: Train, cargo: { string }): (Train, Receipt)
 	local receipt: Receipt = { coal = 0, coalWasted = 0, parts = 0, relicBrass = 0, relics = 0 }
 	local nextTrain = copy(train)

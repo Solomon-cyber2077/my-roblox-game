@@ -224,6 +224,14 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	connection = RunService.Heartbeat:Connect(step)
 end
 
+-- Hands the running stop's hazards (shared with HollowService) to `apply`, for a Workshop upgrade
+-- bought mid-stop (RunDirector). The fog front and spawns don't depend on what it changes.
+function HazardDirector.Refit(apply: (Types.HazardParams) -> ())
+	if timeline then
+		apply(timeline.info.hazards)
+	end
+end
+
 function HazardDirector.Freeze()
 	if timeline and timeline.frozenAt == nil then
 		timeline.frozenAt = Workspace:GetServerTimeNow()

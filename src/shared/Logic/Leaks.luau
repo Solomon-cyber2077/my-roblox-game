@@ -58,6 +58,18 @@ function Leaks.count(
 	return math.clamp(n, 0, Leaks.cap(stop, tutorialTier))
 end
 
+--[[
+	Armour fitted mid-trip: the leaks still to burst (`bursts`, sorted times) thin by the same factor
+	count() applies per level, the fraction settled by `roll` in [0, 1). The earliest are kept, so the
+	rest of the trip is the quieter part. Returns a new list.
+]]
+function Leaks.thin(bursts: { number }, levels: number, roll: number): { number }
+	local expected = #bursts * UpgradesConfig.Effects.BreachMultiplierPerLevel ^ levels
+	local whole = math.floor(expected)
+	local keep = whole + (if roll < expected - whole then 1 else 0)
+	return table.move(bursts, 1, math.min(keep, #bursts), 1, {})
+end
+
 -- When each of `n` leaks bursts, as shares of the trip. `jitter(i)` in [-1, 1].
 function Leaks.shares(n: number, jitter: (number) -> number): { number }
 	local out = {}

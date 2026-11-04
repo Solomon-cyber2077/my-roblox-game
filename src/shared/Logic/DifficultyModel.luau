@@ -122,6 +122,24 @@ function DifficultyModel.params(
 	}
 end
 
+--[[
+	A Workshop upgrade bought after a stop's params were made (travelling, or at the stop): applies
+	`levels` more of it to `params` in place, so it works at once instead of from the next stop.
+	The result matches params() made with the higher level. True if the upgrade touches params.
+]]
+function DifficultyModel.refit(params: Types.HazardParams, upgradeId: string, levels: number): boolean
+	local effects = UpgradesConfig.Effects
+	if upgradeId == "Floodlamps" then
+		params.safeBand += effects.SafeBandPerLevel * levels
+		params.fogDps *= effects.FogDpsMultiplierPerLevel ^ levels
+		return true
+	elseif upgradeId == "SteamWhistle" then
+		params.chaseWindow += effects.ChaseSecondsPerLevel * levels
+		return true
+	end
+	return false
+end
+
 -- Seconds of cruising for a leg of `km` kilometres.
 function DifficultyModel.cruiseSeconds(km: number): number
 	return Tuning.Run.CruiseBaseSeconds + Tuning.Run.CruiseSecondsPerKm * km

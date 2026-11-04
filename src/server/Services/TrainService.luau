@@ -523,6 +523,15 @@ function TrainService.BuyUpgrade(player: Player, upgradeId: string)
 		return
 	end
 	train = nextTrain
+	-- bought mid-trip: the leg already planned works with the new level at once
+	local current = leg
+	if current then
+		if upgradeId == "ArmorPlating" then
+			current.bursts = Leaks.thin(current.bursts, 1, rng:NextNumber())
+		elseif upgradeId == "FireboxBaffles" then
+			current.cost = Ledger.refitLegCost(current.cost, current.burned, 1)
+		end
+	end
 	local level = Ledger.level(train, upgradeId)
 	publish(true)
 	local def = UpgradesConfig.List[upgradeId]

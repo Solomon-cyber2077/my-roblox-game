@@ -686,6 +686,23 @@ function RunDirector.Start()
 	RunService.Heartbeat:Connect(function()
 		Safe.call("RunDirector.tick", tick)
 	end)
+	-- A Workshop upgrade bought after this stop's params were made works at once
+	-- (Logic/DifficultyModel.refit). Each params table is refitted once, however many hold it.
+	Registry.TrainService.UpgradeBought:Connect(function(upgradeId: string)
+		Safe.call("RunDirector.refit", function()
+			local done: { [Types.HazardParams]: boolean } = {}
+			local function refit(params: Types.HazardParams?)
+				if params and not done[params] then
+					done[params] = true
+					DifficultyModel.refit(params, upgradeId, 1)
+				end
+			end
+			refit(state.params)
+			refit(if state.village then state.village.params else nil)
+			Registry.HazardDirector.Refit(refit)
+			publish()
+		end)
+	end)
 end
 
 -- Pushes the current phase's end back by `seconds` (a broken-down train: BreakdownService).
