@@ -209,6 +209,18 @@ function Hud.mount(gui: ScreenGui)
 		ZIndex = 1,
 		Parent = watchFade.group,
 	})
+	-- On a phone the watch is drawn at COMPACT_WATCH, which left the tag's type at 7-8 pt: the tag
+	-- alone is scaled back up, and the watch's group (a CanvasGroup, so it clips) widens to hold it.
+	local tagScale = Ui.new("UIScale", { Parent = watchTag })
+	local groupSize = watchFade.group.Size
+	local function fitTag()
+		local compact = gui:GetAttribute("Compact") == true
+		tagScale.Scale = if compact then 1 / COMPACT_WATCH else 1
+		local grow = if compact then math.ceil(watchTag.Size.X.Offset * (1 / COMPACT_WATCH - 1)) else 0
+		watchFade.group.Size = groupSize + UDim2.fromOffset(grow, 0)
+	end
+	fitTag()
+	gui:GetAttributeChangedSignal("Compact"):Connect(fitTag)
 	local tagTitle = Ui.text({
 		Text = "",
 		Font = Theme.Font.displayMedium,

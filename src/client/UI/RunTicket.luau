@@ -27,6 +27,11 @@ RunTicket.FOOT = 58 -- the strip along the bottom kept free for the host's butto
 
 local HEAD = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
 local PAD = 28
+-- the stamp: full size, or smaller past STAMP_LONG letters; about STAMP_LETTER of its size per letter
+local STAMP_FULL, STAMP_SMALL, STAMP_LONG = 26, 20, 12
+local STAMP_LETTER = 0.58
+local STAMP_MIN_W = 110
+local STAMP_GAP = 12 -- between the NEXT line and the stamp
 local STUB = 44
 local INK = Theme.Color.ink
 local INK_SOFT = Theme.Color.inkSoft
@@ -237,11 +242,16 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		end
 	end
 
+	-- The stamp's width decides the room the NEXT line gets to its left. A long stamp (ENTERED, NOT
+	-- RECALLED; TRAIN LOST AT STOP 6) strikes smaller, and every stamp ends PAD from the right edge.
+	local stampSize = if #data.stamp > STAMP_LONG then STAMP_SMALL else STAMP_FULL
+	local stampW = math.max(STAMP_MIN_W, math.ceil(#data.stamp * stampSize * STAMP_LETTER))
+
 	if data.nextLine then
 		local nextLine = label(ticket, data.nextLine, Theme.Font.type, 15, INK, z + 3)
 		nextLine.Name = "NextLine"
 		nextLine.Position = UDim2.fromOffset(PAD, H - RunTicket.FOOT - 26)
-		nextLine.Size = UDim2.new(1, -2 * PAD - 150, 0, 20)
+		nextLine.Size = UDim2.new(1, -2 * PAD - stampW - STAMP_GAP, 0, 20)
 		fit(nextLine, 15, 11)
 	end
 
@@ -250,10 +260,8 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		key = `runticket{data.stamp}`,
 		text = data.stamp,
 		color = if data.won then WIN else Theme.Color.signal,
-		size = 26,
-		-- a long stamp (ENTERED, NOT RECALLED; TRAIN LOST AT STOP 6) starts further left, so it stays
-		-- on the card: about 14 px a letter at size 26
-		Position = UDim2.new(1, -PAD - math.max(110, #data.stamp * 14), 1, -RunTicket.FOOT - 24),
+		size = stampSize,
+		Position = UDim2.new(1, -PAD - stampW / 2, 1, -RunTicket.FOOT - 24), -- centred: AnchorPoint 0.5
 		ZIndex = z + 10,
 	})
 	stamp.Parent = ticket

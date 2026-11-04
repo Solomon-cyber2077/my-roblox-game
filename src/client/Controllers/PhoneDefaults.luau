@@ -24,7 +24,7 @@ local function apply()
 		return false
 	end
 	local value = Settings.autoGraphics(
-		Registry.StateController.Device(),
+		Registry.StateController.KnownDevice(),
 		player:GetAttribute("GraphicsChosen") == true
 	)
 	if value then
@@ -43,14 +43,18 @@ end
 function PhoneDefaults.Init() end
 
 function PhoneDefaults.Start()
-	if apply() then
-		return
-	end
-	local connection: RBXScriptConnection
-	connection = player:GetAttributeChangedSignal("SettingsReady"):Connect(function()
+	-- apply waits for the device to be known: on its own thread, so the rest of the client starts
+	task.spawn(function()
 		if apply() then
-			connection:Disconnect()
+			return
 		end
+		local connection: RBXScriptConnection
+		connection = player:GetAttributeChangedSignal("SettingsReady"):Connect(function()
+			if player:GetAttribute("SettingsReady") == true and connection.Connected then
+				connection:Disconnect()
+				apply()
+			end
+		end)
 	end)
 end
 

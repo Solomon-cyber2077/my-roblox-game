@@ -707,6 +707,7 @@ local Tuning = {
 		PollSeconds = 1, -- crew status checks (off the train, late joiners)
 		StudioPrint = true, -- Studio diagnostic output: one line per call
 		TabletShortSide = 600, -- touch-only screens this many pixels or more on the short side are tablets
+		DeviceWaitSeconds = 2, -- the first device report waits at most this long for the screen to have a size
 		TakenGrabSeconds = 30, -- a Taken death this soon after a grab is that kind's (heldBy)
 		FirstVisitMaxSeconds = 1800, -- a car server counts first-visit time from the hall join within this long
 		HealthFirstSeconds = 60, -- first client_health report, after this long in the server

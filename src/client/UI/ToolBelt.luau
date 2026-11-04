@@ -155,6 +155,7 @@ function ToolBelt.mount(gui: ScreenGui)
 	local sheet = Ui.panel({ Name = "BagSheet", Visible = false, Parent = gui })
 	local selected: number? = nil
 	local cells: { GuiButton } = {}
+	local cellsKey = "" -- what the cells show; they are rebuilt only when it changes
 	local actions: { TextButton } = {}
 	local open = false
 
@@ -213,7 +214,13 @@ function ToolBelt.mount(gui: ScreenGui)
 	end)
 
 	render = function()
-		local show = phone() and Session.isMember()
+		-- held by a Hollow: the struggle owns the middle of the screen and nothing here can be used,
+		-- so the belt and the bag step aside (and an open bag closes)
+		local held = Registry.GrabController ~= nil and Registry.GrabController.IsHeld()
+		if held and open then
+			close()
+		end
+		local show = phone() and Session.isMember() and not held
 		local inv = inventory()
 		local cluster = TouchButtons.layout()
 		-- belt: the first two tools in carrying order
@@ -258,12 +265,21 @@ function ToolBelt.mount(gui: ScreenGui)
 		}
 		local layout = TouchCluster.sheet(cluster, area, math.max(#inv.items, 1))
 		place(sheet, layout.frame)
-		for _, c in cells do
-			c:Destroy()
-		end
-		table.clear(cells)
 		local s = scale()
-		for slot, itemId in inv.items do
+		-- render runs four times a second: rebuilding the cells each time would swallow a tap whose
+		-- press and release straddle a rebuild, so they are kept until what they show changes
+		local shown = table.concat(inv.items, ",")
+			.. `|{selected}|{layout.frame.x},{layout.frame.y},{layout.frame.w},{layout.frame.h}|{s}`
+		local rebuild = shown ~= cellsKey
+		cellsKey = shown
+		if rebuild then
+			for _, c in cells do
+				c:Destroy()
+			end
+			table.clear(cells)
+		end
+		local toBuild: { string } = if rebuild then inv.items else {}
+		for slot, itemId in toBuild do
 			local r = layout.cells[slot]
 			local c = Ui.new("TextButton", {
 				Name = "Item",

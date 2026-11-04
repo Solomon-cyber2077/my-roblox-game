@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Telemetry = require(ReplicatedStorage.Shared.Logic.Telemetry)
 local Signal = require(ReplicatedStorage.Shared.Util.Signal)
 
@@ -30,23 +31,28 @@ local seqs: { [string]: number } = { public = 0, private = 0 }
 local observers: { Observer } = {}
 local isReady = false
 local resyncRequested = false
-local device: string? = nil -- read once, sent with every ClientReady (the server keeps the first)
+local device: string? = nil -- read once known, sent with every ClientReady (the server keeps the first)
 
--- What kind of device this is, for the server's telemetry (Logic/Telemetry.classify).
+-- What kind of device this is, for the server's telemetry (Logic/Telemetry.classify). "unknown" is
+-- not kept: early in loading the screen may have no size and the input flags may not be set, so a phone would stay unknown for good.
 local function deviceKind(): string
-	if device == nil then
-		local camera = Workspace.CurrentCamera
-		local size = if camera then camera.ViewportSize else nil
-		device = Telemetry.classify({
-			touch = UserInputService.TouchEnabled,
-			keyboard = UserInputService.KeyboardEnabled,
-			mouse = UserInputService.MouseEnabled,
-			gamepad = UserInputService.GamepadEnabled,
-			tenFoot = GuiService:IsTenFootInterface(),
-			shortSide = if size and size.X > 1 then math.min(size.X, size.Y) else nil,
-		})
+	if device ~= nil then
+		return device
 	end
-	return device :: string
+	local camera = Workspace.CurrentCamera
+	local size = if camera then camera.ViewportSize else nil
+	local kind = Telemetry.classify({
+		touch = UserInputService.TouchEnabled,
+		keyboard = UserInputService.KeyboardEnabled,
+		mouse = UserInputService.MouseEnabled,
+		gamepad = UserInputService.GamepadEnabled,
+		tenFoot = GuiService:IsTenFootInterface(),
+		shortSide = if size and size.X > 1 then math.min(size.X, size.Y) else nil,
+	})
+	if kind ~= "unknown" then
+		device = kind
+	end
+	return kind
 end
 
 local function read(root: { [string]: any }, path: Path): any
@@ -137,12 +143,28 @@ function StateController.Init()
 end
 
 function StateController.Start()
-	Net.Fire("ClientReady", deviceKind())
+	-- the first report is the one the server keeps: give the screen and the input flags a moment
+	task.spawn(function()
+		StateController.KnownDevice()
+		Net.Fire("ClientReady", deviceKind())
+	end)
 end
 
 -- What kind of device this is (Logic/Telemetry.classify).
 function StateController.Device(): string
 	return deviceKind()
+end
+
+-- The device once it is known, waiting up to Tuning.Telemetry.DeviceWaitSeconds (yields); "unknown"
+-- if it never settles.
+function StateController.KnownDevice(): string
+	local deadline = os.clock() + Tuning.Telemetry.DeviceWaitSeconds
+	local kind = deviceKind()
+	while kind == "unknown" and os.clock() < deadline do
+		task.wait()
+		kind = deviceKind()
+	end
+	return kind
 end
 
 function StateController.IsReady(): boolean

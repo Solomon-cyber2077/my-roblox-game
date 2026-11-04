@@ -39,6 +39,8 @@ local verdictUntil = 0
 local WIDTH = 320
 local BAR_Y, BAR_W, BAR_H = 44, WIDTH, 16
 local KEY_Y = 110 -- the key chip's centre
+-- where the struggle sits, by screen height: on a phone higher, clear of the touch buttons along the bottom
+local DESK_Y, PHONE_Y = 0.72, 0.5
 local TRACK = Color3.fromRGB(10, 6, 6)
 local ZONE = Color3.fromRGB(186, 132, 58) -- amber: a good press
 local GREAT = Color3.fromRGB(255, 238, 196) -- its bright middle: a great one
@@ -77,7 +79,7 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	root = Ui.new("Frame", {
 		Name = "Struggle",
 		Size = UDim2.fromOffset(WIDTH, 186),
-		Position = UDim2.fromScale(0.5, 0.72),
+		Position = UDim2.fromScale(0.5, DESK_Y),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		Visible = false,
@@ -85,6 +87,11 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 		Parent = gui,
 	})
 	rootScale = Ui.new("UIScale", { Parent = root })
+	local function place()
+		root.Position = UDim2.fromScale(0.5, if gui:GetAttribute("Compact") == true then PHONE_Y else DESK_Y)
+	end
+	place()
+	gui:GetAttributeChangedSignal("Compact"):Connect(place)
 
 	title = Ui.text({
 		Text = "",
