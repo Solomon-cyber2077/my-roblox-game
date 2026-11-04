@@ -149,5 +149,6 @@ return table.freeze({
 	Zones = table.freeze(Zones),
 	Categories = table.freeze(Categories),
 	RareValue = RARE_VALUE,
+	PromptReachSlack = 4, -- studs past a search or pickup prompt's reach still accepted (ping)
 	LooseItems = table.freeze({ "CoalLump", "CoalLump", "CoalLump", "Scrap", "Scrap" }),
 })

@@ -29,11 +29,27 @@ local active = false
 local current: { built: StationBuilder.Built, plan: LayoutGen.Plan, prompts: { [number]: ProximityPrompt } }? =
 	nil
 
-local function canInteract(player: Player): boolean
+-- A prompt's Triggered can be fired by a modified client from anywhere, so the server checks the
+-- player is actually within the prompt's reach (plus slack for ping) before it hands anything over.
+local function inReach(player: Player, prompt: ProximityPrompt): boolean
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local parent = prompt.Parent
+	if root == nil or parent == nil or not parent:IsA("BasePart") then
+		return false
+	end
+	return (root.Position - parent.Position).Magnitude <= prompt.MaxActivationDistance + Loot.PromptReachSlack
+end
+
+local function canInteractAnywhere(player: Player): boolean
 	return active
 		and RunRules.isStationOpen(Registry.RunDirector.Phase())
 		and Registry.CrewService.IsAlive(player)
 		and not Registry.CrewService.IsAboard(player)
+end
+
+local function canInteract(player: Player, prompt: ProximityPrompt): boolean
+	return canInteractAnywhere(player) and inReach(player, prompt)
 end
 
 local function makePrompt(
@@ -75,7 +91,7 @@ local function spawnPickup(itemId: string, position: Vector3, floorY: number?): 
 	local body = piece.PrimaryPart :: BasePart
 	local prompt = makePrompt(body, "Pickup", Items[itemId].name, "Pick up", 0.25, slab.id)
 	prompt.Triggered:Connect(function(player)
-		if not canInteract(player) or piece.Parent == nil then
+		if not canInteract(player, prompt) or piece.Parent == nil then
 			return
 		end
 		local leftovers = Registry.InventoryService.Give(player, { itemId })
@@ -93,9 +109,13 @@ local function onSearch(
 	player: Player,
 	handle: StationBuilder.ContainerHandle,
 	prompt: ProximityPrompt,
-	stationSeed: number
+	stationSeed: number,
+	anywhere: boolean? -- the Studio console's search skips the reach check
 )
-	if not canInteract(player) or handle.model:GetAttribute("Searched") then
+	if
+		not (if anywhere then canInteractAnywhere(player) else canInteract(player, prompt))
+		or handle.model:GetAttribute("Searched")
+	then
 		return
 	end
 	handle.model:SetAttribute("Searched", true)
@@ -160,7 +180,7 @@ function LootService.Activate(built: StationBuilder.Built, plan: LayoutGen.Plan)
 		local itemId = handle.item
 		local prompt = makePrompt(body, "Pickup", Items[itemId].name, "Pick up", 0.25, handle.slab)
 		prompt.Triggered:Connect(function(player)
-			if not canInteract(player) or handle.model.Parent == nil then
+			if not canInteract(player, prompt) or handle.model.Parent == nil then
 				return
 			end
 			local leftovers = Registry.InventoryService.Give(player, { itemId })
@@ -195,7 +215,7 @@ function LootService.DevSearchNearest(player: Player): boolean
 	if best == nil then
 		return false
 	end
-	onSearch(player, best, state.prompts[best.def.id], state.plan.seed)
+	onSearch(player, best, state.prompts[best.def.id], state.plan.seed, true)
 	return best.model:GetAttribute("Searched") == true
 end
 
