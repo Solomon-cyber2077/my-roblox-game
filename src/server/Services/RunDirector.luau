@@ -144,7 +144,8 @@ local function context(): RunRules.Context
 		playerCount = #Players:GetPlayers(),
 		cruiseSeconds = state.cruiseSeconds,
 		dwellSeconds = if state.params then state.params.dwell else 60,
-		chaseSeconds = if state.params then state.params.chaseWindow else 6,
+		-- the Steam Whistle's hold rides on the grace; the phase covers both
+		chaseSeconds = if state.params then state.params.chaseWindow + state.params.whistleHold else 6,
 		holdCountdown = Registry.LobbyService.HoldCountdown(),
 	}
 end
@@ -533,7 +534,7 @@ Enter.Departure = function()
 	state.resolutionEndsAt = nil
 	Registry.CrewService.MarkLastCall()
 	local info = state.info
-	local grace = RunRules.graceSeconds()
+	local grace = RunRules.graceSeconds() + (if state.params then state.params.whistleHold else 0)
 	if info and grace > 0 then
 		state.departed = false
 		info.lastCallEndsAt = now() + grace

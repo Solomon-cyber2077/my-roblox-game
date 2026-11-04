@@ -78,6 +78,7 @@ export type HazardParams = {
 	scriptedOnly: boolean?, -- a first run's stop 3: no sleepers, no fog spawns, only its one Stalker
 	departureAccel: number,
 	chaseWindow: number,
+	whistleHold: number, -- Steam Whistle: seconds added to the Last Call grace (the station stays docked)
 	lootMul: number,
 	safeBand: number,
 }

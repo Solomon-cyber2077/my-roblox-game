@@ -25,6 +25,7 @@ describe("Workshop upgrades bought mid-stop", function()
 			expect(DifficultyModel.refit(before, "SteamWhistle", 1)).toBe(true)
 			expect(before.safeBand).toBe(want.safeBand)
 			expect(before.fogDps).toBeCloseTo(want.fogDps)
+			expect(before.whistleHold).toBe(want.whistleHold)
 			expect(before.chaseWindow).toBeCloseTo(want.chaseWindow)
 		end
 	end)

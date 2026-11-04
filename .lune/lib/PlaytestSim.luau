@@ -335,7 +335,7 @@ local function playStop(mods, session, crew, train, stopInfo)
 	local plan, spots = buildYard(mods, stopInfo.archetype, stopInfo.seed, params)
 	local geo = { depth = plan.depth, safe = plan.safeRows * plan.tile }
 	local departAt = params.dwell + params.lastCall
-	local chaseEnd = departAt + params.chaseWindow
+	local chaseEnd = departAt + (params.whistleHold or 0) + params.chaseWindow
 	local spawns = H.spawnTimes(params, stopInfo.seed)
 	local record = {
 		stop = stopInfo.index,

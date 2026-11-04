@@ -116,7 +116,8 @@ function DifficultyModel.params(
 		hollowChase = blend(Difficulty.HollowChase, d),
 		hollowDamage = math.floor(blend(Difficulty.HollowDamage, d) + 0.5),
 		departureAccel = blend(Difficulty.DepartureAccel, d),
-		chaseWindow = blend(Difficulty.ChaseWindow, d) + effects.ChaseSecondsPerLevel * whistle,
+		chaseWindow = blend(Difficulty.ChaseWindow, d),
+		whistleHold = effects.HoldSecondsPerLevel * whistle,
 		lootMul = blend(Difficulty.LootMultiplier, d),
 		safeBand = Tuning.World.SafeStrip + effects.SafeBandPerLevel * flood,
 	}
@@ -134,7 +135,7 @@ function DifficultyModel.refit(params: Types.HazardParams, upgradeId: string, le
 		params.fogDps *= effects.FogDpsMultiplierPerLevel ^ levels
 		return true
 	elseif upgradeId == "SteamWhistle" then
-		params.chaseWindow += effects.ChaseSecondsPerLevel * levels
+		params.whistleHold += effects.HoldSecondsPerLevel * levels
 		return true
 	end
 	return false

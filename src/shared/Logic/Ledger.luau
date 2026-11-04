@@ -26,7 +26,7 @@ export type Receipt = {
 export type Derived = {
 	coalMax: number,
 	burnMultiplier: number,
-	chaseBonus: number,
+	holdBonus: number,
 	safeBand: number,
 	fogDpsMultiplier: number,
 	breachMultiplier: number,
@@ -77,7 +77,7 @@ function Ledger.derived(train: Train): Derived
 	return {
 		coalMax = Tuning.Train.CoalMax + e.CoalMaxPerLevel * Ledger.level(train, "CoalBunker"),
 		burnMultiplier = e.BurnMultiplierPerLevel ^ Ledger.level(train, "FireboxBaffles"),
-		chaseBonus = e.ChaseSecondsPerLevel * Ledger.level(train, "SteamWhistle"),
+		holdBonus = e.HoldSecondsPerLevel * Ledger.level(train, "SteamWhistle"),
 		safeBand = Tuning.World.SafeStrip + e.SafeBandPerLevel * Ledger.level(train, "Floodlamps"),
 		fogDpsMultiplier = e.FogDpsMultiplierPerLevel ^ Ledger.level(train, "Floodlamps"),
 		breachMultiplier = e.BreachMultiplierPerLevel ^ Ledger.level(train, "ArmorPlating"),

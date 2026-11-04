@@ -51,7 +51,7 @@ function RouteModel.seconds(seed: number, route: Routes.Route, crew: number, bel
 			end
 		end
 		doorsTotal += doors
-		total += run.JunctionSeconds + DifficultyModel.cruiseSeconds(option.distanceKm) + run.ArrivalSeconds + doors + RunRules.graceSeconds() + p.chaseWindow
+		total += run.JunctionSeconds + DifficultyModel.cruiseSeconds(option.distanceKm) + run.ArrivalSeconds + doors + RunRules.graceSeconds() + p.whistleHold + p.chaseWindow
 	end
 	local terminus = RouteGen.terminusOption()
 	total += run.FinalJunctionSeconds + DifficultyModel.cruiseSeconds(terminus.distanceKm) + run.ArrivalSeconds + run.TerminusSeconds + run.RunEndSeconds
