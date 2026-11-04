@@ -76,6 +76,10 @@ function ToolBelt.mount(gui: ScreenGui)
 		return b
 	end
 	local function iconIn(button: GuiObject, itemId: string?)
+		if button:GetAttribute("IconItem") == itemId then
+			return -- render runs four times a second: a live model each time is wasted work
+		end
+		button:SetAttribute("IconItem", itemId)
 		for _, child in button:GetChildren() do
 			if child:IsA("ViewportFrame") then
 				child:Destroy()

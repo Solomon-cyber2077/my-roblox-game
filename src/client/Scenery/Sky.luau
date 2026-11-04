@@ -447,7 +447,7 @@ local LOBBY = {
 	ambient = rgb(HALL.Ambient[1], HALL.Ambient[2], HALL.Ambient[3]), -- warm under the lamps, never grey
 	outdoor = rgb(HALL.Outdoor[1], HALL.Outdoor[2], HALL.Outdoor[3]),
 	bloom = 0.25,
-	bloomThreshold = 1.8,
+	bloomThreshold = 2.2,
 	bloomSize = 16,
 }
 

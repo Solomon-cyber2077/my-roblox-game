@@ -23,6 +23,7 @@ local ORDER = {
 	"AtmosphereController",
 	"VisibilityController",
 	"UIController",
+	"PhoneDefaults",
 	"GrabController",
 	"InjuryController",
 	"DeathCamController",
@@ -56,3 +57,4 @@ end
 for _, entry in controllers do
 	entry.module.Start()
 end
+game:GetService("Players").LocalPlayer:SetAttribute("ClientStarted", true) -- lifts the loading screen

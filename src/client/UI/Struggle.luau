@@ -37,8 +37,8 @@ local onPress: (() -> ())? = nil
 local verdictUntil = 0
 
 local WIDTH = 320
-local BAR_Y, BAR_W, BAR_H = 30, WIDTH, 10
-local KEY_Y = 62 -- the key chip's centre
+local BAR_Y, BAR_W, BAR_H = 44, WIDTH, 16
+local KEY_Y = 110 -- the key chip's centre
 local TRACK = Color3.fromRGB(10, 6, 6)
 local ZONE = Color3.fromRGB(186, 132, 58) -- amber: a good press
 local GREAT = Color3.fromRGB(255, 238, 196) -- its bright middle: a great one
@@ -76,23 +76,23 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	onPress = press
 	root = Ui.new("Frame", {
 		Name = "Struggle",
-		Size = UDim2.fromOffset(WIDTH, 96),
-		Position = UDim2.fromScale(0.5, 0.76),
+		Size = UDim2.fromOffset(WIDTH, 186),
+		Position = UDim2.fromScale(0.5, 0.72),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		Visible = false,
 		ZIndex = 20,
 		Parent = gui,
 	})
-	Ui.phoneScale(root, gui, 0.85) -- the grab's skill check: smaller on a phone, still easy to read
 	rootScale = Ui.new("UIScale", { Parent = root })
 
 	title = Ui.text({
 		Text = "",
 		Font = FONT,
-		TextSize = 20,
+		TextSize = 30,
 		Color = BONE,
-		Size = UDim2.new(1, 0, 0, 22),
+		Size = UDim2.new(1, 80, 0, 34),
+		Position = UDim2.fromOffset(-40, 0),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	title.TextStrokeColor3 = INK
@@ -102,9 +102,9 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	verdict = Ui.text({
 		Text = "",
 		Font = KEY_FONT,
-		TextSize = 22,
+		TextSize = 30,
 		Color = BONE,
-		Size = UDim2.new(1, 0, 0, 22),
+		Size = UDim2.new(1, 0, 0, 34),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	verdict.TextStrokeColor3 = INK
@@ -159,6 +159,7 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	})
 	Ui.stroke(Theme.Color.signal, 1, 0).Parent = needle
 	local meter = line("Meter", BAR_Y + BAR_H + 3, TRACK, root)
+	meter.Size = UDim2.new(1, 0, 0, 6)
 	meter.BackgroundTransparency = 0.5
 	fill = Ui.new("Frame", {
 		Name = "Fill",
@@ -172,7 +173,7 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	-- the key to press, and the button touch players tap
 	local keycap = Ui.new("TextButton", {
 		Name = "Key",
-		Size = UDim2.fromOffset(84, 24),
+		Size = UDim2.fromOffset(136, 72),
 		Position = UDim2.fromOffset(WIDTH / 2, KEY_Y),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundColor3 = TRACK,
@@ -183,12 +184,12 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 		Parent = root,
 	})
 	Ui.corner(4).Parent = keycap
-	Ui.stroke(ZONE, 1, 0.1).Parent = keycap
+	Ui.stroke(ZONE, 2, 0.1).Parent = keycap
 	keyScale = Ui.new("UIScale", { Parent = keycap })
 	keyLabel = Ui.text({
 		Text = "SPACE",
 		Font = KEY_FONT,
-		TextSize = 16,
+		TextSize = 34,
 		Color = GREAT,
 		Size = UDim2.fromScale(1, 1),
 		XAlign = Enum.TextXAlignment.Center,
@@ -208,10 +209,10 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	helpers = Ui.text({
 		Text = "",
 		Font = FONT,
-		TextSize = 13,
+		TextSize = 16,
 		Color = Theme.Color.go,
-		Position = UDim2.fromOffset(0, KEY_Y + 14),
-		Size = UDim2.new(1, 0, 0, 16),
+		Position = UDim2.fromOffset(0, KEY_Y + 38),
+		Size = UDim2.new(1, 0, 0, 18),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	helpers.TextStrokeColor3 = INK
@@ -221,10 +222,10 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	local hint = Ui.text({
 		Text = "",
 		Font = FONT,
-		TextSize = 15,
+		TextSize = 18,
 		Color = BONE,
-		Position = UDim2.fromOffset(-40, KEY_Y + 32),
-		Size = UDim2.new(1, 80, 0, 18),
+		Position = UDim2.fromOffset(-40, KEY_Y + 56),
+		Size = UDim2.new(1, 80, 0, 20),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	hint.TextStrokeColor3 = INK

@@ -1,4 +1,5 @@
 local RunTicketModel = require(Shared.Logic.RunTicketModel)
+local Rank = require(Shared.Logic.Rank)
 
 local function log(stops: number)
 	local list = {}
@@ -89,5 +90,12 @@ describe("RunTicketModel", function()
 		expect(RunTicketModel.initials("TameGiant")).toBe("TG")
 		expect(RunTicketModel.initials("ada")).toBe("AD")
 		expect(RunTicketModel.initials("")).toBe("?")
+	end)
+	it("names the next Crew Rank and the XP left to it, and stops at the top", function()
+		expect(RunTicketModel.nextLine(0)).toBe(`NEXT: CREW RANK 2 IN {Rank.xpFor(2)} XP`)
+		expect(RunTicketModel.nextLine(Rank.xpFor(2))).toBe(
+			`NEXT: CREW RANK 3 IN {Rank.xpFor(3) - Rank.xpFor(2)} XP`
+		)
+		expect(RunTicketModel.nextLine(Rank.xpFor(1000))).toBe(nil)
 	end)
 end)

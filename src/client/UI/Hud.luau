@@ -212,10 +212,10 @@ function Hud.mount(gui: ScreenGui)
 	local tagTitle = Ui.text({
 		Text = "",
 		Font = Theme.Font.displayMedium,
-		TextSize = 13,
-		Color = Theme.Color.inkSoft,
-		Position = UDim2.fromOffset(22, 6),
-		Size = UDim2.new(1, -40, 0, 16),
+		TextSize = 15,
+		Color = Theme.Color.ink,
+		Position = UDim2.fromOffset(22, 4),
+		Size = UDim2.new(1, -40, 0, 18),
 	})
 	tagTitle.TextTruncate = Enum.TextTruncate.AtEnd
 	tagTitle.Parent = watchTag
@@ -231,7 +231,7 @@ function Hud.mount(gui: ScreenGui)
 	local tagStatus = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 15,
+		TextSize = 16,
 		Color = Theme.Color.ink,
 		Position = UDim2.new(1, -28, 0, 26),
 		AnchorPoint = Vector2.new(1, 0),
@@ -242,19 +242,19 @@ function Hud.mount(gui: ScreenGui)
 	local tagMoon = Ui.text({
 		Text = "",
 		Font = Theme.Font.bodyBold,
-		TextSize = 11,
-		Color = Theme.Color.inkSoft,
+		TextSize = 13,
+		Color = Theme.Color.ink,
 		Position = UDim2.fromOffset(22, 52),
 		Size = UDim2.fromOffset(110, 16),
 	})
 	-- shrinks to fit rather than cutting "MOONRISE · AMBER ..." short; widens when no danger is shown
 	tagMoon.TextScaled = true
-	Ui.new("UITextSizeConstraint", { MaxTextSize = 11, MinTextSize = 7, Parent = tagMoon })
+	Ui.new("UITextSizeConstraint", { MaxTextSize = 13, MinTextSize = 10, Parent = tagMoon })
 	tagMoon.Parent = watchTag
 	local tagDanger = Ui.text({
 		Text = "",
 		Font = Theme.Font.bodyBold,
-		TextSize = 11,
+		TextSize = 13,
 		Color = Theme.Color.signal,
 		Position = UDim2.new(1, -28, 0, 52),
 		AnchorPoint = Vector2.new(1, 0),
@@ -690,20 +690,22 @@ function Hud.mount(gui: ScreenGui)
 		local name = Ui.text({
 			Text = label,
 			Font = Theme.Font.display,
-			TextSize = 14,
-			Color = Theme.Color.textDim,
+			TextSize = 16,
+			Color = Theme.Color.bone,
 			Size = UDim2.fromOffset(44, 22),
 		})
+		name.TextStrokeTransparency = 0.4
 		name.Parent = row
 		local value = Ui.text({
 			Text = "",
 			Font = Theme.Font.display,
-			TextSize = 16,
+			TextSize = 18,
 			Color = Theme.Color.white,
 			Size = UDim2.fromOffset(54, 22),
 			Position = UDim2.fromOffset(44, 0),
 			XAlign = Enum.TextXAlignment.Left,
 		})
+		value.TextStrokeTransparency = 0.4
 		value.Parent = row
 		local meter, set = Ui.meter({
 			Size = UDim2.new(1, -108, 0, 8),
@@ -744,11 +746,12 @@ function Hud.mount(gui: ScreenGui)
 	local warning = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
-		TextSize = 14,
+		TextSize = 16,
 		Color = Theme.Color.signal,
 		Position = UDim2.new(0, 0, 1, 14),
-		Size = UDim2.new(1, 0, 0, 18),
+		Size = UDim2.new(1, 0, 0, 20),
 	})
+	warning.TextStrokeTransparency = 0.4
 	warning.Parent = gauges
 
 	-- Crew roster ------------------------------------------------------------------------------
@@ -770,7 +773,7 @@ function Hud.mount(gui: ScreenGui)
 	local rosterTitle = Ui.text({
 		Text = "OPERATORS",
 		Font = Theme.Font.display,
-		TextSize = 14,
+		TextSize = 16,
 		Color = Theme.Color.brass,
 		LayoutOrder = 0,
 	})
@@ -856,7 +859,7 @@ function Hud.mount(gui: ScreenGui)
 				BackgroundTransparency = 0.15,
 				Text = status.text,
 				FontFace = Theme.Font.display,
-				TextSize = 11,
+				TextSize = 13,
 				TextColor3 = Theme.Color.ink,
 				Parent = row,
 			})
@@ -1074,7 +1077,7 @@ function Hud.mount(gui: ScreenGui)
 				local key = Ui.text({
 					Text = tostring(index),
 					Font = Theme.Font.display,
-					TextSize = 13,
+					TextSize = 15,
 					Color = if def.kind == "Tool" then Theme.Color.brass else Theme.Color.inkSoft,
 					Position = UDim2.fromOffset(5, 2),
 					Size = UDim2.fromOffset(16, 14),
@@ -1086,11 +1089,11 @@ function Hud.mount(gui: ScreenGui)
 					local tag = Ui.text({
 						Text = "HEAVY",
 						Font = Theme.Font.display,
-						TextSize = 11,
+						TextSize = 13,
 						Color = Theme.Color.signal,
 						Position = UDim2.new(1, -5, 0, 2),
 						AnchorPoint = Vector2.new(1, 0),
-						Size = UDim2.fromOffset(40, 14),
+						Size = UDim2.fromOffset(40, 16),
 						XAlign = Enum.TextXAlignment.Right,
 					})
 					tag.ZIndex = 4
@@ -1105,11 +1108,11 @@ function Hud.mount(gui: ScreenGui)
 					local mark = Ui.text({
 						Text = "DROPS",
 						Font = Theme.Font.display,
-						TextSize = if small then 10 else 12,
+						TextSize = if small then 12 else 14,
 						Color = Theme.Color.dangerText,
 						Position = UDim2.new(1, -3, 1, -2),
 						AnchorPoint = Vector2.new(1, 1),
-						Size = if small then UDim2.fromOffset(40, 12) else UDim2.fromOffset(40, 14),
+						Size = if small then UDim2.fromOffset(40, 14) else UDim2.fromOffset(40, 16),
 						XAlign = Enum.TextXAlignment.Right,
 					})
 					mark.ZIndex = 4

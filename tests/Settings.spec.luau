@@ -5,6 +5,13 @@ describe("Settings", function()
 		expect(Settings.read(nil)).toEqual(Settings.Defaults)
 		expect(Settings.read({ GraphicsQuality = 5, Hud = "bad" })).toEqual(Settings.Defaults)
 	end)
+	it("picks Performance once, only for a phone with no saved choice", function()
+		expect(Settings.autoGraphics("phone", false)).toBe("Performance")
+		expect(Settings.autoGraphics("phone", true)).toBe(nil)
+		expect(Settings.autoGraphics("tablet", false)).toBe(nil)
+		expect(Settings.autoGraphics("desktop", false)).toBe(nil)
+		expect(Settings.autoGraphics("unknown", false)).toBe(nil)
+	end)
 	it("retains supported saved choices", function()
 		local saved = {
 			GraphicsQuality = "Performance",

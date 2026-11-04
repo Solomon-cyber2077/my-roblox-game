@@ -140,6 +140,11 @@ function StateController.Start()
 	Net.Fire("ClientReady", deviceKind())
 end
 
+-- What kind of device this is (Logic/Telemetry.classify).
+function StateController.Device(): string
+	return deviceKind()
+end
+
 function StateController.IsReady(): boolean
 	return isReady
 end

@@ -237,6 +237,14 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		end
 	end
 
+	if data.nextLine then
+		local nextLine = label(ticket, data.nextLine, Theme.Font.type, 15, INK, z + 3)
+		nextLine.Name = "NextLine"
+		nextLine.Position = UDim2.fromOffset(PAD, H - RunTicket.FOOT - 26)
+		nextLine.Size = UDim2.new(1, -2 * PAD - 150, 0, 20)
+		fit(nextLine, 15, 11)
+	end
+
 	-- The stamp, struck on the right just above the foot (the foot is the host's buttons)
 	local stamp = Stamp.word({
 		key = `runticket{data.stamp}`,

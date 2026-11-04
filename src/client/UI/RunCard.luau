@@ -60,6 +60,7 @@ local function runData(): RunTicketModel.Data
 		nextStop = State.Get({ "run", "nextStop" }),
 		stopCount = State.Get({ "run", "stopCount" }),
 		runId = State.Get({ "run", "runId" }),
+		xp = State.GetPrivate({ "profile", "xp" }),
 		crew = State.Get({ "crew" }),
 		me = Session.userKey,
 	})

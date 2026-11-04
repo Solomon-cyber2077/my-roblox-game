@@ -430,10 +430,10 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 
 	-- What the line is
 	local y = STUB + 10
-	local kind = label(paper, view.kind, BODY, 11, INK_SOFT, 4)
+	local kind = label(paper, view.kind, BODY, 13, INK_SOFT, 4)
 	kind.Position = UDim2.fromOffset(PAD, y)
-	kind.Size = UDim2.new(1, -PAD * 2, 0, 14)
-	shrink(kind, 11, 8)
+	kind.Size = UDim2.new(1, -PAD * 2, 0, 16)
+	shrink(kind, 13, 9)
 	y += 15
 	local name = label(paper, view.name, HEAD, 18, INK, 4)
 	name.Position = UDim2.fromOffset(PAD, y)
@@ -450,7 +450,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 		paper,
 		if view.terminus then "THE END OF THE LINE" elseif view.mystery then "DANGER  UNKNOWN" else "DANGER",
 		HEAD,
-		11,
+		13,
 		INK_SOFT,
 		4
 	)
@@ -495,10 +495,10 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	detail.Position = UDim2.fromOffset(PAD, y)
 	detail.Size = UDim2.new(1, -PAD * 2, 0, 16)
 	detail.Visible = false
-	local warning = label(paper, "NOT ENOUGH COAL: THE HULL SUFFERS", HEAD, 10, Theme.Color.signal, 4)
+	local warning = label(paper, "NOT ENOUGH COAL: THE HULL SUFFERS", HEAD, 12, Theme.Color.signal, 4)
 	warning.Position = UDim2.fromOffset(PAD, y + 16)
-	warning.Size = UDim2.new(1, -PAD * 2, 0, 13)
-	shrink(warning, 10, 7)
+	warning.Size = UDim2.new(1, -PAD * 2, 0, 15)
+	shrink(warning, 12, 9)
 	warning.Visible = false
 
 	if opts.wholeTap and opts.onVote then
@@ -666,13 +666,13 @@ function Ticket.stub(
 	paper.Rotation = TicketModel.tilt(opts.routeId)
 	local hole = circle("StringHole", 7, HOLE, paper, 4)
 	hole.Position = UDim2.fromOffset(10, sh / 2)
-	local serial = label(paper, view.serial, HEAD_LIGHT, 11, INK_SOFT, 4)
+	local serial = label(paper, view.serial, HEAD_LIGHT, 12, INK_SOFT, 4)
 	serial.Position = UDim2.fromOffset(20, 6)
 	serial.Size = UDim2.fromOffset(60, 14)
-	local kind = label(paper, view.kind, BODY, 10, INK_SOFT, 4)
+	local kind = label(paper, view.kind, BODY, 12, INK_SOFT, 4)
 	kind.Position = UDim2.fromOffset(78, 6)
 	kind.Size = UDim2.new(1, -86, 0, 14)
-	shrink(kind, 10, 7)
+	shrink(kind, 12, 9)
 	local name = label(paper, view.name, HEAD, 15, INK, 4)
 	name.Position = UDim2.fromOffset(20, 22)
 	name.Size = UDim2.new(1, if view.seal then -64 else -28, 0, 20)
@@ -682,10 +682,10 @@ function Ticket.stub(
 		if view.coal then
 			foot ..= `  ·  COAL {view.coal.label}`
 		end
-		local legs = label(paper, foot, BODY, 10, INK, 4)
+		local legs = label(paper, foot, BODY, 12, INK, 4)
 		legs.Position = UDim2.fromOffset(20, 46)
 		legs.Size = UDim2.new(1, -64, 0, 14)
-		shrink(legs, 10, 7)
+		shrink(legs, 12, 9)
 	end
 	if view.seal then
 		local disc = circle("Seal", 28, WAX, paper, 4)

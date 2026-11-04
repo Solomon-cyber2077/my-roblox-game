@@ -29,7 +29,7 @@ return table.freeze({
 	Recipe = table.freeze({ brightness = 1.2, range = { 20, 24 } }),
 
 	Hall = table.freeze({
-		Globe = fixture(GAS, 1, 38), -- the platform's hanging globes (some cast shadows: LobbyBuilder picks)
+		Globe = fixture(GAS, 0.85, 38), -- the platform's hanging globes (some cast shadows: LobbyBuilder picks)
 		Kiosk = fixture(AMBER, 0.75, 22), -- the Outfitter's lamp
 		Bulb = fixture(AMBER, 0.55, 14),
 		Stove = fixture(FIRE, 0.9, 18),
@@ -47,11 +47,11 @@ return table.freeze({
 		Firebox = fixture(COALS, 1.0, 13),
 		Banker = fixture(AMBER, 0.55, 9),
 		Flame = fixture(AMBER, 0.7, 14),
-		BenchLamp = fixture(AMBER, 0.8, 13),
+		BenchLamp = fixture(AMBER, 0.7, 13),
 		Stove = fixture(COALS, 2.2, 16, true),
 		GaugeLamp = fixture(AMBER, 0.45, 7),
 		-- the saloon ceiling's square lanterns: the hall's back-wall lamp light (Hall.Gooseneck's gas
 		-- colour and strength), reach cut to a car's width
-		Lantern = fixture(GAS, 1.1, 20, true),
+		Lantern = fixture(GAS, 0.95, 20, true),
 	}),
 })

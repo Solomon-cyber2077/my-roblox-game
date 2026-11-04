@@ -88,7 +88,7 @@ function RouteVote.mount(gui: ScreenGui)
 		Name = "TieNote",
 		Text = "",
 		Font = Theme.Font.type,
-		TextSize = 14,
+		TextSize = 16,
 		Color = Theme.Color.brassLight,
 		Size = UDim2.fromOffset(0, 26),
 		Position = UDim2.new(0.5, 0, 0, 258), -- under an unfolded ticket

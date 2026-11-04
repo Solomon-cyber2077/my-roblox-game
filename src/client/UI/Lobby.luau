@@ -278,7 +278,7 @@ function Lobby.mount(gui: ScreenGui)
 			nameLabel.Position, nameLabel.Size = UDim2.fromOffset(56, 6), UDim2.new(1, -64, 0, 24)
 			nameLabel.TextSize = 21
 			brassLabel.Position, brassLabel.Size = UDim2.fromOffset(56, 31), UDim2.new(1, -64, 0, 20)
-			brassLabel.TextSize = 15
+			brassLabel.TextSize = 16
 		end
 		Menu.setLobbyY(if folded then 12 + 58 + 8 else 186)
 	end
@@ -320,7 +320,7 @@ function Lobby.mount(gui: ScreenGui)
 		BackgroundColor3 = Theme.Color.brass,
 		BorderSizePixel = 0,
 		FontFace = Theme.Font.display,
-		TextSize = 14,
+		TextSize = 15,
 		TextColor3 = Theme.Color.ink,
 		Text = "1",
 		Parent = headStrip,
@@ -328,13 +328,13 @@ function Lobby.mount(gui: ScreenGui)
 	Ui.corner(2).Parent = platformPlate
 	caption("PLATFORM 1  ·  DEPOT HALL", {
 		Color = Theme.Color.white,
-		TextSize = 13,
+		TextSize = 15,
 		Position = UDim2.fromOffset(28, 0),
 		Size = UDim2.new(1, -36, 1, 0),
 		Parent = headStrip,
 	})
 	caption("TO THE TERMINUS", {
-		TextSize = 13,
+		TextSize = 15,
 		Position = UDim2.fromOffset(28, 0),
 		Size = UDim2.new(1, -36, 1, 0),
 		XAlign = Enum.TextXAlignment.Right,
@@ -353,10 +353,10 @@ function Lobby.mount(gui: ScreenGui)
 	local detail = Ui.text({
 		Text = "",
 		Font = Theme.Font.body,
-		TextSize = 14,
-		Color = Theme.Color.boneDim,
-		Position = UDim2.fromOffset(12, 56),
-		Size = UDim2.new(1, -24, 0, 16),
+		TextSize = 16,
+		Color = Theme.Color.bone,
+		Position = UDim2.fromOffset(12, 54),
+		Size = UDim2.new(1, -24, 0, 20),
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	detail.Parent = panel
@@ -447,7 +447,7 @@ function Lobby.mount(gui: ScreenGui)
 		Size = UDim2.new(0.5, -4, 0, 32),
 		Position = UDim2.fromScale(0.5, 0),
 		AnchorPoint = Vector2.new(0.5, 0),
-		TextSize = 15,
+		TextSize = 16,
 	})
 	lineButton.TextColor3 = Theme.Color.bone
 	lineButton.Parent = hallRow
@@ -510,19 +510,23 @@ function Lobby.mount(gui: ScreenGui)
 		boardHead = Ui.text({
 			Text = "",
 			Font = Theme.Font.display,
-			TextSize = 64,
+			TextSize = 72,
 			Color = Theme.Color.brassLight,
-			Position = UDim2.fromOffset(40, 24),
-			Size = UDim2.new(1, -80, 0, 70),
+			Position = UDim2.fromOffset(236, 40),
+			Size = UDim2.fromOffset(628, 80),
+			XAlign = Enum.TextXAlignment.Center,
 		});
+		(boardHead :: TextLabel).TextScaled = true
+		Ui.new("UITextSizeConstraint", { MaxTextSize = 72, MinTextSize = 40, Parent = boardHead });
 		(boardHead :: TextLabel).Parent = surface
 		boardRows = Ui.text({
 			Text = "",
 			Font = Theme.Font.display,
-			TextSize = 40,
+			TextSize = 46,
 			Color = Theme.Color.white,
-			Position = UDim2.fromOffset(40, 110),
-			Size = UDim2.new(1, -80, 1, -130),
+			Position = UDim2.fromOffset(236, 136),
+			Size = UDim2.new(0, 628, 1, -156),
+			XAlign = Enum.TextXAlignment.Center,
 			YAlign = Enum.TextYAlignment.Top,
 			Wrapped = true,
 		});

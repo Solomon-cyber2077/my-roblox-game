@@ -18,6 +18,7 @@ local function publish(player: Player)
 			if profile then profile.stats.runs else nil
 		)
 	)
+	player:SetAttribute("GraphicsChosen", profile ~= nil and profile.settings.GraphicsQuality ~= nil)
 	player:SetAttribute("SettingsReady", profile ~= nil)
 end
 

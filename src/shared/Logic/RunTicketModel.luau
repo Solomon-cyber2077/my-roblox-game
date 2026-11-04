@@ -10,6 +10,7 @@ local Shared = script.Parent.Parent
 local Tuning = require(Shared.Config.Tuning)
 local DeathCause = require(Shared.Logic.DeathCause)
 local RunLog = require(Shared.Logic.RunLog)
+local Rank = require(Shared.Logic.Rank)
 
 export type CrewMark = { initials: string, name: string, lost: boolean }
 export type Stat = { label: string, value: string }
@@ -22,6 +23,7 @@ export type Data = {
 	stats: { Stat }, -- never more than three; the crew's is the last and is drawn from `crew`
 	crew: { CrewMark },
 	stamp: string,
+	nextLine: string?, -- what the player is working toward; old tickets have none
 }
 
 export type CrewEntry = { name: string?, status: string?, cause: string? }
@@ -29,6 +31,7 @@ export type Input = {
 	outcome: string?,
 	log: { any }?,
 	nextStop: number?,
+	xp: number?, -- lifetime XP, for the NEXT line
 	stopCount: number?, -- run.stopCount: a Short Line's victory stamps SHORT LINE
 	runId: string?,
 	crew: { [string]: CrewEntry }?,
@@ -116,12 +119,22 @@ function RunTicketModel.build(input: Input): Data
 			{ label = "CREW", value = table.concat(initials, " · ") },
 		},
 		crew = marks,
+		nextLine = if input.xp then RunTicketModel.nextLine(input.xp) else nil,
 		stamp = RunLog.final(
 			outcome :: any,
 			RunLog.endStop(input.log :: any, input.nextStop),
 			input.stopCount == Tuning.Run.Routes.Short
 		),
 	}
+end
+
+-- The ticket's NEXT line: the XP left to the next Crew Rank; nil at the top rank.
+function RunTicketModel.nextLine(xp: number): string?
+	local rank, into, span = Rank.progress(xp)
+	if span == 0 then
+		return nil
+	end
+	return `NEXT: CREW RANK {rank + 1} IN {span - into} XP`
 end
 
 return table.freeze(RunTicketModel)

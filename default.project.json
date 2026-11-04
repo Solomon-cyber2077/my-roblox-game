@@ -3,6 +3,11 @@
   "globIgnorePaths": ["**/~syncthing~*", "**/.syncthing.*", "**/*.tmp"],
   "tree": {
     "$className": "DataModel",
+    "ReplicatedFirst": {
+      "LoadingScreen": {
+        "$path": "src/first/LoadingScreen.client.luau"
+      }
+    },
     "ReplicatedStorage": {
       "Shared": {
         "$path": "src/shared"
