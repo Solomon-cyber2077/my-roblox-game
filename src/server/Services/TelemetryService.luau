@@ -64,6 +64,7 @@ type Visitor = {
 	timings: { [string]: number }, -- first_session_timing milestones waiting for the profile and device
 	buffer: TelemetrySink.Buffer,
 	flushing: boolean,
+	again: boolean, -- records arrived for a flush while one was running; run it once more after
 	lastOutcome: string?,
 	lastOutcomeAt: number?,
 	lastGrab: { kind: string, at: number, escaped: boolean }?,
@@ -834,11 +835,18 @@ end
 
 local function flush(player: Player, visitor: Visitor): boolean
 	local store = sinkStore
-	if store == nil or #visitor.buffer.pending == 0 or visitor.flushing then
+	if store == nil or #visitor.buffer.pending == 0 then
+		return true
+	end
+	if visitor.flushing then
+		-- A flush is already under way (the timer, or shutdown) and a player may be leaving: records
+		-- added since its snapshot are flushed by that same call once it ends, so none are stranded.
+		visitor.again = true
 		return true
 	end
 	visitor.flushing = true
 	inFlight += 1
+	local started = os.clock()
 	local count = #visitor.buffer.pending
 	local snapshot = table.move(visitor.buffer.pending, 1, count, 1, {})
 	local key = TelemetrySink.key(game.PlaceId, serverId, player.UserId)
@@ -858,10 +866,17 @@ local function flush(player: Player, visitor: Visitor): boolean
 	end, T.SinkRetries, T.SinkRetryDelay, task.wait)
 	visitor.flushing = false
 	inFlight -= 1
+	if RunService:IsStudio() and T.StudioPrint then
+		print(`[Telemetry] sink flush {count} records in {math.floor((os.clock() - started) * 1000)} ms`)
+	end
 	if ok then
 		TelemetrySink.flushed(visitor.buffer, count, total)
 	else
 		warn(`[Telemetry] sink flush failed for {key}: {err}`)
+	end
+	if visitor.again then
+		visitor.again = false
+		return flush(player, visitor) and ok
 	end
 	return ok
 end
@@ -918,6 +933,7 @@ local function onPlayerAdded(player: Player)
 		timings = {},
 		buffer = TelemetrySink.newBuffer(),
 		flushing = false,
+		again = false,
 		lastOutcome = nil,
 		lastOutcomeAt = nil,
 		lastGrab = nil,
