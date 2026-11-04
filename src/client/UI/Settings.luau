@@ -53,9 +53,9 @@ function SettingsUi.mount(gui: ScreenGui)
 			-- first few runs is the default, not a choice
 			values = { "Always", "Off" },
 			toggle = false,
-			note = `Leak marks, floor arrows and notices show during your first {require(
+			note = `The leak alert, a red ! on each leak and the Last Light notice show during your first {require(
 				game:GetService("ReplicatedStorage").Shared.Config.Settings
-			).FirstFewRuns} runs. Keep them always or turn them off.`,
+			).FirstFewRuns} runs. Keep them always, or turn them off and the leaks hiss louder and steam thicker instead.`,
 		},
 		{
 			key = "Hud",

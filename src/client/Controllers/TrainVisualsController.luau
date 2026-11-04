@@ -274,7 +274,7 @@ end
 
 -- A leak's steam and hiss, by how bad it has got (LeakSeverity, from TrainService). Always on,
 -- whatever the settings say: the leak is a thing in the world.
--- With Broken Things Markers off there is no arrow or HUD alert, so the leak itself is louder,
+-- With Broken Things Markers off there is no ! mark or HUD alert, so the leak itself is louder,
 -- its hiss carries into the next cars and its steam is thick enough to see through doorways.
 local function shapeLeak(part: BasePart, emitter: ParticleEmitter)
 	local leaks = Difficulty.Leaks
