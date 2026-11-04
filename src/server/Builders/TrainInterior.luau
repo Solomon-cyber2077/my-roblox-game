@@ -798,27 +798,51 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	-- tickets and dials are SurfaceGuis on the clear faces, the lanterns' light follows the vote.
 	do
 		local XB, ZB = -23.62, 4.05 -- the lining's face, and the board's middle across the car
-		-- A reachable brass bell rope hangs beside the route board, clear of its tickets.
-		bell = Kit.cylinder(
-			model,
-			0.18,
-			0.7,
-			origin * CFrame.new(-22.9, 5.1, 2.25),
-			C.brass,
-			{ material = M.Metal }
-		)
-		bell.Name = "DepartureBell"
-		bell:SetAttribute("Bell", true)
-		local rope = Kit.cylinder(
-			model,
-			0.035,
-			1.0,
-			origin * CFrame.new(-22.9, 4.35, 2.25) * CFrame.Angles(0, 0, math.pi / 2),
-			C.leather,
-			{ material = M.Fabric, collide = false }
-		)
-		rope.Name = "DepartureBellRope"
-		rope:SetAttribute("BellRope", true)
+		-- The departure bell hangs from an iron bracket on the solid pier beside the platform door,
+		-- well clear of the route board so its prompt never sits over a ticket.
+		do
+			local BX, BZ = -32.0, LI - 0.85 -- the pier's middle, and the bell's axis out from the wall
+			local metal = { material = M.Metal, collide = false }
+			local function w(x: number, y: number, z: number): Vector3
+				return (origin * CFrame.new(x, y, z)).Position
+			end
+			Kit.block(model, Vector3.new(0.8, 1.25, 0.14), at(BX, 6.75, LI - 0.1), C.polish, {
+				material = M.Wood,
+				collide = false,
+			}).Name =
+				"BellPlate"
+			Kit.block(model, Vector3.new(0.1, 0.12, 0.82), at(BX, 7.2, LI - 0.54), C.iron, metal).Name =
+				"BellBracket"
+			local a, b = w(BX, 6.4, LI - 0.15), w(BX, 7.16, LI - 0.8)
+			Kit.block(model, Vector3.new(0.07, 0.07, (b - a).Magnitude), Kit.between(a, b), C.iron, metal).Name =
+				"BellBrace"
+			Kit.ball(model, 0.14, at(BX, 7.2, LI - 0.97), C.iron, metal)
+			Kit.block(model, Vector3.new(0.08, 0.14, 0.08), at(BX, 7.08, BZ), C.iron, metal)
+			-- the bell's flare, crown to lip in fine steps
+			Kit.ball(model, 0.22, at(BX, 7.0, BZ), C.brass, metal)
+			for _, tier in
+				{ { 6.94, 0.08, 0.3 }, { 6.86, 0.1, 0.38 }, { 6.76, 0.12, 0.45 }, { 6.65, 0.12, 0.53 } }
+			do
+				Kit.post(model, tier[2], tier[3], at(BX, tier[1], BZ), C.brass, metal)
+			end
+			bell = Kit.post(model, 0.08, 0.66, at(BX, 6.55, BZ), C.brass, metal)
+			bell.Name = "DepartureBell"
+			bell:SetAttribute("Bell", true)
+			Kit.ball(model, 0.13, at(BX, 6.47, BZ), C.iron, metal)
+			local rope = Kit.post(
+				model,
+				1.45,
+				0.06,
+				at(BX, 5.7, BZ),
+				C.leather,
+				{ material = M.Fabric, collide = false }
+			)
+			rope.Name = "DepartureBellRope"
+			rope:SetAttribute("BellRope", true)
+			Kit.post(model, 0.06, 0.15, at(BX, 4.97, BZ), C.brass, metal)
+			Kit.post(model, 0.38, 0.13, at(BX, 4.76, BZ), C.polish, { material = M.Wood, collide = false })
+			Kit.ball(model, 0.16, at(BX, 4.57, BZ), C.polish, { material = M.Wood, collide = false })
+		end
 		local board = Instance.new("Model")
 		board.Name = "RouteBoard"
 		board.Parent = model

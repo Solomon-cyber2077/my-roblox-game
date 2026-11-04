@@ -304,6 +304,9 @@ function TrainService.Init()
 	local bellPrompt =
 		makePrompt(built.bell, "Bell", "Departure bell", "Ring departure bell", Tuning.Grasp.BellHold)
 	bellPrompt.MaxActivationDistance = Tuning.Grasp.BellDistance
+	-- its own keys: the route board's tickets use E with OnePerButton, so a bell on E hid a ticket
+	bellPrompt.KeyboardKeyCode = Enum.KeyCode.R
+	bellPrompt.GamepadKeyCode = Enum.KeyCode.ButtonX
 	bellPrompt.Triggered:Connect(function(player)
 		TrainService.RingBell(player)
 	end)
