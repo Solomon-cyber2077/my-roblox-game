@@ -50,4 +50,46 @@ function Vote.tally(votes: { [string]: number }, options: { Types.RouteOption },
 	return finalists[pick]
 end
 
+-- The ballots whose voter `keep` accepts (crew who left or went down before the close are dropped).
+-- Returns a new table.
+function Vote.prune(votes: { [string]: number }, keep: (string) -> boolean): { [string]: number }
+	local out: { [string]: number } = {}
+	for key, choice in votes do
+		if keep(key) then
+			out[key] = choice
+		end
+	end
+	return out
+end
+
+export type Result = "majority" | "tie" | "none"
+
+-- How a ballot was decided: one option led ("majority"), the short-line rule or the coin settled a
+-- tie ("tie"), or no valid vote was cast ("none").
+function Vote.result(votes: { [string]: number }, optionCount: number): Result
+	local best, second, total = 0, 0, 0
+	for _, count in Vote.counts(votes, optionCount) do
+		total += count
+		if count > best then
+			best, second = count, best
+		elseif count > second then
+			second = count
+		end
+	end
+	if total == 0 then
+		return "none"
+	end
+	return if best > second then "majority" else "tie"
+end
+
+export type Turnout = "none" | "some" | "all"
+
+-- Valid votes against the crew who could vote at the close.
+function Vote.turnout(counted: number, eligible: number): Turnout
+	if counted <= 0 then
+		return "none"
+	end
+	return if counted >= eligible then "all" else "some"
+end
+
 return table.freeze(Vote)

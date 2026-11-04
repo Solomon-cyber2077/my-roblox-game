@@ -75,6 +75,8 @@ local Vocab = table.freeze({
 	Entry = list({ "hall", "car", "join_in_progress" }),
 	InviteSource = list({ "depot", "runcard" }),
 	Scene = list({ "hall", "train", "stop" }), -- where a client health report was taken
+	VoteResult = list({ "majority", "tie", "none" }), -- how a junction ballot was decided (Logic/Vote.result)
+	Turnout = list({ "none", "some", "all" }), -- valid votes against crew able to vote at the close
 	FpsBucket = list({ "<15", "15-25", "25-30", "30-45", "45-58", "58+" }),
 	MemoryBucket = list({ "<800", "800-1200", "1200-1600", "1600-2200", "2200-3000", "3000+" }), -- MB
 	LoadBucket = list({ "<5", "5-10", "10-20", "20-30", "30-60", "60+" }), -- seconds
@@ -123,6 +125,9 @@ local Events: { [string]: EventDef } = table.freeze({
 	client_fps_low = event("FpsBucket", "Device", "Scene"), -- the window's worst whole second
 	client_memory = event("MemoryBucket", "Device", "Scene"),
 	client_load = event("LoadBucket", "Device", "Entry"), -- once per server
+	-- a junction ballot with a real choice closed (RouteService); value: seconds from opening to the last
+	-- counted vote (0 with none); the stop is the one the ballot leads to
+	route_vote = event("Stop", "VoteResult", "Turnout"),
 })
 
 -- Funnel name -> its step names, in order. `onboarding` goes through LogOnboardingFunnelStepEvent;

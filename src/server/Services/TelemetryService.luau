@@ -611,6 +611,17 @@ function TelemetryService.Sighting(player: Player, seconds: number)
 	)
 end
 
+-- A junction ballot with a real choice closed (RouteService): seconds to the last counted vote, how
+-- it was decided and the turnout, for the stop it leads to. Once per run and stop.
+function TelemetryService.RouteVote(stop: number, seconds: number, result: string, turnout: string)
+	local current = run
+	if current == nil or not once(`vote|{current.id}|{stop}`) then
+		return
+	end
+	local field = Telemetry.stop(stop, Registry.RunDirector.StopCount())
+	crewEvent(current, "route_vote", round(seconds, 1), { field, result, turnout })
+end
+
 -- AGAIN accepted on the run card (LobbyService), once per player per card: seconds after the card
 -- opened, and the run it followed.
 function TelemetryService.AgainPressed(player: Player, secondsAfterCard: number, outcome: string)
