@@ -362,7 +362,7 @@ table.insert(targets, {
 })
 
 --[[
-	The surface rule (Prompt 6, B.3): no station surface pure white or pure black. Every visible
+	The surface rule (Design step 6, B.3): no station surface pure white or pure black. Every visible
 	part's colour channels stay within 18-232; glowing glass (Neon, Glass) and invisible parts are
 	exempt. Bone and parchment (inside the band) belong on trim only, which the owner judges.
 ]]
@@ -492,7 +492,7 @@ table.insert(targets, {
 					end
 				end
 			end
-			-- every state of every kind (Prompt 3: Stalk frozen and moving, the coil, the stumble)
+			-- every state of every kind (Design step 3: Stalk frozen and moving, the coil, the stumble)
 			local variants = {
 				{ "Prowl", {} },
 				{ "Stalk", {} },

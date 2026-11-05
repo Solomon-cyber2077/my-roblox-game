@@ -10,7 +10,7 @@ local Difficulty = require(script.Parent.Difficulty)
 local Tuning = {
 	Run = {
 		StationCount = 10, -- the Long Line's stops before the Terminus: the most any run has
-		-- route lengths (Logic/Routes, Prompt 10 FIXED); a run's own is run.stopCount
+		-- route lengths (Logic/Routes, Design step 10 FIXED); a run's own is run.stopCount
 		Routes = table.freeze({ Short = 5, Long = 10 }),
 		-- Short Line stop k reads the Long Line's stop m(k) for every stop-indexed difficulty input
 		ShortLevels = table.freeze({ 1, 2, 4, 6, 8 }),
@@ -89,7 +89,7 @@ local Tuning = {
 	Cars = {
 		MinPlayers = 2, -- the countdown starts once this many are aboard
 		MaxPlayers = 4, -- a full car leaves at once
-		CountdownSeconds = 20, -- PROVISIONAL (Prompt 10: was 40)
+		CountdownSeconds = 20, -- PROVISIONAL (Design step 10: was 40)
 		ExitWindowSeconds = 10, -- after the countdown starts, the door lets people out this long
 		HoldSeconds = 0.6, -- hold E to board or leave (touch players tap)
 		FadeSeconds = 1, -- the screen goes black this long before the teleport
@@ -160,7 +160,7 @@ local Tuning = {
 		PitchJitter = 0.08,
 		Takes = { Plank = 2, TrainFloor = 2, Gravel = 2, Snow = 3 },
 		BreathFade = 1.5, -- seconds the breathing takes to swell or die away
-		-- four boot timbres by crew slot (Prompt 7): the same takes played at a base pitch and level
+		-- four boot timbres by crew slot (Design step 7): the same takes played at a base pitch and level
 		-- of their own, each step still jittered by PitchJitter around it
 		Boots = {
 			{ name = "Hobnail", pitch = 1.12, gain = 1.0 },
@@ -173,7 +173,7 @@ local Tuning = {
 		ArrivalHushLevel = 0.25, -- -12 dB
 		OwnMuffle = -10, -- dB off the high end of your own steps (low-passed)
 	},
-	-- The co-op ping (Prompt 7): the pinger's lantern flares and the crew's watches point at them.
+	-- The co-op ping (Design step 7): the pinger's lantern flares and the crew's watches point at them.
 	Ping = {
 		GlowSeconds = 1.5,
 		GlowBrightness = 4,
@@ -542,7 +542,7 @@ local Tuning = {
 	HollowMotion = {
 		SpeedResponse = 8,
 		TwitchAngle = 0.12,
-		-- body language (Logic/HollowMotion, docs/FINAL-DESIGN.md Prompt 3)
+		-- body language (Logic/HollowMotion, docs/FINAL-DESIGN.md Design step 3)
 		LookLag = 0.25, -- seconds the head lags its target (FIXED)
 		LookCap = { Stalker = 70, Crawler = 50, Brute = 35 }, -- degrees the head may turn (FIXED)
 		ScanDegrees = 25, -- a prowling head's slow scan
@@ -653,7 +653,7 @@ local Tuning = {
 		ReceiptHistory = 50,
 	},
 
-	-- Stalking (Logic/Stalk, Logic/Tells; docs/FINAL-DESIGN.md Prompt 2, FIXED). Server-owned: no NPC
+	-- Stalking (Logic/Stalk, Logic/Tells; docs/FINAL-DESIGN.md Design step 2, FIXED). Server-owned: no NPC
 	-- distance or cue threshold reads the Visibility slider. r = ReferenceRadius.
 	Stalk = {
 		ReferenceRadius = 30,
@@ -681,7 +681,7 @@ local Tuning = {
 		TellClearSeconds = 1, -- tells fade out within this of leaving range
 	},
 
-	-- Door-forcing (Logic/Doors, Services/BuildingService; Prompt 2, FIXED).
+	-- Door-forcing (Logic/Doors, Services/BuildingService; Design step 2, FIXED).
 	DoorForce = {
 		Chance = 0.4, -- of a stop forcing doors, from FromStop on, every tutorial tier
 		FromStop = 3,
@@ -785,7 +785,7 @@ local Tuning = {
 			Fill = 0.94, -- fill transparency: the faintest cold wash
 			Every = 0.75, -- seconds between choosing the nearest
 		},
-		-- each station's own cold grade, off cyan (Prompt 6, B.3): moon green-grey and blue-grey,
+		-- each station's own cold grade, off cyan (Design step 6, B.3): moon green-grey and blue-grey,
 		-- with less desaturation so brick and oxblood still read as materials; weighed in as the
 		-- camera steps off the train onto the platform; the train and the lobby stay warm amber.
 		-- tint is the ColorCorrection tint, saturation is taken off on top of the night's.

@@ -7,10 +7,10 @@
 	player can go solo while the rest of the hall stays put.
 	The host (the lobby player who has been in the server longest) picks the opt-in
 	run tier, up to the lowest tier any hall player has unlocked.
-	The run card's AGAIN (Logic/Again, Prompt 5): pressed during RunEnd it is queued and applied
+	The run card's AGAIN (Logic/Again, Design step 5): pressed during RunEnd it is queued and applied
 	after ResetReady; the hall then holds its countdown until the run's present members are all
 	ready or 20 s pass with one ready. DEPOT leaves that player unready.
-	The line (Logic/Routes, Prompt 10): with a new Hand in the hall the length is fixed and the hall
+	The line (Logic/Routes, Design step 10): with a new Hand in the hall the length is fixed and the hall
 	is told so; otherwise each hall player may vote Short or Long (`VoteLine`), and the run counts
 	its crew's votes at Boarding (a tie or none: Long). INVITE presses are logged (`Invited`).
 ]]

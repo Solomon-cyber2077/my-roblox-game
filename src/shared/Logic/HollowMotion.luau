@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The Hollows' body language as numbers (docs/FINAL-DESIGN.md Prompt 3). Pure: Controllers/
+	The Hollows' body language as numbers (docs/FINAL-DESIGN.md Design step 3). Pure: Controllers/
 	HollowAnimator applies these to Animation/HollowPoses' output on every client.
 
 	  aim       the head's yaw toward its target (or a prowl's slow scan), lagging LookLag and capped

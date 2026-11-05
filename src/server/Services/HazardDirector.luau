@@ -174,7 +174,7 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 			hazards.hollowCap = math.min(hazards.hollowCap, tier.stop1Cap)
 		end
 		hazards.dormantStart = tier ~= nil and stop == 1 and tier.stop1Dormant
-		-- a first run's stop 3: one awake Stalker, a wanderer that stalks (Prompt 5)
+		-- a first run's stop 3: one awake Stalker, a wanderer that stalks (Design step 5)
 		if tier and tier.stop3Stalker and stop == TutorialConfig.Stop3.Stop then
 			hazards.hollowCap = 1
 			hazards.scriptedOnly = true
@@ -185,7 +185,7 @@ function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	local dormant = info.hazards.dormantStart == true
 	local scriptedOnly = info.hazards.scriptedOnly == true
 	-- a first run's quiet stops: no wanderer and no timed events (no Surge), only the planned
-	-- first-run encounters (Prompt 5)
+	-- first-run encounters (Design step 5)
 	local tier = Tutorial.def(info.hazards.tutorial)
 	local quiet = tier ~= nil
 		and tier.quietUntilStop ~= nil

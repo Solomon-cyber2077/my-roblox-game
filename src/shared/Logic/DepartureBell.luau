@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The departure bell (docs/FINAL-DESIGN.md Prompt 4). Pure: RunDirector.ShortenStop counts the crew
+	The departure bell (docs/FINAL-DESIGN.md Design step 4). Pure: RunDirector.ShortenStop counts the crew
 	and asks this module.
 
 	  branch     u = (serverNow - doorsOpenAt) / the ORIGINAL params.dwell (LastCall included). "all":

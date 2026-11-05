@@ -1,6 +1,6 @@
 --!strict
 --[[
-	Telemetry vocabulary (docs/FINAL-DESIGN.md Prompt 0). Services/TelemetryService is the only caller
+	Telemetry vocabulary (docs/FINAL-DESIGN.md Design step 0). Services/TelemetryService is the only caller
 	of AnalyticsService; Logic/Telemetry checks every custom field against these lists before a call.
 	Each event has three string slots (CustomField01..03); `false` leaves a slot unused. Every list is
 	frozen and bounded, so each event stays under Roblox's 8,000 field combinations
@@ -90,7 +90,7 @@ local function event(f1: string | false, f2: string | false, f3: string | false)
 	return table.freeze({ fields = table.freeze({ f1, f2, f3 }) })
 end
 
--- Event name -> the vocabulary of each custom field (Prompt 0's table, then A.4's additions).
+-- Event name -> the vocabulary of each custom field (Design step 0's table, then A.4's additions).
 local Events: { [string]: EventDef } = table.freeze({
 	run_started = event("CrewSize", "RunTier", "TutorialTier"),
 	run_joined = event("Device", "Experience", "CrewSize"),
@@ -116,7 +116,7 @@ local Events: { [string]: EventDef } = table.freeze({
 	first_session_timing = event("Milestone", "Device", "Entry"),
 	cohort_assigned = event("ExperimentId", "Arm", "Device"),
 	invite_prompted = event("InviteSource", "Device", "Experience"),
-	-- stop 1's scripted sighting on a first run: each player's line-of-sight seconds (Prompt 5, E2)
+	-- stop 1's scripted sighting on a first run: each player's line-of-sight seconds (Design step 5, E2)
 	sighting_exposure = event("TellBucket", "Device", "Experience"),
 	-- a player took the stop-five cash-out (Logic/CashOut); value: minutes in the run
 	player_cashed_out = event("Stop", "Device", "Experience"),

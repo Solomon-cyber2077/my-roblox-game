@@ -1,6 +1,6 @@
 --!strict
 --[[
-	INVITE (Prompt 10): Roblox's game-invite prompt for the Depot panel (UI/Lobby) and the run card
+	INVITE (Design step 10): Roblox's game-invite prompt for the Depot panel (UI/Lobby) and the run card
 	(UI/RunCard). The button shows only when SocialService:CanSendGameInviteAsync says this player
 	may invite (privacy settings, account limits); a press opens the prompt and tells the server,
 	which logs invite_prompted. A friend who accepts lands in the hall, or aboard through

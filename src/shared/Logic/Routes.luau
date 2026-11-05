@@ -1,6 +1,6 @@
 --!strict
 --[[
-	Route length (docs/FINAL-DESIGN.md Prompt 10). Pure.
+	Route length (docs/FINAL-DESIGN.md Design step 10). Pure.
 
 	  Short Line  5 stops, the proposed default for new players
 	  Long Line   10 stops, the veteran and status route

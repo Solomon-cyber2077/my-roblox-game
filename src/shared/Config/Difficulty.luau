@@ -97,7 +97,7 @@ return table.freeze({
 		StrikeCooldown = 0.72, -- seconds from one strike's start to the next (was 0.9: -20%)
 	}),
 
-	-- The Stalk state's commit rules (Logic/Stalk, docs/FINAL-DESIGN.md Prompt 2, FIXED), D0 -> D1.
+	-- The Stalk state's commit rules (Logic/Stalk, docs/FINAL-DESIGN.md Design step 2, FIXED), D0 -> D1.
 	-- Distances fixed by the design (the band, facing, the guard) live in Tuning.Stalk.
 	Stalk = table.freeze({
 		MinStalkSeconds = table.freeze({ 4, 1.5 }), -- before any timed commit
@@ -195,7 +195,7 @@ return table.freeze({
 		ExpectedPerTrip = table.freeze({ 0.8, 2.2 }), -- leaks per trip by station difficulty
 		EarlyCap = 1, -- stops 1 to EarlyUntilStop: at most one leak
 		EarlyUntilStop = 3,
-		FirstCruiseCap = 0, -- a first run (tutorial tier 1): no leak on the way to stop 1 (Prompt 5)
+		FirstCruiseCap = 0, -- a first run (tutorial tier 1): no leak on the way to stop 1 (Design step 5)
 		Cap = 3,
 		PatchParts = 1,
 		PatchHold = 1.5,

@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The premise in words (docs/FINAL-DESIGN.md B.3 Narrative, Prompt 8; LORE.md section 0). Copy only:
+	The premise in words (docs/FINAL-DESIGN.md B.3 Narrative, Design step 8; LORE.md section 0). Copy only:
 	code keeps its identifiers (run, crew, lobby) and the UI and the world read their names here.
 
 	The Depot is the last lit place. The Company sends its young down the dead line on the last

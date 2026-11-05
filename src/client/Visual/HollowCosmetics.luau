@@ -1,6 +1,6 @@
 --!strict
 -- Local dressing only. HollowAnimator owns the update loop and every joint write.
--- The Stalker's look (Prompt 3): 3-5 shredded coat strips hinged at the hem, swinging with its speed
+-- The Stalker's look (Design step 3): 3-5 shredded coat strips hinged at the hem, swinging with its speed
 -- and the wind, and pallor (skin toward Bone, darker eye sockets), both growing with the stop's
 -- progression. Primitive parts within MaxParts; a mesh coat would be a HUMAN upload, not done here.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

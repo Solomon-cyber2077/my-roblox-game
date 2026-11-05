@@ -1,6 +1,6 @@
 --!strict
 --[[
-	AGAIN and DEPOT on the run card (docs/FINAL-DESIGN.md Prompt 5). Pure: LobbyService keeps one
+	AGAIN and DEPOT on the run card (docs/FINAL-DESIGN.md Design step 5). Pure: LobbyService keeps one
 	card per ended run and asks this module.
 
 	  eligible   the present participants of the ended run, alive or eliminated

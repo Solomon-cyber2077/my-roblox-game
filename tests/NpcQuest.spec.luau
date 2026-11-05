@@ -73,7 +73,7 @@ describe("NpcQuest", function()
 		expect(joinerBehind.advance).toBe(false)
 	end)
 
-	it("pays errands in story, never Brass (Prompt 8)", function()
+	it("pays errands in story, never Brass (design step 8)", function()
 		for _, quest in Quests do
 			expect((quest :: any).brass).toBe(nil)
 			expect(#quest.story > 0).toBe(true)

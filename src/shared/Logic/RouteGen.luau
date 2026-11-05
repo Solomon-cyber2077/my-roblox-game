@@ -11,7 +11,7 @@
 	repeats the previous stop unless nothing else is eligible, legs 1 and 2 never
 	show tier 3, and every junction offers at least one leg of 5 km or less.
 	A first run's first leg (`firstLegKm`, Tuning.Run.FirstLegKm) is that long on every option, so
-	its cruise stays within 25 s (Prompt 10); the draws are the same, so the rest of the plan is too.
+	its cruise stays within 25 s (Design step 10); the draws are the same, so the rest of the plan is too.
 ]]
 
 local Shared = script.Parent.Parent

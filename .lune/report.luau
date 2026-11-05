@@ -1,5 +1,5 @@
 --[[
-	The balance report (docs/FINAL-DESIGN.md Prompt 0, B.4), computed by the shipped modules so the
+	The balance report (docs/FINAL-DESIGN.md Design step 0, B.4), computed by the shipped modules so the
 	document cannot drift from the game. Deterministic model outputs only: nothing here is a player
 	observation. Re-run it after any change to the clock, speeds, route or bell.
 
@@ -28,7 +28,7 @@ local N = Tuning.Run.StationCount
 local Run = Tuning.Run
 local Crew = Tuning.Crew
 
--- Stop clock B (B.4, Prompt 4): the clock the design adopts. Until Prompt 4 lands it is a scenario
+-- Stop clock B (B.4, Design step 4): the clock the design adopts. Until Design step 4 lands it is a scenario
 -- here, beside the shipped clock. WalkReference sizes the timer only.
 local CLOCK_B = Difficulty.StopClock
 
@@ -55,7 +55,7 @@ local function dwellB(d: number, arch: any, stop: number): number
 	return math.floor(search + walk + c.PerStop * math.max(stop - 1, 0) + 0.5)
 end
 
--- A bell pull sets departAt = min(departAt, now + BELL_LEAD) (Prompt 4, FIXED).
+-- A bell pull sets departAt = min(departAt, now + BELL_LEAD) (Design step 4, FIXED).
 local BELL_LEAD = 30
 
 local function section(title: string)
@@ -88,7 +88,7 @@ end
 -- Difficulty by stop
 
 local function shortLineTable()
-	section("Short Line difficulty (Prompt 10: stop k reads Long Line stop m(k), tier offset 0)")
+	section("Short Line difficulty (design step 10: stop k reads Long Line stop m(k), tier offset 0)")
 	print("stop,long_stop,D_short,D_long_same_stop")
 	for k = 1, Routes.length("Short") do
 		local level = Routes.level("Short", k)

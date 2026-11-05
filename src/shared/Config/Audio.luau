@@ -53,7 +53,7 @@ local Cues: { [string]: Cue } = {
 		mix = "Feedback",
 		with = "LanternRattle", -- the lantern's brass rattles as it goes up
 	},
-	-- a stalking Hollow between cover: now and then a board creaks or a pebble skips (Prompt 7)
+	-- a stalking Hollow between cover: now and then a board creaks or a pebble skips (Design step 7)
 	-- the Stalker's torn coat dragging on its limping step (HollowAnimator): the same "Cloth Flap 19"
 	-- take as Jump, low and quiet, cut short
 	StalkCoat = {

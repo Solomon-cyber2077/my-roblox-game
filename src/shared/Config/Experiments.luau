@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The experiments (docs/FINAL-DESIGN.md A.4 and Prompt 10). Rules in Logic/Experiments.
+	The experiments (docs/FINAL-DESIGN.md A.4 and Design step 10). Rules in Logic/Experiments.
 
 	Randomized per crew at run start: when a starting crew has an eligible player, the arm is
 	derived from the run seed and the experiment's salt, and every eligible player in the crew

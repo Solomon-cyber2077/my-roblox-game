@@ -1,6 +1,6 @@
 --!strict
 --[[
-	A run's length and Brass as the route model counts them (docs/FINAL-DESIGN.md B.4, Prompt 10),
+	A run's length and Brass as the route model counts them (docs/FINAL-DESIGN.md B.4, Design step 10),
 	from the shipped modules. Pure, used by .lune/report.luau and the Routes spec. Model outputs,
 	never player observations.
 

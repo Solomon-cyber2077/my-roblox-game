@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The durable playtest sink (Prompt 0, Gate G1): every telemetry call is also kept as a record in a
+	The durable playtest sink (Design step 0, Gate G1): every telemetry call is also kept as a record in a
 	DataStore, one key per player per server (`<placeId>/<serverId>/<userId>`), so a closed playtest
 	can be read back after its servers have shut down. Pure: Services/TelemetryService owns the
 	buffers and the store; this module holds the record, buffer, cap and CSV rules.

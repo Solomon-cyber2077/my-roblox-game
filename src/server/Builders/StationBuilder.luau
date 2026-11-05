@@ -549,7 +549,7 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 		end
 	end
 
-	-- One brass plaque on the platform lamp post nearest the dock (Prompt 8): the premise in the world.
+	-- One brass plaque on the platform lamp post nearest the dock (Design step 8): the premise in the world.
 	local plaqueLens: BasePart? = nil
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") and d:HasTag("SafeLight") then

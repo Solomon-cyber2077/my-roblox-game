@@ -3,7 +3,7 @@
 -- screen (docs/visibility). Colour, value and a little geometry only: no light, no glow.
 -- Period basis (LORE.md): 19th-century platform edges were stone or hard blue coping brick;
 -- staff whitened edges with whitewash in fog before 1914 (rare, spreading in 1939); limewash
--- was the West Country's everyday paint for walls, posts and outbuildings. Prompt 6 (B.3) took
+-- was the West Country's everyday paint for walls, posts and outbuildings. Design step 6 (B.3) took
 -- the whitewash and the station limewash off: station surfaces keep channels within 18-232
 -- (SurfaceRule, enforced by the visual audit on every stop); the coping is wet grey-brown stone
 -- read against the blue-brick margin. The train's lining keeps its pale floor (tests/Surfaces.spec).

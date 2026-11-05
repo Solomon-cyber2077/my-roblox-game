@@ -1,6 +1,6 @@
 --!strict
 --[[
-	Door-forcing (docs/FINAL-DESIGN.md Prompt 2). Pure: Services/BuildingService owns the doors and
+	Door-forcing (docs/FINAL-DESIGN.md Design step 2). Pure: Services/BuildingService owns the doors and
 	runs one episode per door per forcing; HollowService asks for it.
 
 	  forcing(seed, stop)   whether this stop's Hollows can force doors: from FromStop on, on Chance

@@ -274,7 +274,7 @@ end
 -- seed only the server holds and is handed to RouteService alone; state sees the stand-in.
 local function openBallot()
 	local leg, stops = state.nextStop, state.stopCount
-	-- a first run's first leg is short (Prompt 10: its cruise within 25 s)
+	-- a first run's first leg is short (Design step 10: its cruise within 25 s)
 	local firstLegKm = if state.tutorial == 1 then Tuning.Run.FirstLegKm else nil
 	local options = RouteGen.options(state.seed, leg, stops, state.lastArchetype, firstLegKm)
 	local forced = state.forceArchetype

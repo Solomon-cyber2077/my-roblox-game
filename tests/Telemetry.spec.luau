@@ -8,7 +8,7 @@ describe("Telemetry vocabulary", function()
 		end
 	end)
 
-	it("declares every Prompt 0 event and the A.4 additions", function()
+	it("declares every design step 0 event and the A.4 additions", function()
 		for _, name in
 			{
 				"run_started",

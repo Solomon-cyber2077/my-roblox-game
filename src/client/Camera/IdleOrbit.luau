@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The lobby idle view's slow turn (docs/direction/2026-10-23_lobby-idle-final.md, prompt 4).
+	The lobby idle view's slow turn (docs/direction/2026-10-23_lobby-idle-final.md, design step 4).
 
 	It never takes the camera: the camera stays Custom and the player module keeps it. Before
 	the camera module runs, the orbit turns Camera.CFrame round the focus by this frame's share of

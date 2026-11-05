@@ -11,7 +11,7 @@
 	           back; it rears like a mantis, then pounces
 	  Brute    a heavy, rolling stomp that shakes the ground
 
-	Body language (Prompt 3, Logic/HollowMotion): the head follows its target (attribute Target)
+	Body language (Design step 3, Logic/HollowMotion): the head follows its target (attribute Target)
 	with a lag and a per-kind cap, or scans while it prowls; the torso leans into acceleration; feet
 	sound on their plants, every other plant while stalking and none while frozen under a look; a
 	hunter with Intent or an unmet first-strike warning (WarningCoil) holds the coil. Ordinary
@@ -339,7 +339,7 @@ local function plantStep(rig: Rig, speed: number)
 			audio("StalkCoat", position, 1, 0.8 + math.random() * 0.1)
 		end
 	end
-	-- stalking between cover, now and then a board creaks or a pebble skips under it (Prompt 7)
+	-- stalking between cover, now and then a board creaks or a pebble skips under it (Design step 7)
 	if rig.state == "Stalk" and math.random() < STALK_NOISE then
 		audio(
 			if math.random() < 0.5 then "StalkCreak" else "StalkPebble",

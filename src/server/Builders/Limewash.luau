@@ -7,8 +7,8 @@
 	  station(model, archetype, seed): a lime-washed band low on every obstacle kind listed in
 	    Surfaces.Limewash.kinds, each band's height and tone varied a little (brushed by hand),
 	    darkened by the grade's grime (Surfaces.Grime). No longer called (2026-10-22): the white
-	    bands read as clutter on every crate and cabinet (owner's phone screenshots; Prompt 6
-	    removes the station path). Kept for the visibility harness until Prompt 6 lands.
+	    bands read as clutter on every crate and cabinet (owner's phone screenshots; Design step 6
+	    removes the station path). Kept for the visibility harness until Design step 6 lands.
 	train(model, origin): polishes the brass on the platform side. Decorative pale foot and waist
 	strips were removed because they read as repeated white trim across every car.
 ]]

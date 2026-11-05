@@ -48,7 +48,7 @@ local Remotes: { [string]: RemoteDef } = {
 	Again = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
 	-- the hall's line vote: "Short" or "Long" (Logic/Routes); ignored while a new Hand fixes it
 	VoteLine = { direction = "ToServer", args = { "id" }, rate = 4, burst = 4 },
-	-- the co-op ping (V, gamepad Y, the touch PING): no payload; one every 3 s (Prompt 7)
+	-- the co-op ping (V, gamepad Y, the touch PING): no payload; one every 3 s (Design step 7)
 	Ping = { direction = "ToServer", args = {}, rate = 1 / 3, burst = 1 },
 	-- an INVITE button opened Roblox's invite prompt: "depot" or "runcard" (telemetry only)
 	Invited = { direction = "ToServer", args = { "id" }, rate = 2, burst = 3 },

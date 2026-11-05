@@ -1,5 +1,5 @@
 --!strict
--- Prompt 8: one Brass loop, Line Mastery as the record (Config/Cosmetics record, Logic/Catalog,
+-- Design step 8: one Brass loop, Line Mastery as the record (Config/Cosmetics record, Logic/Catalog,
 -- Logic/Milestones), and the first-run Brass check printed for the report.
 
 local Cosmetics = require(Shared.Config.Cosmetics)

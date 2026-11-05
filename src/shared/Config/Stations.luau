@@ -511,7 +511,7 @@ local Archetypes: { [string]: Archetype } = {
 		looseItems = 10,
 		structures = {
 			{ kind = "Chimney", count = 1, zones = { "Mid" } },
-			{ kind = "WaterTower", count = 1, zones = { "Near", "Mid" } }, -- midground height (Prompt 6 density)
+			{ kind = "WaterTower", count = 1, zones = { "Near", "Mid" } }, -- midground height (Design step 6 density)
 			{ kind = "Shed", count = 3, zones = { "Mid", "Far" } },
 		},
 		landmarks = {
@@ -808,10 +808,10 @@ return table.freeze({
 	-- LitMax: lights on as the stop docks; StationBuilder turns off moonlit panes, then working
 	-- room bulbs (a building's power wakes them) past it, whatever the seed.
 	Lamps = table.freeze({ PoolGap = 4.5, YardMax = 14, LitMax = 64 }),
-	-- the brass plaque on one platform lamp post (Prompt 8, Config/Premise.Plaque): its size, how far
+	-- the brass plaque on one platform lamp post (Design step 8, Config/Premise.Plaque): its size, how far
 	-- below the lamp's lens it hangs and how far out from the post's axis it stands
 	Plaque = table.freeze({ Width = 1.1, Height = 0.6, Depth = 0.06, Drop = 6.4, Out = 0.25 }),
-	-- The sinkhole edge's red oil danger lamps (Prompt 6): one on a post every DangerEvery edge tiles,
+	-- The sinkhole edge's red oil danger lamps (Design step 6): one on a post every DangerEvery edge tiles,
 	-- emissive glass always; PointLights (range DangerRange, no shadows) on at most DangerMaxLit
 	-- of them, evenly spaced, after every other light is counted against LightMax and LitMax. A
 	-- warning only: never a SafeLight, lamp pool or stalk exclusion. Performance shows the glass alone.

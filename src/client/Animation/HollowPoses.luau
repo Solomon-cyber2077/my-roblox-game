@@ -14,7 +14,7 @@
 	           the Crawler's spider walk on planted hands and feet), sleeping, emerging,
 	           the windup and the strike, cowering, reeling, and three grabs per kind
 	           (Config/Grabs), each squeezing on the grab's own rhythm
-	  stalk    (Prompt 3) the prowl's body; frozen under a look it sways and breathes in place, and
+	  stalk    (Design step 3) the prowl's body; frozen under a look it sways and breathes in place, and
 	           the Stalker's head slowly tilts to one side
 	  coil     a hunter's Intent or its first-strike warning: shoulders back, head low, knees
 	           bent, the Crawler's haunches drawn under it. Snapped, never blended
@@ -878,7 +878,7 @@ local function bipedCower(out: Pose, now: number, stunned: boolean, reeling: num
 	out.RootJoint = CFrame.new(0, -0.4, 0.3) * A(0, 0, shiver)
 end
 
--- Coil and follow-through (Prompt 3) ----------------------------------------------------------------
+-- Coil and follow-through (Design step 3) ----------------------------------------------------------------
 
 -- Gathered to spring: shoulders back, head low, knees bent; the Crawler sinks onto its haunches
 -- with its hind feet drawn under it. Moving, the legs keep the gait's stride (no sliding) and only

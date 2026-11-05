@@ -1,7 +1,7 @@
 --!strict
 --[[
-	Clearance for the lobby idle view (docs/direction/2026-10-23_lobby-idle-final.md, prompt 3).
-	Not booted: the idle camera (prompt 4) owns one of these and asks it each frame where the
+	Clearance for the lobby idle view (docs/direction/2026-10-23_lobby-idle-final.md, design step 3).
+	Not booted: the idle camera (design step 4) owns one of these and asks it each frame where the
 	view may sit. CameraController's train wallPull is untouched.
 
 	What counts as geometry: every part with CanQuery on, collidable or not and whatever its

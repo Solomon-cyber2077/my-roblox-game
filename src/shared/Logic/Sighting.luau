@@ -1,6 +1,6 @@
 --!strict
 --[[
-	Stop 1's scripted sighting on a first run (docs/FINAL-DESIGN.md Prompt 5; Config/Tutorial
+	Stop 1's scripted sighting on a first run (docs/FINAL-DESIGN.md Design step 5; Config/Tutorial
 	Sighting). Pure: HollowService places the Stalker and feeds each think; this module says when it
 	withdraws.
 

@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The interior lighting lock (docs/FINAL-DESIGN.md Prompt 6, B.3): one warm amber estate recipe
+	The interior lighting lock (docs/FINAL-DESIGN.md Design step 6, B.3): one warm amber estate recipe
 	for the Depot Hall and the train's interior. Local fixtures only (colour, brightness, range,
 	shadows); global Lighting, ambient and exposure stay with Scenery/Sky (LOBBY) and
 	AtmosphereController, and stations never read this.

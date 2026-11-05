@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The mix's priority table (docs/FINAL-DESIGN.md Prompt 7, Milestone 1 part). Data read by
+	The mix's priority table (docs/FINAL-DESIGN.md Design step 7, Milestone 1 part). Data read by
 	Controllers/AudioController. It sits beside Config/Audio so the cue table keeps its shape.
 
 	  1 Warnings  departure warnings and the clock (Config/Audio group "Warnings")
@@ -14,7 +14,7 @@
 	`voices` caps the one-shots a tier plays at once; a cue past the cap is dropped, except in the
 	Warnings and Threat tiers, which never drop (Warnings also sit outside the Hush).
 
-	IntentHush: a Hollow's replicated Intent (HollowService, Prompt 3) starts a 0.4 s predictive duck
+	IntentHush: a Hollow's replicated Intent (HollowService, Design step 3) starts a 0.4 s predictive duck
 	of the ambience and steps, for a Hollow targeting this player or within Range of them. Never from
 	a Windup already under way; it may fire without a strike and never changes attack timing.
 ]]

@@ -55,7 +55,7 @@ local StateService = require(script.Parent.StateService)
 local HollowBuilder = require(script.Parent.Parent.Builders.HollowBuilder)
 local PhotoCommand = require(script.Parent.Parent.Tools.PhotoCommand)
 
--- Every state each kind can be posed in (Prompt 3), for the photo's IK report.
+-- Every state each kind can be posed in (Design step 3), for the photo's IK report.
 local POSE_STATES: { { state: string, extra: { [string]: any } } } = {
 	{ state = "Prowl", extra = {} },
 	{ state = "Stalk", extra = {} },

@@ -1,6 +1,6 @@
 --!strict
 --[[
-	A stalking Hollow's tells on the local player's side (docs/FINAL-DESIGN.md Prompt 2). Pure: the
+	A stalking Hollow's tells on the local player's side (docs/FINAL-DESIGN.md Design step 2). Pure: the
 	client feeds replicated Hollow states and positions; this module says how far the lantern's light
 	leans and which way, how much it flickers, whether the pocket watch stutters and how loud a
 	Hollow's stalk breath is. Thresholds use the fixed r = Tuning.Stalk.ReferenceRadius (30), never

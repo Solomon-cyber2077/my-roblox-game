@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The Stalk state's rules (docs/FINAL-DESIGN.md Prompt 2). Pure: Services/HollowService senses the
+	The Stalk state's rules (docs/FINAL-DESIGN.md Design step 2). Pure: Services/HollowService senses the
 	world and moves the body; this module decides. Every distance comes from the server-owned
 	Tuning.Stalk.ReferenceRadius r = 30, never from a player's Visibility slider.
 

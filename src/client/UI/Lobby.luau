@@ -2,7 +2,7 @@
 --[[
 	Depot Hall UI: profile card, the START toggle (ready), join-in-progress, shortcuts to
 	the Outfitter and the Ledger, and the in-world departure board.
-	First visit (Prompt 10): players spawn facing the board, which names the plain choices: START
+	First visit (Design step 10): players spawn facing the board, which names the plain choices: START
 	(ride now, the hall's ready), or walk to a car's door to ride with others. Above the panel,
 	centred: the line (Logic/Routes: SHORT or LONG, or fixed while a new Hand is in the hall).
 	INVITE is the friends mark on the MENU box (UI/Menu).
@@ -592,7 +592,7 @@ function Lobby.mount(gui: ScreenGui)
 		badge.Text = tostring(rank)
 		rankLabel.Text = if span > 0 then `{into} / {span} XP` else "MAX RANK"
 		setXp(if span > 0 then into / span else 1)
-		-- the deepest stop ever reached (stats.bestStation; Prompt 8 styles it)
+		-- the deepest stop ever reached (stats.bestStation; Design step 8 styles it)
 		local deepest = if profile.stats then profile.stats.bestStation or 0 else 0
 		brassLabel.Text = `{Format.thousands(profile.brass or 0)} BRASS{if deepest > 0
 			then `  ·  DEEPEST STOP {deepest}`

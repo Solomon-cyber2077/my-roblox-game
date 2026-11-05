@@ -1,6 +1,6 @@
 --!strict
 --[[
-	Telemetry (docs/FINAL-DESIGN.md Prompt 0, A.4). The only caller of AnalyticsService.
+	Telemetry (docs/FINAL-DESIGN.md Design step 0, A.4). The only caller of AnalyticsService.
 
 	  Event(player, name, value, fields)                 a custom event (Config/Telemetry Events)
 	  Funnel(player, funnel, sessionId, step, name, fields)
@@ -14,7 +14,7 @@
 	events once per player occurrence; identity (run, stop, player) only dedupes, never fills a field.
 	The run is watched through RunDirector.PhaseChanged, state and a few hooks (CrewService,
 	HollowService, ProgressionService, ShopService); bell, grasp, tell and AGAIN events come with
-	Prompts 2, 4 and 5.
+	Design steps 2, 4 and 5.
 
 	Every call is also kept in the durable playtest sink (Logic/TelemetrySink): buffered per player,
 	flushed to a DataStore every SinkFlushSeconds, on leaving and at shutdown, never in the way of the

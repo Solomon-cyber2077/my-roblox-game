@@ -4,7 +4,7 @@
 
 	XP needed to reach rank L:  XP(L) = round(120 * (L - 1) ^ 1.55), capped at rank 60.
 	Milestones read lifetime stats from the profile; each grants once.
-	Line Mastery is the record (docs/FINAL-DESIGN.md Prompt 8): the status items' milestones are built
+	Line Mastery is the record (docs/FINAL-DESIGN.md Design step 8): the status items' milestones are built
 	from their `record` in Config/Cosmetics, so the rule lives in one place. `all`, when present, lists
 	every requirement (AND); `stat`/`goal` is then its first.
 ]]
@@ -161,7 +161,7 @@ return table.freeze({
 	Stats = table.freeze({
 		"runs",
 		"victories",
-		"longVictories", -- Long Line victories only (Prompt 10; gates the Long Line's status items)
+		"longVictories", -- Long Line victories only (Design step 10; gates the Long Line's status items)
 		"stationsDeparted",
 		"bestStation",
 		"coalDelivered",
