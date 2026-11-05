@@ -15,12 +15,12 @@
 	postGrab        immunity and stagger after breaking free, at every stop
 	scriptedGrab    the scripted Crawler at ScriptedGrab.Stop, to teach the skill check
 	quietUntilStop  stops 1..this: no wanderer and no timed events (no Surge), so only the
-	                planned first-run encounters happen (docs/FINAL-DESIGN.md Prompt 5)
+	                planned first-run encounters happen (docs/FINAL-DESIGN.md Design step 5)
 	sighting        stop 1's scripted Stalker sighting (Sighting below; E2's treatment arm)
 	stop3Stalker    stop 3 holds one awake Stalker, a wanderer that stalks the first player
 	                Stop3.AwayStuds or more from the train, and nothing else
 
-	First run (tier 1, Prompt 5): stop 1 no attacks and the sighting, no leak on the first cruise;
+	First run (tier 1, Design step 5): stop 1 no attacks and the sighting, no leak on the first cruise;
 	stop 2 the scripted Crawler (pursuit 24, lunge 40, the first-strike guard); stop 3 the
 	stalking wanderer. Tier 2 keeps zone 100 and grace 15 without a scripted grab.
 ]]
@@ -115,7 +115,7 @@ return table.freeze({
 		YardLampsAtStop = 2,
 	}),
 
-	-- Prompt 5 installs this tier-1 stop-2 encounter; absolute speeds ignore normal scaling.
+	-- Design step 5 installs this tier-1 stop-2 encounter; absolute speeds ignore normal scaling.
 	FirstCrawler = table.freeze({
 		Tier = 1,
 		Stop = 2,
@@ -137,7 +137,7 @@ return table.freeze({
 		ZoneDegrees = 100,
 	}),
 
-	-- Stop 1's scripted sighting (Prompt 5, FIXED; E2's treatment arm). `Enabled` decides while E2
+	-- Stop 1's scripted sighting (Design step 5, FIXED; E2's treatment arm). `Enabled` decides while E2
 	-- is off (Config/Experiments); E2's arm decides while it runs. A harmless Stalker appears in
 	-- sight of a crew member off the train, holds the Stalk freeze, then withdraws at walking pace.
 	Sighting = table.freeze({
@@ -155,7 +155,7 @@ return table.freeze({
 		RetrySeconds = 1, -- no spot in view yet: look again this often while someone is off the train
 	}),
 
-	-- Stop 3 of a first run: one Stalker, a wanderer-with-stalk (Prompt 5, FIXED).
+	-- Stop 3 of a first run: one Stalker, a wanderer-with-stalk (Design step 5, FIXED).
 	Stop3 = table.freeze({
 		Stop = 3,
 		Kind = "Stalker",

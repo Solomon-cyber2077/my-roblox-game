@@ -8,7 +8,7 @@
 	of a part tagged SafeLight (attribute Radius, scaled by the tier's safeLightScale).
 
 	Tutorial (Config/Tutorial, by HazardParams.tutorial): nobody is hunted until they have been
-	off the train the tier's `grace` seconds at this stop. A first run (Prompt 5): at stop 1 a
+	off the train the tier's `grace` seconds at this stop. A first run (Design step 5): at stop 1 a
 	harmless scripted Stalker is sighted at the edge of the light and withdraws (Logic/Sighting);
 	at stop 2 a scripted Crawler comes for one player to teach the skill check (an oversized zone,
 	the first-strike guard, and its hold cannot kill); at stop 3 one Stalker wanders and stalks
@@ -1584,7 +1584,7 @@ local function think(hollow: Hollow)
 		end
 		hollow.model:SetAttribute("WarningCoil", guarded or nil)
 		hollow.model:SetAttribute("WarningTarget", if guarded then best.UserId else nil)
-		-- Intent (Prompt 3): the committed approach, in sight within LungeRange once the guard is met.
+		-- Intent (Design step 3): the committed approach, in sight within LungeRange once the guard is met.
 		-- It drives the coil on every client; it never delays an attack.
 		local intent = not guarded and bestVisible and bestDistance <= H.LungeRange
 		if intent ~= (hollow.model:GetAttribute("Intent") == true) then
@@ -2376,7 +2376,7 @@ function HollowService.DevSpawnAt(player: Player, kind: string?, distance: numbe
 	return true
 end
 
--- A first run's stop 3 (Prompt 5): one Stalker that wanders and stalks, and only goes for a player
+-- A first run's stop 3 (Design step 5): one Stalker that wanders and stalks, and only goes for a player
 -- Stop3.AwayStuds or more from the train.
 function HollowService.SpawnStalkingWanderer(plan: LayoutGen.Plan)
 	for _, lane in plan.spawnLanes do

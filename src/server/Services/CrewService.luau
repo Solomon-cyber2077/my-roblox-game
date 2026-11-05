@@ -266,7 +266,7 @@ local function positionTick()
 				then
 					CrewService.Eliminate(player, "Fell")
 				else
-					-- a credited grasp holds Aboard until the departure resolves (Prompt 4)
+					-- a credited grasp holds Aboard until the departure resolves (Design step 4)
 					local inside = member.grasped
 						or Registry.GraspService.IsAttached(player)
 						or Registry.TrainService.IsInside(position)

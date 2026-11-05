@@ -11,7 +11,7 @@
 	           and talks to them completes the errand.
 	  Survive  completes when the train reaches the Terminus; everyone aboard counts.
 
-	Errands pay story, not Brass (docs/FINAL-DESIGN.md Prompt 8): each stage tells its `story` line to
+	Errands pay story, not Brass (docs/FINAL-DESIGN.md Design step 8): each stage tells its `story` line to
 	the Hand who finishes it, and the chain's last stage gives the resident's cosmetic (Config/Npcs).
 ]]
 

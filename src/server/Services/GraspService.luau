@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The railing grasp (docs/FINAL-DESIGN.md Prompt 4; rules in Logic/RailingGrasp). During the live
+	The railing grasp (docs/FINAL-DESIGN.md Design step 4; rules in Logic/RailingGrasp). During the live
 	Departure chase window an off-train player's Jump sends Grasp. The server snapshots its own
 	replicated root and the nearest static GraspRail once, at receipt, and decides from that alone.
 	A catch credits Aboard at once (CrewService.CreditGrasp), welds the root to the rail, hangs 0.6 s,

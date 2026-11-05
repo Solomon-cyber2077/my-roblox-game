@@ -1,6 +1,6 @@
 --!strict
 --[[
-	The railing grasp's rules (docs/FINAL-DESIGN.md Prompt 4). Pure: Services/GraspService takes one
+	The railing grasp's rules (docs/FINAL-DESIGN.md Design step 4). Pure: Services/GraspService takes one
 	snapshot of the server's replicated root and the static rail when a Grasp request arrives, and
 	asks this module. No position history, no extrapolation, no client-reported time or position.
 

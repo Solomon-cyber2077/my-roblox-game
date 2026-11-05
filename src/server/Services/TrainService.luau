@@ -376,7 +376,7 @@ function TrainService.BreachAnchors(): { BasePart }
 	return table.clone(built.breachAnchors)
 end
 
--- The departure bell (Prompt 4): a living crew member aboard, at the rope, during Dwell. The server
+-- The departure bell (Design step 4): a living crew member aboard, at the rope, during Dwell. The server
 -- checks phase, proximity and eligibility (RunDirector.ShortenStop). True if the clock shortened.
 function TrainService.RingBell(player: Player): (boolean, string?)
 	if

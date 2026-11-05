@@ -7,7 +7,7 @@
 	  default     owned by every profile
 	  milestone   granted by Config/Progression milestones; a status item (its name claims an
 	              achievement) carries `record`, the Line Mastery requirements that grant it, all
-	              of which must be met (Prompt 8; Config/Progression builds its milestone from it)
+	              of which must be met (Design step 8; Config/Progression builds its milestone from it)
 	  brass       bought in the Outfitter: ordinary items only, never a status item
 	  robux       a developer product; productId is bound after publishing
 	  gamePass    a game pass; id is bound after publishing
