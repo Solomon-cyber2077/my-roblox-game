@@ -62,6 +62,7 @@ local FAR_FRONT = 4400
 local FEATURE_BACK = -800
 local LOCO_FRONT = 96
 local WHISTLE_LEAD = 230
+local RETRY_SECONDS = 5 -- a chunk whose build failed waits this long before it is tried again
 
 local folder: Folder
 local plan = JourneyPlan.new()
@@ -72,6 +73,7 @@ local stationModel: Model? = nil
 
 local chunks: { [string]: Chunk.Chunk } = {}
 local dirty: { [string]: boolean } = {}
+local failed: { [string]: number } = {} -- os.clock() a failed build may be retried
 local fastUntil = 0
 local whistled: { [string]: boolean } = {}
 
@@ -178,8 +180,14 @@ local wanted: { Wanted } = {}
 local needed: { [string]: boolean } = {}
 
 -- Marks a chunk as needed this frame; true when it still has to be built (or rebuilt).
+-- A build that failed waits RETRY_SECONDS, so one bad chunk never spends every frame's slice
+-- (and a warning every frame) on itself.
 local function wants(key: string): boolean
 	needed[key] = true
+	local retryAt = failed[key]
+	if retryAt and os.clock() < retryAt then
+		return false
+	end
 	return chunks[key] == nil or dirty[key] == true
 end
 
@@ -227,6 +235,11 @@ local function manageChunks()
 			dirty[key] = nil
 		end
 	end
+	for key in failed do
+		if not needed[key] then
+			failed[key] = nil
+		end
+	end
 
 	table.sort(wanted, function(a, b)
 		return a.priority < b.priority
@@ -248,8 +261,10 @@ local function manageChunks()
 		dirty[entry.key] = nil
 		if ok then
 			chunks[entry.key] = built
+			failed[entry.key] = nil
 		else
 			chunks[entry.key] = nil
+			failed[entry.key] = os.clock() + RETRY_SECONDS
 			warn(`[Scenery] {entry.key}: {built}`)
 		end
 	end
