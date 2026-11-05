@@ -389,8 +389,8 @@ local Tuning = {
 		-- server at boot (WorldService) so a joining client and the server's view start warm
 		-- before AtmosphereController runs; default.project.json carries the same numbers
 		Hall = {
-			Ambient = { 48, 36, 24 }, -- one soft warm level everywhere, so no corner falls to black
-			Outdoor = { 48, 36, 28 },
+			Ambient = { 38, 29, 19 }, -- one soft warm level everywhere, so no corner falls to black
+			Outdoor = { 38, 29, 22 },
 			Brightness = 0,
 			Exposure = -0.1,
 			Clock = 19,

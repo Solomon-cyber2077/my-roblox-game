@@ -361,8 +361,11 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	display.model.Name = "DisplayTrain"
 	-- seen from the platform, the display train's cabin lamps need no shadows, and its little
 	-- table and desk lamps none at all: the ceiling globes light its windows
+	-- (the headlamp's beam too: a long shadowed spot inside the hall costs frames for nothing)
 	for _, descendant in display.model:GetDescendants() do
-		if descendant:IsA("PointLight") then
+		if descendant:IsA("SpotLight") then
+			descendant.Shadows = false
+		elseif descendant:IsA("PointLight") then
 			descendant.Shadows = false
 			if descendant.Range <= 11 then
 				descendant.Enabled = false
@@ -733,6 +736,34 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 					C.iron
 				)
 			end
+		end
+		-- a pendant lamp hanging from the tie down the middle of the hall: chain, brass shade, amber
+		-- globe. Every globe glows; every other one carries a soft shadowless light that fills the
+		-- strip between the two column rows
+		local pendantZ = 15
+		decor(
+			Vector3.new(0.12, SPRING + 0.3 - 19.5, 0.12),
+			at(x, (SPRING + 0.3 + 19.5) / 2, pendantZ),
+			C.iron,
+			Enum.Material.Metal
+		)
+		Kit.cylinder(
+			model,
+			0.7,
+			3,
+			at(x, 19.2, pendantZ) * Kit.angles(0, 0, 90),
+			C.brass,
+			{ material = Enum.Material.Metal, collide = false }
+		)
+		local globe = Kit.neon(
+			model,
+			Vector3.new(1.4, 1.4, 1.4),
+			at(x, 18.4, pendantZ),
+			Color3.fromRGB(236, 150, 72),
+			Enum.PartType.Ball
+		)
+		if (x + 99) % 44 == 0 then
+			fixtureLight(globe, IL.Hall.Overhead, false)
 		end
 		-- the truss: an arched rib, a lower chord and braces between them
 		for i = 1, SEGMENTS do

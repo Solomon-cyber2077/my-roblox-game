@@ -36,8 +36,9 @@ return table.freeze({
 		Pendant = fixture(AMBER, 0.65, 20),
 		PianoFlame = fixture(FLAME, 0.55, 8), -- kept to the piano itself, never on the board above
 		PianoPool = fixture(GAS, 0.6, 22),
-		Lantern = fixture(AMBER, 1.25, 32), -- both rows of columns; reach meets in the middle of the hall
-		Gooseneck = fixture(AMBER, 1.1, 31.5), -- the two lamps leaning over the departure board
+		Overhead = fixture(AMBER, 0.5, 34), -- the pendant globes down the middle, a soft fill only
+		Lantern = fixture(AMBER, 1, 30), -- both rows of columns
+		Gooseneck = fixture(AMBER, 0.9, 31.5), -- the two lamps leaning over the departure board
 	}),
 
 	Train = table.freeze({
