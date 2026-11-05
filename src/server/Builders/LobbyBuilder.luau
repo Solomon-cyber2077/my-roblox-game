@@ -165,13 +165,14 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		width: number,
 		depth: number,
 		color: Color3,
-		collide: boolean?
+		collide: boolean?,
+		material: Enum.Material?
 	)
 		block(
 			Vector3.new(width, depth, (b - a).Magnitude),
 			origin * Kit.between(a, b),
 			color,
-			Enum.Material.Metal,
+			material or Enum.Material.Metal,
 			{ collide = collide == true, shadow = true }
 		)
 	end
@@ -480,17 +481,18 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	end
 	for _, x in WIN_XS do
 		local midY, height = (WIN_LOW + WIN_HIGH) / 2, WIN_HIGH - WIN_LOW
-		-- iron casement lining the opening, a pane of old glass, glazing bars in three by three lights
+		-- iron casement lining the opening, a pane of old glass, glazing bars in three by three lights,
+		-- painted (Plastic, not Metal) so no bar glints white in the lamplight or the lightning
 		for _, side in { -1, 1 } do
 			decor(
 				Vector3.new(0.4, height, 0.5),
 				at(x + side * (WIN_W / 2 - 0.2), midY, BACK_Z + 0.45),
 				C.iron,
-				Enum.Material.Metal
+				Enum.Material.Plastic
 			)
 		end
 		for _, y in { WIN_LOW + 0.2, WIN_HIGH - 0.2 } do
-			decor(Vector3.new(WIN_W - 0.8, 0.4, 0.5), at(x, y, BACK_Z + 0.45), C.iron, Enum.Material.Metal)
+			decor(Vector3.new(WIN_W - 0.8, 0.4, 0.5), at(x, y, BACK_Z + 0.45), C.iron, Enum.Material.Plastic)
 		end
 		local pane = decor(
 			Vector3.new(WIN_W - 0.8, height - 0.8, 0.1),
@@ -507,13 +509,13 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				Vector3.new(0.18, height - 0.8, 0.2),
 				at(x + k * (WIN_W - 0.8) / 6, midY, BACK_Z + 0.42),
 				C.iron,
-				Enum.Material.Metal
+				Enum.Material.Plastic
 			)
 			decor(
 				Vector3.new(WIN_W - 0.8, 0.18, 0.22),
 				at(x, midY + k * (height - 0.8) / 6, BACK_Z + 0.4),
 				C.iron,
-				Enum.Material.Metal
+				Enum.Material.Plastic
 			)
 		end
 		-- a stone sill and a lintel below the spring of the roof
@@ -791,7 +793,9 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 					Vector3.new(x, b.Y + 0.42, b.Z),
 					0.22,
 					0.18,
-					C.ironLight
+					C.iron,
+					false,
+					Enum.Material.Plastic -- painted iron: Metal glints white against the lamps and the sky
 				)
 			end
 		end
