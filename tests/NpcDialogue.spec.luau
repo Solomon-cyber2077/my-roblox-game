@@ -29,10 +29,10 @@ local function pick(overrides: { [string]: any }?): string
 end
 
 describe("NpcDialogue", function()
-	it("gives every enabled resident exactly 15 distinct lines covering every topic", function()
+	it("gives every written resident exactly 15 distinct lines covering every topic", function()
 		for _, id in Npcs.Order do
 			local def = Npcs.List[id]
-			if def.enabled then
+			if def.enabled or #def.lines > 0 then
 				expect(#def.lines).toBe(15)
 				local ids, texts, topics = {}, {}, {}
 				for _, line in def.lines do

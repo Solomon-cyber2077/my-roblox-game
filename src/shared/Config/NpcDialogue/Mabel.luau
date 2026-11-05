@@ -17,7 +17,7 @@ local Lines = {
 	{
 		id = "mabel_greeting",
 		topic = "Greeting",
-		text = "Evening, Hand! I'm Mabel, I issue the Relief's tickets. Talk to me between stops if you fancy a job on the way.",
+		text = "Evening, Hand! I'm Mabel. I issue the Relief's tickets. Talk to me between stops if you fancy a job on the way.",
 	},
 	{
 		id = "mabel_smalltalk",
@@ -38,7 +38,7 @@ local Lines = {
 	{
 		id = "mabel_danger",
 		topic = "Danger",
-		text = "Last call! Get aboard, now!",
+		text = "Last call! Aboard, now, or I strike you off the ledger!",
 	},
 	{
 		id = "mabel_offer_luggage",
@@ -84,12 +84,12 @@ local Lines = {
 	{
 		id = "mabel_down",
 		topic = "CrewDown",
-		text = "Someone's down! Go and pull them free.",
+		text = "Someone's held! Go and pry them loose, quick!",
 	},
 	{
 		id = "mabel_closecall",
 		topic = "CloseCall",
-		text = "That was close! Don't cut it so fine next time.",
+		text = "That was close! I very nearly wrote you down as missing.",
 	},
 	{
 		id = "mabel_terminus",
