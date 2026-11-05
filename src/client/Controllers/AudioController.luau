@@ -340,8 +340,9 @@ function AudioController.Start()
 		end)
 	end
 	-- every other button on the screen sounds the same typewriter key as Ui.button's (which marks
-	-- itself Keyed and taps on its own): the hotbar, the touch buttons, tabs and slots. The movement
-	-- stick and jump (Roblox's TouchGui) stay silent.
+	-- itself Keyed and taps on its own): the hotbar, tabs, slots and the door chips. Movement stays
+	-- silent: the stick and jump (Roblox's TouchGui) and the RUN, LOOK and PING buttons
+	-- (ContextActionService's ContextActionGui), which only change how you move or look.
 	task.spawn(function()
 		local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 		local function key(button: Instance)
@@ -349,6 +350,7 @@ function AudioController.Start()
 				not button:IsA("GuiButton")
 				or button:GetAttribute("Keyed")
 				or button:FindFirstAncestor("TouchGui")
+				or button:FindFirstAncestor("ContextActionGui")
 			then
 				return
 			end

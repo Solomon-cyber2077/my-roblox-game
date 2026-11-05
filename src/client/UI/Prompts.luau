@@ -4,7 +4,9 @@
 	Style = Custom; this draws a ticket-styled chip in the world with the input
 	glyph, action, object and a hold-progress rule. On touch the chip is a label only: the one
 	fixed action button by the thumb (UI/ActionButton, Logic/TouchAction) acts on it, so a phone
-	never has to hit a chip moving about the world, and the chip never eats a camera drag.
+	never has to hit a chip moving about the world, and the chip never eats a camera drag. A
+	prompt with the TapChip attribute (the boarding cars' doors) is the exception: on touch its
+	chip is the button, tapped where it stands, and the action button leaves it alone.
 	Prompts tagged with an Action attribute open UI on trigger (workshop, shop).
 ]]
 
@@ -18,11 +20,16 @@ local Ui = require(script.Parent.Ui)
 
 local Prompts = {}
 
+-- Whether this chip takes taps and clicks: always off touch, and on touch only for TapChip prompts.
+local function tappable(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType): boolean
+	return inputType ~= Enum.ProximityPromptInputType.Touch or prompt:GetAttribute("TapChip") == true
+end
+
 local function glyph(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType): string
 	if inputType == Enum.ProximityPromptInputType.Gamepad then
 		return "X"
 	elseif inputType == Enum.ProximityPromptInputType.Touch then
-		return "USE" -- the action button
+		return if prompt:GetAttribute("TapChip") == true then "TAP" else "USE" -- USE: the action button
 	end
 	return prompt.KeyboardKeyCode.Name
 end
@@ -44,7 +51,7 @@ local function build(
 		StudsOffset = Vector3.new(0, 2.6, 0),
 		LightInfluence = 0,
 		ResetOnSpawn = false,
-		Active = inputType ~= Enum.ProximityPromptInputType.Touch,
+		Active = tappable(prompt, inputType),
 		Adornee = prompt.Parent,
 		Parent = gui,
 	})
@@ -54,8 +61,8 @@ local function build(
 		BackgroundTransparency = 0.06,
 		AutoButtonColor = false,
 		Text = "",
-		Active = inputType ~= Enum.ProximityPromptInputType.Touch,
-		Interactable = inputType ~= Enum.ProximityPromptInputType.Touch,
+		Active = tappable(prompt, inputType),
+		Interactable = tappable(prompt, inputType),
 		Parent = billboard,
 	})
 	Ui.corner(3).Parent = chip
@@ -212,7 +219,7 @@ local function build(
 			Ui.tween(needle, { Rotation = -135 }, TweenInfo.new(0.25, Enum.EasingStyle.Quad))
 		end
 	end)
-	if inputType ~= Enum.ProximityPromptInputType.Touch and prompt.ClickablePrompt then
+	if tappable(prompt, inputType) and prompt.ClickablePrompt then
 		chip.InputBegan:Connect(function(input)
 			if
 				input.UserInputType == Enum.UserInputType.Touch

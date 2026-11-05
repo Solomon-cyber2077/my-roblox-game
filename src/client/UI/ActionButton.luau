@@ -114,35 +114,41 @@ function ActionButton.mount(gui: ScreenGui)
 		end
 	end
 
-	ProximityPromptService.PromptShown:Connect(function(prompt, inputType)
-		if
-			inputType ~= Enum.ProximityPromptInputType.Touch
-			or prompt.Style ~= Enum.ProximityPromptStyle.Custom
-		then
-			return
-		end
-		prompts[prompt] = true
-		endHold(TouchAction.show(state, {
-			id = prompt,
-			action = prompt.ActionText,
-			object = prompt.ObjectText,
-			hold = prompt.HoldDuration,
-		}))
-		refresh()
-		local hidden: RBXScriptConnection? = nil
-		local gone: RBXScriptConnection? = nil
-		local function drop()
-			if hidden then
-				hidden:Disconnect()
+	ProximityPromptService.PromptShown:Connect(
+		function(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType)
+			if
+				inputType ~= Enum.ProximityPromptInputType.Touch
+				or prompt.Style ~= Enum.ProximityPromptStyle.Custom
+			then
+				return
 			end
-			if gone then
-				gone:Disconnect()
+			-- a door chip is tapped where it stands (UI/Prompts)
+			if prompt:GetAttribute("TapChip") == true then
+				return
 			end
-			remove(prompt)
+			prompts[prompt] = true
+			endHold(TouchAction.show(state, {
+				id = prompt,
+				action = prompt.ActionText,
+				object = prompt.ObjectText,
+				hold = prompt.HoldDuration,
+			}))
+			refresh()
+			local hidden: RBXScriptConnection? = nil
+			local gone: RBXScriptConnection? = nil
+			local function drop()
+				if hidden then
+					hidden:Disconnect()
+				end
+				if gone then
+					gone:Disconnect()
+				end
+				remove(prompt)
+			end
+			hidden = prompt.PromptHidden:Connect(drop)
+			gone = prompt.Destroying:Connect(drop)
 		end
-		hidden = prompt.PromptHidden:Connect(drop)
-		gone = prompt.Destroying:Connect(drop)
-	end)
+	)
 
 	button.InputBegan:Connect(function(input)
 		if input.UserInputType ~= Enum.UserInputType.Touch then

@@ -243,6 +243,8 @@ local function prompt(parent: BasePart, action: string, index: number, actionTex
 	p.Style = Enum.ProximityPromptStyle.Custom
 	p:SetAttribute("Action", action)
 	p:SetAttribute("Car", index)
+	-- on a phone the door's own chip is tapped (UI/Prompts), not the thumb's action button
+	p:SetAttribute("TapChip", true)
 	p.Triggered:Connect(function(player)
 		if action == "CarBoard" then
 			board(player, index)
