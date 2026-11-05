@@ -47,9 +47,10 @@ local List: { [string]: NpcDef } = {
 		name = "Mabel Orrin",
 		role = "Ticket Clerk",
 		enabled = true,
-		-- the crew saloon's end wall, across the Workshop gangway from the route board (never in
-		-- front of it), clear of the door and the bays
-		post = { x = -25.4, z = -3.5, yaw = 90 },
+		-- the crew saloon's platform side, between the bell and the route board, facing the aisle:
+		-- clear of the bays (the old post at -25.4, -3.5 stood in a bench back), the doors and the
+		-- board's sight line
+		post = { x = -28.5, z = 3.4, yaw = 0 },
 		chain = { "MabelLuggage", "MabelNames", "MabelManifest" },
 		cosmetic = "hat_clerk",
 		-- the company's navy in a fitted bodice and plain skirt, a clerk's eyeshade, her punch
