@@ -728,6 +728,12 @@ local Tuning = {
 	Lobby = {
 		SeatRetouchDelay = 1.5, -- seconds a lobby seat ignores touches after someone stands up
 	},
+	-- The landscape's density (Scenery/World.density) under Settings' Performance, the phone default:
+	-- trees, hedges, mid-distance buildings and crows built at this share. Quality follows the
+	-- engine's graphics level as before.
+	Landscape = {
+		PerformanceDensity = 0.5,
+	},
 	-- The crew's carried lantern: one PointLight whose reach is the readability floor
 	-- (Visibility.Radius) for every cosmetic, plus the bearer's own forward cone (client only).
 	-- A lantern's look changes only its colour, glow style and flicker (Config/Cosmetics,

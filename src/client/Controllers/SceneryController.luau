@@ -20,6 +20,7 @@
 	exactly on its dock.
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -31,6 +32,7 @@ local JourneyPlan = require(Shared.Logic.JourneyPlan)
 local MathX = require(Shared.Util.MathX)
 local Safe = require(Shared.Util.Safe)
 local Signal = require(Shared.Util.Signal)
+local Tuning = require(Shared.Config.Tuning)
 
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
@@ -88,6 +90,10 @@ local context: Context = {
 }
 
 local function qualityDensity(): number
+	-- Settings' Performance (on by default on phones) thins the landscape too
+	if Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance" then
+		return Tuning.Landscape.PerformanceDensity
+	end
 	local ok, level = pcall(function()
 		return UserSettings():GetService("UserGameSettings").SavedQualityLevel.Value
 	end)
@@ -390,6 +396,15 @@ function SceneryController.Init()
 end
 
 function SceneryController.Start()
+	-- switching graphics in Settings rebuilds the landscape at the new density
+	Players.LocalPlayer:GetAttributeChangedSignal("GraphicsQuality"):Connect(function()
+		local density = qualityDensity()
+		if density ~= World.density then
+			World.density = density
+			invalidateAll()
+		end
+	end)
+	World.density = qualityDensity()
 	Workspace.ChildAdded:Connect(findStation)
 	Workspace.ChildRemoved:Connect(findStation)
 	findStation()
