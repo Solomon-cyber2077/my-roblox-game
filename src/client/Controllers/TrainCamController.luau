@@ -341,6 +341,13 @@ function TrainCamController.Start()
 		distance = math.clamp(distance / 1.15, ORBIT_NEAR, ORBIT_FAR)
 	end, { Size = UDim2.fromOffset(40, 40), Position = UDim2.new(1, -46, 0, 34), TextSize = 22 })
 	zoomIn.Parent = bar
+	-- at a limit the zoom button changes nothing, so it makes no sound (UI/Ui reads Inert)
+	RunService.Heartbeat:Connect(function()
+		if active then
+			zoomOut:SetAttribute("Inert", distance >= ORBIT_FAR)
+			zoomIn:SetAttribute("Inert", distance <= ORBIT_NEAR)
+		end
+	end)
 	UserInputService.LastInputTypeChanged:Connect(function()
 		if active then
 			label()

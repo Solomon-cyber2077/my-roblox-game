@@ -191,6 +191,8 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 		Parent = root,
 	})
 	Ui.corner(4).Parent = keycap
+	-- no typewriter key: the hit or miss answers with its own sound, as a keyboard press does
+	keycap:SetAttribute("Keyed", true)
 	Ui.stroke(ZONE, 2, 0.1).Parent = keycap
 	keyScale = Ui.new("UIScale", { Parent = keycap })
 	keyLabel = Ui.text({

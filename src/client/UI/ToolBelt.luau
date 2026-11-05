@@ -292,6 +292,7 @@ function ToolBelt.mount(gui: ScreenGui)
 				Parent = sheet,
 			})
 			Ui.corner(3).Parent = c
+			c:SetAttribute("Inert", slot == selected)
 			Ui.stroke(
 				if slot == selected then Theme.Color.brassLight else Theme.Color.steelLine,
 				if slot == selected then 3 else 1,

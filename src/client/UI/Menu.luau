@@ -128,6 +128,7 @@ function Menu.mount(gui: ScreenGui)
 		Selectable = true,
 	})
 	open.ZIndex = 20
+	open:SetAttribute("Wired", true)
 	open.Parent = box
 	local friends = Ui.button("", "Secondary", function()
 		local handler = onInvite

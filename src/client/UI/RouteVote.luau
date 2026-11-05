@@ -264,7 +264,8 @@ function RouteVote.mount(gui: ScreenGui)
 			local selected = mine == index
 			handle.setSelected(
 				selected,
-				if selected then "YOUR VOTE" elseif #options == 1 then "FINAL LEG" else "TAKE THIS LINE"
+				if selected then "YOUR VOTE" elseif #options == 1 then "FINAL LEG" else "TAKE THIS LINE",
+				selected or #options == 1
 			)
 			handle.setFlap(openIndex == index)
 		end

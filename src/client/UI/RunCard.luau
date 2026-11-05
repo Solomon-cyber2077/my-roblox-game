@@ -87,6 +87,7 @@ local function refreshAgain()
 	countLabel.Text = `{ready}/{of} READY`
 	againButton.Text = if chose == "again" then "READY" else "AGAIN"
 	againButton.Active = chose ~= "again"
+	againButton:SetAttribute("Inert", chose == "again")
 	againButton.AutoButtonColor = chose ~= "again"
 end
 

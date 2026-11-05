@@ -368,6 +368,7 @@ function Outfitter.mount(gui: ScreenGui)
 				Parent = grid,
 			})
 			Ui.corner().Parent = cardButton
+			cardButton:SetAttribute("Inert", selected)
 			local outline = Ui.stroke(
 				if selected then Theme.Color.brassLight else Theme.Color.steelLine,
 				if selected then 2 else 1,
@@ -513,6 +514,7 @@ function Outfitter.mount(gui: ScreenGui)
 				{ Size = UDim2.fromOffset(120, 34), LayoutOrder = i, TextSize = 16 }
 			)
 			tab.ZIndex = 34
+			tab:SetAttribute("Inert", category == selectedCategory)
 			tab.Parent = tabs
 		end
 	end

@@ -294,8 +294,13 @@ function Lobby.mount(gui: ScreenGui)
 		userOpened = folded
 		layoutCard()
 	end)
-	gui:GetAttributeChangedSignal("Compact"):Connect(layoutCard)
-	layoutCard()
+	-- the card only folds on a phone; a desktop click on it changes nothing, so it stays silent
+	local function foldLayout()
+		fold:SetAttribute("Inert", gui:GetAttribute("Compact") ~= true)
+		layoutCard()
+	end
+	gui:GetAttributeChangedSignal("Compact"):Connect(foldLayout)
+	foldLayout()
 
 	-- Departure panel: the platform indicator --------------------------------------------------
 	local panel = Ui.panel({
@@ -366,6 +371,7 @@ function Lobby.mount(gui: ScreenGui)
 		AnchorPoint = Vector2.new(0.5, 1),
 		TextSize = 20,
 	})
+	readyButton:SetAttribute("Wired", true)
 	readyButton.ZIndex = 2
 	readyButton.Parent = panel
 	-- a flat brass plate: one tone, no lit gradient, rim or keel
@@ -450,6 +456,7 @@ function Lobby.mount(gui: ScreenGui)
 		TextSize = 16,
 	})
 	lineButton.TextColor3 = Theme.Color.bone
+	lineButton:SetAttribute("Wired", true)
 	lineButton.Parent = hallRow
 	local lineFixed, myLine = false, "Long"
 	lineButton.Activated:Connect(function()
@@ -462,6 +469,7 @@ function Lobby.mount(gui: ScreenGui)
 		local line = State.Get({ "lobby", "line" })
 		local known = type(line) == "table"
 		lineFixed = known and line.fixed == true
+		lineButton:SetAttribute("Inert", lineFixed)
 		local route = if known then line.route else "Long"
 		local mine = if known and line.votes then line.votes[Session.userKey] else nil
 		if lineFixed then

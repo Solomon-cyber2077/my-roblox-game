@@ -179,6 +179,7 @@ function SettingsUi.mount(gui: ScreenGui)
 					Ui.setButtonStyle(button, if on then "Secondary" else "Primary")
 				else
 					button.Text = (if option == selected then "> " else "") .. (labels[option] or option)
+					button:SetAttribute("Inert", option == selected)
 					Ui.setButtonStyle(button, if option == selected then "Primary" else "Secondary")
 				end
 			end

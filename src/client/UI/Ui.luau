@@ -377,7 +377,15 @@ function Ui.button(
 	-- here, a gamepad's A or Enter in Activated below
 	local tappedAt = 0
 	local function tap()
-		if onClick and not button:GetAttribute("Disabled") and Registry.AudioController then
+		-- only a press that changes something sounds: a button wired elsewhere marks itself Wired,
+		-- and one whose press would change nothing right now (the choice already made) is Inert
+		local wired = onClick ~= nil or button:GetAttribute("Wired") == true
+		if
+			wired
+			and not button:GetAttribute("Disabled")
+			and not button:GetAttribute("Inert")
+			and Registry.AudioController
+		then
 			tappedAt = os.clock()
 			Registry.AudioController.Tap("MenuClick")
 		end

@@ -72,7 +72,7 @@ export type Handle = {
 	stamps: Frame,
 	button: TextButton,
 	flap: TextButton,
-	setSelected: (selected: boolean, text: string) -> (),
+	setSelected: (selected: boolean, text: string, inert: boolean?) -> (),
 	setFlap: (open: boolean) -> (),
 	setDial: (sweep: number, numeral: number?) -> (),
 	punch: () -> (),
@@ -501,8 +501,9 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	shrink(warning, 12, 9)
 	warning.Visible = false
 
+	local face: TextButton? = nil
 	if opts.wholeTap and opts.onVote then
-		Ui.new("TextButton", {
+		local faceButton = Ui.new("TextButton", {
 			Name = "Face",
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
@@ -511,8 +512,9 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 			Selectable = false,
 			ZIndex = 4, -- over the print, under the vote button (5) and the flap
 			Parent = paper,
-		}).Activated
-			:Connect(opts.onVote)
+		})
+		faceButton.Activated:Connect(opts.onVote)
+		face = faceButton
 	end
 
 	-- The vote button and the fold-out flap that lays out the dossier
@@ -594,8 +596,13 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 		stamps = stamps,
 		button = button,
 		flap = flap,
-		setSelected = function(selected: boolean, text: string)
+		setSelected = function(selected: boolean, text: string, inert: boolean?)
 			selectedRim.Transparency = if selected then 0 else 1
+			-- a vote already cast (or the only line) changes nothing on a press: no key sound
+			button:SetAttribute("Inert", inert == true)
+			if face then
+				face:SetAttribute("Inert", inert == true)
+			end
 			button.Text = text
 			Ui.setButtonStyle(button, if selected then "Primary" else "Secondary")
 		end,
