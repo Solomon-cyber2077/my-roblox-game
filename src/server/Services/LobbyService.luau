@@ -350,14 +350,10 @@ function LobbyService.LobbyCount(): number
 	return #LobbyService.LobbyPlayers()
 end
 
+-- Counts exactly the players TakeCrew would take, so a countdown never ends with nobody ready
+-- (which would send the whole hall).
 function LobbyService.ReadyCount(): number
-	local count = 0
-	for player, isReady in ready do
-		if isReady and player.Parent ~= nil and not Registry.CrewService.IsMember(player) then
-			count += 1
-		end
-	end
-	return count
+	return #LobbyService.ReadyPlayers()
 end
 
 -- The run tier for this crew: the host's pick, capped by what every member has unlocked.
