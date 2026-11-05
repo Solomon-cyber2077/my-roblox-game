@@ -56,9 +56,10 @@ local lastPublished = ""
 local safeGlows: { PointLight } = {}
 
 local function publish(force: boolean?)
-	-- integrity keeps its fraction (Ledger.drain); the crew sees it in tenths
+	-- integrity keeps its fraction (Ledger.drain); the crew sees it in tenths. Coal burns a little
+	-- every tick while running; the HUD shows whole units, so only a whole unit re-sends the train
 	local signature =
-		`{train.coal}|{train.parts}|{math.floor(train.integrity * 10)}|{train.coalMax}|{train.starving}|{Ledger.breachCount(
+		`{math.floor(train.coal)}|{train.parts}|{math.floor(train.integrity * 10)}|{train.coalMax}|{train.starving}|{Ledger.breachCount(
 			train
 		)}|{table.concat(train.chest, ",")}`
 	if force or signature ~= lastPublished then
