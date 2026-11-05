@@ -28,8 +28,8 @@
     "Lighting": {
       "$properties": {
         "Technology": "Future",
-        "Ambient": [0.051, 0.039, 0.027],
-        "OutdoorAmbient": [0.051, 0.039, 0.031],
+        "Ambient": [0.188, 0.141, 0.094],
+        "OutdoorAmbient": [0.188, 0.141, 0.11],
         "Brightness": 0,
         "ExposureCompensation": -0.1,
         "EnvironmentDiffuseScale": 0,

@@ -757,31 +757,6 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				)
 			end
 		end
-		-- a pendant lamp hanging from the tie: chain, brass shade, glowing globe
-		local pendantZ = 15
-		decor(
-			Vector3.new(0.12, SPRING + 0.3 - 19.5, 0.12),
-			at(x, (SPRING + 0.3 + 19.5) / 2, pendantZ),
-			C.iron,
-			Enum.Material.Metal
-		)
-		Kit.cylinder(
-			model,
-			0.7,
-			3,
-			at(x, 19.2, pendantZ) * Kit.angles(0, 0, 90),
-			C.brass,
-			{ material = Enum.Material.Metal, collide = false }
-		)
-		-- a warm amber globe (gas behind tinted glass), not a cream one
-		local lamp = Kit.neon(
-			model,
-			Vector3.new(1.4, 1.4, 1.4),
-			at(x, 18.4, pendantZ),
-			Color3.fromRGB(236, 150, 72),
-			Enum.PartType.Ball
-		)
-		fixtureLight(lamp, IL.Hall.Globe, (x + 99) % 44 == 0)
 	end
 	-- purlins along the hall at every rib joint, carrying the roof
 	for i = 2, SEGMENTS do
@@ -1955,49 +1930,55 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	)
 	block(Vector3.new(9.6, 6.6, 0.25), at(nbx, 6.5, BACK_Z - 0.125 + 0.02), C.wood, Enum.Material.Wood)
 
-	-- Lamplight: lanterns hung from the platform-edge columns and sconces on the back wall ---------------
+	-- Lamplight: lanterns hung from both rows of columns, no lamps overhead ----------------------------
 	-- each column carries two, one either side on an iron arm that turns down at its tip, so the
 	-- platform below stays clear for the boarding doors
 	for x = -99, 99, BAY do
-		for _, side in { -1, 1 } do
-			local tip = at(x + side * 2.4, 0, -14)
-			Kit.block(
-				model,
-				Vector3.new(2.05, 0.25, 0.25),
-				at(x + side * 1.475, 13.6, -14),
-				C.iron,
-				{ material = Enum.Material.Metal, collide = false }
-			)
-			Kit.post(
-				model,
-				0.6,
-				0.25,
-				tip * CFrame.new(0, 13.25, 0),
-				C.iron,
-				{ material = Enum.Material.Metal, collide = false }
-			)
-			Kit.block(
-				model,
-				Vector3.new(1.3, 0.25, 1.3),
-				tip * CFrame.new(0, 11.1, 0),
-				C.iron,
-				{ material = Enum.Material.Metal, collide = false }
-			)
-			local lantern = Kit.neon(model, Vector3.new(1, 1.4, 1), tip * CFrame.new(0, 11.95, 0), C.flame)
-			lantern.Transparency = 0.15
-			Kit.block(
-				model,
-				Vector3.new(1.5, 0.3, 1.5),
-				tip * CFrame.new(0, 12.8, 0),
-				C.iron,
-				{ material = Enum.Material.Metal, collide = false }
-			)
-			fixtureLight(lantern, IL.Hall.Lantern)
+		for _, z in { -14, 44 } do
+			for _, side in { -1, 1 } do
+				local tip = at(x + side * 2.4, 0, z)
+				Kit.block(
+					model,
+					Vector3.new(2.05, 0.25, 0.25),
+					at(x + side * 1.475, 13.6, z),
+					C.iron,
+					{ material = Enum.Material.Metal, collide = false }
+				)
+				Kit.post(
+					model,
+					0.6,
+					0.25,
+					tip * CFrame.new(0, 13.25, 0),
+					C.iron,
+					{ material = Enum.Material.Metal, collide = false }
+				)
+				Kit.block(
+					model,
+					Vector3.new(1.3, 0.25, 1.3),
+					tip * CFrame.new(0, 11.1, 0),
+					C.iron,
+					{ material = Enum.Material.Metal, collide = false }
+				)
+				local lantern =
+					Kit.neon(model, Vector3.new(1, 1.4, 1), tip * CFrame.new(0, 11.95, 0), C.flame)
+				lantern.Transparency = 0.15
+				Kit.block(
+					model,
+					Vector3.new(1.5, 0.3, 1.5),
+					tip * CFrame.new(0, 12.8, 0),
+					C.iron,
+					{ material = Enum.Material.Metal, collide = false }
+				)
+				-- one light per column carries both lanterns' glow: a pair 5 studs apart reads as one pool
+				if side == 1 then
+					fixtureLight(lantern, IL.Hall.Lantern)
+				end
+			end
 		end
 	end
-	-- gas lamp standards flanking the board and along the back wall where the sconces were: plinth,
+	-- a pair of gas lamp standards framing the departure board, the only lamps on the back wall: plinth,
 	-- fluted cast-iron shaft, ladder bar, square glazed lantern
-	for _, x in { -102, -78, -54, -24, 24, 54, 78, 102 } do
+	for _, x in { -24, 24 } do
 		local foot = at(x, 0, 66)
 		Kit.block(model, Vector3.new(1.3, 0.8, 1.3), foot * CFrame.new(0, 0.4, 0), C.iron, {
 			material = Enum.Material.Metal,
