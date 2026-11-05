@@ -902,7 +902,9 @@ end
 
 -- Starts a keyed loop attached to a part (machinery, leaks). Stop it with StopLoop.
 function AudioController.Loop(key: string, cueName: string, parent: Instance)
-	if loops[key] then
+	local running = loops[key]
+	-- a loop whose part was destroyed (a station gone, a part streamed out) went with it: start anew
+	if running and running.Parent ~= nil then
 		return
 	end
 	local sound = makeSound(cueName, parent)
