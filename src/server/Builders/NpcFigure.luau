@@ -69,9 +69,6 @@ local function buildRig(def: Npcs.NpcDef, spec: Npcs.Rig): Model?
 		local legs = color(look and look.lower, Color3.fromRGB(46, 42, 40))
 		description.LeftLegColor = legs
 		description.RightLegColor = legs
-		description.Shirt = spec.shirt or 0
-		description.Pants = spec.pants or 0
-		description.Face = spec.face or 0
 		local body = Players:CreateHumanoidModelFromDescription(
 			description,
 			Enum.HumanoidRigType.R6,
@@ -85,6 +82,25 @@ local function buildRig(def: Npcs.NpcDef, spec: Npcs.Rig): Model?
 		return nil
 	end
 	local rig = result :: Model
+	-- the sheets are plain image uploads, so they go on as templates rather than catalogue items
+	if spec.shirt then
+		local shirt = Instance.new("Shirt")
+		shirt.ShirtTemplate = `rbxassetid://{spec.shirt}`
+		shirt.Parent = rig
+	end
+	if spec.pants then
+		local pants = Instance.new("Pants")
+		pants.PantsTemplate = `rbxassetid://{spec.pants}`
+		pants.Parent = rig
+	end
+	local head = rig:FindFirstChild("Head")
+	if spec.face and head then
+		local face = head:FindFirstChildOfClass("Decal") or Instance.new("Decal")
+		face.Name = "face"
+		face.Face = Enum.NormalId.Front
+		face.Texture = `rbxassetid://{spec.face}`
+		face.Parent = head
+	end
 	for _, descendant in rig:GetDescendants() do
 		if descendant.Name == "Animate" and (descendant:IsA("LocalScript") or descendant:IsA("Script")) then
 			descendant:Destroy()
@@ -119,6 +135,10 @@ local function addPieces(def: Npcs.NpcDef, rig: Model, spec: Npcs.Rig, service: 
 		part.Color = Color3.new(1, 1, 1)
 		part.Anchored = false
 		quiet(part)
+		local size = piece.size
+		if size then
+			part.Size = Vector3.new(size[1], size[2], size[3])
+		end
 		local o = piece.offset
 		part.CFrame = limb.CFrame
 			* CFrame.new(o[1], o[2], o[3])

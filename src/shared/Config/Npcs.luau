@@ -54,8 +54,11 @@ export type RigPiece = {
 	limb: string, -- "Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"
 	offset: { number }, -- studs in the limb's space
 	yaw: number?, -- degrees about the limb's up axis
+	size: { number }?, -- the mesh's native size in studs, set in case the import rescaled it
 }
 
+-- shirt, pants and face are image ids (585x559 classic sheets and a face decal), applied as
+-- ShirtTemplate, PantsTemplate and the head's face texture.
 export type Rig = {
 	shirt: number?,
 	pants: number?,
@@ -91,6 +94,50 @@ local List: { [string]: NpcDef } = {
 			prop = "Punch",
 		},
 		mesh = { meshId = 117337144385821, textureId = 134575749709709 },
+		rig = {
+			shirt = 103214750665177,
+			pants = 103978285622458,
+			face = 114163570879355,
+			-- Studio's OBJ import turns these pieces round (front to back), hence yaw 180
+			pieces = {
+				{
+					name = "Skirt",
+					limb = "Torso",
+					mesh = 114561113986467,
+					texture = 130730528507892,
+					offset = { 0, -1.701, 0.06 },
+					yaw = 180,
+					size = { 3.063, 2.347, 2.137 },
+				},
+				{
+					name = "Hair",
+					limb = "Head",
+					mesh = 139153894998568,
+					texture = 72542832896870,
+					offset = { 0, 0.109, 0.122 },
+					yaw = 180,
+					size = { 1.28, 1.067, 1.441 },
+				},
+				{
+					name = "Eyeshade",
+					limb = "Head",
+					mesh = 111491431774316,
+					texture = 125078973870979,
+					offset = { 0, 0.195, -0.18 },
+					yaw = 180,
+					size = { 1.506, 0.38, 1.781 },
+				},
+				{
+					name = "TicketPunch",
+					limb = "Right Arm",
+					mesh = 94369767665961,
+					texture = 114842239591331,
+					offset = { 0, -0.996, -0.309 },
+					yaw = 180,
+					size = { 0.252, 0.937, 0.53 },
+				},
+			},
+		},
 		lines = require(Dialogue.Mabel) :: any,
 	},
 	-- Reserved for the next passes; built from this table once enabled.
