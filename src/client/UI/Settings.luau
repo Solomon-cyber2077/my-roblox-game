@@ -49,7 +49,7 @@ function SettingsUi.mount(gui: ScreenGui)
 		},
 		{
 			key = "BrokenThingMarkers",
-			title = "BROKEN THING MARKERS",
+			title = "DAMAGE MARKERS",
 			-- first few runs is the default, not a choice
 			values = { "Always", "Off" },
 			toggle = false,

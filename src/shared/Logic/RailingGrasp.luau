@@ -55,11 +55,11 @@ end
 -- What a left-behind player reads after a reach miss: the measured shortfall to 0.1 stud.
 function RailingGrasp.shortfallText(shortfall: number): string
 	if shortfall <= 0 then
-		return "within reach"
+		return "The rail was right there."
 	elseif shortfall < 0.1 then
-		return "less than 0.1 stud short"
+		return "Missed the rail by a hair."
 	end
-	return string.format("%.1f studs short", shortfall)
+	return string.format("Missed the rail by %.1f studs.", shortfall)
 end
 
 function RailingGrasp.evaluate(

@@ -334,7 +334,7 @@ function CarBoardingUi.mount(gui: ScreenGui)
 				headline.Text = `FINDING A CREW  ·  {seats}`
 				hint.Text = if solo
 					then `Leaving solo in {math.ceil(solo)}s if no crew joins`
-					else `{waiting} waiting across the line`
+					else `{waiting} waiting in other cars`
 			else
 				headline.Text = `COUPLING  ·  {seats}`
 				hint.Text = "Looking for another car to join yours"

@@ -675,7 +675,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 	-- the crew can tear at it to pull them free
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Pull free"
-	prompt.ObjectText = if def.pin then `{target.DisplayName}: Brute pin` else target.DisplayName
+	prompt.ObjectText = if def.pin then `{target.DisplayName} (pinned by the Brute)` else target.DisplayName
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 11
 	prompt.RequiresLineOfSight = false

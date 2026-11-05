@@ -297,7 +297,7 @@ function TrainService.Init()
 	makePrompt(built.workbench, "Workshop", "Workbench", "Upgrades", 0)
 	-- the crew chest: E opens it (UI/CrewChest); stowing and taking go through ChestStow/ChestTake
 	makePrompt(built.chest, "Chest", "Crew chest", "Open", 0)
-	local mastPrompt = makePrompt(built.mast, "Flare", "Signal mast", "Fire Signal Flare", 0.6)
+	local mastPrompt = makePrompt(built.mast, "Flare", "Signal mast", "Fire signal flare", 0.6)
 	mastPrompt.Triggered:Connect(function(player)
 		TrainService.FireFlare(player)
 	end)

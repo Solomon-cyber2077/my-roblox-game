@@ -261,7 +261,7 @@ local Items: { [string]: ItemDef } = {
 		heavy = false,
 		use = "Rescue",
 		value = 20,
-		description = "Fire it at the train's signal mast to bring back every eliminated crew member once.",
+		description = "Fire it from the train's signal mast to bring back every crewmate you have lost. One use.",
 		model = {
 			{
 				shape = "Cylinder",
@@ -396,7 +396,7 @@ local Items: { [string]: ItemDef } = {
 		slots = 1,
 		heavy = false,
 		value = 12,
-		description = "A muted gold sovereign, warm from a stationer's strongbox.",
+		description = "A gold sovereign, still warm from the stationmaster's strongbox.",
 		model = {
 			{
 				shape = "Cylinder",

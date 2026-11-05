@@ -126,7 +126,7 @@ function NpcQuest.trackerText(rq: RunQuest): string
 	elseif rq.status == "Done" then
 		return "Done. Paid at the end of the line."
 	elseif rq.status == "Failed" then
-		return "Ran out of line."
+		return "The line ran out first."
 	elseif rq.found and quest.carried then
 		return quest.carried
 	end

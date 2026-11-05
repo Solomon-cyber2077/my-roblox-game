@@ -96,7 +96,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Ride",
 			area = "RightArm",
-			name = "IT IS ON YOUR BACK",
+			name = "IT'S ON YOUR BACK",
 			hold = { pos = { 0, -1.9, -3.2 }, up = STANDING, face = AWAY },
 			bite = 0.65,
 			lying = false,

@@ -65,8 +65,8 @@ local CAUSE_TEXT: { [string]: string } = {
 	Smothered = "was lost in the fog",
 	Fell = "fell into the dark",
 	Wrecked = "went down with the train",
-	Stranded = "could not get back aboard in time",
-	Disconnected = "left the line",
+	Stranded = "didn't make it back aboard in time",
+	Disconnected = "lost connection",
 	Other = "was lost on the line",
 }
 
@@ -646,7 +646,7 @@ function CrewService.Rescue(by: Player): number
 		NetService.FireAll(
 			"Notify",
 			"Rescue",
-			`{by.DisplayName} fired a flare. {count} crew coming home. Run to the train!`
+			`{by.DisplayName} fired a flare. {count} crew are coming home. Run to the train!`
 		)
 	end
 	return count
@@ -758,7 +758,7 @@ function CrewService.CashOut(player: Player): (boolean, string?)
 	NetService.FireAll(
 		"Notify",
 		"Station",
-		`{player.DisplayName} cashed out at stop {Tuning.Run.CashOutStop} and stays behind.`
+		`{player.DisplayName} cashed out at stop {Tuning.Run.CashOutStop} and stayed behind.`
 	)
 	spawnGeneration[player] = (spawnGeneration[player] or 0) + 1
 	task.spawn(Registry.LobbyService.Spawn, player)

@@ -57,7 +57,7 @@ local Quests: { [string]: QuestDef } = {
 		npc = "Mabel",
 		title = "The Final Manifest",
 		kind = "Survive",
-		story = 'Mabel signs the manifest at the Terminus. "Every name that went out, and here are the ones that came back."',
+		story = 'Mabel signs the manifest at the Terminus. "Every name that went out. And here, the ones that came back."',
 		brief = "Get Mabel and her final manifest to the Terminus.",
 	},
 }

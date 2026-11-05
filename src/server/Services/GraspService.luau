@@ -91,11 +91,11 @@ function GraspService.LeftBehindText(player: Player): string?
 	if attempt.reason == "missed" and attempt.shortfall then
 		return Rules.shortfallText(attempt.shortfall)
 	elseif attempt.reason == "window" then
-		return "The grasp was outside the departure window."
+		return "Grabbed for the rail too late."
 	elseif attempt.reason == "occupied" then
-		return "That handhold was occupied."
+		return "Someone else had that grip."
 	elseif attempt.reason == "state" then
-		return "Unable to grasp in that state."
+		return "Couldn't get a grip on the rail."
 	end
 	return nil
 end

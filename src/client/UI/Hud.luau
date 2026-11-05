@@ -1218,7 +1218,7 @@ function Hud.mount(gui: ScreenGui)
 		end
 		local hints = {}
 		if hasTool then
-			table.insert(hints, if handSlot then "E use  ·  same key puts away" else "1-6 hold a tool")
+			table.insert(hints, if handSlot then "E use  ·  E again to put away" else "1-6 hold a tool")
 		end
 		if heavy > 0 then
 			table.insert(

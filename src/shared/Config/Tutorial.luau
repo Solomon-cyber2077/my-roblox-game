@@ -205,7 +205,7 @@ return table.freeze({
 			id = "Face",
 			tier = 1,
 			when = "Stalked",
-			text = "Face it and it waits. Staring only buys time; the glance just looks behind you.",
+			text = "Face it and it stops. Staring only buys time, and a quick look back doesn't count.",
 		},
 		{
 			id = "Bell",
@@ -219,7 +219,7 @@ return table.freeze({
 			tier = 2,
 			when = "Grabbed",
 			text = "Press {KEY} when the marker is on the amber.",
-			touch = "Tap the key when the marker is on the amber.",
+			touch = "Tap when the marker is on the amber.",
 			inline = true,
 		},
 		-- run 3: the hull, leaks, stamina, voting

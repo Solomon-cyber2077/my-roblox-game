@@ -38,7 +38,7 @@ describe("DeathCause", function()
 		end
 		expect(DeathCause.line("Stranded").title).toBe("STRANDED")
 		expect(DeathCause.line("Stranded").line).toBe(
-			"You lost both arms and could not get back aboard in time."
+			"You lost both arms and didn't make it back aboard in time."
 		)
 		expect(DeathCause.line("Nonsense").title).toBe(DeathCause.Lines.Other.title)
 		expect(DeathCause.line(nil).title).toBe(DeathCause.Lines.Other.title)

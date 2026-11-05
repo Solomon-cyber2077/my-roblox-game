@@ -305,7 +305,7 @@ function Summary.show(data: { [string]: any })
 	end
 	if data.saved == false then
 		line(
-			"Progress is not saved in this session (DataStores unavailable).",
+			"Your progress is not being saved this session.",
 			Theme.Font.bodyBold,
 			13,
 			Theme.Color.signalDark

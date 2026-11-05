@@ -214,7 +214,7 @@ local function depart(index: number, match: CrewQueue.Match?)
 					"Notify",
 					crew,
 					"Warning",
-					"A run is underway on this server. Try again after it."
+					"A run is underway on this server. Try again when it ends."
 				)
 			elseif teleport(crew, match) then
 				return -- they stay aboard, black, until they leave the server

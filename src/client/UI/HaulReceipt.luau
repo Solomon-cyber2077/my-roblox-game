@@ -91,7 +91,7 @@ function HaulReceipt.show(data: { [string]: any })
 	end
 
 	line("TERMINUS LEDGER", Theme.Color.goInk, 26)
-	line("The strongbox opens. Your earned haul is entered in the crew book.", Theme.Color.ink, 16)
+	line("The strongbox opens. Your haul is entered in the crew book.", Theme.Color.ink, 16)
 	local counts: { [string]: number } = {}
 	for _, itemId in haul.valuables or {} do
 		counts[itemId] = (counts[itemId] or 0) + 1

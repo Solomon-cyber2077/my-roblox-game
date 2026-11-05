@@ -120,7 +120,7 @@ local Catalog: { CosmeticDef } = {
 		name = "Founder's Lantern",
 		category = "Lantern",
 		rarity = "Legendary",
-		description = "For the first crews to ride the line. Sparkles included.",
+		description = "For the first crews to ride the line.",
 		gamePass = { id = nil, price = 249 },
 		look = {
 			body = { 206, 164, 72 }, -- gilt
@@ -361,7 +361,7 @@ for _, recipe in CrewClothing.List do
 		name = recipe.name,
 		category = "Uniform",
 		rarity = if recipe.starter then "Standard" else "Rare",
-		description = "Crew issue uniform for the line.",
+		description = "The standard crew uniform for the line.",
 		default = if recipe.starter then true else nil,
 		milestone = if recipe.record then recipe.id else nil,
 		record = recipe.record,

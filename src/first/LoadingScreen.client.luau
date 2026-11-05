@@ -15,7 +15,7 @@ local INK = Color3.fromRGB(16, 13, 10)
 local BONE = Color3.fromRGB(232, 211, 168)
 local BRASS = Color3.fromRGB(176, 136, 72)
 local TIPS = {
-	"Stay with your crew. Nobody gets dragged away in company.",
+	"Stay with your crew. Alone, nobody can pull you free.",
 	"The train leaves on time, with or without you.",
 	"Keep your lantern lit and watch the edge of the light.",
 }

@@ -115,7 +115,7 @@ describe("TicketModel", function()
 		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe("A TIE: THE DRIVER TAKES THE SHORTER LEG")
 		options[2].distanceKm = 8
 		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe(
-			"A TIE: SHORTEST LEGS LEVEL, THE DRIVER TOSSES A COIN"
+			"A TIE: SHORTEST LEGS TIED, THE DRIVER TOSSES A COIN"
 		)
 	end)
 

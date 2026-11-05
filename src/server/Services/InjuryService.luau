@@ -238,7 +238,7 @@ local function complete(heal: Heal)
 	end
 	if not spent then
 		publish(patient)
-		NetService.Fire("Notify", patient, "Warning", "The Tonic was gone.")
+		NetService.Fire("Notify", patient, "Warning", "The Tonic is gone.")
 		return
 	end
 	local humanoid = humanoidOf(patient)

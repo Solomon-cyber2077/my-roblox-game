@@ -640,10 +640,10 @@ local function onFx(kind: string, data: any)
 		end
 	elseif kind == "RescueOpen" and type(data) == "table" then
 		if data.victim == me then
-			Overlay.alert("HOLD ON: YOUR CREW CAN STILL REACH YOU", Theme.Color.caution, 2)
+			Overlay.alert("HOLD ON. YOUR CREW CAN STILL REACH YOU", Theme.Color.caution, 2)
 		else
 			Overlay.alert(
-				`{string.upper(nameOf(data.victim))} IS GOING UNDER: RESCUE`,
+				`{string.upper(nameOf(data.victim))} IS IN TROUBLE. GET TO THEM!`,
 				Theme.Color.dangerText,
 				2
 			)

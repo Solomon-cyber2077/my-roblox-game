@@ -28,14 +28,17 @@ local BY_SOURCE: { [string]: Cause } = {
 DeathCause.Lines = table.freeze({
 	LeftBehind = table.freeze({ title = "LEFT BEHIND", line = "The train pulled out without you." }),
 	Taken = table.freeze({ title = "TAKEN", line = "A Hollow caught you and would not let go." }),
-	Smothered = table.freeze({ title = "LOST IN THE FOG", line = "You stayed too long past the fog line." }),
+	Smothered = table.freeze({ title = "LOST IN THE FOG", line = "The fog closed over you." }),
 	Fell = table.freeze({ title = "FELL", line = "The ground gave way beneath you." }),
-	Wrecked = table.freeze({ title = "WRECKED", line = "The train broke down for good and was lost." }),
+	Wrecked = table.freeze({
+		title = "WRECKED",
+		line = "The train broke down for good, and you went with it.",
+	}),
 	Stranded = table.freeze({
 		title = "STRANDED",
-		line = "You lost both arms and could not get back aboard in time.",
+		line = "You lost both arms and didn't make it back aboard in time.",
 	}),
-	Disconnected = table.freeze({ title = "DISCONNECTED", line = "You lost the line." }),
+	Disconnected = table.freeze({ title = "DISCONNECTED", line = "Your connection to the game was lost." }),
 	Other = table.freeze({ title = "LOST", line = "Something on the line took you." }),
 })
 

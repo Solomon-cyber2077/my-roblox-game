@@ -121,7 +121,7 @@ function LanternSlider.mount(list: Instance, order: number): () -> ()
 	title.ZIndex = 33
 	title.Parent = row
 	local note = Ui.text({
-		Text = "How far your lantern reads in the dark.",
+		Text = "How far your lantern lights the dark.",
 		Font = Theme.Font.body,
 		TextSize = 19,
 		Wrapped = true,
