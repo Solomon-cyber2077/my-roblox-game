@@ -97,7 +97,7 @@ local List: { [string]: NpcDef } = {
 		rig = {
 			shirt = 80372871723917,
 			pants = 103978285622458,
-			face = 114163570879355,
+			face = 108135520416338,
 			-- Studio's OBJ import turns these pieces round (front to back), hence yaw 180
 			pieces = {
 				{
