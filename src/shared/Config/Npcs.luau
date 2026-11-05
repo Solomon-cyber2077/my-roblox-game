@@ -95,7 +95,7 @@ local List: { [string]: NpcDef } = {
 		},
 		mesh = { meshId = 117337144385821, textureId = 134575749709709 },
 		rig = {
-			shirt = 103214750665177,
+			shirt = 80372871723917,
 			pants = 103978285622458,
 			face = 114163570879355,
 			-- Studio's OBJ import turns these pieces round (front to back), hence yaw 180
@@ -103,11 +103,11 @@ local List: { [string]: NpcDef } = {
 				{
 					name = "Skirt",
 					limb = "Torso",
-					mesh = 114561113986467,
-					texture = 130730528507892,
-					offset = { 0, -1.701, 0.06 },
+					mesh = 96135756126639,
+					texture = 110438944276062,
+					offset = { 0, -1.707, 0.06 },
 					yaw = 180,
-					size = { 3.063, 2.347, 2.137 },
+					size = { 3.063, 2.335, 2.137 },
 				},
 				{
 					name = "Hair",
