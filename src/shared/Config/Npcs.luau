@@ -39,7 +39,28 @@ export type NpcDef = {
 	-- The resident's Blender figure (Builders/NpcFigure): one mesh and its texture, uploaded under
 	-- the owner's account. Without one, or if it fails to load, the kit figure is what shows.
 	mesh: { meshId: number, textureId: number }?,
+	-- The resident as the same blocky R6 body the crew wear (Builders/NpcFigure, like CrewService's
+	-- buildR6): classic Shirt and Pants sheets, a face decal and mesh pieces welded to limbs (the
+	-- CrewClothing accessory fields). When set it wins over `mesh`; every client animates it
+	-- (CharacterAnimator). Ids are owner uploads; a missing one is left off.
+	rig: Rig?,
 	lines: { Line },
+}
+
+export type RigPiece = {
+	name: string,
+	mesh: number,
+	texture: number,
+	limb: string, -- "Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"
+	offset: { number }, -- studs in the limb's space
+	yaw: number?, -- degrees about the limb's up axis
+}
+
+export type Rig = {
+	shirt: number?,
+	pants: number?,
+	face: number?,
+	pieces: { RigPiece },
 }
 
 local Order = { "Mabel", "Dutch", "Varga", "Pip", "Conductor" }

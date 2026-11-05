@@ -9,8 +9,12 @@
 	neck's reach), lands with a jolt, and tells CameraController where its stride is so
 	the view can bob with the steps. Other crew are read from their replicated velocity,
 	seat and grab attributes.
+
+	The train's residents built as R6 bodies (Builders/NpcFigure, tag ResidentRig) are played the
+	same way, standing: they breathe and shift, and turn their head to you when you come near.
 ]]
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -19,7 +23,7 @@ local Registry = require(script.Parent.Parent.Registry)
 local CrewPoses = require(script.Parent.Parent.Animation.CrewPoses)
 
 type Rig = {
-	player: Player,
+	player: Player?, -- nil for a resident
 	model: Model,
 	root: BasePart,
 	humanoid: Humanoid,
@@ -43,7 +47,10 @@ local I = CFrame.identity
 local rigs: { [Model]: Rig } = {}
 local stride = { phase = 0, amount = 0 } -- your own steps, for the camera
 
-local function register(player: Player, character: Model)
+local RESIDENT_TAG = "ResidentRig"
+local RESIDENT_LOOK = 12 -- studs within which a resident turns its head to you
+
+local function register(player: Player?, character: Model)
 	if rigs[character] then
 		return
 	end
@@ -69,8 +76,8 @@ local function register(player: Player, character: Model)
 		motors = motors,
 		pose = {},
 		phase = 0,
-		seed = player.UserId % 997,
-		mine = player == Players.LocalPlayer,
+		seed = if player then player.UserId % 997 else #character.Name * 131 % 997,
+		mine = player ~= nil and player == Players.LocalPlayer,
 		landing = 0,
 		lastVertical = 0,
 		lastYaw = 0,
@@ -106,6 +113,26 @@ local function look(root: BasePart): (number, number)
 	end
 	local pitch = -math.asin(math.clamp(dir.Y, -1, 1))
 	return math.clamp(yaw, -1.15, 1.15), math.clamp(pitch * 0.7, -0.55, 0.6)
+end
+
+-- A resident's head toward your character when you are close, within a neck's reach.
+local function watchYou(root: BasePart): (number, number)
+	local character = Players.LocalPlayer.Character
+	local head = character and character:FindFirstChild("Head") :: BasePart?
+	if head == nil then
+		return 0, 0
+	end
+	local offset = head.Position - (root.Position + Vector3.new(0, 1.5, 0))
+	if offset.Magnitude > RESIDENT_LOOK then
+		return 0, 0
+	end
+	local dir = root.CFrame:VectorToObjectSpace(offset.Unit)
+	local yaw = math.atan2(-dir.X, -dir.Z)
+	if math.abs(yaw) > 1.9 then
+		return 0, 0
+	end
+	local pitch = -math.asin(math.clamp(dir.Y, -1, 1))
+	return math.clamp(yaw, -1.0, 1.0), math.clamp(pitch * 0.6, -0.4, 0.4)
 end
 
 local function animate(rig: Rig, dt: number, now: number)
@@ -166,12 +193,17 @@ local function animate(rig: Rig, dt: number, now: number)
 		local trainCam = Registry.TrainCamController
 		if rig.mine and not (trainCam and trainCam.Active()) then
 			lookYaw, lookPitch = look(root)
+		elseif rig.player == nil then
+			lookYaw, lookPitch = watchYou(root)
 		end
 		local nearest = if Registry.HollowAnimator
 			then Registry.HollowAnimator.Nearest(root.Position)
 			else math.huge
 		local dread = 1 - math.clamp((nearest - DREAD_NEAR) / (DREAD_FAR - DREAD_NEAR), 0, 1)
-		local entry = Registry.StateController.Get({ "crew", tostring(rig.player.UserId) })
+		local player = rig.player
+		local entry = if player
+			then Registry.StateController.Get({ "crew", tostring(player.UserId) })
+			else nil
 		local movement = if rig.mine then Registry.MovementController else nil
 		target = CrewPoses.locomote({
 			now = now,
@@ -217,6 +249,16 @@ function CharacterAnimator.Start()
 	Players.PlayerAdded:Connect(watch)
 	for _, player in Players:GetPlayers() do
 		watch(player)
+	end
+	CollectionService:GetInstanceAddedSignal(RESIDENT_TAG):Connect(function(model)
+		if model:IsA("Model") then
+			task.spawn(register, nil, model)
+		end
+	end)
+	for _, model in CollectionService:GetTagged(RESIDENT_TAG) do
+		if model:IsA("Model") then
+			task.spawn(register, nil, model)
+		end
 	end
 	-- after the engine's own animation step, so these transforms are the ones drawn
 	RunService.Stepped:Connect(function(_, dt: number)
