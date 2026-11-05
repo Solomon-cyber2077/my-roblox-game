@@ -1,6 +1,6 @@
 --!strict
 --[[
-	A phone's first visit starts in Performance (Logic/Settings.autoGraphics). The choice is saved like any
+	A phone's or tablet's first visit starts in Performance (Logic/Settings.autoGraphics). The choice is saved like any
 	other setting, so it happens once and the player can change it back in Settings.
 ]]
 

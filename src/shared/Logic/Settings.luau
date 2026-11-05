@@ -39,10 +39,11 @@ function Settings.read(saved: any): { [string]: string }
 	return result
 end
 
--- The graphics setting to pick for a player who has never saved one: Performance on a phone, nothing
--- elsewhere (Quality stays the default). Once saved it is theirs, and Settings can change it back.
+-- The graphics setting to pick for a player who has never saved one: Performance on a phone or a
+-- tablet (cheap tablets share phones' chips), nothing elsewhere (Quality stays the default). Once
+-- saved it is theirs, and Settings can change it back.
 function Settings.autoGraphics(device: string, chosen: boolean): string?
-	return if device == "phone" and not chosen then "Performance" else nil
+	return if (device == "phone" or device == "tablet") and not chosen then "Performance" else nil
 end
 
 -- Completed runs give existing profiles a conservative migration baseline.
