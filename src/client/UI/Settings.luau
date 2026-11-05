@@ -53,9 +53,9 @@ function SettingsUi.mount(gui: ScreenGui)
 			-- first few runs is the default, not a choice
 			values = { "Always", "Off" },
 			toggle = false,
-			note = `The leak alert, a red ! on each leak and the Last Light notice show during your first {require(
+			note = `Leak alerts, red ! marks and the Last Light notice show for your first {require(
 				game:GetService("ReplicatedStorage").Shared.Config.Settings
-			).FirstFewRuns} runs. Keep them always, or turn them off and the leaks hiss louder and steam thicker instead.`,
+			).FirstFewRuns} runs. Keep them, or turn them off and leaks hiss louder instead.`,
 		},
 		{
 			key = "Hud",
