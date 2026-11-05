@@ -36,6 +36,9 @@ export type NpcDef = {
 	chain: { string },
 	cosmetic: string?,
 	look: Look?,
+	-- The resident's Blender figure (Builders/NpcFigure): one mesh and its texture, uploaded under
+	-- the owner's account. Without one, or if it fails to load, the kit figure is what shows.
+	mesh: { meshId: number, textureId: number }?,
 	lines: { Line },
 }
 
@@ -66,6 +69,7 @@ local List: { [string]: NpcDef } = {
 			hat = "Visor",
 			prop = "Punch",
 		},
+		mesh = { meshId = 117337144385821, textureId = 134575749709709 },
 		lines = require(Dialogue.Mabel) :: any,
 	},
 	-- Reserved for the next passes; built from this table once enabled.
