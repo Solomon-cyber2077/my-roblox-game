@@ -337,7 +337,8 @@ local function track(model: Model, live: boolean)
 				lump.Transparency = if (lump:GetAttribute("CoalTier") :: number) <= fill + 0.001 then 0 else 1
 			end
 		end)
-		for _, part in model:GetDescendants() do
+		-- leak anchors that stream in later (or come back as new instances) are watched too
+		local function watchLeak(part: Instance)
 			if part:IsA("BasePart") and part:GetAttribute("BreachAnchor") then
 				part:GetAttributeChangedSignal("Breach"):Connect(function()
 					updateBreaches(rig)
@@ -347,6 +348,15 @@ local function track(model: Model, live: boolean)
 				end)
 			end
 		end
+		for _, part in model:GetDescendants() do
+			watchLeak(part)
+		end
+		model.DescendantAdded:Connect(function(part)
+			watchLeak(part)
+			if part:IsA("BasePart") and part:GetAttribute("Breach") == true then
+				updateBreaches(rig)
+			end
+		end)
 		-- the markers setting changes how loud and thick the leaks are
 		for _, attribute in { "BrokenThingMarkers", "RunsStarted", "SettingsReady" } do
 			Players.LocalPlayer:GetAttributeChangedSignal(attribute):Connect(function()
