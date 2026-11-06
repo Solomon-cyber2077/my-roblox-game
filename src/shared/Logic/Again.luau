@@ -16,7 +16,7 @@
 
 local Again = {}
 
-Again.FallbackSeconds = 20 -- FIXED
+Again.FallbackSeconds = 12 -- owner, 2026-11-06 (was 20)
 Again.HallRetrySeconds = 15 -- a car server's teleport to the hall: try again if the player is still here
 
 export type Card = {
