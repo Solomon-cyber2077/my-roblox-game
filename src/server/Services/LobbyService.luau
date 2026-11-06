@@ -9,7 +9,8 @@
 	run tier, up to the lowest tier any hall player has unlocked.
 	The run card's AGAIN (Logic/Again, Design step 5): pressed during RunEnd it is queued and applied
 	after ResetReady; the hall then holds its countdown until the run's present members are all
-	ready or 20 s pass with one ready. DEPOT leaves that player unready.
+	ready or 12 s pass with one ready. DEPOT leaves that player unready. A player who chose AGAIN waits
+	aboard the train, not in the hall, until the next run boards (DEPOT sends them back to the hall).
 	The line (Logic/Routes, Design step 10): with a new Hand in the hall the length is fixed and the hall
 	is told so; otherwise each hall player may vote Short or Long (`VoteLine`), and the run counts
 	its crew's votes at Boarding (a tie or none: Long). INVITE presses are logged (`Invited`).
@@ -45,6 +46,7 @@ local published: Types.LobbyTier? = nil
 local card: Again.Card? = nil -- the ended run's AGAIN/DEPOT card
 local cardAt = 0 -- os.clock() it opened
 local cardOutcome = "aborted"
+local aboardAgain: { [Player]: number } = {} -- chose AGAIN: waiting on the train for the next run (their seat)
 local lineVotes: { [Player]: string } = {} -- "Short" or "Long"
 local publishedLine = ""
 
@@ -127,6 +129,7 @@ local function host(): Player?
 			player.Parent ~= nil
 			and not Registry.CrewService.IsMember(player)
 			and not Registry.CarService.IsAboard(player)
+			and aboardAgain[player] == nil -- waiting on the train, without the hall's panel
 		then
 			return player
 		end
@@ -219,6 +222,12 @@ end
 function LobbyService.Start()
 	NetService.Handle("SetReady", function(player, isReady: boolean)
 		ready[player] = isReady
+		-- CANCEL while waiting aboard for AGAIN leaves the AGAIN group and goes back to the hall
+		local current = card
+		if not isReady and aboardAgain[player] and current then
+			Again.depot(current, player.UserId)
+			task.spawn(LobbyService.Spawn, player)
+		end
 		publishReady()
 		publishAgain()
 	end, function(player)
@@ -242,11 +251,17 @@ function LobbyService.Start()
 			if now then
 				ready[player] = true
 				publishReady()
+				if not aboardAgain[player] then
+					task.spawn(LobbyService.Spawn, player) -- a late AGAIN in the hall goes aboard too
+				end
 			end
 		else
 			Again.depot(current, player.UserId)
 			ready[player] = nil
 			publishReady()
+			if aboardAgain[player] then
+				task.spawn(LobbyService.Spawn, player) -- back to the hall
+			end
 		end
 		publishAgain()
 	end, function(player)
@@ -286,6 +301,7 @@ function LobbyService.Start()
 	Players.PlayerRemoving:Connect(function(player)
 		ready[player] = nil
 		lineVotes[player] = nil
+		aboardAgain[player] = nil
 		task.defer(publishLine)
 		task.defer(publishAgain) -- a leaving member drops out of the AGAIN count
 		local index = table.find(joinOrder, player)
@@ -331,8 +347,29 @@ function LobbyService.SpawnPoint(): CFrame
 	return b.spawnPoints[spawnIndex]
 end
 
--- Loads a fresh character in the hall.
+-- Loads a fresh character in the hall, or aboard the train for a player who chose AGAIN on the open
+-- run card (they wait there for the next run instead of passing through the hall).
 function LobbyService.Spawn(player: Player)
+	local current = card
+	local id = player.UserId
+	if current and not current.closed and current.pressed[id] and not current.declined[id] then
+		local seat = aboardAgain[player]
+		if seat == nil then
+			-- the lowest seat nobody waiting aboard has
+			local taken: { [number]: boolean } = {}
+			for _, n in aboardAgain do
+				taken[n] = true
+			end
+			seat = 1
+			while taken[seat] do
+				seat += 1
+			end
+			aboardAgain[player] = seat
+		end
+		Registry.CrewService.LoadCharacterAt(player, Registry.TrainService.SpawnPoint(seat :: number))
+		return
+	end
+	aboardAgain[player] = nil
 	Registry.CrewService.LoadCharacterAt(player, LobbyService.SpawnPoint())
 end
 
@@ -398,7 +435,18 @@ function LobbyService.TakeCrew(): { Player }
 	crewOverride = nil
 	-- the run is leaving: the last card is done
 	card = nil
+	-- anyone left waiting aboard who is not in this crew goes back to the hall (the crew is reloaded aboard)
+	local stray: { Player } = {}
+	for player in aboardAgain do
+		if player.Parent ~= nil and not table.find(crew, player) then
+			table.insert(stray, player)
+		end
+	end
+	table.clear(aboardAgain)
 	publishAgain()
+	for _, player in stray do
+		task.spawn(LobbyService.Spawn, player)
+	end
 	return crew
 end
 
@@ -416,7 +464,7 @@ function LobbyService.OpenCard(players: { Player }, outcome: string)
 	publishAgain()
 end
 
--- Enter.Lobby, after ResetReady: queued AGAIN presses become ready now (and start the 20 s wait).
+-- Enter.Lobby, after ResetReady: queued AGAIN presses become ready now (and start the 12 s wait).
 function LobbyService.ApplyAgain()
 	local current = card
 	if current == nil then

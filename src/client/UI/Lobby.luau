@@ -611,8 +611,12 @@ function Lobby.mount(gui: ScreenGui)
 
 	RunService.RenderStepped:Connect(function()
 		local member = Session.isMember()
+		-- the run card sits over everything while it is up, so the departure panel waits until it closes
+		local runCard = gui:FindFirstChild("RunCard") :: GuiObject?
 		-- the Settings menu's HUD toggle hides the lobby cards too (Settings.luau moves its button)
-		container.Visible = not member and Players.LocalPlayer:GetAttribute("Hud") ~= "Hide"
+		container.Visible = not member
+			and not (runCard ~= nil and runCard.Visible)
+			and Players.LocalPlayer:GetAttribute("Hud") ~= "Hide"
 		-- aboard a boarding car you are ready already: its countdown (UI/CarBoarding) replaces this panel
 		panel.Visible = CarBoarding.MyCar() == nil
 		local phase = Session.phase()
