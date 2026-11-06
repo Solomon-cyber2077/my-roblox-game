@@ -425,7 +425,9 @@ local Tuning = {
 		RailLength = 48, -- a joint kick every rail length (about 0.45 s at cruise)
 		BogieGap = 13, -- the second, softer kick follows after this many studs
 		JointKick = 0.22, -- degrees of pitch per kick at cruise
-		GlanceDegrees = 150,
+		GlanceDegrees = 180, -- LOOK: straight back, level
+		GlanceEyeHeight = 1.6, -- studs above the root the look-back view sits (about the eyes)
+		GlanceForward = 0.9, -- studs behind the head, so the head is not in the view
 		GlanceSeconds = 0.18,
 		GlanceTouchGap = 8,
 	},

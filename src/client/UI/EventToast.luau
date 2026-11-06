@@ -5,6 +5,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
@@ -37,6 +38,18 @@ local function build()
 	local size = Instance.new("UISizeConstraint")
 	size.MaxSize = Vector2.new(420, 74)
 	size.Parent = plate
+	-- drawn at the HUD's scale, so on a phone it is a small strip at the top rather than a desktop-sized
+	-- plate over the middle of the view (it covered RING DEPARTURE BELL, owner, stage 4 round 2)
+	local scale = Instance.new("UIScale")
+	scale.Parent = screen
+	local camera = Workspace.CurrentCamera
+	local function fit()
+		local view = camera.ViewportSize
+		local s = math.clamp(math.min(view.X / 1366, view.Y / 768), 0.55, 1)
+		scale.Scale = s
+	end
+	camera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+	fit()
 	title = Ui.text({
 		Name = "Title",
 		Font = Theme.Font.display,

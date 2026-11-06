@@ -24,6 +24,7 @@ local Inventory = require(Shared.Logic.Inventory)
 local Format = require(Shared.Util.Format)
 local MathX = require(Shared.Util.MathX)
 local Safe = require(Shared.Util.Safe)
+local RunRules = require(Shared.Logic.RunRules)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
@@ -984,9 +985,7 @@ function Hud.mount(gui: ScreenGui)
 		handId = if slot and inv and inv.items then inv.items[slot] else nil
 		renderBackpack(inv)
 	end
-	-- the phone tool belt and bag sheet (UI/ToolBelt) take and read the hand through these
 	Hud.hold = hold
-	Hud.openBag = nil :: ((slot: number) -> ())?
 	Hud.handSlot = function(): number?
 		return handSlot
 	end
@@ -1070,9 +1069,9 @@ function Hud.mount(gui: ScreenGui)
 				})
 				button:SetAttribute("Slot", index)
 				Ui.corner(2).Parent = button
-				-- on a phone the tool belt and the bag sheet (UI/ToolBelt) are the thumb-sized ways to hold, use,
-				-- move and drop; a tap on this row opens the sheet on that item, since players tap what they see
-				local phoneRow = gui:GetAttribute("Compact") == true and UserInputService.TouchEnabled
+				-- on a phone this row is the hotbar: tap to hold, tap the held one to use, press and hold to drop
+				-- (owner, stage 4 round 2)
+				local pressedLong = false
 				local inHand = index == handSlot
 				Ui.stroke(
 					if inHand
@@ -1182,8 +1181,8 @@ function Hud.mount(gui: ScreenGui)
 					end)
 				end
 				button.Activated:Connect(function()
-					if phoneRow and Hud.openBag then
-						Hud.openBag(index)
+					if pressedLong then
+						pressedLong = false -- the release that ends a press-and-hold is not a tap
 						return
 					end
 					-- a click or tap holds a tool; on the one in hand it uses it (touch has no E)
@@ -1198,10 +1197,19 @@ function Hud.mount(gui: ScreenGui)
 				button.MouseButton2Click:Connect(function()
 					Net.Fire("DropItem", index)
 				end)
-				-- touch has no right click: press and hold the slot
+				-- touch has no right click: press and hold the slot. A drop is only taken off the train at an
+				-- open stop, so elsewhere the press is met with the dull knock instead of nothing
 				button.TouchLongPress:Connect(function(_, pressState)
 					if pressState == Enum.UserInputState.Begin then
-						Net.Fire("DropItem", index)
+						pressedLong = true
+						if
+							RunRules.isStationOpen(Session.phase() :: any)
+							and Session.status() ~= "Aboard"
+						then
+							Net.Fire("DropItem", index)
+						elseif Registry.AudioController then
+							Registry.AudioController.Play("Deny")
+						end
 					end
 				end)
 				cursor += def.slots
@@ -1224,7 +1232,17 @@ function Hud.mount(gui: ScreenGui)
 		end
 		local hints = {}
 		if hasTool then
-			table.insert(hints, if handSlot then "E use  ·  E again to put away" else "1-6 hold a tool")
+			-- a touch screen has no E or number keys (owner, stage 4 round 2)
+			local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+			table.insert(
+				hints,
+				if touch
+					then (if handSlot
+						then "tap it again to use  ·  hold to drop"
+						else "tap a tool to hold it")
+					elseif handSlot then "E use  ·  E again to put away"
+					else "1-6 hold a tool"
+			)
 		end
 		if heavy > 0 then
 			table.insert(

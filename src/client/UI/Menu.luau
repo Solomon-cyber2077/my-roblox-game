@@ -203,12 +203,12 @@ function Menu.mount(gui: ScreenGui)
 			Registry.AudioController.Tap("MenuClick")
 		end
 	end
-	-- a mouse or a finger opens it as it goes down, with its key sound: waiting for the release
-	-- (Activated) felt like a missed press, and the second press shut it again
+	-- a mouse opens it as it goes down, with its key sound: waiting for the release (Activated) felt
+	-- like a missed press, and the second press shut it again. A finger waits for a whole tap: a thumb
+	-- pushed up off the move stick reached MENU and opened it (owner, stage 4 round 2)
 	local pointerDown = false
 	open.InputBegan:Connect(function(input: InputObject)
-		local kind = input.UserInputType
-		if kind == Enum.UserInputType.MouseButton1 or kind == Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			pointerDown = true
 			toggle()
 		end

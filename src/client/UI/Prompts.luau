@@ -2,11 +2,9 @@
 --[[
 	Custom ProximityPrompt presentation. Every prompt in the game uses
 	Style = Custom; this draws a ticket-styled chip in the world with the input
-	glyph, action, object and a hold-progress rule. On touch the chip is a label only: the one
-	fixed action button by the thumb (UI/ActionButton, Logic/TouchAction) acts on it, so a phone
-	never has to hit a chip moving about the world, and the chip never eats a camera drag. A
-	prompt with the TapChip attribute (the boarding cars' doors) is the exception: on touch its
-	chip is the button, tapped where it stands, and the action button leaves it alone.
+	glyph, action, object and a hold-progress rule. On touch the chip is the button, tapped (or held)
+	where it stands: the fixed action button by the thumb was retired (owner, stage 4 round 2: it
+	covered the hotbar).
 	Prompts tagged with an Action attribute open UI on trigger (workshop, shop).
 ]]
 
@@ -20,16 +18,16 @@ local Ui = require(script.Parent.Ui)
 
 local Prompts = {}
 
--- Whether this chip takes taps and clicks: always off touch, and on touch only for TapChip prompts.
-local function tappable(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType): boolean
-	return inputType ~= Enum.ProximityPromptInputType.Touch or prompt:GetAttribute("TapChip") == true
+-- Whether this chip takes taps and clicks: every chip does, on every device.
+local function tappable(_prompt: ProximityPrompt, _inputType: Enum.ProximityPromptInputType): boolean
+	return true
 end
 
 local function glyph(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType): string
 	if inputType == Enum.ProximityPromptInputType.Gamepad then
 		return "X"
 	elseif inputType == Enum.ProximityPromptInputType.Touch then
-		return if prompt:GetAttribute("TapChip") == true then "TAP" else "USE" -- USE: the action button
+		return "TAP"
 	end
 	return prompt.KeyboardKeyCode.Name
 end
@@ -244,9 +242,13 @@ end
 
 local REPEAT_TICK = 6
 local lastTick: { [ProximityPrompt]: number } = setmetatable({}, { __mode = "k" }) :: any
+local used: { [ProximityPrompt]: boolean } = setmetatable({}, { __mode = "k" }) :: any
 
 function Prompts.mount(gui: ScreenGui)
 	local container = gui.Parent :: Instance
+	ProximityPromptService.PromptTriggered:Connect(function(prompt)
+		used[prompt] = true
+	end)
 	ProximityPromptService.PromptShown:Connect(function(prompt, inputType)
 		if prompt.Style ~= Enum.ProximityPromptStyle.Custom then
 			return
@@ -255,8 +257,14 @@ function Prompts.mount(gui: ScreenGui)
 		-- a small tick as it comes into reach (its `gap` keeps a row of seats to one); once per prompt per
 		-- REPEAT_TICK seconds, since one that hides and shows again (used, re-enabled by the server, or at
 		-- the edge of its range) was heard as a pop repeating after an interaction
+		-- and never again for one this player has used: the pop the owner still heard once after an
+		-- interaction (round 2) was this tick as the used prompt came back
 		local now = os.clock()
-		if Registry.AudioController and now - (lastTick[prompt] or -math.huge) >= REPEAT_TICK then
+		if
+			Registry.AudioController
+			and not used[prompt]
+			and now - (lastTick[prompt] or -math.huge) >= REPEAT_TICK
+		then
 			lastTick[prompt] = now
 			Registry.AudioController.Play("PromptShow")
 		end

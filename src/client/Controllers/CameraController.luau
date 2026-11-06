@@ -406,8 +406,26 @@ function CameraController.Start()
 		end
 		-- before this frame's shake and glance go on, so the body follows the steady view
 		faceBody(camera, dt)
-		-- View-only yaw: never change Humanoid movement or the character's root facing.
-		offset *= CFrame.Angles(0, math.rad(CAM.GlanceDegrees) * glance, 0)
+		-- View only: never change Humanoid movement or the character's root facing.
+		local view = camera.CFrame * offset
+		local root = if glance > 0 and Players.LocalPlayer.Character
+			then Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			else nil
+		local ahead = view.LookVector
+		local flat = Vector3.new(ahead.X, 0, ahead.Z)
+		if root and flat.Magnitude > 1e-3 then
+			-- LOOK swings the view round to just behind the head and straight back, level, so the head is
+			-- behind the camera (owner, stage 4 round 2: turning in place kept the downward pitch, so it
+			-- looked back at an angle; an eye in front of the face looked back through the head)
+			flat = flat.Unit
+			local eye = root.Position + Vector3.new(0, CAM.GlanceEyeHeight, 0) - flat * CAM.GlanceForward
+			local yaw = math.atan2(-flat.X, -flat.Z) + math.rad(CAM.GlanceDegrees) * glance
+			local pitch = math.asin(math.clamp(ahead.Y, -1, 1)) * (1 - glance)
+			local final = CFrame.new(view.Position:Lerp(eye, glance))
+				* CFrame.Angles(0, yaw, 0)
+				* CFrame.Angles(pitch, 0, 0)
+			offset = camera.CFrame:Inverse() * final
+		end
 		if offset ~= CFrame.identity then
 			applied = offset
 			camera.CFrame *= applied

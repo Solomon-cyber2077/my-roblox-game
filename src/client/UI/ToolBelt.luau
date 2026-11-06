@@ -1,5 +1,8 @@
 --!strict
 --[[
+	Retired (owner, stage 4 round 2): no longer mounted (Controllers/UIController); the HUD row is the phone
+	hotbar now (UI/Hud). Kept for reference.
+
 	The phone hotbar (docs/direction/2026-10-30-phone-hotbar-and-downtime.md; places in Logic/TouchCluster, checked by
 	`lune run layout`). On a phone the HUD's backpack row only shows what you carry (UI/Hud); its taps move here, at
 	thumb size (TouchCluster.Size, ~9.4 mm on an iPhone SE):
@@ -213,14 +216,6 @@ function ToolBelt.mount(gui: ScreenGui)
 			render()
 		end
 	end)
-	-- a tap on the HUD's backpack row opens the sheet with that item picked
-	Hud.openBag = function(slot: number)
-		if not phone() then
-			return
-		end
-		open, selected = true, slot
-		render()
-	end
 
 	render = function()
 		-- held by a Hollow: the struggle owns the middle of the screen and nothing here can be used,

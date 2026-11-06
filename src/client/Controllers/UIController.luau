@@ -126,9 +126,10 @@ function UIController.Start()
 	require(script.Parent.Parent.UI.Settings).mount(gui)
 	RouteVote.mount(gui)
 	require(script.Parent.Parent.UI.CashOut).mount(gui)
-	require(script.Parent.Parent.UI.ActionButton).mount(gui)
+	-- the touch action button (UI/ActionButton) is retired with the tool belt: chips are tapped where they stand
 	require(script.Parent.Parent.UI.HuntedCue).mount(gui)
-	require(script.Parent.Parent.UI.ToolBelt).mount(gui)
+	-- the phone tool belt and bag sheet (UI/ToolBelt) are retired (owner, stage 4 round 2: they covered the
+	-- hotbar and the sheet read as clumsy); on a phone the HUD row is tapped and pressed itself (UI/Hud)
 	Unseal.mount(gui)
 	Lobby.mount(gui)
 	CarBoarding.mount(gui)

@@ -740,9 +740,10 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		-- a pendant lamp hanging from every other tie down the middle of the hall: chain, brass shade,
 		-- amber globe and a soft shadowless light that fills the strip between the two column rows
 		-- (one on every tie read as a ceiling full of lamps; every other tie still read as too many in the
-		-- owner's two-account test, so four now, set evenly about the middle between the lanterns' columns)
+		-- owner's two-account test, so four now, the inner two either side of the middle: at 33 the middle
+		-- was left dark, round 2)
 		local pendantZ = 15
-		if math.abs(x) % 44 == 33 then
+		if math.abs(x) == 11 or math.abs(x) == 55 then
 			decor(
 				Vector3.new(0.12, SPRING + 0.3 - 19.5, 0.12),
 				at(x, (SPRING + 0.3 + 19.5) / 2, pendantZ),
