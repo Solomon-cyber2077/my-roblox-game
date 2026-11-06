@@ -80,6 +80,26 @@ local function applyZoom()
 	player.CameraMinZoomDistance, player.CameraMaxZoomDistance = zoomRange()
 end
 
+-- Sets the view level behind the body, looking the way it faces. The default camera keeps the angle it
+-- had before the spawn (often looking back at the character from the front); it builds each frame
+-- from camera.CFrame, so setting it once is enough.
+local function behindBody(camera: Camera)
+	local character = Players.LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if root == nil or spectateTarget ~= nil or camera.CameraType ~= Enum.CameraType.Custom then
+		return
+	end
+	local ahead = root.CFrame.LookVector
+	local flat = Vector3.new(ahead.X, 0, ahead.Z)
+	if flat.Magnitude < 1e-3 then
+		return
+	end
+	local pitch = math.rad(CAM.StartPitch)
+	local focus = root.Position + Vector3.new(0, 1.5, 0)
+	local look = flat.Unit * math.cos(pitch) - Vector3.new(0, math.sin(pitch), 0)
+	camera.CFrame = CFrame.lookAt(focus - look * CAM.StartZoom, focus)
+end
+
 -- Puts the camera back in the default player camera, following us, at a close zoom.
 local function resetCamera(pinZoom: boolean)
 	local player = Players.LocalPlayer
@@ -106,6 +126,7 @@ local function resetCamera(pinZoom: boolean)
 		RunService.RenderStepped:Wait()
 		if serial == resetSerial then
 			applyZoom()
+			behindBody(camera)
 		end
 	end)
 end

@@ -242,6 +242,9 @@ local function build(
 	return billboard
 end
 
+local REPEAT_TICK = 6
+local lastTick: { [ProximityPrompt]: number } = setmetatable({}, { __mode = "k" }) :: any
+
 function Prompts.mount(gui: ScreenGui)
 	local container = gui.Parent :: Instance
 	ProximityPromptService.PromptShown:Connect(function(prompt, inputType)
@@ -249,8 +252,12 @@ function Prompts.mount(gui: ScreenGui)
 			return
 		end
 		local billboard = build(container, prompt, inputType)
-		-- a small tick as it comes into reach (its `gap` keeps a row of seats to one)
-		if Registry.AudioController then
+		-- a small tick as it comes into reach (its `gap` keeps a row of seats to one); once per prompt per
+		-- REPEAT_TICK seconds, since one that hides and shows again (used, re-enabled by the server, or at
+		-- the edge of its range) was heard as a pop repeating after an interaction
+		local now = os.clock()
+		if Registry.AudioController and now - (lastTick[prompt] or -math.huge) >= REPEAT_TICK then
+			lastTick[prompt] = now
 			Registry.AudioController.Play("PromptShow")
 		end
 		-- PromptHidden does not reliably fire when the server destroys a prompt (a patched leak's),

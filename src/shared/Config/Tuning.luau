@@ -419,6 +419,7 @@ local Tuning = {
 		MaxZoom = 30,
 		StartZoom = 11, -- close third person on every spawn
 		LockZoom = 10, -- the Camera setting's Locked distance (both PC and touch): no zoom, no first person
+		StartPitch = 12, -- degrees the view looks down on a spawn, set behind the body so play starts facing forward
 		FaceTurnRate = 18, -- Locked: how fast the body turns to the view (gap closes by 1 - e^(-rate*dt))
 		SwayRoll = 0.35, -- degrees of roll at cruise while aboard
 		RailLength = 48, -- a joint kick every rail length (about 0.45 s at cruise)

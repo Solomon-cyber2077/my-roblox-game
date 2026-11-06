@@ -737,32 +737,33 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				)
 			end
 		end
-		-- a pendant lamp hanging from the tie down the middle of the hall: chain, brass shade, amber
-		-- globe. Every globe glows; every other one carries a soft shadowless light that fills the
-		-- strip between the two column rows
+		-- a pendant lamp hanging from every other tie down the middle of the hall: chain, brass shade,
+		-- amber globe and a soft shadowless light that fills the strip between the two column rows
+		-- (one on every tie read as a ceiling full of lamps; every other tie still read as too many in the
+		-- owner's two-account test, so four now, set evenly about the middle between the lanterns' columns)
 		local pendantZ = 15
-		decor(
-			Vector3.new(0.12, SPRING + 0.3 - 19.5, 0.12),
-			at(x, (SPRING + 0.3 + 19.5) / 2, pendantZ),
-			C.iron,
-			Enum.Material.Metal
-		)
-		Kit.cylinder(
-			model,
-			0.7,
-			3,
-			at(x, 19.2, pendantZ) * Kit.angles(0, 0, 90),
-			C.brass,
-			{ material = Enum.Material.Metal, collide = false }
-		)
-		local globe = Kit.neon(
-			model,
-			Vector3.new(1.4, 1.4, 1.4),
-			at(x, 18.4, pendantZ),
-			Color3.fromRGB(236, 150, 72),
-			Enum.PartType.Ball
-		)
-		if (x + 99) % 44 == 0 then
+		if math.abs(x) % 44 == 33 then
+			decor(
+				Vector3.new(0.12, SPRING + 0.3 - 19.5, 0.12),
+				at(x, (SPRING + 0.3 + 19.5) / 2, pendantZ),
+				C.iron,
+				Enum.Material.Metal
+			)
+			Kit.cylinder(
+				model,
+				0.7,
+				3,
+				at(x, 19.2, pendantZ) * Kit.angles(0, 0, 90),
+				C.brass,
+				{ material = Enum.Material.Metal, collide = false }
+			)
+			local globe = Kit.neon(
+				model,
+				Vector3.new(1.4, 1.4, 1.4),
+				at(x, 18.4, pendantZ),
+				Color3.fromRGB(236, 150, 72),
+				Enum.PartType.Ball
+			)
 			fixtureLight(globe, IL.Hall.Overhead, false)
 		end
 		-- the truss: an arched rib, a lower chord and braces between them
@@ -1965,12 +1966,19 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	)
 	block(Vector3.new(9.6, 6.6, 0.25), at(nbx, 6.5, BACK_Z - 0.125 + 0.02), C.wood, Enum.Material.Wood)
 
-	-- Lamplight: lanterns hung from both rows of columns, no lamps overhead ----------------------------
-	-- each column carries two, one either side on an iron arm that turns down at its tip, so the
+	-- Lamplight: lanterns hung from both rows of columns, pendant globes overhead ----------------------------
+	-- each column carries one on an iron arm that turns down at its tip, so the
 	-- platform below stays clear for the boarding doors
 	for x = -99, 99, BAY do
+		-- every other column, set evenly about the middle: one on each still read as too many lamps along
+		-- the front and back in the owner's two-account test
+		if math.abs(x) % 44 ~= 11 then
+			continue
+		end
 		for _, z in { -14, 44 } do
-			for _, side in { -1, 1 } do
+			-- one lantern per column, on the arm toward the board end: two on every column read as
+			-- a wall of lamps along the front and back of the hall
+			for _, side in { 1 } do
 				local tip = at(x + side * 2.4, 0, z)
 				Kit.block(
 					model,
@@ -2004,10 +2012,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 					C.iron,
 					{ material = Enum.Material.Metal, collide = false }
 				)
-				-- one light per column carries both lanterns' glow: a pair 5 studs apart reads as one pool
-				if side == 1 then
-					fixtureLight(lantern, IL.Hall.Lantern)
-				end
+				fixtureLight(lantern, IL.Hall.Lantern)
 			end
 		end
 	end

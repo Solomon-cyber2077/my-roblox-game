@@ -212,6 +212,14 @@ function ToolBelt.mount(gui: ScreenGui)
 			render()
 		end
 	end)
+	-- a tap on the HUD's backpack row opens the sheet with that item picked
+	Hud.openBag = function(slot: number)
+		if not phone() then
+			return
+		end
+		open, selected = true, slot
+		render()
+	end
 
 	render = function()
 		-- held by a Hollow: the struggle owns the middle of the screen and nothing here can be used,

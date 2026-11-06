@@ -42,6 +42,8 @@ local Hud = {}
 local CELL = 58
 local GAP = 6
 local WATCH = 168 -- the pocket watch's case, in pixels
+-- The stop ticket under the watch: wide enough for "MOONRISE · AMBER MOON" beside "DANGER ●●○".
+local TAG_WIDTH = 262
 local WATCH_SCALE = 0.98 -- the case is drawn this much smaller (the ticket keeps its size)
 local BLUED = Color3.fromRGB(30, 38, 70) -- heat-blued steel, the hands of a good watch
 local TOUCH_GAP = 10 -- px between the watch and the touch buttons below it
@@ -131,7 +133,7 @@ function Hud.mount(gui: ScreenGui)
 	-- stop or leg (red where last call begins), and the small dial points back to the train.
 	-- The ticket tied to it names the stop and gives the minutes.
 	local watchFade = fader("PocketWatch", WATCH_IDLE, {
-		Size = UDim2.fromOffset(WATCH + 206, WATCH + 16),
+		Size = UDim2.fromOffset(WATCH + TAG_WIDTH - 12, WATCH + 16),
 		Position = UDim2.new(1, -14, 1, -14),
 		AnchorPoint = Vector2.new(1, 1),
 	})
@@ -203,7 +205,7 @@ function Hud.mount(gui: ScreenGui)
 	end)
 	local watchTag = Ui.ticket({
 		Name = "Tag",
-		Size = UDim2.fromOffset(218, 74),
+		Size = UDim2.fromOffset(TAG_WIDTH, 74),
 		Position = UDim2.new(1, -(WATCH - 12), 1, -22),
 		AnchorPoint = Vector2.new(1, 1),
 		ZIndex = 1,
@@ -261,7 +263,9 @@ function Hud.mount(gui: ScreenGui)
 	})
 	-- shrinks to fit rather than cutting "MOONRISE · AMBER ..." short; widens when no danger is shown
 	tagMoon.TextScaled = true
-	Ui.new("UITextSizeConstraint", { MaxTextSize = 13, MinTextSize = 10, Parent = tagMoon })
+	tagMoon.TextTruncate = Enum.TextTruncate.AtEnd
+	tagMoon.ClipsDescendants = true
+	Ui.new("UITextSizeConstraint", { MaxTextSize = 13, MinTextSize = 9, Parent = tagMoon })
 	tagMoon.Parent = watchTag
 	local tagDanger = Ui.text({
 		Text = "",
@@ -982,6 +986,7 @@ function Hud.mount(gui: ScreenGui)
 	end
 	-- the phone tool belt and bag sheet (UI/ToolBelt) take and read the hand through these
 	Hud.hold = hold
+	Hud.openBag = nil :: ((slot: number) -> ())?
 	Hud.handSlot = function(): number?
 		return handSlot
 	end
@@ -1065,12 +1070,9 @@ function Hud.mount(gui: ScreenGui)
 				})
 				button:SetAttribute("Slot", index)
 				Ui.corner(2).Parent = button
-				-- on a phone this row only shows what you carry: the tool belt and the bag sheet (UI/ToolBelt)
-				-- are the thumb-sized ways to hold, use, move and drop
+				-- on a phone the tool belt and the bag sheet (UI/ToolBelt) are the thumb-sized ways to hold, use,
+				-- move and drop; a tap on this row opens the sheet on that item, since players tap what they see
 				local phoneRow = gui:GetAttribute("Compact") == true and UserInputService.TouchEnabled
-				if phoneRow then
-					button.Interactable = false
-				end
 				local inHand = index == handSlot
 				Ui.stroke(
 					if inHand
@@ -1180,6 +1182,10 @@ function Hud.mount(gui: ScreenGui)
 					end)
 				end
 				button.Activated:Connect(function()
+					if phoneRow and Hud.openBag then
+						Hud.openBag(index)
+						return
+					end
 					-- a click or tap holds a tool; on the one in hand it uses it (touch has no E)
 					if def.kind == "Tool" then
 						if inHand then
@@ -1437,7 +1443,17 @@ function Hud.mount(gui: ScreenGui)
 		tagTimer.Text = Format.clock(timerValue)
 		tagTimer.TextColor3 = timerColor
 		tagDanger.Text = danger
-		tagMoon.Size = if danger == "" then UDim2.new(1, -50, 0, 16) else UDim2.fromOffset(110, 16)
+		-- the moon line takes what the danger line leaves, so the two never run into each other
+		-- TextBounds is in screen pixels, so on a phone (the HUD scaled down, the tag scaled back up) it is
+		-- read back into the tag's own units; the ● stamps can come from a wider fallback font, so the line is
+		-- measured rather than assumed to fit its 80 px
+		local tagUnits = if tagDanger.Size.X.Offset > 0
+			then tagDanger.AbsoluteSize.X / tagDanger.Size.X.Offset
+			else 1
+		local dangerWidth = if danger == ""
+			then 0
+			else math.ceil(tagDanger.TextBounds.X / math.max(tagUnits, 0.01)) + 8
+		tagMoon.Size = UDim2.new(1, -(50 + dangerWidth), 0, 16)
 		local hurry = phase == "LastCall" or phase == "Departure"
 		watchScale.Scale = WATCH_SCALE * (if hurry then 1 + 0.03 * math.sin(now * 10) else 1)
 		if hurry or (phase == "Dwell" and timerValue < 30) then

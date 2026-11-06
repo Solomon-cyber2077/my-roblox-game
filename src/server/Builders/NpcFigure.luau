@@ -175,6 +175,18 @@ local function dressRig(def: Npcs.NpcDef, model: Model, cframe: CFrame, spec: Np
 	addPieces(def, rig, spec, service)
 	rig.Name = "Rig"
 	rig:PivotTo(cframe * CFrame.new(0, humanoid.HipHeight + root.Size.Y / 2 + 2, 0))
+	-- then stand the soles on the floor as measured: the pivot and HipHeight the description rig comes
+	-- with left her sunk to the hips in the saloon (stage 4 round 1)
+	local sole = math.huge
+	for _, name in { "Left Leg", "Right Leg" } do
+		local leg = rig:FindFirstChild(name)
+		if leg and leg:IsA("BasePart") then
+			sole = math.min(sole, cframe:PointToObjectSpace(leg.Position).Y - leg.Size.Y / 2)
+		end
+	end
+	if sole < math.huge and math.abs(sole) > 0.05 then
+		rig:PivotTo(rig:GetPivot() + cframe.UpVector * -sole)
+	end
 	root.Anchored = true
 	rig:SetAttribute("Procedural", true)
 	rig:SetAttribute("Resident", def.id)
