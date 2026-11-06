@@ -143,6 +143,9 @@ type Hollow = {
 	stuckSince: number,
 	stallAt: Vector3, -- where the stall window began
 	stallSince: number,
+	climbTo: Vector3?, -- set by think: the dark takes it and it climbs up here (climbBack)
+	climbFace: Vector3?,
+	edgeClimbAt: number?, -- the last time prey at an open edge made it climb round to them
 	forcePathUntil: number, -- os.clock() until which it paths even with the target in sight
 	lungeUntil: number,
 	lastLunge: number,
@@ -191,6 +194,8 @@ local woundRng = Random.new() -- where a bite marks the body: looks only, so not
 local folder: Folder
 local rng = Random.new()
 local rescueSeq = 0
+local openEdgeBeside: (position: Vector3) -> Vector3?
+local EDGE_CLIMB_GAP = 8 -- seconds between one Hollow's climbs round to prey at an edge
 -- the crew rescue's steps, defined beside finishHold (they call each other)
 local openRescue: (hollow: any) -> boolean
 local joinRescue: (hollow: any, ally: Player) -> ()
@@ -1700,11 +1705,53 @@ local function think(hollow: Hollow)
 			hollow.forcePathUntil = clock + H.StallRepath
 			hollow.stallAt = position
 			hollow.stallSince = clock
+			-- prey holding it off at an open edge (the railing gone with the collapse): it drops over
+			-- the edge and climbs up beside them, so an edge is never a place to wait Hollows out
+			local target = hollow.target
+			local preyRoot = target and characterRoot(target)
+			if
+				preyRoot
+				and (preyRoot.Position - position).Magnitude <= H.LungeRange
+				and clock - (hollow.edgeClimbAt or -math.huge) >= EDGE_CLIMB_GAP
+			then
+				local side = openEdgeBeside(preyRoot.Position)
+				if side then
+					hollow.edgeClimbAt = clock
+					hollow.climbTo = preyRoot.Position + side * 2.5
+					hollow.climbFace = preyRoot.Position
+				end
+			end
 		end
 	else
 		hollow.stallAt = position
 		hollow.stallSince = clock
 	end
+end
+
+-- The direction (station space turned to world) from `position` toward an open edge within a tile:
+-- no floor there, or floor that has collapsed. The train's side is never an edge.
+function openEdgeBeside(position: Vector3): Vector3?
+	local plan = StationService.Plan()
+	if plan == nil then
+		return nil
+	end
+	local at = StationService.ToLocal(position)
+	local reach = plan.tile * 0.75
+	for _, d in { Vector3.new(0, 0, 1), Vector3.new(1, 0, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, -1) } do
+		local x, z = at.X + d.X * reach, at.Z + d.Z * reach
+		if z > safeEdge() then
+			local slab = LayoutGen.slabAt(plan, x, z)
+			if slab == nil or StationService.IsCollapsed(slab.id) then
+				local here = StationService.ToWorld(at.X, at.Y, at.Z)
+				local there = StationService.ToWorld(x, at.Y, z)
+				local outward = flat(there - here)
+				if outward.Magnitude > 1e-3 then
+					return outward.Unit
+				end
+			end
+		end
+	end
+	return nil
 end
 
 local function pickKind(): string
@@ -1787,6 +1834,57 @@ local function add(at: CFrame, kind: string, state: string, emerge: string?): Ho
 	}
 	table.insert(hollows, hollow)
 	return hollow
+end
+
+-- A Hollow the dark took (its floor gave way, or it was led off an open edge) is not killed: Hollows
+-- cannot be, only outrun, stunned or kept out with light. It climbs back up over the nearest standing
+-- floor from `near`, working in toward the train, facing `face` (or the train). Nil if no floor holds.
+local function climbBack(kind: string, wanderer: boolean, near: Vector3, face: Vector3?): Hollow?
+	local plan = StationService.Plan()
+	if plan == nil or params == nil then
+		return nil
+	end
+	local starts = { near }
+	if face then
+		table.insert(starts, face) -- prey at an edge: up beside them if the edge side has no floor
+	end
+	for _, start in starts do
+		local at = StationService.ToLocal(start)
+		local x = math.clamp(at.X, -plan.length / 2 + plan.tile / 2, plan.length / 2 - plan.tile / 2)
+		local z = math.min(at.Z, plan.depth - 3)
+		for _ = 1, 12 do
+			if z < safeEdge() + 10 then
+				break
+			end
+			local slab = LayoutGen.slabAt(plan, x, z)
+			if slab and slab.kind == "Floor" and not StationService.IsCollapsed(slab.id) then
+				local height = HollowBuilder.rootHeight(kind)
+				local position = StationService.ToWorld(x, height, z)
+				if safeLightAt(position) then
+					return nil
+				end
+				local toward = face or StationService.ToWorld(x, height, 0)
+				local look = Vector3.new(toward.X, position.Y, toward.Z)
+				local hollow = add(
+					if (look - position).Magnitude > 1e-3
+						then CFrame.lookAt(position, look)
+						else CFrame.new(position),
+					kind,
+					"Emerge",
+					"Climb"
+				)
+				if wanderer then
+					hollow.model:SetAttribute("Wanderer", true)
+				end
+				return hollow
+			end
+			z -= plan.tile / 2
+		end
+	end
+	-- no standing floor near: it rises at the fog front like any other, past the cap (it was counted)
+	local at = StationService.ToLocal(near)
+	HollowService.TrySpawn(at.X, plan.depth / 2, kind, wanderer, true)
+	return nil
 end
 
 -- Tutorial ------------------------------------------------------------------------------------
@@ -2094,10 +2192,19 @@ function HollowService.Start()
 				Safe.call("HollowService.tutorial", tutorialStep)
 				for i = #hollows, 1, -1 do
 					local hollow = hollows[i]
-					if hollow.model.Parent == nil or hollow.root.Position.Y < Tuning.World.FloorY - 60 then
+					local fell = hollow.model.Parent ~= nil
+						and hollow.root.Position.Y < Tuning.World.FloorY - 60
+					if hollow.model.Parent == nil or fell or hollow.climbTo then
+						local near = hollow.climbTo or hollow.root.Position
+						local face = hollow.climbFace
+						local wanderer = hollow.model:GetAttribute("Wanderer") == true
+						local climbs = fell or hollow.climbTo ~= nil
 						release(hollow, "Gone")
 						hollow.model:Destroy()
 						table.remove(hollows, i)
+						if climbs then
+							Safe.call("HollowService.climbBack", climbBack, hollow.kind, wanderer, near, face)
+						end
 					else
 						Safe.call("HollowService.think", think, hollow)
 					end
