@@ -27,6 +27,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
+local Paintings = require(ReplicatedStorage.Shared.Config.Paintings)
 local IL = InteriorLight
 
 export type Dims = {
@@ -192,13 +193,32 @@ local PAINTINGS = {
 }
 
 local function paint(canvas: BasePart, face: Enum.NormalId, style: number): string
-	local spec = PAINTINGS[(style - 1) % #PAINTINGS + 1]
-	local gui = Instance.new("SurfaceGui")
-	gui.Face = face
-	gui.CanvasSize = Vector2.new(240, 180) * PAINT_SCALE
-	gui.LightInfluence = 1
-	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	gui.Parent = canvas
+	local index = (style - 1) % #PAINTINGS + 1
+	local spec = PAINTINGS[index]
+	-- the rendered oil painting (Config/Paintings) once uploaded; the drawn one until then
+	local image = Paintings.Train[index]
+	if image and image ~= 0 then
+		local decal = Instance.new("Decal")
+		decal.Name = "Oil"
+		decal.Face = face
+		decal.Texture = `rbxassetid://{image}`
+		decal.Parent = canvas
+		return spec.title
+	end
+	local surface = Instance.new("SurfaceGui")
+	surface.Face = face
+	surface.CanvasSize = Vector2.new(240, 180) * PAINT_SCALE
+	surface.LightInfluence = 1
+	surface.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	surface.Parent = canvas
+	-- a CanvasGroup clips everything to the canvas: turned peaks and wires ran past the frame (owner,
+	-- stage 4 round 2), as rotated frames ignore ClipsDescendants
+	local gui = Instance.new("CanvasGroup")
+	gui.Name = "Canvas"
+	gui.Size = UDim2.fromScale(1, 1)
+	gui.BackgroundTransparency = 1
+	gui.BorderSizePixel = 0
+	gui.Parent = surface
 	-- the same brushwork for the same style every time (Park-Miller)
 	local seed = style * 48271 % 2147483647
 	local function rand(): number
