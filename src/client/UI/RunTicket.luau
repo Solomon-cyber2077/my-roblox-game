@@ -86,7 +86,7 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		BackgroundTransparency = 1,
 		Image = Theme.Image.vignette,
 		ImageColor3 = if data.won then Theme.Color.mahogany else Theme.Color.signalDark,
-		ImageTransparency = if data.won then 0.6 else 0.55,
+		ImageTransparency = if data.won then 0.6 else 0.7, -- a lost ticket stays amber card, red only at the rim
 		ZIndex = z + 1,
 		Parent = ticket,
 	})

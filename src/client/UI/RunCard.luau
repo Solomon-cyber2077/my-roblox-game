@@ -15,6 +15,7 @@
 local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
 local RunTicketModel = require(ReplicatedStorage.Shared.Logic.RunTicketModel)
 
@@ -38,6 +39,11 @@ local countLabel: TextLabel
 local inviteButton: TextButton
 local inviteAllowed = false
 local hint: TextLabel
+
+-- The H hint names a key: only where there is a keyboard (a phone has no H).
+local function hasKeyboard(): boolean
+	return UserInputService.KeyboardEnabled or not UserInputService.TouchEnabled
+end
 local ticket: ImageLabel? = nil
 local shownFor: string? = nil
 
@@ -84,7 +90,7 @@ local function refreshAgain()
 	inviteButton.Visible = inviteAllowed and shown
 	againButton.Visible = eligible and shown
 	countLabel.Visible = eligible and shown and of > 0
-	countLabel.Text = `{ready}/{of} READY`
+	countLabel.Text = `{ready} of {of} ready`
 	againButton.Text = if chose == "again" then "READY" else "AGAIN"
 	againButton.Active = chose ~= "again"
 	againButton:SetAttribute("Inert", chose == "again")
@@ -129,7 +135,7 @@ local function show()
 	inviteButton.Parent = built
 	hint.Parent = built
 	closeButton.Visible = true
-	hint.Visible = true
+	hint.Visible = hasKeyboard()
 	refreshAgain()
 
 	root.Visible = true
@@ -140,7 +146,7 @@ local function show()
 		end
 		if input.KeyCode == Enum.KeyCode.H then
 			closeButton.Visible = not closeButton.Visible
-			hint.Visible = closeButton.Visible
+			hint.Visible = closeButton.Visible and hasKeyboard()
 			refreshAgain()
 		elseif input.KeyCode == Enum.KeyCode.ButtonA then
 			pressAgain()
@@ -185,15 +191,31 @@ function RunCard.mount(gui: ScreenGui)
 	})
 	againButton.ZIndex = Z + 12
 	againButton.Visible = false
+	-- AGAIN is a brass plate riveted at both ends; DEPOT and INVITE are leather tabs with a tooled rim
+	for _, x in { 0, 1 } do
+		Ui.new("ImageLabel", {
+			Name = "Rivet",
+			AnchorPoint = Vector2.new(x, 0.5),
+			Position = UDim2.new(x, if x > 0 then -5 else 5, 0.5, 0),
+			Size = UDim2.fromOffset(8, 8),
+			BackgroundTransparency = 1,
+			Image = Theme.Image.rivet,
+			Interactable = false,
+			ZIndex = Z + 13,
+			Parent = againButton,
+		})
+	end
 	countLabel = Ui.text({
 		Name = "ReadyCount",
 		Text = "",
-		Font = Theme.Font.body,
-		TextSize = 15,
+		Font = Theme.Font.hand,
+		TextSize = 16,
 		Color = Theme.Color.ink,
-		Position = UDim2.new(0, PAD + 124, 1, -RunTicket.FOOT + 16),
-		Size = UDim2.fromOffset(70, 22),
+		Position = UDim2.new(0, PAD + 122, 1, -RunTicket.FOOT + 16),
+		Size = UDim2.fromOffset(74, 22),
 	})
+	countLabel.TextScaled = true
+	Ui.new("UITextSizeConstraint", { MaxTextSize = 16, Parent = countLabel })
 	countLabel.ZIndex = Z + 12
 	countLabel.Visible = false
 	closeButton = Ui.button("DEPOT", "Secondary", depot, {
@@ -213,6 +235,19 @@ function RunCard.mount(gui: ScreenGui)
 	})
 	inviteButton.ZIndex = Z + 12
 	inviteButton.Visible = false
+	for _, tab in { closeButton, inviteButton } do
+		local rim = Ui.new("Frame", {
+			Name = "Rim",
+			Size = UDim2.new(1, -8, 1, -8),
+			Position = UDim2.fromOffset(4, 4),
+			BackgroundTransparency = 1,
+			Interactable = false,
+			ZIndex = Z + 13,
+			Parent = tab,
+		})
+		Ui.corner(3).Parent = rim
+		Ui.stroke(Theme.Color.tarnish, 1, 0.35).Parent = rim
+	end
 	Invite.whenChecked(function(allowed)
 		inviteAllowed = allowed
 		if root.Visible then
@@ -221,8 +256,8 @@ function RunCard.mount(gui: ScreenGui)
 	end)
 	hint = Ui.text({
 		Name = "Hint",
-		Text = "H hides these buttons",
-		Font = Theme.Font.body,
+		Text = "press H to hide the buttons",
+		Font = Theme.Font.type,
 		TextSize = 12,
 		Color = Theme.Color.boneDim,
 		-- under the ticket, on the backdrop: the foot's right is the stamp's
