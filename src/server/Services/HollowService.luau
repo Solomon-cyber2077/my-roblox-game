@@ -488,11 +488,22 @@ local function roomFor(base: CFrame, frame: CFrame): boolean
 	return Workspace:Raycast(from, to - from, sightParams) == nil
 end
 
+-- each Pull free prompt's own label (the victim), before the share freed is added to it
+local pryLabel: { [any]: string } = setmetatable({}, { __mode = "k" }) :: any
+
 local function publishEscape(hold: Hold)
 	local shown = math.floor(SkillCheck.fraction(hold.progress) * 50 + 0.5) / 50
 	if shown ~= hold.shownEscape then
 		hold.shownEscape = shown
 		hold.character:SetAttribute("GrabEscape", shown)
+		-- the helpers see each tear land: how free the victim is, on the Pull free prompt
+		local prompt = hold.prompt
+		if prompt and not hold.rescue then
+			local name = pryLabel[prompt]
+			prompt.ObjectText = if shown > 0
+				then `{name or ""}  ·  {math.floor(shown * 100 + 0.5)}% free`
+				else name or ""
+		end
 	end
 end
 
@@ -681,6 +692,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 	prompt.RequiresLineOfSight = false
 	prompt.Style = Enum.ProximityPromptStyle.Custom
 	prompt:SetAttribute("Action", "Pry")
+	pryLabel[prompt] = prompt.ObjectText
 	prompt.Parent = root
 
 	local hold: Hold = {
@@ -1062,7 +1074,9 @@ local function resolveStrike(hollow: Hollow)
 	if flat.Magnitude > H.HitRange * hollow.def.reach or math.abs(offset.Y) > 8 then
 		return miss()
 	end
-	if flat.Magnitude > 2 and hollow.root.CFrame.LookVector:Dot(flat.Unit) < 0.1 then
+	-- facing matters only past its feet: a hunter stops StopShort from its prey without turning, so
+	-- someone standing at its feet (beside it, or just behind) is in reach whichever way it faces
+	if flat.Magnitude > H.StopShort + 1 and hollow.root.CFrame.LookVector:Dot(flat.Unit) < 0.1 then
 		return miss()
 	end
 	if not clearBetween(hollow.root.Position, root.Position) then

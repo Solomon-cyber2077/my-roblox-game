@@ -170,7 +170,9 @@ return table.freeze({
 		MinPressGap = 0.12, -- presses closer together than this are ignored
 		FinishByStop = table.freeze({ 12, 11.5, 11, 10.5, 10, 9.5, 9 }), -- the grab clock by stop
 		FinishMargin = 1, -- the clock always exceeds the time the minimum checks need by this
-		PryProgress = 0.14, -- one crewmate's tear at the Hollow (~3.2 s to free a victim alone)
+		-- one crewmate's tear at the Hollow: ~3 s to free a victim alone at a real mash (~4 presses a second).
+		-- Was 0.14 (22 presses), which a held victim's missed checks undid faster than one helper could pry
+		PryProgress = 0.25,
 	}),
 
 	-- The hull (Logic/Ledger, Logic/Leaks, Services/BreakdownService).
