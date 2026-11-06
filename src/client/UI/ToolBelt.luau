@@ -20,6 +20,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage.Shared
 local Items = require(Shared.Config.Items)
+local RunRules = require(Shared.Logic.RunRules)
 local TouchCluster = require(Shared.Logic.TouchCluster)
 
 local Hud = require(script.Parent.Hud)
@@ -257,7 +258,8 @@ function ToolBelt.mount(gui: ScreenGui)
 		if bag.Visible then
 			place(bag, cluster.bag)
 		end
-		if not show then
+		-- an empty bag (the last item dropped or used) closes its sheet rather than leaving a blank panel
+		if not show or #inv.items == 0 then
 			close()
 			return
 		end
@@ -324,6 +326,12 @@ function ToolBelt.mount(gui: ScreenGui)
 		actions[1].Text = if def and def.kind == "Tool" and hand == selected then "USE" else "HOLD"
 		actions[1].Visible = def ~= nil and def.kind == "Tool"
 		actions[2].Visible = selected ~= nil and (selected :: number) > 1
+		-- the server only takes a drop off the train at an open stop (InventoryService.Drop); anywhere
+		-- else the button says where instead of doing nothing when pressed
+		local canDrop = RunRules.isStationOpen(Session.phase() :: any) and Session.status() ~= "Aboard"
+		actions[3].Text = if canDrop then "DROP" else "DROP AT A STOP"
+		actions[3].Interactable = canDrop
+		actions[3]:SetAttribute("Inert", not canDrop)
 	end
 
 	State.Observe("private", { "inventory" }, render)
