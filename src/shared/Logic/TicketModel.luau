@@ -39,7 +39,6 @@ export type View = {
 	description: string,
 	hint: string,
 	tier: number,
-	terminus: boolean,
 	seal: Seal?,
 	distanceKm: number,
 	coal: Coal?,
@@ -75,8 +74,8 @@ function TicketModel.tilt(routeId: string): number
 	return (TicketModel.hash(routeId) * 2 - 1) * TicketModel.MaxTilt
 end
 
-function TicketModel.seal(tier: number?, terminus: boolean?): Seal?
-	if terminus or tier == nil then
+function TicketModel.seal(tier: number?): Seal?
+	if tier == nil then
 		return nil
 	end
 	local n = math.max(math.floor(tier), 1)
@@ -113,9 +112,6 @@ function TicketModel.hint(arch: Stations.Archetype?): string
 	if arch == nil then
 		return ""
 	end
-	if arch.terminus then
-		return "The last stop"
-	end
 	local lootBest, lootValue = "", 1
 	for _, kind in { "coal", "parts", "relic", "tools" } do
 		local value = (arch.loot :: any)[kind] or 0
@@ -141,7 +137,6 @@ end
 function TicketModel.view(option: Types.RouteOption?, serial: number?, cost: number?, coalHeld: number?): View
 	local mystery = option ~= nil and option.mystery == true
 	local arch = if option and not mystery then Stations.List[option.archetype] else nil
-	local terminus = arch ~= nil and arch.terminus == true
 	local tier = if option and not mystery then option.tier else 0
 	return {
 		serial = string.format("No. %02d", serial or 0),
@@ -154,8 +149,7 @@ function TicketModel.view(option: Types.RouteOption?, serial: number?, cost: num
 			else "",
 		hint = if mystery then "No questions answered" else TicketModel.hint(arch),
 		tier = tier,
-		terminus = terminus,
-		seal = if option and not mystery then TicketModel.seal(tier, terminus) else nil,
+		seal = if option and not mystery then TicketModel.seal(tier) else nil,
 		distanceKm = if option then option.distanceKm else 0,
 		coal = TicketModel.coal(cost),
 		after = if cost ~= nil and coalHeld ~= nil

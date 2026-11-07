@@ -75,7 +75,6 @@ export type Archetype = {
 	yardTrees: number,
 	layout: Layout?,
 	village: Village?,
-	terminus: boolean?,
 	emergency: boolean?, -- the Emergency Village: no platform buildings, a cinder bank and the train's lights
 	yardLamps: number?, -- lamp pools at most (default Lamps.YardMax)
 }
@@ -715,36 +714,6 @@ local Archetypes: { [string]: Archetype } = {
 		},
 		emergency = true,
 		yardLamps = 1,
-	},
-	Terminus = {
-		id = "Terminus",
-		name = "Terminus",
-		tier = 1,
-		minStation = 99,
-		weight = 0,
-		length = 324,
-		depth = 156,
-		dwellMultiplier = 1,
-		hint = "End of the line",
-		loot = { coal = 0, parts = 0, relic = 0, tools = 0 },
-		hazard = { collapse = 0, fog = 0, hollows = 0 },
-		containers = {},
-		looseItems = 0,
-		structures = {
-			{ kind = "Concourse", count = 1, zones = { "Mid" } },
-		},
-		lampSpacing = 24,
-		ground = "Marble",
-		palette = {
-			ground = { 196, 186, 168 },
-			accent = { 201, 160, 82 },
-			trim = { 120, 104, 82 },
-			light = { 255, 226, 170 },
-		},
-		edge = { fence = "FenceIron", trees = {}, treeChance = 0 },
-		dressing = {},
-		yardTrees = 0,
-		terminus = true,
 	},
 }
 

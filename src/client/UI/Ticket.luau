@@ -446,14 +446,8 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	end
 
 	-- DANGER on its own line, then the seal
-	local dangerTitle = label(
-		paper,
-		if view.terminus then "THE END OF THE LINE" elseif view.mystery then "DANGER  UNKNOWN" else "DANGER",
-		HEAD,
-		13,
-		INK_SOFT,
-		4
-	)
+	local dangerTitle =
+		label(paper, if view.mystery then "DANGER  UNKNOWN" else "DANGER", HEAD, 13, INK_SOFT, 4)
 	-- The seal sits in the empty right of the danger rows, its poured wax kept inside the paper
 	-- and clear of the name above, the title and tallies to its left and the button below.
 	local SEAL = 32

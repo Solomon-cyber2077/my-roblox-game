@@ -9,7 +9,7 @@
 	  Find     `item` (Config/Items) is hidden at a docked stop numbered `stops[1]..stops[2]`,
 	           beside one of the station's containers. Whoever carries it to the NPC
 	           and talks to them completes the errand.
-	  Survive  completes when the train reaches the Terminus; everyone aboard counts.
+	  Survive  completes when the train leaves the route's last stop; everyone aboard counts.
 
 	Errands pay story, not Brass (docs/FINAL-DESIGN.md Design step 8): each stage tells its `story` line to
 	the Hand who finishes it, and the chain's last stage gives the resident's cosmetic (Config/Npcs).
@@ -57,8 +57,8 @@ local Quests: { [string]: QuestDef } = {
 		npc = "Mabel",
 		title = "The Final Manifest",
 		kind = "Survive",
-		story = 'Mabel signs the manifest at the Terminus. "Every name that went out. And here, the ones that came back."',
-		brief = "Get Mabel and her final manifest to the Terminus.",
+		story = 'Mabel signs the manifest as the last stop falls behind. "Every name that went out. And here, the ones that came back."',
+		brief = "Get Mabel and her final manifest through the last stop on the line.",
 	},
 }
 

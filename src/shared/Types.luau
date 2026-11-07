@@ -11,7 +11,6 @@ export type Phase =
 	| "Dwell"
 	| "LastCall"
 	| "Departure"
-	| "Terminus"
 	| "RunEnd"
 
 export type CrewStatus = "Lobby" | "Aboard" | "Afield" | "Straggler" | "Eliminated"
@@ -45,7 +44,6 @@ export type Destination = {
 	distanceKm: number,
 	difficulty: number,
 	coalCost: number,
-	terminus: boolean,
 	mystery: boolean?,
 	sealed: boolean?,
 	biome: string?, -- a sealed destination's land (Logic/Journey biome id), so the scenery need not switch at Arrival
@@ -97,7 +95,6 @@ export type StationInfo = {
 	lastCallEndsAt: number?, -- set at T-0: the station stays docked until then (Tuning.LastCallGrace)
 	layoutSeed: number,
 	hazards: HazardParams,
-	terminus: boolean,
 	originalDwell: number?,
 	bell: "none" | "all" | "half"?,
 	-- the Emergency Village after a breakdown (not one of the stops): bring `needed` repair parts
@@ -189,7 +186,7 @@ export type CrewTally = {
 	rescues: number,
 	clutchBoards: number,
 	closeCalls: number, -- not aboard at T-0, aboard when the stop resolved
-	reachedTerminus: boolean,
+	reachedEnd: boolean,
 }
 
 -- lobby.line: the hall's route choice (LobbyService, Logic/Routes). fixed: a new Hand is in the

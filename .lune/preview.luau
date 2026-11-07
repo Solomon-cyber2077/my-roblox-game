@@ -65,9 +65,8 @@ if odometer == nil then
 	-- stand just short of the first set piece, so it is in view
 	odometer = if #pieces > 0 then pieces[1].at - 250 else 0
 end
-local arch = if biome == "Coast" then Stations.List.Terminus else Stations.List[Stations.Order[1]]
-local sinkhole =
-	Journey.sinkhole((odometer :: number) + 1900, arch.length, arch.depth, arch.id, arch.terminus == true)
+local arch = Stations.List[Stations.Order[1]]
+local sinkhole = Journey.sinkhole((odometer :: number) + 1900, arch.length, arch.depth, arch.id)
 World.sinkholes = { sinkhole }
 
 local CFrame = roblox.CFrame

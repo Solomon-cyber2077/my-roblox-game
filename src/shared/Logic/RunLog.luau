@@ -198,13 +198,13 @@ function RunLog.endStop(log: { Entry }?, nextStop: number?): number
 	return nextStop or 1
 end
 
--- "TERMINUS", "TRAIN LOST AT STOP 6" (a second breakdown), "ENTERED, NOT RECALLED" (the crew lost:
+-- "LONG LINE", "TRAIN LOST AT STOP 6" (a second breakdown), "ENTERED, NOT RECALLED" (the crew lost:
 -- the ledger's words for Hands left behind, Design step 8; the stop shows under STOPS REACHED).
 -- `stop` is where the run ended (run.nextStop).
 -- The run ticket's stamp. A Short Line victory is stamped SHORT LINE (Design step 10).
 function RunLog.final(outcome: Types.Outcome?, stop: number?, short: boolean?): string
 	if outcome == "Victory" then
-		return if short then "SHORT LINE" else "TERMINUS"
+		return if short then "SHORT LINE" else "LONG LINE"
 	end
 	if outcome == "Derailed" then
 		return `TRAIN LOST AT STOP {stop or 1}`

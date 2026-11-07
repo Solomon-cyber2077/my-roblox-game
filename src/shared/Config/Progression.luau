@@ -98,8 +98,8 @@ local Milestones: { Milestone } = {
 	},
 	{
 		id = "EndOfTheLine",
-		name = "End of the Line",
-		description = "Reach the Terminus.",
+		name = "Last Stop",
+		description = "Ride a line to its last stop.",
 		stat = "victories",
 		goal = 1,
 		reward = { cosmetic = "livery_terminus" },
@@ -123,13 +123,13 @@ local Milestones: { Milestone } = {
 	-- the record: the status items, earned and never sold
 	record("DeepLine", "Deep Line", "Reach stop 8 in a single Relief.", "hat_lampcap"),
 	record("ClutchHand", "Clutch Hand", "Board in the final two seconds five times.", "trail_brass"),
-	record("AuroraWatch", "Aurora Watch", "Reach the Terminus three times.", "lantern_aurora"),
-	record("Stationmaster", "Stationmaster", "Reach the Terminus five times.", "hat_topper"),
+	record("AuroraWatch", "Aurora Watch", "Ride a line to its last stop three times.", "lantern_aurora"),
+	record("Stationmaster", "Stationmaster", "Ride a line to its last stop five times.", "hat_topper"),
 	record("RoyalRoad", "Royal Road", "Finish the Long Line and depart 50 stops in all.", "livery_royal"),
 	record("uniform_stoker_veteran", "Veteran Stoker", "Depart 25 stations alive.", "uniform_stoker_veteran"),
 	record(
 		"uniform_conductor_terminus",
-		"Terminus Conductor",
+		"Long Line Conductor",
 		"Finish the Long Line.",
 		"uniform_conductor_terminus"
 	),
@@ -146,9 +146,9 @@ return table.freeze({
 	Milestones = table.freeze(Milestones),
 	ById = table.freeze(ById),
 	Rank = table.freeze({ Scale = 120, Exponent = 1.55, Max = 60 }),
-	-- how a requirement reads on the Outfitter and the Roll (%d is the goal)
+	-- how a requirement reads on the Outfitter and the Ledger (%d is the goal)
 	StatText = table.freeze({
-		victories = "%d Terminus arrivals",
+		victories = "%d last stops reached",
 		longVictories = "%d Long Line finish",
 		stationsDeparted = "%d stops departed",
 		bestStation = "Reach stop %d",

@@ -173,7 +173,7 @@ local function setUpcoming(
 		end
 		table.insert(changes, { x0 = old.rect.x0 - 20, x1 = old.rect.x1 + 20 })
 	end
-	local sinkhole = Journey.sinkhole(center, arch.length, arch.depth, arch.id, arch.terminus == true)
+	local sinkhole = Journey.sinkhole(center, arch.length, arch.depth, arch.id)
 	table.insert(plan.sinkholes, sinkhole)
 	plan.upcoming = sinkhole
 	table.insert(changes, { x0 = sinkhole.rect.x0 - 20, x1 = sinkhole.rect.x1 + 20 })
@@ -260,7 +260,7 @@ function JourneyPlan.step(plan: Plan, input: Input): Result
 		end
 	end
 	local station = run.station
-	local stationPhase = phase == "Arrival" or phase == "Dwell" or phase == "LastCall" or phase == "Terminus"
+	local stationPhase = phase == "Arrival" or phase == "Dwell" or phase == "LastCall"
 	if stationPhase and station and input.stationX and not plan.stationChecked then
 		plan.stationChecked = true
 		local actual = input.odometer + input.stationX
@@ -284,17 +284,7 @@ function JourneyPlan.step(plan: Plan, input: Input): Result
 		end
 		-- how far through the stop the crew is: the clock keeps running while the doors are open
 		local stay = 0
-		if phase == "Terminus" then
-			-- the sun comes up over the last platform
-			local started = run.phaseStartedAt or input.now
-			local length = if run.phaseEndsAt then run.phaseEndsAt - started else 1
-			stay = MathX.saturate((input.now - started) / math.max(length, 1))
-		elseif
-			(phase == "Dwell" or phase == "LastCall")
-			and station
-			and station.startedAt
-			and station.dwell
-		then
+		if (phase == "Dwell" or phase == "LastCall") and station and station.startedAt and station.dwell then
 			stay = MathX.saturate((input.now - station.startedAt) / math.max(station.dwell, 1))
 		end
 		plan.skyProgress = Journey.skyProgress(plan.leg, plan.skyShare, stay)
@@ -366,7 +356,7 @@ function JourneyPlan.correction(
 		return 0
 	end
 	local dock: number? = nil
-	if phase == "Arrival" or phase == "Dwell" or phase == "LastCall" or phase == "Terminus" then
+	if phase == "Arrival" or phase == "Dwell" or phase == "LastCall" then
 		dock = if plan.upcoming then plan.upcoming.center else nil
 	elseif phase == "Departure" or phase == "Junction" then
 		dock = plan.lastDock

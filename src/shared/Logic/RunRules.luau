@@ -15,7 +15,7 @@ type Phase = Types.Phase
 type Outcome = Types.Outcome
 
 export type Context = {
-	nextStop: number, -- the stop the train is heading to or standing at (1..stopCount + 1)
+	nextStop: number, -- the stop the train is heading to or standing at (1..stopCount)
 	stopCount: number,
 	readyCount: number,
 	lobbyCount: number,
@@ -36,7 +36,6 @@ local RUN_PHASES: { [Phase]: boolean } = {
 	Dwell = true,
 	LastCall = true,
 	Departure = true,
-	Terminus = true,
 }
 
 local RunRules = {}
@@ -51,7 +50,6 @@ RunRules.Phases = table.freeze({
 	"Dwell",
 	"LastCall",
 	"Departure",
-	"Terminus",
 	"RunEnd",
 } :: { Phase })
 
@@ -74,8 +72,9 @@ function RunRules.isStationOpen(phase: Phase): boolean
 	return phase == "Dwell" or phase == "LastCall" or phase == "Departure"
 end
 
-function RunRules.isFinalLeg(ctx: Context): boolean
-	return ctx.nextStop > ctx.stopCount
+-- The train is heading to, standing at or leaving the route's last stop: leaving it ends the run.
+function RunRules.isFinalStop(ctx: Context): boolean
+	return ctx.nextStop >= ctx.stopCount
 end
 
 -- Ready is per player: one ready player is a crew of their own (LobbyService.TakeCrew takes
@@ -128,7 +127,7 @@ function RunRules.duration(phase: Phase, ctx: Context): number?
 	elseif phase == "Boarding" then
 		return run.BoardingSeconds
 	elseif phase == "Junction" then
-		return if RunRules.isFinalLeg(ctx) then run.FinalJunctionSeconds else run.JunctionSeconds
+		return run.JunctionSeconds
 	elseif phase == "Cruise" then
 		return ctx.cruiseSeconds
 	elseif phase == "Arrival" then
@@ -139,8 +138,6 @@ function RunRules.duration(phase: Phase, ctx: Context): number?
 		return run.LastCallSeconds
 	elseif phase == "Departure" then
 		return RunRules.graceSeconds() + ctx.chaseSeconds
-	elseif phase == "Terminus" then
-		return run.TerminusSeconds
 	elseif phase == "RunEnd" then
 		return run.RunEndSeconds
 	end
@@ -157,15 +154,14 @@ function RunRules.next(phase: Phase, ctx: Context): Phase
 	elseif phase == "Cruise" then
 		return "Arrival"
 	elseif phase == "Arrival" then
-		return if RunRules.isFinalLeg(ctx) then "Terminus" else "Dwell"
+		return "Dwell"
 	elseif phase == "Dwell" then
 		return "LastCall"
 	elseif phase == "LastCall" then
 		return "Departure"
 	elseif phase == "Departure" then
-		return "Junction"
-	elseif phase == "Terminus" then
-		return "RunEnd"
+		-- the last stop ends the run: the haul is paid and the crew goes back to the hall
+		return if RunRules.isFinalStop(ctx) then "RunEnd" else "Junction"
 	end
 	return "Lobby"
 end

@@ -68,7 +68,7 @@ end
 local function assumptions()
 	print("Deterministic model outputs from the shipped modules; no player observations.")
 	print(
-		`Run: {N} stops then the Terminus; run tier 1 unless stated; no upgrades; route tier from the first offered option.`
+		`Run: {N} stops, the last one's departure ends it; run tier 1 unless stated; no upgrades; route tier from the first offered option.`
 	)
 	print(
 		`Speeds: walk {Crew.WalkSpeed}, sprint {Crew.SprintSpeed} (reach and chases use these). Timer walk term uses WalkReference {CLOCK_B.WalkReference} (timer only).`
@@ -248,7 +248,7 @@ local function hazardTable()
 end
 
 --------------------------------------------------------------------------------------------
--- The route model: Countdown to the Terminus's RunEnd, every leg through the Terminus
+-- The route model: Countdown to RunEnd, every leg through the last stop's departure
 
 type Scenario = { name: string, share: number?, fraction: number, eligibility: string }
 
@@ -318,7 +318,7 @@ local function routeModel()
 		"Crew size changes Hollow counts, not the clock, so 1 and 4 match on duration. Means, not ceilings; no outcome or completion rate follows from them."
 	)
 	print(
-		"brass_win: one crew member who departs every stop alive and reaches the Terminus (per-stop Brass + the Terminus); loot, relics, rescues, tiers and the daily bonus excluded. A Short Line pays for the stops it covers."
+		"brass_win: one crew member who departs every stop alive and rides it to the last stop (per-stop Brass + the line's-end bonus); loot, relics, rescues, tiers and the daily bonus excluded. A Short Line pays for the stops it covers."
 	)
 end
 

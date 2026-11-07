@@ -104,7 +104,7 @@ function NpcQuest.canDeliver(rq: RunQuest, carrying: boolean): boolean
 	return Quests[rq.quest].kind == "Find" and rq.status == "Active" and carrying
 end
 
-function NpcQuest.completesAtTerminus(rq: RunQuest): boolean
+function NpcQuest.completesAtLineEnd(rq: RunQuest): boolean
 	return Quests[rq.quest].kind == "Survive" and rq.status ~= "Done" and rq.status ~= "Failed"
 end
 
@@ -124,7 +124,7 @@ function NpcQuest.trackerText(rq: RunQuest): string
 	if rq.status == "Offered" then
 		return `Talk to {name}.`
 	elseif rq.status == "Done" then
-		return "Done. Paid at the end of the line."
+		return "Done. Paid at the last stop."
 	elseif rq.status == "Failed" then
 		return "The line ran out first."
 	elseif rq.found and quest.carried then

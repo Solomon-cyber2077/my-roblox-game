@@ -15,7 +15,7 @@ describe("CrewClothing", function()
 	end)
 
 	it("allows wear only at positive stops in active run phases", function()
-		local active = { "Junction", "Cruise", "Arrival", "Dwell", "LastCall", "Departure", "Terminus" }
+		local active = { "Junction", "Cruise", "Arrival", "Dwell", "LastCall", "Departure" }
 		for _, phase in active do
 			expect(Rules.wearAt(3, phase)).toBe(true)
 			expect(Rules.wearAt(2, phase)).toBe(false)

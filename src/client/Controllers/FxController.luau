@@ -367,9 +367,6 @@ local function onPhase(phase: string?)
 	elseif phase == "Departure" then
 		-- T-0: the whistle; the station leaves when the Last Call grace ends (onDeparted)
 		audio("Departure")
-	elseif phase == "Terminus" then
-		Overlay.alert("TERMINUS. YOU MADE IT.", Theme.Color.go, 4)
-		audio("Victory")
 	end
 end
 

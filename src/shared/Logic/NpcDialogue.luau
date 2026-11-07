@@ -18,7 +18,7 @@ export type Context = {
 	quest: string?, -- the run errand's quest id
 	stage: number, -- the player's saved stage for this NPC
 	failed: boolean, -- the player's last errand with this NPC failed
-	flags: { [string]: boolean }, -- Danger, LowSupplies, CrewDown, CloseCall, NearTerminus
+	flags: { [string]: boolean }, -- Danger, LowSupplies, CrewDown, CloseCall, NearEnd
 	choices: { [string]: string },
 	seen: { [string]: boolean }, -- every line this player has heard
 	heardThisRun: { [string]: boolean },
@@ -35,7 +35,7 @@ NpcDialogue.PRIORITY = table.freeze({
 	"CloseCall",
 	"Danger",
 	"LowSupplies",
-	"NearTerminus",
+	"NearEnd",
 	"Greeting",
 	"QuestActive",
 	"StopHint",
@@ -53,7 +53,7 @@ local ONCE_PER_RUN = table.freeze({
 	CloseCall = true,
 	Danger = true,
 	LowSupplies = true,
-	NearTerminus = true,
+	NearEnd = true,
 	QuestActive = true,
 })
 
@@ -63,7 +63,7 @@ local FLAG_TOPICS = table.freeze({
 	CloseCall = true,
 	Danger = true,
 	LowSupplies = true,
-	NearTerminus = true,
+	NearEnd = true,
 })
 
 local function matches(line: Npcs.Line, ctx: Context): boolean
@@ -146,7 +146,7 @@ NpcDialogue.REQUIRED_TOPICS = table.freeze({
 	"LowSupplies",
 	"CrewDown",
 	"CloseCall",
-	"NearTerminus",
+	"NearEnd",
 })
 
 return NpcDialogue

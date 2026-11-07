@@ -189,7 +189,7 @@ describe("RunLog", function()
 	end)
 
 	it("names the final stamp", function()
-		expect(RunLog.final("Victory", 11)).toBe("TERMINUS")
+		expect(RunLog.final("Victory", 10)).toBe("LONG LINE")
 		expect(RunLog.final("Victory", 6, true)).toBe("SHORT LINE")
 		expect(RunLog.final("Wiped", 4, true)).toBe("ENTERED, NOT RECALLED")
 		expect(RunLog.final("Derailed", 6)).toBe("TRAIN LOST AT STOP 6")

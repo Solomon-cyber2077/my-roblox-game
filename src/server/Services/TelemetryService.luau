@@ -470,15 +470,12 @@ local function stopResolved(current: Run, entry: Types.LogEntry)
 	current.stop, current.openAt, current.closedAt, current.dwell = nil, nil, nil, nil
 end
 
--- New run.log entries are resolved stops (the Terminus leg's entry is the run's end, not a stop).
+-- New run.log entries are resolved stops.
 local function resolveLog(current: Run)
 	local log = StateService.Get({ "run", "log" }) :: { Types.LogEntry }?
 	local count = if log then #log else 0
 	for i = current.logged + 1, count do
-		local entry = (log :: { Types.LogEntry })[i]
-		if entry.archetype ~= "Terminus" then
-			stopResolved(current, entry)
-		end
+		stopResolved(current, (log :: { Types.LogEntry })[i])
 	end
 	current.logged = count
 end

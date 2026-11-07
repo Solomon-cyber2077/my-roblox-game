@@ -142,7 +142,7 @@ export type WordProps = {
 	ZIndex: number?,
 }
 
--- A rubber-stamped word in a ruled box ("CLOSE CALL", "TERMINUS"), at its own seeded angle.
+-- A rubber-stamped word in a ruled box ("CLOSE CALL", "LONG LINE"), at its own seeded angle.
 function Stamp.word(props: WordProps): Frame
 	local color = props.color or INK
 	local size = props.size or 13

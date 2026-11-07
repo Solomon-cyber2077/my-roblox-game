@@ -85,14 +85,10 @@ local function play(seed: number, options: { [string]: any }?)
 
 	frames("Boarding", Tuning.Run.BoardingSeconds, nil)
 	local last: string? = nil
-	for stop = 1, STOPS + 1 do
+	for stop = 1, STOPS do
 		run.nextStop = stop
-		local final = stop > STOPS
-		local junction = if final then Tuning.Run.FinalJunctionSeconds else Tuning.Run.JunctionSeconds
-		frames("Junction", junction, if stop > 1 then departing(departStart) else nil)
-		local option = if final
-			then RouteGen.terminusOption()
-			else RouteGen.options(seed, stop, STOPS, last)[1]
+		frames("Junction", Tuning.Run.JunctionSeconds, if stop > 1 then departing(departStart) else nil)
+		local option = RouteGen.options(seed, stop, STOPS, last)[1]
 		last = option.archetype
 		run.destination = { archetype = option.archetype }
 		frames("Cruise", DifficultyModel.cruiseSeconds(option.distanceKm), nil)
@@ -102,10 +98,6 @@ local function play(seed: number, options: { [string]: any }?)
 		end)
 		local docked = function(_: number): (number?, number?)
 			return 0, 0
-		end
-		if final then
-			frames("Terminus", Tuning.Run.TerminusSeconds, docked)
-			break
 		end
 		run.station =
 			{ archetype = option.archetype, startedAt = now, dwell = 45 + Tuning.Run.LastCallSeconds }
@@ -123,7 +115,7 @@ local function checkDocks(seed: number, options: { [string]: any }?)
 	local docks = 0
 	local opts = options or {}
 	opts.onPhase = function(phase, plan, odometer, x)
-		if phase == "Dwell" or phase == "Terminus" then
+		if phase == "Dwell" then
 			docks += 1
 			local upcoming = plan.upcoming
 			expect(upcoming ~= nil).toBe(true)
@@ -137,7 +129,7 @@ local function checkDocks(seed: number, options: { [string]: any }?)
 		end
 	end
 	local plan, log = play(seed, opts)
-	expect(docks).toBe(STOPS + 1)
+	expect(docks).toBe(STOPS)
 	return plan, log
 end
 
@@ -165,12 +157,11 @@ describe("JourneyPlan runs", function()
 		expect(log.recuts).toBe(1)
 	end)
 
-	it("plans every leg's biome change and ends at sunrise", function()
+	it("plans every leg's biome change and ends in the small hours", function()
 		local plan = checkDocks(42)
 		expect(#plan.transitions).toBeAtLeast(1)
-		local final = plan.transitions[#plan.transitions]
-		expect(final.biome).toBe("Coast")
-		expect(plan.progress).toBeCloseTo(STOPS + 1, 1e-6)
+		-- the last frames are the train pulling out of the last stop: a sliver past it
+		expect(plan.progress).toBeCloseTo(STOPS, 0.05)
 		expect(Journey.clock(Journey.hour(plan.progress, STOPS))).toBeCloseTo(J.Sky[#J.Sky].hour % 24, 1e-6)
 	end)
 
@@ -182,7 +173,7 @@ describe("JourneyPlan runs", function()
 				last = plan.progress
 			end,
 		})
-		expect(last).toBeGreaterThan(STOPS)
+		expect(last).toBeGreaterThan(STOPS - 1)
 	end)
 
 	it("keeps the clock running through every stop, without a jump", function()
@@ -202,8 +193,8 @@ describe("JourneyPlan runs", function()
 		})
 		-- no frame moves the night on by more than a sliver
 		expect(biggest).toBeLessThan(0.02)
-		-- the last frame falls a sliver short of the Terminus phase's end
-		expect(plan.skyProgress).toBeCloseTo(STOPS + 1, 1e-2)
+		-- the train pulls out of the last stop in the run's last hour
+		expect(plan.skyProgress).toBeCloseTo(STOPS, 0.05)
 		expect(Journey.clock(Journey.hour(plan.skyProgress, STOPS))).toBeCloseTo(
 			J.Sky[#J.Sky].hour % 24,
 			1e-2

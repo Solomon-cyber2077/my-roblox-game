@@ -48,9 +48,6 @@ describe("Mystery.offers", function()
 		local after = Mystery.record(Mystery.newHistory(), true)
 		expect(Mystery.offers(after, 4, STOPS, HIT)).toBe(false)
 	end)
-	it("never offers on the leg to the Terminus", function()
-		expect(Mystery.offers({ since = 99, last = false }, STOPS + 1, STOPS, HIT)).toBe(false)
-	end)
 	it("rolls the chance otherwise", function()
 		local h = { since = 1, last = false }
 		expect(Mystery.offers(h, 2, STOPS, Config.Chance - 0.01)).toBe(true)
@@ -117,7 +114,6 @@ describe("Mystery.pick", function()
 				expect(real ~= nil).toBe(true)
 				local arch = Stations.List[real.archetype]
 				expect(arch ~= nil).toBe(true)
-				expect(arch.terminus == true).toBe(false)
 				expect(arch.weight > 0).toBe(true) -- any station, any leg (RouteGen no longer gates by stop)
 				for _, option in visible do
 					expect(option.archetype ~= real.archetype).toBe(true)

@@ -8,8 +8,8 @@
 	  * set pieces: tunnels, gorges, burning towns and the rest, planned per leg
 	    from the run seed and trimmed clear of the next dock
 	  * sinkholes: the void each station sits in, on the platform (+Z) side
-	  * the sky: time of day by run progress, from dusk at the lobby to sunrise
-	    at the Terminus
+	  * the sky: time of day by run progress, from dusk at the lobby to the
+	    small hours at the last stop
 
 	Coordinates are land coordinates: x is studs along the track (the odometer
 	scale), so a land point at x is drawn at world x = x - odometer. z and y are
@@ -56,7 +56,6 @@ export type Sinkhole = {
 	rect: Rect,
 	center: number, -- land x of the station centre when docked
 	archetype: string,
-	terminus: boolean,
 }
 
 local J = Tuning.Journey
@@ -76,7 +75,6 @@ local BIOMES: { [string]: Biome } = {
 	Infirmary = "Highland",
 	RailwayHotel = "Corridor",
 	PostTown = "BurningTown",
-	Terminus = "Coast",
 }
 
 -- The first piece of each leg is one of these, rotated by leg, so every run shows them.
@@ -237,20 +235,13 @@ function Journey.dockFromCruise(odometer: number, secondsLeft: number, speed: nu
 	return odometer + distance + Motion.arrivalDistance()
 end
 
-function Journey.sinkhole(
-	center: number,
-	length: number,
-	depth: number,
-	archetype: string,
-	terminus: boolean
-): Sinkhole
+function Journey.sinkhole(center: number, length: number, depth: number, archetype: string): Sinkhole
 	local half = length / 2 + J.SinkholeMarginX
 	local edge = Tuning.World.PlatformEdgeZ
 	return {
 		rect = { x0 = center - half, x1 = center + half, z0 = edge, z1 = edge + depth + J.SinkholeMarginZ },
 		center = center,
 		archetype = archetype,
-		terminus = terminus,
 	}
 end
 
@@ -326,7 +317,7 @@ function Journey.legShare(odometer: number, legStart: number, dock: number?): nu
 	return math.clamp((odometer - legStart) / J.TypicalLeg, 0, J.UnknownShareCap)
 end
 
--- Run progress in legs: 0 at the lobby, 1 docked at the first stop, stops + 1 at the Terminus.
+-- Run progress in legs: 0 at the lobby, 1 docked at the first stop, stops docked at the last stop.
 function Journey.progress(leg: number, share: number): number
 	return math.max(leg - 1, 0) + MathX.saturate(share)
 end
@@ -344,7 +335,7 @@ end
 
 -- Continuous hour for a run progress; past 24 means the small hours of the next day.
 function Journey.hour(progress: number, stops: number): number
-	local total = stops + 1
+	local total = stops
 	local previousAt, previousHour = -math.huge, 0
 	for i, key in J.Sky do
 		local at = key.at

@@ -158,9 +158,6 @@ end
 
 function HazardDirector.Begin(plan: LayoutGen.Plan, info: Types.StationInfo)
 	HazardDirector.Stop()
-	if info.terminus then
-		return
-	end
 	-- One budget for every Hollow at the stop: the threat curve's share of the full count for the
 	-- players in the run (Logic/Threat).
 	if info.hazards.hollowCap > 0 then

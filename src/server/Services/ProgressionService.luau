@@ -2,7 +2,7 @@
 --[[
 	End-of-run payouts, lifetime stats, Crew Rank and Line Mastery milestones.
 	Each stop's Brass and XP are banked as it departs (BankStop, Logic/StopBank); RunEnd pays the rest:
-	the Terminus line, the tier bonus and the first run of the day, to whoever is still in the run.
+	the line's-end bonus, the tier bonus and the first run of the day, to whoever is still in the run.
 	Charter (private server) rules: a solo run pays 60%, Brass from charter runs is
 	capped per day, and the owner earns a Charter Stamp for each run with 3+ crew
 	that clears 5+ stations. A victory at run tier N unlocks tier N + 1 (Logic/RunTier).
@@ -117,7 +117,7 @@ type Settlement = {
 	charter: boolean,
 }
 
--- Pays one crew member their run: what the stops have not banked yet, the Terminus line on a victory,
+-- Pays one crew member their run: what the stops have not banked yet, the line's-end bonus on a victory,
 -- the tier and first-run-of-the-day bonuses; then stats and milestones.
 local function settle(player: Player, tally: Types.CrewTally, run: Settlement)
 	local outcome, haul, tier, route, day, charter =
@@ -173,7 +173,7 @@ local function settle(player: Player, tally: Types.CrewTally, run: Settlement)
 					s.payrollCrewPassProgress = (s.payrollCrewPassProgress or 0) + #haul.trophies
 				end
 				s.runs = (s.runs or 0) + 1
-				local arrived = outcome == "Victory" and tally.reachedTerminus
+				local arrived = outcome == "Victory" and tally.reachedEnd
 				s.victories = (s.victories or 0) + (if arrived then 1 else 0)
 				-- a Short Line victory counts above; this one is the Long Line's alone
 				s.longVictories = (s.longVictories or 0) + (if arrived and route ~= "Short" then 1 else 0)
@@ -263,8 +263,8 @@ function ProgressionService.PayRun(
 	end
 end
 
--- The stop-five cash-out (Logic/CashOut): this player's run ends here, paid as earned. No Terminus
--- line and no share of the haul: those settle at the run's end, for whoever is still aboard.
+-- The stop-five cash-out (Logic/CashOut): this player's run ends here, paid as earned. No line's-end
+-- bonus and no share of the haul: those settle at the run's end, for whoever is still aboard.
 function ProgressionService.CashOut(
 	player: Player,
 	tally: Types.CrewTally,

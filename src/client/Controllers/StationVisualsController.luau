@@ -178,7 +178,7 @@ function StationVisualsController.Start()
 		local info = Registry.StateController.Get({ "run", "station" })
 		local root = station and station.Parent and station.PrimaryPart
 		local open = phase == "Dwell" or phase == "LastCall" or phase == "Departure"
-		if info and root and not info.terminus and open then
+		if info and root and open then
 			local run = Registry.StateController.Get({ "run" }) or {}
 			-- the fog stops where the station actually left (the end of the Last Call grace)
 			local frozenAt = info.lastCallEndsAt or run.phaseStartedAt or now
@@ -215,11 +215,7 @@ end
 function StationVisualsController.FogDepth(): number?
 	local info = Registry.StateController.Get({ "run", "station" })
 	local phase = Session.phase()
-	if
-		info == nil
-		or info.terminus
-		or not (phase == "Dwell" or phase == "LastCall" or phase == "Departure")
-	then
+	if info == nil or not (phase == "Dwell" or phase == "LastCall" or phase == "Departure") then
 		return nil
 	end
 	return HazardSchedule.fogFront(

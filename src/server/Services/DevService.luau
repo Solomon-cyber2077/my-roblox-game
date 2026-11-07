@@ -363,7 +363,7 @@ end
 Commands.station = function(_, args)
 	local Stations = require(ReplicatedStorage.Shared.Config.Stations)
 	local id = args[1]
-	if id and Stations.List[id] and not Stations.List[id].terminus then
+	if id and Stations.List[id] then
 		Registry.RunDirector.DevForceArchetype(id)
 	end
 end

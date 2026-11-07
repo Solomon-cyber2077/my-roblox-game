@@ -79,7 +79,7 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		ZIndex = z,
 	})
 	Ui.stroke(INK_SOFT, 1, 0.4).Parent = ticket
-	-- read by the light the run ended in: the blood moon at the edges, or the Terminus lamps
+	-- read by the light the run ended in: the blood moon at the edges, or a warm lamp
 	Ui.new("ImageLabel", {
 		Name = "Moonlight",
 		Size = UDim2.fromScale(1, 1),

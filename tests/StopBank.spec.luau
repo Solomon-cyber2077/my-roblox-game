@@ -37,13 +37,13 @@ describe("StopBank", function()
 			StopBank.grant(bank, stop, tally(stop, stop * 10), false)
 		end
 		local final = tally(5, 50)
-		final.reachedTerminus = true
+		final.reachedEnd = true
 		local payout =
 			Economy.payout(final, { outcome = "Victory", dailyBonus = true, soloCharter = false, tier = 3 })
 		local brass, xp = StopBank.remainder(bank, payout.brass, payout.xp)
 		expect(bank.brass + brass).toBe(payout.brass)
 		expect(bank.xp + xp).toBe(payout.xp)
-		expect(brass).toBeGreaterThan(0) -- the Terminus, tier and daily lines wait for RunEnd
+		expect(brass).toBeGreaterThan(0) -- the line's-end, tier and daily lines wait for RunEnd
 	end)
 
 	it("applies the solo charter rate to each grant", function()

@@ -200,7 +200,7 @@ function DRAW.coast(g: Instance)
 	words(g, "S. & W. C. R.", OSWALD, rgb(206, 168, 92), 30, 622, 300, 40, Enum.TextXAlignment.Left)
 	words(
 		g,
-		"ALL STOPS TO THE TERMINUS",
+		"ALL STOPS ON THE LINE",
 		OSWALD,
 		rgb(146, 158, 166),
 		330,

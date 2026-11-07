@@ -56,7 +56,7 @@ function B.ticket(parent: Instance, cf: CFrame): Model
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
-	label.Text = "S&WCR • THIRD\nTO TERMINUS\nNo. 01884 • 18 OCT 1888"
+	label.Text = "S&WCR • THIRD\nALL STATIONS\nNo. 01884 • 18 OCT 1888"
 	label.TextColor3 = Color3.fromRGB(45, 32, 24)
 	label.TextSize = 21
 	label.Font = Enum.Font.Antique

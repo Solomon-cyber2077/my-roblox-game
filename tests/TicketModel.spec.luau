@@ -17,7 +17,6 @@ describe("TicketModel", function()
 		expect(TicketModel.seal(5).number).toBe(5)
 		expect(TicketModel.seal(5).strokes).toBe(3)
 		expect(TicketModel.seal(0).strokes).toBe(1)
-		expect(TicketModel.seal(2, true)).toBe(nil)
 		expect(TicketModel.seal(nil)).toBe(nil)
 	end)
 

@@ -94,7 +94,6 @@ local Surfaces = {
 		RailwayHotel = 0.03,
 		PostTown = 0.03,
 		EmergencyVillage = 0.05,
-		Terminus = 0.02,
 	},
 }
 

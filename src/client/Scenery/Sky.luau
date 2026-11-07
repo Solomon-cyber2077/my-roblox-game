@@ -21,7 +21,7 @@
 	  * omens (Logic/Omens) bend all of it for a few seconds: the moon blinks, opens an
 	    eye, bleeds; every sound and star goes out; lightning shows what stands out there
 
-	Sunrise at the Terminus is the relief, and is left warm and clear.
+	The run ends in the small hours, the moon pale and low: the night is never lifted.
 
 	Hours past 24 are the small hours of the next morning (Logic/Journey.hour).
 ]]
@@ -259,25 +259,6 @@ local KEYS: { Key } = {
 		stars = 250,
 		glow = 0.3,
 	},
-	{ -- sunrise at the Terminus: the relief
-		hour = 30.5,
-		brightness = 2.0,
-		exposure = 0.15,
-		ambient = rgb(76, 64, 70),
-		outdoor = rgb(152, 128, 118),
-		shift = rgb(90, 70, 50),
-		air = rgb(228, 172, 142),
-		decay = rgb(126, 84, 72),
-		clouds = rgb(252, 206, 180),
-		rays = 0.1,
-		tint = rgb(255, 240, 226),
-		saturation = -0.02,
-		haze = 2.4,
-		density = 0.38,
-		cover = -0.05,
-		stars = 0,
-		glow = 0,
-	},
 }
 
 --[[
@@ -412,10 +393,9 @@ Sky.Phases = table.freeze({
 	{ from = 25.3, name = "BLOOD MOON" },
 	{ from = 26.9, name = "MOON WANING" },
 	{ from = 28.6, name = "PALE MOON" },
-	{ from = 29.9, name = "DAWN" },
 })
 
--- The phase of the night at `hour`, and the next one with the hour it starts (nil at dawn).
+-- The phase of the night at `hour`, and the next one with the hour it starts (nil once the moon is pale).
 function Sky.phase(hour: number): (string, string?, number?)
 	local phases = Sky.Phases
 	for i = #phases, 1, -1 do

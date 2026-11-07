@@ -47,7 +47,7 @@ local function line(text: string, color: Color3, size: number)
 end
 
 function HaulReceipt.mount(gui: ScreenGui)
-	modal = Modal.new(gui, "Terminus haul", Vector2.new(520, 500))
+	modal = Modal.new(gui, "The haul", Vector2.new(520, 500))
 	UserInputService.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 and modal:isOpen() then
 			modal:close()
@@ -90,7 +90,7 @@ function HaulReceipt.show(data: { [string]: any })
 		return
 	end
 
-	line("TERMINUS LEDGER", Theme.Color.goInk, 26)
+	line("STRONGBOX LEDGER", Theme.Color.goInk, 26)
 	line("The strongbox opens. Your haul is entered in the crew book.", Theme.Color.ink, 16)
 	local counts: { [string]: number } = {}
 	for _, itemId in haul.valuables or {} do

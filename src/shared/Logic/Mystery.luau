@@ -16,7 +16,6 @@
 
 local Shared = script.Parent.Parent
 local Config = require(Shared.Config.Mystery)
-local Stations = require(Shared.Config.Stations)
 local Types = require(Shared.Types)
 local Rng = require(Shared.Util.Rng)
 local Journey = require(script.Parent.Journey)
@@ -66,7 +65,7 @@ function Mystery.pick(
 	local chosen: RouteOption? = nil
 	for attempt = 1, Mystery.Attempts do
 		for _, option in RouteGen.options(Rng.derive(hiddenSeed, attempt), leg, stopCount, previous) do
-			if not Stations.List[option.archetype].terminus and not taken[option.archetype] then
+			if not taken[option.archetype] then
 				chosen = option
 				break
 			end
@@ -119,7 +118,6 @@ function Mystery.sealed(distanceKm: number, coalCost: number, archetype: string?
 		distanceKm = distanceKm,
 		difficulty = 0,
 		coalCost = coalCost,
-		terminus = false,
 		mystery = true,
 		sealed = true,
 		biome = if archetype then Journey.biomeFor(archetype) else nil,

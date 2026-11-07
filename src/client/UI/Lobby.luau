@@ -338,7 +338,7 @@ function Lobby.mount(gui: ScreenGui)
 		Size = UDim2.new(1, -36, 1, 0),
 		Parent = headStrip,
 	})
-	caption("TO THE TERMINUS", {
+	caption("ALL STATIONS", {
 		TextSize = 15,
 		Position = UDim2.fromOffset(28, 0),
 		Size = UDim2.new(1, -36, 1, 0),

@@ -166,7 +166,7 @@ local list: { Recipe } = {
 	recipe("uniform_stoker_veteran", "Stoker Veteran", false, { { stat = "stationsDeparted", goal = 25 } }),
 	recipe(
 		"uniform_conductor_terminus",
-		"Conductor of the Terminus",
+		"Conductor of the Long Line",
 		false,
 		{ { stat = "longVictories", goal = 1 } }
 	),

@@ -40,7 +40,7 @@ describe("RouteGen randomness", function()
 		local eligible = 0
 		for _, id in Stations.Order do
 			local arch = Stations.List[id]
-			if arch.weight > 0 and not arch.terminus then
+			if arch.weight > 0 then
 				eligible += 1
 			end
 		end

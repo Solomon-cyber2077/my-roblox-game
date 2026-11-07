@@ -7,10 +7,7 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 
 local GrimeLevel = {}
 
-function GrimeLevel.forStop(stopIndex: number, stopCount: number, isTerminus: boolean): number
-	if isTerminus then
-		return 1
-	end
+function GrimeLevel.forStop(stopIndex: number, stopCount: number): number
 	if stopIndex <= 0 then
 		return 0
 	end

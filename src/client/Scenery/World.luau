@@ -105,12 +105,8 @@ function World.blocked(x: number, z: number, radius: number): boolean
 	return false
 end
 
--- The ground past a sinkhole's far rim that its backdrop (Features) stands on; nil at the
--- Terminus, which opens onto the harbour.
+-- The ground past a sinkhole's far rim that its backdrop (Features) stands on.
 function World.backdrop(sinkhole: Journey.Sinkhole): Journey.Rect?
-	if sinkhole.terminus then
-		return nil
-	end
 	local B = Tuning.Journey.Backdrop
 	local r = sinkhole.rect
 	return { x0 = r.x0 - B.Margin, x1 = r.x1 + B.Margin, z0 = r.z1, z1 = r.z1 + B.Reach }

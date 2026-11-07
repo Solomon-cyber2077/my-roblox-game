@@ -6,7 +6,7 @@
 	      + 2 per 10 coal and 2 per 5 parts delivered by this player
 	      + relic Brass banked by this player
 	      + 10 per flare rescue
-	      + 80 for being aboard at the Terminus (40 if the crew won without you)
+	      + 80 for being aboard when the last stop departs (40 if the crew won without you)
 	XP    = that Brass + 25 for finishing the run
 	A run at tier t > 1 adds BrassBonusPerTier per tier (Config/Difficulty.RunTier).
 	The first run of each UTC day doubles the Brass (bonus capped at 400).
@@ -44,7 +44,10 @@ function Economy.payout(tally: Types.CrewTally, options: Options): Payout
 	add("Relics banked", tally.relicBrass)
 	add("Rescues", tally.rescues * e.BrassPerRescue)
 	if options.outcome == "Victory" then
-		add("Reached the Terminus", if tally.reachedTerminus then e.BrassVictoryAlive else e.BrassVictoryCrew)
+		add(
+			"Rode the line to its last stop",
+			if tally.reachedEnd then e.BrassVictoryAlive else e.BrassVictoryCrew
+		)
 	end
 
 	local base = 0
@@ -83,7 +86,7 @@ function Economy.emptyTally(): Types.CrewTally
 		rescues = 0,
 		clutchBoards = 0,
 		closeCalls = 0,
-		reachedTerminus = false,
+		reachedEnd = false,
 	}
 end
 

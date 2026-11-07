@@ -44,11 +44,10 @@ local function features(plan): { [number]: boolean }
 end
 
 describe("Station layouts", function()
-	it("gives every stop but the Terminus a layout", function()
+	it("gives every stop a layout", function()
 		for _, id in Stations.Order do
 			expect(Stations.List[id].layout ~= nil).toBe(true)
 		end
-		expect(Stations.List.Terminus.layout).toBe(nil)
 	end)
 
 	it("lays out the same props for a seed", function()
@@ -201,7 +200,6 @@ describe("Station layouts", function()
 				end
 			end
 		end
-		expect(LayoutGen.generate("Terminus", 1, 1).payroll).toBe(nil)
 	end)
 
 	it("lays sidings across a coal yard", function()

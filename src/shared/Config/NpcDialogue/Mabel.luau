@@ -56,7 +56,7 @@ local Lines = {
 		id = "mabel_offer_manifest",
 		topic = "QuestOffer",
 		when = { status = "Offered", quest = "MabelManifest" },
-		text = "Last job: carry my manifest all the way to the Terminus. Don't lose it!",
+		text = "Last job: carry my manifest to the last stop on the line. Don't lose it!",
 	},
 	{
 		id = "mabel_active",
@@ -93,8 +93,8 @@ local Lines = {
 	},
 	{
 		id = "mabel_terminus",
-		topic = "NearTerminus",
-		text = "Nearly at the Terminus. Come back and I'll put your name on the Roll.",
+		topic = "NearEnd",
+		text = "Last stop coming. Stay close, and we all ride back to the Depot together.",
 	},
 }
 

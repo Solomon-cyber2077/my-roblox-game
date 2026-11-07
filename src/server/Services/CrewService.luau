@@ -715,10 +715,11 @@ function CrewService.SpawnPendingJoiners()
 	end
 end
 
-function CrewService.MarkTerminus()
+-- The route's last stop has departed: everyone still in the run rode the line to its end.
+function CrewService.MarkLineEnd()
 	for _, member in members do
 		if isAliveStatus(member.status) then
-			member.tally.reachedTerminus = true
+			member.tally.reachedEnd = true
 		end
 	end
 end

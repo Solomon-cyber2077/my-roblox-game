@@ -6,10 +6,8 @@ local Upgrades = require(Shared.Config.Upgrades)
 
 local function anyStation()
 	local ids = {}
-	for id, arch in Stations.List do
-		if not arch.terminus then
-			table.insert(ids, id)
-		end
+	for id in Stations.List do
+		table.insert(ids, id)
 	end
 	table.sort(ids)
 	return Stations.List[ids[1]]

@@ -60,12 +60,7 @@ function Telemetry.scene(phase: string): string
 	if phase == "Lobby" or phase == "Countdown" then
 		return "hall"
 	end
-	return if phase == "Dwell"
-			or phase == "LastCall"
-			or phase == "Departure"
-			or phase == "Terminus"
-		then "stop"
-		else "train"
+	return if phase == "Dwell" or phase == "LastCall" or phase == "Departure" then "stop" else "train"
 end
 
 function Telemetry.runDuration(minutes: number): string
@@ -97,13 +92,13 @@ function Telemetry.crewSize(count: number): string
 	return tostring(math.clamp(math.floor(count), 1, #Config.Vocab.CrewSize))
 end
 
--- A stop number as a field: "pre" before stop 1 opens, "terminus" past the last regular stop.
+-- A stop number as a field: "pre" before stop 1 opens, else the stop (never past the route's last).
 function Telemetry.stop(stop: number?, stopCount: number?): string
 	local count = stopCount or Tuning.Run.StationCount
 	if stop == nil or stop < 1 then
 		return "pre"
 	elseif stop > count then
-		return "terminus"
+		return tostring(math.floor(count))
 	end
 	return tostring(math.floor(stop))
 end

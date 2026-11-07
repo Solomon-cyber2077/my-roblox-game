@@ -42,11 +42,16 @@ describe("RunRules", function()
 		expect(table.concat(seen, ",")).toBe("Junction,Cruise,Arrival,Dwell,LastCall,Departure,Junction")
 	end)
 
-	it("ends at the Terminus after the last stop", function()
-		local c = ctx({ nextStop = Tuning.Run.StationCount + 1 })
-		expect(RunRules.next("Arrival", c)).toBe("Terminus")
-		expect(RunRules.next("Terminus", c)).toBe("RunEnd")
-		expect(RunRules.duration("Junction", c)).toBe(Tuning.Run.FinalJunctionSeconds)
+	it("ends the run when the train leaves the last stop", function()
+		local c = ctx({ nextStop = Tuning.Run.StationCount })
+		expect(RunRules.next("Arrival", c)).toBe("Dwell")
+		expect(RunRules.next("Departure", c)).toBe("RunEnd")
+		expect(RunRules.next("Departure", ctx({ nextStop = Tuning.Run.StationCount - 1 }))).toBe("Junction")
+		local short = ctx({ nextStop = Tuning.Run.Routes.Short, stopCount = Tuning.Run.Routes.Short })
+		expect(RunRules.next("Departure", short)).toBe("RunEnd")
+		for _, phase in RunRules.Phases do
+			expect(phase ~= "Terminus").toBe(true)
+		end
 	end)
 
 	it("splits the dwell so Last Call is always 15 seconds", function()
@@ -142,7 +147,6 @@ describe("RouteGen", function()
 				local short = false
 				for _, option in options do
 					local arch = Stations.List[option.archetype]
-					expect(arch.terminus == true).toBe(false)
 					expect(arch.weight > 0).toBe(true)
 					expect(seen[option.archetype]).toBe(nil)
 					seen[option.archetype] = true
@@ -156,10 +160,11 @@ describe("RouteGen", function()
 		end
 	end)
 
-	it("routes the last leg to the Terminus", function()
-		local options = RouteGen.options(1, Tuning.Run.StationCount + 1, Tuning.Run.StationCount, "Halt")
-		expect(#options).toBe(1)
-		expect(options[1].archetype).toBe("Terminus")
+	it("offers no leg past the last stop", function()
+		expect(pcall(RouteGen.options, 1, Tuning.Run.StationCount + 1, Tuning.Run.StationCount, "Halt")).toBe(
+			false
+		)
+		expect(Stations.List.Terminus).toBe(nil)
 	end)
 end)
 
@@ -208,7 +213,7 @@ describe("Economy", function()
 	end)
 	it("pays a victory bonus", function()
 		local tally = Economy.emptyTally()
-		tally.reachedTerminus = true
+		tally.reachedEnd = true
 		expect(Economy.payout(tally, { outcome = "Victory", dailyBonus = false, soloCharter = false }).brass).toBe(
 			80
 		)

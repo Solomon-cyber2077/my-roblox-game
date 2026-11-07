@@ -5,7 +5,7 @@
 	  Short Line  5 stops, the proposed default for new players
 	  Long Line   10 stops, the veteran and status route
 
-	  length(route)            stops before the Terminus (run.stopCount)
+	  length(route)            stops on the route (run.stopCount)
 	  level(route, k)          the Long Line stop index stop k's difficulty reads: Short stop k
 	                           reads m(k) = {1, 2, 4, 6, 8}, so stops 1-2 match the Long Line and the
 	                           Short Line still climbs to a late climax below the Long Line's peak.

@@ -34,7 +34,7 @@ Sim.Defaults = {
 	soloJoinWindow = 10, -- queue: seconds a player happy alone waits for a forming crew before starting solo
 	teleportFail = 0.02, -- a car or queue teleport that fails and drops its crew back in the hall
 	minutesPerStop = 4.1, -- a stop's dwell + junction + cruise + arrival (bot playtests: ~185 s dwell)
-	runOverhead = 2, -- minutes of boarding, terminus and run card
+	runOverhead = 2, -- minutes of boarding and the run card
 }
 
 local function xorshift(seed: number)

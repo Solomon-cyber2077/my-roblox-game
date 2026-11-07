@@ -1431,7 +1431,7 @@ function Hud.mount(gui: ScreenGui)
 		elseif phase == "Cruise" then
 			title = if destination then `NEXT: {string.upper(destination.name)}` else "EN ROUTE"
 			status = if destination then `{destination.distanceKm} KM` else ""
-			if destination and not destination.terminus then
+			if destination then
 				danger = if destination.sealed then "DANGER ???" else `DANGER {tierStamps(destination.tier)}`
 			end
 		elseif phase == "Arrival" then
@@ -1457,8 +1457,6 @@ function Hud.mount(gui: ScreenGui)
 				status = "LAST CALL"
 				timerValue = Registry.DepartureClock.Remaining() or timerValue
 			end
-		elseif phase == "Terminus" then
-			title, status = "TERMINUS", "END OF THE LINE"
 		end
 		-- any other countdown fills the ring when it starts and empties as it runs
 		if left == nil and timerValue > 0 then

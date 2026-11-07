@@ -7,11 +7,11 @@
 	  seconds(seed, route, crew, bell?)  Countdown through the end of RunEnd: every leg's junction,
 	                                     cruise, arrival, doors-open time (Logic/DifficultyModel.dwell
 	                                     at the stop's level, bell scenarios applied), grace and
-	                                     chase window, then the Terminus leg. The first offered
+	                                     chase window, then RunEnd. The first offered
 	                                     option each leg, run tier 1, no upgrades. Also returns the
 	                                     mean doors-open seconds per stop
 	  brass(route, won)                  a crew member's Brass from a run that departs every stop
-	                                     alive: per-stop Brass plus the Terminus (loot, relics,
+	                                     alive: per-stop Brass plus the line's-end bonus (loot, relics,
 	                                     rescues, tiers and the daily bonus left out)
 ]]
 
@@ -53,8 +53,7 @@ function RouteModel.seconds(seed: number, route: Routes.Route, crew: number, bel
 		doorsTotal += doors
 		total += run.JunctionSeconds + DifficultyModel.cruiseSeconds(option.distanceKm) + run.ArrivalSeconds + doors + RunRules.graceSeconds() + p.whistleHold + p.chaseWindow
 	end
-	local terminus = RouteGen.terminusOption()
-	total += run.FinalJunctionSeconds + DifficultyModel.cruiseSeconds(terminus.distanceKm) + run.ArrivalSeconds + run.TerminusSeconds + run.RunEndSeconds
+	total += run.RunEndSeconds
 	return total, doorsTotal / stops
 end
 

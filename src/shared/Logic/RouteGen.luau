@@ -3,7 +3,7 @@
 	Junction options for each leg. Deterministic from the run seed, so every
 	client can show the same cards before the server even sends them.
 
-	Leg k leads to stop k. Legs past the last stop lead to the Terminus.
+	Leg k leads to stop k. Leaving the last stop ends the run, so there is no leg past it.
 	Rules: every station (weight > 0) can come up at any leg, stop 1 included, so
 	no stop is fixed (the run seed is fresh every run, RunDirector Enter.Boarding;
 	`minStation` in Config/Stations is no longer a gate). Options use distinct
@@ -25,15 +25,6 @@ type RouteOption = Types.RouteOption
 
 local RouteGen = {}
 
-function RouteGen.terminusOption(): RouteOption
-	return {
-		archetype = "Terminus",
-		tier = 1,
-		distanceKm = Tuning.Run.TerminusDistanceKm,
-		hint = Stations.List.Terminus.hint,
-	}
-end
-
 function RouteGen.options(
 	runSeed: number,
 	leg: number,
@@ -41,9 +32,7 @@ function RouteGen.options(
 	previous: string?,
 	firstLegKm: number?
 ): { RouteOption }
-	if leg > stopCount then
-		return { RouteGen.terminusOption() }
-	end
+	assert(leg <= stopCount, "no leg past the last stop")
 
 	local rng = Rng.new(Rng.derive(runSeed, "route", leg))
 	local count = if Tuning.Run.WideJunctions[leg] then 3 else Tuning.Run.RouteOptionCount
@@ -51,7 +40,7 @@ function RouteGen.options(
 	local pool: { Rng.Weighted<string> } = {}
 	for _, id in Stations.Order do
 		local arch = Stations.List[id]
-		if arch.weight > 0 and not arch.terminus and id ~= previous then
+		if arch.weight > 0 and id ~= previous then
 			table.insert(pool, { weight = arch.weight, value = id })
 		end
 	end

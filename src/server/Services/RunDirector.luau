@@ -62,6 +62,7 @@ type RunState = {
 	info: Types.StationInfo?,
 	plan: LayoutGen.Plan?,
 	outcome: Types.Outcome?,
+	lineEnd: boolean, -- the route's last stop is departing: the run ends a Victory
 	departed: boolean, -- false only during the Last Call grace, while the station is still docked
 	chaseStart: number?,
 	chaseEnd: number?,
@@ -74,7 +75,7 @@ type RunState = {
 	mark: Types.StopHaul, -- the run's loot and downs when the previous stop resolved
 	tutorial: number, -- the crew's tutorial tier for this run (Services/TutorialService), 0 past it
 	route: Routes.Route, -- the run's line (Logic/Routes), fixed at Boarding
-	stopCount: number, -- its stops before the Terminus (run.stopCount)
+	stopCount: number, -- its stops (run.stopCount)
 	arms: { [string]: string }, -- this run's experiment arms by id (Logic/Experiments), absent when off
 	forcedArms: { [string]: string }, -- Dev `experiment`: arms the next runs use
 	-- the Emergency Village after a breakdown: the trip it interrupted, to resume after it
@@ -99,6 +100,7 @@ local state: RunState = {
 	info = nil,
 	plan = nil,
 	outcome = nil,
+	lineEnd = false,
 	departed = true,
 	chaseStart = nil,
 	chaseEnd = nil,
@@ -245,6 +247,7 @@ Enter.Boarding = function()
 	state.runId = HttpService:GenerateGUID(false)
 	state.seed = rng:NextInteger(1, 2147483646)
 	state.nextStop = 1
+	state.lineEnd = false
 	state.stationsCleared = 0
 	state.lastArchetype = nil
 	state.outcome = nil
@@ -336,9 +339,7 @@ Enter.Cruise = function()
 	local arch = Stations.List[option.archetype]
 	-- the Long Line stop this stop's difficulty reads (Logic/Routes: Short stop k reads m(k))
 	local level = Routes.level(state.route, state.nextStop)
-	local d = if arch.terminus
-		then 0
-		else DifficultyModel.forStop(level, Tuning.Run.StationCount, option.tier, state.runTier)
+	local d = DifficultyModel.forStop(level, Tuning.Run.StationCount, option.tier, state.runTier)
 	local train = Registry.TrainService.Get()
 	state.chosen = option
 	state.lastArchetype = option.archetype
@@ -367,7 +368,6 @@ Enter.Cruise = function()
 			distanceKm = option.distanceKm,
 			difficulty = d,
 			coalCost = coalCost,
-			terminus = arch.terminus == true,
 		}
 	StateService.Set({ "run", "destination" }, destination)
 	local ballot =
@@ -405,7 +405,6 @@ local function arriveAtVillage()
 		departAt = startedAt + params.dwell,
 		layoutSeed = layoutSeed,
 		hazards = params,
-		terminus = false,
 		emergency = { needed = (state.village :: any).needed, found = 0 },
 	}
 	state.info = info
@@ -439,7 +438,6 @@ Enter.Arrival = function()
 		departAt = startedAt + params.dwell,
 		layoutSeed = layoutSeed,
 		hazards = params,
-		terminus = arch.terminus == true,
 	}
 	state.info = info
 	state.plan = plan
@@ -455,7 +453,6 @@ Enter.Arrival = function()
 			distanceKm = option.distanceKm,
 			difficulty = params.difficulty,
 			coalCost = (StateService.Get({ "run", "destination", "coalCost" }) :: number?) or 0,
-			terminus = false,
 			mystery = true,
 			sealed = false,
 		}
@@ -567,7 +564,7 @@ Exit.Departure = function(nextPhase)
 			NetService.FireAll("Notify", "Alarm", "Not enough parts. The crew will have to patch her aboard.")
 		end
 		Registry.BreakdownService.VillageDone(found, village.needed)
-	elseif nextPhase == "Junction" then
+	elseif nextPhase == "Junction" or state.lineEnd then
 		local closeCalls = Registry.CrewService.ResolveDeparture()
 		-- the last of the crew left behind: the run ends at this stop, not the next, and it does
 		-- not count as cleared
@@ -584,7 +581,12 @@ Exit.Departure = function(nextPhase)
 		if cleared then
 			state.stationsCleared += 1
 		end
-		state.nextStop += 1
+		if state.lineEnd then
+			-- the route's last stop: whoever is still aboard rode the line to its end
+			Registry.CrewService.MarkLineEnd()
+		else
+			state.nextStop += 1
+		end
 		StateService.Update({ "stats" }, function(stats)
 			local s = stats or { coalDelivered = 0, partsDelivered = 0, relics = 0, stationsCleared = 0 }
 			s.stationsCleared = state.stationsCleared
@@ -596,16 +598,11 @@ Exit.Departure = function(nextPhase)
 	Registry.StationService.ReleaseAfter(Tuning.Motion.DepartureLingerSeconds)
 end
 
-Enter.Terminus = function()
-	Registry.StationService.Dock()
-	Registry.TrainService.SetDoors(true)
-	Registry.CrewService.MarkTerminus()
-	Registry.HaulService.Open()
-	NetService.FireAll("Notify", "Station", "Terminus. End of the line. You made it.")
-end
-
 Enter.RunEnd = function(previous, outcome)
-	state.outcome = outcome or (if previous == "Terminus" then "Victory" else "Wiped")
+	-- the last stop departed with someone aboard is a Victory; the strongbox settles in PayRun
+	local finished = previous == "Departure" and state.lineEnd and Registry.CrewService.AliveCount() > 0
+	state.lineEnd = false
+	state.outcome = outcome or (if finished then "Victory" else "Wiped")
 	Registry.HazardDirector.Stop()
 	Registry.HollowService.Clear()
 	local finalOutcome = state.outcome :: Types.Outcome
@@ -624,7 +621,7 @@ Enter.RunEnd = function(previous, outcome)
 		state.runId
 	)
 	local text = {
-		Victory = "The train reached the Terminus.",
+		Victory = "The last stop is behind you. The strongbox is opened and the haul paid out.",
 		Wiped = "The whole crew was lost.",
 		CashedOut = "The last of the crew cashed out. The line closes behind them.",
 		Derailed = "The train broke down for good and was lost.",
@@ -681,6 +678,9 @@ local function tick()
 		if state.phase == "Departure" and state.village then
 			nextPhase = "Cruise" -- the Emergency Village: back on the interrupted trip
 		end
+		if state.phase == "Departure" and nextPhase == "RunEnd" then
+			state.lineEnd = true -- Exit.Departure resolves the last stop, Enter.RunEnd pays it out
+		end
 		transition(nextPhase, nil)
 	end
 end
@@ -722,7 +722,7 @@ end
 
 function RunDirector.ShortenStop(_player: Player): (boolean, string?)
 	local info = state.info
-	if state.phase ~= "Dwell" or info == nil or info.terminus or state.village ~= nil then
+	if state.phase ~= "Dwell" or info == nil or state.village ~= nil then
 		return false, "not_dwell"
 	end
 	local original = info.originalDwell or info.dwell
@@ -874,7 +874,7 @@ function RunDirector.NextStop(): number
 	return state.nextStop
 end
 
--- The run's stops before the Terminus (Short or Long Line).
+-- The run's stops (Short or Long Line).
 function RunDirector.StopCount(): number
 	return state.stopCount
 end

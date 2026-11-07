@@ -108,7 +108,7 @@ describe("First Brass purchase", function()
 			tally.coalDelivered = coal
 			tally.partsDelivered = parts
 			tally.relicBrass = relic
-			tally.reachedTerminus = won
+			tally.reachedEnd = won
 			local payout = Economy.payout(tally, {
 				outcome = if won then "Victory" else "Wiped",
 				dailyBonus = daily,

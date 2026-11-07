@@ -9,7 +9,7 @@ local Difficulty = require(script.Parent.Difficulty)
 
 local Tuning = {
 	Run = {
-		StationCount = 10, -- the Long Line's stops before the Terminus: the most any run has
+		StationCount = 10, -- the Long Line's stops: the most any run has
 		-- route lengths (Logic/Routes, Design step 10 FIXED); a run's own is run.stopCount
 		Routes = table.freeze({ Short = 5, Long = 10 }),
 		-- Short Line stop k reads the Long Line's stop m(k) for every stop-indexed difficulty input
@@ -20,7 +20,6 @@ local Tuning = {
 		CountdownSeconds = 10,
 		BoardingSeconds = 4,
 		JunctionSeconds = 20,
-		FinalJunctionSeconds = 8, -- the last junction has a single option: the Terminus
 		CruiseBaseSeconds = 18,
 		CruiseSecondsPerKm = 6,
 		ArrivalSeconds = 10,
@@ -31,10 +30,8 @@ local Tuning = {
 		-- after this stop departs, on a line that runs past it, each living crew member aboard may cash
 		-- out through the junction (Logic/CashOut; launch hardening step 4)
 		CashOutStop = 5,
-		TerminusSeconds = 8,
 		RunEndSeconds = 12,
 		JoinInProgressMaxStation = 6,
-		TerminusDistanceKm = 5,
 		RouteOptionCount = 2,
 		WideJunctions = { [4] = true, [8] = true }, -- legs that offer three options
 	},
@@ -285,15 +282,14 @@ local Tuning = {
 		StopHours = 0.15, -- share of a leg's night that passes while the train stands at its stop
 		-- Time of day by run progress (legs travelled). Hours keep counting past 24 so the
 		-- night interpolates forward. mode: Stop = after `at` legs, Share = at that share of
-		-- the run, End = `at` legs before the Terminus.
+		-- the run, End = `at` legs before the last stop.
 		Sky = {
 			{ mode = "Stop", at = 0, hour = 18.3 }, -- the lobby: the sun just touching the horizon
 			{ mode = "Stop", at = 1, hour = 18.9 }, -- first stop: sunset embers
 			{ mode = "Stop", at = 2, hour = 19.6 }, -- second stop: the last blue light
 			{ mode = "Share", at = 0.4, hour = 22 },
 			{ mode = "Share", at = 0.65, hour = 26 }, -- two in the morning
-			{ mode = "End", at = 1, hour = 28.9 }, -- the last stop before dawn
-			{ mode = "End", at = 0, hour = 30.5 }, -- the Terminus at sunrise
+			{ mode = "End", at = 0, hour = 28.9 }, -- the last stop: the small hours, the moon pale and low
 		},
 		-- Set pieces. length in studs along the track; reach is the |z| band kept clear of
 		-- ordinary props (sided pieces use one side, the others both); pad extends it along x.
@@ -806,7 +802,6 @@ local Tuning = {
 			RailwayHotel = { tint = { 222, 222, 212 }, saturation = 0.08 }, -- faded olive
 			PostTown = { tint = { 214, 220, 224 }, saturation = 0.1 }, -- slate
 			EmergencyVillage = { tint = { 218, 220, 206 }, saturation = 0.12 }, -- mud olive
-			Terminus = { tint = { 224, 230, 232 }, saturation = 0.08 }, -- dawn coming
 		},
 		GradeRamp = 8, -- studs past the platform edge over which the grade comes in
 		-- what all this may cost: one light per player (their lantern), one shadow-casting

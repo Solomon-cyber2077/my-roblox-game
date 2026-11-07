@@ -44,13 +44,13 @@ local RunTicketModel = {}
 RunTicketModel.MaxStats = 3
 
 local HERO: { [string]: string } = {
-	Victory = "REACHED THE TERMINUS",
+	Victory = "ALL STOPS MADE",
 	Wiped = "THE CREW WAS LOST",
 	Derailed = "THE TRAIN WAS LOST",
 	CashedOut = "THE CREW CASHED OUT",
 }
 
-local MADE_IT = { title = "MADE IT", line = "You rode it to the end of the line." }
+local MADE_IT = { title = "MADE IT", line = "You rode it to the last stop." }
 local CASHED_OUT = {
 	title = "CASHED OUT",
 	line = `You walked away at stop {Tuning.Run.CashOutStop} with your pay and your life.`,

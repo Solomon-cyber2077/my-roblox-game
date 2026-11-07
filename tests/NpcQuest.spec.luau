@@ -53,11 +53,11 @@ describe("NpcQuest", function()
 		expect(NpcQuest.canDeliver(rq, false)).toBe(false)
 	end)
 
-	it("completes the Survive errand at the Terminus, not a Find", function()
+	it("completes the Survive errand at the last stop, not a Find", function()
 		local find = NpcQuest.start("Mabel", { 1 }) :: any
 		local survive = NpcQuest.start("Mabel", { 3 }) :: any
-		expect(NpcQuest.completesAtTerminus(find)).toBe(false)
-		expect(NpcQuest.completesAtTerminus(survive)).toBe(true)
+		expect(NpcQuest.completesAtLineEnd(find)).toBe(false)
+		expect(NpcQuest.completesAtLineEnd(survive)).toBe(true)
 		expect(NpcQuest.shouldSpawn(NpcQuest.accept(survive), 5)).toBe(false)
 	end)
 

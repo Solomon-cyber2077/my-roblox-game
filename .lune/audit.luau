@@ -903,11 +903,8 @@ for _, scene in scenes do
 				})
 			end
 			World.pieces = pieces
-			local arch = if biome == "Coast"
-				then Stations.List.Terminus
-				else Stations.List[Stations.Order[(b - 1) % #Stations.Order + 1]]
-			local sinkhole =
-				Journey.sinkhole(SINK_AT, arch.length, arch.depth, arch.id, arch.terminus == true)
+			local arch = Stations.List[Stations.Order[(b - 1) % #Stations.Order + 1]]
+			local sinkhole = Journey.sinkhole(SINK_AT, arch.length, arch.depth, arch.id)
 			World.sinkholes = { sinkhole }
 
 			local list: { Item } = {}

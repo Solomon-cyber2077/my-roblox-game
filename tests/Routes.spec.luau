@@ -110,8 +110,9 @@ describe("Route durations (the report's model)", function()
 		expect(mean("Short")).toBeBetween(23, 26)
 	end)
 
-	it("puts mixed bell use on the Short Line at about 21-23 min", function()
-		expect(mean("Short", { share = 0.5, fraction = 0.6 })).toBeBetween(20, 23)
+	-- 21-23 before the run ended at the last stop; without the extra closing leg it models about 20
+	it("puts mixed bell use on the Short Line at about 19-23 min", function()
+		expect(mean("Short", { share = 0.5, fraction = 0.6 })).toBeBetween(19, 23)
 		expect(mean("Short", { share = 0.4, fraction = 1 })).toBeLessThan(mean("Short"))
 	end)
 

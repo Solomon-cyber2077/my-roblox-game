@@ -930,7 +930,7 @@ Builders.Timetable = function(ctx)
 		{ "20.40", "Brannoc", "CANCELLED" },
 		{ "22.15", "Gallowmere", "CANCELLED" },
 		{ "02.00", "------------", "DO NOT WAIT" },
-		{ "06.30", "The Terminus", "ON TIME" },
+		{ "06.30", "Coldharbour Depot", "ON TIME" },
 	}
 	for i, row in rows do
 		local y = 80 + (i - 1) * 31

@@ -3,14 +3,14 @@
 	Stop rewards, banked once (launch hardening step 2). A crew member's Brass and XP are paid as each
 	stop departs, so leaving or dropping mid-run keeps what was already earned.
 
-	  earned(tally)                      the base Brass so far: Economy.payout with no Terminus line,
+	  earned(tally)                      the base Brass so far: Economy.payout with no line's-end bonus,
 	                                     tier bonus, charter rate or daily bonus
 	  grant(bank, stop, tally, solo)     what stop `stop` adds to the bank; 0, 0 if it was banked already
 	  remainder(bank, brass, xp)         what RunEnd still owes once its full payout is known
 
 	Grants are cumulative: each one tops the bank up to the run's earnings so far, so the coal and parts
 	remainders (per 10, per 5) are never lost between stops and the total never goes past the run's
-	payout. The Terminus line, the tier bonus and the first-run-of-the-day bonus are left for RunEnd:
+	payout. The line's-end bonus, the tier bonus and the first-run-of-the-day bonus are left for RunEnd:
 	only a crew member who sees the run out gets them.
 ]]
 

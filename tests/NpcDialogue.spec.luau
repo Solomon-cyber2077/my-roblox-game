@@ -72,7 +72,7 @@ describe("NpcDialogue", function()
 	end)
 
 	it("reacts to run state in priority order", function()
-		local flags = { CrewDown = true, LowSupplies = true, NearTerminus = true }
+		local flags = { CrewDown = true, LowSupplies = true, NearEnd = true }
 		local seen = { mabel_greeting = true }
 		expect(pick({ inRun = true, flags = flags, seen = seen })).toBe("mabel_down")
 		expect(pick({ inRun = true, flags = flags, seen = seen, heardThisRun = { mabel_down = true } })).toBe(
@@ -80,7 +80,7 @@ describe("NpcDialogue", function()
 		)
 		expect(pick({ inRun = true, flags = { Danger = true }, seen = seen })).toBe("mabel_danger")
 		expect(pick({ inRun = true, flags = { CloseCall = true }, seen = seen })).toBe("mabel_closecall")
-		expect(pick({ inRun = true, flags = { NearTerminus = true }, seen = seen })).toBe("mabel_terminus")
+		expect(pick({ inRun = true, flags = { NearEnd = true }, seen = seen })).toBe("mabel_terminus")
 	end)
 
 	it("celebrates a finished errand before anything else", function()

@@ -841,7 +841,7 @@ function Sim.run(mods, cfg)
 		end
 	end
 
-	for leg = 1, stopCount + 1 do
+	for leg = 1, stopCount do
 		local alive = 0
 		for _, p in crew do
 			if p.status == "Playing" then
@@ -871,17 +871,6 @@ function Sim.run(mods, cfg)
 			end
 			break
 		end
-		if option.archetype == "Terminus" or leg > stopCount then
-			outcome, cause = "Victory", "Reached the Terminus"
-			session.tally.reachedTerminus = true
-			stopsReached = stopCount
-			for _, p in crew do
-				if p.status == "Playing" then
-					feel(p, "fun", 0.35)
-				end
-			end
-			break
-		end
 		local arch = mods.Stations.List[option.archetype]
 		local params = mods.DifficultyModel.params(d, arch, alive, train.upgrades, level)
 		local stopSeed = Rng.derive(runSeed, "station", leg)
@@ -897,6 +886,21 @@ function Sim.run(mods, cfg)
 		table.insert(session.stops, record)
 		stopsReached = leg
 		prev = option.archetype
+		if leg == stopCount then
+			-- leaving the route's last stop ends the run: whoever is still playing rode it to the end
+			local standing = false
+			for _, p in crew do
+				if p.status == "Playing" then
+					standing = true
+					feel(p, "fun", 0.35)
+				end
+			end
+			if standing then
+				outcome, cause = "Victory", "Rode the line to its last stop"
+				session.tally.reachedEnd = true
+			end
+			break
+		end
 
 		-- the stop-five cash-out (Logic/CashOut): each living crew member aboard chooses at the junction;
 		-- a missed card means ride on

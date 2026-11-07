@@ -19,9 +19,9 @@ local CHROME = 64 + 12 + 20 + 8 -- header and body insets, the receipt's margins
 
 local TITLES: { [string]: { text: string, color: Color3, line: string } } = {
 	Victory = {
-		text = "END OF THE LINE",
+		text = "ALL STOPS MADE",
 		color = Theme.Color.goInk,
-		line = "The train reached the Terminus.",
+		line = "The strongbox is opened and the haul paid out.",
 	},
 	Wiped = { text = "NO ONE MADE IT", color = Theme.Color.signal, line = "The whole crew was lost." },
 	Derailed = {
@@ -86,7 +86,7 @@ end
 --[[
 	A railway company's receipt: a header band, the outcome struck with a rubber stamp, ledger
 	lines with dotted leaders, a double totals rule, the brass/XP strip on an iron plate, and a
-	tear-off foot. Lost runs are lit by the blood moon; the Terminus by a warm lamp.
+	tear-off foot. Lost runs are lit by the blood moon; a finished line by a warm lamp.
 ]]
 function Summary.show(data: { [string]: any })
 	if data.haul then

@@ -2,7 +2,6 @@ local LayoutGen = require(Shared.Logic.LayoutGen)
 local Stations = require(Shared.Config.Stations)
 
 local ALL = table.clone(Stations.Order)
-table.insert(ALL, "Terminus")
 
 local function covers(plan)
 	local hits = {}
@@ -248,9 +247,7 @@ describe("LayoutGen", function()
 						end
 					end
 				end
-				if not arch.terminus then
-					expect(count).toBeGreaterThan(2)
-				end
+				expect(count).toBeGreaterThan(2)
 			end
 		end
 	end)

@@ -4,7 +4,7 @@
 	weather and the sky objects (Scenery/Heavens) on the client, then every frame:
 
 	  * gathers what the sky depends on: the hour (Logic/Journey maps run progress to
-	    dusk at the lobby, night mid-run and sunrise at the Terminus), the biome mix
+	    dusk at the lobby, night mid-run and the small hours at the last stop), the biome mix
 	    under the camera, a tunnel's dark, a station's fog bank, Last Call, dread (a
 	    Hollow close by), the spectator's view and a flare's flash
 	  * asks Logic/Omens what the sky is doing at this server time: an omen, a

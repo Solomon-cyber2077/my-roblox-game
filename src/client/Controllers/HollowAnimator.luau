@@ -698,11 +698,7 @@ function HollowAnimator.Start()
 		local position = if playerRoot and playerRoot:IsA("BasePart") then playerRoot.Position else nil
 		local run = Registry.StateController.Get({ "run" })
 		local grime = if run
-			then GrimeLevel.forStop(
-				run.nextStop or 1,
-				run.stopCount or Tuning.Run.StationCount,
-				run.station ~= nil and run.station.terminus == true
-			)
+			then GrimeLevel.forStop(run.nextStop or 1, run.stopCount or Tuning.Run.StationCount)
 			else 0
 		-- secondary motion (look-at, lean) for the nearest FullMotion Hollows within SimpleBeyond
 		local camera = Workspace.CurrentCamera

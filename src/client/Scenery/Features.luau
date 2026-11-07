@@ -15,7 +15,7 @@
 	  Graveyard, Lake, Crossing
 	  Sinkhole     the void a station docks over: rim cliffs, an ember-lit abyss
 	               and mist layers, and past its far rim a treeline, hills and a
-	               mountain massif (a harbour at the Terminus)
+	               mountain massif
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -27,7 +27,6 @@ local Rng = require(Shared.Util.Rng)
 local Tuning = require(Shared.Config.Tuning)
 
 local Bands = require(script.Parent.Bands)
-local Biomes = require(script.Parent.Biomes)
 local Props = require(script.Parent.Props)
 local World = require(script.Parent.World)
 
@@ -1108,54 +1107,6 @@ end
 
 -- Station sinkholes -------------------------------------------------------------------------------------------------
 
-local function harbour(model: Model, sinkhole: Journey.Sinkhole, rng: Rng.Rng)
-	local r = sinkhole.rect
-	local len = r.x1 - r.x0
-	local stone = Kit.jitter(STONE, 0.05, rng:next())
-	-- the basin fills the cut exactly, level with the open sea it opens onto
-	local water = part(
-		model,
-		Vector3.new(len, Bands.SeaThickness, r.z1 - r.z0),
-		CFrame.new(len / 2, Bands.SeaNear - Bands.SeaThickness / 2, (r.z0 + r.z1) / 2),
-		rgb(44, 78, 92),
-		M.SmoothPlastic
-	)
-	water.Reflectance = 0.25
-	-- quays along both ends, from under the platform's edge out past the basin
-	for _, x in { -7.5, len + 7.5 } do
-		part(
-			model,
-			Vector3.new(16, 22, r.z1 - r.z0 + 41),
-			CFrame.new(x, -23, (r.z0 - 1 + r.z1 + 40) / 2),
-			stone,
-			M.Cobblestone,
-			true
-		)
-		for z = r.z0 + 20, r.z1, 30 do
-			Kit.post(
-				model,
-				1.4,
-				1.2,
-				CFrame.new(x + (if x < 0 then 6 else -6), -11.3, z),
-				IRON,
-				{ material = M.Metal, collide = false, shadow = false }
-			)
-		end
-	end
-	-- the lighthouse on a rock rising out of the water off the quay's end
-	local coast = Biomes.get("Coast")
-	earth(
-		part(
-			model,
-			Vector3.new(20, 4, 20),
-			CFrame.new(len + 30, -14.5, r.z1 + 30) * Kit.angles(0, 20, 0),
-			Kit.jitter(coast.rock, 0.06, rng:next()),
-			M.Rock
-		)
-	)
-	Props.lighthouse(model, CFrame.new(len + 30, -12, r.z1 + 30), { rng = rng, biome = coast, shadow = true })
-end
-
 --[[
 	Past a sinkhole's far rim (World.backdrop): a treeline of tall trees along the lip, rolling
 	hills behind it and a mountain massif behind them, so the dark beyond a station has a
@@ -1420,11 +1371,7 @@ end
 
 function Features.buildSinkhole(sinkhole: Journey.Sinkhole, model: Model)
 	local rng = Rng.new(math.floor(sinkhole.center) + World.seed)
-	if sinkhole.terminus then
-		harbour(model, sinkhole, rng)
-	else
-		abyss(model, sinkhole, rng)
-	end
+	abyss(model, sinkhole, rng)
 end
 
 function Features.farReach(kind: string): boolean

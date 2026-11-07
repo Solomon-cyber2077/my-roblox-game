@@ -89,7 +89,7 @@ function Catalog.canBuyWithBrass(owned: OwnedSet, brass: number, id: string, day
 	return "Ok", price
 end
 
--- A status item's record, as the Outfitter and the Roll show it: "3 Terminus arrivals", and both
+-- A status item's record, as the Outfitter and the Roll show it: "3 last stops reached", and both
 -- halves of an AND ("1 Long Line finish + 50 stops departed").
 function Catalog.recordText(def: CosmeticDef): string?
 	local record = def.record

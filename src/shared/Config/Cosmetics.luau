@@ -321,10 +321,10 @@ local Catalog: { CosmeticDef } = {
 	},
 	{
 		id = "livery_terminus",
-		name = "Terminus Gold",
+		name = "Last Stop Gold",
 		category = "Livery",
 		rarity = "Legendary",
-		description = "Only for crews who reached the end of the line.",
+		description = "Only for crews who rode a line to its last stop.",
 		milestone = "EndOfTheLine",
 		look = {
 			body = { 176, 136, 62 },

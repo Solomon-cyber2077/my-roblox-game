@@ -109,7 +109,7 @@ export type Plan = {
 	-- tiles nobody walks through (structures and barriers), keyed gz * cols + gx; enterable
 	-- buildings are not in it (their doors let you through)
 	blocked: { [number]: boolean },
-	-- the clear spot at the very back kept for the payroll crate (nil at the Terminus and the
+	-- the clear spot at the very back kept for the payroll crate (nil at the
 	-- Emergency Village)
 	payroll: { x: number, z: number, slab: number }?,
 }
@@ -313,7 +313,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	-- the edge. Nothing is built, dropped or stood there.
 	local keepClear: { [number]: boolean } = {}
 	local payrollCell: { number }? = nil
-	if not arch.terminus and not arch.emergency then
+	if not arch.emergency then
 		local mid = cols // 2
 		payrollCell = { mid, rows - 2 }
 		for gx = mid - Stations.Payroll.HalfTiles, mid + Stations.Payroll.HalfTiles do
@@ -844,9 +844,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		table.insert(taken, { x - hx, x + hx, z - hz, z + hz })
 	end
 	-- the Emergency Village has no station: no canopy, lamps, benches, boards or clutter
-	local canopy = if arch.terminus or arch.emergency
-		then 0
-		else math.clamp(half - 60, 30, Stations.CanopyHalfSpan)
+	local canopy = if arch.emergency then 0 else math.clamp(half - 60, 30, Stations.CanopyHalfSpan)
 	if canopy > 0 then
 		table.insert(props, { kind = "Canopy", slab = 1, x = 0, z = 0, rot = 0, size = canopy * 2 })
 		for _, x in Stations.canopyColumns(canopy) do
@@ -967,7 +965,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 		The sinkhole edge: on every open edge tile an unseen stop RailBack in from the edge
 		(StationDressing EdgeMark). The far stop ends short of the side ones.
 	]]
-	if not arch.terminus then
+	do
 		local E = Stations.Edge
 		local marks: { Prop } = {}
 		local cornerX = half - E.RailBack - 0.4
@@ -1084,7 +1082,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 			onTile("Lamp", 0, true)
 		end
 	end
-	if not arch.terminus then
+	do
 		for _ = 1, cols // 4 do
 			onTile("DecorCrates", 3)
 		end
@@ -1144,7 +1142,7 @@ function LayoutGen.generate(archetypeId: string, seed: number, lootMul: number):
 	-- and then a sight) stand on open tiles, Cover.Spacing apart, until no stretch of yard is
 	-- far from something to run to. A cover tile's four neighbours are open ground and no two cover tiles touch, so a
 	-- Hollow can always go round. The first yard row is left to the threshold.
-	if layout and not arch.terminus then
+	if layout then
 		local function feature(gx: number, gz: number): boolean
 			if gx < 0 or gx >= cols or gz < 0 or gz >= rows then
 				return false

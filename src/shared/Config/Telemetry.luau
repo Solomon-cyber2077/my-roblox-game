@@ -20,7 +20,6 @@ local function stops(): { string }
 	for n = 1, Tuning.Run.StationCount do
 		table.insert(out, tostring(n))
 	end
-	table.insert(out, "terminus")
 	table.insert(out, "between") -- on the line after a stop resolved, before the next one opens
 	table.insert(out, "village") -- the Emergency Village: between stops, not one of them
 	return table.freeze(out)
@@ -37,7 +36,7 @@ local Vocab = table.freeze({
 	Archetype = Stations.Order,
 	StopOutcome = list({ "cleared", "wiped", "derailed", "aborted", "cashedout" }),
 	RunOutcome = list({ "victory", "wiped", "derailed", "aborted", "cashedout" }),
-	-- a player's own end of a run: reached the Terminus, went down (any cause), or the run ended
+	-- a player's own end of a run: rode the line to its last stop, went down (any cause), or the run ended
 	-- around them still standing (derailed, aborted)
 	PlayerOutcome = list({ "victory", "eliminated", "derailed", "aborted", "cashed_out" }),
 	Bell = list({ "none", "all", "half" }),
@@ -68,7 +67,6 @@ local Vocab = table.freeze({
 		"Dwell",
 		"LastCall",
 		"Departure",
-		"Terminus",
 		"RunEnd",
 	}),
 	Milestone = list({ "control", "run_start", "first_stop", "first_hollow_seen" }),

@@ -14,7 +14,7 @@
 	  - the offer lasts the junction; no answer by then means ride on
 	  - the choice is final: a second press changes nothing, and nobody cashes out after the window
 	  - going down or leaving the game before choosing is the same as at any other stop
-	  - cashing out pays what is earned (no Terminus line, no share of the haul) and puts the player
+	  - cashing out pays what is earned (no line's-end bonus, no share of the haul) and puts the player
 	    in the Depot Hall; another run in this server waits until this crew's run ends
 	  - when the last living crew member cashes out the run ends with outcome CashedOut
 ]]

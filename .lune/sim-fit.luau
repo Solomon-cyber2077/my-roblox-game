@@ -38,7 +38,6 @@ local RUN_PHASES = {
 	Dwell = true,
 	LastCall = true,
 	Departure = true,
-	Terminus = true,
 }
 -- metric -> the sim knob a gap points at (lib/Personas, lib/PlaytestSim)
 local KNOBS = {

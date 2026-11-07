@@ -109,16 +109,13 @@ local function write(all: { Lines })
 	local stopCount = run.stopCount or Tuning.Run.StationCount
 	local title, detail, note = "", "", ""
 	if phase == "Boarding" then
-		title, detail = "All aboard", `{stopCount} stops to the Terminus`
-	elseif phase == "Terminus" then
-		title, detail = "Terminus", "end of the line"
+		title, detail = "All aboard", `{stopCount} stops on the line`
 	elseif phase == "Junction" and destination == nil then
 		title, detail = "Junction ahead", "vote a line. mind the danger"
 	elseif (phase == "Cruise" or phase == "Junction") and destination then
 		title = `Next: {destination.name}`
-		detail = if destination.terminus
-			then "the Terminus. hold on"
-			elseif destination.sealed then `{destination.distanceKm} km   danger unknown`
+		detail = if destination.sealed
+			then `{destination.distanceKm} km   danger unknown`
 			else `{destination.distanceKm} km   danger {marks(destination.tier)}`
 	elseif station then
 		title = station.name

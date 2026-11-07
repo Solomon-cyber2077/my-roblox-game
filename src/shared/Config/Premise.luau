@@ -5,8 +5,8 @@
 
 	The Depot is the last lit place. The Company sends its young down the dead line on the last
 	train to strip the stations for coal, parts and valuables; the trips delay the end. Those who
-	come back from the Terminus go on the Roll; those entered in the ledger as left behind are not
-	recalled. The Hollows are never explained, and nothing here says anyone comes back from death.
+	keep to the Company's routes and stick together; those entered in the ledger as left behind are not
+	recalled. Nobody is chosen for a fault: they are simply chosen. The Hollows are never explained, and nothing here says anyone comes back from death.
 ]]
 
 return table.freeze({
@@ -25,12 +25,12 @@ return table.freeze({
 		Apply = "Coldharbour Depot · Apply to the Clerk.",
 	}),
 
-	-- the honours board in the hall (Builders/LobbyBuilder) and the Ledger
-	Roll = "ROLL OF THE TERMINUS",
-	RollLines = table.freeze({
-		"Hands who came back from the Terminus",
-		"Their names, titles and liveries",
-		"Open the Ledger to see your record",
+	-- the route board in the hall (Builders/LobbyBuilder)
+	Board = "THE COMPANY'S LINES",
+	BoardLines = table.freeze({
+		"Short Line  ·  five stations",
+		"Long Line  ·  ten stations",
+		"Keep to the route. Keep together.",
 	}),
 
 	-- the departure board (UI/Lobby)

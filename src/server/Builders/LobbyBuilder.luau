@@ -1077,7 +1077,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local kioskLamp = Kit.neon(model, Vector3.new(1, 1, 1), at(kx, 10, kz), C.warm, Enum.PartType.Ball)
 	fixtureLight(kioskLamp, IL.Hall.Kiosk)
 
-	-- The Roll of the Terminus (Line Mastery): an honours board in a carved frame, gilt on it --------------
+	-- The Company's lines: a route board in a carved frame, gilt on it ------------------------------------
 	local lx, lz = -54, 36
 	block(Vector3.new(18, 13, 1.2), at(lx, 8.5, lz + 4.2), C.SHELL_MAHOGANY, Enum.Material.Wood)
 	block(
@@ -1136,13 +1136,13 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 			return t
 		end
 		text(
-			Premise.Roll,
+			Premise.Board,
 			Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold),
 			gold,
 			UDim2.fromScale(0.08, 0.04),
 			UDim2.fromScale(0.84, 0.17)
 		)
-		for i, line in Premise.RollLines do
+		for i, line in Premise.BoardLines do
 			text(
 				line,
 				Font.new("rbxasset://fonts/families/Oswald.json"),
@@ -2130,8 +2130,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	line.TextScaled = true
 	line.TextWrapped = true
 	line.TextColor3 = Color3.fromRGB(30, 26, 22)
-	line.Text = "That is the Roll of the Terminus. Every Hand who came back from the end of the line is "
-		.. "painted up there in gilt, with their title and livery. Step up and read your record."
+	line.Text = "That board shows the Company's lines, the short and the long. Keep to the route, keep "
+		.. "together, and bring the haul home. The Ledger beneath it holds your record."
 	line.Parent = paper
 
 	local spawnPoints: { CFrame } = {}

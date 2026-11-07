@@ -122,7 +122,6 @@ function Rules.wearAt(stop: number, phase: string): boolean
 			or phase == "Dwell"
 			or phase == "LastCall"
 			or phase == "Departure"
-			or phase == "Terminus"
 		)
 end
 

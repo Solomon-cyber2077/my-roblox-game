@@ -19,7 +19,6 @@ describe("Journey biomes", function()
 			expect(Journey.biomeFor(id) ~= nil).toBe(true)
 		end
 		expect(Journey.biomeFor("Halt")).toBe("Farmland")
-		expect(Journey.biomeFor("Terminus")).toBe("Coast")
 		expect(Journey.biomeFor(nil)).toBe("Corridor")
 	end)
 
@@ -178,20 +177,20 @@ describe("Journey geometry", function()
 end)
 
 describe("Journey sky", function()
-	it("runs from dusk at the lobby through the night to sunrise at the Terminus", function()
+	it("runs from dusk at the lobby through the night to the small hours at the last stop", function()
 		local stops = Tuning.Run.StationCount
 		expect(Journey.hour(0, stops)).toBeCloseTo(18.3, 1e-6)
 		expect(Journey.hour(1, stops)).toBeCloseTo(18.9, 1e-6)
 		expect(Journey.hour(2, stops)).toBeCloseTo(19.6, 1e-6)
 		expect(Journey.clock(Journey.hour(stops, stops))).toBeCloseTo(4.9, 1e-6)
-		expect(Journey.clock(Journey.hour(stops + 1, stops))).toBeCloseTo(6.5, 1e-6)
+		expect(Journey.hour(stops + 1, stops)).toBeCloseTo(28.9, 1e-6) -- no sunrise: the night holds
 		local last = -1
-		for p = 0, stops + 1, 0.25 do
+		for p = 0, stops, 0.25 do
 			local hour = Journey.hour(p, stops)
 			expect(hour).toBeAtLeast(last)
 			last = hour
 		end
-		local midnight = Journey.clock(Journey.hour((stops + 1) * 0.55, stops))
+		local midnight = Journey.clock(Journey.hour(stops * 0.55, stops))
 		expect(midnight < 4 or midnight > 22).toBe(true)
 	end)
 

@@ -2,7 +2,7 @@
 --[[
 	The stop-five cash-out (Logic/CashOut, launch hardening step 4): a paper card under the junction
 	ballot for each crew member the server offered it to. CASH OUT takes what is earned and steps off
-	at the Depot Hall; RIDE ON (or no answer before the junction ends) stays aboard for the Terminus.
+	at the Depot Hall; RIDE ON (or no answer before the junction ends) stays aboard to the last stop.
 	A brass bar along the foot runs down with the offer. The pay packet (Theme.Image.payPacket) sits
 	on the left once uploaded.
 ]]
@@ -33,7 +33,7 @@ local ICON = 104
 local COMPACT = { maxWidth = 400, height = 120, pad = 10, margin = 8, title = 15, body = 12 }
 local COMPACT_TITLE = `STOP {Tuning.Run.CashOutStop} - CASH OUT OR RIDE ON?`
 local COMPACT_BODY =
-	`Cash out: keep what you earned. Ride on: +{Tuning.Economy.BrassVictoryAlive} Brass at the Terminus.`
+	`Cash out: keep what you earned. Ride on: +{Tuning.Economy.BrassVictoryAlive} Brass at the last stop.`
 
 function CashOut.mount(gui: ScreenGui)
 	local State = Registry.StateController
@@ -82,7 +82,7 @@ function CashOut.mount(gui: ScreenGui)
 	})
 	title.Parent = card
 	local body = Ui.text({
-		Text = `Cash out: keep what you have earned and step off at the Depot. The next run here leaves once this crew is done.\nRide on: the Terminus pays {Tuning.Economy.BrassVictoryAlive} Brass more.`,
+		Text = `Cash out: keep what you have earned and step off at the Depot. The next run here leaves once this crew is done.\nRide on: the last stop pays {Tuning.Economy.BrassVictoryAlive} Brass more.`,
 		TextSize = 13,
 		Color = Theme.Color.ink,
 		Wrapped = true,
@@ -157,7 +157,7 @@ function CashOut.mount(gui: ScreenGui)
 			title.TextSize, body.TextSize = 21, 13
 			title.Position, title.Size = UDim2.fromOffset(textLeft, 12), UDim2.new(1, -textLeft - 16, 0, 26)
 			body.Text =
-				`Cash out: keep what you have earned and step off at the Depot. The next run here leaves once this crew is done.\nRide on: the Terminus pays {Tuning.Economy.BrassVictoryAlive} Brass more.`
+				`Cash out: keep what you have earned and step off at the Depot. The next run here leaves once this crew is done.\nRide on: the last stop pays {Tuning.Economy.BrassVictoryAlive} Brass more.`
 			body.Position, body.Size = UDim2.fromOffset(textLeft, 42), UDim2.new(1, -textLeft - 16, 0, 72)
 			-- 56 tall: ~9.3 mm on an iPad at our UI scale (the thumb minimum), roomy with a mouse
 			cashOut.Size, cashOut.Position = UDim2.fromOffset(150, 56), UDim2.new(1, -332, 1, -70)

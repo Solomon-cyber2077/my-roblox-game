@@ -220,13 +220,15 @@ local function onPhase(nextPhase: string)
 		task.spawn(Safe.call, "NpcService.startRun", startRun)
 	elseif nextPhase == "Dwell" then
 		Safe.call("NpcService.hideItems", hideItems)
-	elseif nextPhase == "Terminus" then
-		for _, rq in runQuests do
-			if NpcQuest.completesAtTerminus(rq) then
-				complete(rq)
+	elseif nextPhase == "RunEnd" then
+		-- the last stop departed: errands that ride the whole line are done
+		if StateService.Get({ "run", "outcome" }) == "Victory" then
+			for _, rq in runQuests do
+				if NpcQuest.completesAtLineEnd(rq) then
+					complete(rq)
+				end
 			end
 		end
-	elseif nextPhase == "RunEnd" then
 		endRun()
 	elseif nextPhase == "Lobby" then
 		table.clear(runQuests)
@@ -272,7 +274,7 @@ local function flags(player: Player): { [string]: boolean }
 	end
 	local tally = Registry.CrewService.Tallies()[player]
 	out.CloseCall = tally ~= nil and tally.closeCalls > 0
-	out.NearTerminus = Registry.RunDirector.NextStop() >= Registry.RunDirector.StopCount()
+	out.NearEnd = Registry.RunDirector.NextStop() >= Registry.RunDirector.StopCount()
 	return out
 end
 
