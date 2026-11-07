@@ -10,8 +10,9 @@
 	  belt     a guard's patent-leather shoulder belt and pouch
 	  skirt    nil for trousers and boots; "Plain" or "Bustle" for a long skirt
 	  hat      "Top", "Bowler", "Peaked" (company cap with a badge), "Lace" (a cap), "Bonnet"
-	           or "Visor" (a clerk's eyeshade); nil for bare-headed indoors
-	  prop     what they hold: "Punch", "Ledger", "Tape", "Lamp", "Pointer" or "Cloth"
+	           "Visor" (a clerk's eyeshade) or "Flat" (a newsboy's cap); nil for bare-headed indoors
+	  prop     what they hold: "Punch", "Ledger", "Tape", "Lamp", "Pointer", "Cloth", "Cane",
+	           "Papers" (a newsboy's bag), "Post" (a porter's satchel), "Reticule" or "Hanky"
 
 	A pose bends the figure: `lean` tips the body forward at the hips, `armL`/`armR` swing each
 	arm forward from the shoulder and `head` tips the head back up (all degrees).

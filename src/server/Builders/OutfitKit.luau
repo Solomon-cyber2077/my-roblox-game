@@ -44,6 +44,17 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		made.Material = material or M.SmoothPlastic
 		return made
 	end
+	-- a finishing touch: gone under the Performance setting (Controllers/DetailController)
+	local function fine(made: BasePart): BasePart
+		made:AddTag("Detail")
+		return made
+	end
+	-- the limb a piece rides on when the figure is worn by a walking body (Builders/PassengerFigure)
+	local function on(made: BasePart, limb: string): BasePart
+		made:SetAttribute("Limb", limb)
+		return made
+	end
+	local sole = Color3.fromRGB(18, 16, 14)
 
 	-- the skeleton: legs stand straight, the body tips forward at the hips by `lean`
 	local hip = cframe * CFrame.new(0, 2, 0) * pitch(-(p.lean or 0))
@@ -65,9 +76,26 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		for _, x in { -0.4, 0.4 } do
 			part(Vector3.new(0.5, 0.24, 0.6), cframe * CFrame.new(x, 0.12, -0.62), BOOTS, M.Leather)
 		end
+		-- the waistband, and the pressed pleats falling to the hem
+		part(Vector3.new(2.34, 0.1, 1.54), cframe * CFrame.new(0, 1.94, 0), Kit.shade(lower, 0.8))
+		for i = -2, 2 do
+			fine(
+				part(
+					Vector3.new(0.06, 1.5, 0.04),
+					cframe * CFrame.new(i * 0.42, 1.08, -0.77),
+					Kit.shade(lower, 0.78)
+				)
+			)
+		end
 		if look.skirt == "Bustle" then
 			part(Vector3.new(1.9, 1.0, 0.9), cframe * CFrame.new(0, 1.62, 0.92), lower)
 			ball(1.1, cframe * CFrame.new(0, 1.8, 1.18), Kit.shade(lower, 0.9), M.Fabric)
+			-- the draped overskirt swagged across the front, and the bow over the bustle
+			part(Vector3.new(2.34, 0.62, 0.06), cframe * CFrame.new(0, 1.55, -0.78), Kit.shade(lower, 1.18))
+			part(Vector3.new(2.34, 0.12, 0.08), cframe * CFrame.new(0, 1.24, -0.81), trim)
+			for _, x in { -0.28, 0.28 } do
+				fine(ball(0.34, cframe * CFrame.new(x, 2.02, 1.42), trim, M.Fabric))
+			end
 		end
 		if look.apron then
 			local apron = Kit.rgb(look.apron)
@@ -77,8 +105,30 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		end
 	else
 		for _, x in { -0.5, 0.5 } do
-			part(Vector3.new(0.96, 1.96, 0.96), cframe * CFrame.new(x, 1.0, 0), lower)
-			part(Vector3.new(1.0, 0.45, 1.15), cframe * CFrame.new(x, 0.225, -0.08), BOOTS, M.Leather)
+			part(Vector3.new(0.96, 1.68, 0.96), cframe * CFrame.new(x, 1.14, 0), lower) -- tucked into the boot
+			part(Vector3.new(1.0, 0.37, 1.15), cframe * CFrame.new(x, 0.265, -0.08), BOOTS, M.Leather)
+			-- welted sole, stacked heel and a polished toe cap
+			on(
+				part(Vector3.new(0.98, 0.08, 1.24), cframe * CFrame.new(x, 0.04, -0.08), sole, M.Leather),
+				if x > 0 then "Right Leg" else "Left Leg"
+			)
+			part(Vector3.new(0.7, 0.12, 0.14), cframe * CFrame.new(x, 0.14, 0.5), sole, M.Leather)
+			local cap = fine(
+				part(Vector3.new(0.9, 0.14, 0.04), cframe * CFrame.new(x, 0.2, -0.675), Kit.shade(BOOTS, 1.6))
+			)
+			cap.Material = M.SmoothPlastic
+			cap.Reflectance = 0.08
+			-- the pressed crease down the front of the trouser leg
+			fine(
+				part(
+					Vector3.new(0.03, 1.4, 0.02),
+					cframe * CFrame.new(x, 1.15, -0.49),
+					Kit.shade(lower, 0.72)
+				)
+			)
+			if look.cut == "Reefer" then -- company piping down the outside seam
+				part(Vector3.new(0.03, 1.04, 0.12), cframe * CFrame.new(x * 1.99, 0.97, 0), trim)
+			end
 		end
 	end
 
@@ -102,11 +152,39 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		)
 	end
 	if cut == "Frock" or cut == "Sack" then
+		-- the lapels, opening toward the shoulders
 		for _, side in { -1, 1 } do
 			part(
 				Vector3.new(0.42, 1.5, 0.06),
-				torso * CFrame.new(side * 0.72, 0.12, -0.555),
+				torso * CFrame.new(side * 0.72, 0.12, -0.555) * Kit.angles(0, 0, -side * 8),
 				Kit.shade(coat, 0.75)
+			)
+		end
+		if not look.waistcoat then -- the shirt front between them
+			part(Vector3.new(0.56, 1.0, 0.04), torso * CFrame.new(0, 0.45, -0.52), SHIRT)
+		end
+	end
+	if cut == "Frock" and look.waistcoat then -- a linen square in the breast pocket
+		fine(
+			part(
+				Vector3.new(0.22, 0.12, 0.04),
+				torso * CFrame.new(-0.66, 0.6, -0.61) * Kit.angles(0, 0, 18),
+				SHIRT
+			)
+		)
+	end
+	if cut ~= "Bodice" then -- the coat's turned collar behind the neck
+		part(Vector3.new(1.3, 0.28, 0.3), torso * CFrame.new(0, 1.02, 0.38), Kit.shade(coat, 0.85))
+	end
+	if cut == "Sack" or cut == "Reefer" then -- flapped hip pockets
+		for _, side in { -1, 1 } do
+			on(
+				part(
+					Vector3.new(0.56, 0.14, 0.06),
+					hip * CFrame.new(side * 0.55, -0.14, -0.55),
+					Kit.shade(coat, 0.8)
+				),
+				"Torso"
 			)
 		end
 	end
@@ -126,10 +204,15 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 				ball(0.16, torso * CFrame.new(x, 0.6 - i * 0.45, -0.56), trim, M.Metal)
 			end
 		end
+		-- brass collar badges
+		for _, x in { -0.36, 0.36 } do
+			fine(part(Vector3.new(0.14, 0.14, 0.04), torso * CFrame.new(x, 1.05, -0.47), trim, M.Metal))
+		end
 	elseif cut == "Bodice" then
 		for i = 0, 5 do
 			ball(0.1, torso * CFrame.new(0, 0.75 - i * 0.28, -0.53), trim, M.Metal)
 		end
+		ball(0.2, torso * CFrame.new(0, 0.95, -0.5), trim, M.Metal) -- a brooch at the throat
 	end
 	-- a guard's patent-leather shoulder belt, right shoulder to left hip, with its pouch
 	if look.belt then
@@ -165,20 +248,63 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		part(Vector3.new(0.96, 2, 0.96), arm, coat)
 		if cut == "Bodice" then
 			ball(1.12, shoulder * CFrame.new(0, -0.05, 0), coat, M.Fabric) -- a full sleeve head
+		else -- the coat's turned-back cuff above the linen
+			part(Vector3.new(1.0, 0.18, 1.0), arm * CFrame.new(0, -0.64, 0), Kit.shade(coat, 0.8))
+		end
+		if cut == "Reefer" then -- a shoulder strap with its button
+			part(Vector3.new(0.5, 0.06, 0.9), shoulder * CFrame.new(0, 0.28, 0), Kit.shade(coat, 0.85))
+			fine(ball(0.12, shoulder * CFrame.new(0, 0.32, -0.32), trim, M.Metal))
 		end
 		part(Vector3.new(1.02, 0.22, 1.02), arm * CFrame.new(0, -0.85, 0), SHIRT)
 		hands[side] = arm * CFrame.new(0, -1.15, 0)
 		ball(0.62, hands[side], skin)
+		ball(0.26, hands[side] * CFrame.new(-side * 0.2, 0.06, -0.2), skin) -- the thumb
 	end
 
-	-- the head: eyes, whiskers, hair
+	-- the head: a face (eyes, brows, nose, mouth, ears), whiskers, hair
 	local headPart = ball(1.3, head, skin)
 	headPart.Name = "Head"
-	for _, x in { -0.22, 0.22 } do
-		part(Vector3.new(0.12, 0.16, 0.06), head * CFrame.new(x, 0.08, -0.63), EYES, M.SmoothPlastic)
+	local whites = Color3.fromRGB(232, 226, 214)
+	local brow = Kit.shade(hair, 0.8)
+	for _, side in { -1, 1 } do
+		local x = side * 0.22
+		part(Vector3.new(0.22, 0.12, 0.04), head * CFrame.new(x, 0.08, -0.615), whites, M.SmoothPlastic)
+		part(Vector3.new(0.1, 0.1, 0.06), head * CFrame.new(x, 0.08, -0.63), EYES, M.SmoothPlastic)
+		part(
+			Vector3.new(0.24, 0.05, 0.05),
+			head * CFrame.new(x, 0.25, -0.585) * Kit.angles(0, 0, -side * 6),
+			brow,
+			M.SmoothPlastic
+		)
+		on(ball(0.3, head * CFrame.new(side * 0.64, 0, 0.04), Kit.shade(skin, 0.94)), "Head")
 	end
+	part(
+		Vector3.new(0.13, 0.24, 0.12),
+		head * CFrame.new(0, -0.06, -0.68),
+		Kit.shade(skin, 0.95),
+		M.SmoothPlastic
+	)
+	part(
+		Vector3.new(0.3, 0.045, 0.04),
+		head * CFrame.new(0, -0.32, -0.565),
+		Kit.shade(skin, 0.68),
+		M.SmoothPlastic
+	)
 	if look.whiskers then
-		part(Vector3.new(0.62, 0.13, 0.1), head * CFrame.new(0, -0.2, -0.6), hair, M.SmoothPlastic)
+		-- a drooping moustache and mutton-chop side whiskers
+		for _, side in { -1, 1 } do
+			part(
+				Vector3.new(0.28, 0.09, 0.08),
+				head * CFrame.new(side * 0.13, -0.2, -0.6) * Kit.angles(0, 0, -side * 14),
+				hair,
+				M.Fabric
+			)
+			part(Vector3.new(0.12, 0.42, 0.36), head * CFrame.new(side * 0.58, -0.12, -0.25), hair, M.Fabric)
+		end
+	elseif not look.skirt and look.hairStyle ~= "Bun" and look.hairStyle ~= "Bald" then
+		for _, side in { -1, 1 } do -- trimmed sideburns
+			part(Vector3.new(0.08, 0.26, 0.2), head * CFrame.new(side * 0.6, 0.02, -0.14), hair, M.Fabric)
+		end
 	end
 	if look.hairStyle ~= "Bald" then
 		ball(1.32, head * CFrame.new(0, 0.18, 0.12), hair, M.Fabric)
@@ -222,6 +348,37 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 	elseif hat == "Bonnet" then
 		part(Vector3.new(1.5, 1.2, 0.9), head * CFrame.new(0, 0.25, 0.32), hatColor)
 		part(Vector3.new(0.14, 0.9, 0.08), head * CFrame.new(0.5, -0.3, -0.5), trim)
+		-- the poke brim framing the face, its ribbon bow under the chin and a silk flower
+		Kit.cylinder(
+			model,
+			0.1,
+			1.72,
+			head * CFrame.new(0, 0.26, -0.12) * Kit.angles(0, 90, 0),
+			Kit.shade(hatColor, 1.15),
+			{ material = M.Fabric, collide = false, shadow = false }
+		)
+		on(fine(ball(0.26, head * CFrame.new(0.42, -0.6, -0.4), trim, M.Fabric)), "Head")
+		fine(ball(0.3, head * CFrame.new(-0.62, 0.6, 0.1), Kit.shade(trim, 0.8), M.Fabric))
+	elseif hat == "Flat" then
+		-- a newsboy's eight-panel cap: soft crown, short peak, button on top
+		Kit.cylinder(
+			model,
+			0.34,
+			1.52,
+			crown * CFrame.new(0, 0.1, 0.04) * pitch(-6) * Kit.angles(0, 0, 90),
+			hatColor,
+			{
+				material = M.Fabric,
+				collide = false,
+				shadow = false,
+			}
+		)
+		part(
+			Vector3.new(0.92, 0.06, 0.44),
+			crown * CFrame.new(0, -0.04, -0.82) * Kit.angles(-10, 0, 0),
+			Kit.shade(hatColor, 0.8)
+		)
+		fine(ball(0.14, crown * CFrame.new(0, 0.3, 0.02), Kit.shade(hatColor, 0.8), M.Fabric))
 	elseif hat == "Visor" then
 		Kit.post(model, 0.16, 1.36, crown * CFrame.new(0, -0.05, 0), trim, DECOR)
 		local shade = part(
@@ -270,6 +427,89 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		ball(0.14, rod * CFrame.new(0, 0, -1.42), trim, M.Metal)
 	elseif prop == "Cloth" then
 		part(Vector3.new(0.5, 0.9, 0.08), hands[1] * CFrame.new(0, 0.55, -0.52), SHIRT)
+	elseif prop == "Cane" then
+		-- a malacca walking cane, its silver knob in the right hand, ferrule near the floor
+		on(
+			part(
+				Vector3.new(0.1, 1.75, 0.1),
+				hands[1] * CFrame.new(0, -0.9, -0.12),
+				Color3.fromRGB(70, 44, 28),
+				M.Wood
+			),
+			"Right Arm"
+		)
+		on(
+			ball(0.24, hands[1] * CFrame.new(0, 0.02, -0.34), Color3.fromRGB(196, 196, 200), M.Metal),
+			"Right Arm"
+		)
+		on(
+			fine(part(Vector3.new(0.12, 0.12, 0.12), hands[1] * CFrame.new(0, -1.74, -0.12), trim, M.Metal)),
+			"Right Arm"
+		)
+	elseif prop == "Papers" or prop == "Post" then
+		-- a bag slung on a strap from the left shoulder to the right hip: the evening papers in canvas,
+		-- or the Company's post in leather
+		local papers = prop == "Papers"
+		local bag = if papers then Color3.fromRGB(150, 136, 104) else Color3.fromRGB(78, 50, 32)
+		local material = if papers then M.Fabric else M.Leather
+		part(
+			Vector3.new(0.18, 2.5, 0.06),
+			torso * CFrame.new(0, 0, -0.56) * Kit.angles(0, 0, 38),
+			bag,
+			material
+		)
+		-- the bag rides behind the right hip, clear of the swinging arm
+		on(part(Vector3.new(0.95, 0.75, 0.34), hip * CFrame.new(0.62, -0.2, 0.72), bag, material), "Torso")
+		on(
+			part(
+				Vector3.new(0.99, 0.12, 0.38),
+				hip * CFrame.new(0.62, 0.13, 0.72),
+				Kit.shade(bag, 0.8),
+				material
+			),
+			"Torso"
+		)
+		if papers then
+			local newsprint = Color3.fromRGB(214, 206, 186)
+			for i, x in { -0.24, 0.02, 0.26 } do
+				on(
+					part(
+						Vector3.new(0.7, 0.5, 0.08),
+						hip * CFrame.new(0.62 + x * 0.4, 0.34, 0.68 + i * 0.03) * Kit.angles(4 - i * 4, 0, 0),
+						Kit.shade(newsprint, 1 - i * 0.04),
+						M.SmoothPlastic
+					),
+					"Torso"
+				)
+			end
+		else
+			on(
+				fine(part(Vector3.new(0.12, 0.16, 0.04), hip * CFrame.new(0.62, 0.0, 0.91), trim, M.Metal)),
+				"Torso"
+			)
+		end
+	elseif prop == "Reticule" then
+		-- a drawstring purse hung from the left wrist
+		local purse = Kit.shade(trim, 0.7)
+		on(
+			fine(part(Vector3.new(0.04, 0.34, 0.04), hands[-1] * CFrame.new(0, -0.3, -0.1), purse)),
+			"Left Arm"
+		)
+		on(ball(0.5, hands[-1] * CFrame.new(0, -0.66, -0.1), purse, M.Fabric), "Left Arm")
+		on(fine(ball(0.1, hands[-1] * CFrame.new(0, -0.42, -0.1), trim, M.Metal)), "Left Arm")
+	elseif prop == "Hanky" then
+		-- a black-edged mourning handkerchief in the right hand
+		on(part(Vector3.new(0.34, 0.5, 0.04), hands[1] * CFrame.new(0, -0.38, -0.3), SHIRT), "Right Arm")
+		on(
+			fine(
+				part(
+					Vector3.new(0.36, 0.05, 0.05),
+					hands[1] * CFrame.new(0, -0.62, -0.3),
+					Color3.fromRGB(20, 18, 20)
+				)
+			),
+			"Right Arm"
+		)
 	end
 
 	model.PrimaryPart = body
