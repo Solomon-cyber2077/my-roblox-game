@@ -192,6 +192,57 @@ end
 -- How far the poured wax spreads past the seal's disc, as a share of the disc.
 local WAX_SPREAD = 1.7
 
+-- One hand-drawn tally centred on (x, y), `height` tall: two pulls of the pencil meeting at a
+-- slight kink, pressed hard where it lands and thinning as it lifts off, with a dry skip in the
+-- middle. Seeded by `key`, so a ticket's marks come out the same every time it is drawn.
+local function tally(parent: Instance, key: string, x: number, y: number, height: number, z: number)
+	local lean = 4 + (TicketModel.hash(`{key}:lean`) - 0.5) * 5 -- a right hand leans its marks a little
+	local bend = lean + (TicketModel.hash(`{key}:bend`) - 0.5) * 7
+	local skip = 0.3 + TicketModel.hash(`{key}:skip`) * 0.4
+	local upper = math.floor(height * 0.55)
+	local lower = height - upper + 1 -- overlaps the joint by a pixel so the kink never gaps
+	local jx, jy = x, y - height / 2 + upper -- the joint
+	-- Rotation turns a frame about its centre, so each pull is placed by its centre: the upper one
+	-- reaches up from the joint along `lean`, the lower one down along `bend`
+	local function pull(
+		name: string,
+		length: number,
+		width: number,
+		angle: number,
+		up: boolean,
+		fade: { number }
+	)
+		local r = math.rad(angle)
+		local sign = if up then 1 else -1
+		local stroke = Ui.new("Frame", {
+			Name = name,
+			Size = UDim2.fromOffset(width, length),
+			Position = UDim2.fromOffset(
+				jx + sign * math.sin(r) * length / 2,
+				jy - sign * math.cos(r) * length / 2
+			),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Rotation = angle,
+			BackgroundColor3 = INK,
+			BorderSizePixel = 0,
+			ZIndex = z,
+			Parent = parent,
+		})
+		Ui.corner(1).Parent = stroke
+		local keys = {}
+		for k = 1, #fade, 2 do
+			table.insert(keys, NumberSequenceKeypoint.new(fade[k], fade[k + 1]))
+		end
+		Ui.new("UIGradient", { -- top to bottom along the pull
+			Rotation = 90,
+			Transparency = NumberSequence.new(keys),
+			Parent = stroke,
+		})
+	end
+	pull("Tally", upper, 3, lean, true, { 0, 0, skip - 0.12, 0.06, skip, 0.25, skip + 0.12, 0.08, 1, 0.1 })
+	pull("TallyTail", lower, 3, bend, false, { 0, 0.1, 0.6, 0.18, 1, 0.45 })
+end
+
 -- The wax seal holding the danger number at (x, y); its chalk tallies start at (tallyX, y).
 local function seal(
 	parent: Instance,
@@ -223,18 +274,7 @@ local function seal(
 	n.TextXAlignment = Enum.TextXAlignment.Center
 	Ui.stroke(WAX_DARK, 1.5, 0).Parent = n -- pressed into the wax, not printed on it
 	for i = 1, s.strokes do
-		Ui.new("Frame", {
-			Name = "Tally",
-			Size = UDim2.fromOffset(3, math.floor(size * 0.6)),
-			Position = UDim2.fromOffset(tallyX + 2 + (i - 1) * 8, y + size / 2),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Rotation = -6 + i * 4,
-			BackgroundColor3 = INK,
-			BackgroundTransparency = 0.1,
-			BorderSizePixel = 0,
-			ZIndex = z,
-			Parent = parent,
-		})
+		tally(parent, `{s.number}:{i}`, tallyX + 2 + (i - 1) * 8, y + size / 2, math.floor(size * 0.6), z)
 	end
 end
 

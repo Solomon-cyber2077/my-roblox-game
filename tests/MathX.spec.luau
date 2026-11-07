@@ -1,0 +1,58 @@
+local MathX = require(Shared.Util.MathX)
+
+describe("MathX ranges", function()
+	it("clamps and saturates", function()
+		expect(MathX.clamp(5, 0, 10)).toBe(5)
+		expect(MathX.clamp(-1, 0, 10)).toBe(0)
+		expect(MathX.clamp(11, 0, 10)).toBe(10)
+		expect(MathX.saturate(1.5)).toBe(1)
+		expect(MathX.saturate(-0.5)).toBe(0)
+		expect(MathX.saturate(0.25)).toBe(0.25)
+	end)
+
+	it("lerps and inverts the lerp", function()
+		expect(MathX.lerp(10, 20, 0.25)).toBe(12.5)
+		expect(MathX.inverseLerp(10, 20, 12.5)).toBe(0.25)
+		expect(MathX.inverseLerp(5, 5, 7)).toBe(0) -- an empty range never divides by zero
+	end)
+
+	it("remaps into the output range and clamps outside the input", function()
+		expect(MathX.remap(15, 10, 20, 0, 100)).toBe(50)
+		expect(MathX.remap(30, 10, 20, 0, 100)).toBe(100)
+		expect(MathX.remap(0, 10, 20, 0, 100)).toBe(0)
+		expect(MathX.remap(15, 10, 20, 100, 0)).toBe(50)
+	end)
+
+	it("smoothsteps flat at both ends", function()
+		expect(MathX.smoothstep(0, 1, -1)).toBe(0)
+		expect(MathX.smoothstep(0, 1, 0.5)).toBe(0.5)
+		expect(MathX.smoothstep(0, 1, 2)).toBe(1)
+		expect(MathX.smoothstep(0, 1, 0.1)).toBeLessThan(0.1)
+	end)
+end)
+
+describe("MathX steps", function()
+	it("rounds to a step", function()
+		expect(MathX.round(2.4)).toBe(2)
+		expect(MathX.round(2.5)).toBe(3)
+		expect(MathX.round(7, 5)).toBe(5)
+		expect(MathX.round(8, 5)).toBe(10)
+		expect(MathX.round(0.34, 0.1)).toBeCloseTo(0.3)
+	end)
+
+	it("approaches a target without overshooting", function()
+		expect(MathX.approach(0, 10, 3)).toBe(3)
+		expect(MathX.approach(9, 10, 3)).toBe(10)
+		expect(MathX.approach(10, 0, 4)).toBe(6)
+		expect(MathX.approach(1, 0, 4)).toBe(0)
+	end)
+
+	it("damps by half once per half-life, whatever the frame rate", function()
+		expect(MathX.damp(1, 1)).toBeCloseTo(0.5)
+		expect(MathX.damp(1, 0)).toBe(0)
+		-- two half frames land where one whole frame does
+		local half = MathX.damp(1, 0.5)
+		expect(1 - (1 - half) * (1 - half)).toBeCloseTo(MathX.damp(1, 1))
+		expect(MathX.damp(0, 1)).toBeCloseTo(1) -- a zero half-life snaps instead of dividing by zero
+	end)
+end)

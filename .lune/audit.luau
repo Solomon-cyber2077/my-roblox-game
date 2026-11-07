@@ -955,6 +955,8 @@ type Stats = {
 	details: number, -- of those, tagged "Detail" (gone under Performance)
 	lights: number,
 	lit: number,
+	perfLit: number, -- lit lights the Performance setting leaves on (it turns off DangerLamp lights)
+	hiddenLit: number, -- lit lights inside a Detail part: the part hides under Performance, its light does not
 	shadows: number,
 	emitters: number,
 	particles: number,
@@ -962,7 +964,18 @@ type Stats = {
 }
 
 local function newStats(): Stats
-	return { parts = 0, details = 0, lights = 0, lit = 0, shadows = 0, emitters = 0, particles = 0, tris = 0 }
+	return {
+		parts = 0,
+		details = 0,
+		lights = 0,
+		lit = 0,
+		perfLit = 0,
+		hiddenLit = 0,
+		shadows = 0,
+		emitters = 0,
+		particles = 0,
+		tris = 0,
+	}
 end
 
 local function tally(
@@ -1030,6 +1043,13 @@ local function tally(
 			stats.lights += 1
 			if d.Enabled then
 				stats.lit += 1
+				local holder = d.Parent
+				if not (holder and holder:HasTag("DangerLamp") and d.Name == "DangerLight") then
+					stats.perfLit += 1
+				end
+				if holder and holder:HasTag("Detail") then
+					stats.hiddenLit += 1
+				end
 			end
 			if d.Shadows then
 				stats.shadows += 1
@@ -1198,15 +1218,19 @@ for _, target in targets do
 			total.parts - total.details
 		)
 	end
+	if total.hiddenLit > 0 then
+		landNote ..= string.format("  (%d lit inside Detail parts)", total.hiddenLit)
+	end
 	print(
 		stdio.color(color)
 			.. string.format(
-				"%-22s %5d parts ~%4dk tris %4d lights (%d lit, %d shadow) %4d emitters (%5d particles) %4d z-fights %3d clashes%s",
+				"%-22s %5d parts ~%4dk tris %4d lights (%d lit, %d perf, %d shadow) %4d emitters (%5d particles) %4d z-fights %3d clashes%s",
 				target.name,
 				total.parts,
 				math.floor(total.tris / 1000 + 0.5),
 				total.lights,
 				total.lit,
+				total.perfLit,
 				total.shadows,
 				total.emitters,
 				total.particles,

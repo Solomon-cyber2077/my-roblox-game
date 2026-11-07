@@ -3,7 +3,7 @@
 
 local Format = {}
 
--- 65.2 -> "1:05". Rounds up so a countdown never shows 0:00 while time remains.
+-- 65.2 -> "1:06". Rounds up so a countdown never shows 0:00 while time remains.
 function Format.clock(seconds: number): string
 	local total = math.max(0, math.ceil(seconds))
 	return string.format("%d:%02d", total // 60, total % 60)
@@ -11,8 +11,8 @@ end
 
 -- 1250 -> "1,250"
 function Format.thousands(n: number): string
-	local negative = n < 0
 	local digits = tostring(math.floor(math.abs(n) + 0.5))
+	local negative = n < 0 and digits ~= "0" -- -0.4 rounds to "0", not "-0"
 	local out = string.reverse((string.gsub(string.reverse(digits), "(%d%d%d)", "%1,")))
 	if string.sub(out, 1, 1) == "," then
 		out = string.sub(out, 2)

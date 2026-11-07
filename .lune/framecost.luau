@@ -65,7 +65,7 @@ local order: { string } = {}
 for line in string.gmatch(text, "[^\n]+") do
 	local name, parts, ktris, lights, lit, shadows, particles = string.match(
 		line,
-		"^(%S+)%s+(%d+) parts ~%s*(%d+)k tris%s+(%d+) lights %((%d+) lit, (%d+) shadow%)%s+%d+ emitters %(%s*(%d+) particles%)"
+		"^(%S+)%s+(%d+) parts ~%s*(%d+)k tris%s+(%d+) lights %((%d+) lit, [%d perf,]*%s?(%d+) shadow%)%s+%d+ emitters %(%s*(%d+) particles%)"
 	)
 	if name and not loads[name] then
 		loads[name] = {
