@@ -44,6 +44,12 @@ local alertToken = 0
 local slate: CanvasGroup
 local slateLabel: TextLabel
 local slateToken = 0
+local title: CanvasGroup
+local titleName: TextLabel
+local titleSub: TextLabel
+local titleScale: UIScale
+local titleToken = 0
+local titleSize = 1 -- the card's scale: smaller on a phone
 local SLATE_COLOR = Color3.fromRGB(40, 44, 42) -- the same slate and frame as UI/ChalkSlate
 local SLATE_WOOD = Color3.fromRGB(96, 62, 38)
 local SLATE_CHALK = Color3.fromRGB(232, 230, 220)
@@ -130,6 +136,83 @@ function Overlay.mount(gui: ScreenGui)
 	end
 	gui:GetAttributeChangedSignal("Compact"):Connect(fitAlert)
 	fitAlert()
+
+	-- the stop's name card on arrival (Overlay.title): the name between engraved brass rules on a
+	-- soft band of shadow, so it reads over snow or a lit platform alike
+	title = Ui.new("CanvasGroup", {
+		Name = "Title",
+		Size = UDim2.fromOffset(640, 124),
+		Position = UDim2.new(0.5, 0, 0, 100),
+		AnchorPoint = Vector2.new(0.5, 0),
+		BackgroundTransparency = 1,
+		GroupTransparency = 1,
+		Visible = false,
+		Parent = gui,
+	})
+	titleScale = Ui.new("UIScale", { Parent = title })
+	local function fade(edge: number, middle: number): NumberSequence
+		return NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(edge, middle),
+			NumberSequenceKeypoint.new(1 - edge, middle),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+	end
+	local band = Ui.new("Frame", {
+		Name = "Band",
+		Size = UDim2.new(1, 0, 0, 108), -- from the top rule to the bottom one, so its edges sit on brass
+		Position = UDim2.fromOffset(0, 9),
+		BackgroundColor3 = Theme.Color.black,
+		BorderSizePixel = 0,
+		Parent = title,
+	})
+	Ui.new("UIGradient", { Transparency = fade(0.5, 0.5), Parent = band })
+	local function rule(y: number, thickness: number, width: number)
+		local line = Ui.new("Frame", {
+			Name = "Rule",
+			Size = UDim2.new(width, 0, 0, thickness),
+			Position = UDim2.new(0.5, 0, 0, y),
+			AnchorPoint = Vector2.new(0.5, 0),
+			BackgroundColor3 = Theme.Color.brass,
+			BorderSizePixel = 0,
+			Parent = title,
+		})
+		Ui.new("UIGradient", { Transparency = fade(0.2, 0), Parent = line })
+	end
+	rule(14, 2, 0.62) -- a double rule above and below, thick outside, thin inside
+	rule(19, 1, 0.5)
+	rule(108, 1, 0.5)
+	rule(112, 2, 0.62)
+	titleName = Ui.text({
+		Name = "Name",
+		Font = Theme.Font.display,
+		TextSize = 64,
+		Color = Theme.Color.white,
+		Size = UDim2.new(1, 0, 0, 66),
+		Position = UDim2.fromOffset(0, 21),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	titleName.TextStrokeColor3 = Theme.Color.black
+	titleName.TextStrokeTransparency = 0.5
+	titleName.Parent = title
+	titleSub = Ui.text({
+		Name = "Sub",
+		Font = Theme.Font.display,
+		TextSize = 18,
+		Color = Theme.Color.brassLight,
+		Size = UDim2.new(1, 0, 0, 20),
+		Position = UDim2.fromOffset(0, 85),
+		XAlign = Enum.TextXAlignment.Center,
+	})
+	titleSub.TextStrokeColor3 = Theme.Color.black
+	titleSub.TextStrokeTransparency = 0.6
+	titleSub.Parent = title
+	local function fitTitle()
+		titleSize = if gui:GetAttribute("Compact") == true then 0.6 else 1
+		titleScale.Scale = titleSize
+	end
+	gui:GetAttributeChangedSignal("Compact"):Connect(fitTitle)
+	fitTitle()
 
 	slate = Ui.new("CanvasGroup", {
 		Name = "Slate",
@@ -377,7 +460,21 @@ function Overlay.feed(kind: string, text: string)
 	end)
 end
 
+local function hideTitle(seconds: number)
+	titleToken += 1
+	local token = titleToken
+	Ui.tween(title, { GroupTransparency = 1 }, TweenInfo.new(seconds))
+	task.delay(seconds, function()
+		if token == titleToken then
+			title.Visible = false
+		end
+	end)
+end
+
 function Overlay.alert(text: string, color: Color3?, seconds: number?)
+	if title.Visible then
+		hideTitle(0.25) -- a newer centre line takes the stage
+	end
 	alertToken += 1
 	local token = alertToken
 	alertLabel.Text = text
@@ -389,6 +486,28 @@ function Overlay.alert(text: string, color: Color3?, seconds: number?)
 	task.delay(seconds or 2.4, function()
 		if token == alertToken then
 			Ui.tween(alertLabel, { TextTransparency = 1, TextStrokeTransparency = 1 }, TweenInfo.new(0.5))
+		end
+	end)
+end
+
+-- The stop's name card: lands like a stamp, holds, then fades. `sub` is the small line under it.
+function Overlay.title(name: string, sub: string?, seconds: number?)
+	titleToken += 1
+	local token = titleToken
+	titleName.Text = name
+	titleSub.Text = sub or ""
+	title.Visible = true
+	title.GroupTransparency = 1
+	titleScale.Scale = titleSize * 1.12
+	Ui.tween(title, { GroupTransparency = 0 }, TweenInfo.new(0.2))
+	Ui.tween(
+		titleScale,
+		{ Scale = titleSize },
+		TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	)
+	task.delay(0.3 + (seconds or 2), function()
+		if token == titleToken then
+			hideTitle(0.6)
 		end
 	end)
 end

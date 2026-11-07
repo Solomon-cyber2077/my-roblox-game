@@ -353,7 +353,15 @@ local function onPhase(phase: string?)
 	if phase == "Junction" then
 		Overlay.alert("JUNCTION AHEAD: CHOOSE A LINE", Theme.Color.brassLight, 2.6)
 	elseif phase == "Arrival" then
-		Overlay.alert(string.upper(station and station.name or "STATION"), Theme.Color.paper, 3)
+		local sub: { string } = {}
+		if station and station.stop then
+			table.insert(sub, `STOP {station.stop}`)
+		end
+		if station and station.tier and station.tier > 0 then
+			local tier = math.clamp(station.tier, 0, 3)
+			table.insert(sub, `DANGER {string.rep("●", tier)}{string.rep("○", 3 - tier)}`)
+		end
+		Overlay.title(string.upper(station and station.name or "STATION"), table.concat(sub, "  ·  "), 2)
 		audio("Brakes")
 	elseif phase == "Dwell" then
 		Overlay.alert(`DOORS OPEN  ·  {Format.clock(station and station.dwell or 0)}`, Theme.Color.go, 2.6)
