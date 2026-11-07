@@ -39,6 +39,7 @@ type Rig = {
 	doors: { Door },
 	heap: { BasePart },
 	smoke: ParticleEmitter?,
+	cinders: ParticleEmitter?,
 	vents: { ParticleEmitter },
 	firebox: PointLight?,
 	flames: { ParticleEmitter },
@@ -50,6 +51,7 @@ type Rig = {
 	live: boolean,
 	doorLamps: { PointLight }?, -- at the platform-side doors, made at the first Last Call grace
 	cabFittings: BasePart?, -- hidden while the doors are open (see CAB_FITTINGS)
+	nextBlow: number, -- os.clock() of the display engine's next drain-cock blow
 }
 
 local TrainVisualsController = {}
@@ -80,6 +82,33 @@ local function smokeEmitter(parent: BasePart): ParticleEmitter
 	emitter.Transparency =
 		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 1) })
 	emitter.RotSpeed = NumberRange.new(-30, 30)
+	emitter.Parent = parent
+	return emitter
+end
+
+-- Hot cinders thrown from the chimney: only at speed, where the draught pulls them up the stack.
+local function cinderEmitter(parent: BasePart): ParticleEmitter
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Name = "Cinders"
+	emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	emitter.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 196, 110)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(232, 96, 32)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(110, 30, 14)),
+	})
+	emitter.LightEmission = 1
+	emitter.Rate = 0
+	emitter.Lifetime = NumberRange.new(0.7, 1.6)
+	emitter.Speed = NumberRange.new(10, 18)
+	emitter.SpreadAngle = Vector2.new(18, 18)
+	emitter.EmissionDirection = Enum.NormalId.Right
+	emitter.Size =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.28), NumberSequenceKeypoint.new(1, 0.08) })
+	emitter.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(0.7, 0.2),
+		NumberSequenceKeypoint.new(1, 1),
+	})
 	emitter.Parent = parent
 	return emitter
 end
@@ -137,6 +166,7 @@ local function register(rig: Rig, part: Instance)
 	end
 	if part.Name == "ChimneyTop" then
 		rig.smoke = smokeEmitter(part)
+		rig.cinders = cinderEmitter(part)
 	elseif part.Name == "SteamVent" then
 		table.insert(rig.vents, steamEmitter(part, 0))
 	elseif part.Name == "Firebox" then
@@ -197,6 +227,9 @@ local function unregister(rig: Rig, part: Instance)
 	if rig.smoke and rig.smoke.Parent == part then
 		rig.smoke = nil
 	end
+	if rig.cinders and rig.cinders.Parent == part then
+		rig.cinders = nil
+	end
 	if rig.firebox and rig.firebox.Parent == part then
 		rig.firebox = nil
 	end
@@ -213,6 +246,7 @@ local function rigFor(model: Model, live: boolean): Rig
 		doors = {},
 		heap = {},
 		smoke = nil,
+		cinders = nil,
 		vents = {},
 		firebox = nil,
 		flames = {},
@@ -224,6 +258,7 @@ local function rigFor(model: Model, live: boolean): Rig
 		live = live,
 		doorLamps = nil,
 		cabFittings = nil,
+		nextBlow = os.clock() + math.random(4, 12),
 	}
 	for _, part in model:GetDescendants() do
 		register(rig, part)
@@ -506,7 +541,32 @@ function TrainVisualsController.Start()
 				rig.smoke.Acceleration = Vector3.new(-rigSpeed * 0.9, 3, 0)
 				rig.smoke.Color = if starving then STARVING_SMOKE else SMOKE
 			end
+			-- none standing or starving, up to 10 a second at cruise; the Performance setting skips them
+			if rig.cinders then
+				local performance = Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
+				rig.cinders.Rate = if starving or performance
+					then 0
+					else math.clamp((rigSpeed - 30) * 0.12, 0, 10)
+				rig.cinders.Acceleration = Vector3.new(-rigSpeed * 1.1, -2, 0)
+			end
 			local t = os.clock()
+			-- the display engine at rest in the hall blows its drain cocks now and then: a white
+			-- burst from the cylinders and a short hiss
+			if not rig.live and #rig.vents > 0 and t >= rig.nextBlow then
+				rig.nextBlow = t + 9 + math.random() * 7
+				for _, vent in rig.vents do
+					vent:Emit(12)
+				end
+				local vent = rig.vents[1].Parent
+				if Registry.AudioController and vent and vent:IsA("BasePart") then
+					Registry.AudioController.Play(
+						"DrainCocks",
+						vent.Position,
+						nil,
+						0.95 + math.random() * 0.1
+					)
+				end
+			end
 			if rig.live then
 				updateDoorLamps(rig, t)
 			end
