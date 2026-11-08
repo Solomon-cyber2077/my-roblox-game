@@ -41,6 +41,7 @@ type Person = {
 	satAt: number,
 	sitFor: number,
 	greeted: { [number]: number }, -- user id -> os.clock() of the last greeting
+	target: number?, -- the spot it is walking to (no one else picks it meanwhile)
 }
 
 local PassengerService = {}
@@ -50,6 +51,7 @@ local W = Passengers.Walk
 local STEP = 24 -- studs per MoveTo (the engine gives up on one after 8 s)
 
 local people: { Person } = {}
+local lastGreet = -math.huge -- os.clock() of the hall's last greeting
 local seats: { Seat } = {}
 local origin = CFrame.new()
 
@@ -68,6 +70,20 @@ local function local2(position: Vector3): (number, number)
 end
 
 -- Walks straight to `target` in steps the engine will finish; false if it gets stuck.
+-- Someone else of ours within personal space of `p`, ahead along `heading` when one is given.
+local function crowded(p: Person, heading: Vector3?): boolean
+	for _, other in people do
+		if other ~= p then
+			local gap = other.root.Position - p.root.Position
+			local flat = Vector3.new(gap.X, 0, gap.Z)
+			if flat.Magnitude < W.personalSpace and (heading == nil or flat:Dot(heading) > 0) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function walkTo(p: Person, target: Vector3): boolean
 	while p.rig.Parent do
 		local here = p.root.Position
@@ -82,8 +98,30 @@ local function walkTo(p: Person, target: Vector3): boolean
 		end)
 		p.humanoid:MoveTo(goal)
 		local deadline = os.clock() + W.stepTimeout
+		local waited = false -- one wait a step: people who stand in each other's way never wait forever
 		while not finished and os.clock() < deadline and p.rig.Parent do
 			task.wait(0.2)
+			-- someone close ahead: stand and let them get on, then carry on (or go anyway after a while)
+			local heading = Vector3.new(goal.X - p.root.Position.X, 0, goal.Z - p.root.Position.Z)
+			if not waited and heading.Magnitude > 0.5 and crowded(p, heading.Unit) then
+				waited = true
+				p.humanoid:MoveTo(p.root.Position)
+				local until_ = os.clock() + W.waitAhead
+				while os.clock() < until_ and crowded(p, heading.Unit) and p.rig.Parent do
+					task.wait(0.3)
+				end
+				deadline += W.waitAhead
+				if crowded(p, heading.Unit) then
+					-- still someone in the way (two meeting head-on): pass on the right, as people do
+					local right = heading.Unit:Cross(Vector3.yAxis)
+					p.humanoid:MoveTo(p.root.Position + right * W.sidestep)
+					local aside = os.clock() + 1.2
+					while os.clock() < aside and p.rig.Parent do
+						task.wait(0.1)
+					end
+				end
+				p.humanoid:MoveTo(goal)
+			end
 		end
 		connection:Disconnect()
 		if not reached then
@@ -127,14 +165,14 @@ local function freeSeat(): Seat?
 		if seat.Occupant ~= nil then
 			continue
 		end
-		local crowded = false
+		local busy = false
 		for _, other in people do
 			if other.seat and (other.seat.Position - seat.Position).Magnitude < 4 then
-				crowded = true
+				busy = true
 				break
 			end
 		end
-		if not crowded then
+		if not busy then
 			table.insert(open, seat)
 		end
 	end
@@ -166,7 +204,14 @@ local function sit(p: Person)
 	local fx, fz = local2(front.Position)
 	local look = origin:VectorToObjectSpace(seat.CFrame.LookVector)
 	local from = Passenger.approach(HALL.spots, fx, fz, look.X, look.Z)
+	for _, other in people do
+		if other ~= p and (other.spot == from or other.target == from) then
+			return -- someone else of ours stands at or is making for that bench's spot
+		end
+	end
+	p.target = from -- reserved like a wander's spot, so two of ours never make for one bench's spot
 	walkRoute(p, from)
+	p.target = nil
 	if p.spot ~= from or seat.Occupant ~= nil then
 		return
 	end
@@ -192,6 +237,7 @@ end
 local function greet(p: Person, player: Player, target: BasePart)
 	local now = os.clock()
 	p.greeted[player.UserId] = now
+	lastGreet = now
 	if p.seat == nil then
 		-- turn to face them, a few steps of the turn so it reads as turning
 		p.humanoid.AutoRotate = false
@@ -228,14 +274,32 @@ local function step(p: Person)
 		seatFree = freeSeat() ~= nil,
 		othersSitting = sittingCount(),
 		handNear = player ~= nil,
-		canGreet = player ~= nil and (last == nil or os.clock() - last > W.greetCooldown),
+		-- off this Hand's cooldown, nobody else speaking, and no one of ours at its elbow
+		canGreet = player ~= nil
+			and Passenger.offCooldown(os.clock(), last, W.greetCooldown)
+			and Passenger.mayGreet(os.clock(), lastGreet, W.greetGap)
+			and not crowded(p, nil),
 	}, p.sitFor)
 	if action == "greet" and player and target then
 		greet(p, player, target)
 	elseif action == "wander" then
-		-- half the time somewhere a Hand at the spawn ring can see them
-		local to = if p.rng:chance(0.5) then p.rng:pick(HALL.seen) else p.rng:int(1, #HALL.spots)
-		walkRoute(p, to)
+		-- half the time somewhere a Hand at the spawn ring can see them; never a spot someone else of
+		-- ours stands at or is heading for
+		local taken: { [number]: boolean } = {}
+		for _, other in people do
+			if other ~= p then
+				taken[other.spot] = true
+				if other.target then
+					taken[other.target] = true
+				end
+			end
+		end
+		local to = Passenger.pickSpot(p.rng, #HALL.spots, HALL.seen, taken)
+		if to then
+			p.target = to
+			walkRoute(p, to)
+			p.target = nil
+		end
 	elseif action == "sit" then
 		sit(p)
 	elseif action == "stand" then

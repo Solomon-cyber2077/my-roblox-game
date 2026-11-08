@@ -1,0 +1,117 @@
+{
+ "className": "Folder",
+ "children": [
+  {
+   "name": "head_m_young",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://112223543580022"
+   }
+  },
+  {
+   "name": "head_m_old",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://134695108290828"
+   }
+  },
+  {
+   "name": "head_f_young",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://98026444074305"
+   }
+  },
+  {
+   "name": "head_f_old",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://110280059433780"
+   }
+  },
+  {
+   "name": "hair_short",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://90729120332816"
+   }
+  },
+  {
+   "name": "hair_bun",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://75029872110469"
+   }
+  },
+  {
+   "name": "whiskers_walrus",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://79629523580995"
+   }
+  },
+  {
+   "name": "whiskers_handlebar",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://108026881818396"
+   }
+  },
+  {
+   "name": "whiskers_chevron",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://97405858430759"
+   }
+  },
+  {
+   "name": "whiskers_vandyke",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://91690470906548"
+   }
+  },
+  {
+   "name": "whiskers_curtain",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://129493859789662"
+   }
+  },
+  {
+   "name": "whiskers_full",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://112944778175656"
+   }
+  },
+  {
+   "name": "hand_r",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://90613753703154"
+   }
+  },
+  {
+   "name": "hand_l",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://74400584098128"
+   }
+  }
+ ]
+}

@@ -14,6 +14,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 local Outfits = require(ReplicatedStorage.Shared.Config.Outfits)
+local FaceKit = require(script.Parent.FaceKit)
 
 export type Figure = { model: Model, body: BasePart, head: BasePart }
 
@@ -227,8 +228,8 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		end
 		part(Vector3.new(0.34, 0.55, 0.7), hip * CFrame.new(-1.12, 0.05, 0), leather, M.Leather)
 	end
-	-- the collar (lace on a bodice), and a cravat or neckerchief
-	part(
+	-- the collar (lace on a bodice), and a cravat or neckerchief (a sculpted head brings its own collar)
+	local collarPart = part(
 		Vector3.new(1.1, 0.3, 0.9),
 		torso * CFrame.new(0, 1.05, 0),
 		if cut == "Bodice" then Color3.fromRGB(236, 232, 224) else SHIRT
@@ -241,6 +242,7 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 
 	-- arms: sleeves in the coat, a linen cuff, a hand
 	local hands: { [number]: CFrame } = {}
+	local handParts: { BasePart } = {} -- ball and thumb, left then right (Builders/FaceKit)
 	for _, side in { -1, 1 } do
 		local swing = if side < 0 then p.armL or 0 else p.armR or 0
 		local shoulder = torso * CFrame.new(side * 1.5, 0.75, 0) * pitch(swing)
@@ -257,60 +259,114 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		end
 		part(Vector3.new(1.02, 0.22, 1.02), arm * CFrame.new(0, -0.85, 0), SHIRT)
 		hands[side] = arm * CFrame.new(0, -1.15, 0)
-		ball(0.62, hands[side], skin)
-		ball(0.26, hands[side] * CFrame.new(-side * 0.2, 0.06, -0.2), skin) -- the thumb
+		table.insert(handParts, ball(0.62, hands[side], skin))
+		table.insert(handParts, ball(0.26, hands[side] * CFrame.new(-side * 0.2, 0.06, -0.2), skin)) -- the thumb
 	end
 
 	-- the head: a face (eyes, brows, nose, mouth, ears), whiskers, hair
 	local headPart = ball(1.3, head, skin)
 	headPart.Name = "Head"
+	local faceParts: { BasePart } = { headPart, collarPart } -- what Builders/FaceKit's sculpted head replaces
+	local whiskerParts: { BasePart } = {}
 	local whites = Color3.fromRGB(232, 226, 214)
 	local brow = Kit.shade(hair, 0.8)
 	for _, side in { -1, 1 } do
 		local x = side * 0.22
-		part(Vector3.new(0.22, 0.12, 0.04), head * CFrame.new(x, 0.08, -0.615), whites, M.SmoothPlastic)
-		part(Vector3.new(0.1, 0.1, 0.06), head * CFrame.new(x, 0.08, -0.63), EYES, M.SmoothPlastic)
+		table.insert(
+			faceParts,
+			part(Vector3.new(0.22, 0.12, 0.04), head * CFrame.new(x, 0.08, -0.615), whites, M.SmoothPlastic)
+		)
+		table.insert(
+			faceParts,
+			part(Vector3.new(0.1, 0.1, 0.06), head * CFrame.new(x, 0.08, -0.63), EYES, M.SmoothPlastic)
+		)
+		table.insert(
+			faceParts,
+			part(
+				Vector3.new(0.24, 0.05, 0.05),
+				head * CFrame.new(x, 0.25, -0.585) * Kit.angles(0, 0, -side * 6),
+				brow,
+				M.SmoothPlastic
+			)
+		)
+		table.insert(
+			faceParts,
+			on(ball(0.3, head * CFrame.new(side * 0.64, 0, 0.04), Kit.shade(skin, 0.94)), "Head")
+		)
+	end
+	table.insert(
+		faceParts,
 		part(
-			Vector3.new(0.24, 0.05, 0.05),
-			head * CFrame.new(x, 0.25, -0.585) * Kit.angles(0, 0, -side * 6),
-			brow,
+			Vector3.new(0.13, 0.24, 0.12),
+			head * CFrame.new(0, -0.06, -0.68),
+			Kit.shade(skin, 0.95),
 			M.SmoothPlastic
 		)
-		on(ball(0.3, head * CFrame.new(side * 0.64, 0, 0.04), Kit.shade(skin, 0.94)), "Head")
-	end
-	part(
-		Vector3.new(0.13, 0.24, 0.12),
-		head * CFrame.new(0, -0.06, -0.68),
-		Kit.shade(skin, 0.95),
-		M.SmoothPlastic
 	)
-	part(
-		Vector3.new(0.3, 0.045, 0.04),
-		head * CFrame.new(0, -0.32, -0.565),
-		Kit.shade(skin, 0.68),
-		M.SmoothPlastic
+	table.insert(
+		faceParts,
+		part(
+			Vector3.new(0.3, 0.045, 0.04),
+			head * CFrame.new(0, -0.32, -0.565),
+			Kit.shade(skin, 0.68),
+			M.SmoothPlastic
+		)
 	)
-	if look.whiskers then
-		-- a drooping moustache and mutton-chop side whiskers
-		for _, side in { -1, 1 } do
-			part(
-				Vector3.new(0.28, 0.09, 0.08),
-				head * CFrame.new(side * 0.13, -0.2, -0.6) * Kit.angles(0, 0, -side * 14),
-				hair,
-				M.Fabric
+	-- facial hair by style (Config/Outfits `whiskers`); never sideburns. Builders/FaceKit swaps the
+	-- sculpted piece of the same style in once uploaded.
+	local whiskers = look.whiskers
+	if whiskers then
+		local walrus = whiskers == "Walrus" or whiskers == "Full"
+		local handlebar = whiskers == "Handlebar"
+		local sides: { number } = if whiskers == "Curtain" then {} else { -1, 1 } -- a chin curtain has no moustache
+		for _, side in sides do
+			local size = if walrus
+				then Vector3.new(0.32, 0.12, 0.1)
+				elseif handlebar then Vector3.new(0.26, 0.06, 0.07)
+				else Vector3.new(0.24, 0.09, 0.08)
+			local tilt = if walrus then -side * 22 else -side * 10
+			table.insert(
+				whiskerParts,
+				part(
+					size,
+					head * CFrame.new(side * 0.13, -0.2, -0.6) * Kit.angles(0, 0, tilt),
+					hair,
+					M.Fabric
+				)
 			)
-			part(Vector3.new(0.12, 0.42, 0.36), head * CFrame.new(side * 0.58, -0.12, -0.25), hair, M.Fabric)
+			if handlebar then -- the waxed tips turned up
+				table.insert(
+					whiskerParts,
+					fine(
+						part(
+							Vector3.new(0.05, 0.12, 0.05),
+							head * CFrame.new(side * 0.28, -0.12, -0.56) * Kit.angles(0, 0, side * 20),
+							hair,
+							M.Fabric
+						)
+					)
+				)
+			end
 		end
-	elseif not look.skirt and look.hairStyle ~= "Bun" and look.hairStyle ~= "Bald" then
-		for _, side in { -1, 1 } do -- trimmed sideburns
-			part(Vector3.new(0.08, 0.26, 0.2), head * CFrame.new(side * 0.6, 0.02, -0.14), hair, M.Fabric)
+		-- the beard under the moustache: size, then centre from the head's
+		local beardSize: Vector3?, beardAt: CFrame? = nil, nil
+		if whiskers == "VanDyke" then
+			beardSize, beardAt = Vector3.new(0.26, 0.3, 0.16), CFrame.new(0, -0.62, -0.5)
+		elseif whiskers == "Curtain" then -- a band along the jaw line and under the chin
+			beardSize, beardAt = Vector3.new(0.9, 0.16, 0.48), CFrame.new(0, -0.62, -0.24)
+		elseif whiskers == "Full" then
+			beardSize, beardAt = Vector3.new(0.86, 0.6, 0.5), CFrame.new(0, -0.68, -0.26)
+		end
+		if beardSize and beardAt then
+			table.insert(whiskerParts, on(part(beardSize, head * beardAt, hair, M.Fabric), "Head"))
 		end
 	end
+	-- the hair (Builders/FaceKit swaps in the sculpted cut once uploaded, so it rides with the whiskers)
 	if look.hairStyle ~= "Bald" then
-		ball(1.32, head * CFrame.new(0, 0.18, 0.12), hair, M.Fabric)
+		table.insert(whiskerParts, ball(1.32, head * CFrame.new(0, 0.18, 0.12), hair, M.SmoothPlastic))
 	end
 	if look.hairStyle == "Bun" then
-		ball(0.6, head * CFrame.new(0, 0.32, 0.66), hair, M.Fabric)
+		table.insert(whiskerParts, ball(0.6, head * CFrame.new(0, 0.32, 0.66), hair, M.SmoothPlastic))
 	end
 
 	-- the hat
@@ -513,6 +569,7 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 	end
 
 	model.PrimaryPart = body
+	FaceKit.dress(head, hands, look, faceParts, whiskerParts, handParts)
 	return { model = model, body = body, head = headPart }
 end
 

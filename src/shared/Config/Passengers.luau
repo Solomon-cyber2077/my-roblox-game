@@ -124,6 +124,10 @@ Passengers.Walk = table.freeze({
 	waveSeconds = 2.2,
 	quietRadius = 160, -- with no Hand this close to the hall, everyone stands still
 	weights = { wander = 4, sit = 2, idle = 3 },
+	personalSpace = 3.5, -- studs a walker keeps from anyone ahead (it waits), and a greeter from anyone near
+	waitAhead = 4, -- seconds a walker waits for the way to clear before going on regardless
+	sidestep = 2.4, -- studs a walker steps to its right to pass someone still in the way after waiting
+	greetGap = 5, -- seconds between any two greetings in the hall: one speech bubble at a time
 })
 
 -- What a client shows when one of them speaks.
@@ -160,9 +164,9 @@ Passengers.People = table.freeze({
 	{
 		id = "Mother",
 		look = {
+			hairStyle = "Bun",
 			skin = { 236, 204, 178 },
 			hair = { 98, 66, 46 },
-			hairStyle = "Bun",
 			cut = "Bodice",
 			coat = { 70, 40, 50 },
 			trim = { 196, 170, 120 },
@@ -183,7 +187,7 @@ Passengers.People = table.freeze({
 		look = {
 			skin = { 222, 182, 150 },
 			hair = { 150, 146, 140 },
-			whiskers = true,
+			whiskers = "Full",
 			cut = "Frock",
 			coat = { 30, 32, 36 },
 			trim = { 196, 160, 90 },
@@ -203,6 +207,7 @@ Passengers.People = table.freeze({
 	{
 		id = "Porter",
 		look = {
+			whiskers = "Curtain",
 			skin = { 196, 150, 118 },
 			hair = { 40, 32, 28 },
 			cut = "Reefer",

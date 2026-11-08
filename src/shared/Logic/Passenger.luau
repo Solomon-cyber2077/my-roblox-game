@@ -44,6 +44,38 @@ function Passenger.choose(rng: Rng.Rng, ctx: Context, sitTime: number): Action
 	return "idle"
 end
 
+-- Whether a Hand greeted at `last` (os.clock, nil never) may be greeted again at `now`.
+function Passenger.offCooldown(now: number, last: number?, cooldown: number): boolean
+	return last == nil or now - last > cooldown
+end
+
+-- Whether anyone may greet now, `lastAny` seconds-clock of the hall's last greeting: one bubble at a time.
+function Passenger.mayGreet(now: number, lastAny: number, gap: number): boolean
+	return now - lastAny >= gap
+end
+
+-- A spot to walk to that nobody else stands at or is heading for (`taken`), from `seen` half the time;
+-- nil when every spot is taken.
+function Passenger.pickSpot(
+	rng: Rng.Rng,
+	count: number,
+	seen: { number },
+	taken: { [number]: boolean }
+): number?
+	for _ = 1, 12 do
+		local to = if rng:chance(0.5) then rng:pick(seen) else rng:int(1, count)
+		if not taken[to] then
+			return to
+		end
+	end
+	for i = 1, count do
+		if not taken[i] then
+			return i
+		end
+	end
+	return nil
+end
+
 -- The line after `index` (1-based) of `count`, round and round.
 function Passenger.nextLine(index: number, count: number): number
 	return if count <= 0 then 0 else index % count + 1

@@ -22,7 +22,7 @@ export type Look = {
 	skin: { number },
 	hair: { number },
 	hairStyle: string?, -- "Short" (default), "Bun", "Bald"
-	whiskers: boolean?,
+	whiskers: string?, -- facial hair: "Walrus", "Handlebar", "Chevron", "VanDyke", "Curtain" or "Full"
 	cut: string,
 	coat: { number },
 	trim: { number }, -- buttons, badge, watch chain
@@ -78,7 +78,7 @@ local Lobby: { [string]: Resident } = {
 		look = {
 			skin = { 224, 188, 160 },
 			hair = { 62, 50, 42 },
-			whiskers = true,
+			whiskers = "Chevron",
 			cut = "Frock",
 			coat = { 30, 32, 38 },
 			trim = BRASS,
@@ -96,7 +96,7 @@ local Lobby: { [string]: Resident } = {
 		look = {
 			skin = { 214, 176, 150 },
 			hair = { 120, 110, 100 },
-			whiskers = true,
+			whiskers = "Handlebar",
 			cut = "Reefer",
 			coat = { 28, 36, 60 },
 			trim = BRASS,
@@ -115,7 +115,7 @@ local Lobby: { [string]: Resident } = {
 		look = {
 			skin = { 230, 196, 170 },
 			hair = { 150, 146, 140 },
-			whiskers = true,
+			whiskers = "VanDyke",
 			cut = "Frock",
 			coat = { 22, 24, 30 },
 			trim = BRASS,
@@ -135,7 +135,7 @@ local Lobby: { [string]: Resident } = {
 		look = {
 			skin = { 210, 168, 140 },
 			hair = { 70, 60, 54 },
-			whiskers = true,
+			whiskers = "Walrus",
 			-- 1870s-90s guards: double-breasted frock coat, peaked cap, shoulder belt (LORE.md 6)
 			cut = "StaffFrock",
 			belt = true,

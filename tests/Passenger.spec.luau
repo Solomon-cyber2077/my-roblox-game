@@ -73,6 +73,44 @@ describe("Passenger lines", function()
 	end)
 end)
 
+describe("Passenger manners", function()
+	it("greets the same Hand again only after the cooldown", function()
+		local cooldown = Passengers.Walk.greetCooldown
+		expect(Passenger.offCooldown(10, nil, cooldown)).toBe(true)
+		expect(Passenger.offCooldown(10 + cooldown - 1, 10, cooldown)).toBe(false)
+		expect(Passenger.offCooldown(10 + cooldown + 0.1, 10, cooldown)).toBe(true)
+	end)
+
+	it("comes round to the first line on the fourth greeting", function()
+		local line = 0
+		for _ = 1, 4 do
+			line = Passenger.nextLine(line, 3)
+		end
+		expect(line).toBe(1)
+	end)
+
+	it("lets only one speak at a time: a bubble ends before the next greeting", function()
+		local gap = Passengers.Walk.greetGap
+		expect(gap).toBeGreaterThan(Passengers.Bubble.seconds)
+		expect(Passenger.mayGreet(100, 100 - gap + 0.5, gap)).toBe(false)
+		expect(Passenger.mayGreet(100, 100 - gap, gap)).toBe(true)
+	end)
+
+	it("never sends two to the same spot", function()
+		local rng = Rng.new(3)
+		local taken = { [14] = true, [15] = true, [19] = true, [20] = true, [24] = true }
+		for _ = 1, 200 do
+			local to = Passenger.pickSpot(rng, #Passengers.Hall.spots, Passengers.Hall.seen, taken)
+			expect(to ~= nil and not taken[to :: number]).toBe(true)
+		end
+		local all: { [number]: boolean } = {}
+		for i = 1, #Passengers.Hall.spots do
+			all[i] = true
+		end
+		expect(Passenger.pickSpot(rng, #Passengers.Hall.spots, Passengers.Hall.seen, all)).toBe(nil)
+	end)
+end)
+
 describe("Passenger walk graph", function()
 	local hall = Passengers.Hall
 
