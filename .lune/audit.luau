@@ -362,6 +362,109 @@ table.insert(targets, {
 })
 
 --[[
+	The hall's passengers (Config/Passengers): every spot, every walk between two spots and every
+	bench seat's last steps (from the spot Logic/Passenger.approach picks) keep Walk.clearance
+	studs from anything solid at body height and from the kept-out areas (the boarding edge, the
+	spawn ring, the board, the Outfitter and Ledger fronts, the back door). The note counts the
+	kit pieces each person wears.
+]]
+table.insert(targets, {
+	name = "Passengers/Hall",
+	build = function()
+		local Passengers = load(Shared.Config.Passengers)
+		local Passenger = load(Shared.Logic.Passenger)
+		local OutfitKit = load(Server.Builders.OutfitKit)
+		local built = LobbyBuilder.build(CFrame.new(), Instance.new("Folder"))
+		local hall = Passengers.Hall
+		local solid: { any } = {}
+		for _, p in built.model:GetDescendants() do
+			if p:IsA("BasePart") and p.CanCollide and not built.displayTrain:IsAncestorOf(p) then
+				local cf, size = p.CFrame, p.Size
+				local b = { x0 = math.huge, z0 = math.huge, x1 = -math.huge, z1 = -math.huge, name = p.Name }
+				local y0, y1 = math.huge, -math.huge
+				for _, sx in { -1, 1 } do
+					for _, sy in { -1, 1 } do
+						for _, sz in { -1, 1 } do
+							local w = cf
+								* roblox.Vector3.new(sx * size.X / 2, sy * size.Y / 2, sz * size.Z / 2)
+							b.x0, b.x1 = math.min(b.x0, w.X), math.max(b.x1, w.X)
+							b.z0, b.z1 = math.min(b.z0, w.Z), math.max(b.z1, w.Z)
+							y0, y1 = math.min(y0, w.Y), math.max(y1, w.Y)
+						end
+					end
+				end
+				-- body height only, and not the floor, walls or roof spanning the hall
+				if y1 > 0.5 and y0 < 5.5 and not (b.x1 - b.x0 > 60 and b.z1 - b.z0 > 60) then
+					table.insert(solid, b)
+				end
+			end
+		end
+		local problems: { string } = {}
+		local function walk(label: string, ax: number, az: number, bx: number, bz: number, margin: number)
+			for _, b in solid do
+				if not Passenger.clearOf(ax, az, bx, bz, b, margin) then
+					table.insert(problems, `{label} runs into {b.name}`)
+					return
+				end
+			end
+			for i, b in hall.keepOut do
+				if not Passenger.clearOf(ax, az, bx, bz, b, margin) then
+					table.insert(problems, `{label} enters kept-out area {i}`)
+					return
+				end
+			end
+		end
+		local margin = Passengers.Walk.clearance
+		for i, s in hall.spots do
+			walk(`spot {i}`, s.x, s.z, s.x, s.z, margin)
+		end
+		for _, link in hall.links do
+			local a, b = hall.spots[link[1]], hall.spots[link[2]]
+			walk(`walk {link[1]}-{link[2]}`, a.x, a.z, b.x, b.z, margin)
+		end
+		local benches = 0
+		for _, seat in built.seats do
+			if seat:GetAttribute("SeatName") == hall.seatName then
+				benches += 1
+				local front = (seat.CFrame * CFrame.new(0, 0, -2.4)).Position
+				local look = seat.CFrame.LookVector
+				local from = hall.spots[Passenger.approach(hall.spots, front.X, front.Z, look.X, look.Z)]
+				-- the last steps end beside the bench, so they keep less room
+				walk(
+					`seat at ({math.floor(front.X)}, {math.floor(front.Z)})`,
+					from.x,
+					from.z,
+					front.X,
+					front.Z,
+					0.6
+				)
+			end
+		end
+		local pieces: { number } = {}
+		for _, person in Passengers.People do
+			local figure = OutfitKit.figure(Instance.new("Folder"), CFrame.new(), person.look, {})
+			local n = 0
+			for _, d in figure.model:GetDescendants() do
+				if d:IsA("BasePart") then
+					n += 1
+				end
+			end
+			table.insert(pieces, n)
+		end
+		return {
+			{
+				instance = Instance.new("Folder"),
+				problems = problems,
+				note = `{#hall.spots} spots, {#hall.links} walks, {benches} bench seats clear; dress pieces {table.concat(
+					pieces,
+					", "
+				)}`,
+			},
+		}
+	end,
+})
+
+--[[
 	The surface rule (Design step 6, B.3): no station surface pure white or pure black. Every visible
 	part's colour channels stay within 18-232; glowing glass (Neon, Glass) and invisible parts are
 	exempt. Bone and parchment (inside the band) belong on trim only, which the owner judges.

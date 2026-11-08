@@ -19,6 +19,8 @@ local ORDER = {
 	"CameraController",
 	"TrainCamController",
 	"CharacterAnimator",
+	"PassengerController",
+	"HallLife",
 	"SceneryController",
 	"TrainVisualsController",
 	"StationVisualsController",

@@ -11,7 +11,8 @@
 	seat and grab attributes.
 
 	The train's residents built as R6 bodies (Builders/NpcFigure, tag ResidentRig) are played the
-	same way, standing: they breathe and shift, and turn their head to you when you come near.
+	same way, standing: they breathe and shift, and turn their head to you when you come near. The
+	hall's passengers (Builders/PassengerFigure) share the tag: they walk, sit and wave (WaveAt).
 ]]
 
 local CollectionService = game:GetService("CollectionService")
@@ -21,6 +22,7 @@ local Workspace = game:GetService("Workspace")
 
 local Registry = require(script.Parent.Parent.Registry)
 local CrewPoses = require(script.Parent.Parent.Animation.CrewPoses)
+local Passengers = require(game:GetService("ReplicatedStorage").Shared.Config.Passengers)
 
 type Rig = {
 	player: Player?, -- nil for a resident
@@ -49,6 +51,7 @@ local stride = { phase = 0, amount = 0 } -- your own steps, for the camera
 
 local RESIDENT_TAG = "ResidentRig"
 local RESIDENT_LOOK = 12 -- studs within which a resident turns its head to you
+local WAVE = Passengers.Walk.waveSeconds
 
 local function register(player: Player?, character: Model)
 	if rigs[character] then
@@ -222,6 +225,13 @@ local function animate(rig: Rig, dt: number, now: number)
 			dread = dread,
 			turn = rig.turn,
 		})
+	end
+	if rig.player == nil then
+		-- one of the hall's passengers greeting you (Services/PassengerService)
+		local waveAt = model:GetAttribute("WaveAt") :: number?
+		if waveAt and now - waveAt < WAVE then
+			target = CrewPoses.wave(target, now - waveAt, WAVE)
+		end
 	end
 	if Registry.InjuryController then
 		target = Registry.InjuryController.Pose(model, target, now)

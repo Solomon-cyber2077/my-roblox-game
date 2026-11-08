@@ -33,6 +33,7 @@ local ORDER = {
 	"ProgressionService",
 	"ShopService",
 	"NpcService",
+	"PassengerService",
 	"TutorialService",
 	"BreakdownService",
 	"RunDirector",

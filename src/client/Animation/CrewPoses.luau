@@ -246,6 +246,17 @@ function CrewPoses.locomote(input: Input): Pose
 end
 
 -- Gone limp: on the ground, or in a Hollow's hands.
+-- A wave over `base`: the right arm comes up high to the side, rocks a few times and comes down,
+-- `t` seconds into a wave `length` long.
+function CrewPoses.wave(base: Pose, t: number, length: number): Pose
+	local up = smoothstep(0, 0.3, t) * (1 - smoothstep(length - 0.35, length, t))
+	local out: Pose = table.clone(base)
+	local raised = limb(RIGHT, 0.25, 2.55 + 0.3 * math.sin(t * 9))
+	out["Right Shoulder"] = (base["Right Shoulder"] or CFrame.identity):Lerp(raised, up)
+	out.Neck = (base.Neck or CFrame.identity) * CFrame.Angles(0, 0.12 * up, 0) -- a friendly tilt
+	return out
+end
+
 function CrewPoses.limp(now: number, seed: number): Pose
 	local out: Pose = {}
 	local sway = math.sin(now * 1.1 + seed) * 0.05

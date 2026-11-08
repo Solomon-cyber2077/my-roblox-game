@@ -12,6 +12,7 @@
 	             with being hurt or chased
 ]]
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -263,6 +264,13 @@ function FootstepController.Start()
 				end
 				if player.Character then
 					table.insert(characters, player.Character)
+				end
+			end
+			-- the hall's passengers walk too (Services/PassengerService); not the ones Performance hides
+			local performance = Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
+			for _, passenger in CollectionService:GetTagged("Passenger") do
+				if passenger:GetAttribute("PerformanceKeep") or not performance then
+					table.insert(characters, passenger)
 				end
 			end
 			if now - lastScan > 1 then

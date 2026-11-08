@@ -127,6 +127,17 @@ local Cues: { [string]: Cue } = {
 		voices = 3,
 	},
 	SteamLeak = { id = 9116496074, volume = 1.5, spatial = true, loop = true },
+	-- the display engine in the hall blowing its drain cocks at rest (Controllers/TrainVisualsController):
+	-- the steam leak, short and a little higher
+	DrainCocks = {
+		id = 9116496074,
+		volume = 1.1,
+		spatial = true,
+		rollOff = 90,
+		maxSeconds = 1.6,
+		pitch = 1.15,
+		mix = "Ambience",
+	},
 	Victory = { id = 9112766203, volume = 3.62, maxSeconds = 6 },
 	Purchase = { id = 9113728042, volume = 0.95, mix = "Feedback" },
 	Clutch = { id = 9125573009, start = 0.61, volume = 5.97, maxSeconds = 2, mix = "Feedback" },
