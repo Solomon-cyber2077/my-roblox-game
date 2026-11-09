@@ -1,7 +1,8 @@
 --!strict
 --[[
 	Small life in the air of the Depot hall and the train's saloon, client side: fine dust hanging
-	over the platform and down the saloon aisle, drifting slowly. The motes take the light around them (LightInfluence 1), so they show in the lamp
+	over the platform and down the saloon aisle, drifting slowly; and the hall's gas lamps breathing,
+	a slight, slow flicker each out of step with the others. The motes take the light around them (LightInfluence 1), so they show in the lamp
 	pools and vanish in the dark between, as dust does in lamplight. Under the Performance
 	setting there is none.
 
@@ -12,6 +13,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -25,10 +27,28 @@ local HALL: Air = { x0 = -104, x1 = 104, y0 = 1.5, y1 = 15, z0 = -4, z1 = 64, ra
 local SALOON: Air = { x0 = -66, x1 = -20, y0 = 1.5, y1 = 7.5, z0 = -4.5, z1 = 4.5, rate = 9 } -- ~90
 
 local emitters: { ParticleEmitter } = {}
+-- the hall's lamps (its lit glass inside DepotHall, not the display train's): a slow, slight breath
+-- of the gas, each lamp out of step with the others
+type Lamp = { light: PointLight, base: number, seed: number }
+local lamps: { Lamp } = {}
+
+-- The life pass's small emitters on server-built parts (HallWear's drip and splash, the saloon's teapot
+-- steam): hiding their Detail part under Performance does not stop an emitter, so they are switched here.
+local EXTRA = { Drip = true, Splash = true, TeaSteam = true }
+
+local function performance(): boolean
+	return Players.LocalPlayer:GetAttribute(SETTING) == "Performance"
+end
 
 local function apply()
+	local on = not performance()
 	for _, emitter in emitters do
-		emitter.Enabled = Players.LocalPlayer:GetAttribute(SETTING) ~= "Performance"
+		emitter.Enabled = on
+	end
+	for _, d in Workspace:GetDescendants() do
+		if d:IsA("ParticleEmitter") and EXTRA[d.Name] then
+			d.Enabled = on
+		end
 	end
 end
 
@@ -70,12 +90,41 @@ end
 
 function HallLife.Init() end
 
+local function findLamps(hall: Instance)
+	local train = hall:FindFirstChild("DisplayTrain")
+	for _, d in hall:GetDescendants() do
+		if d:IsA("PointLight") and not (train and d:IsDescendantOf(train)) then
+			table.insert(lamps, { light = d, base = d.Brightness, seed = #lamps * 1.73 })
+		end
+	end
+end
+
 function HallLife.Start()
 	local o = Tuning.World.LobbyOrigin
 	dustIn("HallDust", CFrame.new(o[1], o[2], o[3]), HALL)
 	dustIn("SaloonDust", CFrame.new(0, Tuning.World.FloorY, 0), SALOON)
 	Players.LocalPlayer:GetAttributeChangedSignal(SETTING):Connect(apply)
 	apply()
+	task.delay(8, apply) -- once the hall and train have streamed in
+	task.spawn(function()
+		local hall = Workspace:WaitForChild("DepotHall", 60)
+		if hall == nil then
+			return
+		end
+		task.wait(2) -- the hall's parts stream in
+		findLamps(hall)
+		RunService.Heartbeat:Connect(function()
+			if performance() then
+				return -- the lamps hold still: no per-frame writes on a phone
+			end
+			local now = os.clock()
+			for _, lamp in lamps do
+				if lamp.light.Parent then
+					lamp.light.Brightness = lamp.base * (0.97 + 0.03 * math.noise(now * 1.3, lamp.seed))
+				end
+			end
+		end)
+	end)
 end
 
 return HallLife

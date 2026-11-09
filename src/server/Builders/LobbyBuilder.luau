@@ -24,6 +24,7 @@ local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
 local IL = InteriorLight
 local Outfits = require(ReplicatedStorage.Shared.Config.Outfits)
+local HallWear = require(script.Parent.HallWear)
 local OutfitKit = require(script.Parent.OutfitKit)
 local Premise = require(ReplicatedStorage.Shared.Config.Premise)
 local PosterArt = require(script.Parent.PosterArt)
@@ -2133,6 +2134,8 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	line.Text = "That board shows the Company's lines, the short and the long. Keep to the route, keep "
 		.. "together, and bring the haul home. The Ledger beneath it holds your record."
 	line.Parent = paper
+
+	HallWear.build(model, origin) -- grime, wall wear, a puddle, luggage and litter (the life pass)
 
 	local spawnPoints: { CFrame } = {}
 	for i = 0, 11 do
