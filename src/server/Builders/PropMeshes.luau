@@ -44,6 +44,14 @@ function PropMeshes.dress(cluster: Model, list: { Placed })
 	if service == nil then
 		return
 	end
+	-- A whole detail cluster keeps its Performance cut when its visible parts become meshes.
+	local detail, visible = true, false
+	for _, part in cluster:GetDescendants() do
+		if part:IsA("BasePart") and part.Transparency < 1 then
+			visible = true
+			detail = detail and part:HasTag("Detail")
+		end
+	end
 	task.spawn(function()
 		local meshes: { MeshPart } = {}
 		for _, item in list do
@@ -80,6 +88,9 @@ function PropMeshes.dress(cluster: Model, list: { Placed })
 			end
 		end
 		for _, mesh in meshes do
+			if visible and detail then
+				mesh:AddTag("Detail")
+			end
 			mesh.Parent = cluster
 		end
 	end)

@@ -26,6 +26,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local PropMeshes = require(script.Parent.PropMeshes)
 local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
 local Paintings = require(ReplicatedStorage.Shared.Config.Paintings)
 local IL = InteriorLight
@@ -83,6 +84,7 @@ local C = {
 	teapot = rgb(84, 50, 34), -- a brown betty
 	porcelain = rgb(206, 220, 228), -- cold white, as on the enamel
 	darn = rgb(100, 32, 36), -- a near match for the moquette, a shade off
+	worn = rgb(124, 64, 58), -- the runner trodden thin, its pile gone pale
 }
 
 local SIGN_FONT = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold)
@@ -738,6 +740,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		post(0.5, 0.95, at(tx, 4.05, side * 5.0), C.shade, M.Glass)
 		local bulb =
 			Kit.neon(model, Vector3.one * 0.3, at(tx, 3.85, side * 5.0), C.interiorWarm, Enum.PartType.Ball)
+		bulb.Name = "SaloonLamp" -- flickers and dips over the rail joints (Controllers/TrainVisualsController)
 		fixtureLight(bulb, IL.Train.Bulb)
 	end
 
@@ -757,13 +760,137 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	-- and a darn in a seat back, mended rather than replaced. Decor only (no collision).
 	local teaX, teaZ, teaTop = -58.35, -3.85, 2.96 -- the far table of the first bay, its aisle half
 	decor(Vector3.new(0.95, 0.04, 0.62), at(teaX, teaTop + 0.02, teaZ), C.brass, M.Metal)
-	ball(0.44, at(teaX - 0.18, teaTop + 0.26, teaZ), C.teapot, M.SmoothPlastic)
+	local teapot = ball(0.44, at(teaX - 0.18, teaTop + 0.26, teaZ), C.teapot, M.SmoothPlastic)
+	-- still warm: a thread of steam from the pot
+	local steam = Instance.new("ParticleEmitter")
+	steam.Name = "TeaSteam"
+	steam.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	steam.Color = ColorSequence.new(Color3.fromRGB(236, 232, 226))
+	steam.LightInfluence = 1
+	steam.Rate = 2.5
+	steam.Lifetime = NumberRange.new(1.6, 2.6)
+	steam.Speed = NumberRange.new(0.5, 0.9)
+	steam.SpreadAngle = Vector2.new(8, 8)
+	steam.EmissionDirection = Enum.NormalId.Top
+	steam.Acceleration = Vector3.new(0, 0.25, 0)
+	steam.RotSpeed = NumberRange.new(-25, 25)
+	steam.Size =
+		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.12), NumberSequenceKeypoint.new(1, 0.55) })
+	steam.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.82),
+		NumberSequenceKeypoint.new(0.3, 0.7),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	steam.Parent = teapot
+	-- the runner worn thin where boots fall: by the gangway doors and between the bays (a hair
+	-- above the pile, so no two faces share a plane)
+	for _, wear in { { -60.6, 0.2, 7 }, { -47.4, -0.15, -5 }, { -38.6, 0.1, 4 }, { -25.4, -0.2, -8 } } do
+		decor(
+			Vector3.new(2.3, 0.006, 1.7),
+			at(wear[1], 0.064, wear[2]) * Kit.angles(0, wear[3], 0),
+			C.worn,
+			M.Fabric
+		).Transparency =
+			0.4
+	end
 	for _, dx in { 0.2, 0.36 } do
 		disc(0.14, 0.2, at(teaX + dx, teaTop + 0.11, teaZ + (if dx > 0.3 then 0.14 else -0.14)), C.porcelain)
 	end
 	-- the blanket, folded at the window end of a seat in the second car
 	decor(Vector3.new(0.9, 0.16, 0.62), at(-38.45, 1.78, -5.0), C.linen, M.Fabric)
 	decor(Vector3.new(0.92, 0.2, 0.08), at(-38.45, 1.79, -4.82), C.velvet, M.Fabric)
+
+	-- Luggage up on the brass racks, a few papers and a hat left on the seats: the saloon in use. Each
+	-- rack load is part-built until the hall's Blender props (Config/HallProps) are uploaded, then
+	-- Builders/PropMeshes swaps them in (scaled to the rack: 0.9 deep, its top at y = 7.81).
+	do
+		local RACK_TOP = 7.81
+		local leather, canvas = Color3.fromRGB(70, 40, 26), Color3.fromRGB(150, 134, 102)
+		local brass = Color3.fromRGB(176, 140, 76)
+		local function stand(x: number, side: number, yaw: number): CFrame
+			return at(x, RACK_TOP, side * (LI - 0.975)) * Kit.angles(0, yaw, 0)
+		end
+		local function piece(
+			cluster: Model,
+			size: Vector3,
+			cf: CFrame,
+			color: Color3,
+			material: Enum.Material
+		)
+			Kit.block(cluster, size, cf, color, { material = material, collide = false, shadow = true })
+		end
+		for i, load in
+			{
+				{ "trunk", -60.4, 1, 3, 0.4 },
+				{ "hatbox", -58.6, 1, 0, 0.55 },
+				{ "sack", -52.2, -1, -6, 0.5 },
+				{ "trunk", -47.6, 1, -4, 0.38 },
+				{ "trunk", -38.4, -1, 5, 0.42 },
+				{ "hatbox", -36.8, -1, 0, 0.5 },
+				{ "sack", -30.2, 1, 8, 0.5 },
+				{ "hatbox", -25.9, -1, 0, 0.55 },
+			} :: { { any } }
+		do
+			local key, x, side, yaw, k = load[1], load[2], load[3], load[4], load[5]
+			local cluster = Kit.model(`RackLoad{i}`, model)
+			local cf = stand(x, side, yaw)
+			if key == "trunk" then
+				piece(
+					cluster,
+					Vector3.new(2.32, 1.29, 1.37) * k,
+					cf * CFrame.new(0, 0.645 * k, 0),
+					leather,
+					M.Leather
+				)
+				piece(
+					cluster,
+					Vector3.new(0.16 * k, 1.29 * k + 0.05, 1.37 * k + 0.05),
+					cf * CFrame.new(0.55 * k, 0.645 * k, 0),
+					brass,
+					M.Metal
+				)
+			elseif key == "hatbox" then
+				Kit.cylinder(
+					cluster,
+					0.74 * k,
+					1.06 * k,
+					cf * CFrame.new(0, 0.37 * k, 0) * Kit.angles(0, 0, 90),
+					Color3.fromRGB(110, 48, 44),
+					{ material = M.Fabric, collide = false, shadow = true }
+				)
+			else
+				Kit.cylinder(
+					cluster,
+					1.5 * k,
+					0.6 * k,
+					cf * CFrame.new(0, 0.3 * k, 0),
+					canvas,
+					{ material = M.Fabric, collide = false, shadow = true }
+				)
+			end
+			for _, part in cluster:GetChildren() do
+				part:AddTag("Detail") -- clutter: the Performance setting leaves it out
+			end
+			PropMeshes.dress(cluster, { { key = key, cframe = cf, scale = k } })
+		end
+		-- the papers someone left, and a bowler on the next seat (seat tops at y = 1.7)
+		for _, paper in { { -60.45, -3.42, 18 }, { -38.45, 3.42, -27 }, { -28.25, -3.42, 64 } } do
+			decor(
+				Vector3.new(1.0, 0.03, 0.7),
+				at(paper[1], 1.72, paper[2]) * Kit.angles(0, paper[3], 0),
+				Color3.fromRGB(196, 190, 176),
+				M.SmoothPlastic
+			):AddTag("Detail")
+			decor(
+				Vector3.new(0.5, 0.03, 0.7),
+				at(paper[1] + 0.2, 1.75, paper[2] + 0.05) * Kit.angles(0, paper[3] + 9, 0),
+				Color3.fromRGB(186, 180, 166),
+				M.SmoothPlastic
+			):AddTag("Detail")
+		end
+		disc(0.06, 1.0, at(-34.25, 1.73, -3.42), Color3.fromRGB(28, 24, 22), M.Fabric):AddTag("Detail")
+		disc(0.42, 0.72, at(-34.25, 1.97, -3.42), Color3.fromRGB(28, 24, 22), M.Fabric):AddTag("Detail")
+	end
 	-- the darn: a square of near-matching moquette on the seat back that faces the aisle
 	decor(
 		Vector3.new(0.04, 0.5, 0.56),
