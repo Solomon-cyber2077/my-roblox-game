@@ -120,6 +120,34 @@ function Passenger.route(links: { { number } }, from: number, to: number): { num
 	return nil
 end
 
+-- The nearest free spot reachable directly without crossing a kept-out area. No unsafe fallback.
+function Passenger.nearestFree(
+	spots: { Passengers.Spot },
+	x: number,
+	z: number,
+	taken: { [number]: boolean },
+	keepOut: { Passengers.Box }?,
+	clearance: number?
+): number?
+	local best, bestDistance = nil :: number?, math.huge
+	for i, spot in spots do
+		local clear = not taken[i]
+		for _, box in keepOut or ({} :: { Passengers.Box }) do
+			if not Passenger.clearOf(x, z, spot.x, spot.z, box, clearance or 0) then
+				clear = false
+				break
+			end
+		end
+		if clear then
+			local d = (spot.x - x) ^ 2 + (spot.z - z) ^ 2
+			if d < bestDistance then
+				best, bestDistance = i, d
+			end
+		end
+	end
+	return best
+end
+
 -- The spot nearest (x, z).
 function Passenger.nearest(spots: { Passengers.Spot }, x: number, z: number): number
 	local best, bestDistance = 1, math.huge

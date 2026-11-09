@@ -92,15 +92,15 @@ local function walkTo(p: Person, target: Vector3): boolean
 			return true
 		end
 		local goal = if flat.Magnitude > STEP then here + flat.Unit * STEP else target
-		local finished, reached = false, false
-		local connection = p.humanoid.MoveToFinished:Connect(function(ok: boolean)
-			finished, reached = true, ok
-		end)
 		p.humanoid:MoveTo(goal)
 		local deadline = os.clock() + W.stepTimeout
 		local waited = false -- one wait a step: people who stand in each other's way never wait forever
-		while not finished and os.clock() < deadline and p.rig.Parent do
+		while os.clock() < deadline and p.rig.Parent do
 			task.wait(0.2)
+			local delta = goal - p.root.Position
+			if Vector3.new(delta.X, 0, delta.Z).Magnitude < 1.5 then
+				break
+			end
 			-- someone close ahead: stand and let them get on, then carry on (or go anyway after a while)
 			local heading = Vector3.new(goal.X - p.root.Position.X, 0, goal.Z - p.root.Position.Z)
 			if not waited and heading.Magnitude > 0.5 and crowded(p, heading.Unit) then
@@ -123,8 +123,9 @@ local function walkTo(p: Person, target: Vector3): boolean
 				p.humanoid:MoveTo(goal)
 			end
 		end
-		connection:Disconnect()
-		if not reached then
+		-- Stop and sidestep commands also fire MoveToFinished; only position proves arrival.
+		local remaining = goal - p.root.Position
+		if Vector3.new(remaining.X, 0, remaining.Z).Magnitude >= 1.5 then
 			p.humanoid:MoveTo(p.root.Position) -- stop where it is
 			return false
 		end
@@ -133,6 +134,40 @@ local function walkTo(p: Person, target: Vector3): boolean
 end
 
 -- Along the links to spot `to`; the person's spot is wherever they got to.
+-- The spots others of ours stand at or are walking to.
+local function takenBy(p: Person): { [number]: boolean }
+	local taken: { [number]: boolean } = {}
+	for _, other in people do
+		if other ~= p then
+			taken[other.spot] = true
+			if other.target then
+				taken[other.target] = true
+			end
+			local x, z = local2(other.root.Position)
+			for i, spot in HALL.spots do
+				if (spot.x - x) ^ 2 + (spot.z - z) ^ 2 < (W.personalSpace + 1.5) ^ 2 then
+					taken[i] = true
+				end
+			end
+		end
+	end
+	return taken
+end
+
+-- Wherever `p` has got to, it takes the nearest spot nobody else holds and walks onto it, so two
+-- people never settle on one spot (a walk that failed left them standing together).
+local function settle(p: Person)
+	local x, z = local2(p.root.Position)
+	local to = Passenger.nearestFree(HALL.spots, x, z, takenBy(p), HALL.keepOut, W.clearance)
+	if to then
+		p.target = to
+		if walkTo(p, spotAt(to)) then
+			p.spot = to
+		end
+		p.target = nil
+	end
+end
+
 local function walkRoute(p: Person, to: number)
 	local path = Passenger.route(HALL.links, p.spot, to)
 	if path == nil then
@@ -140,8 +175,7 @@ local function walkRoute(p: Person, to: number)
 	end
 	for i = 2, #path do
 		if not walkTo(p, spotAt(path[i])) then
-			local x, z = local2(p.root.Position)
-			p.spot = Passenger.nearest(HALL.spots, x, z)
+			settle(p)
 			return
 		end
 		p.spot = path[i]
@@ -266,6 +300,13 @@ local function step(p: Person)
 		task.wait(3)
 		return
 	end
+	if p.seat == nil then
+		local offset = p.root.Position - spotAt(p.spot)
+		if crowded(p, nil) or Vector3.new(offset.X, 0, offset.Z).Magnitude >= 1.5 then
+			settle(p)
+			return
+		end
+	end
 	local player, target = nearestHand(p.root.Position, W.greetRadius)
 	local last = player and p.greeted[player.UserId]
 	local action = Passenger.choose(p.rng, {
@@ -285,16 +326,7 @@ local function step(p: Person)
 	elseif action == "wander" then
 		-- half the time somewhere a Hand at the spawn ring can see them; never a spot someone else of
 		-- ours stands at or is heading for
-		local taken: { [number]: boolean } = {}
-		for _, other in people do
-			if other ~= p then
-				taken[other.spot] = true
-				if other.target then
-					taken[other.target] = true
-				end
-			end
-		end
-		local to = Passenger.pickSpot(p.rng, #HALL.spots, HALL.seen, taken)
+		local to = Passenger.pickSpot(p.rng, #HALL.spots, HALL.seen, takenBy(p))
 		if to then
 			p.target = to
 			walkRoute(p, to)
@@ -304,8 +336,13 @@ local function step(p: Person)
 		sit(p)
 	elseif action == "stand" then
 		stand(p)
+	elseif p.seat == nil and crowded(p, nil) then
+		settle(p) -- someone at its elbow: it moves off to a spot of its own before standing about
 	else
-		task.wait(p.rng:range(W.idle[1], W.idle[2]))
+		local until_ = os.clock() + p.rng:range(W.idle[1], W.idle[2])
+		repeat
+			task.wait(0.2)
+		until os.clock() >= until_ or (p.seat == nil and crowded(p, nil)) or not p.rig.Parent
 	end
 end
 

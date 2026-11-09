@@ -96,6 +96,41 @@ describe("Passenger manners", function()
 		expect(Passenger.mayGreet(100, 100 - gap, gap)).toBe(true)
 	end)
 
+	it("after a failed walk, settles on a free spot, not on someone else's", function()
+		local spots = Passengers.Hall.spots
+		local s14 = spots[14]
+		-- stuck right by spot 14 while someone else holds it: the old rule (nearest) put both on 14
+		expect(Passenger.nearest(spots, s14.x + 0.5, s14.z)).toBe(14)
+		local free = Passenger.nearestFree(spots, s14.x + 0.5, s14.z, { [14] = true })
+		expect(free ~= 14).toBe(true)
+		-- no free spot means wait, never claim an occupied spot
+		local all: { [number]: boolean } = {}
+		for i = 1, #spots do
+			all[i] = true
+		end
+		expect(Passenger.nearestFree(spots, s14.x, s14.z, all)).toBe(nil)
+	end)
+
+	it("recovers along a clear segment instead of walking through a solid obstacle", function()
+		local spots = { { x = 4, z = 0 }, { x = 0, z = 8 } }
+		local boxes = { { x0 = 1, z0 = -1, x1 = 3, z1 = 1 } }
+		expect(Passenger.nearestFree(spots, 0, 0, {}, boxes, 0)).toBe(2)
+		expect(Passenger.nearestFree(spots, 0, 0, { [2] = true }, boxes, 0)).toBe(nil)
+	end)
+	it("keeps people on separate spots further apart than their personal space", function()
+		local spots = Passengers.Hall.spots
+		local closest = math.huge
+		for i = 1, #spots do
+			for j = i + 1, #spots do
+				closest = math.min(
+					closest,
+					math.sqrt((spots[i].x - spots[j].x) ^ 2 + (spots[i].z - spots[j].z) ^ 2)
+				)
+			end
+		end
+		expect(closest).toBeGreaterThan(Passengers.Walk.personalSpace * 2)
+	end)
+
 	it("never sends two to the same spot", function()
 		local rng = Rng.new(3)
 		local taken = { [14] = true, [15] = true, [19] = true, [20] = true, [24] = true }
