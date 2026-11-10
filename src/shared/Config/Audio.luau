@@ -301,7 +301,7 @@ local Cues: { [string]: Cue } = {
 	-- the panting after it: the Breath recording, once, cut short with a fade. Measured in Studio
 	-- (2026-10-30): at 0.6 it peaked about 30x under the cry and below the rain bed, then the shock's
 	-- muffle dulled it further; 2.4 (+12 dB) puts it level with the bed as the muffle lets go.
-	TornBreath = { id = 100147087354736, volume = 2.4, maxSeconds = 2.4, mix = "Feedback" },
+	TornBreath = { id = 77836944589790, volume = 2.4, maxSeconds = 2.4, mix = "Feedback" },
 	-- Accelerating Tone Piercing High Pitch Ring 1: its rising first seconds, shaped by the shock
 	ShockRing = { id = 9113031196, volume = 8.49, maxSeconds = 4, group = "Warnings" },
 	-- a rail joint under the wheels: one metal hit, low and short ("Prison Bar Hits 8"), not the UI click
@@ -415,11 +415,11 @@ local Cues: { [string]: Cue } = {
 	-- out of breath ("Gasp Trouble Breathing 4")
 	Winded = { id = 9114555843, volume = 3.41, maxSeconds = 0.9, mix = "Feedback" },
 
-	-- Footsteps by surface (Logic/Footsteps, Controllers/FootstepController): Creator Store
-	-- uploads, free, chosen 2026-10-15 for audition (HANDOFF.md lists them with their sources).
+	-- Footsteps by surface (Logic/Footsteps, Controllers/FootstepController): our own recordings,
+	-- made with tools/sfx/make_sfx.py.
 	-- Two or three takes a surface; the controller picks one and nudges the pitch per step.
 	StepPlank1 = {
-		id = 136507037003210,
+		id = 95006401323602,
 		volume = 0.5,
 		spatial = true,
 		rollOff = 70,
@@ -427,7 +427,7 @@ local Cues: { [string]: Cue } = {
 		mix = "Steps",
 	},
 	StepPlank2 = {
-		id = 137526436035209,
+		id = 117687701949582,
 		volume = 0.5,
 		spatial = true,
 		rollOff = 70,
@@ -436,7 +436,7 @@ local Cues: { [string]: Cue } = {
 	},
 	-- the carriage floor: the same boards, lower, hollow over the underframe
 	StepTrain1 = {
-		id = 136507037003210,
+		id = 95006401323602,
 		volume = 0.45,
 		spatial = true,
 		rollOff = 50,
@@ -445,7 +445,7 @@ local Cues: { [string]: Cue } = {
 		mix = "Steps",
 	},
 	StepTrain2 = {
-		id = 137526436035209,
+		id = 117687701949582,
 		volume = 0.45,
 		spatial = true,
 		rollOff = 50,
@@ -454,64 +454,64 @@ local Cues: { [string]: Cue } = {
 		mix = "Steps",
 	},
 	StepGravel1 = {
-		id = 131788428206726,
-		volume = 0.5,
+		id = 123584170083299,
+		volume = 0.67,
 		spatial = true,
 		rollOff = 70,
 		maxSeconds = 0.8,
 		mix = "Steps",
 	},
 	StepGravel2 = {
-		id = 132387836053582,
-		volume = 0.5,
+		id = 83205563296407,
+		volume = 0.67,
 		spatial = true,
 		rollOff = 70,
 		maxSeconds = 0.8,
 		mix = "Steps",
 	},
-	-- cobbles and paving: until the own-made takes are uploaded (tools/sfx lto_step_stone_1/2), the gravel ids
+	-- cobbles and paving
 	StepStone1 = {
-		id = 131788428206726,
-		volume = 0.5,
+		id = 91129526194977,
+		volume = 0.63,
 		spatial = true,
 		rollOff = 70,
 		maxSeconds = 0.8,
 		mix = "Steps",
 	},
 	StepStone2 = {
-		id = 132387836053582,
-		volume = 0.5,
+		id = 83057869421371,
+		volume = 0.63,
 		spatial = true,
 		rollOff = 70,
 		maxSeconds = 0.8,
 		mix = "Steps",
 	},
 	StepSnow1 = {
-		id = 103816422099881,
-		volume = 0.55,
+		id = 99404852760970,
+		volume = 0.75,
 		spatial = true,
 		rollOff = 60,
 		maxSeconds = 0.7,
 		mix = "Steps",
 	},
 	StepSnow2 = {
-		id = 135918121539048,
-		volume = 0.55,
+		id = 121172019626438,
+		volume = 0.75,
 		spatial = true,
 		rollOff = 60,
 		maxSeconds = 0.7,
 		mix = "Steps",
 	},
 	StepSnow3 = {
-		id = 103079968724414,
-		volume = 0.55,
+		id = 70383952285263,
+		volume = 0.75,
 		spatial = true,
 		rollOff = 60,
 		maxSeconds = 0.7,
 		mix = "Steps",
 	},
 	-- heavy breathing while stamina is spent (MovementController.IsExhausted), not tied to combat
-	Breath = { id = 100147087354736, volume = 0.5, loop = true, mix = "Feedback" },
+	Breath = { id = 125586910891305, volume = 0.5, loop = true, mix = "Feedback" },
 	-- Jumping and landing (Controllers/FootstepController, numbers in Config/Foley). A landing is the
 	-- surface's own step takes, both feet; a hard one adds the thud. ProSoundEffects, Creator Store.
 	Jump = { -- "Cloth Flap 19": a coat's heavy whump as you push off
