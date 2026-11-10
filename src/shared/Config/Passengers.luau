@@ -235,7 +235,7 @@ Passengers.People = table.freeze({
 			trim = { 90, 86, 84 },
 			lower = { 20, 18, 22 },
 			skirt = "Plain",
-			hat = "Lace",
+			-- no lace cap: its flat disc sat on the sculpted bun like a stray plate (owner, 11-10)
 			prop = "Hanky",
 		},
 		lines = {

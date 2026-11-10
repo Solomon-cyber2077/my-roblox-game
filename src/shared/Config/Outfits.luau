@@ -66,7 +66,7 @@ local Lobby: { [string]: Resident } = {
 			lower = { 52, 44, 60 },
 			skirt = "Plain",
 			apron = LINEN,
-			hat = "Lace",
+			-- no lace cap: its flat disc sat on the sculpted bun like a stray plate (owner, 11-10)
 			prop = "Cloth",
 		},
 		pose = { armR = 18 },
