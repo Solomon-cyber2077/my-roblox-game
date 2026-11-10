@@ -1,16 +1,16 @@
 --!strict
 --[[
 	Blender crowns for the station trees (tools/trees/build.py: one mesh each, no texture), uploaded
-	through Studio's 3D Importer under the owner's account. A crown with no id yet keeps its Part balls
+	under the owner's account. A crown with no id yet keeps its Part balls
 	(Builders/TreeCrowns).
 ]]
 
 local TreeCrowns: { [string]: number } = {
-	-- crown_oak_a = <mesh id>,
-	-- crown_oak_b = <mesh id>,
-	-- crown_elm = <mesh id>,
-	-- crown_poplar = <mesh id>,
-	-- crown_birch = <mesh id>,
+	crown_oak_a = 82061257568745,
+	crown_oak_b = 117809123805414,
+	crown_elm = 99574489469487,
+	crown_poplar = 139177178887647,
+	crown_birch = 130859333337669,
 }
 
 return table.freeze(TreeCrowns)
