@@ -24,7 +24,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Stations = require(Shared.Config.Stations)
+local Crowns = require(Shared.Visual.Crowns)
 local Kit = require(Shared.Visual.Kit)
+local SignArt = require(script.Parent.SignArt)
+local TreeCrowns = require(script.Parent.TreeCrowns)
 local Tutorial = require(Shared.Config.Tutorial)
 local Tuning = require(Shared.Config.Tuning)
 
@@ -263,23 +266,27 @@ Builders.Oak = function(ctx)
 	end
 	local crown = h * 0.5
 	local color = pick(ctx, FOLIAGE)
-	ball(ctx, crown, base * CFrame.new(0, trunkH + crown * 0.3, 0), color, M.LeafyGrass)
+	local balls = { ball(ctx, crown, base * CFrame.new(0, trunkH + crown * 0.3, 0), color, M.LeafyGrass) }
 	for k = 1, rng:NextInteger(4, 5) do
 		local a = k / 5 * math.pi * 2 + rng:NextNumber(0, 0.8)
 		local d = crown * rng:NextNumber(0.6, 0.78)
-		ball(
-			ctx,
-			d,
-			base
-				* CFrame.new(
-					math.cos(a) * crown * 0.36,
-					trunkH + crown * rng:NextNumber(0.05, 0.42),
-					math.sin(a) * crown * 0.36
-				),
-			Kit.shade(color, rng:NextNumber(0.86, 1.1)),
-			M.LeafyGrass
+		table.insert(
+			balls,
+			ball(
+				ctx,
+				d,
+				base
+					* CFrame.new(
+						math.cos(a) * crown * 0.36,
+						trunkH + crown * rng:NextNumber(0.05, 0.42),
+						math.sin(a) * crown * 0.36
+					),
+				Kit.shade(color, rng:NextNumber(0.86, 1.1)),
+				M.LeafyGrass
+			)
 		)
 	end
+	TreeCrowns.swap(balls, base, Crowns.oak(base))
 end
 
 Builders.Pine = function(ctx)
@@ -305,15 +312,20 @@ Builders.Poplar = function(ctx)
 	local base = ctx.frame
 	post(ctx, h * 0.3, h * 0.05, base * CFrame.new(0, h * 0.15, 0), shade(ctx, C.bark, 0.1), M.Wood, true)
 	local color = pick(ctx, FOLIAGE)
+	local balls = {}
 	for i = 0, 3 do
-		ball(
-			ctx,
-			h * (0.26 - i * 0.04),
-			base * CFrame.new(0, h * (0.32 + i * 0.17), 0),
-			Kit.shade(color, 0.94 + i * 0.05),
-			M.LeafyGrass
+		table.insert(
+			balls,
+			ball(
+				ctx,
+				h * (0.26 - i * 0.04),
+				base * CFrame.new(0, h * (0.32 + i * 0.17), 0),
+				Kit.shade(color, 0.94 + i * 0.05),
+				M.LeafyGrass
+			)
 		)
 	end
+	TreeCrowns.swap(balls, base, "crown_poplar")
 end
 
 Builders.Birch = function(ctx)
@@ -330,8 +342,16 @@ Builders.Birch = function(ctx)
 		)
 	end
 	local color = Kit.shade(pick(ctx, FOLIAGE), 1.2)
-	ball(ctx, h * 0.44, trunk * CFrame.new(0, h * 0.78, 0), color, M.LeafyGrass)
-	ball(ctx, h * 0.3, trunk * CFrame.new(h * 0.12, h * 0.62, h * 0.06), Kit.shade(color, 0.9), M.LeafyGrass)
+	TreeCrowns.swap({
+		ball(ctx, h * 0.44, trunk * CFrame.new(0, h * 0.78, 0), color, M.LeafyGrass),
+		ball(
+			ctx,
+			h * 0.3,
+			trunk * CFrame.new(h * 0.12, h * 0.62, h * 0.06),
+			Kit.shade(color, 0.9),
+			M.LeafyGrass
+		),
+	}, trunk, "crown_birch")
 end
 
 -- A gnarled dead tree: a leaning trunk, crooked limbs, twigs like fingers against the moon.
@@ -779,6 +799,7 @@ Builders.Canopy = function(ctx)
 			ctx.palette.light,
 			Enum.PartType.Ball
 		)
+		flame.Name = "HangingLantern" -- its gas flame breathes, or gutters (Controllers/StationVisualsController)
 		Kit.pointLight(flame, ctx.palette.light, 1.15, 24, false)
 		post(ctx, 0.2, 0.84, f(ctx, x, 10.1, lz), C.iron, M.Metal)
 	end
@@ -811,6 +832,7 @@ Builders.PlatformEnd = function(ctx)
 		Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold),
 		Vector2.new(360, 190)
 	)
+	SignArt.dress(board, Enum.NormalId.Left, "notice_iron")
 	post(ctx, 3.2, 0.3, f(ctx, -0.8, 1.6, -length / 2 + 1.6), C.iron, M.Metal, true)
 	Kit.neon(ctx.parent, Vector3.new(0.5, 0.7, 0.5), f(ctx, -0.8, 3.55, -length / 2 + 1.6), rgb(200, 40, 34))
 end
@@ -973,6 +995,7 @@ Builders.Timetable = function(ctx)
 		Font.new(Font.fromEnum(Enum.Font.Fondamento).Family), -- a private hand (LORE.md)
 		Vector2.new(130, 170)
 	)
+	SignArt.dress(poster, Enum.NormalId.Front, "bill_tom")
 	ball(ctx, 0.16, f(ctx, 1.4, 5.55, -0.14), C.red, M.SmoothPlastic)
 end
 
@@ -1332,6 +1355,7 @@ Builders.Statue = function(ctx)
 		GARAMOND,
 		Vector2.new(220, 130)
 	)
+	SignArt.dress(plaque, Enum.NormalId.Front, "plaque_subscription")
 	-- the figure: boots, trousers, the coat's skirts, body, arms, head and hat
 	piece(ctx, Vector3.new(1.5, 0.4, 1.4), at(0, 9.0, 0), bronze, M.Metal)
 	for _, x in { -0.32, 0.32 } do
@@ -1366,6 +1390,7 @@ Builders.Obelisk = function(ctx)
 		GARAMOND,
 		Vector2.new(160, 150)
 	)
+	SignArt.dress(die, Enum.NormalId.Front, "jubilee_die")
 	piece(ctx, Vector3.new(3.3, 0.4, 3.3), at(4.05), dark, M.Granite)
 	-- the shaft in three tapering drums
 	local y = 4.2
@@ -1417,17 +1442,22 @@ Builders.Elm = function(ctx)
 		block(ctx, Vector3.new(h * 0.035, len, h * 0.035), limb * CFrame.new(0, len / 2, 0), bark, M.Wood)
 	end
 	local color = pick(ctx, FOLIAGE)
+	local balls = {}
 	for k = 0, 1 do -- two broad clumps: balls are dear (432 tris each)
 		local a = rng:NextNumber(0, math.pi * 2)
 		local r = if k == 0 then 0 else h * 0.14
-		ball(
-			ctx,
-			h * rng:NextNumber(0.34, 0.42),
-			base * CFrame.new(math.cos(a) * r, trunkH + h * rng:NextNumber(0.2, 0.36), math.sin(a) * r),
-			Kit.shade(color, rng:NextNumber(0.86, 1.08)),
-			M.LeafyGrass
+		table.insert(
+			balls,
+			ball(
+				ctx,
+				h * rng:NextNumber(0.34, 0.42),
+				base * CFrame.new(math.cos(a) * r, trunkH + h * rng:NextNumber(0.2, 0.36), math.sin(a) * r),
+				Kit.shade(color, rng:NextNumber(0.86, 1.08)),
+				M.LeafyGrass
+			)
 		)
 	end
+	TreeCrowns.swap(balls, base, "crown_elm")
 	guard(ctx, 2.9, trunkH, 2.9)
 end
 
@@ -1462,6 +1492,7 @@ Builders.DrinkingFountain = function(ctx)
 		GARAMOND,
 		Vector2.new(160, 70)
 	)
+	SignArt.dress(sign, Enum.NormalId.Front, "plaque_temperance")
 	-- the horse trough, low, behind it
 	piece(ctx, Vector3.new(4.4, 1.6, 1.6), at(0, 0.8, 2.0), granite, M.Granite)
 	piece(ctx, Vector3.new(4.0, 0.1, 1.2), at(0, 1.62, 2.0), C.water, M.Slate)
@@ -1507,7 +1538,8 @@ Builders.NoticeBoard = function(ctx)
 	end
 	local first = ctx.rng:NextInteger(1, #NOTICES)
 	for k = 0, 1 do
-		local notice = NOTICES[(first + k * 2 - 1) % #NOTICES + 1]
+		local index = (first + k * 2 - 1) % #NOTICES + 1
+		local notice = NOTICES[index]
 		local sheet = piece(
 			ctx,
 			Vector3.new(1.55, 2.3, 0.04),
@@ -1534,6 +1566,7 @@ Builders.NoticeBoard = function(ctx)
 			label.TextTransparency = if i == 1 then 0.05 else 0.15
 			label.Parent = gui
 		end
+		SignArt.dress(sheet, Enum.NormalId.Front, `bill_{index}`)
 	end
 	guard(ctx, 4.6, 9.2, 0.6)
 end
@@ -1603,6 +1636,7 @@ Builders.YardLamp = function(ctx)
 	block(ctx, Vector3.new(1.6, 0.2, 0.2), f(ctx, 0, 8.6, 0), C.iron, M.Metal)
 	block(ctx, Vector3.new(1.2, 0.3, 1.2), f(ctx, 0, 9.85, 0), C.iron, M.Metal)
 	local glass = Kit.neon(ctx.parent, Vector3.new(0.8, 1.1, 0.8), f(ctx, 0, 10.55, 0), ctx.palette.light)
+	glass.Name = "YardLamp" -- its gas flame breathes, or gutters (Controllers/StationVisualsController)
 	wedge(ctx, Vector3.new(1.3, 0.5, 0.65), f(ctx, 0, 11.35, -0.325), C.iron, M.Metal)
 	wedge(ctx, Vector3.new(1.3, 0.5, 0.65), f(ctx, 0, 11.35, 0.325) * Kit.angles(0, 180, 0), C.iron, M.Metal)
 	Kit.pointLight(glass, ctx.palette.light, 1.6, 30, false)

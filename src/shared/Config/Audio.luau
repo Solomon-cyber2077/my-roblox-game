@@ -194,6 +194,32 @@ local Cues: { [string]: Cue } = {
 	Wind = { id = 9113286969, volume = 7.95, loop = true, mix = "Outdoor" },
 	StationEerie = { id = 9125440141, volume = 10, loop = true, mix = "Outdoor" },
 	DepotHall = { id = 9114872503, volume = 3.29, loop = true, mix = "Ambience" },
+	-- people waiting in the hall, under the hall's own bed and the piano (owner 11-07, life pass): a large,
+	-- reverberant crowd with footsteps and a far door (Pro Sound Effects, asset 9112823809)
+	HallMurmur = { id = 9112823809, volume = 0.55, loop = true, mix = "Ambience" },
+	-- the saloon's crockery rattling on its saucers at speed, now and then over a rail joint
+	-- ("Dishes Shaking 6", Pro Sound Effects; Controllers/TrainVisualsController)
+	SaloonCrockery = {
+		id = 9114118300,
+		volume = 0.45,
+		spatial = true,
+		rollOff = 30,
+		maxSeconds = 2.5,
+		gap = 5,
+		mix = "Ambience",
+	},
+	-- a failing gas lamp sputtering as it gutters at a stop: the game's own fire hiss, short and higher
+	-- (Controllers/StationVisualsController)
+	GasSputter = {
+		id = 9112780743,
+		volume = 0.35,
+		spatial = true,
+		rollOff = 26,
+		maxSeconds = 0.6,
+		pitch = 1.6,
+		gap = 1.5,
+		mix = "Ambience",
+	},
 	-- Satie, Gnossienne No. 3 (APM Music), from the lobby piano (Builders/LobbyBuilder)
 	LobbyPiano = { id = 1837474268, volume = 3.45, loop = true, spatial = true, mix = "Piano" },
 
@@ -275,7 +301,7 @@ local Cues: { [string]: Cue } = {
 	-- the panting after it: the Breath recording, once, cut short with a fade. Measured in Studio
 	-- (2026-10-30): at 0.6 it peaked about 30x under the cry and below the rain bed, then the shock's
 	-- muffle dulled it further; 2.4 (+12 dB) puts it level with the bed as the muffle lets go.
-	TornBreath = { id = 100147087354736, volume = 2.4, maxSeconds = 2.4, pitch = 1.08, mix = "Feedback" },
+	TornBreath = { id = 100147087354736, volume = 2.4, maxSeconds = 2.4, mix = "Feedback" },
 	-- Accelerating Tone Piercing High Pitch Ring 1: its rising first seconds, shaped by the shock
 	ShockRing = { id = 9113031196, volume = 8.49, maxSeconds = 4, group = "Warnings" },
 	-- a rail joint under the wheels: one metal hit, low and short ("Prison Bar Hits 8"), not the UI click
@@ -436,6 +462,23 @@ local Cues: { [string]: Cue } = {
 		mix = "Steps",
 	},
 	StepGravel2 = {
+		id = 132387836053582,
+		volume = 0.5,
+		spatial = true,
+		rollOff = 70,
+		maxSeconds = 0.8,
+		mix = "Steps",
+	},
+	-- cobbles and paving: until the own-made takes are uploaded (tools/sfx lto_step_stone_1/2), the gravel ids
+	StepStone1 = {
+		id = 131788428206726,
+		volume = 0.5,
+		spatial = true,
+		rollOff = 70,
+		maxSeconds = 0.8,
+		mix = "Steps",
+	},
+	StepStone2 = {
 		id = 132387836053582,
 		volume = 0.5,
 		spatial = true,

@@ -153,11 +153,14 @@ local function teleport(crew: { Player }, match: CrewQueue.Match?): boolean
 	end
 	local ok, err = pcall(function()
 		local options = Instance.new("TeleportOptions")
+		-- ReservedServerAccessCode and ShouldReserveServer are deprecated (still live) and missing from newer
+		-- type definitions, so they are set through an untyped handle
+		local legacy: any = options
 		if match then
-			options.ReservedServerAccessCode = match.code
+			legacy.ReservedServerAccessCode = match.code
 			options:SetTeleportData({ carRun = true, crew = match.crew, matchId = match.matchId })
 		else
-			options.ShouldReserveServer = true
+			legacy.ShouldReserveServer = true
 			options:SetTeleportData({ carRun = true, crew = userIds })
 		end
 		TeleportService:TeleportAsync(game.PlaceId, crew, options)

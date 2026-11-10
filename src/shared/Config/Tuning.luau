@@ -155,7 +155,7 @@ local Tuning = {
 		MaxInterval = 0.7,
 		MinSpeed = 2,
 		PitchJitter = 0.08,
-		Takes = { Plank = 2, TrainFloor = 2, Gravel = 2, Snow = 3 },
+		Takes = { Plank = 2, TrainFloor = 2, Stone = 2, Gravel = 2, Snow = 3 },
 		BreathFade = 1.5, -- seconds the breathing takes to swell or die away
 		-- four boot timbres by crew slot (Design step 7): the same takes played at a base pitch and level
 		-- of their own, each step still jittered by PitchJitter around it
@@ -188,7 +188,7 @@ local Tuning = {
 		SeverImpulse = 18, -- studs/s a severed limb is thrown at
 	},
 	Grasp = {
-		RailOutside = 0.42,
+		RailOutside = 0.56,
 		RailHeight = 4.6,
 		RailWidth = 0.35,
 		RailJamb = 0.1, -- gap between a door's opening and its handhold
@@ -571,6 +571,9 @@ local Tuning = {
 		CrawlerNeck = 0.75,
 		Jaw = 0.35,
 	},
+	-- Kinds kept out of play: never rolled, and a sleeper of that kind wakes as a Stalker instead (owner,
+	-- 2026-11-09: the Brute sits out the Test Launch until its remake). Studio dev commands still spawn them.
+	HollowBenched = { Brute = true } :: { [string]: boolean },
 	HollowKinds = {
 		Stalker = {
 			walk = 1,
@@ -750,6 +753,13 @@ local Tuning = {
 		screen in a dark room. Radius is the one value a Settings "Visibility" slider moves
 		(RadiusMin..RadiusMax); the ambient floors scale with it.
 	]]
+	-- A stop on a phone (the Performance setting): small decor left out, lit lamps capped near the camera.
+	StationPhone = {
+		DetailUnder = 1, -- studs: plain, non-colliding station parts smaller than this become Detail
+		LightCap = 14, -- lit station lamps kept on, the nearest to the camera
+		LightAlways = 25, -- studs: lamps this near always stay lit, whatever the cap
+		LightPeriod = 0.5, -- seconds between re-picks as the camera moves
+	},
 	Visibility = {
 		Radius = 18, -- studs readable all round
 		Setting = "Visibility", -- the player attribute a Settings slider writes (studs; nil = Radius)
