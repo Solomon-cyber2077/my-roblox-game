@@ -158,9 +158,11 @@ function FaceKit.dress(
 			-- the texture as an Overlay SurfaceAppearance (src/server/FaceLooks.model.json), so the person's
 			-- own Color shows through its clear parts; a plain TextureID would show them black
 			local skinLook = looks and looks:FindFirstChild(w.key)
-			if skinLook then
+			local faceless = not Config.PaintedFaces and string.sub(w.key, 1, 5) == "head_"
+			-- faceless: plain skin, the person's own Color on the sculpted head with no painted features
+			if skinLook and not faceless then
 				skinLook:Clone().Parent = mesh
-			else
+			elseif not faceless then
 				mesh.TextureID = `rbxassetid://{Config.Ids[w.key].texture}`
 			end
 			mesh.Color = w.color

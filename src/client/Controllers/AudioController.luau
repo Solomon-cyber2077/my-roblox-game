@@ -216,6 +216,12 @@ local function makeSound(cueName: string, parent: Instance): Sound?
 	sound.Volume = cue.volume
 	sound.Looped = cue.loop == true
 	sound.PlaybackSpeed = cue.pitch or 1
+	local region = cue.loopRegion
+	if region then
+		sound.PlaybackRegionsEnabled = true
+		sound.LoopRegion = NumberRange.new(region[1], region[2])
+		sound.TimePosition = region[1]
+	end
 	sound.SoundGroup = if cue.mix then mixes[cue.mix] or group else group
 	if cue.group then
 		sound.SoundGroup = ownGroup(cue.group)

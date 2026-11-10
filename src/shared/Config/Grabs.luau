@@ -52,7 +52,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Throttle",
 			area = "Head",
-			name = "LIFTED BY THE THROAT",
+			name = "IT HAS YOUR THROAT",
 			hold = { pos = { 0.4, 0, -4.2 }, up = STANDING, face = TOWARD },
 			bite = 0.9,
 			lying = false,
@@ -60,7 +60,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Embrace",
 			area = "Torso",
-			name = "CRUSHED IN ITS ARMS",
+			name = "IT'S CRUSHING YOU",
 			hold = { pos = { 0, -1.7, -3.0 }, up = STANDING, face = TOWARD },
 			bite = 1.1,
 			lying = false,
@@ -68,7 +68,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Drag",
 			area = "RightLeg",
-			name = "DRAGGED BY THE ANKLE",
+			name = "IT'S DRAGGING YOU OFF",
 			hold = { pos = { 0, -4.65, -5.8 }, up = AWAY, face = DOWN },
 			bite = 0.8,
 			lying = true,
@@ -80,7 +80,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Pin",
 			area = "Head",
-			name = "PINNED DOWN",
+			name = "IT HAS YOU DOWN",
 			hold = { pos = { 0, -2.95, -2.7 }, up = AWAY, face = UP },
 			bite = 0.6,
 			lying = true,
@@ -88,7 +88,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Latch",
 			area = "LeftLeg",
-			name = "CAUGHT BY THE LEGS",
+			name = "IT'S GOT YOUR LEGS",
 			hold = { pos = { 0, -2.95, -6.6 }, up = AWAY, face = DOWN },
 			bite = 0.7,
 			lying = true,
@@ -96,7 +96,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Ride",
 			area = "RightArm",
-			name = "IT'S ON YOUR BACK",
+			name = "GET IT OFF!",
 			hold = { pos = { 0, -1.9, -3.2 }, up = STANDING, face = AWAY },
 			bite = 0.65,
 			lying = false,
@@ -108,7 +108,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Fist",
 			area = "LeftArm",
-			name = "IN ITS FIST",
+			name = "CAUGHT IN ITS FIST",
 			hold = { pos = { -1.6, 0.4, -3.8 }, up = STANDING, face = TOWARD },
 			bite = 1.2,
 			lying = false,
@@ -116,7 +116,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Shovel",
 			area = "Torso",
-			name = "PINNED UNDER THE SHOVEL",
+			name = "UNDER THE SHOVEL",
 			hold = { pos = { 0.9, -5.15, -5.2 }, up = AWAY, face = UP },
 			bite = 1.0,
 			lying = true,
@@ -124,7 +124,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Bearhug",
 			area = "Torso",
-			name = "CRUSHED TO ITS CHEST",
+			name = "HELD TO THE EMBERS",
 			hold = { pos = { 0, -1.1, -2.9 }, up = STANDING, face = TOWARD },
 			bite = 1.3,
 			lying = false,
@@ -133,7 +133,7 @@ local Grabs: { [string]: { Def } } = {
 		{
 			id = "Slam",
 			area = "RightLeg",
-			name = "PINNED BY THE BRUTE",
+			name = "THE BRUTE HAS YOU",
 			hold = { pos = { 0.9, -5.15, -5.2 }, up = AWAY, face = DOWN },
 			bite = Tuning.Grab.Pin.Tick,
 			lying = true,

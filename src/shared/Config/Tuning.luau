@@ -472,6 +472,7 @@ local Tuning = {
 		LungeBoost = 1.45, -- its speed multiplier while lunging
 		LungeSeconds = 0.55,
 		LungeCooldown = 3.5,
+		SearchPace = 0.7, -- share of its chase speed while it searches where it lost you (was 0.85)
 		SafeMargin = 3,
 		ThinkHz = 12,
 		RetreatSeconds = 6,

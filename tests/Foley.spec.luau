@@ -3,16 +3,11 @@ local Foley = require(Shared.Logic.Foley)
 local Items = require(Shared.Config.Items)
 
 describe("Handling sounds", function()
-	it("gives coal, parts and relics a sound of their own", function()
-		expect(Foley.pickup("CoalSack")).toBe("PickupCoal")
-		expect(Foley.pickup("Scrap")).toBe("PickupParts")
-		expect(Foley.pickup("Tonic")).toBe("Loot") -- a tool keeps the plain sound
-		expect(Foley.pickup("NoSuchItem")).toBe("Loot")
-		for id, def in Items do
-			if def.kind == "Relic" and (def.coal or 0) == 0 and (def.parts or 0) == 0 then
-				expect(Foley.pickup(id)).toBe("PickupRelic")
-			end
+	it("gives every item the one soft pickup sound", function()
+		for id in Items do
+			expect(Foley.pickup(id)).toBe("Pickup")
 		end
+		expect(Foley.pickup("NoSuchItem")).toBe("Loot")
 	end)
 
 	it("pours coal and tips parts, coal first, and nothing for an empty delivery", function()
@@ -24,9 +19,7 @@ describe("Handling sounds", function()
 	it("has a cue for every sound it can pick, each kept from repeating in a burst", function()
 		for _, name in
 			{
-				"PickupCoal",
-				"PickupParts",
-				"PickupRelic",
+				"Pickup",
 				"DepositCoal",
 				"DepositParts",
 				"Deny",

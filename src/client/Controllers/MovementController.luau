@@ -162,9 +162,7 @@ function MovementController.Start()
 			if stamina <= 0 then
 				exhausted = true
 				windedUntil = clock + crew.WindedSeconds
-				if Registry.AudioController then
-					Registry.AudioController.Play("Winded")
-				end
+				-- no gasp here (owner, 11-10: overdone): the soft panting loop fades in on its own
 			end
 		elseif clock - lastSprintAt > crew.StaminaRegenDelay then
 			stamina = math.min(stamina + crew.StaminaRegenPerSecond * dt, crew.StaminaMax)

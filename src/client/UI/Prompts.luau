@@ -153,7 +153,7 @@ local function build(
 	})
 	local chip = Ui.new("TextButton", {
 		Size = UDim2.fromScale(1, 1),
-		BackgroundColor3 = if danger then Theme.Color.signalDark else Theme.Color.steel,
+		BackgroundColor3 = if danger then Theme.Color.mahogany else Theme.Color.steel,
 		BackgroundTransparency = 0.06,
 		AutoButtonColor = false,
 		Text = "",

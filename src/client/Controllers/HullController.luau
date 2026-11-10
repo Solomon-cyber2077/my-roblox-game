@@ -60,7 +60,7 @@ local function onTrain(train: any)
 	end
 	if tier > warned and Session.isRunActive() then
 		warned = tier
-		Overlay.alert(WARNINGS[tier], if tier >= 3 then Theme.Color.signal else Theme.Color.caution, 3)
+		Overlay.alert(WARNINGS[tier], if tier >= 3 then Theme.Color.alarm else Theme.Color.caution, 3)
 	elseif tier < warned then
 		warned = tier -- repaired: crossing down again warns again
 	end

@@ -22,5 +22,5 @@ return table.freeze({
 	DangerBias = 0,
 	MaxTier = 3,
 	Archetype = "Mystery",
-	Name = "????",
+	Name = "? ? ? ? ? ?",
 })

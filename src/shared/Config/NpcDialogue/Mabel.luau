@@ -17,18 +17,18 @@ local Lines = {
 	{
 		id = "mabel_greeting",
 		topic = "Greeting",
-		text = "Evening, Hand! I'm Mabel. I issue the Relief's tickets. Talk to me between stops if you fancy a job on the way.",
+		text = "Evening, Hand! I'm Mabel, I punch the tickets round here. Come find me between stops if you fancy a little job on the way.",
 	},
 	{
 		id = "mabel_smalltalk",
 		topic = "SmallTalk",
-		text = "Coal, parts, anything of value: strip it and be back aboard before the whistle. The Depot stands while the line runs.",
+		text = "Coal, parts, anything worth a penny: grab it and get back aboard before the whistle. Keep the train running and the Depot keeps standing.",
 	},
 	{
 		id = "mabel_lore",
 		topic = "Lore",
 		when = { stageMin = 2, seen = "mabel_smalltalk" },
-		text = "I count every ticket out and every Hand back in. The numbers never match. Never mind. Keep your lamp lit.",
+		text = "I punch a ticket for every Hand who goes out. Fewer come back to show me. Keep your lamp lit, love.",
 	},
 	{
 		id = "mabel_hint",
@@ -38,7 +38,7 @@ local Lines = {
 	{
 		id = "mabel_danger",
 		topic = "Danger",
-		text = "Last call! Aboard, now, or I strike you off the ledger!",
+		text = "Last call! Aboard, now, or you're walking home!",
 	},
 	{
 		id = "mabel_offer_luggage",
@@ -68,7 +68,7 @@ local Lines = {
 		id = "mabel_done",
 		topic = "QuestDone",
 		when = { status = "Done" },
-		text = "Lovely, thank you! That one goes in the ledger.",
+		text = "Lovely, thank you! I knew you'd find it.",
 	},
 	{
 		id = "mabel_failed",
@@ -89,7 +89,7 @@ local Lines = {
 	{
 		id = "mabel_closecall",
 		topic = "CloseCall",
-		text = "That was close! I very nearly wrote you down as missing.",
+		text = "That was close! You gave me such a fright.",
 	},
 	{
 		id = "mabel_terminus",

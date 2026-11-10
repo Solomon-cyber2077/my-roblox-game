@@ -2,8 +2,7 @@
 --[[
 	Which handling sound an item makes (Config/Audio). Pure, for the client's FxController.
 
-	  pickup   coal lumps, a clanky part, or a small bell for a relic or a valuable; a tool or
-	           anything else keeps the plain Loot sound
+	  pickup   one soft sound for every item
 	  deposit  coal poured into the bunker or parts tipped into the bin, by what was delivered
 ]]
 
@@ -12,20 +11,8 @@ local Items = require(script.Parent.Parent.Config.Items)
 local Foley = {}
 
 function Foley.pickup(itemId: string): string
-	local def = Items[itemId]
-	if def == nil then
-		return "Loot"
-	end
-	if (def.coal or 0) > 0 then
-		return "PickupCoal"
-	end
-	if (def.parts or 0) > 0 then
-		return "PickupParts"
-	end
-	if def.kind == "Relic" or def.kind == "Valuable" then
-		return "PickupRelic"
-	end
-	return "Loot"
+	-- one plain sound for every item (owner, 11-10); unknown ids keep the old Loot sound
+	return if Items[itemId] then "Pickup" else "Loot"
 end
 
 -- The delivery sounds for `coal` and `parts` delivered at once, coal first.

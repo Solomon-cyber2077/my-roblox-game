@@ -65,7 +65,7 @@ local STAMINA_W, STAMINA_H, STAMINA_GAP = 200, 8, 10
 local STAMINA_REST = 0.7
 -- The leak alert's slot, top right under the Operators panel (it follows the panel's height;
 -- `y` is the gap below it). The Settings button sits under the gauge case in a run (UI/Settings).
-local LEAK_SLOT = { x = 14, y = 8, w = 236, h = 40 }
+local LEAK_SLOT = { x = 14, y = 8, w = 280, h = 50 } -- owner, 11-10: a bit larger
 -- Full-screen UI the leak slot hides behind (direct children of the HUD ScreenGui).
 local FULL_SCREEN = { "RouteVote", "RunCard", "Unseal", "CarBoarding", "Eliminated" }
 local leakSlot: Frame? = nil

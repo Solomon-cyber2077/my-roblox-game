@@ -187,7 +187,7 @@ function Dialogue.mount(gui: ScreenGui)
 		Size = UDim2.fromOffset(104, 104),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Image = Theme.Image.stamp,
-		ImageColor3 = Theme.Color.signal,
+		ImageColor3 = Theme.Color.oxblood,
 		ImageTransparency = 0.04,
 		Rotation = -14,
 		ZIndex = 37,

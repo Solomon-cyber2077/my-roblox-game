@@ -54,11 +54,11 @@ local function buildPlate(slot: Frame)
 		Parent = slot,
 	})
 	Ui.corner(4).Parent = panel
-	Ui.stroke(Theme.Color.signal, 2, 0.05).Parent = panel
+	Ui.stroke(Theme.Color.alarmRim, 2, 0.05).Parent = panel
 	local text = Ui.text({
 		Text = "",
-		Font = Theme.Font.displayMedium,
-		TextSize = 14,
+		Font = Theme.Font.alert,
+		TextSize = 17,
 		Color = Theme.Color.white,
 		Position = UDim2.fromOffset(10, 0),
 		Size = UDim2.new(1, -20, 1, 0),
@@ -70,7 +70,7 @@ local function buildPlate(slot: Frame)
 	label = text
 end
 
--- A small red exclamation mark at the leak: a painted "!" with a soot outline, no plate.
+-- A small amber exclamation mark at the leak: a painted "!" with a soot outline, no plate.
 local function buildMark(anchor: BasePart): BillboardGui
 	local mark = Instance.new("BillboardGui")
 	mark.Name = "LeakMark"
@@ -83,7 +83,7 @@ local function buildMark(anchor: BasePart): BillboardGui
 		Text = "!",
 		Font = Theme.Font.display,
 		TextSize = 42,
-		Color = Theme.Color.dangerText,
+		Color = Theme.Color.alarm,
 		Size = UDim2.fromScale(1, 1),
 		XAlign = Enum.TextXAlignment.Center,
 	})

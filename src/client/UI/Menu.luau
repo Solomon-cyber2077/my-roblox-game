@@ -31,7 +31,7 @@ local onInvite: (() -> ())? = nil
 local inviteShown: (() -> boolean)? = nil
 
 local WIDTH, ROW, GAP = 150, 34, 4
-local MENU_W, FRIENDS_W, HEIGHT = 74, 34, 30
+local MENU_W, FRIENDS_W, HEIGHT = 90, 38, 36 -- owner, 11-10: a bit larger
 
 -- Adds an entry (callable before or after mount).
 function Menu.add(label: string, order: number, onClick: () -> (), shown: (() -> boolean)?)
@@ -124,7 +124,7 @@ function Menu.mount(gui: ScreenGui)
 	local open = Ui.button("MENU", "Secondary", nil, {
 		Name = "MenuButton",
 		Size = UDim2.fromOffset(MENU_W, HEIGHT),
-		TextSize = 15,
+		TextSize = 18,
 		Selectable = true,
 	})
 	open.ZIndex = 20

@@ -156,8 +156,8 @@ Passengers.People = table.freeze({
 			prop = "Ledger",
 		},
 		lines = {
-			"Evening. Is it true they're sending the Relief out again tonight?",
-			"I count the coal they bring back. It's never enough, and never nothing.",
+			"Evening. They're really sending her out again tonight?",
+			"Whatever coal you lot bring back keeps my stove lit. Bless you for it.",
 			"Keep to the lamps, Hand. Everyone says it, so it must be true.",
 		},
 	},
@@ -239,7 +239,7 @@ Passengers.People = table.freeze({
 			prop = "Hanky",
 		},
 		lines = {
-			"I come every evening. The ledger says 'not recalled'. I come anyway.",
+			"I come every evening. They tell me he isn't coming back. I come anyway.",
 			"Listen. You can hear the line humming when the Relief's far out.",
 			"Keep your lamp lit, dear. Mine went out once.",
 		},

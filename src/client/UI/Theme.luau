@@ -53,6 +53,10 @@ Theme.Color = table.freeze({
 	parts = Color3.fromRGB(150, 146, 136),
 	hull = Color3.fromRGB(132, 190, 128),
 	fog = Color3.fromRGB(104, 168, 160),
+	-- pop-ups and alerts (owner, 11-10: the red ones were ugly): lamp-glare amber for the words,
+	-- old brass for the rim, set in typewriter type, so an alert reads as an urgent telegram
+	alarm = Color3.fromRGB(242, 184, 104),
+	alarmRim = Color3.fromRGB(168, 116, 52),
 })
 
 Theme.Font = table.freeze({
@@ -66,6 +70,8 @@ Theme.Font = table.freeze({
 	dial = Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold),
 	sign = Font.new("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold),
 	chalk = Font.new("rbxasset://fonts/families/PatrickHand.json"),
+	-- pop-ups and alerts: typewriter capitals (Special Elite, the owner's title pick)
+	alert = Font.new("rbxasset://fonts/families/SpecialElite.json"),
 })
 
 --[[

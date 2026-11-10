@@ -161,6 +161,7 @@ type Hollow = {
 	stalk: StalkRun?, -- the stalk under way
 	exposure: { [Player]: number }, -- warning seconds each target has had from this Hollow
 	stalked: { [Player]: number }, -- os.clock() it stalked each target this stop (the budget)
+	lostUntil: { [Player]: number }, -- os.clock() until which it can't sense someone it lost, unseen
 	noStalkUntil: number, -- after a stun or stagger
 	lastThink: number,
 	door: BasePart?, -- the shut door it is forcing
@@ -1445,7 +1446,15 @@ local function think(hollow: Hollow)
 					if visible then
 						Registry.TelemetryService.HollowSeen(player) -- first_hollow_seen (A.4)
 					end
-					if wanderer or visible or distance <= A.AwarenessRange then
+					-- unseen, it senses only someone close it isn't already hunting and hasn't just lost;
+					-- its own prey out of sight is tracked only within CloseSense (the search covers the rest)
+					local senseRange = if player == current
+							or clock < (hollow.lostUntil[player] or 0)
+						then A.CloseSense
+						else A.AwarenessRange
+					-- a Surge hunts everyone; a wanderer comes looking until it loses someone
+					local homing = clock < alertUntil or (wanderer and senseRange == A.AwarenessRange)
+					if homing or visible or distance <= senseRange then
 						if player == current then
 							currentRoot, currentDistance, currentVisible = root, distance, visible
 						end
@@ -1546,6 +1555,7 @@ local function think(hollow: Hollow)
 			end
 			if run.unseenSince and clock - run.unseenSince >= A.Persistence then
 				endStalk(hollow) -- lost: back to prowling, its stalk spent
+				hollow.lostUntil[best] = clock + A.LostGrace
 				setState(hollow, "Prowl")
 				hollow.target = nil
 				hollow.model:SetAttribute("Target", nil)
@@ -1667,12 +1677,15 @@ local function think(hollow: Hollow)
 		-- lost sight: search where it saw them last
 		setState(hollow, "Hunt")
 		hollow.model:SetAttribute("WarningCoil", nil)
-		hollow.humanoid.WalkSpeed = chase * 0.85
+		hollow.humanoid.WalkSpeed = chase * H.SearchPace
 		moveToward(hollow, spaced(hollow, hollow.lastSeen :: Vector3), false)
 		if (position - (hollow.lastSeen :: Vector3)).Magnitude < 4 then
 			hollow.lastSeen = nil
 		end
 	else
+		if hollow.target then
+			hollow.lostUntil[hollow.target] = clock + A.LostGrace -- shaken off: it can't feel them out again
+		end
 		endStalk(hollow)
 		leaveDoor(hollow)
 		setState(hollow, "Prowl")
@@ -1830,6 +1843,7 @@ local function add(at: CFrame, kind: string, state: string, emerge: string?): Ho
 		stalk = nil,
 		exposure = {},
 		stalked = {},
+		lostUntil = {},
 		noStalkUntil = 0,
 		lastThink = os.clock(),
 		door = nil,

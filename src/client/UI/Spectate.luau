@@ -65,9 +65,9 @@ function Spectate.mount(gui: ScreenGui)
 	})
 	cardTitle = Ui.text({
 		Text = "",
-		Font = Theme.Font.display,
-		TextSize = 72,
-		Color = Theme.Color.signal,
+		Font = Theme.Font.alert,
+		TextSize = 68,
+		Color = Theme.Color.alarm,
 		Size = UDim2.new(1, 0, 0, 84),
 		Position = UDim2.fromScale(0.5, 0.38),
 		AnchorPoint = Vector2.new(0.5, 0.5),

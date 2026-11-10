@@ -296,7 +296,7 @@ function QuestTracker.mount(gui: ScreenGui)
 				local mark = Stamp.word({
 					key = `errand{entry.npc}{entry.title}`,
 					text = "DONE",
-					color = Theme.Color.signal,
+					color = Theme.Color.oxblood,
 					size = 22,
 					Position = UDim2.new(1, -52, 0, 22),
 					ZIndex = 4,

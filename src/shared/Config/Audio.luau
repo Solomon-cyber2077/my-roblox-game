@@ -37,6 +37,7 @@ export type Cue = {
 	start: number?,
 	gap: number?,
 	voices: number?,
+	loopRegion: { number }?, -- seconds { from, to } a loop keeps to
 }
 
 local Cues: { [string]: Cue } = {
@@ -521,7 +522,16 @@ local Cues: { [string]: Cue } = {
 		mix = "Steps",
 	},
 	-- heavy breathing while stamina is spent (MovementController.IsExhausted), not tied to combat
-	Breath = { id = 125586910891305, volume = 0.5, loop = true, mix = "Feedback" },
+	-- Owner, 11-10: the deep breath that catches, its long "hooo" and the pause after it sounded like
+	-- someone filling their lungs to go underwater. The loop keeps to the quick pants between them
+	-- (3.85-6.4 s of the recording, both ends on a quiet gap) and plays softer.
+	Breath = {
+		id = 125586910891305,
+		volume = 0.3,
+		loop = true,
+		loopRegion = { 3.85, 6.4 },
+		mix = "Feedback",
+	},
 	-- Jumping and landing (Controllers/FootstepController, numbers in Config/Foley). A landing is the
 	-- surface's own step takes, both feet; a hard one adds the thud. ProSoundEffects, Creator Store.
 	Jump = { -- "Cloth Flap 19": a coat's heavy whump as you push off
@@ -551,24 +561,15 @@ local Cues: { [string]: Cue } = {
 		maxSeconds = 0.5,
 		mix = "Feedback",
 	},
-	-- Handling (Logic/Foley picks which). ProSoundEffects, Creator Store.
-	-- picking up: coal is lumps ("Pebbles On Wood 10"), parts a clanky piece ("Metal Impact Dropping Clanky
-	-- Piece 11"), a relic or a valuable a small high bell ("Bell Rings 10", its first ring)
-	PickupCoal = {
-		id = 9117273725,
-		start = 0.58,
-		volume = 3.79,
-		maxSeconds = 0.45,
-		pitch = 1.1,
-		mix = "Feedback",
-		gap = 0.15,
-	},
-	PickupParts = { id = 9116672975, volume = 1.63, maxSeconds = 0.6, mix = "Feedback", gap = 0.15 },
-	PickupRelic = {
-		id = 9113421363,
-		volume = 4.58,
-		maxSeconds = 0.7,
-		pitch = 1.6,
+	-- Picking anything up (Logic/Foley): one soft sound for every item, the bag's dull settle
+	-- ("Bag Dull Sprinkling Impact 3", the ItemDrop recording) lifted a little and cut short. Owner, 11-10:
+	-- the lumps, clanks and bell didn't fit; it should be simple and never wear on you.
+	Pickup = {
+		id = 9113246398,
+		start = 0.74,
+		volume = 1.3,
+		maxSeconds = 0.28,
+		pitch = 1.18,
 		mix = "Feedback",
 		gap = 0.15,
 	},

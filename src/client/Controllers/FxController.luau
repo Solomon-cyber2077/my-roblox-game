@@ -310,7 +310,7 @@ local function onFx(kind: string, data: { [string]: any }?)
 end
 
 local ALERT_KINDS: { [string]: Color3 } = {
-	Alarm = Theme.Color.signal,
+	Alarm = Theme.Color.alarm,
 	Rescue = Theme.Color.sky,
 }
 
@@ -370,7 +370,7 @@ local function onPhase(phase: string?)
 			Registry.AudioController.ArrivalHush() -- the brakes are done: the stop's silence first
 		end
 	elseif phase == "LastCall" then
-		Overlay.alert("LAST CALL", Theme.Color.signal, 3)
+		Overlay.alert("LAST CALL", Theme.Color.alarm, 3)
 		audio("Whistle")
 	elseif phase == "Departure" then
 		-- T-0: the whistle; the station leaves when the Last Call grace ends (onDeparted)
@@ -382,7 +382,7 @@ end
 local function onDeparted()
 	local status = Session.status()
 	if status == "Afield" or status == "Straggler" then
-		Overlay.alert("THE TRAIN IS LEAVING. RUN!", Theme.Color.signal, 3)
+		Overlay.alert("THE TRAIN IS LEAVING. RUN!", Theme.Color.alarm, 3)
 	else
 		Overlay.alert("DOORS CLOSING", Theme.Color.caution, 2)
 	end

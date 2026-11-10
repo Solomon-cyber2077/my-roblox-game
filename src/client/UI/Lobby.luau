@@ -240,7 +240,7 @@ function Lobby.mount(gui: ScreenGui)
 		Text = "",
 		Font = Theme.Font.display,
 		TextSize = 16,
-		Color = Theme.Color.dangerText,
+		Color = Theme.Color.alarm,
 		Position = UDim2.new(0.4, 0, 0, 132),
 		Size = UDim2.new(0.6, -16, 0, 22),
 		XAlign = Enum.TextXAlignment.Right,

@@ -95,6 +95,11 @@ return table.freeze({
 		AwarenessRange = 37.5, -- studs it senses crew without line of sight (was 30: +25%)
 		Persistence = 5.2, -- seconds it keeps hunting where it last saw you (was 4: +30%)
 		StrikeCooldown = 0.72, -- seconds from one strike's start to the next (was 0.9: -20%)
+		-- Breaking sight shakes it off (owner, 11-10: "players should be able to escape for a bit if
+		-- they break line of sight"). The one it hunts is sensed through walls only this close; out
+		-- of sight beyond it, it searches where it saw them last and then gives up.
+		CloseSense = 10, -- studs: it hears its own prey through a wall only this near
+		LostGrace = 10, -- seconds after it loses someone before it can sense them again unseen
 	}),
 
 	-- The Stalk state's commit rules (Logic/Stalk, docs/FINAL-DESIGN.md Design step 2, FIXED), D0 -> D1.

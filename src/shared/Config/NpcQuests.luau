@@ -48,7 +48,7 @@ local Quests: { [string]: QuestDef } = {
 		kind = "Find",
 		item = "TicketStub",
 		stops = { 4, 7 },
-		story = 'Mabel copies the name off the stub into the Relief\'s ledger. "Entered. Not recalled. But entered."',
+		story = 'Mabel copies the name off the stub into her little book. "There. Somebody remembers you now."',
 		brief = "Find a punched ticket stub at stops 4 to 7.",
 		carried = "Bring the ticket stub to Mabel in the saloon.",
 	},

@@ -39,6 +39,11 @@ FaceKit.Pieces = table.freeze({
 	hand_l = { centre = { 0.043, -0.175, -0.016 }, faces = 684, size = { 0.199, 0.35, 0.221 } },
 }) :: { [string]: Piece }
 
+-- Owner, 11-10: not content with the painted faces ("give them no faces or search for some that
+-- aren't the basic ones"). False leaves the sculpted heads in plain skin, with no painted eyes, brows
+-- or mouth; true puts the painted faces back.
+FaceKit.PaintedFaces = false
+
 FaceKit.Ids = table.freeze({
 	head_m_young = { mesh = 102365691059734, texture = 112223543580022 },
 	head_m_old = { mesh = 138232892001043, texture = 134695108290828 },

@@ -275,7 +275,7 @@ export type ButtonStyle = "Primary" | "Secondary" | "Danger" | "Paper"
 local STYLES: { [string]: { bg: Color3, text: Color3, stroke: Color3 } } = {
 	Primary = { bg = Theme.Color.brass, text = Theme.Color.ink, stroke = Theme.Color.brassLight },
 	Secondary = { bg = Theme.Color.leather, text = Theme.Color.brassLight, stroke = Theme.Color.brass },
-	Danger = { bg = Theme.Color.signalDark, text = Theme.Color.white, stroke = Theme.Color.signal },
+	Danger = { bg = Theme.Color.mahogany, text = Theme.Color.alarm, stroke = Theme.Color.alarmRim }, -- no red (owner, 11-10)
 	Paper = { bg = Theme.Color.paper, text = Theme.Color.ink, stroke = Theme.Color.paperShade },
 }
 

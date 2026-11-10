@@ -11,7 +11,7 @@
 	                           the bunker is short) and a layer for stamps. Returns a handle.
 	  Ticket.stub(view, opts)  the same ticket torn short: serial, type, name, seal, km, coal.
 
-	A sealed mystery (view.mystery) prints "????" under a smudge of soot, and where the wax seal
+	A sealed mystery (view.mystery) prints only question marks (the soot smudge is frozen), and where the wax seal
 	would be a small lantern flickers in a neutral lamp colour, never a danger colour. It has
 	no flap: there is no dossier to unfold.
 
@@ -280,7 +280,8 @@ end
 
 -- Soot rubbed over a mystery's name: a few thin smears seeded by the route, kept to the name's line
 -- so the description below stays readable.
-local function smudge(parent: Instance, routeId: string, y: number, height: number, z: number): Frame
+-- Frozen 11-10 (owner: low quality for now), kept for when it returns.
+local function _smudge(parent: Instance, routeId: string, y: number, height: number, z: number): Frame
 	local cover = Ui.new("Frame", {
 		Name = "Smudge",
 		Size = UDim2.new(1, -PAD, 0, height),
@@ -482,9 +483,8 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	shrink(name, 18, 9)
 	y += 24
 	y += 2
-	if view.mystery then
-		smudge(paper, opts.routeId, name.Position.Y.Offset, name.Size.Y.Offset, 5)
-	end
+	-- the soot smudge over a mystery's name is frozen (owner, 11-10: low quality for now);
+	-- the name is only question marks (Config/Mystery.Name)
 
 	-- DANGER on its own line, then the seal
 	local dangerTitle =

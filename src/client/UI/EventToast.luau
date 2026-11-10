@@ -34,7 +34,7 @@ local function build()
 		BackgroundColor3 = Theme.Color.steel,
 		BackgroundTransparency = 0.15,
 		Parent = screen,
-	}, { Ui.corner() :: Instance, Ui.stroke(Theme.Color.signal, 2), Ui.padding(8, 14, 8, 14) })
+	}, { Ui.corner() :: Instance, Ui.stroke(Theme.Color.alarmRim, 2), Ui.padding(8, 14, 8, 14) })
 	local size = Instance.new("UISizeConstraint")
 	size.MaxSize = Vector2.new(420, 74)
 	size.Parent = plate
@@ -52,9 +52,9 @@ local function build()
 	fit()
 	title = Ui.text({
 		Name = "Title",
-		Font = Theme.Font.display,
-		TextSize = 30,
-		Color = Theme.Color.signal,
+		Font = Theme.Font.alert,
+		TextSize = 28,
+		Color = Theme.Color.alarm,
 		XAlign = Enum.TextXAlignment.Center,
 		Size = UDim2.new(1, 0, 0, 34),
 	})
