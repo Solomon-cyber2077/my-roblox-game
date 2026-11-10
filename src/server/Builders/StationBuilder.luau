@@ -18,6 +18,7 @@ local Buildings = require(Shared.Config.Buildings)
 local ItemModel = require(Shared.Visual.ItemModel)
 local BuildingGen = require(Shared.Logic.BuildingGen)
 local Kit = require(Shared.Visual.Kit)
+local Tuning = require(Shared.Config.Tuning)
 local LayoutGen = require(Shared.Logic.LayoutGen)
 local Loot = require(Shared.Config.Loot)
 local Premise = require(Shared.Config.Premise)
@@ -27,6 +28,7 @@ local Surfaces = require(Shared.Config.Surfaces)
 local BuildingBuilder = require(script.Parent.BuildingBuilder)
 local FurnitureKit = require(script.Parent.FurnitureKit)
 local RoomDecor = require(script.Parent.RoomDecor)
+local SignArt = require(script.Parent.SignArt)
 local StructureKit = require(script.Parent.StructureKit)
 local StationKit = require(script.Parent.StationKit)
 
@@ -584,6 +586,7 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 		label.Position = UDim2.fromScale(0.06, 0.1)
 		label.FontFace = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
 		label.Text = Premise.Plaque
+		SignArt.dress(plaque, Enum.NormalId.Front, "plaque_kept_lit")
 		label.TextColor3 = Color3.fromRGB(40, 30, 18)
 		label.TextScaled = true
 		label.TextWrapped = true
@@ -592,6 +595,37 @@ function StationBuilder.build(plan: Plan, docked: CFrame, stationName: string): 
 		weld.Part0 = plaque
 		weld.Part1 = plaqueLens
 		weld.Parent = plaque
+	end
+
+	-- Small decor a phone may leave out (the Performance setting; Controllers/DetailController hides
+	-- Detail parts): plain and non-colliding, smaller than Tuning.StationPhone.DetailUnder on its longest
+	-- side, carrying nothing (no tags or attributes, no sign, light, emitter or decal on it)
+	local function carries(part: BasePart): boolean
+		for _, child in part:GetChildren() do
+			if
+				not (
+					child:IsA("JointInstance")
+					or child:IsA("WeldConstraint")
+					or child:IsA("NoCollisionConstraint")
+				)
+			then
+				return true
+			end
+		end
+		return false
+	end
+	for _, part in model:GetDescendants() do
+		if
+			part:IsA("BasePart")
+			and not part.CanCollide
+			and part.Transparency < 1
+			and #part:GetTags() == 0
+			and next(part:GetAttributes()) == nil
+			and math.max(part.Size.X, part.Size.Y, part.Size.Z) < Tuning.StationPhone.DetailUnder
+			and not carries(part)
+		then
+			part:AddTag("Detail")
+		end
 	end
 
 	-- Everything except Root moves with physics; Root holds the assembly when anchored.
