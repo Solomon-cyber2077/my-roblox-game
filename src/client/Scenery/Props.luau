@@ -18,6 +18,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
+local Crowns = require(Shared.Visual.Crowns)
 local Kit = require(Shared.Visual.Kit)
 local Rng = require(Shared.Util.Rng)
 
@@ -25,7 +26,15 @@ local Biomes = require(script.Parent.Biomes)
 
 -- lights: false keeps fires dark (set pieces ration their PointLights).
 -- far: built for the mid field, where windows, doors and chimneys are too small to read.
-export type Ctx = { rng: Rng.Rng, biome: Biomes.Def, shadow: boolean, lights: boolean?, far: boolean? }
+-- postSpacing: studs between fence posts (default 6; the phone trackside uses fewer).
+export type Ctx = {
+	rng: Rng.Rng,
+	biome: Biomes.Def,
+	shadow: boolean,
+	lights: boolean?,
+	far: boolean?,
+	postSpacing: number?,
+}
 
 local Props = {}
 
@@ -359,23 +368,28 @@ function Props.tree(parent: Instance, cf: CFrame, ctx: Ctx, scale: number?)
 	local crown = h * 0.5
 	local color = pickColor(ctx, ctx.biome.foliage)
 	local clumps = ctx.rng:int(3, 5)
+	local balls = {}
 	for i = 1, clumps do
 		local a = (i / clumps) * math.pi * 2 + ctx.rng:range(0, 1)
 		local spread = if i == 1 then 0 else crown * 0.36
-		ball(
-			parent,
-			crown * (if i == 1 then 1 else ctx.rng:range(0.62, 0.8)),
-			cf
-				* CFrame.new(
-					math.cos(a) * spread,
-					trunkH + crown * (if i == 1 then 0.32 else ctx.rng:range(0.05, 0.42)),
-					math.sin(a) * spread
-				),
-			Kit.shade(color, ctx.rng:range(0.86, 1.1)),
-			M.LeafyGrass,
-			ctx.shadow
+		table.insert(
+			balls,
+			ball(
+				parent,
+				crown * (if i == 1 then 1 else ctx.rng:range(0.62, 0.8)),
+				cf
+					* CFrame.new(
+						math.cos(a) * spread,
+						trunkH + crown * (if i == 1 then 0.32 else ctx.rng:range(0.05, 0.42)),
+						math.sin(a) * spread
+					),
+				Kit.shade(color, ctx.rng:range(0.86, 1.1)),
+				M.LeafyGrass,
+				ctx.shadow
+			)
 		)
 	end
+	Crowns.swapShared(balls, cf, Crowns.oak(cf))
 end
 
 -- A tall narrow poplar.
@@ -391,17 +405,22 @@ function Props.poplar(parent: Instance, cf: CFrame, ctx: Ctx)
 		ctx.shadow
 	)
 	local color = pickColor(ctx, ctx.biome.foliage)
+	local balls = {}
 	for i = 0, 3 do
 		local d = h * (0.26 - i * 0.04)
-		ball(
-			parent,
-			d,
-			cf * CFrame.new(0, h * (0.32 + i * 0.17), 0),
-			Kit.shade(color, 0.94 + i * 0.04),
-			M.LeafyGrass,
-			ctx.shadow
+		table.insert(
+			balls,
+			ball(
+				parent,
+				d,
+				cf * CFrame.new(0, h * (0.32 + i * 0.17), 0),
+				Kit.shade(color, 0.94 + i * 0.04),
+				M.LeafyGrass,
+				ctx.shadow
+			)
 		)
 	end
+	Crowns.swapShared(balls, cf, "crown_poplar")
 end
 
 -- A birch: pale trunk with dark bands, light crown.
@@ -427,15 +446,17 @@ function Props.birch(parent: Instance, cf: CFrame, ctx: Ctx)
 		)
 	end
 	local color = Kit.shade(pickColor(ctx, ctx.biome.foliage), 1.15)
-	ball(parent, h * 0.42, trunk * CFrame.new(0, h * 0.78, 0), color, M.LeafyGrass, ctx.shadow)
-	ball(
-		parent,
-		h * 0.3,
-		trunk * CFrame.new(h * 0.12, h * 0.62, h * 0.06),
-		Kit.shade(color, 0.92),
-		M.LeafyGrass,
-		ctx.shadow
-	)
+	Crowns.swapShared({
+		ball(parent, h * 0.42, trunk * CFrame.new(0, h * 0.78, 0), color, M.LeafyGrass, ctx.shadow),
+		ball(
+			parent,
+			h * 0.3,
+			trunk * CFrame.new(h * 0.12, h * 0.62, h * 0.06),
+			Kit.shade(color, 0.92),
+			M.LeafyGrass,
+			ctx.shadow
+		),
+	}, trunk, "crown_birch")
 end
 
 -- A conifer: a trunk under two spires, the upper one narrower and turned half a step.
@@ -739,7 +760,7 @@ end
 function Props.fence(parent: Instance, cf: CFrame, ctx: Ctx, length: number?)
 	local len = length or ctx.rng:range(24, 48)
 	local color = jitter(ctx, rgb(98, 80, 62), 0.1)
-	local posts = math.floor(len / 6) + 1
+	local posts = math.floor(len / (ctx.postSpacing or 6)) + 1
 	local broken = ctx.rng:int(1, posts)
 	for i = 0, posts - 1 do
 		local lean = if i == broken then 14 else 0

@@ -18,6 +18,7 @@ local Biomes = require(script.Parent.Biomes)
 local World = {
 	seed = 1931,
 	density = 1,
+	sparse = false, -- Performance: the trackside leaves out verge grass and spaces fence posts wider
 	base = Journey.FirstBiome :: Journey.Biome,
 	transitions = {} :: { Journey.Transition },
 	pieces = {} :: { Journey.Piece },

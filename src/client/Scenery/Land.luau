@@ -505,8 +505,8 @@ local function buildTrackside(model: Model, x0: number, length: number, rng: Rng
 	if not clearTrack(x0) and not clearTrack(x0 + length) then
 		return
 	end
-	-- verge grass on both shoulders
-	for _ = 1, 2 do
+	-- verge grass on both shoulders (left out on phones: 6 parts a chunk, a blur at cruise)
+	for _ = 1, if World.sparse then 0 else 2 do
 		local x = x0 + rng:range(2, length - 2)
 		local z = rng:sign() * rng:range(9.5, 16.5)
 		if free(x, z, 2) then
@@ -544,7 +544,7 @@ local function buildTrackside(model: Model, x0: number, length: number, rng: Rng
 				Props.fence(
 					model,
 					CFrame.new(length / 2, GROUND, z),
-					{ rng = rng, biome = def, shadow = false },
+					{ rng = rng, biome = def, shadow = false, postSpacing = if World.sparse then 12 else 6 },
 					length - 0.6
 				)
 			end

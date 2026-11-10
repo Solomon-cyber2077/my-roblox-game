@@ -65,6 +65,15 @@ local FEATURE_BACK = -800
 local LOCO_FRONT = 96
 local WHISTLE_LEAD = 230
 local RETRY_SECONDS = 5 -- a chunk whose build failed waits this long before it is tried again
+-- Performance (phones): a part that moves at all costs render CPU every frame (~4k scenery parts at
+-- cruise doubled it in Studio, 11-08), so near-land chunks whose nearest edge is past PARK_BEYOND along
+-- the line wait out of sight and still (they are built ahead for the thin build slice, deep in the haze),
+-- and chunks past the STRIDE distances move every 2nd / 4th frame: far off the scroll is mostly toward
+-- the camera, so the lag is a few pixels. Horizon and set pieces (seen from afar) are never parked.
+-- PARK_BEYOND sits past the haze's reach (about a thousand studs at night, Scenery/Heavens).
+local STRIDE_2_BEYOND = 600
+local STRIDE_4_BEYOND = 1500
+local PARK_BEYOND = 1200
 
 local folder: Folder
 local plan = JourneyPlan.new()
@@ -78,6 +87,10 @@ local dirty: { [string]: boolean } = {}
 local failed: { [string]: number } = {} -- os.clock() a failed build may be retried
 local fastUntil = 0
 local whistled: { [string]: boolean } = {}
+local strided = false -- Performance: far chunks skip frames (STRIDE_*)
+local frameCount = 0
+local placedHidden: { [Chunk.Chunk]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local strideOffset: { [Chunk.Chunk]: number } = setmetatable({}, { __mode = "k" }) :: any
 
 local context: Context = {
 	tunnel = 0,
@@ -398,13 +411,17 @@ end
 function SceneryController.Start()
 	-- switching graphics in Settings rebuilds the landscape at the new density
 	Players.LocalPlayer:GetAttributeChangedSignal("GraphicsQuality"):Connect(function()
+		strided = Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
 		local density = qualityDensity()
-		if density ~= World.density then
+		if density ~= World.density or strided ~= World.sparse then
 			World.density = density
+			World.sparse = strided
 			invalidateAll()
 		end
 	end)
 	World.density = qualityDensity()
+	strided = Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
+	World.sparse = strided
 	Workspace.ChildAdded:Connect(findStation)
 	Workspace.ChildRemoved:Connect(findStation)
 	findStation()
@@ -426,9 +443,33 @@ function SceneryController.Start()
 
 		table.clear(roots)
 		table.clear(frames)
+		frameCount += 1
 		for _, chunk in chunks do
 			local x0 = chunk.x0 - odometer
-			local hide = chunk.hideable and x0 + (chunk.x1 - chunk.x0) > stationMin and x0 < stationMax
+			local x1 = x0 + (chunk.x1 - chunk.x0)
+			local nearest = if x0 > 0 then x0 elseif x1 < 0 then -x1 else 0
+			local distant = chunk.layer == "Horizon" or chunk.layer == "Feature"
+			local parked = strided and not distant and nearest > PARK_BEYOND
+			local hide = parked or chunk.hideable and x1 > stationMin and x0 < stationMax
+			if strided and placedHidden[chunk] == hide then
+				if hide then
+					continue -- already out of sight and still: a still part costs no render CPU
+				end
+				local stride = if nearest > STRIDE_4_BEYOND
+					then 4
+					elseif nearest > STRIDE_2_BEYOND then 2
+					else 1
+				if chunk.layer == "Horizon" then
+					stride = math.max(stride, 2)
+				end
+				if not strideOffset[chunk] then
+					strideOffset[chunk] = math.random(0, 3)
+				end
+				if (frameCount + strideOffset[chunk]) % stride ~= 0 then
+					continue
+				end
+			end
+			placedHidden[chunk] = hide
 			table.insert(roots, chunk.root)
 			table.insert(frames, CFrame.new(x0, if hide then -4000 else 0, 0))
 		end
