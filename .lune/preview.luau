@@ -2,6 +2,9 @@
 	Exports a stretch of the journey as JSON, for looking at it outside Roblox:
 
 	  lune run preview <biome> <out.json> [seed] [odometer]
+	  lune run preview Hall <out.json>        the Depot Hall instead (Builders/LobbyBuilder at
+	                                          the origin, its display train and residents, lit
+	                                          as the hall is), for looking at the lobby
 
 	Builds the train at the origin and every landscape chunk the client would have
 	built with the train at `odometer` (land x) on a leg through `biome`, with that
@@ -56,6 +59,11 @@ local gallery = biome == "Gallery"
 if gallery then
 	biome = "Highland"
 end
+local hall = biome == "Hall"
+local hallMeshes: { any } = {}
+if hall then
+	biome = "Farmland"
+end
 
 World.reset(seed, biome)
 World.density = 1
@@ -104,9 +112,59 @@ if gallery then
 	print(`gallery length {x}`)
 end
 
-local train = TrainBuilder.build(CFrame.new(), nil).model
-table.insert(models, { model = train, offset = CFrame.new(), world = 0 })
-for _, layer in if gallery then {} else Land.Layers do
+if hall then
+	local LobbyBuilder = load(Server.Builders.LobbyBuilder)
+	local FaceKit = load(Server.Builders.FaceKit)
+	FaceKit.recording = true
+	table.clear(FaceKit.placed)
+	local built = LobbyBuilder.build(CFrame.new(), roblox.Instance.new("Folder"))
+	table.insert(models, { model = built.model, offset = CFrame.new(), world = 0 })
+	-- where the hall's Blender props stand (Builders/HallWear), for a renderer to drop them in
+	-- and the sculpted heads and hands the hall's people would wear (Builders/FaceKit), with their tint
+	for _, item in FaceKit.placed do
+		local cf = item.cframe
+		local r, u, b = cf.RightVector, cf.UpVector, -cf.LookVector
+		table.insert(hallMeshes, {
+			k = item.key,
+			s = 1,
+			c = {
+				math.floor(item.color.R * 255),
+				math.floor(item.color.G * 255),
+				math.floor(item.color.B * 255),
+			},
+			p = { cf.Position.X, cf.Position.Y, cf.Position.Z },
+			r = { r.X, r.Y, r.Z, u.X, u.Y, u.Z, b.X, b.Y, b.Z },
+		})
+	end
+	for _, item in load(Server.Builders.HallWear).placed do
+		local cf = item.cframe
+		local r, u, b = cf.RightVector, cf.UpVector, -cf.LookVector
+		table.insert(hallMeshes, {
+			k = item.key,
+			s = item.scale,
+			p = { cf.Position.X, cf.Position.Y, cf.Position.Z },
+			r = { r.X, r.Y, r.Z, u.X, u.Y, u.Z, b.X, b.Y, b.Z },
+		})
+	end
+else
+	local PropMeshes = load(Server.Builders.PropMeshes)
+	PropMeshes.recording = true
+	table.clear(PropMeshes.placed)
+	local train = TrainBuilder.build(CFrame.new(), nil).model
+	table.insert(models, { model = train, offset = CFrame.new(), world = 0 })
+	-- the saloon's rack luggage (Builders/PropMeshes), for a renderer to drop the Blender props in
+	for _, item in PropMeshes.placed do
+		local cf = item.cframe
+		local r, u, b = cf.RightVector, cf.UpVector, -cf.LookVector
+		table.insert(hallMeshes, {
+			k = item.key,
+			s = item.scale,
+			p = { cf.Position.X, cf.Position.Y, cf.Position.Z },
+			r = { r.X, r.Y, r.Z, u.X, u.Y, u.Z, b.X, b.Y, b.Z },
+		})
+	end
+end
+for _, layer in if gallery or hall then {} else Land.Layers do
 	-- a ride needs the windows the client builds over its whole length
 	local first = math.floor((odometer + layer.from) / layer.length)
 	local last = math.floor((odometer + layer.to + rideLength) / layer.length)
@@ -119,16 +177,18 @@ for _, layer in if gallery then {} else Land.Layers do
 		)
 	end
 end
-for _, piece in pieces do
+for _, piece in if hall then {} else pieces do
 	if piece.at + piece.length > odometer - 1600 and piece.at < odometer + 4400 + rideLength then
 		local model = Chunk.begin(piece.kind)
 		Features.build(piece, model)
 		table.insert(models, { model = model, offset = CFrame.new(piece.at - odometer, 0, 0), world = 1 })
 	end
 end
-local hole = Chunk.begin("Sinkhole")
-Features.buildSinkhole(sinkhole, hole)
-table.insert(models, { model = hole, offset = CFrame.new(sinkhole.rect.x0 - odometer, 0, 0), world = 1 })
+if not hall then
+	local hole = Chunk.begin("Sinkhole")
+	Features.buildSinkhole(sinkhole, hole)
+	table.insert(models, { model = hole, offset = CFrame.new(sinkhole.rect.x0 - odometer, 0, 0), world = 1 })
+end
 
 local SHAPES = { Block = "B", Cylinder = "C", Ball = "S", Wedge = "W", CornerWedge = "B" }
 local FACES = {
@@ -150,6 +210,18 @@ local function rgb(color: any): { number }
 		math.floor(color.G * 255 + 0.5),
 		math.floor(color.B * 255 + 0.5),
 	}
+end
+
+-- whether a part belongs to a cluster whose Blender meshes replace it (Builders/HallWear)
+local function meshed(d: any): boolean
+	local at = d
+	while at do
+		if at:GetAttribute("Meshed") then
+			return true
+		end
+		at = at.Parent
+	end
+	return false
 end
 
 local parts = {}
@@ -183,6 +255,7 @@ for _, entry in models do
 				t = round(d.Transparency),
 				f = round(d.Reflectance),
 				k = entry.world,
+				g = if meshed(d) then 1 else nil,
 			})
 		elseif d:IsA("Light") and d.Parent and d.Parent:IsA("BasePart") then
 			local cf = entry.offset * d.Parent.CFrame
@@ -312,7 +385,7 @@ local function skyAt(now: number, still: boolean, dt: number?): ({ [string]: any
 		a = def,
 		b = def,
 		w = 0,
-		lobby = false,
+		lobby = hall,
 		fog = 0,
 		alarm = nil,
 		dread = dread,
@@ -367,6 +440,7 @@ fs.writeFile(
 		hour = hour,
 		parts = parts,
 		lights = lights,
+		meshes = if #hallMeshes > 0 then hallMeshes else nil,
 		ride = ride,
 		sky = sky,
 		heavens = heavens,
