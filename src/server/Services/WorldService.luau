@@ -16,6 +16,7 @@ local StarterPlayer = game:GetService("StarterPlayer")
 local Workspace = game:GetService("Workspace")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local TreeCrowns = require(script.Parent.Parent.Builders.TreeCrowns)
 
 local WorldService = {}
 
@@ -76,7 +77,9 @@ function WorldService.Init()
 	Lighting.EnvironmentDiffuseScale = 0
 end
 
-function WorldService.Start() end
+function WorldService.Start()
+	TreeCrowns.publish()
+end
 
 -- Puts every part of a character in the Players collision group.
 function WorldService.TagCharacter(character: Model)
