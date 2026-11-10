@@ -1,10 +1,11 @@
 --!strict
 --[[
 	The first thing a player sees: a plain dark screen, a moving bar and one tip, in place of Roblox's
-	loader, until the client has started (init.client sets ClientStarted) or MAX_WAIT runs out. It runs
+	loader, until the state, character, camera and nearby hall are ready. It runs
 	before ReplicatedStorage has arrived, so it can't require Theme: the colours and fonts are copied here.
 ]]
 
+local began = os.clock()
 local Players = game:GetService("Players")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
 local TweenService = game:GetService("TweenService")
@@ -86,8 +87,13 @@ local sweep = TweenService:Create(
 )
 sweep:Play()
 
-local started = tick()
-while player:GetAttribute("ClientStarted") ~= true and tick() - started < MAX_WAIT do
+local warned = false
+while player:GetAttribute("ClientPlayable") ~= true do
+	if not warned and os.clock() - began >= MAX_WAIT then
+		warned = true
+		warn("[LoadingScreen] playable readiness exceeded 30 s; still waiting")
+		tip.Text = "The hall is taking longer to arrive. Still connecting…"
+	end
 	task.wait(0.1)
 end
 
@@ -100,3 +106,6 @@ TweenService:Create(bar, fade, { BackgroundTransparency = 1 }):Play()
 task.wait(FADE)
 sweep:Cancel()
 gui:Destroy()
+
+-- Starts at this script, excluding the launcher and any earlier connection/download time.
+print(string.format("[LoadingScreen] playable world %.1f s since ReplicatedFirst", os.clock() - began))

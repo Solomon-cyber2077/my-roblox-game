@@ -244,6 +244,7 @@ function CrewService.LoadCharacterAt(player: Player, cframe: CFrame)
 		end)
 	end
 	Registry.CosmeticService.Apply(player)
+	character:SetAttribute("SpawnReady", true)
 end
 
 local departureResolved = false
