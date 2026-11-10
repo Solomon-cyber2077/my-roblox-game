@@ -273,8 +273,11 @@ function CharacterAnimator.Start()
 	-- after the engine's own animation step, so these transforms are the ones drawn
 	RunService.Stepped:Connect(function(_, dt: number)
 		local now = Workspace:GetServerTimeNow()
+		local phone = Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
 		for _, rig in rigs do
-			if rig.model.Parent then
+			-- a hall passenger hidden by the Performance setting (PassengerController) is not animated
+			local hidden = phone and rig.player == nil and rig.model:GetAttribute("PerformanceKeep") == false
+			if rig.model.Parent and not hidden then
 				animate(rig, dt, now)
 			end
 		end

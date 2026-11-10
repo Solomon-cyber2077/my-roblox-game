@@ -391,7 +391,17 @@ function AudioController.Start()
 	end)
 
 	for _, name in
-		{ "TrainRun", "Wind", "StationEerie", "DepotHall", "Drone", "DroneHarmonic", "Howl", "LanternFlame" }
+		{
+			"TrainRun",
+			"Wind",
+			"StationEerie",
+			"DepotHall",
+			"HallMurmur",
+			"Drone",
+			"DroneHarmonic",
+			"Howl",
+			"LanternFlame",
+		}
 	do
 		local sound = makeSound(name, SoundService)
 		if sound then
@@ -581,6 +591,7 @@ function AudioController.Start()
 				else Audio.Wind.volume * (0.35 + 0.65 * pace) * (1 + 1.4 * bridge) * (1 - 0.6 * tunnel),
 			StationEerie = if inLobby then 0 else Audio.StationEerie.volume * (0.3 + tension),
 			DepotHall = Audio.DepotHall.volume * (if inLobby then 1 else SHELTER_ROOM * shelter),
+			HallMurmur = if inLobby then Audio.HallMurmur.volume else 0, -- the people waiting, only in the hall
 			-- the stop's drone, rising with danger; the night humming under the wheels, an omen swelling it
 			Drone = Audio.Drone.volume
 				* (math.max(ambience * (0.3 + 0.7 * danger), NIGHT_DRONE * night) + 0.6 * swell)
@@ -606,6 +617,7 @@ function AudioController.Start()
 			idleGroup.Volume = idlePiano
 		end
 		targets.DepotHall *= 1 - (1 - IDLE.BedGain) * idleBed
+		targets.HallMurmur *= 1 - (1 - IDLE.BedGain) * idleBed
 		walls.MidGain = SHELTER_MID * shelter
 		walls.HighGain = SHELTER_HIGH * shelter
 		for name in OUTSIDE do

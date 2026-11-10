@@ -629,12 +629,13 @@ function TrainBuilder.build(origin: CFrame, parent: Instance?): Built
 			end
 			if lining.curtains then
 				for _, dx in { -2.3, 2.3 } do
-					trimPart(
+					local drape = trimPart(
 						Vector3.new(0.55, band - 0.3, 0.22),
 						at(cx + dx, mid + 0.05, inward(0.22)),
 						C.curtain,
 						Enum.Material.Fabric
 					)
+					drape.Name = "Curtain" -- swings with the ride (Controllers/TrainVisualsController)
 				end
 				trimPart(
 					Vector3.new(5.2, 0.72, 0.3),

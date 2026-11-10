@@ -52,7 +52,12 @@ type Rig = {
 	doorLamps: { PointLight }?, -- at the platform-side doors, made at the first Last Call grace
 	cabFittings: BasePart?, -- hidden while the doors are open (see CAB_FITTINGS)
 	nextBlow: number, -- os.clock() of the display engine's next drain-cock blow
+	lamps: { PointLight }, -- the saloon's table lamps: a steady flame that dips over the rail joints
+	curtains: { Curtain }, -- swinging with the ride
+	swung: boolean, -- the curtains are off their rest and must be put back when the ride stops
 }
+
+type Curtain = { part: BasePart, base: CFrame }
 
 local TrainVisualsController = {}
 
@@ -177,6 +182,14 @@ local function register(rig: Rig, part: Instance)
 				table.insert(rig.flames, emitter)
 			end
 		end
+	elseif part.Name == "SaloonLamp" then
+		local light = part:FindFirstChildOfClass("PointLight")
+		if light then
+			light:SetAttribute("Base", light.Brightness)
+			table.insert(rig.lamps, light)
+		end
+	elseif part.Name == "Curtain" then
+		table.insert(rig.curtains, { part = part, base = part.CFrame })
 	elseif part.Name == "StoveGlow" or part.Name == "LanternFlame" then
 		local light = part:FindFirstChildOfClass("PointLight")
 		if light then
@@ -224,6 +237,12 @@ local function unregister(rig: Rig, part: Instance)
 	without(rig.glows, function(light: PointLight)
 		return light.Parent == part
 	end)
+	without(rig.lamps, function(light: PointLight)
+		return light.Parent == part
+	end)
+	without(rig.curtains, function(curtain: Curtain)
+		return curtain.part == part
+	end)
 	if rig.smoke and rig.smoke.Parent == part then
 		rig.smoke = nil
 	end
@@ -259,6 +278,9 @@ local function rigFor(model: Model, live: boolean): Rig
 		doorLamps = nil,
 		cabFittings = nil,
 		nextBlow = os.clock() + math.random(4, 12),
+		lamps = {},
+		curtains = {},
+		swung = false,
 	}
 	for _, part in model:GetDescendants() do
 		register(rig, part)
@@ -550,6 +572,48 @@ function TrainVisualsController.Start()
 				rig.cinders.Acceleration = Vector3.new(-rigSpeed * 1.1, -2, 0)
 			end
 			local t = os.clock()
+			-- the saloon's lamps burn steady, dipping briefly as the wheels cross each rail joint;
+			-- its curtains swing with the ride (a lean into the curve, a jolt at the joints)
+			local pace = math.clamp(rigSpeed / 110, 0, 1)
+			local joint = math.max(math.sin(t * (2 + rigSpeed * 0.09)), 0) ^ 12 * pace
+			-- now and then a hard joint at speed sets the saloon's crockery rattling (Config/Audio gap)
+			if rig.live and joint > 0.9 and pace > 0.6 and #rig.lamps > 0 and math.random() < 0.02 then
+				local lamp = rig.lamps[math.random(1, #rig.lamps)].Parent
+				if Registry.AudioController and lamp and lamp:IsA("BasePart") then
+					Registry.AudioController.Play(
+						"SaloonCrockery",
+						lamp.Position,
+						nil,
+						0.95 + math.random() * 0.1
+					)
+				end
+			end
+			for i, light in rig.lamps do
+				local base = (light:GetAttribute("Base") :: number?) or light.Brightness
+				local scale = if Registry.HullController then Registry.HullController.LightScale(t, i) else 1
+				light.Brightness = base
+					* (0.95 + 0.05 * math.noise(t * 2.6, i * 3.1))
+					* (1 - 0.18 * joint)
+					* scale
+			end
+			local swinging = pace > 0 and Players.LocalPlayer:GetAttribute("GraphicsQuality") ~= "Performance"
+			if swinging or rig.swung then
+				rig.swung = swinging
+				for i, curtain in rig.curtains do
+					local swing = if swinging
+						then (math.noise(t * 0.8, i * 0.53) * 2.2 + joint * 1.4) * pace
+						else 0
+					local half = curtain.part.Size.Y / 2
+					table.insert(spinParts, curtain.part)
+					table.insert(
+						spinFrames,
+						curtain.base
+							* CFrame.new(0, half, 0)
+							* CFrame.Angles(math.rad(swing), 0, 0)
+							* CFrame.new(0, -half, 0)
+					)
+				end
+			end
 			-- the display engine at rest in the hall blows its drain cocks now and then: a white
 			-- burst from the cylinders and a short hiss
 			if not rig.live and #rig.vents > 0 and t >= rig.nextBlow then
