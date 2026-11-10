@@ -28,6 +28,7 @@ local HallWear = require(script.Parent.HallWear)
 local OutfitKit = require(script.Parent.OutfitKit)
 local Premise = require(ReplicatedStorage.Shared.Config.Premise)
 local PosterArt = require(script.Parent.PosterArt)
+local SignArt = require(script.Parent.SignArt)
 local TrainBuilder = require(script.Parent.TrainBuilder)
 
 export type Built = {
@@ -1427,6 +1428,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		gui.LightInfluence = 0.7
 		gui.Parent = paper
 		PosterArt.draw(gui, kind)
+		SignArt.dress(paper, posterFace, `poster_{kind}`)
 	end
 
 	-- The waiting corner at the west end: a stove, armchairs on a rug, books and a palm ----------------
@@ -1681,6 +1683,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		t.TextColor3 = Color3.fromRGB(226, 232, 234)
 		t.TextScaled = true
 		t.Parent = gui
+		SignArt.dress(menu, Enum.NormalId.Left, "chalk_tearoom")
 	end
 	local pendant =
 		Kit.neon(model, Vector3.new(0.8, 0.8, 0.8), at(tx + 4, 11, tz), C.warm, Enum.PartType.Ball)

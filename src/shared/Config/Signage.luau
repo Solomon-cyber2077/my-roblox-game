@@ -16,7 +16,9 @@ local function sign(mesh: number, look: string): Sign
 end
 
 return table.freeze({
-	Enabled = true,
+	-- off: on the Quality setting the sign meshes draw blank or black (normals or maps), so the printed signs
+	-- show everywhere until the meshes are re-exported
+	Enabled = false,
 	-- out from the old face, so the paper never fights the part under it
 	Gap = 0.012,
 	Signs = table.freeze({

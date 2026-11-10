@@ -29,6 +29,7 @@ local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 local PropMeshes = require(script.Parent.PropMeshes)
 local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
 local Paintings = require(ReplicatedStorage.Shared.Config.Paintings)
+local SignArt = require(script.Parent.SignArt)
 local IL = InteriorLight
 
 export type Dims = {
@@ -1311,7 +1312,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	chest.Name = "CrewChest"
 	-- a map of the line on the blind front wall
 	picture(19.38, 3.0, -1, 2)
-	plate(
+	local noPassengers = plate(
 		Vector3.new(19.3, 7.6, 0),
 		Vector3.new(-1, 0, 0),
 		Vector3.new(5.6, 0.62, 0.1),
@@ -1322,6 +1323,7 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		BOARD_FONT,
 		0.5
 	)
+	SignArt.dress(noPassengers, Enum.NormalId.Front, "enamel_no_passengers")
 
 	-- Footplate: the furnace ---------------------------------------------------------------------
 
