@@ -62,8 +62,8 @@ function HaulReceipt.show(data: { [string]: any })
 	local haul = data.haul or {}
 	local won = data.outcome == "Victory"
 	if not won then
-		line("STRONGBOX LOST", Theme.Color.signalDark, 26)
-		local stamp = line("LOST", Theme.Color.signal, 42)
+		line("STRONGBOX LOST", Theme.Color.oxblood, 26)
+		local stamp = line("LOST", Theme.Color.oxblood, 42)
 		stamp.TextTransparency = 1
 		local stampScale = Ui.new("UIScale", { Scale = 2, Parent = stamp })
 		local lost = haul.valuables or {}

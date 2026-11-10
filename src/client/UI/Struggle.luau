@@ -26,6 +26,8 @@ local needle: Frame
 local verdict: TextLabel
 local zoneFrame: Frame
 local greatFrame: Frame
+local hitFlash: Frame -- a hit: the zone's place flashes bone-white (the zone itself is cleared at once)
+local hitMark: Frame -- and the marker jolts up where it struck
 local title: TextLabel
 local keyLabel: TextLabel
 local keyScale: UIScale
@@ -165,6 +167,27 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 		Parent = bar,
 	})
 	Ui.stroke(Theme.Color.signal, 1, 0).Parent = needle
+	hitFlash = Ui.new("Frame", {
+		Name = "HitFlash",
+		BackgroundColor3 = GREAT,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(0, 1),
+		ZIndex = 25,
+		Parent = bar,
+	})
+	Ui.corner(3).Parent = hitFlash
+	hitMark = Ui.new("Frame", {
+		Name = "HitMark",
+		Size = UDim2.new(0, 3, 1, 10),
+		Position = UDim2.fromOffset(0, -5),
+		AnchorPoint = Vector2.new(0.5, 0),
+		BackgroundColor3 = GREAT,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 26,
+		Parent = bar,
+	})
 	local meter = line("Meter", BAR_Y + BAR_H + 3, TRACK, root)
 	meter.Size = UDim2.new(1, 0, 0, 6)
 	meter.BackgroundTransparency = 0.5
@@ -307,6 +330,24 @@ function Struggle.needle(angle: number?)
 	if angle then
 		needle.Position = UDim2.fromOffset(math.clamp(angle, 0, 360) / 360 * BAR_W, -5)
 	end
+end
+
+-- A hit (Good or Great): where the zone was flashes bone-white and fades, and the marker jolts up
+-- 4 px at the spot it struck, so a correct press reads at a glance and not only as a word.
+function Struggle.hit(great: boolean)
+	hitFlash.Position = zoneFrame.Position
+	hitFlash.Size = zoneFrame.Size
+	hitFlash.BackgroundTransparency = if great then 0 else 0.15
+	Ui.tween(hitFlash, { BackgroundTransparency = 1 }, TweenInfo.new(0.25, Enum.EasingStyle.Quad))
+	local x = needle.Position.X.Offset
+	hitMark.Position = UDim2.fromOffset(x, -9)
+	hitMark.Size = UDim2.new(0, 5, 1, 14)
+	hitMark.BackgroundTransparency = 0
+	Ui.tween(
+		hitMark,
+		{ Position = UDim2.fromOffset(x, -5), Size = UDim2.new(0, 3, 1, 10), BackgroundTransparency = 1 },
+		TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	)
 end
 
 function Struggle.clearCheck()

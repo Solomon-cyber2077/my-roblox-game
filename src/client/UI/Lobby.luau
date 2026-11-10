@@ -652,7 +652,7 @@ function Lobby.mount(gui: ScreenGui)
 			Ui.setButtonEnabled(readyButton, true)
 			-- the first-visit prompt: the board names the two ways to ride
 			head = "START  ·  OR TAKE A CAR"
-			rows = "START to ride now.\nWalk to a car's door to ride with others."
+			rows = "START: ride now\nCAR DOOR: ride together"
 		end
 		if boardHead and boardRows and boardGui then
 			boardHead.Text = head

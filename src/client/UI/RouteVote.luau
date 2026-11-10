@@ -45,12 +45,19 @@ function RouteVote.mount(gui: ScreenGui)
 		Parent = gui,
 	})
 	Ui.freeCursor(container) -- the tickets are clicked, so the cursor shows while the ballot is up
-	-- on a phone the ballot is drawn smaller, a strip along the top rather than a third of the screen
+	-- on a phone the ballot is drawn as large as the screen allows: up to 95% of its width and 62% of
+	-- its height (a flat 0.6 left the tickets' words too small to read, owner's playtest, 11-08)
 	local phoneScale = Ui.new("UIScale", { Scale = 1, Parent = container })
 	local function fit()
-		phoneScale.Scale = if gui:GetAttribute("Compact") == true then 0.6 else 1
+		if gui:GetAttribute("Compact") ~= true then
+			phoneScale.Scale = 1
+			return
+		end
+		local view = gui.AbsoluteSize
+		phoneScale.Scale = math.clamp(math.min(view.X * 0.95 / 720, view.Y * 0.62 / 290), 0.6, 1)
 	end
 	gui:GetAttributeChangedSignal("Compact"):Connect(fit)
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
 	fit()
 	-- the tickets sit in a row of their own, so the tie note under them stays out of the layout
 	local ticketRow = Ui.new("Frame", {

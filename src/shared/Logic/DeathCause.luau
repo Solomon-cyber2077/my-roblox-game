@@ -27,7 +27,8 @@ local BY_SOURCE: { [string]: Cause } = {
 
 DeathCause.Lines = table.freeze({
 	LeftBehind = table.freeze({ title = "LEFT BEHIND", line = "The train pulled out without you." }),
-	Taken = table.freeze({ title = "TAKEN", line = "A Hollow caught you and would not let go." }),
+	-- no line: the title says it (owner's playtest, 11-08)
+	Taken = table.freeze({ title = "TAKEN", line = "" }),
 	Smothered = table.freeze({ title = "LOST IN THE FOG", line = "The fog closed over you." }),
 	Fell = table.freeze({ title = "FELL", line = "The ground gave way beneath you." }),
 	Wrecked = table.freeze({

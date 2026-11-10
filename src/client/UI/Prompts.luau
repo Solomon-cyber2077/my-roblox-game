@@ -27,7 +27,7 @@ local function glyph(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInp
 	if inputType == Enum.ProximityPromptInputType.Gamepad then
 		return "X"
 	elseif inputType == Enum.ProximityPromptInputType.Touch then
-		return "TAP"
+		return if prompt.HoldDuration > 0 then "HOLD" else "TAP" -- a hold prompt ignores a quick tap
 	end
 	return prompt.KeyboardKeyCode.Name
 end

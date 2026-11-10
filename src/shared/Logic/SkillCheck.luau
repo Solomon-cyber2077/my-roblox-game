@@ -195,9 +195,13 @@ function SkillCheck.pressTime(claimed: any, arrived: number, tolerance: number):
 end
 
 -- Judges a press with the client's claimed press time when it has one (the marker where the
--- player saw it), else on arrival with the look-back window.
+-- player saw it), else on arrival with the look-back window. The claim may reach back by the
+-- client's own stamp leads too (FrameLeadMax + TouchLead): without them a phone's honest stamp,
+-- ~55-75 ms early, was clamped later than the player saw it, so a hit shown as Good on the phone
+-- could land as a Miss here (owner's phone playtest, 11-08). LatencyMax still bounds it.
 function SkillCheck.judgePress(check: Check, claimed: any, arrived: number, tolerance: number): Result
-	local at = SkillCheck.pressTime(claimed, arrived, tolerance)
+	local reach = math.min(math.max(tolerance, 0) + C.FrameLeadMax + C.TouchLead, C.LatencyMax)
+	local at = SkillCheck.pressTime(claimed, arrived, reach)
 	if at == nil then
 		return SkillCheck.judge(check, arrived, tolerance)
 	end

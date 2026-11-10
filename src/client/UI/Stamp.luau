@@ -164,7 +164,7 @@ function Stamp.word(props: WordProps): Frame
 	local letters = Ui.text({
 		Name = "Word",
 		Text = props.text,
-		Font = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold),
+		Font = Theme.Font.type, -- typewriter face, as a rubber stamp prints (owner's title font pick, 11-09)
 		TextSize = size,
 		Color = color,
 		Size = UDim2.fromScale(0, 1),

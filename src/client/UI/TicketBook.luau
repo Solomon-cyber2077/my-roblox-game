@@ -36,8 +36,8 @@ local STAMP_COLOR: { [string]: Color3 } = {
 local DOT_COLOR: { [string]: Color3 } = {
 	Cleared = Theme.Color.ink,
 	Victory = Theme.Color.brass,
-	Wiped = Theme.Color.signal,
-	Derailed = Theme.Color.signal,
+	Wiped = Theme.Color.oxblood,
+	Derailed = Theme.Color.oxblood,
 }
 
 -- `bare` (the run card): stubs without figures, no haul line, only the gamble's stamp, and the

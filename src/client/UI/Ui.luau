@@ -98,6 +98,39 @@ function Ui.corner(radius: number?): UICorner
 	return Ui.new("UICorner", { CornerRadius = UDim.new(0, radius or Theme.Corner) })
 end
 
+--[[
+	Pressed ink on card (owner: text "looks flat", 11-09): letterpress pushes the paper in, so a faint
+	lighter lip shows 1 px under each letter, and the ink lets a little of the card's grain through.
+	The lip is a sibling one ZIndex below that follows the label's text, size and place. Card text only;
+	text on dark material stays as it is.
+]]
+function Ui.pressInk(l: TextLabel, card: Color3)
+	l.TextTransparency = math.max(l.TextTransparency, 0.06)
+	local lip = l:Clone()
+	lip.Name = l.Name .. "Lip"
+	for _, child in lip:GetChildren() do
+		if not child:IsA("UITextSizeConstraint") then
+			child:Destroy()
+		end
+	end
+	lip.TextColor3 = card:Lerp(Color3.new(1, 1, 1), 0.4)
+	lip.TextTransparency = 0.55
+	lip.ZIndex = l.ZIndex - 1
+	local function follow()
+		lip.Text = l.Text
+		lip.TextSize = l.TextSize
+		lip.Size = l.Size
+		lip.AnchorPoint = l.AnchorPoint
+		lip.Position = l.Position + UDim2.fromOffset(0, 1)
+		lip.Visible = l.Visible
+	end
+	for _, prop in { "Text", "TextSize", "Size", "Position", "AnchorPoint", "Visible" } do
+		l:GetPropertyChangedSignal(prop):Connect(follow)
+	end
+	follow()
+	lip.Parent = l.Parent
+end
+
 function Ui.stroke(color: Color3?, thickness: number?, transparency: number?): UIStroke
 	return Ui.new("UIStroke", {
 		Color = color or Theme.Color.brass,

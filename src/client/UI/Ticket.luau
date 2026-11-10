@@ -476,6 +476,7 @@ function Ticket.full(view: TicketModel.View, opts: Opts): Handle
 	shrink(kind, 13, 9)
 	y += 15
 	local name = label(paper, view.name, HEAD, 18, INK, 4)
+	Ui.pressInk(name, Theme.Color.paper)
 	name.Position = UDim2.fromOffset(PAD, y)
 	name.Size = UDim2.new(1, -PAD * 2, 0, 22)
 	shrink(name, 18, 9)
@@ -715,6 +716,7 @@ function Ticket.stub(
 	kind.Size = UDim2.new(1, -86, 0, 14)
 	shrink(kind, 12, 9)
 	local name = label(paper, view.name, HEAD, 15, INK, 4)
+	Ui.pressInk(name, Theme.Color.paper)
 	name.Position = UDim2.fromOffset(20, 22)
 	name.Size = UDim2.new(1, if view.seal then -64 else -28, 0, 20)
 	shrink(name, 15, 8)

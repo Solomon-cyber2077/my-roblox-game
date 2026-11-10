@@ -293,11 +293,11 @@ function TicketModel.tieNote(votes: { [string]: number }?, options: { Types.Rout
 			level += 1
 		end
 	end
-	local lead = if best == 0 then "NO VOTES" else "A TIE"
+	local lead = if best == 0 then "NO VOTE" else "A TIE"
 	if level > 1 then
-		return `{lead}: SHORTEST LEGS TIED, THE DRIVER TOSSES A COIN`
+		return `{lead}: COIN TOSS`
 	end
-	return `{lead}: THE DRIVER TAKES THE SHORTER LEG`
+	return `{lead}: SHORTER LINE`
 end
 
 return table.freeze(TicketModel)

@@ -2,7 +2,7 @@
 --[[
 	The train: its shared stores (through Logic/Ledger), coal burn per leg,
 	hull breaches, the workshop, the signal mast, doors, livery and its seats
-	(every one takes a Sit prompt; jump to stand).
+	(step up onto one to sit, Logic/SeatStep; jump to stand).
 	The train never moves; see StationService for the moving world.
 ]]
 
@@ -22,6 +22,7 @@ local Signal = require(Shared.Util.Signal)
 local Types = require(Shared.Types)
 
 local NetService = require(script.Parent.NetService)
+local SeatWatch = require(script.Parent.SeatWatch)
 local Registry = require(script.Parent.Parent.Registry)
 local StateService = require(script.Parent.StateService)
 local RailingPilot = require(script.Parent.Parent.Builders.RailingPilot)
@@ -252,32 +253,9 @@ local function safeLights()
 	end
 end
 
--- A Sit prompt on every seat, hidden while someone is sitting in it.
+-- Every seat: step up onto it and you sit, jump to stand (SeatWatch); no prompt, so brushing past does nothing.
 local function seatPrompts()
-	for _, seat in built.seats do
-		local name = (seat:GetAttribute("SeatName") :: string?) or "Seat"
-		local prompt = makePrompt(seat, "Sit", name, "Sit", 0)
-		prompt.MaxActivationDistance = 5.5
-		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
-			prompt.Enabled = seat.Occupant == nil
-		end)
-		prompt.Triggered:Connect(function(player)
-			local character = player.Character
-			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-			if
-				humanoid
-				and root
-				and humanoid.Health > 0
-				and seat.Occupant == nil
-				and not humanoid.Sit
-				and not root.Anchored
-				and (root.Position - seat.Position).Magnitude < 9
-			then
-				seat:Sit(humanoid)
-			end
-		end)
-	end
+	SeatWatch.watch("TrainService.seat", built.seats, Tuning.Lobby.SeatRetouchDelay)
 end
 
 function TrainService.Init()

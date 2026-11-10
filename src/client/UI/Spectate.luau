@@ -158,9 +158,9 @@ function Spectate.showElimination(cause: string, canRescue: boolean)
 	cardTitle.Text = info.title
 	cardLine.Text = info.line
 	cardHope.Text = if canRescue and #aliveOthers() > 0
-		then "A crewmate can still bring you back with a Signal Flare."
+		then "A crewmate can revive you with a flare."
 		elseif #aliveOthers() == 0 and canRescue then "No one is left to bring you back."
-		else "This was your second chance. Watch your crew bring it home."
+		else "No second chance. Watch your crew."
 	card.Visible = true
 	card.BackgroundTransparency = 1
 	Ui.tween(card, { BackgroundTransparency = 0.35 }, TweenInfo.new(0.6))

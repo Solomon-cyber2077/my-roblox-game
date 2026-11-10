@@ -40,6 +40,7 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
+local Audio = require(Shared.Config.Audio)
 local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
 local RunRules = require(Shared.Logic.RunRules)
@@ -477,7 +478,15 @@ function GrabController.Result(data: { id: number, result: string, progress: num
 		Registry.CameraController.Shake(0.35)
 		audio("Hit", 0.4, 1.3)
 	else
-		audio("Click", 0.8, if data.result == "Great" then 1.4 else 1.1)
+		-- a hit: a small bell tick (owner's pick, 11-09; the click until Config/Audio has SkillHit)
+		-- and the bar's flash
+		local great = data.result == "Great"
+		if (Audio :: any).SkillHit then
+			audio("SkillHit", if great then 1 else 0.8, if great then 1.12 else 1)
+		else
+			audio("Click", 0.8, if great then 1.4 else 1.1)
+		end
+		Struggle.hit(great)
 	end
 end
 

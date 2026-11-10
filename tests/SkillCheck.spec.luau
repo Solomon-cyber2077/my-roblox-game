@@ -84,6 +84,10 @@ describe("SkillCheck", function()
 		expect(SkillCheck.pressTime(nil, 1, tol)).toBe(nil)
 		expect(SkillCheck.pressTime(0 / 0, 1, tol)).toBe(nil)
 		expect(SkillCheck.judgePress(check, "x", centre, tol)).toBe(SkillCheck.judge(check, centre, tol))
+		-- a phone's stamp leads (a frame + TouchLead) on top of the trip are still trusted: a tap on
+		-- the white block, stamped early and arriving half a ping plus those leads later, stays Great
+		local phoneLate = tol + C.FrameLeadMax + C.TouchLead - 0.005
+		expect(SkillCheck.judgePress(check, centre, centre + phoneLate, tol)).toBe("Great")
 		-- the white block is smaller than the old great zone (a quarter of the zone)
 		expect(check.greatWidth).toBeLessThan(check.zoneWidth * 0.25)
 	end)

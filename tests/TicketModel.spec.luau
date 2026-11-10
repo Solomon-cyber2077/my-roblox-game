@@ -110,12 +110,10 @@ describe("TicketModel", function()
 			{ archetype = "Market", tier = 2, distanceKm = 12, hint = "" },
 		}
 		expect(TicketModel.tieNote({ a = 1 }, options)).toBe(nil)
-		expect(TicketModel.tieNote({}, options)).toBe("NO VOTES: THE DRIVER TAKES THE SHORTER LEG")
-		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe("A TIE: THE DRIVER TAKES THE SHORTER LEG")
+		expect(TicketModel.tieNote({}, options)).toBe("NO VOTE: SHORTER LINE")
+		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe("A TIE: SHORTER LINE")
 		options[2].distanceKm = 8
-		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe(
-			"A TIE: SHORTEST LEGS TIED, THE DRIVER TOSSES A COIN"
-		)
+		expect(TicketModel.tieNote({ a = 1, b = 2 }, options)).toBe("A TIE: COIN TOSS")
 	end)
 
 	it("leans each ticket the same way every time, within limits", function()

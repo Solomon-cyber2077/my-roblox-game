@@ -73,20 +73,20 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 		Name = "RunTicket",
 		Size = UDim2.fromOffset(W, H),
 		BackgroundColor3 = Theme.Color.paper:Lerp(
-			if data.won then Theme.Color.amber else Theme.Color.signalDark,
+			if data.won then Theme.Color.amber else Theme.Color.mahogany,
 			0.08
 		),
 		ZIndex = z,
 	})
 	Ui.stroke(INK_SOFT, 1, 0.4).Parent = ticket
-	-- read by the light the run ended in: the blood moon at the edges, or a warm lamp
+	-- an aged card: lamp-smoke browning at the edges, never red (owner: the red rim read as an outline)
 	Ui.new("ImageLabel", {
 		Name = "Moonlight",
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		Image = Theme.Image.vignette,
-		ImageColor3 = if data.won then Theme.Color.mahogany else Theme.Color.signalDark,
-		ImageTransparency = if data.won then 0.6 else 0.7, -- a lost ticket stays amber card, red only at the rim
+		ImageColor3 = Theme.Color.mahogany,
+		ImageTransparency = if data.won then 0.6 else 0.7,
 		ZIndex = z + 1,
 		Parent = ticket,
 	})
@@ -148,16 +148,18 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 
 	-- The hero line: how the run ended
 	local y = STUB + 16
-	local hero = label(ticket, data.hero, HEAD, 32, if data.won then WIN else Theme.Color.signalDark, z + 3)
+	local hero =
+		label(ticket, data.hero, Theme.Font.type, 32, if data.won then WIN else Theme.Color.oxblood, z + 3)
 	hero.Name = "Hero"
 	hero.Position = UDim2.fromOffset(PAD, y)
 	hero.Size = UDim2.new(1, -2 * PAD, 0, 40)
 	fit(hero, 32, 18)
+	Ui.pressInk(hero, Theme.Color.paper)
 	y += 46
 
 	-- Your own line: the cause
 	local causeTitle =
-		label(ticket, data.causeTitle, HEAD, 14, if data.won then INK else Theme.Color.signal, z + 3)
+		label(ticket, data.causeTitle, HEAD, 14, if data.won then INK else Theme.Color.oxblood, z + 3)
 	causeTitle.Name = "CauseTitle"
 	causeTitle.Position = UDim2.fromOffset(PAD, y)
 	causeTitle.Size = UDim2.new(1, -2 * PAD, 0, 18)
@@ -168,7 +170,8 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 	causeLine.Size = UDim2.new(1, -2 * PAD, 0, 44)
 	causeLine.TextWrapped = true
 	causeLine.TextYAlignment = Enum.TextYAlignment.Top
-	y += 52
+	-- a cause with no line (TAKEN) gives half its room back, so the stats do not float under a blank
+	y += if data.causeLine == "" then 26 else 52
 
 	Ui.new("Frame", {
 		Name = "Rule",
@@ -226,7 +229,7 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 						Position = UDim2.fromScale(0, 0.5),
 						AnchorPoint = Vector2.new(0, 0.5),
 						Rotation = -8,
-						BackgroundColor3 = Theme.Color.signal,
+						BackgroundColor3 = Theme.Color.oxblood,
 						BackgroundTransparency = 0.2,
 						BorderSizePixel = 0,
 						ZIndex = z + 5,
@@ -239,11 +242,12 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 			value.Position = UDim2.fromOffset(x, y + 18)
 			value.Size = UDim2.fromOffset(colW - 8, 30)
 			fit(value, 26, 12)
+			Ui.pressInk(value, Theme.Color.paper)
 		end
 	end
 
-	-- The stamp's width decides the room the NEXT line gets to its left. A long stamp (ENTERED, NOT
-	-- RECALLED; TRAIN LOST AT STOP 6) strikes smaller, and every stamp ends PAD from the right edge.
+	-- The stamp's width decides the room the NEXT line gets to its left. A long stamp (TRAIN LOST AT
+	-- STOP 6) strikes smaller, and every stamp ends PAD from the right edge.
 	local stampSize = if #data.stamp > STAMP_LONG then STAMP_SMALL else STAMP_FULL
 	local stampW = math.max(STAMP_MIN_W, math.ceil(#data.stamp * stampSize * STAMP_LETTER))
 
@@ -259,7 +263,7 @@ function RunTicket.build(data: RunTicketModel.Data, z: number, strike: boolean?)
 	local stamp = Stamp.word({
 		key = `runticket{data.stamp}`,
 		text = data.stamp,
-		color = if data.won then WIN else Theme.Color.signal,
+		color = if data.won then WIN else Theme.Color.oxblood,
 		size = stampSize,
 		Position = UDim2.new(1, -PAD - stampW / 2, 1, -RunTicket.FOOT - 24), -- centred: AnchorPoint 0.5
 		ZIndex = z + 10,

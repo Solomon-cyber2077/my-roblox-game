@@ -47,7 +47,7 @@ local function prompt(part: BasePart, label: string, callback: (Player) -> (), r
 	local maxReach = reach or H.PromptReach
 	p.MaxActivationDistance = maxReach
 	p.RequiresLineOfSight = false
-	p.HoldDuration = 0.25
+	p.HoldDuration = 0 -- one tap, even on the run (owner's playtest, 11-08)
 	p.Parent = part
 	p.Triggered:Connect(function(player)
 		local r = root(player)

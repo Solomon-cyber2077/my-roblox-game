@@ -211,8 +211,6 @@ describe("Mystery ballot", function()
 		expect(Vote.tally({ x = 1, y = 2, z = 3 }, options, 0.99)).toBe(3)
 		-- no votes at all: the same rule
 		expect(Vote.tally({}, options, 0.5)).toBe(3)
-		expect(TicketModel.tieNote({ x = 1, y = 2, z = 3 }, options)).toBe(
-			"A TIE: SHORTEST LEGS TIED, THE DRIVER TOSSES A COIN"
-		)
+		expect(TicketModel.tieNote({ x = 1, y = 2, z = 3 }, options)).toBe("A TIE: COIN TOSS")
 	end)
 end)

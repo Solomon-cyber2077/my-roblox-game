@@ -23,10 +23,10 @@ local TITLES: { [string]: { text: string, color: Color3, line: string } } = {
 		color = Theme.Color.goInk,
 		line = "The strongbox is opened and the haul paid out.",
 	},
-	Wiped = { text = "NO ONE MADE IT", color = Theme.Color.signal, line = "The whole crew was lost." },
+	Wiped = { text = "NO ONE MADE IT", color = Theme.Color.oxblood, line = "The whole crew was lost." },
 	Derailed = {
 		text = "BROKEN DOWN",
-		color = Theme.Color.signalDark,
+		color = Theme.Color.oxblood,
 		line = "The train failed on the line.",
 	},
 }
@@ -99,12 +99,12 @@ function Summary.show(data: { [string]: any })
 	end
 	local title = TITLES[data.outcome] or TITLES.Wiped
 	local won = data.outcome == "Victory"
-	local ink = if won then Theme.Color.goInk else Theme.Color.signalDark
+	local ink = if won then Theme.Color.goInk else Theme.Color.oxblood
 	local receipt = Ui.ticket({
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = 32,
 		BackgroundColor3 = Theme.Color.paper:Lerp(
-			if won then Theme.Color.amber else Theme.Color.signalDark,
+			if won then Theme.Color.amber else Theme.Color.mahogany,
 			0.16
 		),
 		Parent = body,
@@ -115,7 +115,7 @@ function Summary.show(data: { [string]: any })
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		Image = Theme.Image.vignette,
-		ImageColor3 = if won then Theme.Color.mahogany else Theme.Color.signalDark,
+		ImageColor3 = Theme.Color.mahogany,
 		ImageTransparency = if won then 0.55 else 0.25,
 		ZIndex = 32,
 		Parent = receipt,
@@ -253,7 +253,7 @@ function Summary.show(data: { [string]: any })
 			nextOrder(),
 			tostring(entry.label),
 			Format.signed(entry.amount),
-			if entry.amount < 0 then Theme.Color.signalDark else Theme.Color.ink,
+			if entry.amount < 0 then Theme.Color.oxblood else Theme.Color.ink,
 			34
 		)
 	end
@@ -304,12 +304,7 @@ function Summary.show(data: { [string]: any })
 		line(`LINE MASTERY: {string.upper(name)}`, Theme.Font.display, 16, Theme.Color.goInk)
 	end
 	if data.saved == false then
-		line(
-			"Your progress is not being saved this session.",
-			Theme.Font.bodyBold,
-			13,
-			Theme.Color.signalDark
-		)
+		line("Your progress is not being saved this session.", Theme.Font.bodyBold, 13, Theme.Color.oxblood)
 	end
 	-- tear-off foot
 	line("RETAIN THIS RECEIPT  ·  NOT TRANSFERABLE", Theme.Font.type, 11, Theme.Color.inkSoft)

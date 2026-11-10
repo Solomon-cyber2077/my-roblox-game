@@ -52,6 +52,9 @@ local function canInteract(player: Player, prompt: ProximityPrompt): boolean
 	return canInteractAnywhere(player) and inReach(player, prompt)
 end
 
+-- a loose item is one tap, so it can be grabbed on the run (owner's playtest, 11-08); searches stay held
+local PICKUP_HOLD = 0
+
 local function makePrompt(
 	parent: BasePart,
 	kind: string,
@@ -89,7 +92,7 @@ local function spawnPickup(itemId: string, position: Vector3, floorY: number?): 
 	local ground = StationService.ToWorld(localPos.X, (floorY or 0) + 0.75, math.max(localPos.Z, 1))
 	local piece = StationBuilder.pickup(itemId, built.model, base, ground)
 	local body = piece.PrimaryPart :: BasePart
-	local prompt = makePrompt(body, "Pickup", Items[itemId].name, "Pick up", 0.25, slab.id)
+	local prompt = makePrompt(body, "Pickup", Items[itemId].name, "Pick up", PICKUP_HOLD, slab.id)
 	prompt.Triggered:Connect(function(player)
 		if not canInteract(player, prompt) or piece.Parent == nil then
 			return
@@ -178,7 +181,7 @@ function LootService.Activate(built: StationBuilder.Built, plan: LayoutGen.Plan)
 	for _, handle in built.loose do
 		local body = handle.model.PrimaryPart :: BasePart
 		local itemId = handle.item
-		local prompt = makePrompt(body, "Pickup", Items[itemId].name, "Pick up", 0.25, handle.slab)
+		local prompt = makePrompt(body, "Pickup", Items[itemId].name, "Pick up", PICKUP_HOLD, handle.slab)
 		prompt.Triggered:Connect(function(player)
 			if not canInteract(player, prompt) or handle.model.Parent == nil then
 				return

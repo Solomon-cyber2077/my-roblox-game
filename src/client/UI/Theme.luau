@@ -32,18 +32,22 @@ Theme.Color = table.freeze({
 	ember = Color3.fromRGB(217, 102, 31),
 	signal = Color3.fromRGB(179, 38, 30), -- moon red
 	signalDark = Color3.fromRGB(122, 16, 20), -- deep blood
+	-- stamp-pad ink on the reports (run ticket, summary, receipt, ticket book): the owner found moon
+	-- red on card near-neon and soft (playtest, 11-08), so a report's losses print in dark oxblood
+	oxblood = Color3.fromRGB(110, 31, 26),
 	go = Color3.fromRGB(132, 190, 128),
 	goInk = Color3.fromRGB(30, 82, 46), -- success printed on card stock (go is too pale to read there)
 	caution = Color3.fromRGB(232, 158, 60),
 	sky = Color3.fromRGB(196, 154, 78),
-	white = Color3.fromRGB(232, 220, 196), -- bone: text on dark, never a fill
-	bone = Color3.fromRGB(232, 211, 168), -- lamplit text on the ticket-office pieces
-	boneDim = Color3.fromRGB(190, 168, 128), -- secondary text there; still reads on leather
+	-- bone text is lamp-lit, warmer than paper white (owner: "warmer lamp-lit bone everywhere", 11-09)
+	white = Color3.fromRGB(238, 218, 182), -- bone: text on dark, never a fill
+	bone = Color3.fromRGB(238, 208, 158), -- lamplit text on the ticket-office pieces
+	boneDim = Color3.fromRGB(198, 166, 118), -- secondary text there; still reads on leather
 	inkDeep = Color3.fromRGB(26, 18, 16), -- engraving cut into brass
 	wood = Color3.fromRGB(36, 14, 9), -- mahogany in shadow, under the grain
 	tarnish = Color3.fromRGB(138, 106, 48), -- old brass: rules and inlays on leather
 	dangerText = Color3.fromRGB(232, 92, 70), -- moon red bright enough to read on leather
-	textDim = Color3.fromRGB(168, 152, 128),
+	textDim = Color3.fromRGB(176, 154, 120),
 	black = Color3.fromRGB(0, 0, 0),
 	coal = Color3.fromRGB(70, 66, 64),
 	parts = Color3.fromRGB(150, 146, 136),

@@ -36,8 +36,9 @@ return table.freeze({
 	-- the departure board (UI/Lobby)
 	BoardHead = "COLDHARBOUR DEPOT  ·  THE RELIEF",
 
-	-- the run ticket's stamp when the crew is lost (Logic/RunLog.final)
-	NotRecalled = "ENTERED, NOT RECALLED",
+	-- the run ticket's stamp when the crew is lost (Logic/RunLog.final); was "ENTERED, NOT RECALLED",
+	-- shortened on the owner's call (playtest review, 11-09)
+	NotRecalled = "CREW LOST",
 
 	-- a brass plaque on a lamp post at every station (Builders/StationDressing)
 	Plaque = "KEPT LIT BY THOSE WHO WENT BEFORE",
