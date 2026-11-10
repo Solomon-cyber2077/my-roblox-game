@@ -10,7 +10,6 @@
 
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 
 local Registry = require(script.Parent.Parent.Registry)
 local Theme = require(script.Parent.Theme)
@@ -30,6 +29,105 @@ local function glyph(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInp
 		return if prompt.HoldDuration > 0 then "HOLD" else "TAP" -- a hold prompt ignores a quick tap
 	end
 	return prompt.KeyboardKeyCode.Name
+end
+
+-- Chip taps and clicks drive the prompt as the key would.
+local function wireTaps(chip: TextButton, prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType)
+	if not (tappable(prompt, inputType) and prompt.ClickablePrompt) then
+		return
+	end
+	chip.InputBegan:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.Touch
+			or input.UserInputType == Enum.UserInputType.MouseButton1
+		then
+			prompt:InputHoldBegin()
+		end
+	end)
+	chip.InputEnded:Connect(function(input)
+		if
+			input.UserInputType == Enum.UserInputType.Touch
+			or input.UserInputType == Enum.UserInputType.MouseButton1
+		then
+			prompt:InputHoldEnd()
+		end
+	end)
+end
+
+-- Loose items and haul goods (owner's playtest, 11-08: "a smaller interaction button ... appears,
+-- quickly shows so you can press it while running and still pick it up, and can also easily
+-- choose between what you actually want when there's a bunch of items around you"): a small tag
+-- over each item, the key and the item's name only, shown at once with no grow-in, sitting low so
+-- the tags of items lying together don't stack.
+local SMALL: { [string]: boolean } = { Pickup = true, Haul = true }
+
+local function buildSmall(
+	gui: Instance,
+	prompt: ProximityPrompt,
+	inputType: Enum.ProximityPromptInputType
+): BillboardGui
+	local touch = inputType == Enum.ProximityPromptInputType.Touch
+	local label = if prompt:GetAttribute("Action") == "Pickup" then prompt.ObjectText else prompt.ActionText
+	local billboard = Ui.new("BillboardGui", {
+		Name = "Prompt",
+		AlwaysOnTop = true,
+		Size = UDim2.fromOffset(if touch then 150 else 170, if touch then 44 else 36),
+		StudsOffset = Vector3.new(0, 1.4, 0),
+		LightInfluence = 0,
+		ResetOnSpawn = false,
+		Active = tappable(prompt, inputType),
+		Adornee = prompt.Parent,
+		Parent = gui,
+	})
+	local chip = Ui.new("TextButton", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Theme.Color.steel,
+		BackgroundTransparency = 0.06,
+		AutoButtonColor = false,
+		Text = "",
+		Active = tappable(prompt, inputType),
+		Interactable = tappable(prompt, inputType),
+		Parent = billboard,
+	})
+	Ui.corner(3).Parent = chip
+	Ui.new("ImageLabel", {
+		Name = "Plate",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Image = Theme.Image.cardLeather.id,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Theme.Image.cardLeather.slice,
+		SliceScale = 0.15,
+		ZIndex = 0,
+		Parent = chip,
+	})
+	local cap = if touch then 34 else 26
+	local key = Ui.new("TextLabel", {
+		Size = UDim2.fromOffset(cap, cap),
+		Position = UDim2.new(0, 5, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		BackgroundColor3 = Theme.Color.brass,
+		Text = if touch then "TAP" else glyph(prompt, inputType),
+		FontFace = Theme.Font.display,
+		TextSize = if touch then 12 else 16,
+		TextColor3 = Theme.Color.ink,
+		Parent = chip,
+	})
+	Ui.corner(3).Parent = key
+	Ui.stroke(Theme.Color.brassLight, 1, 0.2).Parent = key
+	local name = Ui.text({
+		Text = label,
+		Font = Theme.Font.display,
+		TextSize = 15,
+		Color = Theme.Color.brassLight,
+		Position = UDim2.fromOffset(cap + 12, 0),
+		Size = UDim2.new(1, -(cap + 16), 1, 0),
+	})
+	name.TextYAlignment = Enum.TextYAlignment.Center
+	name.TextTruncate = Enum.TextTruncate.AtEnd
+	name.Parent = chip
+	wireTaps(chip, prompt, inputType)
+	return billboard
 end
 
 local function build(
@@ -217,24 +315,7 @@ local function build(
 			Ui.tween(needle, { Rotation = -135 }, TweenInfo.new(0.25, Enum.EasingStyle.Quad))
 		end
 	end)
-	if tappable(prompt, inputType) and prompt.ClickablePrompt then
-		chip.InputBegan:Connect(function(input)
-			if
-				input.UserInputType == Enum.UserInputType.Touch
-				or input.UserInputType == Enum.UserInputType.MouseButton1
-			then
-				prompt:InputHoldBegin()
-			end
-		end)
-		chip.InputEnded:Connect(function(input)
-			if
-				input.UserInputType == Enum.UserInputType.Touch
-				or input.UserInputType == Enum.UserInputType.MouseButton1
-			then
-				prompt:InputHoldEnd()
-			end
-		end)
-	end
+	wireTaps(chip, prompt, inputType)
 	local scale = Ui.new("UIScale", { Scale = 0.8, Parent = chip })
 	Ui.tween(scale, { Scale = 1 }, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out))
 	return billboard
@@ -249,45 +330,50 @@ function Prompts.mount(gui: ScreenGui)
 	ProximityPromptService.PromptTriggered:Connect(function(prompt)
 		used[prompt] = true
 	end)
-	ProximityPromptService.PromptShown:Connect(function(prompt, inputType)
-		if prompt.Style ~= Enum.ProximityPromptStyle.Custom then
-			return
-		end
-		local billboard = build(container, prompt, inputType)
-		-- a small tick as it comes into reach (its `gap` keeps a row of seats to one); once per prompt per
-		-- REPEAT_TICK seconds, since one that hides and shows again (used, re-enabled by the server, or at
-		-- the edge of its range) was heard as a pop repeating after an interaction
-		-- and never again for one this player has used: the pop the owner still heard once after an
-		-- interaction (round 2) was this tick as the used prompt came back
-		local now = os.clock()
-		if
-			Registry.AudioController
-			and not used[prompt]
-			and now - (lastTick[prompt] or -math.huge) >= REPEAT_TICK
-		then
-			lastTick[prompt] = now
-			Registry.AudioController.Play("PromptShow")
-		end
-		-- PromptHidden does not reliably fire when the server destroys a prompt (a patched leak's),
-		-- which left its chip on screen: it also goes when the prompt leaves the game
-		local connections: { RBXScriptConnection } = {}
-		local function drop()
-			for _, connection in connections do
-				connection:Disconnect()
+	ProximityPromptService.PromptShown:Connect(
+		function(prompt: ProximityPrompt, inputType: Enum.ProximityPromptInputType)
+			if prompt.Style ~= Enum.ProximityPromptStyle.Custom then
+				return
 			end
-			billboard:Destroy()
-		end
-		table.insert(connections, prompt.PromptHidden:Connect(drop))
-		table.insert(connections, prompt.Destroying:Connect(drop))
-		table.insert(
-			connections,
-			prompt.AncestryChanged:Connect(function()
-				if not prompt:IsDescendantOf(game) then
-					drop()
+			local kind = prompt:GetAttribute("Action")
+			local billboard = if type(kind) == "string" and SMALL[kind]
+				then buildSmall(container, prompt, inputType)
+				else build(container, prompt, inputType)
+			-- a small tick as it comes into reach (its `gap` keeps a row of seats to one); once per prompt per
+			-- REPEAT_TICK seconds, since one that hides and shows again (used, re-enabled by the server, or at
+			-- the edge of its range) was heard as a pop repeating after an interaction
+			-- and never again for one this player has used: the pop the owner still heard once after an
+			-- interaction (round 2) was this tick as the used prompt came back
+			local now = os.clock()
+			if
+				Registry.AudioController
+				and not used[prompt]
+				and now - (lastTick[prompt] or -math.huge) >= REPEAT_TICK
+			then
+				lastTick[prompt] = now
+				Registry.AudioController.Play("PromptShow")
+			end
+			-- PromptHidden does not reliably fire when the server destroys a prompt (a patched leak's),
+			-- which left its chip on screen: it also goes when the prompt leaves the game
+			local connections: { RBXScriptConnection } = {}
+			local function drop()
+				for _, connection in connections do
+					connection:Disconnect()
 				end
-			end)
-		)
-	end)
+				billboard:Destroy()
+			end
+			table.insert(connections, prompt.PromptHidden:Connect(drop))
+			table.insert(connections, prompt.Destroying:Connect(drop))
+			table.insert(
+				connections,
+				prompt.AncestryChanged:Connect(function()
+					if not prompt:IsDescendantOf(game) then
+						drop()
+					end
+				end)
+			)
+		end
+	)
 
 	ProximityPromptService.PromptTriggered:Connect(function(prompt)
 		local action = prompt:GetAttribute("Action")
@@ -302,8 +388,9 @@ function Prompts.mount(gui: ScreenGui)
 		end
 	end)
 
-	-- Gamepad and keyboard users get the default key; touch users tap the chip.
-	ProximityPromptService.MaxPromptsVisible = if UserInputService.TouchEnabled then 2 else 3
+	-- Gamepad and keyboard users get the default key; touch users tap the chip. Three on phones too,
+	-- so items lying together each show their own small tag to pick from.
+	ProximityPromptService.MaxPromptsVisible = 3
 end
 
 return Prompts

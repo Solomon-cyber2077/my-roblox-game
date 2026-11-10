@@ -154,6 +154,16 @@ local Cues: { [string]: Cue } = {
 		mix = "Feedback",
 	},
 	BrassClick = { id = 9117028601, volume = 2.52, maxSeconds = 0.3, pitch = 0.85, mix = "Feedback" }, -- "Moviola Toggle Switch 6"
+	-- a skill-check hit in a grab: the warning bell's recording, pitched up and cut to its first
+	-- strike, so it lands as a small hand-bell tick rather than a toll
+	SkillHit = {
+		id = 9113804436,
+		start = 0.07,
+		volume = 1.1,
+		maxSeconds = 0.3,
+		pitch = 2.6,
+		mix = "Feedback",
+	},
 	-- the ticket's stamp coming down ("Table Hit Hand Smacks On Wood Table 14")
 	TicketPunch = { id = 9119909448, volume = 0.87, maxSeconds = 0.6, pitch = 0.8, mix = "Feedback" },
 

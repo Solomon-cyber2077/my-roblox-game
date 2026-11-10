@@ -24,6 +24,7 @@ local Tuning = require(Shared.Config.Tuning)
 local NpcDialogue = require(Shared.Logic.NpcDialogue)
 local NpcQuest = require(Shared.Logic.NpcQuest)
 local NpcSave = require(Shared.Logic.NpcSave)
+local ResidentWalk = require(Shared.Logic.ResidentWalk)
 local RunRules = require(Shared.Logic.RunRules)
 local Rng = require(Shared.Util.Rng)
 local Safe = require(Shared.Util.Safe)
@@ -341,6 +342,91 @@ local function talk(player: Player, npcId: string)
 	NetService.Fire("Dialogue", player, { npc = npcId, name = def.name, role = def.role, text = line.text })
 end
 
+-- A resident with a `walk` strolls her spots (Logic/ResidentWalk) once her R6 rig is dressed. The
+-- whole figure moves as one anchored model, with nothing on it colliding; the rig's root carries
+-- the walking velocity so every client's CharacterAnimator steps her legs. A Hand within
+-- `pauseRadius` stops her where she is, so she can always be caught for a word.
+local function walker(def: Npcs.NpcDef, model: Model, origin: CFrame)
+	local walk = def.walk :: Npcs.Walk
+	local rig: Instance? = nil
+	for _ = 1, 60 do
+		rig = model:FindFirstChild("Rig")
+		if rig or not model.Parent then
+			break
+		end
+		task.wait(0.5)
+	end
+	local root = if rig then rig:FindFirstChild("HumanoidRootPart") else nil
+	if root == nil or not root:IsA("BasePart") then
+		return -- the kit figure cannot step its legs: it keeps to its post
+	end
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") then
+			part.CanCollide = false
+			part.CanTouch = false
+		end
+	end
+	local spots = walk.spots
+	local random = Random.new()
+	local x, z, yaw = spots[1].x, spots[1].z, math.rad(spots[1].yaw)
+	local placed = origin * CFrame.new(x, 0, z) * CFrame.Angles(0, yaw, 0)
+	local function place(vx: number, vz: number)
+		local target = origin * CFrame.new(x, 0, z) * CFrame.Angles(0, yaw, 0)
+		model:PivotTo(target * placed:Inverse() * model:GetPivot())
+		placed = target
+		root.AssemblyLinearVelocity = origin:VectorToWorldSpace(Vector3.new(vx, 0, vz))
+	end
+	local function handNear(): boolean
+		local here = placed.Position
+		for _, player in Players:GetPlayers() do
+			local character = player.Character
+			local hrp = character and character:FindFirstChild("HumanoidRootPart")
+			if hrp and hrp:IsA("BasePart") and (hrp.Position - here).Magnitude < walk.pauseRadius then
+				return true
+			end
+		end
+		return false
+	end
+	local function turnTo(target: number)
+		local from = yaw
+		local delta = (target - from + math.pi) % (2 * math.pi) - math.pi
+		local t = 0
+		while t < walk.turnSeconds and model.Parent do
+			t += RunService.Heartbeat:Wait()
+			yaw = from + delta * math.min(t / walk.turnSeconds, 1)
+			place(0, 0)
+		end
+	end
+	local current = 1
+	while model.Parent do
+		task.wait(random:NextNumber(walk.idle[1], walk.idle[2]))
+		if model.Parent and not handNear() then
+			local to = ResidentWalk.nextSpot(walk, current, random:NextNumber())
+			for _, i in ResidentWalk.route(current, to) do
+				local spot = spots[i]
+				turnTo(math.atan2(-(spot.x - x), -(spot.z - z))) -- yaw 0 faces -Z
+				local arrived = false
+				while not arrived and model.Parent do
+					if handNear() then
+						place(0, 0)
+						repeat
+							task.wait(0.5)
+						until not model.Parent or not handNear()
+					end
+					local dt = RunService.Heartbeat:Wait()
+					local nx, nz
+					nx, nz, arrived = ResidentWalk.step(x, z, spot.x, spot.z, walk.speed, dt)
+					local vx, vz = (nx - x) / dt, (nz - z) / dt
+					x, z = nx, nz
+					place(if arrived then 0 else vx, if arrived then 0 else vz)
+				end
+				current = i
+			end
+			turnTo(math.rad(spots[current].yaw))
+		end
+	end
+end
+
 function NpcService.Init()
 	local origin = Registry.TrainService.Origin()
 	local folder = Instance.new("Folder")
@@ -364,6 +450,9 @@ function NpcService.Init()
 			prompt.Triggered:Connect(function(player)
 				Safe.call("NpcService.talk", talk, player, npcId)
 			end)
+			if def.walk then
+				task.spawn(Safe.call, "NpcService.walk", walker, def, figure.model, origin)
+			end
 		end
 	end
 end

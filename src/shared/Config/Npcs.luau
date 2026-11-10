@@ -27,6 +27,19 @@ export type Line = {
 -- Dressed from the shared period kit (Config/Outfits, built by Builders/OutfitKit).
 export type Look = Outfits.Look
 
+-- A resident's stroll (Logic/ResidentWalk, run by NpcService), in the same train space as `post`.
+-- The spots lie along one line, in order, the first is the post; keep-outs are the things Hands
+-- use, which no spot or leg between spots comes inside (tests/ResidentWalk checks it).
+export type Walk = {
+	speed: number, -- studs a second
+	idle: { number }, -- seconds stood at a spot, min and max
+	homeBias: number, -- chance to head back to the post from another spot
+	pauseRadius: number, -- a Hand this close stops her, so she can always be caught for a word
+	turnSeconds: number, -- time to turn to a spot's facing on arrival
+	spots: { { x: number, z: number, yaw: number } },
+	keepOut: { { name: string, x: number, z: number, r: number } },
+}
+
 export type NpcDef = {
 	id: string,
 	name: string,
@@ -44,6 +57,8 @@ export type NpcDef = {
 	-- CrewClothing accessory fields). When set it wins over `mesh`; every client animates it
 	-- (CharacterAnimator). Ids are owner uploads; a missing one is left off.
 	rig: Rig?,
+	-- walks between spots with no collision (only with the R6 rig; the kit figure stays put)
+	walk: Walk?,
 	lines: { Line },
 }
 
@@ -79,6 +94,30 @@ local List: { [string]: NpcDef } = {
 		-- board's sight line
 		post = { x = -28.5, z = 3.4, yaw = 0 },
 		chain = { "MabelLuggage", "MabelNames", "MabelManifest" },
+		-- owner, 11-08: "have mabel be able to move around, but give her not collison, and she never
+		-- sits or stands infront of things players need to interact with". Up and down the platform
+		-- side of the aisle in her own car, home most often; never at the bell, the route board, the
+		-- errand board or the doors through to the Workshop and Stores.
+		walk = {
+			speed = 3.4,
+			idle = { 7, 16 },
+			homeBias = 0.55,
+			pauseRadius = 7,
+			turnSeconds = 0.5,
+			spots = {
+				{ x = -28.5, z = 3.4, yaw = 0 },
+				{ x = -30.0, z = 0.7, yaw = 0 },
+				{ x = -35.5, z = 1.0, yaw = 90 },
+				{ x = -38.8, z = 1.3, yaw = -90 },
+			},
+			keepOut = {
+				{ name = "bell", x = -32.0, z = 5.2, r = 3.5 },
+				{ name = "route board", x = -23.62, z = 4.05, r = 4 },
+				{ name = "errand board", x = -23.62, z = -4.05, r = 4 },
+				{ name = "Workshop door", x = -23.7, z = 0, r = 4 },
+				{ name = "saloon door", x = -41.8, z = 0, r = 2.5 },
+			},
+		},
 		cosmetic = "hat_clerk",
 		-- the company's navy in a fitted bodice and plain skirt, a clerk's eyeshade, her punch
 		look = {
