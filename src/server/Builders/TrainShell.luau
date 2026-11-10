@@ -50,6 +50,17 @@ local LAMP = Color3.fromRGB(255, 206, 150)
 local TEAK = Vector3.new(0.7, 2.5, 2.5) -- a Mansell wheel's teak centre, inside its tyre
 local RETIRE_EPS = 0.02 -- an engine's retire list matches a primitive's centre and size this closely
 local DRIVER_RADIUS = 2 -- a WheelRadius above this is a driving wheel, not a bogie's
+-- Window glazing in the carved cars (tools/trainshell/carriage2.py: WIN_*, teak glazing at |z| 6.36-6.46)
+local PANE = Vector3.new(3.6, 3.6, 0.15) -- the primitive window glass
+local PANE_OUT = 6.475 -- the glass moves out here: past the teak, its edges buried in the skin
+local CAB_PANE_OUT = 6.45 -- the cab's far window glass: behind engine2.py's teak frame and mullion (6.3-6.42)
+local WIN_W, WIN_SILL, WIN_SPRING = 3.36, 3.5, 6.15
+local BAR_Z, BAR_T = 6.29, 0.07 -- iron glazing bars on the inside, clear of the haze (6.335) and curtains (6.23)
+local BAR_IRON = Color3.fromRGB(66, 66, 70)
+-- every carved car has arched windows (their Haze and Glow pieces share one window band)
+-- the fanlight glow (Glow, 0.65 high) lies at |z| 6.33-6.345, in front of its lead cames (6.34-6.36):
+-- stretched across the car it sits behind them, so the leading reads from inside
+local FANLIGHT_H, FANLIGHT_STRETCH = 0.65, 6.365 / 6.33
 
 local templates: { [number]: MeshPart } = {}
 
@@ -195,7 +206,7 @@ end
 -- The engine and her tender (Config `engine` cars): the kit's driving wheels, coupling rods and coal
 -- go on the primitives that carry WheelRadius, CrankRadius and CoalTier; the rest of the dressing
 -- retires exactly the primitives in the car's list. Returns false for parts the carriage rules
--- still handle (door panels, the bogies).
+-- still handle (door panels, the bogies, the cab window glass).
 local function dressEngine(
 	part: BasePart,
 	cf: CFrame,
@@ -260,6 +271,29 @@ local INSIDE_IRON = Color3.fromRGB(46, 44, 42)
 local CORNICE_GILT = Color3.fromRGB(172, 138, 80)
 local CORNICE_CAP = Color3.fromRGB(34, 32, 32)
 local CORNICE = { low = 9.04, high = 9.7, face = 6.88 } -- the band (y) and the shell's outer face (|z|)
+-- Iron bars on the inside of a carved window, over its teak ones: a mullion and a transom with
+-- two lights over each half.
+local function windowBars(parent: Instance, origin: CFrame, wx: number, side: number)
+	local z = side * BAR_Z
+	local function bar(x0: number, y0: number, x1: number, y1: number)
+		Kit.block(
+			parent,
+			Vector3.new(x1 - x0, y1 - y0, BAR_T),
+			origin * CFrame.new((x0 + x1) / 2, (y0 + y1) / 2, z),
+			BAR_IRON,
+			{ material = Enum.Material.Metal, collide = false, shadow = false }
+		).Name =
+			"GlazingBar"
+	end
+	local half = WIN_W / 2
+	bar(wx - 0.07, WIN_SILL + 0.12, wx + 0.07, WIN_SPRING - 0.06)
+	bar(wx - half, WIN_SPRING - 0.06, wx + half, WIN_SPRING + 0.06)
+	bar(wx - half, 4.57, wx + half, 4.63)
+	for _, sx in { -1, 1 } do
+		bar(wx + sx * half / 2 - 0.03, 4.63, wx + sx * half / 2 + 0.03, WIN_SPRING - 0.06)
+	end
+end
+
 local function cornice(parent: Instance, origin: CFrame, car: any, colors: { [string]: Color3 })
 	local x0, x1 = car.x0 + 0.15, car.x1 - 0.15
 	local len, cx = x1 - x0, (x0 + x1) / 2
@@ -297,13 +331,38 @@ local function dressLeafInside(
 	origin: CFrame,
 	slide: number,
 	glazed: boolean,
-	parent: Instance
+	parent: Instance,
+	looks: Instance
 )
 	local here = origin:ToObjectSpace(leaf.CFrame).Position
 	local side = if here.Z > 0 then 1 else -1
 	local w, h = leaf.Size.X, leaf.Size.Y
 	local face = here.Z - side * leaf.Size.Z / 2
 	local edge = if slide < 0 then 1 else -1 -- toward the meeting edge
+	-- the Blender inside (Config.Inside), its pull on the meeting edge: the mesh's +X looks along
+	-- the car's +X on the +Z side; the battens below stand in if it did not load
+	local inside = Config.Inside
+	local pull = edge == side
+	local id = if glazed
+		then (if pull then inside.GlazedPos else inside.GlazedNeg)
+		else (if pull then inside.HeavyPos else inside.HeavyNeg)
+	local template = templates[id]
+	if template then
+		local depth = template.Size.Z
+		local centre = Vector3.new(here.X, here.Y, face - side * (0.005 + depth / 2))
+		local part = place(
+			id,
+			origin * CFrame.lookAt(centre, centre - Vector3.new(0, 0, side)),
+			{ w, h, depth },
+			parent
+		)
+		part.Name = "DoorInside"
+		part.Color = Color3.new(1, 1, 1)
+		part.CastShadow = false
+		part:SetAttribute("DoorSlide", slide)
+		look(looks, inside.look, part)
+		return
+	end
 	local wood = Kit.shade(leaf.Color, 0.78)
 	local function at(x: number, y: number, out: number): Vector3
 		return Vector3.new(here.X + x, here.Y + y, face - side * out)
@@ -394,6 +453,9 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 	if not loadTemplates(ids) then
 		return false
 	end
+	-- the door insides are a finish, not the shell: a leaf whose inside fails keeps its battens
+	local inside = Config.Inside
+	loadTemplates({ inside.GlazedPos, inside.GlazedNeg, inside.HeavyPos, inside.HeavyNeg })
 
 	local archiveRoot = ServerStorage:FindFirstChild("TrainExteriorArchive")
 	if not archiveRoot then
@@ -450,6 +512,9 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 			end
 			if piece.transparency then
 				part.Transparency = piece.transparency
+			end
+			if name == "Glow" and math.abs(piece.size[2] - FANLIGHT_H) < 0.05 then
+				part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3] * FANLIGHT_STRETCH)
 			end
 			if piece.light then
 				-- one light per door lamp, at the lamp (a round-1 car has one lamp: the lens itself)
@@ -532,7 +597,7 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 						leaf:SetAttribute("DoorSlide", slide)
 						look(looks, own.look, leaf)
 						if slide then
-							dressLeafInside(leaf, origin, slide, false, folder)
+							dressLeafInside(leaf, origin, slide, false, folder, looks)
 						end
 						retire(part, archive)
 						continue
@@ -550,7 +615,7 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 					leaf:SetAttribute("DoorSlide", slide)
 					look(looks, kit.look or Config.KitLook, leaf)
 					if slide then
-						dressLeafInside(leaf, origin, slide, true, folder)
+						dressLeafInside(leaf, origin, slide, true, folder, looks)
 					end
 					retire(part, archive)
 				end
@@ -584,6 +649,22 @@ function TrainShell.dress(model: Model, origin: CFrame): boolean
 					look(looks, kit.look or Config.KitLook, bogie)
 				end
 				retire(part, archive)
+			elseif
+				(car.hideWalls == true or car.engine)
+				and part.Material == Enum.Material.Glass
+				and part.Size:FuzzyEq(PANE, 0.01)
+			then
+				-- the old pane stood in front of the carved frame, paling its edges and fogging
+				-- the bars: it moves out past them, and iron bars go on the inside (the cab has
+				-- no haze, so its own teak mullion is enough)
+				local side = if cf.Z > 0 then 1 else -1
+				part.Size = Vector3.new(PANE.X, PANE.Y, 0.02)
+				part.CFrame = origin
+					* CFrame.new(cf.X, cf.Y, side * (if car.engine then CAB_PANE_OUT else PANE_OUT))
+					* cf.Rotation
+				if not car.engine then
+					windowBars(folder, origin, cf.X, side)
+				end
 			elseif (outside or roof or wall or arch) and not car.engine then
 				retire(part, archive)
 			end
