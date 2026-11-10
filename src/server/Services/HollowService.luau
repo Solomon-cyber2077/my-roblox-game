@@ -1759,6 +1759,9 @@ local function pickKind(): string
 	local options: { { kind: string, weight: number } } = {}
 	local total = 0
 	for kind, pair in Difficulty.HollowKinds :: { [string]: { number } } do
+		if Tuning.HollowBenched[kind] then
+			continue
+		end
 		local weight = MathX.lerp(pair[1], pair[2], p.difficulty)
 		total += weight
 		table.insert(options, { kind = kind, weight = weight })
@@ -2320,14 +2323,15 @@ function HollowService.Prepare(plan: LayoutGen.Plan)
 		if i > (if p.dormantStart then p.hollowCap else HollowBudget.sleepers(p.hollowCap)) then
 			break
 		end
-		local height = HollowBuilder.rootHeight(sleeper.kind)
+		local kind = if Tuning.HollowBenched[sleeper.kind] then "Stalker" else sleeper.kind
+		local height = HollowBuilder.rootHeight(kind)
 		local position = StationService.ToWorld(sleeper.x, sleeper.y + height, sleeper.z)
 		local facing = StationService.ToWorld(
 			sleeper.x - math.sin(math.rad(sleeper.rot)),
 			sleeper.y + height,
 			sleeper.z - math.cos(math.rad(sleeper.rot))
 		)
-		local hollow = add(CFrame.lookAt(position, facing), sleeper.kind, "Dormant", nil)
+		local hollow = add(CFrame.lookAt(position, facing), kind, "Dormant", nil)
 		hollow.stirAt = if p.dormantStart then math.huge else p.dwell * H.SleeperStir * rng:NextNumber(1, 1.6)
 	end
 end
