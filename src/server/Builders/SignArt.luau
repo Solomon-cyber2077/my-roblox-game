@@ -18,6 +18,10 @@ local Signage = require(ReplicatedStorage.Shared.Config.Signage)
 
 local SignArt = {}
 
+-- The uploaded sign meshes face +Z (the import turns the export's -Z front round), so each is turned on
+-- its own centre to look out of the face; unturned, only its back shows and the wall reads blank.
+local TURN = CFrame.Angles(0, math.pi, 0)
+
 local templates: { [number]: MeshPart } = {}
 local loading: { [number]: boolean } = {}
 local preloaded = false
@@ -89,7 +93,7 @@ function SignArt.dress(part: BasePart, face: Enum.NormalId, name: string)
 		sign.CanQuery = false
 		sign.CanTouch = false
 		sign.CastShadow = false
-		sign.CFrame = faceFrame(part, face) * CFrame.new(0, 0, -(Signage.Gap + sign.Size.Z / 2))
+		sign.CFrame = faceFrame(part, face) * CFrame.new(0, 0, -(Signage.Gap + sign.Size.Z / 2)) * TURN
 		look:Clone().Parent = sign
 		if not part.Anchored then
 			local weld = Instance.new("WeldConstraint")

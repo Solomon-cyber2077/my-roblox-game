@@ -16,9 +16,9 @@ local function sign(mesh: number, look: string): Sign
 end
 
 return table.freeze({
-	-- off: on the Quality setting the sign meshes draw blank or black (normals or maps), so the printed signs
-	-- show everywhere until the meshes are re-exported
-	Enabled = false,
+	-- on: the uploads face +Z and SignArt turns them round (they drew blank from the front until it did,
+	-- Studio 2026-11-10)
+	Enabled = true,
 	-- out from the old face, so the paper never fights the part under it
 	Gap = 0.012,
 	Signs = table.freeze({
