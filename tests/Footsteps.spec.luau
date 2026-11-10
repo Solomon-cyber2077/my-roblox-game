@@ -3,7 +3,7 @@ local Audio = require(Shared.Config.Audio)
 local Tuning = require(Shared.Config.Tuning)
 
 describe("Footsteps", function()
-	it("tells the train, snow, planks and gravel apart", function()
+	it("tells the train, snow, planks, stone and gravel apart", function()
 		local function ground(material, onTrain, slabKind, snowy)
 			return { material = material, onTrain = onTrain, slabKind = slabKind, snowy = snowy }
 		end
@@ -12,7 +12,8 @@ describe("Footsteps", function()
 		expect(Footsteps.surface(ground("Cobblestone", false, "Floor", true))).toBe("Snow")
 		expect(Footsteps.surface(ground("Cobblestone", false, "Safe", true))).toBe("Plank")
 		expect(Footsteps.surface(ground("WoodPlanks", false, "Foundation", false))).toBe("Plank")
-		expect(Footsteps.surface(ground("Cobblestone", false, "Floor", false))).toBe("Gravel")
+		expect(Footsteps.surface(ground("Cobblestone", false, "Floor", false))).toBe("Stone")
+		expect(Footsteps.surface(ground("Slate", false, nil, false))).toBe("Stone")
 		expect(Footsteps.surface(ground("Ground", false, nil, false))).toBe("Gravel")
 	end)
 
@@ -26,7 +27,7 @@ describe("Footsteps", function()
 	end)
 
 	it("has a cue for every take of every surface, and alternates them", function()
-		for _, surface in { "TrainFloor", "Snow", "Plank", "Gravel" } do
+		for _, surface in { "TrainFloor", "Snow", "Plank", "Stone", "Gravel" } do
 			local seen = {}
 			for n = 1, Tuning.Footsteps.Takes[surface] do
 				local cue = Footsteps.cue(surface, n)

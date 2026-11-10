@@ -81,6 +81,8 @@ return table.freeze({
 		HeartSettled = 0.7,
 		BreathAt = 1.2, -- ragged panting from here to the end of the shock (skipped during a rush,
 		-- which pants already: GrabController)
+		BreathVoiceFollow = 0.4, -- how far the breath follows the cry's voice pitch (1 = all the way): breath
+		-- pitched as high as the highest cry sounds cartoonish
 		-- the body: camera shake, a kick, the screen (UI/Trauma), a controller rumble
 		Shake = 1.1,
 		Kick = 0.7,

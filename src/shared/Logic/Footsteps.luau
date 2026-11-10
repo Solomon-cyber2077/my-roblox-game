@@ -8,13 +8,14 @@
 	  Snow        snow or ice, or a yard slab at a stop in snowy country (its sheet of snow
 	              does not collide, so the slab under it is what the foot finds)
 	  Plank       the platform's boards and anything wooden: floors, decks, stairs
-	  Gravel      the rest: the yard's ground, cobbles, cinders, stone
+	  Stone       cobbles, flags, brick, slate, concrete: hard paving
+	  Gravel      the rest: the yard's ground, cinders, loose stone
 ]]
 
 local Foley = require(script.Parent.Parent.Config.Foley)
 local Tuning = require(script.Parent.Parent.Config.Tuning)
 
-export type Surface = "TrainFloor" | "Snow" | "Plank" | "Gravel"
+export type Surface = "TrainFloor" | "Snow" | "Plank" | "Stone" | "Gravel"
 export type Landing = { kind: "Soft" | "Hard", gain: number }
 export type Ground = {
 	material: string, -- Enum.Material name
@@ -27,6 +28,20 @@ local Footsteps = {}
 
 local WOOD = { Wood = true, WoodPlanks = true }
 local SNOW = { Snow = true, Glacier = true, Ice = true }
+local STONE = {
+	Cobblestone = true,
+	Slate = true,
+	Brick = true,
+	Concrete = true,
+	Pavement = true,
+	Limestone = true,
+	Marble = true,
+	Granite = true,
+	Sandstone = true,
+	Basalt = true,
+	Rock = true,
+	Asphalt = true,
+}
 
 function Footsteps.surface(ground: Ground): Surface
 	if ground.onTrain then
@@ -37,6 +52,9 @@ function Footsteps.surface(ground: Ground): Surface
 	end
 	if ground.slabKind == "Safe" or WOOD[ground.material] then
 		return "Plank"
+	end
+	if STONE[ground.material] then
+		return "Stone"
 	end
 	return "Gravel"
 end

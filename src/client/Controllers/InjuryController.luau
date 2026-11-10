@@ -464,9 +464,9 @@ local function shock(side: number, cry: string, pitch: number)
 		camera.ShakeFor(TEAR.Kick, TEAR.KickSeconds)
 	end
 	rumble(TEAR.Haptic, TEAR.HapticSeconds)
-	-- a rescue's rush already pants (GrabController); otherwise the panting is ours
+	-- a rescue's rush already pants (GrabController); otherwise the panting is ours, in the cry's voice
 	if Trauma.rush() < 0.25 then
-		task.delay(TEAR.BreathAt, play, "TornBreath")
+		task.delay(TEAR.BreathAt, play, "TornBreath", nil, nil, 1 + (pitch - 1) * TEAR.BreathVoiceFollow)
 	end
 	task.spawn(function()
 		local started = os.clock()
