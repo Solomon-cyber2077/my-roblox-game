@@ -14,7 +14,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage.Shared
 local BuildingGen = require(Shared.Logic.BuildingGen)
 local Kit = require(Shared.Visual.Kit)
+local Paintings = require(Shared.Config.Paintings)
 
+local SignArt = require(script.Parent.SignArt)
 local StationDressing = require(script.Parent.StationDressing)
 
 local RoomDecor = {}
@@ -117,12 +119,29 @@ Builders.WallClock = function(parent, frame, _rng)
 	flat(parent, frame, Vector3.new(0.22, 0.22, 0.03), 0, -1.6, 0.3, BRASS, M.Metal)
 end
 
--- A gilt frame round a painting gone dark: a landscape, or a sitter in black.
+-- A gilt frame round a painting gone dark: the rendered oil landscape (Config/Paintings) once
+-- uploaded, else a drawn landscape or a sitter in black. A raised lip of darker gilt stands round
+-- the canvas, so the picture sits in the frame rather than on it.
 Builders.Picture = function(parent, frame, rng)
 	local w = 2.6
-	flat(parent, frame, Vector3.new(w, 1.9, 0.12), 0, 0, 0, Kit.jitter(GILT, 0.1, rng:NextNumber()), M.Metal)
+	local gilt = Kit.jitter(GILT, 0.1, rng:NextNumber())
+	flat(parent, frame, Vector3.new(w, 1.9, 0.12), 0, 0, 0, gilt, M.Metal)
+	local lip = Kit.shade(gilt, 0.7)
+	for _, side in { -1, 1 } do
+		flat(parent, frame, Vector3.new(w - 0.24, 0.08, 0.08), 0, side * 0.81, 0.1, lip, M.Metal)
+		flat(parent, frame, Vector3.new(0.08, 1.54, 0.08), side * (w / 2 - 0.16), 0, 0.1, lip, M.Metal)
+	end
 	local ground = CANVAS[rng:NextInteger(1, #CANVAS)]
-	flat(parent, frame, Vector3.new(w - 0.36, 1.54, 0.04), 0, 0, 0.12, ground)
+	local canvas = flat(parent, frame, Vector3.new(w - 0.36, 1.54, 0.04), 0, 0, 0.12, ground)
+	local image = Paintings.Station[rng:NextInteger(1, #Paintings.Station)]
+	if image ~= 0 then
+		local decal = Instance.new("Decal")
+		decal.Name = "Oil"
+		decal.Face = Enum.NormalId.Front
+		decal.Texture = `rbxassetid://{image}`
+		decal.Parent = canvas
+		return
+	end
 	if rng:NextNumber() < 0.5 then
 		-- a sky over a dark field
 		flat(parent, frame, Vector3.new(w - 0.42, 0.62, 0.02), 0, 0.42, 0.16, Kit.shade(ground, 1.9))
@@ -146,7 +165,9 @@ Builders.Text = function(parent, frame, rng)
 		0.1,
 		Kit.shade(CREAM, rng:NextNumber(0.75, 0.95))
 	)
-	label(sheet, TEXTS[rng:NextInteger(1, #TEXTS)], Vector2.new(186, 126))
+	local index = rng:NextInteger(1, #TEXTS)
+	label(sheet, TEXTS[index], Vector2.new(186, 126))
+	SignArt.dress(sheet, Enum.NormalId.Front, `framed_{index}`)
 end
 
 -- An unlit gas bracket: a brass rose, a swan-neck arm and a frosted globe.

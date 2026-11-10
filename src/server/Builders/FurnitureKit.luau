@@ -12,6 +12,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local SignArt = require(script.Parent.SignArt)
 
 local FurnitureKit = {}
 
@@ -223,12 +224,14 @@ Builders.Chalkboard = function(ctx)
 	label.Size = UDim2.fromScale(0.9, 0.8)
 	label.Position = UDim2.fromScale(0.05, 0.1)
 	label.FontFace = Font.new(Font.fromEnum(Enum.Font.Fondamento).Family) -- a teacher's round hand
-	label.Text = CHALK[ctx.rng:NextInteger(1, #CHALK)]
+	local index = ctx.rng:NextInteger(1, #CHALK)
+	label.Text = CHALK[index]
 	label.TextColor3 = rgb(226, 226, 214)
 	label.TextTransparency = 0.15
 	label.TextScaled = true
 	label.Rotation = (ctx.rng:NextNumber() - 0.5) * 6
 	label.Parent = gui
+	SignArt.dress(board, Enum.NormalId.Front, `chalk_{index}`)
 	return board
 end
 

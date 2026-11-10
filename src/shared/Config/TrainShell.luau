@@ -43,6 +43,7 @@ local TrainShell: {
 	LampLight: { Range: number, Brightness: number },
 	Cars: { [string]: Car },
 	Kit: { [string]: KitPiece },
+	Inside: { look: string, GlazedPos: number, GlazedNeg: number, HeavyPos: number, HeavyNeg: number },
 } =
 	{
 		Enabled = true,
@@ -1055,6 +1056,15 @@ local TrainShell: {
 				size = { 0.996, 0.531, 0.998 },
 				anchor = { 0, 0, 0 },
 			},
+		},
+		-- the inner face of a sliding leaf (tools/train-doors), sized to the leaf it is laid on:
+		-- Glazed on the passenger leaves, Heavy on the Workshop's and Stores'; Pos has its pull at +X
+		Inside = {
+			look = "DoorInside",
+			GlazedPos = 111528405069936,
+			GlazedNeg = 108728859063460,
+			HeavyPos = 101056858927604,
+			HeavyNeg = 104865432958372,
 		},
 	}
 

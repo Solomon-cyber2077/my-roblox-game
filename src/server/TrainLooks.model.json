@@ -327,6 +327,17 @@
     "ColorMap": "rbxassetid://114209098568040",
     "NormalMap": "rbxassetid://78844910549802"
    }
+  },
+  {
+   "name": "DoorInside",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://102971503085196",
+    "NormalMap": "rbxassetid://84968480619222",
+    "RoughnessMap": "rbxassetid://76889412537153",
+    "MetalnessMap": "rbxassetid://85888286754738"
+   }
   }
  ]
 }

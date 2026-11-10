@@ -1,0 +1,127 @@
+{
+ "className": "Folder",
+ "children": [
+  {
+   "name": "poster_coast",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://140278726218283",
+    "NormalMap": "rbxassetid://83150807215563"
+   }
+  },
+  {
+   "name": "poster_fog",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://140206760225241",
+    "NormalMap": "rbxassetid://125128801966571"
+   }
+  },
+  {
+   "name": "poster_coal",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://93497651985793",
+    "NormalMap": "rbxassetid://108933984007128"
+   }
+  },
+  {
+   "name": "poster_moon",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://111056481400687",
+    "NormalMap": "rbxassetid://114962340160120"
+   }
+  },
+  {
+   "name": "bills",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://140727464235358",
+    "NormalMap": "rbxassetid://131589332463990"
+   }
+  },
+  {
+   "name": "metal",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://131191377466665",
+    "NormalMap": "rbxassetid://91756654149601",
+    "RoughnessMap": "rbxassetid://138483155539758",
+    "MetalnessMap": "rbxassetid://100209866558384"
+   }
+  },
+  {
+   "name": "stone",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://103345988888609",
+    "NormalMap": "rbxassetid://112239618283678"
+   }
+  },
+  {
+   "name": "chalk_1",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://137901131807117"
+   }
+  },
+  {
+   "name": "chalk_2",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://70654688324771"
+   }
+  },
+  {
+   "name": "chalk_3",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://139943944560828"
+   }
+  },
+  {
+   "name": "chalk_4",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://114837996407029"
+   }
+  },
+  {
+   "name": "chalk_5",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://128596523756474"
+   }
+  },
+  {
+   "name": "chalk_tearoom",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://95270513557423"
+   }
+  },
+  {
+   "name": "framed",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "AlphaMode": "Overlay",
+    "ColorMap": "rbxassetid://132058819674117",
+    "NormalMap": "rbxassetid://105951211207923"
+   }
+  }
+ ]
+}

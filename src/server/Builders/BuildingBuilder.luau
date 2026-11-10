@@ -22,6 +22,7 @@ local Kit = require(Shared.Visual.Kit)
 local BuildingGen = require(Shared.Logic.BuildingGen)
 
 local FurnitureKit = require(script.Parent.FurnitureKit)
+local SignArt = require(script.Parent.SignArt)
 
 export type Lamp = { light: PointLight, bulb: BasePart, works: boolean }
 export type Lock = { leaf: BasePart, door: BuildingGen.Door, open: CFrame }
@@ -276,6 +277,7 @@ function BuildingBuilder.build(
 		words.TextColor3 = rgb(70, 62, 54)
 		words.TextScaled = true
 		words.Parent = cut
+		SignArt.dress(tablet, Enum.NormalId.Front, "datestone_ashgrove") -- the one date stone (Config/Buildings)
 	end
 
 	-- doors ------------------------------------------------------------------------------------
