@@ -44,6 +44,7 @@ local MOUTH = rgb(46, 12, 14)
 local GAPE = rgb(120, 22, 26) -- the Stalker's open mouth: brighter so it reads in dim light
 local TOOTH = rgb(196, 184, 148)
 local SHINE = rgb(236, 226, 170)
+local GLINT = rgb(190, 22, 18) -- the Stalker's eye: one dull red glint deep in a black socket
 local BRASS = rgb(124, 100, 58)
 
 -- Helpers ---------------------------------------------------------------------------------
@@ -171,9 +172,12 @@ local function decoRod(
 	)
 end
 
-local function shine(model: Model, to: BasePart, offset: CFrame, size: number)
-	local eye =
-		stick(to, Kit.neon(model, Vector3.one * size, CFrame.new(), SHINE, Enum.PartType.Ball), offset)
+local function shine(model: Model, to: BasePart, offset: CFrame, size: number, color: Color3?)
+	local eye = stick(
+		to,
+		Kit.neon(model, Vector3.one * size, CFrame.new(), color or SHINE, Enum.PartType.Ball),
+		offset
+	)
 	eye.Name = "Eye"
 	eye.Transparency = 0.15
 end
@@ -288,6 +292,7 @@ end
 local function stalker(model: Model, root: BasePart)
 	local SKIN = rgb(182, 178, 160) -- pallor, not grey
 	local SKIN_DARK = rgb(126, 122, 108)
+	local FACE = rgb(140, 135, 120) -- the face reads darker than the body, against amber gaslight
 	local COAT = rgb(43, 40, 38)
 	local LAPEL = rgb(27, 25, 24)
 	local BLOOD = rgb(104, 22, 24)
@@ -303,7 +308,7 @@ local function stalker(model: Model, root: BasePart)
 	end
 	local pelvis = block(model, "Pelvis", Vector3.new(1.5, 0.9, 0.95), COAT, cloth)
 	local chest = block(model, "Chest", Vector3.new(1.45, 2.8, 0.95), COAT, cloth)
-	local head = mark("head", block(model, "Head", Vector3.new(0.82, 1.4, 0.98), SKIN, skin))
+	local head = mark("head", block(model, "Head", Vector3.new(0.82, 1.4, 0.98), FACE, skin))
 	local jaw = block(model, "Jaw", Vector3.new(0.62, 0.46, 0.8), SKIN_DARK, skin)
 	joint("RootJoint", root, pelvis, CFrame.new(0, -0.65, 0), CFrame.new())
 	joint("Waist", pelvis, chest, CFrame.new(0, 0.42, 0) * Kit.angles(-27, 0, 0), CFrame.new(0, -1.4, 0))
@@ -408,7 +413,7 @@ local function stalker(model: Model, root: BasePart)
 			)
 		)
 		-- the pinprick sits deep in the carved socket when the close-up skull is on
-		shine(model, head, CFrame.new(side, 0.16, if meshCache.head then -0.3 else -0.54), 0.05)
+		shine(model, head, CFrame.new(side, 0.16, if meshCache.head then -0.3 else -0.54), 0.06, GLINT)
 		-- the cheek fallen in under each socket
 		mark(
 			"head",
@@ -518,7 +523,7 @@ local function stalker(model: Model, root: BasePart)
 	end
 
 	-- the close-up skull and coat in place of their blocks (the arm pieces went on with the arms)
-	meshPiece(model, "head", head, SKIN, skin)
+	meshPiece(model, "head", head, FACE, skin)
 	meshPiece(model, "coat", pelvis, COAT, cloth)
 	for group, parts in blocks do
 		if meshCache[group] ~= nil then
