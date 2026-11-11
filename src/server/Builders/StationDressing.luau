@@ -26,6 +26,7 @@ local Shared = ReplicatedStorage.Shared
 local Stations = require(Shared.Config.Stations)
 local Crowns = require(Shared.Visual.Crowns)
 local Kit = require(Shared.Visual.Kit)
+local Lettering = require(script.Parent.Lettering)
 local SignArt = require(script.Parent.SignArt)
 local TreeCrowns = require(script.Parent.TreeCrowns)
 local Tutorial = require(Shared.Config.Tutorial)
@@ -875,14 +876,17 @@ Builders.FireBuckets = function(ctx)
 		block(ctx, Vector3.new(0.3, 3.6, 0.32), f(ctx, x, 1.8, 0), C.red, M.Metal, true)
 	end
 	local bar = block(ctx, Vector3.new(4.0, 0.5, 0.25), f(ctx, 0, 3.5, 0), C.red, M.Metal)
-	letter(
-		bar,
-		Enum.NormalId.Front,
-		"FIRE",
-		C.enamel,
-		Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold),
-		Vector2.new(400, 50)
-	)
+	-- hand-painted on the red bar, chipped where the buckets have knocked it
+	Lettering.paint(bar, Enum.NormalId.Front, "FIRE", {
+		font = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold),
+		canvas = Vector2.new(400, 50),
+		light = 1,
+		color = C.enamel,
+		ground = C.red,
+		bare = C.iron,
+		wear = 0.6,
+		box = { x = 0.05, y = 0.1, w = 0.9, h = 0.8 },
+	})
 	for _, x in { -1.1, 0, 1.1 } do
 		post(ctx, 0.6, 0.06, f(ctx, x, 3.0, -0.3), C.iron, M.Metal)
 		post(ctx, 0.95, 0.85, f(ctx, x, 2.2, -0.3), C.red, M.Metal)

@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 local Tutorial = require(ReplicatedStorage.Shared.Config.Tutorial)
 
+local Lettering = require(script.Parent.Lettering)
 local StationDressing = require(script.Parent.StationDressing)
 
 export type Palette = { ground: Color3, accent: Color3, trim: Color3, light: Color3 }
@@ -1337,34 +1338,25 @@ Props.Sign = function(ctx)
 		material = Enum.Material.Wood,
 		collide = false,
 	})
-	local rng = ctx.rng
 	for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
-		local gui = Instance.new("SurfaceGui")
-		gui.Face = face
-		gui.CanvasSize = Vector2.new(700, 130)
-		gui.LightInfluence = 0.25
-		gui.Parent = board
-		local label = Instance.new("TextLabel")
-		label.BackgroundTransparency = 1
-		label.Size = UDim2.fromScale(1, 1)
-		label.FontFace = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold)
-		label.Text = string.upper(ctx.label or "")
-		label.TextColor3 = SIGN_WHITE
-		label.TextScaled = true
-		label.Parent = gui
-		local pad = Instance.new("UIPadding")
-		pad.PaddingTop = UDim.new(0.14, 0)
-		pad.PaddingBottom = UDim.new(0.12, 0)
-		pad.PaddingLeft = UDim.new(0.05, 0)
-		pad.PaddingRight = UDim.new(0.05, 0)
-		pad.Parent = label
+		-- sign-writer's paint on the enamel, worn and flaked, the board's edge knocked to the iron
+		local paint = Lettering.paint(board, face, string.upper(ctx.label or ""), {
+			font = Font.new("rbxasset://fonts/families/Oswald.json", Enum.FontWeight.Bold),
+			canvas = Vector2.new(700, 130),
+			light = 0.25,
+			color = SIGN_WHITE,
+			ground = ENAMEL_BLUE,
+			bare = Color3.fromRGB(20, 18, 18),
+			wear = 0.55,
+			box = { x = 0.05, y = 0.14, w = 0.9, h = 0.74 },
+		})
 		-- soot from the engines, heaviest along the top edge
 		local soot = Instance.new("Frame")
 		soot.BorderSizePixel = 0
 		soot.BackgroundColor3 = Color3.fromRGB(12, 10, 10)
 		soot.Size = UDim2.fromScale(1, 0.5)
-		soot.ZIndex = 2
-		soot.Parent = gui
+		soot.ZIndex = 4
+		soot.Parent = paint.Parent
 		local fade = Instance.new("UIGradient")
 		fade.Rotation = 90
 		fade.Transparency = NumberSequence.new({
@@ -1372,27 +1364,6 @@ Props.Sign = function(ctx)
 			NumberSequenceKeypoint.new(1, 1),
 		})
 		fade.Parent = soot
-		-- chips knocked out of the enamel, black iron showing, mostly at the edges
-		for _ = 1, rng:NextInteger(4, 7) do
-			local chip = Instance.new("Frame")
-			chip.BorderSizePixel = 0
-			chip.BackgroundColor3 = Color3.fromRGB(20, 18, 18)
-			local size = rng:NextInteger(5, 14)
-			chip.Size = UDim2.fromOffset(size, math.floor(size * rng:NextNumber(0.6, 1.2)))
-			local edge = rng:NextInteger(1, 4)
-			local x = if edge == 1
-				then rng:NextNumber(0, 0.03)
-				elseif edge == 2 then rng:NextNumber(0.96, 0.99)
-				else rng:NextNumber(0.02, 0.97)
-			local y = if edge == 3
-				then rng:NextNumber(0, 0.06)
-				elseif edge == 4 then rng:NextNumber(0.88, 0.94)
-				else rng:NextNumber(0.1, 0.85)
-			chip.Position = UDim2.fromScale(x, y)
-			chip.Rotation = rng:NextNumber(-30, 30)
-			chip.ZIndex = 3
-			chip.Parent = gui
-		end
 	end
 end
 

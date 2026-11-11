@@ -22,6 +22,7 @@ local Kit = require(Shared.Visual.Kit)
 local BuildingGen = require(Shared.Logic.BuildingGen)
 
 local FurnitureKit = require(script.Parent.FurnitureKit)
+local Lettering = require(script.Parent.Lettering)
 local SignArt = require(script.Parent.SignArt)
 
 export type Lamp = { light: PointLight, bulb: BasePart, works: boolean }
@@ -232,20 +233,17 @@ function BuildingBuilder.build(
 		M.Wood,
 		false
 	)
-	local gui = Instance.new("SurfaceGui")
-	gui.Face = Enum.NormalId.Front
-	gui.CanvasSize = Vector2.new(1000, 100)
-	gui.LightInfluence = 0.6
-	gui.Parent = sign
-	local label = Instance.new("TextLabel")
-	label.BackgroundTransparency = 1
-	label.Size = UDim2.fromScale(0.94, 0.8)
-	label.Position = UDim2.fromScale(0.03, 0.1)
-	label.FontFace = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold)
-	label.Text = string.upper(def.name)
-	label.TextColor3 = rgb(236, 220, 180)
-	label.TextScaled = true
-	label.Parent = gui
+	-- the name in sign-writer's cream on the fascia, worn by the weather and flaked to the wood
+	Lettering.paint(sign, Enum.NormalId.Front, string.upper(def.name), {
+		font = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Bold),
+		canvas = Vector2.new(1000, 100),
+		light = 0.6,
+		color = rgb(236, 220, 180),
+		ground = Kit.shade(trim, 0.5),
+		bare = Kit.shade(trim, 0.25),
+		wear = 0.45,
+		box = { x = 0.03, y = 0.1, w = 0.94, h = 0.8 },
+	})
 	if def.dateStone then
 		-- a dressed stone tablet beside the board, its lettering cut and darkened by the weather
 		local tx = math.min(2 * ox - 4, 26) / 2 + 4.5
@@ -263,20 +261,14 @@ function BuildingBuilder.build(
 			M.Limestone,
 			false
 		)
-		local cut = Instance.new("SurfaceGui")
-		cut.Face = Enum.NormalId.Front
-		cut.CanvasSize = Vector2.new(350, 110)
-		cut.LightInfluence = 1
-		cut.Parent = tablet
-		local words = Instance.new("TextLabel")
-		words.BackgroundTransparency = 1
-		words.Size = UDim2.fromScale(0.9, 0.8)
-		words.Position = UDim2.fromScale(0.05, 0.1)
-		words.FontFace = Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold)
-		words.Text = def.dateStone
-		words.TextColor3 = rgb(70, 62, 54)
-		words.TextScaled = true
-		words.Parent = cut
+		Lettering.engrave(tablet, Enum.NormalId.Front, def.dateStone, {
+			font = Font.new(Font.fromEnum(Enum.Font.Bodoni).Family, Enum.FontWeight.Bold),
+			canvas = Vector2.new(350, 110),
+			light = 1,
+			fill = rgb(70, 62, 54),
+			surface = rgb(176, 166, 146),
+			box = { x = 0.05, y = 0.1, w = 0.9, h = 0.8 },
+		})
 		SignArt.dress(tablet, Enum.NormalId.Front, "datestone_ashgrove") -- the one date stone (Config/Buildings)
 	end
 

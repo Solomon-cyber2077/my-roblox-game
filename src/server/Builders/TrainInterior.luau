@@ -29,6 +29,7 @@ local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 local PropMeshes = require(script.Parent.PropMeshes)
 local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
 local Paintings = require(ReplicatedStorage.Shared.Config.Paintings)
+local Lettering = require(script.Parent.Lettering)
 local SignArt = require(script.Parent.SignArt)
 local IL = InteriorLight
 
@@ -627,7 +628,30 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		light: number
 	): BasePart
 		local part = decor(size, origin * CFrame.lookAt(center, center + normal), color, material)
-		letter(part, Enum.NormalId.Front, text, ink, font, Vector2.new(size.X * 100, size.Y * 100), light)
+		local canvas = Vector2.new(size.X * 100, size.Y * 100)
+		if material == M.Metal then
+			-- engraved brass: the cut filled with wax, the plate's edge bevelled
+			Lettering.engrave(part, Enum.NormalId.Front, text, {
+				font = font,
+				canvas = canvas,
+				light = light,
+				fill = ink,
+				surface = color,
+				bevel = true,
+			})
+		elseif material == M.Wood then
+			-- a gilded V-cut in the board
+			Lettering.engrave(part, Enum.NormalId.Front, text, {
+				font = font,
+				canvas = canvas,
+				light = light,
+				fill = ink,
+				surface = color,
+				gilt = true,
+			})
+		else
+			letter(part, Enum.NormalId.Front, text, ink, font, canvas, light)
+		end
 		return part
 	end
 	-- An enamel sign over a door, saying where it leads (as an exit sign would).
@@ -659,7 +683,14 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		local board = decor(Vector3.new(0.14, 0.72, 3.8), at(x, y, 0), C.board, M.Wood)
 		board.Name = "Nameboard"
 		for _, face in { Enum.NormalId.Right, Enum.NormalId.Left } do
-			letter(board, face, text, C.gilt, BOARD_FONT, Vector2.new(380, 72), 0.5)
+			Lettering.engrave(board, face, text, {
+				font = BOARD_FONT,
+				canvas = Vector2.new(380, 72),
+				light = 0.5,
+				fill = C.gilt,
+				surface = C.board,
+				gilt = true,
+			})
 		end
 		for _, z in { -1.5, 1.5 } do
 			local top = dims.ceilingAt(x, z)
@@ -1302,7 +1333,14 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	local chestLabel =
 		decor(Vector3.new(1.2, 0.34, 0.05), chestCf * CFrame.new(0, 0.7, 0.785), C.board, M.Wood)
 	chestLabel.Name = "ChestLabel"
-	letter(chestLabel, Enum.NormalId.Back, "CREW STORES", C.gilt, PLATE_FONT, Vector2.new(240, 68), 1)
+	Lettering.paint(chestLabel, Enum.NormalId.Back, "CREW STORES", {
+		font = PLATE_FONT,
+		canvas = Vector2.new(240, 68),
+		light = 1,
+		color = C.gilt,
+		ground = C.board,
+		wear = 0.5,
+	})
 	local chest = Kit.block(
 		model,
 		Vector3.new(3.1, 1.8, 1.7),
