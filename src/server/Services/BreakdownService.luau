@@ -83,7 +83,7 @@ local function toast(on: boolean)
 		ReplicatedStorage:SetAttribute("TimedEventText", text)
 		ReplicatedStorage:SetAttribute("TimedEventStartAt", now())
 		ReplicatedStorage:SetAttribute("TimedEventEndAt", state.endsAt)
-		ReplicatedStorage:SetAttribute("TimedEventCue", "Alarm")
+		ReplicatedStorage:SetAttribute("TimedEventCue", "HullBell") -- the hand bell, not the electric alarm (owner, 11-11)
 		ReplicatedStorage:SetAttribute("TimedEvent", "Rally")
 	end
 end
@@ -244,7 +244,10 @@ end
 local shownFound = -1
 local function villageProgress()
 	local phase = Registry.RunDirector.Phase()
-	if not Registry.RunDirector.IsVillageStop() or (phase ~= "Dwell" and phase ~= "LastCall") then
+	if
+		not Registry.RunDirector.IsVillageStop()
+		or (phase ~= "Arrival" and phase ~= "Dwell" and phase ~= "LastCall")
+	then
 		if ReplicatedStorage:GetAttribute("TimedEvent") == "Village" then
 			for _, name in { "TimedEvent", "TimedEventTitle", "TimedEventText", "TimedEventCue" } do
 				ReplicatedStorage:SetAttribute(name, nil)
@@ -259,7 +262,8 @@ local function villageProgress()
 	end
 	local found = Registry.RunDirector.VillageFound()
 	local needed = station.emergency.needed
-	if found ~= shownFound then
+	-- the toast is put up again when the doors open (the stop's event director clears it then)
+	if found ~= shownFound or ReplicatedStorage:GetAttribute("TimedEvent") ~= "Village" then
 		if shownFound >= 0 and found >= needed and shownFound < needed then
 			NetService.FireAll("Notify", "Upgrade", "Enough repair parts aboard! Get back on the train.")
 		end
@@ -272,7 +276,7 @@ local function villageProgress()
 		)
 		ReplicatedStorage:SetAttribute("TimedEventStartAt", station.startedAt)
 		ReplicatedStorage:SetAttribute("TimedEventEndAt", station.departAt)
-		ReplicatedStorage:SetAttribute("TimedEventCue", "Alarm")
+		ReplicatedStorage:SetAttribute("TimedEventCue", "HullBell") -- the hand bell, not the electric alarm (owner, 11-11)
 		ReplicatedStorage:SetAttribute("TimedEvent", "Village")
 	end
 end
