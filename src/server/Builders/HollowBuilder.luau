@@ -41,6 +41,7 @@ local SPECS: { [string]: Spec } = {
 
 local ICHOR = rgb(18, 12, 14)
 local MOUTH = rgb(46, 12, 14)
+local GAPE = rgb(120, 22, 26) -- the Stalker's open mouth: brighter so it reads in dim light
 local TOOTH = rgb(196, 184, 148)
 local SHINE = rgb(236, 226, 170)
 local BRASS = rgb(124, 100, 58)
@@ -426,7 +427,7 @@ local function stalker(model: Model, root: BasePart)
 		head,
 		Vector3.new(0.5, 0.26, 0.08),
 		CFrame.new(0, -0.5, if meshCache.head then -0.3 else -0.49),
-		MOUTH,
+		GAPE,
 		skin
 	)
 	for i = -2, 2 do
