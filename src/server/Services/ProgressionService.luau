@@ -258,8 +258,10 @@ function ProgressionService.PayRun(
 		day = Catalog.dayNumber(os.time()),
 		charter = isCharter(),
 	}
+	-- settling the haul banks the relics still in the crew's bags, after `tallies` was copied
+	local fresh = Registry.CrewService.Tallies()
 	for player, tally in tallies do
-		settle(player, tally, run)
+		settle(player, fresh[player] or tally, run)
 	end
 end
 

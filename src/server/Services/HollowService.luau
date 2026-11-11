@@ -1448,7 +1448,10 @@ local function think(hollow: Hollow)
 					end
 					-- unseen, it senses only someone close it isn't already hunting and hasn't just lost;
 					-- its own prey out of sight is tracked only within CloseSense (the search covers the rest)
-					local senseRange = if player == current
+					-- (a stalk in progress keeps its own unseen timer, Persistence, so its prey isn't dropped the
+					-- instant it slips behind cover)
+					local stalkingThem = hollow.stalk ~= nil and hollow.stalk.target == player
+					local senseRange = if (player == current and not stalkingThem)
 							or clock < (hollow.lostUntil[player] or 0)
 						then A.CloseSense
 						else A.AwarenessRange

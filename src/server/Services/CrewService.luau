@@ -740,6 +740,10 @@ function CrewService.CashOut(player: Player): (boolean, string?)
 	for _ in members do
 		crewCount += 1
 	end
+	if member.status == "Aboard" then
+		-- relics wait in the bag for the strongbox; one leaving aboard banks them now so they are paid
+		Registry.InventoryService.DepositCargo(player, true)
+	end
 	Registry.ProgressionService.CashOut(
 		player,
 		table.clone(member.tally),
