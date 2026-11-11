@@ -10,7 +10,7 @@
 export type Piece = { id: number?, size: { number }, center: { number } }
 
 local StalkerMeshes: { [string]: Piece } = {
-	head = { id = 113544450008210, size = { 0.82, 1.403, 1.022 }, center = { 0.001, 0, -0.019 } },
+	head = { id = 117465394556390, size = { 0.82, 1.403, 1.022 }, center = { 0.001, 0, -0.019 } },
 	hand = { id = 103415365644746, size = { 0.542, 1.689, 0.336 }, center = { 0.069, -0.624, -0.064 } },
 	forearm = { id = 71731572612543, size = { 2.75, 0.342, 0.304 }, center = { 0, 0, -0.004 } },
 	sleeve = { id = 97551971745771, size = { 3.128, 0.452, 0.408 }, center = { -0.114, 0, 0 } },

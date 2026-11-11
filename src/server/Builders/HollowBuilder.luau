@@ -421,13 +421,20 @@ local function stalker(model: Model, root: BasePart)
 			)
 		)
 	end
-	deco(model, head, Vector3.new(0.5, 0.26, 0.08), CFrame.new(0, -0.5, -0.49), MOUTH, skin)
+	deco(
+		model,
+		head,
+		Vector3.new(0.5, 0.26, 0.08),
+		CFrame.new(0, -0.5, if meshCache.head then -0.3 else -0.49),
+		MOUTH,
+		skin
+	)
 	for i = -2, 2 do
 		decoWedge(
 			model,
 			head,
 			Vector3.new(0.07, 0.2, 0.05),
-			CFrame.new(i * 0.095, -0.46, -0.55) * Kit.angles(0, 0, 180),
+			CFrame.new(i * 0.095, -0.46, if meshCache.head then -0.36 else -0.55) * Kit.angles(0, 0, 180),
 			TOOTH,
 			skin
 		)

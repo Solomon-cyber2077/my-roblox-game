@@ -126,6 +126,8 @@ def skull():
             # nose: a collapsed bridge, the nostrils a pit
             z -= 0.05 * gauss(x ** 2 + (y - 0.0) ** 2, 0.06) * f
             z += 0.09 * gauss(x ** 2 + (y + 0.09) ** 2, 0.055) * f
+            # the grin: a wide dark pit cut into the face, the jaw drops from it
+            z += 0.24 * math.exp(-((x / 0.2) ** 2 + ((y + 0.47) / 0.075) ** 2)) * f
             # the mouth area: a flat sunken plane where the grin sits
             z += 0.06 * gauss(x ** 2 + (y + 0.5) ** 2, 0.25) * f
         # the skull's back swells; a tight dome at the crown
