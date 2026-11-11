@@ -200,6 +200,9 @@ function PassengerFigure.build(person: Passengers.Person, cframe: CFrame, parent
 		if wear and wear.face and piece:GetAttribute("Face") then
 			continue -- the Roblox head and its painted face take the kit face's place
 		end
+		if wear and wear.head and limb.Name == "Head" then
+			continue -- the sculpted hair, whiskers and hat take the kit's head pieces' place
+		end
 		piece.Anchored = false
 		piece.CanCollide = false
 		piece.CanQuery = false

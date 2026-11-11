@@ -284,7 +284,8 @@ export type WearPiece = {
 }
 -- `face`: a classic Roblox head with a painted face decal (tools/crew-clothing/passenger_faces.py) in
 -- place of the kit's sculpted head and whiskers (owner, 11-10: "roblox heads with the same eerie tone")
-export type Wear = { shirt: number?, pants: number?, face: number?, pieces: { WearPiece } }
+-- `head`: the sculpted hair, whiskers and hat stand in for every kit piece on the head
+export type Wear = { shirt: number?, pants: number?, face: number?, head: boolean?, pieces: { WearPiece } }
 
 -- Mabel's uploaded skirt mesh (Config/Npcs), worn in each woman's own cloth
 local function skirt(texture: number?): WearPiece
@@ -332,7 +333,83 @@ local BAG_RETICULE: WearPiece = {
 	prop = true,
 }
 
-Passengers.Wear = table.freeze({
+-- sculpted hair, whiskers, hats and coat pieces (tools/crew-clothing/passenger_heads.py, one atlas)
+local HEADS = 80589939821623
+local function headPiece(
+	name: string,
+	limb: string,
+	mesh: number,
+	offset: { number },
+	size: { number }
+): WearPiece
+	return { name = name, limb = limb, mesh = mesh, texture = HEADS, offset = offset, yaw = 180, size = size }
+end
+local HEAD_PIECES: { [string]: { WearPiece } } = {
+	Clerk = {
+		headPiece("ClerkHair", "Head", 123297463482216, { -0.004, 0.174, 0.007 }, { 1.286, 0.969, 1.259 }),
+		headPiece("ClerkBowler", "Head", 137688806355414, { 0.006, 0.543, 0.005 }, { 1.849, 0.714, 2.004 }),
+		headPiece("ClerkCoat", "Torso", 117614044555489, { -0.005, -1.034, 0.023 }, { 2.267, 0.977, 1.232 }),
+	},
+	Mother = {
+		headPiece("MotherHair", "Head", 80472637476256, { 0.001, 0.173, 0.06 }, { 1.295, 0.955, 1.328 }),
+		headPiece("MotherBonnet", "Head", 115440195872016, { 0, 0.07, 0.121 }, { 1.904, 1.816, 1.485 }),
+		headPiece(
+			"MotherBustle",
+			"Torso",
+			123457434236952,
+			{ -0.009, -1.099, 0.905 },
+			{ 2.273, 1.571, 0.751 }
+		),
+	},
+	Gentleman = {
+		headPiece("GentlemanHair", "Head", 90488999382602, { 0.002, 0.182, 0.058 }, { 1.353, 0.921, 1.248 }),
+		headPiece("GentlemanBeard", "Head", 87459602620550, { 0, -0.437, -0.302 }, { 1.29, 1.215, 0.837 }),
+		headPiece(
+			"GentlemanTopHat",
+			"Head",
+			84721764741591,
+			{ 0.006, 0.748, 0.005 },
+			{ 1.969, 1.104, 2.133 }
+		),
+		headPiece(
+			"GentlemanFrock",
+			"Torso",
+			82479189384957,
+			{ -0.004, -1.536, 0.07 },
+			{ 2.39, 1.976, 1.655 }
+		),
+	},
+	Porter = {
+		headPiece("PorterHair", "Head", 74035923247102, { 0.01, 0.141, 0.026 }, { 1.287, 0.978, 1.256 }),
+		headPiece("PorterWhiskers", "Head", 104548563849159, { 0, -0.311, -0.254 }, { 1.317, 0.922, 0.678 }),
+		headPiece("PorterCap", "Head", 123639014463686, { 0, 0.329, -0.148 }, { 1.62, 0.702, 1.908 }),
+		headPiece(
+			"PorterReefer",
+			"Torso",
+			122435259936413,
+			{ -0.004, -0.986, 0.005 },
+			{ 2.186, 0.874, 1.208 }
+		),
+	},
+	Widow = {
+		headPiece("WidowHair", "Head", 138944061769277, { -0.001, 0.176, 0.085 }, { 1.298, 0.953, 1.378 }),
+		headPiece("WidowVeil", "Head", 120694103884542, { -0.02, -0.389, 0.31 }, { 1.571, 2.078, 1.172 }),
+		headPiece("WidowShawl", "Torso", 88800382632590, { 0, 0.255, 0.005 }, { 2.231, 1.61, 1.3 }),
+	},
+	Newsboy = {
+		headPiece("NewsboyHair", "Head", 76279041602489, { 0.006, 0.087, 0.001 }, { 1.379, 1.136, 1.404 }),
+		headPiece("NewsboyCap", "Head", 135021005133986, { 0, 0.404, -0.088 }, { 1.521, 0.752, 1.847 }),
+		headPiece(
+			"NewsboyKerchief",
+			"Torso",
+			110601366120613,
+			{ 0.022, 0.753, -0.257 },
+			{ 1.018, 0.662, 0.753 }
+		),
+	},
+}
+
+local WEAR: { [string]: Wear } = {
 	Clerk = { shirt = 123341283155742, pants = 72138147318622, face = 88504745702667, pieces = {} },
 	Mother = {
 		shirt = 79013536763641,
@@ -359,7 +436,17 @@ Passengers.Wear = table.freeze({
 		face = 116658704551546,
 		pieces = { BAG_PAPER },
 	},
-} :: { [string]: Wear })
+}
+for id, wear in WEAR do
+	local extra = HEAD_PIECES[id]
+	if extra then
+		for _, piece in extra do
+			table.insert(wear.pieces, piece)
+		end
+		wear.head = true
+	end
+end
+Passengers.Wear = table.freeze(WEAR)
 
 -- Whether `id` is dressed in its sheets and pieces: every id is bound.
 function Passengers.wearReady(id: string): boolean

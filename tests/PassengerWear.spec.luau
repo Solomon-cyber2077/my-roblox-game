@@ -1,7 +1,13 @@
 local Passengers = require(Shared.Config.Passengers)
 
-local LIMBS =
-	{ Torso = true, ["Left Arm"] = true, ["Right Arm"] = true, ["Left Leg"] = true, ["Right Leg"] = true }
+local LIMBS = {
+	Head = true,
+	Torso = true,
+	["Left Arm"] = true,
+	["Right Arm"] = true,
+	["Left Leg"] = true,
+	["Right Leg"] = true,
+}
 
 describe("Passenger clothing (Config/Passengers Wear)", function()
 	it("gives every passenger a wear entry, skirts only to the skirted", function()
