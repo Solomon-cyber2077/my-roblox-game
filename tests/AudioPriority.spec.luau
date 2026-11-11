@@ -29,7 +29,7 @@ describe("The audio priority table", function()
 	end)
 
 	it("puts each named cue in its tier", function()
-		for _, name in { "WarnTick", "WarnBell", "WarnWhistle", "WarnWhistleLong" } do
+		for _, name in { "WarnTick", "WarnBell", "WarnWhistleLong" } do
 			expect(cueRank(name)).toBe(1)
 		end
 		for _, name in { "HollowSwipe", "HollowSlam", "HollowScream", "HollowWake", "DoorForce", "Heartbeat" } do

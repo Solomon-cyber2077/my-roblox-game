@@ -98,7 +98,6 @@ local function onMilestone(milestone: DepartureSchedule.Milestone)
 	if milestone.kind == "warning" then
 		duck()
 		play("WarnBell")
-		play("WarnWhistle", nil, true)
 		puff(PUFF)
 	elseif milestone.kind == "escalated" then
 		duck()

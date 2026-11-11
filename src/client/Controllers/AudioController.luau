@@ -152,10 +152,6 @@ local SHAPES: { [string]: (Sound) -> () } = {
 		equalize(sound, -2, -4, -18)
 		reverb(sound, 5, -6, -6)
 	end,
-	DistantBell = function(sound)
-		equalize(sound, 0, -2, -14)
-		reverb(sound, 8, -2, -14)
-	end,
 	DistantCry = function(sound)
 		equalize(sound, 0, -6, -20)
 		reverb(sound, 6, -2, -12)
@@ -653,8 +649,7 @@ function AudioController.Start()
 				local away = DISTANT_RANGE[1] + math.random() * (DISTANT_RANGE[2] - DISTANT_RANGE[1])
 				local at = focus
 					+ Vector3.new(math.cos(angle) * away, 8 + math.random() * 10, math.sin(angle) * away)
-				local cue = if math.random() < 0.65 then "DistantBell" else "DistantCry"
-				AudioController.Play(cue, at, 0.8 + 0.4 * math.random(), 0.9 + 0.2 * math.random())
+				AudioController.Play("DistantCry", at, 0.8 + 0.4 * math.random(), 0.9 + 0.2 * math.random())
 			end
 			nextDistant = clock + DISTANT_EVERY[1] + math.random() * (DISTANT_EVERY[2] - DISTANT_EVERY[1])
 		elseif ambience <= 0.5 then
@@ -667,8 +662,12 @@ function AudioController.Start()
 				local angle = math.random() * math.pi * 2
 				local away = NIGHT_RANGE[1] + math.random() * (NIGHT_RANGE[2] - NIGHT_RANGE[1])
 				local spot = focus + Vector3.new(math.cos(angle) * away, 20, math.sin(angle) * away)
-				local cue = if math.random() < 0.6 then "DistantCry" else "DistantBell"
-				AudioController.Play(cue, spot, 1.3 + 0.5 * math.random(), 0.75 + 0.2 * math.random())
+				AudioController.Play(
+					"DistantCry",
+					spot,
+					1.3 + 0.5 * math.random(),
+					0.75 + 0.2 * math.random()
+				)
 			end
 			local wait = NIGHT_EVERY[1] + math.random() * (NIGHT_EVERY[2] - NIGHT_EVERY[1])
 			nextNight = clock + wait * (1.6 - night)

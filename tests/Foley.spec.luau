@@ -67,7 +67,7 @@ describe("Handling sounds", function()
 			do
 				expect(Audio[name] ~= nil).toBe(true)
 			end
-			expect(Audio.PingWhistle.with).toBe("LanternRattle")
+			expect(Audio.Ping.with).toBe("LanternRattle")
 			expect(Audio.HollowBreath.loop).toBe(true)
 			expect(Audio.HollowBreath.mix).toBe("Cues")
 		end

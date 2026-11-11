@@ -183,7 +183,7 @@ local function ping(userId: number)
 		Hud.pointCompass(root.Position)
 	end
 	if Registry.AudioController then
-		Registry.AudioController.Play("PingWhistle", root.Position)
+		Registry.AudioController.Play("Ping", root.Position)
 	end
 end
 

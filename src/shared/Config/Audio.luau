@@ -42,13 +42,12 @@ export type Cue = {
 
 local Cues: { [string]: Cue } = {
 	Whistle = { id = 9119628070, start = 0.23, volume = 9.94, maxSeconds = 4 },
-	-- the co-op ping: a soft whistle from the pinger (the engine's whistle, high and short)
-	PingWhistle = {
-		id = 9119628070,
-		start = 0.23,
-		volume = 6.26,
-		maxSeconds = 0.9,
-		pitch = 1.9,
+	-- the co-op ping: two soft knocks from the pinger ("Window Knocks 5", light and short)
+	Ping = {
+		id = 9120758253,
+		volume = 3.2,
+		maxSeconds = 0.45,
+		pitch = 1.15,
 		spatial = true,
 		rollOff = 180,
 		mix = "Feedback",
@@ -192,17 +191,7 @@ local Cues: { [string]: Cue } = {
 		pitch = 1.15,
 		group = "Warnings",
 	},
-	-- whistles from the locomotive's chimney, heard across the whole stop
-	WarnWhistle = {
-		id = 9119628070,
-		start = 0.23,
-		volume = 10,
-		maxSeconds = 3,
-		pitch = 0.8,
-		spatial = true,
-		group = "Warnings",
-		rollOff = 900,
-	},
+	-- the locomotive's long whistle, heard across the whole stop
 	WarnWhistleLong = {
 		id = 9119628070,
 		start = 0.23,
@@ -259,15 +248,6 @@ local Cues: { [string]: Cue } = {
 	-- and its harmonic; MistController sets the volume (proximity, idle) every frame
 	MistHum = { id = 9112795295, volume = 0, loop = true, pitch = 2, mix = "Outdoor" },
 	Howl = { id = 9113286969, volume = 9.42, loop = true, pitch = 0.6, mix = "Outdoor" }, -- gusts that come and go
-	DistantBell = {
-		id = 9113804436,
-		start = 0.07,
-		volume = 0.71,
-		maxSeconds = 7,
-		pitch = 0.62,
-		spatial = true,
-		mix = "Outdoor",
-	},
 	DistantCry = {
 		id = 9125475729,
 		volume = 1.39,
