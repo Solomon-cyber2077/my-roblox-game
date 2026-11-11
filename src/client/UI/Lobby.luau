@@ -590,11 +590,11 @@ function Lobby.mount(gui: ScreenGui)
 	-- a player who has never run: the panel names the goal for their first minute (owner, 11-10)
 	local firstTime = false
 	local function renderProfile(profile)
-		local stats: { [string]: number } = profile.stats or {}
-		firstTime = (profile.tutorialRuns or 0) == 0 and (stats.runs or 0) == 0
 		if profile == nil then
 			return
 		end
+		local stats: { [string]: number } = profile.stats or {}
+		firstTime = (profile.tutorialRuns or 0) == 0 and (stats.runs or 0) == 0
 		local rank, into, span = Rank.progress(profile.xp or 0)
 		local xp = profile.xp or 0
 		if lastXp ~= nil and xp > lastXp then
