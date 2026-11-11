@@ -587,7 +587,11 @@ function Lobby.mount(gui: ScreenGui)
 		end
 	end
 
+	-- a player who has never run: the panel names the goal for their first minute (owner, 11-10)
+	local firstTime = false
 	local function renderProfile(profile)
+		local stats: { [string]: number } = profile.stats or {}
+		firstTime = (profile.tutorialRuns or 0) == 0 and (stats.runs or 0) == 0
 		if profile == nil then
 			return
 		end
@@ -646,8 +650,10 @@ function Lobby.mount(gui: ScreenGui)
 			Ui.setButtonEnabled(readyButton, true)
 			rows = `BOARDING NOW  ·  DEPARTS {Format.clock(remaining)}\n{readyCount} CREW READY`
 		else
-			status.Text = "WAITING FOR CREW"
-			detail.Text = `{readyCount}/{needed} ready to depart`
+			status.Text = if firstTime then "YOUR FIRST RUN: PRESS START" else "WAITING FOR CREW"
+			detail.Text = if firstTime
+				then "Loot each stop. Be aboard by the whistle."
+				else `{readyCount}/{needed} ready to depart`
 			readyButton.Text = if mine then "CANCEL" else "START"
 			Ui.setButtonEnabled(readyButton, true)
 			-- the first-visit prompt: the board names the two ways to ride

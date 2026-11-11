@@ -321,6 +321,15 @@ local function onNotify(kind: string, text: string)
 	else
 		Overlay.feed(kind, text)
 	end
+	-- a stop's pay banked as the train leaves: a "+12 BRASS" that rises up the screen and the till's
+	-- ring, so the reward is felt, not only read in the feed (owner, 11-10)
+	if kind == "Banked" then
+		local brass = tonumber(string.match(text, "(%d+) Brass"))
+		if brass and brass > 0 then
+			Overlay.popup(`+{brass} BRASS`, Theme.Color.brassLight)
+			audio("BrassPop")
+		end
+	end
 	if kind == "Alarm" then
 		audio("HullBell") -- the hand bell, not the electric alarm bell (owner, 11-10)
 	elseif kind == "Elimination" then

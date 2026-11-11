@@ -141,6 +141,8 @@ local Cues: { [string]: Cue } = {
 	},
 	Victory = { id = 9112766203, volume = 3.62, maxSeconds = 6 },
 	Purchase = { id = 9113728042, volume = 0.95, mix = "Feedback" },
+	-- a stop's Brass banked (FxController): the same till, shorter and a touch brighter
+	BrassPop = { id = 9113728042, volume = 0.8, maxSeconds = 0.9, pitch = 1.08, mix = "Feedback" },
 	Clutch = { id = 9125573009, start = 0.61, volume = 5.97, maxSeconds = 2, mix = "Feedback" },
 	Click = { id = 15675059323, volume = 1.76, mix = "Feedback" },
 	-- UI sounds, Creator Store (ProSoundEffects), chosen 2026-10-17 for audition (HANDOFF.md lists them)
