@@ -160,9 +160,11 @@ local function clearCrate()
 	ground = nil
 end
 local function deposit(player: Player)
-	if closed or settled then
+	-- carried to the strongbox by hand; open or shut, until the run's haul is settled
+	if settled then
 		return
 	end
+	Registry.InventoryService.DepositCargo(player, true) -- relics go in with the valuables
 	local inventory: { items: { string } } = Registry.InventoryService.Get(player)
 	for _, id in table.clone(inventory.items) do
 		if Items[id] and Items[id].kind == "Valuable" and Registry.InventoryService.Consume(player, id) then
@@ -283,15 +285,19 @@ function Service.Reset()
 	end
 	Builder.stack(stores, valuables)
 end
-function Service.Open()
+-- Opens the strongbox's lid. `bank` (only when the run ends) also banks what the crew aboard still
+-- carries, so nothing is lost; delivering the payroll no longer does (owner, 11-10: valuables went in
+-- without anyone taking them to the box).
+function Service.Open(bank: boolean?)
+	if bank then
+		for _, player in Players:GetPlayers() do
+			if Registry.CrewService.IsAboard(player) then
+				deposit(player)
+			end
+		end
+	end
 	if closed then
 		return
-	end
-	-- Bank carried valuables aboard before sealing the final ledger.
-	for _, player in Players:GetPlayers() do
-		if Registry.CrewService.IsAboard(player) then
-			deposit(player)
-		end
 	end
 	closed = true
 	local lid = stores:FindFirstChild("Lid") :: BasePart
@@ -302,7 +308,7 @@ function Service.Settle(success: boolean): Types.HaulReceipt
 		return { valuables = {}, trophies = {}, xp = 0 }
 	end
 	if success then
-		Service.Open()
+		Service.Open(true)
 	end
 	settled = true
 	local receipt: Types.HaulReceipt = {

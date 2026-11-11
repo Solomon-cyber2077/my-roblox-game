@@ -1,13 +1,13 @@
 --!strict
 --[[
-	Footsteps and breath, client side.
+	Footsteps, client side.
 
 	  footsteps  every crew member's steps, heard where they fall: what is under each one
 	             is found by a ray down from the root, turned into a surface by
 	             Logic/Footsteps (plank, gravel, the carriage floor, snow) and played as one
 	             of that surface's takes, a step every stride at the speed they are moving
 	  jumps      every crew member's jumps and landings, heard where they happen (airborne below)
-	  breath     the local player's heavy breathing while their stamina is spent
+	  (no out-of-breath loop: dropped, owner 11-10, too often, too loud and flat)
 	             (MovementController.IsExhausted), swelling in and dying away; nothing to do
 	             with being hurt or chased
 ]]
@@ -16,7 +16,6 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
@@ -41,7 +40,6 @@ local deathWatch: { [Model]: RBXScriptConnection } = {}
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 local snowy = false
-local breath = 0 -- 0..1: how hard the local player is breathing
 
 local function suppressDefaultDeathSound(instance: Instance)
 	if not instance:IsA("Sound") then
@@ -230,31 +228,11 @@ local function step(character: Model, root: BasePart, humanoid: Humanoid, now: n
 	play(character, Footsteps.cue(surface, walker.count), hit.Position, 1, true)
 end
 
-local function breathe(dt: number)
-	local controller = Registry.MovementController
-	local exhausted = controller ~= nil and controller.IsExhausted()
-	local fade = dt / Tuning.Footsteps.BreathFade
-	breath = math.clamp(breath + (if exhausted then fade else -fade), 0, 1)
-	local audio = Registry.AudioController
-	if audio == nil then
-		return
-	end
-	if breath > 0 then
-		audio.Loop("breath", "Breath", SoundService)
-		local sound = audio.LoopSound("breath")
-		if sound then
-			sound.Volume = Audio.Breath.volume * breath
-		end
-	else
-		audio.StopLoop("breath")
-	end
-end
-
 function FootstepController.Init() end
 
 function FootstepController.Start()
 	local lastScan = 0
-	RunService.Heartbeat:Connect(function(dt: number)
+	RunService.Heartbeat:Connect(function()
 		Safe.call("FootstepController", function()
 			local now = os.clock()
 			local characters: { Instance } = {}
@@ -301,7 +279,6 @@ function FootstepController.Start()
 					step(model, root, humanoid, now)
 				end
 			end
-			breathe(dt)
 		end)
 	end)
 end

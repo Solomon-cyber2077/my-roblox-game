@@ -95,12 +95,16 @@ function Inventory.jumpHeight(inv: State): number
 end
 
 -- Splits depositable cargo and relics from tools and valuables (kept).
-function Inventory.splitCargo(inv: State): (State, { string })
+-- Boarding unloads coal and parts; relics stay in the bag until they are put in the strongbox
+-- (`withRelics`, owner 11-10: a relic used to vanish into the ledger the moment you stepped aboard).
+function Inventory.splitCargo(inv: State, withRelics: boolean?): (State, { string })
 	local kept: { string } = {}
 	local cargo: { string } = {}
 	for _, id in inv.items do
 		local def = Items[id]
-		if def and (def.kind == "Tool" or def.kind == "Valuable") then
+		if
+			def and (def.kind == "Tool" or def.kind == "Valuable" or (def.kind == "Relic" and not withRelics))
+		then
 			table.insert(kept, id)
 		else
 			table.insert(cargo, id)
@@ -109,10 +113,10 @@ function Inventory.splitCargo(inv: State): (State, { string })
 	return { items = kept, capacity = inv.capacity }, cargo
 end
 
-function Inventory.hasCargo(inv: State): boolean
+function Inventory.hasCargo(inv: State, withRelics: boolean?): boolean
 	for _, id in inv.items do
 		local def = Items[id]
-		if def and (def.kind == "Cargo" or def.kind == "Relic") then
+		if def and (def.kind == "Cargo" or (def.kind == "Relic" and withRelics)) then
 			return true
 		end
 	end

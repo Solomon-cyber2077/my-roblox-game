@@ -210,7 +210,7 @@ end
 -- Workbench "Repair hull": RepairParts parts for RepairAmount hull (Difficulty.Hull), up to the max.
 function Ledger.repairHull(train: Train): (Train, boolean, FailReason?)
 	local hull = Difficulty.Hull
-	if train.integrity >= train.integrityMax then
+	if train.integrity >= train.integrityMax and next(train.breaches) == nil then
 		return train, false, "Full"
 	end
 	if train.parts < hull.RepairParts then
@@ -219,6 +219,7 @@ function Ledger.repairHull(train: Train): (Train, boolean, FailReason?)
 	local nextTrain = copy(train)
 	nextTrain.parts -= hull.RepairParts
 	nextTrain.integrity = math.min(train.integrity + hull.RepairAmount, train.integrityMax)
+	nextTrain.breaches = {} -- a workshop repair seals every open leak too
 	return nextTrain, true, nil
 end
 

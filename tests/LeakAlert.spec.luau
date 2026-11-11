@@ -27,9 +27,9 @@ describe("LeakAlert", function()
 		expect(view.car).toBe("crew car")
 		expect(view.distance).toBeCloseTo(25)
 		expect(view.metres).toBe(7) -- 25 studs x 0.28
-		expect(string.find(view.text, "3 STEAM LEAKS", 1, true) ~= nil).toBe(true)
+		expect(string.find(view.text, "3 LEAKS: CREW CAR, 7 m", 1, true) ~= nil).toBe(true)
 		local one = LeakAlert.view({ leaks[3] }, ME, true) :: LeakAlert.View
-		expect(string.find(one.text, "STEAM LEAK  ·  WORKSHOP", 1, true) ~= nil).toBe(true)
+		expect(string.find(one.text, "LEAK: WORKSHOP", 1, true) ~= nil).toBe(true)
 	end)
 
 	it("falls back to 'train' for an unknown anchor", function()

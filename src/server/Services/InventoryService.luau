@@ -197,13 +197,13 @@ function InventoryService.Consume(player: Player, itemId: string): boolean
 	return true
 end
 
--- Moves all cargo and relics into the train. Called while the player is aboard.
-function InventoryService.DepositCargo(player: Player)
+-- Moves cargo into the train, and relics too with `withRelics` (the strongbox). Called while aboard.
+function InventoryService.DepositCargo(player: Player, withRelics: boolean?)
 	local inv = InventoryService.Get(player)
-	if not Inventory.hasCargo(inv) then
+	if not Inventory.hasCargo(inv, withRelics) then
 		return
 	end
-	local kept, cargo = Inventory.splitCargo(inv)
+	local kept, cargo = Inventory.splitCargo(inv, withRelics)
 	set(player, kept)
 	local receipt = Registry.TrainService.Deposit(cargo)
 	Registry.CrewService.RecordDeposit(player, receipt)

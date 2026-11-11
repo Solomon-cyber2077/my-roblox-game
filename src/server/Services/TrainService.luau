@@ -613,6 +613,9 @@ function TrainService.RepairHull(player: Player)
 		)
 		return
 	end
+	for id in breachPrompts do
+		closeBreach(id) -- the leaks it sealed lose their prompt and mark
+	end
 	train = nextTrain
 	publish(true)
 	notifyAll("Upgrade", `{player.DisplayName} repaired the hull (+{hull.RepairAmount}%).`)

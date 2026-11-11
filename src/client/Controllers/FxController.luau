@@ -322,7 +322,7 @@ local function onNotify(kind: string, text: string)
 		Overlay.feed(kind, text)
 	end
 	if kind == "Alarm" then
-		audio("Alarm")
+		audio("HullBell") -- the hand bell, not the electric alarm bell (owner, 11-10)
 	elseif kind == "Elimination" then
 		audio("Toll")
 	end

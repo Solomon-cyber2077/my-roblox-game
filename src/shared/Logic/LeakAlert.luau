@@ -54,9 +54,10 @@ function LeakAlert.view(leaks: { Leak }, me: Point?, markersOn: boolean): View?
 	local nearest = best :: Leak
 	local metres = math.floor(bestDistance * Difficulty.Leaks.StudsToMetres + 0.5)
 	local car = LeakAlert.car(nearest.anchor)
+	-- short enough that the distance always shows in the HUD's slot (owner, 11-10: it was cut off)
 	local text = if #leaks == 1
-		then `STEAM LEAK  ·  {string.upper(car)}  ·  {metres} m`
-		else `{#leaks} STEAM LEAKS  ·  NEAREST {string.upper(car)}  ·  {metres} m`
+		then `LEAK: {string.upper(car)}, {metres} m`
+		else `{#leaks} LEAKS: {string.upper(car)}, {metres} m`
 	return {
 		count = #leaks,
 		nearest = nearest,

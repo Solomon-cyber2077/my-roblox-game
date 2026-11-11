@@ -37,6 +37,8 @@ local warned = 0 -- the highest tier warned of this run
 local runId = ""
 local nextCreak = 0
 local nextAlarm = 0
+local alarmsLeft = 0 -- strikes left since the hull last crossed into Emergency
+local ALARM_STRIKES = 3 -- then it falls quiet (owner, 11-10: it rang on after leaving the stop)
 
 local function strength(): number
 	return HullTier.strength(BrokenThingMarkers.visible())
@@ -60,6 +62,9 @@ local function onTrain(train: any)
 	end
 	if tier > warned and Session.isRunActive() then
 		warned = tier
+		if tier >= 3 then
+			alarmsLeft = ALARM_STRIKES
+		end
 		Overlay.alert(WARNINGS[tier], if tier >= 3 then Theme.Color.alarm else Theme.Color.caution, 3)
 	elseif tier < warned then
 		warned = tier -- repaired: crossing down again warns again
@@ -71,7 +76,7 @@ local function creak(atTier: number, s: number)
 end
 
 local function alarm(s: number)
-	audio("Alarm", math.min(0.4 * s, 0.85), 0.92)
+	audio("HullBell", math.min(0.5 * s, 0.9), 0.96 + math.random() * 0.08)
 end
 
 local function step()
@@ -84,7 +89,8 @@ local function step()
 		nextCreak = clock + CREAK_EVERY[tier] / s * (0.8 + math.random() * 0.4)
 		creak(tier, s)
 	end
-	if tier >= 3 and clock >= nextAlarm then
+	if tier >= 3 and alarmsLeft > 0 and clock >= nextAlarm then
+		alarmsLeft -= 1
 		nextAlarm = clock + ALARM_EVERY / s
 		alarm(s)
 	end

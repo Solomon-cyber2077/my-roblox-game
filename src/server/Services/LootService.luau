@@ -38,7 +38,28 @@ local function inReach(player: Player, prompt: ProximityPrompt): boolean
 	if root == nil or parent == nil or not parent:IsA("BasePart") then
 		return false
 	end
-	return (root.Position - parent.Position).Magnitude <= prompt.MaxActivationDistance + Loot.PromptReachSlack
+	if (root.Position - parent.Position).Magnitude > prompt.MaxActivationDistance + Loot.PromptReachSlack then
+		return false
+	end
+	-- and nothing solid between their head and the thing (the prompt's own model doesn't count)
+	local body = character :: Model -- set: root was found in it
+	local head = body:FindFirstChild("Head") :: BasePart?
+	local from = if head then head.Position else root.Position + Vector3.new(0, 1.5, 0)
+	-- the whole container or pickup: the model it is the PrimaryPart of, else its nearest model
+	local own: Instance = parent:FindFirstAncestorOfClass("Model") or parent
+	local up = parent.Parent
+	while up and up ~= workspace do
+		if up:IsA("Model") and up.PrimaryPart == parent then
+			own = up
+			break
+		end
+		up = up.Parent
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { body, own }
+	params.RespectCanCollide = true
+	return workspace:Raycast(from, parent.Position - from, params) == nil
 end
 
 local function canInteractAnywhere(player: Player): boolean
@@ -68,7 +89,8 @@ local function makePrompt(
 	prompt.ObjectText = objectText
 	prompt.HoldDuration = hold
 	prompt.MaxActivationDistance = 8
-	prompt.RequiresLineOfSight = false
+	-- no searching or picking up through a wall (owner, 11-10: found as an exploit)
+	prompt.RequiresLineOfSight = true
 	prompt.Style = Enum.ProximityPromptStyle.Custom
 	prompt:SetAttribute("Action", kind)
 	prompt.Parent = parent

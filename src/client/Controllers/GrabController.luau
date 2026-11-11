@@ -383,7 +383,8 @@ function GrabController.Start()
 			local rush = Trauma.rush()
 			if rush > 0.25 and os.clock() >= gaspAt then
 				gaspAt = os.clock() + 1.1 + 1.4 * (1 - rush)
-				audio("Winded", 0.3 + 0.4 * rush, 0.75 + math.random() * 0.15)
+				-- lighter and higher than before (owner, 11-10: the panting after escaping was deep and raspy)
+				audio("Winded", 0.18 + 0.22 * rush, 1.08 + math.random() * 0.1)
 			end
 			return
 		end

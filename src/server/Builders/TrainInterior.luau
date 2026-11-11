@@ -874,8 +874,9 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 			end
 			PropMeshes.dress(cluster, { { key = key, cframe = cf, scale = k } })
 		end
-		-- the papers someone left, and a bowler on the next seat (seat tops at y = 1.7)
-		for _, paper in { { -60.45, -3.42, 18 }, { -38.45, 3.42, -27 }, { -28.25, -3.42, 64 } } do
+		-- the papers someone left, and a bowler on the next seat (seat tops at y = 1.7); all on the -Z
+		-- bench side: the +Z side of the saloon is Mabel's aisle, with no seat (a paper floated there, 11-10)
+		for _, paper in { { -60.45, -3.42, 18 }, { -38.45, -3.42, -27 }, { -28.25, -3.42, 64 } } do
 			decor(
 				Vector3.new(1.0, 0.03, 0.7),
 				at(paper[1], 1.72, paper[2]) * Kit.angles(0, paper[3], 0),

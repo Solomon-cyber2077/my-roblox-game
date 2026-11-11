@@ -44,8 +44,6 @@ local STOP_PHASES: { [string]: boolean } = { Dwell = true, LastCall = true, Depa
 local AMBER = Color3.fromRGB(240, 172, 64)
 local GRADE_TINT = Color3.fromRGB(255, 228, 196) -- the warning grade at full warmth
 local PULSE = { warning = 0.08, escalated = 0.14 } -- edge pulse strength per tick
-local TICK_GAIN = { warning = 1, escalated = 1.5 }
-local TICK_RATE = { warning = 1, escalated = 2 } -- ticks per second
 local WARM_RATE = 0.6 -- per second, toward the warning look and back
 local PUFF, BURST = 24, 70 -- smoke particles at T-30 and T-0
 
@@ -55,7 +53,6 @@ local level: DepartureSchedule.Level = "calm"
 local clearedKey: number? = nil
 local departedKey: number? = nil
 local inGrace = false
-local lastBeat = -1
 local lastSecond = -1
 local warmth = 0
 local grade: ColorCorrectionEffect
@@ -90,7 +87,7 @@ end
 function DepartureClock.Clear()
 	clearedKey = tracker.key
 	level = "calm"
-	lastBeat, lastSecond = -1, -1
+	lastSecond = -1
 end
 
 local function onMilestone(milestone: DepartureSchedule.Milestone)
@@ -114,16 +111,13 @@ local function onMilestone(milestone: DepartureSchedule.Milestone)
 	end
 end
 
--- Ticks while the warning is up: a click on each beat, an edge pulse on each whole second.
+-- While the warning is up: an edge pulse on each whole second.
 local function tick(remaining: number)
 	if level ~= "warning" and level ~= "escalated" then
 		return
 	end
-	local beat = math.floor(remaining * TICK_RATE[level])
-	if beat ~= lastBeat then
-		lastBeat = beat
-		play("WarnTick", TICK_GAIN[level])
-	end
+	-- no click on each beat any more (owner, 11-10: a pop out of beat with nothing on screen to
+	-- match); the whole-second edge pulse below stays
 	local second = math.floor(remaining)
 	if second ~= lastSecond then
 		lastSecond = second

@@ -160,13 +160,25 @@ local Cues: { [string]: Cue } = {
 	SkillHit = {
 		id = 9113804436,
 		start = 0.07,
-		volume = 1.1,
+		volume = 1.21, -- +10% (owner, 11-10)
 		maxSeconds = 0.3,
 		pitch = 2.6,
 		mix = "Feedback",
 	},
 	-- the ticket's stamp coming down ("Table Hit Hand Smacks On Wood Table 14")
 	TicketPunch = { id = 9119909448, volume = 0.87, maxSeconds = 0.6, pitch = 0.8, mix = "Feedback" },
+
+	-- the hull's Emergency bell (Controllers/HullController): a brass hand bell, not the electric
+	-- alarm bell (owner, 11-10: "historical"): the tolling bell's recording, high and cut to one
+	-- bright strike with its ring
+	HullBell = {
+		id = 9113804436,
+		start = 0.07,
+		volume = 1.6,
+		maxSeconds = 1.4,
+		pitch = 1.9,
+		mix = "Cues",
+	},
 
 	-- Departure warnings (Controllers/DepartureClock), from the recordings above
 	WarnTick = { id = 15675059323, volume = 1.76, maxSeconds = 0.4, pitch = 1.7, group = "Warnings" },

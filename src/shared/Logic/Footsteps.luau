@@ -7,8 +7,8 @@
 	  TrainFloor  anything that is part of the train
 	  Snow        snow or ice, or a yard slab at a stop in snowy country (its sheet of snow
 	              does not collide, so the slab under it is what the foot finds)
-	  Plank       the platform's boards and anything wooden: floors, decks, stairs
-	  Stone       cobbles, flags, brick, slate, concrete: hard paving
+	  Plank       anything wooden: floors, decks, stairs (and a platform of no stone material)
+	  Stone       cobbles, flags, brick, slate, concrete: hard paving, the platform included
 	  Gravel      the rest: the yard's ground, cinders, loose stone
 ]]
 
@@ -50,11 +50,16 @@ function Footsteps.surface(ground: Ground): Surface
 	if SNOW[ground.material] or (ground.snowy and ground.slabKind == "Floor") then
 		return "Snow"
 	end
-	if ground.slabKind == "Safe" or WOOD[ground.material] then
+	if WOOD[ground.material] then
 		return "Plank"
 	end
+	-- the platform is stone (concrete under brick and slate paving), so it steps as stone; it used
+	-- to play planks whatever it was made of (owner, 11-10: no brick sound)
 	if STONE[ground.material] then
 		return "Stone"
+	end
+	if ground.slabKind == "Safe" then
+		return "Plank"
 	end
 	return "Gravel"
 end
