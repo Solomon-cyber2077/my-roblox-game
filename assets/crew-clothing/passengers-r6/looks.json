@@ -1,0 +1,145 @@
+{
+ "Clerk": {
+  "cut": "Sack",
+  "coat": [
+   64,
+   60,
+   56
+  ],
+  "trim": [
+   120,
+   116,
+   108
+  ],
+  "waistcoat": [
+   96,
+   84,
+   66
+  ],
+  "neck": [
+   40,
+   44,
+   70
+  ],
+  "lower": [
+   54,
+   52,
+   50
+  ],
+  "prop": "Ledger"
+ },
+ "Mother": {
+  "cut": "Bodice",
+  "coat": [
+   70,
+   40,
+   50
+  ],
+  "trim": [
+   196,
+   170,
+   120
+  ],
+  "lower": [
+   62,
+   36,
+   44
+  ],
+  "skirt": "Bustle",
+  "prop": "Reticule"
+ },
+ "Gentleman": {
+  "cut": "Frock",
+  "coat": [
+   30,
+   32,
+   36
+  ],
+  "trim": [
+   196,
+   160,
+   90
+  ],
+  "waistcoat": [
+   110,
+   26,
+   30
+  ],
+  "neck": [
+   226,
+   220,
+   206
+  ],
+  "lower": [
+   44,
+   42,
+   46
+  ],
+  "prop": "Cane"
+ },
+ "Porter": {
+  "cut": "Reefer",
+  "coat": [
+   30,
+   40,
+   62
+  ],
+  "trim": [
+   180,
+   148,
+   88
+  ],
+  "lower": [
+   34,
+   38,
+   52
+  ],
+  "prop": "Post"
+ },
+ "Widow": {
+  "cut": "Bodice",
+  "coat": [
+   22,
+   20,
+   24
+  ],
+  "trim": [
+   90,
+   86,
+   84
+  ],
+  "lower": [
+   20,
+   18,
+   22
+  ],
+  "skirt": "Plain",
+  "prop": "Hanky",
+  "crape": true
+ },
+ "Newsboy": {
+  "cut": "Sack",
+  "coat": [
+   92,
+   70,
+   48
+  ],
+  "trim": [
+   150,
+   130,
+   100
+  ],
+  "neck": [
+   120,
+   30,
+   26
+  ],
+  "lower": [
+   70,
+   62,
+   54
+  ],
+  "prop": "Papers",
+  "patched": true
+ }
+}

@@ -11,6 +11,11 @@
 	the person their space. The rig carries Procedural and the ResidentRig tag, so every client
 	walks, seats and turns it like the crew (Controllers/CharacterAnimator).
 
+	Once a person's clothing is uploaded (Passengers.Wear, Passengers.wearReady) they wear it as
+	Mabel does: shirt and pants sheets on the rig's own limbs and mesh pieces (skirt, bag) welded to
+	them. The kit then keeps only what is on the head and what the hands hold; its box coat, sleeves,
+	trousers, boots and skirt are left off.
+
 	Returns nil if the R6 body cannot be made (no AssetService in a headless build).
 ]]
 
@@ -75,6 +80,57 @@ local function body(look: any): Model?
 	return result :: Model
 end
 
+-- Whether a kit piece stays on a person in sheets: the head's pieces and the props (OutfitKit marks
+-- them), unless a wear piece replaces the prop; the box clothing on the body and limbs goes.
+local function keepOverSheets(limb: string, prop: boolean, propReplaced: boolean): boolean
+	if limb == "Head" then
+		return true
+	end
+	return prop and not propReplaced
+end
+
+-- Welds each wear piece to its limb; a piece whose mesh does not load is left off.
+local function addPieces(rig: Model, wear: Passengers.Wear)
+	local ok, service = pcall(game.GetService, game, "AssetService")
+	if not ok then
+		return
+	end
+	for _, piece in wear.pieces do
+		local limb = rig:FindFirstChild(piece.limb)
+		if not (limb and limb:IsA("BasePart")) then
+			continue
+		end
+		local loaded, mesh = pcall(function(): any
+			return (service :: AssetService):CreateMeshPartAsync(Content.fromAssetId(piece.mesh :: number))
+		end)
+		if not loaded or mesh == nil then
+			warn(`PassengerFigure: piece {piece.name} ({piece.mesh}) did not load: {mesh}`)
+			continue
+		end
+		local part = mesh :: MeshPart
+		part.Name = piece.name
+		part.TextureID = `rbxassetid://{piece.texture}`
+		part.Color = Color3.new(1, 1, 1)
+		part.Anchored = false
+		part.CanCollide = false
+		part.CanQuery = false
+		part.CanTouch = false
+		part.Massless = true
+		part.CastShadow = false
+		part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3])
+		local o = piece.offset
+		part.CFrame = limb.CFrame * CFrame.new(o[1], o[2], o[3]) * CFrame.Angles(0, math.rad(piece.yaw), 0)
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = limb
+		weld.Part1 = part
+		weld.Parent = part
+		if piece.prop then
+			part:AddTag("Detail") -- a bag: the Performance setting leaves it off; sheets and skirt stay
+		end
+		part.Parent = rig
+	end
+end
+
 function PassengerFigure.build(person: Passengers.Person, cframe: CFrame, parent: Instance): Model?
 	local rig = body(person.look)
 	if rig == nil then
@@ -118,6 +174,13 @@ function PassengerFigure.build(person: Passengers.Person, cframe: CFrame, parent
 	local dress = Instance.new("Folder")
 	dress.Name = "Dress"
 	local skirt = person.look.skirt ~= nil
+	local wear = if Passengers.wearReady(person.id) then Passengers.Wear[person.id] else nil
+	local propReplaced = false
+	if wear then
+		for _, piece in wear.pieces do
+			propReplaced = propReplaced or piece.prop == true
+		end
+	end
 	for _, piece in kit.model:GetDescendants() do
 		if not piece:IsA("BasePart") then
 			continue
@@ -130,6 +193,12 @@ function PassengerFigure.build(person: Passengers.Person, cframe: CFrame, parent
 		)
 		if not (limb and limb:IsA("BasePart")) then
 			continue
+		end
+		if wear and not keepOverSheets(limb.Name, piece:GetAttribute("Prop") == true, propReplaced) then
+			continue
+		end
+		if wear and wear.face and piece:GetAttribute("Face") then
+			continue -- the Roblox head and its painted face take the kit face's place
 		end
 		piece.Anchored = false
 		piece.CanCollide = false
@@ -147,7 +216,30 @@ function PassengerFigure.build(person: Passengers.Person, cframe: CFrame, parent
 	dress.Parent = rig
 	for _, part in rig:GetChildren() do
 		if part:IsA("BasePart") then
-			part.Transparency = 1 -- the plain limbs; the dress is what shows
+			-- the plain limbs; the dress is what shows (in sheets, everything but the kit's head)
+			part.Transparency = if wear
+					and (part.Name ~= "Head" or wear.face ~= nil)
+					and part.Name ~= "HumanoidRootPart"
+				then 0
+				else 1
+		end
+	end
+	if wear then
+		-- the sheets are plain image uploads, so they go on as templates rather than catalogue items
+		local shirt = Instance.new("Shirt")
+		shirt.ShirtTemplate = `rbxassetid://{wear.shirt}`
+		shirt.Parent = rig
+		local pants = Instance.new("Pants")
+		pants.PantsTemplate = `rbxassetid://{wear.pants}`
+		pants.Parent = rig
+		addPieces(rig, wear)
+		local head = rig:FindFirstChild("Head")
+		if wear.face and head then
+			local face = head:FindFirstChildOfClass("Decal") or Instance.new("Decal")
+			face.Name = "face"
+			face.Face = Enum.NormalId.Front
+			face.Texture = `rbxassetid://{wear.face}`
+			face.Parent = head
 		end
 	end
 

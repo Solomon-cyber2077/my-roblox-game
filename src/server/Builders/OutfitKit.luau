@@ -446,7 +446,8 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		shade.Transparency = 0.25
 	end
 
-	-- what they hold
+	-- what they hold (marked Prop, so a body in clothing sheets keeps it: Builders/PassengerFigure)
+	local beforeProps = #model:GetChildren()
 	local prop = look.prop
 	if prop == "Punch" then
 		part(Vector3.new(0.34, 0.22, 0.5), hands[1] * CFrame.new(0, -0.1, -0.2), trim, M.Metal)
@@ -568,6 +569,19 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		)
 	end
 
+	for i, made in model:GetChildren() do
+		if i > beforeProps then
+			made:SetAttribute("Prop", true)
+		end
+	end
+
+	-- the face and whiskers are marked, so a body with a Roblox head and painted face leaves them off
+	-- (Builders/PassengerFigure, Passengers.Wear face); the hair and hat stay
+	for _, list in { faceParts, whiskerParts } do
+		for _, made in list do
+			made:SetAttribute("Face", true)
+		end
+	end
 	model.PrimaryPart = body
 	FaceKit.dress(head, hands, look, faceParts, whiskerParts, handParts)
 	return { model = model, body = body, head = headPart }

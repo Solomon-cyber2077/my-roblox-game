@@ -1,0 +1,91 @@
+{
+  "status": "source assets; uploads and a Studio arm's-length check pending (HUMAN pending)",
+  "sheets": {
+    "Clerk": {
+      "shirt": "clerk-shirt.png",
+      "pants": "clerk-pants.png"
+    },
+    "Mother": {
+      "shirt": "mother-shirt.png",
+      "pants": "mother-pants.png",
+      "skirtTexture": "mother-skirt.png",
+      "skirtMesh": "Mabel skirt 96135756126639"
+    },
+    "Gentleman": {
+      "shirt": "gentleman-shirt.png",
+      "pants": "gentleman-pants.png"
+    },
+    "Porter": {
+      "shirt": "porter-shirt.png",
+      "pants": "porter-pants.png"
+    },
+    "Widow": {
+      "shirt": "widow-shirt.png",
+      "pants": "widow-pants.png",
+      "skirtTexture": "widow-skirt.png",
+      "skirtMesh": "Mabel skirt 96135756126639"
+    },
+    "Newsboy": {
+      "shirt": "newsboy-shirt.png",
+      "pants": "newsboy-pants.png"
+    }
+  },
+  "units": "studs, limb space, -Z is the front",
+  "totalTriangles": 2136,
+  "pieces": [
+    {
+      "name": "PostBag",
+      "limb": "Torso",
+      "mesh": "post-bag.obj",
+      "texture": "bags.png",
+      "size": [
+        1.025,
+        0.862,
+        0.398
+      ],
+      "offset": [
+        0.62,
+        -1.144,
+        0.736
+      ],
+      "yaw": 0,
+      "triangles": 944
+    },
+    {
+      "name": "PaperBag",
+      "limb": "Torso",
+      "mesh": "paper-bag.obj",
+      "texture": "bags.png",
+      "size": [
+        1.014,
+        1.175,
+        0.384
+      ],
+      "offset": [
+        0.62,
+        -0.988,
+        0.72
+      ],
+      "yaw": 0,
+      "triangles": 700
+    },
+    {
+      "name": "Reticule",
+      "limb": "Left Arm",
+      "mesh": "reticule.obj",
+      "texture": "bags.png",
+      "size": [
+        0.52,
+        1.064,
+        0.52
+      ],
+      "offset": [
+        -0.0,
+        -1.678,
+        -0.1
+      ],
+      "yaw": 0,
+      "triangles": 492
+    }
+  ]
+}

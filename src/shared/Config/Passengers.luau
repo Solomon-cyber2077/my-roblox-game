@@ -266,4 +266,113 @@ Passengers.People = table.freeze({
 	},
 } :: { Person })
 
+-- Clothing for the R6 body in place of the kit's box coat, sleeves, trousers, boots, skirt and bag
+-- (tools/crew-clothing/passenger_textures.py, passenger_r6.py; sources in assets/crew-clothing/
+-- passengers-r6): classic shirt and pants sheets and mesh pieces welded to limbs, as Mabel wears
+-- (Config/Npcs). A person wears them only once both sheets and every piece have ids; until the uploads
+-- land the kit dresses them as before (bound 11-10, uploaded under the owner's account). `prop` marks a piece that replaces the kit's prop.
+-- Studio's OBJ import turns the pieces round (front to back), hence yaw 180.
+export type WearPiece = {
+	name: string,
+	limb: string,
+	mesh: number?,
+	texture: number?,
+	offset: { number },
+	yaw: number,
+	size: { number },
+	prop: boolean?,
+}
+-- `face`: a classic Roblox head with a painted face decal (tools/crew-clothing/passenger_faces.py) in
+-- place of the kit's sculpted head and whiskers (owner, 11-10: "roblox heads with the same eerie tone")
+export type Wear = { shirt: number?, pants: number?, face: number?, pieces: { WearPiece } }
+
+-- Mabel's uploaded skirt mesh (Config/Npcs), worn in each woman's own cloth
+local function skirt(texture: number?): WearPiece
+	return {
+		name = "Skirt",
+		limb = "Torso",
+		mesh = 96135756126639,
+		texture = texture,
+		offset = { 0, -1.707, 0.06 },
+		yaw = 180,
+		size = { 3.063, 2.335, 2.137 },
+	}
+end
+
+-- the bags (passenger_r6.py manifest: one atlas, bags.png); each replaces the kit's prop
+local BAGS = 75170804867986
+local BAG_POST: WearPiece = {
+	name = "PostBag",
+	limb = "Torso",
+	mesh = 117355350677440,
+	texture = BAGS,
+	offset = { 0.62, -1.144, 0.736 },
+	yaw = 180,
+	size = { 1.025, 0.862, 0.398 },
+	prop = true,
+}
+local BAG_PAPER: WearPiece = {
+	name = "PaperBag",
+	limb = "Torso",
+	mesh = 132294118806403,
+	texture = BAGS,
+	offset = { 0.62, -0.988, 0.72 },
+	yaw = 180,
+	size = { 1.014, 1.175, 0.384 },
+	prop = true,
+}
+local BAG_RETICULE: WearPiece = {
+	name = "Reticule",
+	limb = "Left Arm",
+	mesh = 118089836112138,
+	texture = BAGS,
+	offset = { 0, -1.678, -0.1 },
+	yaw = 180,
+	size = { 0.52, 1.064, 0.52 },
+	prop = true,
+}
+
+Passengers.Wear = table.freeze({
+	Clerk = { shirt = 123341283155742, pants = 72138147318622, face = 88504745702667, pieces = {} },
+	Mother = {
+		shirt = 79013536763641,
+		pants = 116411447034393,
+		face = 129542827975755,
+		pieces = { skirt(101866923489772), BAG_RETICULE },
+	},
+	Gentleman = { shirt = 127815124237291, pants = 130620267136694, face = 93443120066114, pieces = {} },
+	Porter = {
+		shirt = 124284344455641,
+		pants = 138727635610576,
+		face = 137639748705187,
+		pieces = { BAG_POST },
+	},
+	Widow = {
+		shirt = 89073375936855,
+		pants = 93642940005009,
+		face = 72801263217418,
+		pieces = { skirt(92381773347916) },
+	},
+	Newsboy = {
+		shirt = 90911706316960,
+		pants = 95755848352529,
+		face = 116658704551546,
+		pieces = { BAG_PAPER },
+	},
+} :: { [string]: Wear })
+
+-- Whether `id` is dressed in its sheets and pieces: every id is bound.
+function Passengers.wearReady(id: string): boolean
+	local wear = Passengers.Wear[id]
+	if wear == nil or wear.shirt == nil or wear.pants == nil then
+		return false
+	end
+	for _, piece in wear.pieces do
+		if piece.mesh == nil or piece.texture == nil then
+			return false
+		end
+	end
+	return true
+end
+
 return table.freeze(Passengers)
