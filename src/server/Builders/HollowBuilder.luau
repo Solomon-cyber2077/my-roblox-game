@@ -22,6 +22,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local StalkerMeshes = require(ReplicatedStorage.Shared.Config.StalkerMeshes)
 
 local HollowBuilder = {}
 
@@ -225,6 +226,62 @@ local function emitter(parent: BasePart, props: { [string]: any }): ParticleEmit
 	return e
 end
 
+-- Close-up meshes (Config/StalkerMeshes), loaded once in the background: a Stalker built before they
+-- arrive, or with a piece that has no id, keeps its blocks. Under Performance the blocks come back.
+local meshCache: { [string]: MeshPart? } = {}
+
+local function preloadMeshes()
+	local ok, service = pcall(game.GetService, game, "AssetService")
+	if not ok then
+		return
+	end
+	for name, piece in StalkerMeshes do
+		if piece.id == nil then
+			continue
+		end
+		local loaded, mesh = pcall(function(): any
+			return (service :: AssetService):CreateMeshPartAsync(Content.fromAssetId(piece.id :: number))
+		end)
+		if loaded and mesh then
+			meshCache[name] = mesh :: MeshPart
+		else
+			warn(`HollowBuilder: Stalker mesh {name} ({piece.id}) did not load: {mesh}`)
+		end
+	end
+end
+
+-- A copy of a loaded mesh welded to `to`, or nil when it has no mesh yet. Drawn on Quality only.
+local function meshPiece(
+	model: Model,
+	name: string,
+	to: BasePart,
+	color: Color3,
+	material: Enum.Material
+): BasePart?
+	local source = meshCache[name]
+	if source == nil then
+		return nil
+	end
+	local piece = StalkerMeshes[name]
+	local part = source:Clone()
+	part.Name = "Close" .. name
+	part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3])
+	part.Color = color
+	part.Material = material
+	part.TextureID = ""
+	part.CastShadow = false
+	loose(part)
+	part.CFrame = to.CFrame * CFrame.new(piece.center[1], piece.center[2], piece.center[3])
+	local weld = Instance.new("Weld")
+	weld.Part0 = to
+	weld.Part1 = part
+	weld.C0 = CFrame.new(piece.center[1], piece.center[2], piece.center[3])
+	weld.Parent = part
+	part:AddTag("Detail")
+	part.Parent = model
+	return part
+end
+
 -- Kinds -----------------------------------------------------------------------------------
 
 local function stalker(model: Model, root: BasePart)
@@ -237,9 +294,15 @@ local function stalker(model: Model, root: BasePart)
 	local cloth = Enum.Material.Fabric
 	local skin = Enum.Material.SmoothPlastic
 
+	-- blocks a mesh replaces: tagged DetailFallback once that mesh is in (see meshPiece)
+	local blocks: { [string]: { BasePart } } = { head = {}, hand = {}, forearm = {}, sleeve = {}, coat = {} }
+	local function mark(group: string, part: BasePart): BasePart
+		table.insert(blocks[group], part)
+		return part
+	end
 	local pelvis = block(model, "Pelvis", Vector3.new(1.5, 0.9, 0.95), COAT, cloth)
 	local chest = block(model, "Chest", Vector3.new(1.45, 2.8, 0.95), COAT, cloth)
-	local head = block(model, "Head", Vector3.new(0.82, 1.4, 0.98), SKIN, skin)
+	local head = mark("head", block(model, "Head", Vector3.new(0.82, 1.4, 0.98), SKIN, skin))
 	local jaw = block(model, "Jaw", Vector3.new(0.62, 0.46, 0.8), SKIN_DARK, skin)
 	joint("RootJoint", root, pelvis, CFrame.new(0, -0.65, 0), CFrame.new())
 	joint("Waist", pelvis, chest, CFrame.new(0, 0.42, 0) * Kit.angles(-27, 0, 0), CFrame.new(0, -1.4, 0))
@@ -274,24 +337,30 @@ local function stalker(model: Model, root: BasePart)
 	-- coat tails in tatters, hanging past the knees
 	for i, x in { -0.72, -0.34, 0.02, 0.36, 0.7 } do
 		local long = if i % 2 == 0 then 3.6 else 2.5
-		decoWedge(
-			model,
-			pelvis,
-			Vector3.new(0.3 + (i % 3) * 0.05, long, 0.08),
-			CFrame.new(x, -0.5 - long / 2, 0.42 + i * 0.012) * Kit.angles(-3 - i * 2, 0, (i - 3) * 4),
-			COAT,
-			cloth
+		mark(
+			"coat",
+			decoWedge(
+				model,
+				pelvis,
+				Vector3.new(0.3 + (i % 3) * 0.05, long, 0.08),
+				CFrame.new(x, -0.5 - long / 2, 0.42 + i * 0.012) * Kit.angles(-3 - i * 2, 0, (i - 3) * 4),
+				COAT,
+				cloth
+			)
 		)
 	end
 	-- the same rags at the front, either side of the ribs, and torn off each shoulder
 	for _, side in { -1, 1 } do
-		decoWedge(
-			model,
-			pelvis,
-			Vector3.new(0.34, 3.0, 0.08),
-			CFrame.new(side * 0.6, -1.7, -0.44) * Kit.angles(4, 0, side * -5),
-			COAT,
-			cloth
+		mark(
+			"coat",
+			decoWedge(
+				model,
+				pelvis,
+				Vector3.new(0.34, 3.0, 0.08),
+				CFrame.new(side * 0.6, -1.7, -0.44) * Kit.angles(4, 0, side * -5),
+				COAT,
+				cloth
+			)
 		)
 		decoWedge(
 			model,
@@ -304,7 +373,7 @@ local function stalker(model: Model, root: BasePart)
 	end
 
 	-- a crushed porter's cap and the skull behind the face
-	decoBall(model, head, 1.08, CFrame.new(0, 0.32, 0.12), SKIN_DARK, skin)
+	mark("head", decoBall(model, head, 1.08, CFrame.new(0, 0.32, 0.12), SKIN_DARK, skin))
 	decoRod(model, head, 0.34, 1.16, CFrame.new(0.08, 0.92, 0.08) * Kit.angles(0, 0, 106), LAPEL, cloth)
 	decoWedge(
 		model,
@@ -324,25 +393,32 @@ local function stalker(model: Model, root: BasePart)
 	)
 
 	-- no eyes: dark sockets with a pinprick of shine deep inside
-	deco(model, head, Vector3.new(0.78, 0.13, 0.16), CFrame.new(0, 0.3, -0.53), SKIN_DARK, skin) -- the brow, over them
+	mark("head", deco(model, head, Vector3.new(0.78, 0.13, 0.16), CFrame.new(0, 0.3, -0.53), SKIN_DARK, skin)) -- the brow, over them
 	for _, side in { -0.2, 0.2 } do
-		deco(
-			model,
-			head,
-			Vector3.new(0.2, 0.15, 0.08),
-			CFrame.new(side, 0.17, -0.49) * Kit.angles(0, 0, if side < 0 then 14 else -14),
-			ICHOR,
-			skin
+		mark(
+			"head",
+			deco(
+				model,
+				head,
+				Vector3.new(0.2, 0.15, 0.08),
+				CFrame.new(side, 0.17, -0.49) * Kit.angles(0, 0, if side < 0 then 14 else -14),
+				ICHOR,
+				skin
+			)
 		)
-		shine(model, head, CFrame.new(side, 0.16, -0.54), 0.05)
+		-- the pinprick sits deep in the carved socket when the close-up skull is on
+		shine(model, head, CFrame.new(side, 0.16, if meshCache.head then -0.3 else -0.54), 0.05)
 		-- the cheek fallen in under each socket
-		deco(
-			model,
-			head,
-			Vector3.new(0.14, 0.46, 0.05),
-			CFrame.new(side * 1.5, -0.16, -0.48),
-			SKIN_DARK,
-			skin
+		mark(
+			"head",
+			deco(
+				model,
+				head,
+				Vector3.new(0.14, 0.46, 0.05),
+				CFrame.new(side * 1.5, -0.16, -0.48),
+				SKIN_DARK,
+				skin
+			)
 		)
 	end
 	deco(model, head, Vector3.new(0.5, 0.26, 0.08), CFrame.new(0, -0.5, -0.49), MOUTH, skin)
@@ -363,7 +439,7 @@ local function stalker(model: Model, root: BasePart)
 	-- arms far too long, with fingers to match
 	for _, side in { "L", "R" } do
 		local s = if side == "L" then -1 else 1
-		local _, _, hand = limb(
+		local upperArm, foreArm, hand = limb(
 			model,
 			side,
 			{ "UpperArm", "Forearm", "Hand" },
@@ -380,6 +456,9 @@ local function stalker(model: Model, root: BasePart)
 			Vector3.new(0.42, 0.5, 0.22),
 			BLOOD
 		)
+		mark("sleeve", upperArm)
+		mark("forearm", foreArm)
+		mark("hand", hand)
 		for f = -1, 1 do
 			local finger = deco(
 				model,
@@ -389,14 +468,23 @@ local function stalker(model: Model, root: BasePart)
 				BLOOD,
 				skin
 			)
-			decoWedge(
-				model,
-				finger,
-				Vector3.new(0.06, 0.24, 0.1),
-				CFrame.new(0, -0.62, -0.02) * Kit.angles(180, 0, 0),
-				ICHOR,
-				skin
+			mark("hand", finger)
+			mark(
+				"hand",
+				decoWedge(
+					model,
+					finger,
+					Vector3.new(0.06, 0.24, 0.1),
+					CFrame.new(0, -0.62, -0.02) * Kit.angles(180, 0, 0),
+					ICHOR,
+					skin
+				)
 			)
+			if f == 0 then
+				meshPiece(model, "hand", hand, BLOOD, skin)
+				meshPiece(model, "forearm", foreArm, SKIN, skin)
+				meshPiece(model, "sleeve", upperArm, COAT, cloth)
+			end
 		end
 		local thigh, shin, foot = limb(
 			model,
@@ -419,6 +507,17 @@ local function stalker(model: Model, root: BasePart)
 		-- trousers torn off at the knee
 		decoRod(model, shin, 0.32, 0.5, CFrame.new(0.72, 0, 0), TROUSER, cloth)
 		local _ = foot
+	end
+
+	-- the close-up skull and coat in place of their blocks (the arm pieces went on with the arms)
+	meshPiece(model, "head", head, SKIN, skin)
+	meshPiece(model, "coat", pelvis, COAT, cloth)
+	for group, parts in blocks do
+		if meshCache[group] ~= nil then
+			for _, part in parts do
+				part:AddTag("DetailFallback")
+			end
+		end
 	end
 
 	-- black ichor drips from the jaw; a low mist drags at the feet
@@ -945,6 +1044,12 @@ function HollowBuilder.build(at: CFrame, kind: string?): (Model, Humanoid)
 		end
 	end
 	return model, humanoid
+end
+
+-- (the headless audit has no task library, and no meshes to load)
+local scheduler: any = task
+if scheduler then
+	scheduler.spawn(preloadMeshes)
 end
 
 HollowBuilder.Kinds = { "Stalker", "Crawler", "Brute" }
