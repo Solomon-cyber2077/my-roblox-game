@@ -410,6 +410,7 @@ function Sky.phase(hour: number): (string, string?, number?)
 end
 
 local BLOOD = rgb(255, 34, 26) -- the Bleed: the moon, its light, its bolt
+local EYE_LIGHT = 0.35 -- the Eye: how much brighter the moon burns while it is open
 local BLOOD_GLOW = rgb(200, 16, 12)
 local BLOOD_AIR = rgb(96, 14, 14)
 local BLOOD_CLOUD = rgb(92, 16, 18)
@@ -488,6 +489,25 @@ function Sky.direction(azimuth: number, elevation: number): Vector3
 	return Vector3.new(math.cos(el) * math.cos(az), math.sin(el), math.cos(el) * math.sin(az))
 end
 
+--[[
+	How far out the moon may hang and still come through the haze. The Atmosphere fogs a
+	BillboardGui much harder than a lit part: in Studio (2026-11-11) the moon at 750 studs
+	read clearly at density 0.40 and was gone at 0.48, drawn as a dark disc of fog over the
+	sky; at 0.58 a bright test billboard faded out past about 300 studs. The night's own
+	density (the key plus the biome, plus dread) runs 0.46 to 0.62, so the moon is drawn
+	nearer as the air thickens: half as far for every `halving` of density past `clear`,
+	never nearer than `near`. Its size scales with it, so it looks the same. The landscape
+	past that range is lost in the same haze, so nothing that should stand in front of the
+	moon is skipped.
+]]
+local MOON_REACH = { clear = 0.42, halving = 0.08, near = 160 }
+
+-- The moon's distance in studs at Atmosphere `density`, given its usual distance `far`.
+function Sky.moonReach(density: number, far: number): number
+	local past = math.max(density - MOON_REACH.clear, 0)
+	return math.clamp(far * 2 ^ (-past / MOON_REACH.halving), MOON_REACH.near, far)
+end
+
 -- Where the moon is and how it looks at an hour, before clouds and omens.
 function Sky.moon(hour: number): Moon
 	local first, last = MOON[1], MOON[#MOON]
@@ -546,6 +566,10 @@ function Sky.compose(i: Inputs): State
 	elseif kind == "Eye" then
 		moon.pupil = envelope(progress, 0.22, 0.8)
 		moon.throb = moon.pupil * (0.5 + 0.5 * math.sin(i.now * math.pi * 2.2))
+		-- the eye opens on a lit face: the eclipse shadow lifts off it, or the dark iris
+		-- over the dark shadow reads as one black disc (Studio, 2026-11-11)
+		moon.umbra *= 1 - moon.pupil
+		moon.brightness *= 1 + EYE_LIGHT * moon.pupil
 	elseif kind == "TallOnes" then
 		moon.brightness *= 0.6
 	end

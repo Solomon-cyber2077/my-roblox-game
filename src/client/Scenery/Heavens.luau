@@ -10,8 +10,9 @@
 	fogs them like any part (seen 2026-10-14: at the night's density nothing past about
 	a thousand studs shows), so the anchor stands at DISTANCE, inside the haze, and the
 	moon burns HAZE_BOOST brighter to come through it. Whatever lies further out is
-	lost in the haze anyway. Scenery/Sky veils the moon where the air or the cloud
-	should.
+	lost in the haze anyway. Deep in the night the haze is thick enough to swallow the
+	moon even there, so it is drawn nearer as the air thickens (Sky.moonReach). Scenery/Sky
+	veils the moon where the air or the cloud should.
 
 	  moon     a halo built up from soft rings, a 22-degree ring, a shaded disc with
 	           dark maria, the eclipse shadow, an eye that is usually not there, a lid
@@ -51,6 +52,7 @@ type MoonRig = {
 	scud: { Frame },
 	umbraShown: number,
 	sizeShown: number,
+	reachShown: number, -- the distance it was last sized for
 	haloShown: number,
 	ringShown: number,
 }
@@ -269,9 +271,9 @@ local function billboard(anchor: BasePart, name: string): (BillboardGui, Attachm
 	return gui, attachment
 end
 
--- How many studs across something `degrees` wide is at the sky's distance.
-local function span(degrees: number): number
-	return 2 * DISTANCE * math.tan(math.rad(degrees) / 2)
+-- How many studs across something `degrees` wide is at `distance` (the sky's, by default).
+local function span(degrees: number, distance: number?): number
+	return 2 * (distance or DISTANCE) * math.tan(math.rad(degrees) / 2)
 end
 
 -- Building ----------------------------------------------------------------------------------------
@@ -329,7 +331,8 @@ local function buildMoon(anchor: BasePart): MoonRig
 	end
 	local umbra = frame(gui, 5)
 	umbra.Size = UDim2.fromScale(DISC, DISC)
-	umbra.BackgroundColor3 = rgb(26, 4, 6)
+	-- a dim copper, as an eclipsed moon goes in the earth's shadow, never black
+	umbra.BackgroundColor3 = rgb(84, 24, 16)
 	round(umbra)
 	local umbraGradient = gradient(umbra, -30, NumberSequence.new(1))
 	local iris = frame(gui, 6)
@@ -387,6 +390,7 @@ local function buildMoon(anchor: BasePart): MoonRig
 		scud = scud,
 		umbraShown = -1,
 		sizeShown = -1,
+		reachShown = -1,
 		haloShown = -1,
 		ringShown = -1,
 	}
@@ -503,12 +507,16 @@ local function poseMoon(m: MoonRig, state: Sky.State, info: Info)
 	if not m.gui.Enabled then
 		return
 	end
-	m.attachment.Position = moon.direction * DISTANCE
+	-- nearer in thick air, so the haze does not swallow it (Sky.moonReach); in steps, so it
+	-- is not resized every frame
+	local reach = math.floor(Sky.moonReach(state.density, DISTANCE) / 10 + 0.5) * 10
+	m.attachment.Position = moon.direction * reach
 	-- resizing lays out every frame inside, so only when the moon has grown or shrunk visibly
 	local size = math.floor(moon.size * 50 + 0.5) / 50
-	if size ~= m.sizeShown then
+	if size ~= m.sizeShown or reach ~= m.reachShown then
 		m.sizeShown = size
-		local side = span(size) * SPAN
+		m.reachShown = reach
+		local side = span(size, reach) * SPAN
 		m.gui.Size = UDim2.fromScale(side, side)
 	end
 	-- a throb swells the light (one property) rather than the halo's steps
