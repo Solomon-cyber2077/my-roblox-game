@@ -174,7 +174,22 @@ def hand():
     # the thumb, short, angled in
     tube(bm, [(0.17, 0.0, 0.0), (0.27, -0.2, -0.06), (0.3, -0.42, -0.1), (0.29, -0.55, -0.14)],
          [0.06, 0.048, 0.04, 0.02], sides=6, flat=0.8)
-    return finish(to_object("stalker_hand", bm), subdiv=0)
+    obj = finish(to_object("stalker_hand", bm), subdiv=0)
+    return obj
+
+
+def hand_left():
+    """The same hand mirrored, the thumb on the other side, for the left arm."""
+    obj = hand()
+    obj.name = obj.data.name = "stalker_handL"
+    for v in obj.data.vertices:
+        v.co.x = -v.co.x
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.reverse_faces(bm, faces=bm.faces)
+    bm.to_mesh(obj.data)
+    bm.free()
+    return obj
 
 
 # ------------------------------------------------------------------ arms
@@ -299,7 +314,7 @@ def sheet(objs):
     world.use_nodes = True
     world.node_tree.nodes["Background"].inputs[0].default_value = (0.05, 0.05, 0.06, 1)
     sc.world = world
-    colors = {"stalker_head": (0.71, 0.70, 0.63), "stalker_hand": (0.45, 0.12, 0.12), "stalker_forearm": (0.71, 0.70, 0.63),
+    colors = {"stalker_head": (0.71, 0.70, 0.63), "stalker_hand": (0.45, 0.12, 0.12), "stalker_handL": (0.45, 0.12, 0.12), "stalker_forearm": (0.71, 0.70, 0.63),
               "stalker_sleeve": (0.17, 0.16, 0.15), "stalker_coat": (0.17, 0.16, 0.15)}
     x = -4.6
     for o in objs:
@@ -329,7 +344,7 @@ def sheet(objs):
 def main():
     clear()
     report = {}
-    objs = [skull(), hand(), forearm(), sleeve(), coat()]
+    objs = [skull(), hand(), hand_left(), forearm(), sleeve(), coat()]
     for o in objs:
         export(o, report)
     (OUT / "report.json").write_text(json.dumps(report, indent=1))

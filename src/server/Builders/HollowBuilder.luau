@@ -488,7 +488,7 @@ local function stalker(model: Model, root: BasePart)
 				)
 			)
 			if f == 0 then
-				meshPiece(model, "hand", hand, BLOOD, skin)
+				meshPiece(model, if side == "L" then "hand" else "handL", hand, BLOOD, skin)
 				meshPiece(model, "forearm", foreArm, SKIN, skin)
 				meshPiece(model, "sleeve", upperArm, COAT, cloth)
 			end
