@@ -100,34 +100,51 @@ local function addPieces(rig: Model, wear: Passengers.Wear)
 		if not (limb and limb:IsA("BasePart")) then
 			continue
 		end
-		local loaded, mesh = pcall(function(): any
-			return (service :: AssetService):CreateMeshPartAsync(Content.fromAssetId(piece.mesh :: number))
-		end)
-		if not loaded or mesh == nil then
-			warn(`PassengerFigure: piece {piece.name} ({piece.mesh}) did not load: {mesh}`)
+		local function place(id: number): MeshPart?
+			local loaded, mesh = pcall(function(): any
+				return (service :: AssetService):CreateMeshPartAsync(Content.fromAssetId(id))
+			end)
+			if not loaded or mesh == nil then
+				warn(`PassengerFigure: piece {piece.name} ({id}) did not load: {mesh}`)
+				return nil
+			end
+			local part = mesh :: MeshPart
+			part.Name = piece.name
+			part.TextureID = `rbxassetid://{piece.texture}`
+			part.Color = Color3.new(1, 1, 1)
+			part.Anchored = false
+			part.CanCollide = false
+			part.CanQuery = false
+			part.CanTouch = false
+			part.Massless = true
+			part.CastShadow = false
+			part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3])
+			local o = piece.offset
+			part.CFrame = (limb :: BasePart).CFrame
+				* CFrame.new(o[1], o[2], o[3])
+				* CFrame.Angles(0, math.rad(piece.yaw), 0)
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = limb :: BasePart
+			weld.Part1 = part
+			weld.Parent = part
+			part.Parent = rig
+			return part
+		end
+		local part = place(piece.mesh :: number)
+		if part == nil then
 			continue
 		end
-		local part = mesh :: MeshPart
-		part.Name = piece.name
-		part.TextureID = `rbxassetid://{piece.texture}`
-		part.Color = Color3.new(1, 1, 1)
-		part.Anchored = false
-		part.CanCollide = false
-		part.CanQuery = false
-		part.CanTouch = false
-		part.Massless = true
-		part.CastShadow = false
-		part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3])
-		local o = piece.offset
-		part.CFrame = limb.CFrame * CFrame.new(o[1], o[2], o[3]) * CFrame.Angles(0, math.rad(piece.yaw), 0)
-		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = limb
-		weld.Part1 = part
-		weld.Parent = part
 		if piece.prop then
 			part:AddTag("Detail") -- a bag: the Performance setting leaves it off; sheets and skirt stay
+		elseif piece.phone then
+			-- the lighter phone mesh in its place under Performance (Controllers/DetailController)
+			local phone = place(piece.phone)
+			if phone then
+				phone.Name = `{piece.name}Phone`
+				part:AddTag("Detail")
+				phone:AddTag("DetailFallback")
+			end
 		end
-		part.Parent = rig
 	end
 end
 
@@ -181,6 +198,15 @@ function PassengerFigure.build(person: Passengers.Person, cframe: CFrame, parent
 			propReplaced = propReplaced or piece.prop == true
 		end
 	end
+	-- a Roblox head sits lower than the kit's ball head (centre 4.5 against 4.72), so what is kept on the
+	-- head (hat, bonnet) is moved down onto it rather than riding above it
+	local rigHead = rig:FindFirstChild("Head")
+	local fit = if wear
+			and wear.face
+			and rigHead
+			and rigHead:IsA("BasePart")
+		then rigHead.CFrame * kit.head.CFrame:Inverse()
+		else nil
 	for _, piece in kit.model:GetDescendants() do
 		if not piece:IsA("BasePart") then
 			continue
@@ -202,6 +228,9 @@ function PassengerFigure.build(person: Passengers.Person, cframe: CFrame, parent
 		end
 		if wear and wear.head and limb.Name == "Head" then
 			continue -- the sculpted hair, whiskers and hat take the kit's head pieces' place
+		end
+		if fit and limb.Name == "Head" then
+			piece.CFrame = fit * piece.CFrame
 		end
 		piece.Anchored = false
 		piece.CanCollide = false

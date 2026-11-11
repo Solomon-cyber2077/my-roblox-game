@@ -403,7 +403,10 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 		Kit.post(model, 0.16, 1.2, crown * CFrame.new(0, -0.06, 0.24), Color3.fromRGB(226, 222, 214), DECOR)
 	elseif hat == "Bonnet" then
 		part(Vector3.new(1.5, 1.2, 0.9), head * CFrame.new(0, 0.25, 0.32), hatColor)
-		part(Vector3.new(0.14, 0.9, 0.08), head * CFrame.new(0.5, -0.3, -0.5), trim)
+		-- the ribbon string down the cheek and its bow sit on the kit's round head; a body with a Roblox
+		-- head (Builders/PassengerFigure) leaves them off, or the string stands out of the cheek as a strip
+		local string_ = part(Vector3.new(0.14, 0.9, 0.08), head * CFrame.new(0.5, -0.3, -0.5), trim)
+		string_:SetAttribute("Face", true)
 		-- the poke brim framing the face, its ribbon bow under the chin and a silk flower
 		Kit.cylinder(
 			model,
@@ -413,7 +416,10 @@ function OutfitKit.figure(parent: Instance, cframe: CFrame, look: Outfits.Look, 
 			Kit.shade(hatColor, 1.15),
 			{ material = M.Fabric, collide = false, shadow = false }
 		)
-		on(fine(ball(0.26, head * CFrame.new(0.42, -0.6, -0.4), trim, M.Fabric)), "Head")
+		on(fine(ball(0.26, head * CFrame.new(0.42, -0.6, -0.4), trim, M.Fabric)), "Head"):SetAttribute(
+			"Face",
+			true
+		)
 		fine(ball(0.3, head * CFrame.new(-0.62, 0.6, 0.1), Kit.shade(trim, 0.8), M.Fabric))
 	elseif hat == "Flat" then
 		-- a newsboy's eight-panel cap: soft crown, short peak, button on top

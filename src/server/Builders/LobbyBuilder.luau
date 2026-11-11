@@ -26,6 +26,7 @@ local IL = InteriorLight
 local Outfits = require(ReplicatedStorage.Shared.Config.Outfits)
 local HallWear = require(script.Parent.HallWear)
 local OutfitKit = require(script.Parent.OutfitKit)
+local Passengers = require(ReplicatedStorage.Shared.Config.Passengers)
 local Premise = require(ReplicatedStorage.Shared.Config.Premise)
 local PosterArt = require(script.Parent.PosterArt)
 local SignArt = require(script.Parent.SignArt)
@@ -2102,8 +2103,34 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 				Enum.Material.WoodPlanks
 			)
 		end
-		local figure = OutfitKit.figure(people, at(x, lift, z) * Kit.angles(0, yaw, 0), who.look, who.pose)
+		local stand = at(x, lift, z) * Kit.angles(0, yaw, 0)
+		local figure = OutfitKit.figure(people, stand, who.look, who.pose)
 		figure.model.Name = who.id
+		if Passengers.wearReady(id) then
+			-- once their sheets are uploaded: the R6 body in them, rooted to the spot (it breathes and turns
+			-- to you, CharacterAnimator); the kit figure stays, hidden, for collision and the speech card
+			task.spawn(function()
+				-- loaded here: the headless audit has no Players service for its R6 body
+				local PassengerFigure = require(script.Parent.PassengerFigure) :: any
+				local rig = PassengerFigure.build({ id = id, look = who.look } :: any, stand, figure.model)
+				if rig == nil then
+					return
+				end
+				local root = rig:FindFirstChild("HumanoidRootPart") :: BasePart?
+				if root then
+					root.Anchored = true
+				end
+				rig.Name = "Rig"
+				rig:SetAttribute("Passenger", nil)
+				rig:SetAttribute("Resident", id)
+				rig:RemoveTag("Passenger")
+				for _, d in figure.model:GetDescendants() do
+					if not d:IsDescendantOf(rig) and (d:IsA("BasePart") or d:IsA("Decal")) then
+						(d :: any).Transparency = 1
+					end
+				end
+			end)
+		end
 		return figure
 	end
 	resident("TeaRoom", 109.5, 50, 90, 1)

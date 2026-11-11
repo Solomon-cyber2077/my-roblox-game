@@ -281,6 +281,9 @@ export type WearPiece = {
 	yaw: number,
 	size: { number },
 	prop: boolean?,
+	-- the phone set's mesh (passenger_heads.py with PASSENGER_LOD=0.5, same atlas): shown instead under the
+	-- Performance setting (Detail / DetailFallback tags, Controllers/DetailController)
+	phone: number?,
 }
 -- `face`: a classic Roblox head with a painted face decal (tools/crew-clothing/passenger_faces.py) in
 -- place of the kit's sculpted head and whiskers (owner, 11-10: "roblox heads with the same eerie tone")
@@ -335,6 +338,8 @@ local BAG_RETICULE: WearPiece = {
 
 -- sculpted hair, whiskers, hats and coat pieces (tools/crew-clothing/passenger_heads.py, one atlas)
 local HEADS = 80589939821623
+-- the phone set, by piece name (assets/crew-clothing/passengers-r6/phone; owner uploads pending)
+local PHONE: { [string]: number } = {}
 local function headPiece(
 	name: string,
 	limb: string,
@@ -342,7 +347,16 @@ local function headPiece(
 	offset: { number },
 	size: { number }
 ): WearPiece
-	return { name = name, limb = limb, mesh = mesh, texture = HEADS, offset = offset, yaw = 180, size = size }
+	return {
+		name = name,
+		limb = limb,
+		mesh = mesh,
+		texture = HEADS,
+		offset = offset,
+		yaw = 180,
+		size = size,
+		phone = PHONE[name],
+	}
 end
 local HEAD_PIECES: { [string]: { WearPiece } } = {
 	Clerk = {
@@ -437,6 +451,14 @@ local WEAR: { [string]: Wear } = {
 		pieces = { BAG_PAPER },
 	},
 }
+-- The hall's four counter staff (Config/Outfits Lobby, built by Builders/LobbyBuilder) wear the same way
+-- (tools/crew-clothing/staff_textures.py; sources in assets/crew-clothing/staff-r6). Mrs. Pell's apron
+-- is painted on her bodice and skirt. The Guard stays the kit figure: he lies over the van rail.
+WEAR.TeaRoom = { pieces = { skirt(nil) } }
+WEAR.Outfitter = { pieces = {} }
+WEAR.TicketClerk = { pieces = {} }
+WEAR.LineMastery = { pieces = {} }
+
 for id, wear in WEAR do
 	local extra = HEAD_PIECES[id]
 	if extra then

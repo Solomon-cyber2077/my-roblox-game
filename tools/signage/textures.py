@@ -303,8 +303,8 @@ def coast():
     S.box((12, 16, 20), 0, 610, 560, 110)
     S.rule((206, 168, 92), 0, 610, 560, 4)
     S.words('S. & W. C. R.', 'oswald', (206, 168, 92), 30, 622, 300, 40, 'left')
-    S.words('ALL STOPS TO THE TERMINUS', 'oswald', (146, 158, 166), 330, 630, 200, 26, 'right')
-    S.words('Ten stops, one sunrise. Return tickets regrettably unavailable.', 'serif_i', (196, 206, 210), 30, 672, 500, 30, 'left')
+    S.words('ALL STATIONS TO THE LAST STOP', 'oswald', (146, 158, 166), 330, 630, 200, 26, 'right')
+    S.words('Every halt, all night. Return tickets regrettably unavailable.', 'serif_i', (196, 206, 210), 30, 672, 500, 30, 'left')
     # lithograph grain over the colour
     S.paper(fibre=0.08, mottle=0.1, edge=0.25)
     worn(S, 1)

@@ -121,7 +121,7 @@ def skin_head(skin, dx):
 def person(pid, look, dx, plain):
     shirt = None if plain else OUT / f'{pid.lower()}-shirt.png'
     pants = None if plain else OUT / f'{pid.lower()}-pants.png'
-    skin = SKIN[pid]
+    skin = SKIN.get(pid) or tuple(look['skin'])  # the staff carry theirs in looks.json
     torso = sheet_material(pid + ' torso', shirt, look['coat'])
     arms = sheet_material(pid + ' arms', shirt, skin if not plain else look['coat'])
     legs = sheet_material(pid + ' legs', pants, look['lower'])
@@ -173,16 +173,17 @@ def main():
     scene = stage(18)
     for pid in ids:
         person(pid, LOOKS[pid], dx_of[pid], plain)
-    bags(dx_of, plain)
+    if 'Porter' in LOOKS:  # the staff (staff_textures.py) carry no bag meshes
+        bags(dx_of, plain)
     tag = 'before' if plain else 'after'
     shoot(scene, f'{tag}-lineup.png', (0, -34, 4.0), (0, 0, 2.6), 50, (2000, 900))
-    shoot(scene, f'{tag}-34-left.png', (dx_of['Clerk'] - 6, -9, 4.5), (dx_of['Mother'] - .6, 0, 2.6), 45, (1400, 1000))
+    shoot(scene, f'{tag}-34-left.png', (dx_of[ids[0]] - 6, -9, 4.5), (dx_of[ids[1]] - .6, 0, 2.6), 45, (1400, 1000))
     bpy.data.objects['wall'].hide_render = True
     shoot(scene, f'{tag}-back.png', (2, 24, 4.5), (0, 0, 2.6), 50, (2000, 900))
     bpy.data.objects['wall'].hide_render = False
     if not plain:
-        shoot(scene, 'after-arms-length-porter.png', (dx_of['Porter'] - 1, -4.2, 4.2), (dx_of['Porter'], 0, 3.2), 45, (1200, 1000))
-        shoot(scene, 'after-arms-length-gentleman.png', (dx_of['Gentleman'] + 1, -4.2, 4.2), (dx_of['Gentleman'], 0, 3.2), 45, (1200, 1000))
+        for pid in ('Porter', 'Gentleman') if 'Porter' in LOOKS else ids:
+            shoot(scene, f'after-arms-length-{pid.lower()}.png', (dx_of[pid] - 1, -4.2, 4.2), (dx_of[pid], 0, 3.2), 45, (1200, 1000))
         manifest = ns['manifest']
         (OUT / 'manifest.json').write_text(json.dumps({
             'status': 'source assets; uploads and a Studio arm\'s-length check pending (HUMAN pending)',

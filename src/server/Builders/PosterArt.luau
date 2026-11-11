@@ -211,7 +211,7 @@ function DRAW.coast(g: Instance)
 	)
 	words(
 		g,
-		"Ten stops, one sunrise. Return tickets regrettably unavailable.",
+		"Every halt, all night. Return tickets regrettably unavailable.",
 		SERIF_ITALIC,
 		rgb(196, 206, 210),
 		30,

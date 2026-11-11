@@ -23,6 +23,11 @@ M, export, head_point, phi_for, textured, shoot = mb['M'], mb['export'], mb['hea
 person, bags, stage, LOOKS = ns['person'], ns['bags'], ns['stage'], ns['LOOKS']
 TAU, PI = math.tau, math.pi
 HEAD, TORSO = (0, 0, 4.5), (0, 0, 3)
+# PASSENGER_LOD=0.5 builds the phone set (Config/Passengers `phone` ids, shown on the Performance setting): about
+# half the segments round each shape, fewer rows, thinner lock paths. Same atlas and UV cells, so heads.png serves both.
+LOD = float(os.environ.get('PASSENGER_LOD', '1'))
+def lod(n, floor=8):
+    return n if LOD >= 1 else max(floor, round(n * LOD))
 
 # ------------------------------------------------------------------ atlas cells (passenger_head_textures.py)
 CELL = dict(Clerk=0, Mother=1, Gentleman=2, Porter=3, Widow=4, Newsboy=5, felt=6, plush=7, bonnet=8, capcloth=9,
@@ -60,6 +65,9 @@ def sheet(m, k, P, out_fn, s_span=1.0, t_flip=False):
 def lock(m, k, path, width, flat=.45, sides=4, s0=None, rng=None):
     """A tapered hair lock along `path`, flattened against the head (radial = its thickness)."""
     rng = rng or random; s0 = rng.uniform(0, .75) if s0 is None else s0
+    if LOD < 1:  # the phone set: fewer sides, every other point along the lock (ends kept)
+        sides = max(3, sides - 2)
+        path = list(path[:-1:2]) + [path[-1]] if len(path) > 4 else path
     n = len(path); rings = []
     for i, p in enumerate(path):
         p = Vector(p); a = Vector(path[min(i + 1, n - 1)]); b = Vector(path[max(i - 1, 0)])
@@ -91,7 +99,7 @@ def surface_path(th0, ph0, th1, ph1, scale, lift=.02, curl=0.0, n=7, wave=0.0):
         pts.append(tuple(head_point(th, ph, scale + lift * math.sin(PI * t) + curl * t * t)))
     return pts
 
-def hair_shell(m, k, hairline, scale, seg=36, rows=11):
+def hair_shell(m, k, hairline, scale, seg=lod(36), rows=lod(11, 5)):
     """Mabel's hair cap generalised: crown to `hairline(theta)` (a z), radius scale(theta, phi)."""
     ths = [-PI + TAU * j / seg for j in range(seg + 1)]
     P = []
@@ -149,7 +157,7 @@ def hair_gentleman():
 
 def beard_gentleman():
     m = M('gentleman beard'); k = CELL['Gentleman']; rng = random.Random(3)
-    seg, rows = 28, 9
+    seg, rows = lod(28), lod(9, 4)
     ths = [-1.75 + 3.5 * j / seg for j in range(seg + 1)]
     def top(th):  # sideburns high at the ears, under the mouth at the front
         return phi_for(.16) + (phi_for(-.26) - phi_for(.16)) * (1 - smooth(.55, 1.35, abs(th)))
@@ -187,7 +195,7 @@ def hair_porter():
 
 def beard_porter():
     m = M('porter whiskers'); k = CELL['Porter']; rng = random.Random(5)
-    seg, rows = 30, 5
+    seg, rows = lod(30), lod(5, 3)
     ths = [-1.7 + 3.4 * j / seg for j in range(seg + 1)]
     def top(th):  # a chin curtain: a band along the jaw, sideburn to sideburn, no moustache
         return phi_for(.14) + (phi_for(-.36) - phi_for(.14)) * (1 - smooth(.4, 1.4, abs(th)))
@@ -239,7 +247,7 @@ def hair_widow():
     return hair_bands('widow hair', CELL['Widow'], 8, (0, .62, .02), (0, 1, .1), .22)
 
 # ------------------------------------------------------------------ hats
-def lathe(m, k, prof, out_fn, seg=36, sy=1.06, mod=None, cap=False):
+def lathe(m, k, prof, out_fn, seg=lod(36), sy=1.06, mod=None, cap=False):
     """Profile [(r, z)] spun round the head axis (front -Y), ovalled front to back by sy."""
     P = []
     for r, z in prof:
@@ -256,7 +264,7 @@ def lathe(m, k, prof, out_fn, seg=36, sy=1.06, mod=None, cap=False):
             m.face([tuple(c), tuple(P[-1][j]), tuple(P[-1][j + 1])], [cuv(k, .5, .5), cuv(k, j / seg, 0), cuv(k, (j + 1) / seg, 0)], (0, 0, 1))
     return P
 
-def brim(m, k, r0, r1, zb, curl, dip=0.0, roll=.035, seg=40, sy=1.06, droop=0.0):
+def brim(m, k, r0, r1, zb, curl, dip=0.0, roll=.035, seg=lod(40), sy=1.06, droop=0.0):
     """A hat brim from r0 to r1 at height zb, sides curling up by `curl`, a rolled edge."""
     def z_at(th, f):
         s2 = math.sin(th) ** 2
@@ -317,7 +325,7 @@ def hat_flat():
         lift = min(1.0, max(0, z - .22) / .42) * min(1.0, r / .7)
         return r * (1 + .1 * f * lift), z - .1 * f * lift
     prof = [(.66, .2), (.7, .3), (.75, .42), (.75, .52), (.68, .62), (.5, .7), (.28, .74), (.02, .75)]
-    lathe(m, k, prof, lambda c: c - V(0, 0, .1), mod=mod, sy=1.1, seg=48)
+    lathe(m, k, prof, lambda c: c - V(0, 0, .1), mod=mod, sy=1.1, seg=lod(48))
     for j in range(8):  # panel seams
         th = TAU * j / 8
         path = [tuple(V(r * math.sin(th), -r * math.cos(th) * 1.1, z)) for r, z in [mod(th, r, z) for r, z in prof[2:]]]
@@ -337,7 +345,7 @@ def hat_flat():
 
 def hat_bonnet():
     m = M('mother bonnet'); k = CELL['bonnet']; beta = 1.3
-    rows, seg = 9, 26
+    rows, seg = lod(9, 4), lod(26)
     def th_at(s):
         return beta + (TAU - 2 * beta) * s
     phmax = lambda th: 1.85 + .2 * (1 - math.cos(th)) / 2
@@ -380,7 +388,7 @@ def hat_bonnet():
     return m
 
 def veil_widow():
-    m = M('widow veil'); k = CELL['crape']; seg, rows = 30, 12
+    m = M('widow veil'); k = CELL['crape']; seg, rows = lod(30), lod(12, 5)
     beta = 1.15
     ths = [beta + (TAU - 2 * beta) * j / seg for j in range(seg + 1)]
     P = []
@@ -406,7 +414,7 @@ def superellipse(t, e=.4):
     c, s = math.cos(t), math.sin(t)
     return math.copysign(abs(c) ** e, c), math.copysign(abs(s) ** e, s)
 
-def coat_skirt(name, k, z0, z1, w0, d0, w1, d1, gap0, gap1, seg=40, rows=8, flare_back=0.0, vent=False):
+def coat_skirt(name, k, z0, z1, w0, d0, w1, d1, gap0, gap1, seg=lod(40), rows=lod(8, 4), flare_back=0.0, vent=False):
     """A coat's skirts from the waist down, open at the front by gap (radians each side)."""
     m = M(name)
     for layer, sc, cell in ((0, 1.0, k), (1, .975, CELL['lining'])):
@@ -434,7 +442,7 @@ def coat_skirt(name, k, z0, z1, w0, d0, w1, d1, gap0, gap1, seg=40, rows=8, flar
     return m
 
 def bustle():
-    m = M('mother bustle'); k = CELL['bustle']; seg, rows = 22, 10
+    m = M('mother bustle'); k = CELL['bustle']; seg, rows = lod(22), lod(10, 4)
     P = []
     for i in range(rows):
         f = i / (rows - 1); z = -.45 - 1.35 * f
@@ -457,7 +465,7 @@ def bustle():
     return m
 
 def shawl():
-    m = M('widow shawl'); k = CELL['shawl']; seg, rows = 40, 8
+    m = M('widow shawl'); k = CELL['shawl']; seg, rows = lod(40), lod(8, 4)
     a0 = .55  # the front opening either side of the chest
     def length(a):  # long points front and back, short over the shoulders
         f = abs(math.sin(a))
