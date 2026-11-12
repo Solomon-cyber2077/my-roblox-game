@@ -189,6 +189,9 @@ local function setTrails(rig: Rig, on: boolean)
 end
 
 local function makeTrails(rig: Rig)
+	if rig.kind == "Stalker" then
+		return -- no streak behind its claws (owner, 11-11)
+	end
 	local hands: { string } = if rig.kind == "Brute" then { "RHand" } else { "LHand", "RHand" }
 	for _, name in hands do
 		local hand = rig.model:FindFirstChild(name) :: BasePart?
