@@ -309,7 +309,13 @@ local function stalker(model: Model, root: BasePart)
 	local pelvis = block(model, "Pelvis", Vector3.new(1.5, 0.9, 0.95), COAT, cloth)
 	local chest = block(model, "Chest", Vector3.new(1.45, 2.8, 0.95), COAT, cloth)
 	local head = mark("head", block(model, "Head", Vector3.new(0.82, 1.4, 0.98), FACE, skin))
-	local jaw = block(model, "Jaw", Vector3.new(0.62, 0.46, 0.8), SKIN_DARK, skin)
+	local jaw = block(
+		model,
+		"Jaw",
+		if meshCache.head then Vector3.new(0.46, 0.34, 0.6) else Vector3.new(0.62, 0.46, 0.8),
+		SKIN_DARK,
+		skin
+	)
 	joint("RootJoint", root, pelvis, CFrame.new(0, -0.65, 0), CFrame.new())
 	joint("Waist", pelvis, chest, CFrame.new(0, 0.42, 0) * Kit.angles(-27, 0, 0), CFrame.new(0, -1.4, 0))
 	joint("Neck", chest, head, CFrame.new(0, 1.62, -0.42) * Kit.angles(16, 0, 0), CFrame.new(0, -0.68, 0.12))
@@ -413,7 +419,13 @@ local function stalker(model: Model, root: BasePart)
 			)
 		)
 		-- the pinprick sits deep in the carved socket when the close-up skull is on
-		shine(model, head, CFrame.new(side, 0.16, if meshCache.head then -0.3 else -0.54), 0.06, GLINT)
+		shine(
+			model,
+			head,
+			CFrame.new(side, 0.16, if meshCache.head then -0.14 else -0.54),
+			if meshCache.head then 0.045 else 0.06,
+			GLINT
+		)
 		-- the cheek fallen in under each socket
 		mark(
 			"head",
@@ -430,8 +442,8 @@ local function stalker(model: Model, root: BasePart)
 	deco(
 		model,
 		head,
-		Vector3.new(0.5, 0.26, 0.08),
-		CFrame.new(0, -0.5, if meshCache.head then -0.3 else -0.49),
+		if meshCache.head then Vector3.new(0.3, 0.17, 0.08) else Vector3.new(0.5, 0.26, 0.08),
+		CFrame.new(0, if meshCache.head then -0.43 else -0.5, if meshCache.head then -0.2 else -0.49),
 		GAPE,
 		skin
 	)
@@ -439,8 +451,12 @@ local function stalker(model: Model, root: BasePart)
 		decoWedge(
 			model,
 			head,
-			Vector3.new(0.07, 0.2, 0.05),
-			CFrame.new(i * 0.095, -0.46, if meshCache.head then -0.36 else -0.55) * Kit.angles(0, 0, 180),
+			if meshCache.head then Vector3.new(0.045, 0.14, 0.05) else Vector3.new(0.07, 0.2, 0.05),
+			CFrame.new(
+				i * (if meshCache.head then 0.055 else 0.095),
+				if meshCache.head then -0.4 else -0.46,
+				if meshCache.head then -0.27 else -0.55
+			) * Kit.angles(0, 0, 180),
 			TOOTH,
 			skin
 		)

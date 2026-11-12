@@ -221,7 +221,12 @@ local function build(h: Handle)
 	local v = GrimeLevel.variation(seed)
 	local bone, red, grime = color("Bone", v.tint), color("Blood", v.tint), color("Grime", v.tint)
 	local front = -head.Size.Z / 2 - 0.025
+	-- the Stalker's carved skull already holds its own pinprick eyes deep in the sockets
+	local ownEyes = kind == "Stalker" and model:FindFirstChild("Closehead") ~= nil
 	for _, side in { -1, 1 } do
+		if ownEyes then
+			break
+		end
 		local eye = part(
 			h,
 			head,
@@ -239,7 +244,7 @@ local function build(h: Handle)
 	light.Range = C.LightRange
 	light.Shadows = false
 	light.Enabled = false
-	light.Parent = h.eyes[1]
+	light.Parent = h.eyes[1] or head
 	h.light = light
 	for i = 1, 3 do
 		stain(

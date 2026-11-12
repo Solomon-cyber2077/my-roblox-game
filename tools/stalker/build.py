@@ -99,13 +99,13 @@ def finish(obj, smooth=True, subdiv=0, decimate=None):
 def skull():
     """The head block is 0.82 x 1.4 x 0.98: a narrow, long skull, face toward -Z, skin drawn tight over bone."""
     bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=44, v_segments=30, radius=0.5)
+    bmesh.ops.create_uvsphere(bm, u_segments=72, v_segments=52, radius=0.5)
     gauss = lambda d2, w: math.exp(-d2 / (w * w))
     for v in bm.verts:
         x, y, z = v.co
         # a long narrow egg: 0.8 wide, 1.4 tall, 0.98 deep
-        x *= 0.82
-        y *= 1.4
+        x *= 0.76
+        y *= 1.46
         z *= 0.98
         front = z < 0  # the face side
         if front:
@@ -117,17 +117,20 @@ def skull():
             for sx in (-0.2, 0.2):
                 # sockets: deep dents, a little slanted
                 dy = y - (0.17 + (0.02 if sx > 0 else 0.02) * 0)
-                z += 0.34 * gauss((x - sx) ** 2 + (dy * 1.15) ** 2, 0.12) * f
+                z += 0.5 * gauss((x - sx) ** 2 + (dy * 1.05) ** 2, 0.105) * f
+                z -= 0.05 * gauss((x - sx) ** 2 + (dy * 1.05) ** 2, 0.2) * f  # the bony rim round the socket
                 # the cheekbone under each socket, the cheek fallen in below it
-                z -= 0.06 * gauss((x - sx * 1.7) ** 2 + (y - 0.0) ** 2, 0.13) * f
-                z += 0.11 * gauss((x - sx * 1.2) ** 2 + (y + 0.28) ** 2, 0.15) * f
+                z -= 0.1 * gauss((x - sx * 1.75) ** 2 + (y + 0.02) ** 2, 0.1) * f
+                z += 0.2 * gauss((x - sx * 1.2) ** 2 + (y + 0.25) ** 2, 0.14) * f
+                # the temples fallen in, the skin drawn tight to the bone
+                z += 0.07 * gauss((x - sx * 2.0) ** 2 + (y - 0.22) ** 2, 0.14) * f
                 # temple hollows
                 x -= sx * 0.0
             # nose: a collapsed bridge, the nostrils a pit
             z -= 0.05 * gauss(x ** 2 + (y - 0.0) ** 2, 0.06) * f
-            z += 0.09 * gauss(x ** 2 + (y + 0.09) ** 2, 0.055) * f
+            z += 0.2 * gauss((x / 0.8) ** 2 + (y + 0.09) ** 2, 0.07) * f
             # the grin: a wide dark pit cut into the face, the jaw drops from it
-            z += 0.24 * math.exp(-((x / 0.2) ** 2 + ((y + 0.47) / 0.075) ** 2)) * f
+            z += 0.32 * math.exp(-((x / 0.24) ** 2 + ((y + 0.47) / 0.06) ** 2)) * f
             # the mouth area: a flat sunken plane where the grin sits
             z += 0.06 * gauss(x ** 2 + (y + 0.5) ** 2, 0.25) * f
         # the skull's back swells; a tight dome at the crown
@@ -135,12 +138,14 @@ def skull():
             z += 0.04 * (y - 0.2)
         # taper the chin
         if y < -0.35:
-            s = 1 - 0.55 * ((-y - 0.35) / 0.35)
-            x *= max(s, 0.45)
+            s = 1 - 0.7 * ((-y - 0.35) / 0.35)
+            x *= max(s, 0.38)
             z *= max(0.5 + 0.5 * s, 0.6)
         # veins and sinew: a little noise
         rng_n = math.sin(x * 31 + y * 17) * math.cos(z * 23 + y * 11)
-        v.co = Vector((x, y, z)) * (1 + 0.012 * rng_n)
+        # skin stretched in cords over the jaw and brow
+        cord = 0.014 * math.sin(x * 55 + y * 6) * (1 if front else 0) * max(0.0, min(0.25, -y - 0.1))
+        v.co = Vector((x, y, z - cord)) * (1 + 0.02 * rng_n)
     return finish(to_object("stalker_head", bm), subdiv=0)
 
 
@@ -231,6 +236,15 @@ def sleeve(length=2.9, d=0.32):
         v.co.y *= 1.05
     for k, v in enumerate(rings[1]):
         v.co.x -= rnd.uniform(0.0, 0.1)
+    # torn strips hanging off the cuff
+    cuff = [Vector(v.co) for v in rings[0]]
+    for k in range(0, len(cuff), 2):
+        a = cuff[k]
+        b = cuff[(k + 1) % len(cuff)]
+        mid = (a + b) / 2
+        tip = mid + Vector((-rnd.uniform(0.25, 0.55), rnd.uniform(-0.05, 0.05), rnd.uniform(-0.03, 0.03)))
+        bm.faces.new((bm.verts.new(a), bm.verts.new(b), bm.verts.new(tip)))
+        bm.faces.new((bm.verts.new(b), bm.verts.new(a), bm.verts.new(tip)))
     return finish(to_object("stalker_sleeve", bm), subdiv=0)
 
 
@@ -273,11 +287,16 @@ def coat():
         bm.faces.new((grid[-1][1], grid[-1][0], grid2[-1][0], grid2[-1][1]))
         bm.faces.new((grid[-1][-1], grid[-1][1], grid2[-1][1], grid2[-1][-1]))
 
-    for i, x in enumerate([-0.72, -0.34, 0.02, 0.36, 0.7]):
-        long = 3.6 if i % 2 == 0 else 2.5
-        strip(x, 0.42 + i * 0.012, 0.42, long, 0.05 + 0.03 * (i % 3), 0.18 + 0.03 * i, 0.35, 1.0)
-    for s in (-1, 1):  # the front rags
-        strip(s * 0.6, -0.46, 0.4, 3.0, -0.04, -0.1, 0.4, 1.4)
+    # seven tails behind, narrower and of every length, each tapering to a ragged point
+    lengths = [3.9, 2.2, 3.4, 2.7, 3.8, 1.9, 3.2]
+    for i, x in enumerate([-0.78, -0.52, -0.26, 0.0, 0.26, 0.52, 0.78]):
+        strip(x, 0.42 + i * 0.008, 0.3, lengths[i], 0.05 + 0.03 * (i % 3), 0.2 + 0.03 * (i % 4), 0.55, 1.6)
+    for s in (-1, 1):  # the front rags, torn to long strips
+        strip(s * 0.62, -0.46, 0.26, 3.3, -0.04, -0.12, 0.6, 2.0)
+        strip(s * 0.4, -0.47, 0.18, 2.1, -0.03, -0.08, 0.7, 2.4)
+    # shreds that hang loose below the torn hem
+    for i, x in enumerate([-0.62, -0.18, 0.3, 0.64]):
+        strip(x, 0.46, 0.1, 1.2, 0.02, 0.1, 0.8, 3.0)
     # a waist band of cloth to hide the joins
     tube(bm, [(0, top + 0.05, 0), (0, top - 0.2, 0)], [0.8, 0.82], sides=16, flat=0.6, close_end=False)
     return finish(to_object("stalker_coat", bm), smooth=False)
@@ -316,7 +335,7 @@ def sheet(objs):
     sc.world = world
     colors = {"stalker_head": (0.71, 0.70, 0.63), "stalker_hand": (0.45, 0.12, 0.12), "stalker_handL": (0.45, 0.12, 0.12), "stalker_forearm": (0.71, 0.70, 0.63),
               "stalker_sleeve": (0.17, 0.16, 0.15), "stalker_coat": (0.17, 0.16, 0.15)}
-    x = -4.6
+    x = -5.8
     for o in objs:
         o.location = Vector((x, 0, 0)) + Vector((0, 0, 0))
         mat = bpy.data.materials.new(o.name)
@@ -332,7 +351,7 @@ def sheet(objs):
         sc.collection.objects.link(lo)
     cam = bpy.data.objects.new("c", bpy.data.cameras.new("c"))
     cam.data.type = "ORTHO"
-    cam.data.ortho_scale = 11
+    cam.data.ortho_scale = 15
     cam.location = (0, -12, 0)
     cam.rotation_euler = (math.radians(90), 0, 0)
     sc.collection.objects.link(cam)
