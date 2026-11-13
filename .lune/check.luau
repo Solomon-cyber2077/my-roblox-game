@@ -37,6 +37,8 @@ local STEPS: { Step } = {
 		args = { "analyze", "--sourcemap=sourcemap.json", `--definitions=@roblox={DEFINITIONS}`, "src" },
 	},
 	{ name = "tests", program = "lune", args = { "run", "test" } },
+	{ name = "R15 poses", program = "lune", args = { "run", "r15-avatar" } },
+	{ name = "R15 injuries", program = "lune", args = { "run", "r15-injury" } },
 	-- every touch target on the phones and tablets meets the thumb minimum and none overlap (lib/TouchLayout)
 	{ name = "touch layout", program = "lune", args = { "run", "layout" } },
 	{ name = "audit", program = "lune", args = { "run", "audit" } },

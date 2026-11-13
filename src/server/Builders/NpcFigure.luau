@@ -8,7 +8,7 @@
 	and both falling back to the kit figure if anything fails to load (or in a headless build, the
 	Lune audit):
 
-	  rig   (`def.rig`) the same blocky R6 body the crew wear (as CrewService's buildR6), in the
+	  rig   (`def.rig`) the same blocky R15 body the crew wear (as CrewService's character builder), in the
 	        resident's own Shirt, Pants and face, with mesh pieces welded to its limbs. Its root is
 	        anchored; it carries the Procedural attribute and the ResidentRig tag, so every client
 	        animates it (CharacterAnimator: idle breathing, a look toward you when you are near).
@@ -23,6 +23,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Npcs = require(ReplicatedStorage.Shared.Config.Npcs)
 local OutfitKit = require(script.Parent.OutfitKit)
+local AvatarRig = require(ReplicatedStorage.Shared.Visual.AvatarRig)
 
 export type Figure = { model: Model, body: BasePart }
 
@@ -56,11 +57,12 @@ local function quiet(part: BasePart)
 	part.Massless = true
 end
 
--- The R6 body in the resident's clothes, or nil if it could not be made.
+-- The R15 body in the resident's clothes, or nil if it could not be made.
 local function buildRig(def: Npcs.NpcDef, spec: Npcs.Rig): Model?
 	local look = def.look
 	local ok, result = pcall(function()
 		local description = Instance.new("HumanoidDescription")
+		AvatarRig.Configure(description)
 		local skin = color(look and look.skin, Color3.fromRGB(226, 178, 140))
 		description.HeadColor = skin
 		description.LeftArmColor = skin
@@ -71,14 +73,14 @@ local function buildRig(def: Npcs.NpcDef, spec: Npcs.Rig): Model?
 		description.RightLegColor = legs
 		local body = Players:CreateHumanoidModelFromDescription(
 			description,
-			Enum.HumanoidRigType.R6,
+			Enum.HumanoidRigType.R15,
 			Enum.AssetTypeVerification.Always
 		)
 		description:Destroy()
 		return body
 	end)
 	if not ok or result == nil then
-		warn(`NpcFigure: {def.id} R6 body did not build: {result}`)
+		warn(`NpcFigure: {def.id} R15 body did not build: {result}`)
 		return nil
 	end
 	local rig = result :: Model
@@ -118,8 +120,9 @@ end
 -- Welds each mesh piece to its limb. Pieces whose mesh fails to load are left off.
 local function addPieces(def: Npcs.NpcDef, rig: Model, spec: Npcs.Rig, service: any)
 	for _, piece in spec.pieces do
-		local limb = rig:FindFirstChild(piece.limb)
-		if not (limb and limb:IsA("BasePart")) then
+		local limb = AvatarRig.Part(rig, piece.limb)
+		local frame = AvatarRig.Frame(rig, piece.limb)
+		if not limb or not frame then
 			continue
 		end
 		local loaded, mesh = pcall(function()
@@ -140,11 +143,9 @@ local function addPieces(def: Npcs.NpcDef, rig: Model, spec: Npcs.Rig, service: 
 			part.Size = Vector3.new(size[1], size[2], size[3])
 		end
 		local o = piece.offset
-		part.CFrame = limb.CFrame
-			* CFrame.new(o[1], o[2], o[3])
-			* CFrame.Angles(0, math.rad(piece.yaw or 0), 0)
+		part.CFrame = frame * CFrame.new(o[1], o[2], o[3]) * CFrame.Angles(0, math.rad(piece.yaw or 0), 0)
 		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = limb
+		weld.Part0 = AvatarRig.Anchor(rig, piece.limb, part.Position) or limb
 		weld.Part1 = part
 		weld.Parent = part
 		part.Parent = rig
@@ -178,7 +179,7 @@ local function dressRig(def: Npcs.NpcDef, model: Model, cframe: CFrame, spec: Np
 	-- then stand the soles on the floor as measured: the pivot and HipHeight the description rig comes
 	-- with left her sunk to the hips in the saloon (stage 4 round 1)
 	local sole = math.huge
-	for _, name in { "Left Leg", "Right Leg" } do
+	for _, name in { "LeftFoot", "RightFoot" } do
 		local leg = rig:FindFirstChild(name)
 		if leg and leg:IsA("BasePart") then
 			sole = math.min(sole, cframe:PointToObjectSpace(leg.Position).Y - leg.Size.Y / 2)

@@ -51,7 +51,10 @@ local prompts: { [Model]: ProximityPrompt } = {}
 local chestPrompt: ProximityPrompt? = nil
 local wasAboard: { [Player]: boolean } = {}
 
-local ARMS: { [string]: string } = { L = "Left Arm", R = "Right Arm" }
+local ARMS: { [string]: { string } } = {
+	L = { "LeftUpperArm", "LeftLowerArm", "LeftHand" },
+	R = { "RightUpperArm", "RightLowerArm", "RightHand" },
+}
 
 local function now(): number
 	return Workspace:GetServerTimeNow()
@@ -96,10 +99,12 @@ local function publish(player: Player)
 	character:SetAttribute("ReturnBy", state.returnBy)
 	local heal = heals[player]
 	character:SetAttribute("Healing", if heal then heal.doneAt else nil)
-	for key, name in ARMS do
-		local arm = character:FindFirstChild(name)
-		if arm and arm:IsA("BasePart") then
-			arm.Transparency = if Injury.missing(state, key :: Injury.Arm) then 1 else 0
+	for key, names in ARMS do
+		for _, name in names do
+			local arm = character:FindFirstChild(name)
+			if arm and arm:IsA("BasePart") then
+				arm.Transparency = if Injury.missing(state, key :: Injury.Arm) then 1 else 0
+			end
 		end
 	end
 end
@@ -139,7 +144,7 @@ function InjuryService.Tear(player: Player, arm: Injury.Arm)
 	end
 	cancelHeal(player, nil)
 	local character = player.Character
-	local part = character and character:FindFirstChild(ARMS[arm]) :: BasePart?
+	local part = character and character:FindFirstChild(ARMS[arm][1]) :: BasePart?
 	-- every client builds the falling arm from this, before the arm is hidden
 	NetService.FireAll("Fx", "ArmTorn", {
 		userId = player.UserId,

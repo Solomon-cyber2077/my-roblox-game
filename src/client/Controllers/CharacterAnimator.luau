@@ -1,6 +1,6 @@
 --!strict
 --[[
-	Plays the crew's bodies on every client. Each R6 character the server builds (its
+	Plays the crew's bodies on every client. Each R15 character the server builds (its
 	Procedural attribute set, CrewService) has its joints written every frame from
 	Animation/CrewPoses: how fast it moves and which way, whether it is in the air,
 	seated, carrying, winded, afraid, or in a Hollow's hands.
@@ -10,7 +10,7 @@
 	the view can bob with the steps. Other crew are read from their replicated velocity,
 	seat and grab attributes.
 
-	The train's residents built as R6 bodies (Builders/NpcFigure, tag ResidentRig) are played the
+	The train's residents built as R15 bodies (Builders/NpcFigure, tag ResidentRig) are played the
 	same way, standing: they breathe and shift, and turn their head to you when you come near. The
 	hall's passengers (Builders/PassengerFigure) share the tag: they walk, sit and wave (WaveAt).
 ]]
@@ -22,6 +22,7 @@ local Workspace = game:GetService("Workspace")
 
 local Registry = require(script.Parent.Parent.Registry)
 local CrewPoses = require(script.Parent.Parent.Animation.CrewPoses)
+local R15Pose = require(script.Parent.Parent.Animation.R15Pose)
 local Passengers = require(game:GetService("ReplicatedStorage").Shared.Config.Passengers)
 
 type Rig = {
@@ -42,7 +43,23 @@ type Rig = {
 
 local CharacterAnimator = {}
 
-local JOINTS = { "RootJoint", "Neck", "Left Shoulder", "Right Shoulder", "Left Hip", "Right Hip" }
+local JOINTS = {
+	"Root",
+	"Waist",
+	"Neck",
+	"LeftShoulder",
+	"RightShoulder",
+	"LeftElbow",
+	"RightElbow",
+	"LeftWrist",
+	"RightWrist",
+	"LeftHip",
+	"RightHip",
+	"LeftKnee",
+	"RightKnee",
+	"LeftAnkle",
+	"RightAnkle",
+}
 local DREAD_NEAR, DREAD_FAR = 10, 75
 local I = CFrame.identity
 
@@ -59,14 +76,13 @@ local function register(player: Player?, character: Model)
 	end
 	local root = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
 	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
-	local torso = character:WaitForChild("Torso", 10)
+	local torso = character:WaitForChild("UpperTorso", 10)
 	if root == nil or humanoid == nil or torso == nil or character:GetAttribute("Procedural") ~= true then
 		return
 	end
 	local motors: { [string]: Motor6D } = {}
 	for _, name in JOINTS do
-		local parent = if name == "RootJoint" then root else torso
-		local motor = parent:WaitForChild(name, 5)
+		local motor = character:FindFirstChild(name, true)
 		if motor and motor:IsA("Motor6D") then
 			motors[name] = motor
 		end
@@ -233,6 +249,7 @@ local function animate(rig: Rig, dt: number, now: number)
 			target = CrewPoses.wave(target, now - waveAt, WAVE)
 		end
 	end
+	local beforeInjury = target
 	if Registry.InjuryController then
 		target = Registry.InjuryController.Pose(model, target, now)
 	end
@@ -245,9 +262,31 @@ local function animate(rig: Rig, dt: number, now: number)
 			else 0
 	end
 
+	local articulated = humanoid.Health > 0 and style == nil and grasp == nil and target == beforeInjury
+	target = R15Pose.convert(
+		target,
+		rig.phase,
+		if grounded then math.clamp(speed / 25, 0, 1) else 0,
+		humanoid.Sit,
+		articulated
+	)
 	local alpha = 1 - math.exp(-rate * dt)
 	for name, motor in rig.motors do
-		local value = (rig.pose[name] or I):Lerp(target[name] or I, alpha)
+		if motor.Parent == nil then
+			continue
+		end
+		local side = string.match(name, "^(Left)") or string.match(name, "^(Right)")
+		if side then
+			local proximal = if string.find(name, "Elbow") or string.find(name, "Wrist")
+				then "Shoulder"
+				elseif string.find(name, "Knee") or string.find(name, "Ankle") then "Hip"
+				else nil
+			local anchor = if proximal then rig.motors[side .. proximal] else nil
+			if proximal and (anchor == nil or anchor.Parent == nil) then
+				continue
+			end
+		end
+		local value = (rig.pose[name] or I):Lerp(R15Pose.inJoint(target[name] or I, motor.C0), alpha)
 		rig.pose[name] = value
 		motor.Transform = value
 	end
@@ -271,7 +310,7 @@ function CharacterAnimator.Start()
 		end
 	end
 	-- after the engine's own animation step, so these transforms are the ones drawn
-	RunService.Stepped:Connect(function(_, dt: number)
+	RunService.PreSimulation:Connect(function(dt: number)
 		local now = Workspace:GetServerTimeNow()
 		local phone = Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
 		for _, rig in rigs do

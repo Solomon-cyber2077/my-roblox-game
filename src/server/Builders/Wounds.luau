@@ -30,22 +30,22 @@ local DROPS = ColorSequence.new(Color3.fromRGB(70, 10, 12), Color3.fromRGB(38, 6
 local FLUSH = 0.02 -- a mark stands this far off the limb's skin
 
 -- The limb each area marks (a grip on the head marks the neck: the head is a mesh) and the joints
--- (on the Torso) a death there breaks.
+-- a death there breaks. Each R15 limb keeps its distal joints when its root is severed.
 local LIMB: { [Grabs.Area]: string } = {
-	Head = "Torso",
-	Torso = "Torso",
-	LeftArm = "Left Arm",
-	RightArm = "Right Arm",
-	LeftLeg = "Left Leg",
-	RightLeg = "Right Leg",
+	Head = "UpperTorso",
+	Torso = "UpperTorso",
+	LeftArm = "LeftUpperArm",
+	RightArm = "RightUpperArm",
+	LeftLeg = "LeftUpperLeg",
+	RightLeg = "RightUpperLeg",
 }
 local JOINTS: { [Grabs.Area]: { string } } = {
 	Head = { "Neck" },
-	Torso = { "Left Hip", "Right Hip" },
-	LeftArm = { "Left Shoulder" },
-	RightArm = { "Right Shoulder" },
-	LeftLeg = { "Left Hip" },
-	RightLeg = { "Right Hip" },
+	Torso = { "LeftHip", "RightHip" },
+	LeftArm = { "LeftShoulder" },
+	RightArm = { "RightShoulder" },
+	LeftLeg = { "LeftHip" },
+	RightLeg = { "RightHip" },
 }
 
 local function folder(character: Model): Folder
@@ -89,13 +89,14 @@ function Wounds.mark(character: Model, area: Grabs.Area, rng: Random)
 	-- the front, the back or the outer side of the limb (the torso's sides are under the arms, a
 	-- limb's inner side against the body); a grip on the head marks the neck's top band
 	local faces = { Vector3.zAxis, -Vector3.zAxis }
-	if limb.Name ~= "Torso" then
+	if limb.Name ~= "UpperTorso" then
 		table.insert(faces, if string.find(limb.Name, "Left", 1, true) then -Vector3.xAxis else Vector3.xAxis)
 	end
 	local normal = faces[rng:NextInteger(1, #faces)]
 	local across = if math.abs(normal.Z) > 0 then Vector3.xAxis else Vector3.zAxis
-	local spanAcross = math.abs((half * across).Magnitude) - 0.3
-	local high = if area == "Head" then half.Y - 0.35 else rng:NextNumber(-half.Y + 0.35, half.Y - 0.35)
+	local spanAcross = math.max(0, (half * across).Magnitude - 0.3)
+	local spanHigh = math.max(0, half.Y - 0.35)
+	local high = if area == "Head" then spanHigh else rng:NextNumber(-spanHigh, spanHigh)
 	local depth = (half * normal).Magnitude + FLUSH
 	local spot = normal * depth + across * rng:NextNumber(-spanAcross, spanAcross) + Vector3.yAxis * high
 	local facing = CFrame.lookAt(spot, spot + normal) * CFrame.Angles(0, 0, rng:NextNumber(-0.7, 0.7))
@@ -166,22 +167,20 @@ end
 
 -- A death in its grip: the limb `area` comes away. Returns how many joints it broke.
 function Wounds.sever(character: Model, area: Grabs.Area): number
-	local torso = character:FindFirstChild("Torso")
-	if torso == nil or not torso:IsA("BasePart") then
-		return 0
-	end
 	local broken = 0
 	for _, name in JOINTS[area] do
-		local motor = torso:FindFirstChild(name)
+		local motor = character:FindFirstChild(name, true)
 		if motor == nil or not motor:IsA("Motor6D") then
 			continue
 		end
+		local torso = motor.Part0
 		local limb = motor.Part1
-		if limb == nil then
+		if torso == nil or limb == nil then
 			continue
 		end
 		local joint = torso.CFrame * motor.C0
-		local out = (limb.Position - torso.Position).Unit
+		local direction = limb.Position - torso.Position
+		local out = if direction.Magnitude > 0.001 then direction.Unit else -torso.CFrame.UpVector
 		motor:Destroy()
 		broken += 1
 		local diameter = math.min(limb.Size.X, limb.Size.Z) * 0.92
@@ -191,6 +190,21 @@ function Wounds.sever(character: Model, area: Grabs.Area): number
 		limb.Anchored = false
 		limb.CanCollide = true
 		limb.Massless = false
+		-- Elbows, wrists, knees and ankles remain connected to the detached root.
+		local prefix = string.match(limb.Name, "^(Left)Upper") or string.match(limb.Name, "^(Right)Upper")
+		if prefix then
+			local distal: { string } = if string.find(limb.Name, "Arm", 1, true)
+				then { prefix .. "LowerArm", prefix .. "Hand" }
+				else { prefix .. "LowerLeg", prefix .. "Foot" }
+			for _, segmentName in distal do
+				local segment = character:FindFirstChild(segmentName)
+				if segment and segment:IsA("BasePart") then
+					segment.Anchored = false
+					segment.CanCollide = true
+					segment.Massless = false
+				end
+			end
+		end
 		if limb:CanSetNetworkOwnership() then
 			limb:SetNetworkOwner(nil)
 		end

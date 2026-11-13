@@ -6,7 +6,7 @@
 	boarding volume (Aboard / Afield). Stragglers stay Stragglers until they board.
 	Every elimination path ends in CrewService.Eliminate, which names the cause.
 
-	Every character is a blocky R6 rig in the player's own avatar, built here from their
+	Every character is a blocky R15 rig in the player's own avatar, built here from their
 	HumanoidDescription. It has no default Animate script: every client animates it
 	procedurally (CharacterAnimator), and its joints hold on death so a body falls as a
 	body. Health comes back slowly, as it did with the default character scripts.
@@ -25,6 +25,7 @@ local Ledger = require(Shared.Logic.Ledger)
 local RunRules = require(Shared.Logic.RunRules)
 local Safe = require(Shared.Util.Safe)
 local Types = require(Shared.Types)
+local AvatarRig = require(Shared.Visual.AvatarRig)
 
 local NetService = require(script.Parent.NetService)
 local Registry = require(script.Parent.Parent.Registry)
@@ -152,25 +153,36 @@ local function describe(player: Player): HumanoidDescription
 	return final:Clone()
 end
 
--- A blocky R6 body in the player's avatar, ready for CharacterAnimator, or nil if it failed.
-local function buildR6(player: Player): Model?
+-- A blocky R15 body in the player's avatar, ready for CharacterAnimator, or nil if it failed.
+local function buildR15(player: Player): Model?
 	local ok, result = pcall(function()
 		local description = describe(player)
-		-- Preserve clothes, colours and accessories; package meshes can make an R6 rig
+		-- Preserve clothes, colours and accessories; package meshes can make an R15 rig
 		-- non-blocky and invalidate the hands/feet assumed by the procedural poses.
-		for _, property in { "Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg" } do
-			(description :: any)[property] = 0
-		end
+		AvatarRig.Configure(description)
 		local body = Players:CreateHumanoidModelFromDescription(
 			description,
-			Enum.HumanoidRigType.R6,
+			Enum.HumanoidRigType.R15,
 			Enum.AssetTypeVerification.Always
 		)
 		description:Destroy()
 		return body
 	end)
 	if not ok or result == nil then
-		warn(`[Crew] could not build an R6 body for {player.Name}: {result}`)
+		-- Retry with a plain R15 description when an avatar asset cannot load.
+		local fallback = Instance.new("HumanoidDescription")
+		AvatarRig.Configure(fallback)
+		ok, result = pcall(function()
+			return Players:CreateHumanoidModelFromDescription(
+				fallback,
+				Enum.HumanoidRigType.R15,
+				Enum.AssetTypeVerification.Always
+			)
+		end)
+		fallback:Destroy()
+	end
+	if not ok or result == nil then
+		warn(`[Crew] could not build an R15 body for {player.Name}: {result}`)
 		return nil
 	end
 	local model = result :: Model
@@ -200,7 +212,7 @@ function CrewService.LoadCharacterAt(player: Player, cframe: CFrame)
 	pcall(function()
 		player:RequestStreamAroundAsync(cframe.Position, 5)
 	end)
-	local body = buildR6(player)
+	local body = buildR15(player)
 	if spawnGeneration[player] ~= generation or not player:IsDescendantOf(Players) then
 		if body then
 			body:Destroy()
@@ -222,7 +234,8 @@ function CrewService.LoadCharacterAt(player: Player, cframe: CFrame)
 			end)
 		end
 	else
-		player:LoadCharacterAsync()
+		warn(`[Crew] R15 spawn failed for {player.Name}; keeping the previous character`)
+		return
 	end
 	if spawnGeneration[player] ~= generation then
 		return

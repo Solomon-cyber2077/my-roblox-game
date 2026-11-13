@@ -6,6 +6,7 @@ local Rules = require(Shared.Logic.CrewClothing)
 local ContentProvider = game:GetService("ContentProvider")
 local RunService = game:GetService("RunService")
 local Visual = {}
+local AvatarRig = require(script.Parent.AvatarRig)
 type Snapshot = { originals: Folder, cleanup: RBXScriptConnection }
 local snapshots: { [Model]: Snapshot } = {}
 local function asset(id: number): string
@@ -96,7 +97,7 @@ function Visual.Apply(character: Model, recipe: Config.Recipe): Folder?
 	end
 	-- Validate and stage everything before touching the avatar. No yields below.
 	for _, spec in recipe.accessories do
-		local target = character:FindFirstChild(spec.limb)
+		local target = AvatarRig.Part(character, spec.limb)
 		if target == nil or not target:IsA("BasePart") then
 			return nil
 		end
@@ -104,7 +105,7 @@ function Visual.Apply(character: Model, recipe: Config.Recipe): Folder?
 	local folder = Instance.new("Folder")
 	folder.Name = "CrewUniform"
 	for _, spec in recipe.accessories do
-		local target = character:FindFirstChild(spec.limb) :: BasePart
+		local target = AvatarRig.Part(character, spec.limb) :: BasePart
 		local part = Instance.new("Part")
 		part.Name = spec.name
 		part.Size = Vector3.one
@@ -113,7 +114,7 @@ function Visual.Apply(character: Model, recipe: Config.Recipe): Folder?
 		part.CanTouch = false
 		part.CanQuery = false
 		part.Massless = true
-		part.CFrame = target.CFrame
+		part.CFrame = (AvatarRig.Frame(character, spec.limb) or target.CFrame)
 			* CFrame.new(spec.offset[1], spec.offset[2], spec.offset[3])
 			* CFrame.Angles(0, math.rad(spec.yaw or 0), 0)
 		local mesh = Instance.new("SpecialMesh")
@@ -123,7 +124,7 @@ function Visual.Apply(character: Model, recipe: Config.Recipe): Folder?
 		mesh.Scale = Vector3.new(spec.size[1], spec.size[2], spec.size[3])
 		mesh.Parent = part
 		local weld = Instance.new("WeldConstraint")
-		weld.Part0 = target
+		weld.Part0 = AvatarRig.Anchor(character, spec.limb, part.Position) or target
 		weld.Part1 = part
 		weld.Parent = part
 		part.Parent = folder

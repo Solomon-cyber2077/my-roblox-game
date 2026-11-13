@@ -166,16 +166,19 @@ function InjuryController.Pose(character: Model, base: CrewPoses.Pose, now: numb
 		else 0
 	local healing = if typeof(character:GetAttribute("Healing")) == "number" then 1 else 0
 	local p = Config.Presentation
-	return CrewPoses.injured(
-		base,
-		missing,
-		motion.arm,
-		if motion.torn then (now - motion.torn) / p.RecoilSeconds else 0,
-		if motion.restored then (now - motion.restored) / p.RegrowSeconds else 0,
-		warning,
-		healing,
-		if motion.died then math.clamp((now - motion.died) / p.CollapseSeconds, 0, 1) else 0
-	)
+	local recoil = if motion.torn then (now - motion.torn) / p.RecoilSeconds else 0
+	local regrow = if motion.restored then (now - motion.restored) / p.RegrowSeconds else 0
+	local collapse = if motion.died then math.clamp((now - motion.died) / p.CollapseSeconds, 0, 1) else 0
+	-- Preserve identity when no injury pose is active so the animator can add normal limb articulation.
+	if
+		missing == ""
+		and not (recoil > 0 and recoil < 1)
+		and not (regrow > 0 and regrow < 1)
+		and collapse <= 0
+	then
+		return base
+	end
+	return CrewPoses.injured(base, missing, motion.arm, recoil, regrow, warning, healing, collapse)
 end
 
 local function serverNow(): number
@@ -199,7 +202,8 @@ end
 local function spawnLimb(userId: number, arm: string, from: CFrame?)
 	local player = Players:GetPlayerByUserId(userId)
 	local character = player and player.Character
-	local name = if arm == "L" then "Left Arm" else "Right Arm"
+	local sideName = if arm == "L" then "Left" else "Right"
+	local name = sideName .. "UpperArm"
 	local source = character and character:FindFirstChild(name) :: BasePart?
 	if character == nil or source == nil then
 		return
@@ -207,21 +211,31 @@ local function spawnLimb(userId: number, arm: string, from: CFrame?)
 	-- a small rig of its own so the wearer's shirt still dresses the arm
 	local model = Instance.new("Model")
 	model.Name = "TornArm"
-	local part = source:Clone()
-	for _, child in part:GetChildren() do
-		if not (child:IsA("Decal") or child:IsA("SpecialMesh") or child:IsA("SurfaceAppearance")) then
-			child:Destroy()
+	local segments: { BasePart } = {}
+	local origin = from or source.CFrame
+	for _, segmentName in { name, sideName .. "LowerArm", sideName .. "Hand" } do
+		local segment = character:FindFirstChild(segmentName)
+		if segment == nil or not segment:IsA("BasePart") then
+			continue
 		end
+		local clone = segment:Clone()
+		for _, child in clone:GetChildren() do
+			if not (child:IsA("Decal") or child:IsA("SpecialMesh") or child:IsA("SurfaceAppearance")) then
+				child:Destroy()
+			end
+		end
+		clone.Transparency = 0
+		clone.LocalTransparencyModifier = 0
+		clone.Anchored = true
+		clone.CanCollide = false
+		clone.CanQuery = false
+		clone.CanTouch = false
+		clone.Massless = true
+		clone.CFrame = origin * source.CFrame:ToObjectSpace(segment.CFrame)
+		clone.Parent = model
+		table.insert(segments, clone)
 	end
-	part.Transparency = 0
-	part.LocalTransparencyModifier = 0
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanQuery = false
-	part.CanTouch = false
-	part.Massless = true
-	part.CFrame = from or source.CFrame
-	part.Parent = model
+	local part = segments[1]
 	local shirt = character:FindFirstChildOfClass("Shirt")
 	if shirt then
 		shirt:Clone().Parent = model
@@ -231,6 +245,8 @@ local function spawnLimb(userId: number, arm: string, from: CFrame?)
 		colors:Clone().Parent = model
 	end
 	local humanoid = Instance.new("Humanoid")
+	humanoid.RigType = Enum.HumanoidRigType.R15
+	humanoid.RequiresNeck = false
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
 	humanoid.EvaluateStateMachine = false
@@ -243,7 +259,7 @@ local function spawnLimb(userId: number, arm: string, from: CFrame?)
 	evict()
 
 	-- away from the body on the arm's side, up a little, then down to the ground, tumbling
-	local torso = character:FindFirstChild("Torso") :: BasePart?
+	local torso = character:FindFirstChild("UpperTorso") :: BasePart?
 	local start = part.CFrame
 	local side = if torso
 		then (if arm == "L" then -torso.CFrame.RightVector else torso.CFrame.RightVector)
@@ -273,17 +289,21 @@ local function spawnLimb(userId: number, arm: string, from: CFrame?)
 			if position.Y <= floorY or age >= L.SettleSeconds then
 				-- lie on the ground on its side
 				local yaw = select(2, (start.Rotation * turn):ToEulerAnglesYXZ())
-				part.CFrame = CFrame.new(position.X, floorY, position.Z)
-					* CFrame.Angles(0, yaw, 0)
-					* CFrame.Angles(0, 0, math.rad(90))
+				model:PivotTo(
+					CFrame.new(position.X, floorY, position.Z)
+						* CFrame.Angles(0, yaw, 0)
+						* CFrame.Angles(0, 0, math.rad(90))
+				)
 				resting = true
 			else
-				part.CFrame = CFrame.new(position) * start.Rotation * turn
+				model:PivotTo(CFrame.new(position) * start.Rotation * turn)
 			end
 		end
 		local fadeFrom = L.RemoveSeconds - 1.5
 		if age >= fadeFrom then
-			part.Transparency = math.clamp((age - fadeFrom) / 1.5, 0, 1)
+			for _, segment in segments do
+				segment.Transparency = math.clamp((age - fadeFrom) / 1.5, 0, 1)
+			end
 		end
 		if age >= L.RemoveSeconds then
 			(connection :: RBXScriptConnection):Disconnect()
@@ -350,18 +370,32 @@ end
 
 -- Where the arm met the body, in the world (the arm's own frame from the server when it has one).
 local function shoulderOf(character: Model, arm: string, from: CFrame?): Vector3?
-	if from then
-		return (from * CFrame.new(0, 0.8, 0)).Position
+	local sideName = if arm == "L" then "Left" else "Right"
+	local upperArm = character:FindFirstChild(sideName .. "UpperArm")
+	if from and upperArm and upperArm:IsA("BasePart") then
+		local attachment = upperArm:FindFirstChild(sideName .. "ShoulderRigAttachment")
+		if attachment and attachment:IsA("Attachment") then
+			return (from * attachment.CFrame).Position
+		end
+		return (from * CFrame.new(0, upperArm.Size.Y / 2, 0)).Position
 	end
-	local torso = character:FindFirstChild("Torso") :: BasePart?
+	local torso = character:FindFirstChild("UpperTorso") :: BasePart?
+	local shoulder = torso and torso:FindFirstChild(sideName .. "ShoulderRigAttachment")
+	if shoulder and shoulder:IsA("Attachment") then
+		return shoulder.WorldPosition
+	end
 	return if torso
-		then (torso.CFrame * CFrame.new(if arm == "L" then -1.1 else 1.1, 0.75, 0)).Position
+		then (torso.CFrame * CFrame.new(
+			(if arm == "L" then -1 else 1) * torso.Size.X / 2,
+			torso.Size.Y / 2,
+			0
+		)).Position
 		else nil
 end
 
 -- Every client: a dark burst where the arm came away and a brief drip from the shoulder.
 local function burst(character: Model, arm: string, at: Vector3)
-	local torso = character:FindFirstChild("Torso") :: BasePart?
+	local torso = character:FindFirstChild("UpperTorso") :: BasePart?
 	local outward = if torso
 		then (if arm == "L" then -torso.CFrame.RightVector else torso.CFrame.RightVector)
 		else Vector3.xAxis

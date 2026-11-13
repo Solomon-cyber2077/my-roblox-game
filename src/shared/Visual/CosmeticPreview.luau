@@ -16,29 +16,31 @@ function Preview.build(def: Cosmetics.CosmeticDef): Model?
 		if not recipe or not ClothingRules.available(recipe) then
 			return nil
 		end
+		-- A synchronous segmented mannequin keeps changing cards free of asset-fetch races.
 		local model = Kit.model("UniformPreview")
-		local body = Color3.fromRGB(202, 164, 132)
-		local root = Kit.block(model, Vector3.new(2, 2, 1), CFrame.new(0, 1.8, 0), body, { collide = false })
-		root.Name = "HumanoidRootPart"
+		local skin = Color3.fromRGB(202, 164, 132)
+		local function segment(name: string, size: Vector3, position: Vector3, color: Color3): BasePart
+			local part = Kit.block(model, size, CFrame.new(position), color, { collide = false })
+			part.Name = name
+			return part
+		end
+		local root = segment("HumanoidRootPart", Vector3.new(2, 2, 1), Vector3.new(0, 1.8, 0), skin)
 		root.Transparency = 1
-		local torso = Kit.block(model, Vector3.new(2, 2, 1), CFrame.new(0, 1.8, 0), DARK, { collide = false })
-		torso.Name = "Torso"
-		model.PrimaryPart = torso
-		local head = Kit.block(model, Vector3.new(2, 1, 1), CFrame.new(0, 3.3, 0), body, { collide = false })
-		head.Name = "Head"
-		local limbs: { { name: string, position: Vector3 } } = {
-			{ name = "Left Arm", position = Vector3.new(-1.5, 1.8, 0) },
-			{ name = "Right Arm", position = Vector3.new(1.5, 1.8, 0) },
-			{ name = "Left Leg", position = Vector3.new(-0.5, 0, 0) },
-			{ name = "Right Leg", position = Vector3.new(0.5, 0, 0) },
-		}
-		for _, item in limbs do
-			local part =
-				Kit.block(model, Vector3.new(1, 2, 1), CFrame.new(item.position), body, { collide = false })
-			part.Name = item.name
+		model.PrimaryPart = root
+		segment("UpperTorso", Vector3.new(2, 1.6, 1), Vector3.new(0, 2, 0), DARK)
+		segment("LowerTorso", Vector3.new(2, 0.4, 1), Vector3.new(0, 1, 0), DARK)
+		segment("Head", Vector3.new(2, 1, 1), Vector3.new(0, 3.3, 0), skin)
+		for _, side in { "Left", "Right" } do
+			local sign = if side == "Left" then -1 else 1
+			segment(side .. "UpperArm", Vector3.new(1, 1.2, 1), Vector3.new(sign * 1.5, 2.2, 0), skin)
+			segment(side .. "LowerArm", Vector3.new(1, 0.6, 1), Vector3.new(sign * 1.5, 1.3, 0), skin)
+			segment(side .. "Hand", Vector3.new(1, 0.2, 1), Vector3.new(sign * 1.5, 0.9, 0), skin)
+			segment(side .. "UpperLeg", Vector3.new(1, 1, 1), Vector3.new(sign * 0.5, 0.3, 0), skin)
+			segment(side .. "LowerLeg", Vector3.new(1, 0.8, 1), Vector3.new(sign * 0.5, -0.6, 0), skin)
+			segment(side .. "Foot", Vector3.new(1, 0.2, 1), Vector3.new(sign * 0.5, -1.1, 0), skin)
 		end
 		local humanoid = Instance.new("Humanoid")
-		humanoid.RigType = Enum.HumanoidRigType.R6
+		humanoid.RigType = Enum.HumanoidRigType.R15
 		humanoid.Parent = model
 		if ClothingVisual.Apply(model, recipe) == nil then
 			model:Destroy()
