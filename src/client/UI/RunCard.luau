@@ -173,7 +173,7 @@ function RunCard.mount(gui: ScreenGui)
 		Size = UDim2.new(1, 0, 1, 80),
 		Position = UDim2.fromOffset(0, -60),
 		BackgroundColor3 = Theme.Color.black,
-		BackgroundTransparency = 0.35,
+		BackgroundTransparency = 1, -- no dimming: the world stays visible behind the ticket
 		Text = "",
 		AutoButtonColor = false,
 		Modal = true, -- the cursor shows over the card, first person included
