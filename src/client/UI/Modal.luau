@@ -70,6 +70,10 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 			if current then
 				current:close()
 			end
+			-- never left dimming the screen with no window on it
+			if current == nil and backdrop then
+				backdrop.Visible = false
+			end
 		end)
 	end
 
@@ -212,6 +216,14 @@ function Modal.new(gui: ScreenGui, titleText: string, size: Vector2): Modal
 		end,
 		close = function(self: Modal)
 			if not frame.Visible then
+				-- hidden some other way: still let go of the backdrop and the close binding
+				if current == self then
+					current = nil
+					if backdrop then
+						backdrop.Visible = false
+					end
+					ContextActionService:UnbindAction("LTO_CloseModal")
+				end
 				return
 			end
 			frame.Visible = false
