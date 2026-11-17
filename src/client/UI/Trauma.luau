@@ -9,7 +9,8 @@
 	              veins crack in from the screen's edges and fade (no splashes of blood)
 	  adrenaline  after you tear free: everything snaps sharp and over-bright, your heart races
 	              and slowly settles and you gasp for breath, for Tuning.Trauma.AdrenalineSeconds
-	  death       in its grip: the tunnel shuts to black-red
+	  death       in its grip: the tunnel shuts to black-red, holds while the elimination card is
+	              up, then opens so a dead player can watch the crew (Logic/Grab.deathTunnel)
 	  torn        an arm comes away (InjuryController): the view whites out for an instant, the
 	              dark floods in hardest from the torn side, the colour all but goes and the world
 	              swims, veins crack in from that side; it ebbs over the shock (Config/Injury Tear)
@@ -23,6 +24,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
+local Grab = require(ReplicatedStorage.Shared.Logic.Grab)
 local TearFeedback = require(ReplicatedStorage.Shared.Logic.TearFeedback)
 
 local Ui = require(script.Parent.Ui)
@@ -52,7 +54,8 @@ local stressTarget = 0
 local hit = 0 -- 0..1, spikes on a bite and falls away fast
 local beat = 0 -- 0..1, the last heartbeat's throb
 local rush = 0 -- 0..1, adrenaline after an escape
-local dead = 0 -- 0..1, the tunnel shutting at a death in its grip
+local dead = 0 -- 0..1, the tunnel shut by a death in its grip
+local diedAt: number? = nil -- os.clock() of that death (its curve: Logic/Grab.deathTunnel)
 local tornAt: number? = nil -- os.clock() an arm came away (its shock: Logic/TearFeedback.shock)
 local flash = 0 -- 0..1, its white-out instant, gone in a fraction of a second
 local tornSide = 0 -- -1 the left arm, 1 the right (the screen edge the dark floods from)
@@ -135,8 +138,12 @@ local function step(dt: number)
 			Trauma.beat(0.5 * rush)
 		end
 	end
-	if dead > 0 then
-		dead = math.min(dead + dt / 1.2, 1)
+	if diedAt then
+		local since = os.clock() - diedAt
+		dead = Grab.deathTunnel(since)
+		if since > T.DeathHoldSeconds and dead <= 0 then
+			diedAt = nil
+		end
 	end
 	flash *= math.exp(-dt * 6)
 	local shock = if tornAt then TearFeedback.shock(os.clock() - tornAt) else 0
@@ -162,7 +169,7 @@ local function step(dt: number)
 	g.Contrast = 0.22 * stress + 0.18 * hit + 0.16 * rush + 0.25 * shock
 	g.Brightness = 0.22 * hit + 0.05 * rush * beat - 0.1 * dead + 0.55 * flash - 0.06 * shock
 	g.TintColor = Color3.new(1, 1, 1):Lerp(STRESS_TINT, stress):Lerp(RUSH_TINT, rush):Lerp(STRESS_TINT, shock)
-	g.Enabled = stress > 0.01 or hit > 0.01 or rush > 0.01 or dead > 0 or shock > 0.01 or flash > 0.01
+	g.Enabled = stress > 0.01 or hit > 0.01 or rush > 0.01 or dead > 0.005 or shock > 0.01 or flash > 0.01
 	b.Size = T.StressBlur * stress + T.HitBlur * hit + T.TornBlur * (0.35 * shock + flash)
 	b.Enabled = b.Size > 0.2
 end
@@ -215,6 +222,7 @@ function Trauma.seize()
 	stressTarget = 1
 	rush = 0
 	dead = 0
+	diedAt = nil
 	Trauma.hit(1)
 end
 
@@ -254,17 +262,20 @@ function Trauma.release(alive: boolean)
 	end
 end
 
--- You died in its grip: the tunnel shuts.
+-- You died in its grip: the tunnel shuts, then opens again (a dead player stays dead and watches).
 function Trauma.died()
 	stressTarget = 0
 	rush = 0
-	dead = math.max(dead, 0.01)
+	if diedAt == nil then
+		diedAt = os.clock()
+	end
 end
 
 -- A new body: the screen clears at once.
 function Trauma.clear()
 	stress, stressTarget, hit, beat, rush, dead, flash = 0, 0, 0, 0, 0, 0, 0
 	tornAt = nil
+	diedAt = nil
 	for _, vein in veins:GetChildren() do
 		vein:Destroy()
 	end

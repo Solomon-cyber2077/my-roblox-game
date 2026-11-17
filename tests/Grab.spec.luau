@@ -144,3 +144,29 @@ describe("Grab", function()
 		expect(Grab.dps(hard, brute)).toBeGreaterThan(Grab.dps(hard, crawler))
 	end)
 end)
+
+describe("Grab.deathTunnel", function()
+	local T = Tuning.Trauma
+
+	it("shuts, holds while the elimination card is up, then opens and stays open", function()
+		expect(Grab.deathTunnel(0)).toBe(0)
+		expect(Grab.deathTunnel(T.DeathShutSeconds / 2)).toBeGreaterThan(0.4)
+		expect(Grab.deathTunnel(T.DeathShutSeconds)).toBe(1)
+		expect(Grab.deathTunnel(T.DeathHoldSeconds)).toBe(1)
+		expect(Grab.deathTunnel(T.DeathHoldSeconds + T.DeathOpenSeconds)).toBe(0)
+		-- a dead player watching the crew for the rest of the run sees through it
+		expect(Grab.deathTunnel(60)).toBe(0)
+		expect(Grab.deathTunnel(600)).toBe(0)
+	end)
+
+	it("never rises again once it starts to open", function()
+		local last = 1
+		local t = T.DeathHoldSeconds
+		while t < T.DeathHoldSeconds + T.DeathOpenSeconds + 1 do
+			local v = Grab.deathTunnel(t)
+			expect(v <= last + 1e-9).toBe(true)
+			last = v
+			t += 1 / 30
+		end
+	end)
+end)

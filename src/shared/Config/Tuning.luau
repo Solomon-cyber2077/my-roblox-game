@@ -184,6 +184,12 @@ local Tuning = {
 		StressBlur = 3, -- BlurEffect.Size while held
 		HitBlur = 12, -- and added at a bite's instant
 		TornBlur = 16, -- an arm coming away: this at its white-out instant, a third of it through the shock
+		-- dying in a grip: the tunnel shuts over DeathShut, stays shut to DeathHold (the elimination
+		-- card is up until about 4 s), then opens over DeathOpen so a dead player watches the crew
+		-- with a clear view instead of under the dark until the run ends
+		DeathShutSeconds = 1.2,
+		DeathHoldSeconds = 3.6,
+		DeathOpenSeconds = 1.4,
 		WoundsPerLimb = 3, -- marks a limb can carry before new ones replace the oldest
 		SeverImpulse = 18, -- studs/s a severed limb is thrown at
 	},

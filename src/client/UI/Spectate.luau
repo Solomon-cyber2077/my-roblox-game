@@ -2,12 +2,14 @@
 --[[
 	Elimination card and spectator bar. The card names the cause in large type,
 	says whether a flare can still bring you back, then shrinks into a bar that
-	shows who you are watching (Q/E, shoulder buttons or the arrows to switch).
+	shows who you are watching (Q/E, shoulder buttons, the arrow keys, or a tap on the arrows
+	either side of the bar to switch; phones have only the tap).
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
 local DeathCause = require(ReplicatedStorage.Shared.Logic.DeathCause)
 local Registry = require(script.Parent.Parent.Registry)
@@ -23,6 +25,7 @@ local cardLine: TextLabel
 local cardHope: TextLabel
 local bar: ImageLabel
 local barLabel: TextLabel
+local arrows: { TextButton } = {}
 local targetIndex = 1
 
 local function aliveOthers(): { Player }
@@ -49,8 +52,21 @@ local function refreshTarget()
 	end
 	targetIndex = (targetIndex - 1) % #others + 1
 	local target = others[targetIndex]
-	barLabel.Text = `WATCHING {string.upper(target.DisplayName)}  ·  Q / E TO SWITCH`
+	local several = #others > 1
+	-- the key hint only where there are keys; touch players have the arrows
+	local keys = UserInputService:GetLastInputType() ~= Enum.UserInputType.Touch
+	barLabel.Text = if several and keys
+		then `WATCHING {string.upper(target.DisplayName)}  ·  Q / E TO SWITCH`
+		else `WATCHING {string.upper(target.DisplayName)}`
+	for _, arrow in arrows do
+		arrow.Visible = several
+	end
 	Registry.CameraController.SetSpectateTarget(target)
+end
+
+local function cycle(step: number)
+	targetIndex += step
+	refreshTarget()
 end
 
 function Spectate.mount(gui: ScreenGui)
@@ -118,6 +134,21 @@ function Spectate.mount(gui: ScreenGui)
 		XAlign = Enum.TextXAlignment.Center,
 	})
 	barLabel.Parent = bar
+	-- tap targets just outside the bar's ends, thumb-sized after the phone scale
+	for _, side in { -1, 1 } do
+		local arrow = Ui.button(if side < 0 then "<" else ">", "Secondary", function()
+			cycle(side)
+		end, {
+			Name = if side < 0 then "Previous" else "Next",
+			Size = UDim2.fromOffset(60, 44),
+			Position = UDim2.new(if side < 0 then 0 else 1, side * 8, 0.5, 0),
+			AnchorPoint = Vector2.new(if side < 0 then 1 else 0, 0.5),
+			TextSize = 26,
+		})
+		arrow.Visible = false
+		arrow.Parent = bar
+		table.insert(arrows, arrow)
+	end
 
 	ContextActionService:BindAction(
 		"LTO_SpectateCycle",
@@ -128,8 +159,7 @@ function Spectate.mount(gui: ScreenGui)
 			local forward = input.KeyCode == Enum.KeyCode.E
 				or input.KeyCode == Enum.KeyCode.ButtonR1
 				or input.KeyCode == Enum.KeyCode.Right
-			targetIndex += if forward then 1 else -1
-			refreshTarget()
+			cycle(if forward then 1 else -1)
 			return Enum.ContextActionResult.Sink
 		end,
 		false,

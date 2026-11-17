@@ -93,4 +93,19 @@ function Grab.order(kindName: string, seed: number): { Grabs.Def }
 	return Rng.new(Rng.derive(seed, "grab")):shuffle(list)
 end
 
+-- How shut the screen's tunnel is (0 open, 1 shut) `t` seconds after dying in a grip
+-- (UI/Trauma): it closes, holds while the elimination card is up, then opens again and stays open.
+function Grab.deathTunnel(t: number): number
+	local T = Tuning.Trauma
+	if t <= 0 then
+		return 0
+	elseif t < T.DeathShutSeconds then
+		return t / T.DeathShutSeconds
+	elseif t <= T.DeathHoldSeconds then
+		return 1
+	end
+	local u = math.clamp((t - T.DeathHoldSeconds) / T.DeathOpenSeconds, 0, 1)
+	return 1 - u * u * (3 - 2 * u)
+end
+
 return table.freeze(Grab)
