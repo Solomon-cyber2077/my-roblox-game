@@ -467,13 +467,16 @@ WEAR.TicketClerk = { shirt = 72247674941511, pants = 114713283061429, face = 123
 WEAR.LineMastery = { shirt = 96525135691204, pants = 124210362610200, face = 75741414994992, pieces = {} }
 -- their hair and hats are the passengers' sculpted pieces (same atlas): a Roblox head with a painted face
 -- (passenger_faces.py) and the kit's ball head left off, as the passengers wear them
--- her hair up in a bun, no bonnet behind the counter: the Mother's hair, a touch larger and higher, since
--- with no bonnet over it the head showed through
-local pellHair = table.clone(HEAD_PIECES.Mother[1])
-pellHair.size = { pellHair.size[1] * 1.07, pellHair.size[2] * 1.07, pellHair.size[3] * 1.07 }
-pellHair.offset = { pellHair.offset[1], pellHair.offset[2] + 0.04, pellHair.offset[3] }
-HEAD_PIECES.TeaRoom = { pellHair }
-HEAD_PIECES.Outfitter = { HEAD_PIECES.Clerk[1] }
+-- hair made to sit under a hat, worn bare: a touch larger and higher, since with nothing over it the head
+-- showed through the crown
+local function bareHair(piece: WearPiece): WearPiece
+	local bare = table.clone(piece)
+	bare.size = { piece.size[1] * 1.07, piece.size[2] * 1.07, piece.size[3] * 1.07 }
+	bare.offset = { piece.offset[1], piece.offset[2] + 0.04, piece.offset[3] }
+	return bare
+end
+HEAD_PIECES.TeaRoom = { bareHair(HEAD_PIECES.Mother[1]) } -- her hair up in a bun, no bonnet behind the counter
+HEAD_PIECES.Outfitter = { bareHair(HEAD_PIECES.Clerk[1]) } -- the clerk's side-parted hair, no bowler
 HEAD_PIECES.TicketClerk = { HEAD_PIECES.Porter[1], HEAD_PIECES.Porter[3] } -- hair under a peaked cap
 HEAD_PIECES.LineMastery = { HEAD_PIECES.Gentleman[1], HEAD_PIECES.Gentleman[3] } -- hair under a silk top hat
 
