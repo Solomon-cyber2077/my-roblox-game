@@ -53,6 +53,9 @@ local SCHEMA_VERSION = NpcSave.VERSION -- 2: profile.npcs (Logic/NpcSave)
 local DataService = {
 	ProfileLoaded = Signal.new() :: Signal.Signal<Player, Profile>,
 	ProfileChanged = Signal.new() :: Signal.Signal<Player, Profile>,
+	-- a load or save went wrong: player, kind, reason, attempts or lock age (Config/Telemetry SaveKind,
+	-- SaveReason). Report only: listeners run on their own thread and change nothing here.
+	SaveFailed = Signal.new() :: Signal.Signal<Player, string, string, number>,
 }
 
 local store: DataStore? = nil
@@ -137,6 +140,7 @@ local function tryLoad(player: Player): (Profile?, boolean, string?)
 	local token = HttpService:GenerateGUID(false)
 	for attempt = 1, Tuning.Data.LoadRetries do
 		local lockedElsewhere = false
+		local takenAge: number? = nil -- a foreign lock this attempt took over: its age in seconds
 		local ok, result = pcall(function()
 			return (store :: DataStore):UpdateAsync(keyFor(player), function(old: any)
 				local data = if type(old) == "table" then old else { profile = nil, lock = nil }
@@ -150,6 +154,7 @@ local function tryLoad(player: Player): (Profile?, boolean, string?)
 					lockedElsewhere = true
 					return nil -- cancel the write and retry
 				end
+				takenAge = if lock and lock.job ~= game.JobId then os.time() - (lock.time or 0) else nil
 				data.lock = { job = game.JobId, time = now }
 				data.session = token
 				return data
@@ -157,9 +162,13 @@ local function tryLoad(player: Player): (Profile?, boolean, string?)
 		end)
 		if not ok then
 			warn(`[DataService] load failed for {player.Name}: {result}`)
+			DataService.SaveFailed:Fire(player, "load", "error", attempt)
 			return nil, false, nil
 		end
 		if not lockedElsewhere then
+			if takenAge then
+				DataService.SaveFailed:Fire(player, "load", "takeover", math.max(0, takenAge))
+			end
 			local data = result :: any
 			return reconcile(data and data.profile), true, token
 		end
@@ -168,7 +177,8 @@ local function tryLoad(player: Player): (Profile?, boolean, string?)
 	return nil, false, nil
 end
 
-local function save(player: Player, release: boolean): boolean
+-- kind: autosave, now, leave or shutdown (telemetry only)
+local function save(player: Player, release: boolean, kind: string): boolean
 	local session = sessions[player]
 	if session == nil or not session.online or store == nil then
 		return false
@@ -191,11 +201,13 @@ local function save(player: Player, release: boolean): boolean
 	if not ok then
 		-- the session stays dirty, so the next autosave tries again
 		warn(`[DataService] save failed for {player.Name}: {err}`)
+		DataService.SaveFailed:Fire(player, kind, "error", Tuning.Data.SaveRetries)
 		return false
 	end
 	if refused then
 		-- stays dirty, and "not saving" shows: this session can't save again
 		warn(`[DataService] save refused for {player.Name}: a newer session owns the profile`)
+		DataService.SaveFailed:Fire(player, kind, "refused", 1)
 		session.online = false
 		if not session.released then
 			publish(player)
@@ -228,7 +240,7 @@ local function onPlayerRemoving(player: Player)
 	local session = sessions[player]
 	if session and not session.released then
 		session.released = true
-		save(player, true)
+		save(player, true, "leave")
 	end
 	sessions[player] = nil
 end
@@ -256,7 +268,7 @@ function DataService.Start()
 			task.wait(Tuning.Data.AutosaveSeconds)
 			for player, session in sessions do
 				if session.dirty then
-					task.spawn(save, player, false)
+					task.spawn(save, player, false, "autosave")
 				end
 			end
 		end
@@ -269,7 +281,7 @@ function DataService.Start()
 				session.released = true
 				pending += 1
 				task.spawn(function()
-					save(player, true)
+					save(player, true, "shutdown")
 					pending -= 1
 				end)
 			end
@@ -319,7 +331,7 @@ end
 
 -- Immediate save, used after a Robux purchase is granted.
 function DataService.SaveNow(player: Player): boolean
-	return save(player, false)
+	return save(player, false, "now")
 end
 
 function DataService.UnlockedTier(player: Player): number

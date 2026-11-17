@@ -123,6 +123,7 @@ local function spawnPickup(itemId: string, position: Vector3, floorY: number?): 
 		if #leftovers == 0 then
 			piece:Destroy()
 			NetService.Fire("Fx", player, "Found", { items = { itemId } })
+			Registry.TelemetryService.Looted(player)
 		else
 			NetService.Fire("Notify", player, "Warning", "Your backpack is full.")
 		end
@@ -153,6 +154,9 @@ local function onSearch(
 		LootRoll.seedFor(stationSeed, handle.def.id)
 	)
 	local leftovers = Registry.InventoryService.Give(player, items)
+	if #items > 0 then
+		Registry.TelemetryService.Looted(player)
+	end
 	local origin = handle.promptPart.Position
 	for i, itemId in leftovers do
 		local angle = i * 2.1

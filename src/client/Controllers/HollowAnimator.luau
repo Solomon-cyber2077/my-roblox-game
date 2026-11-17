@@ -73,6 +73,7 @@ type Rig = {
 	embers: PointLight?,
 	quietStep: boolean, -- a stalking Hollow sounds every other footfall
 	breath: Sound?, -- its stalk breath
+	heardEpoch: number, -- HealthController.StopEpoch when its breath was last counted
 	frozenAt: number?, -- clock when a look froze it, nil while it moves
 	intent: boolean, -- its replicated Intent last frame (the hush starts on the rising edge)
 	aim: number, -- the head's yaw now (Logic/HollowMotion)
@@ -259,6 +260,17 @@ local function breathe(rig: Rig, on: boolean, frozen: boolean, dt: number)
 			sound:Play()
 		else
 			sound:Stop()
+		end
+	end
+	-- the stop's warning-sound tally (telemetry): this Hollow's breath, once per stop, when it first
+	-- comes within earshot of the local character
+	local health = Registry.HealthController
+	if on and sound and health and rig.heardEpoch ~= health.StopEpoch() then
+		local character = Players.LocalPlayer.Character
+		local mine = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if mine and (mine.Position - rig.root.Position).Magnitude <= sound.RollOffMaxDistance then
+			rig.heardEpoch = health.StopEpoch()
+			health.Heard("breath")
 		end
 	end
 end
@@ -607,6 +619,7 @@ local function register(model: Instance)
 		pose = {},
 		phase = seed % 7,
 		smoothedSpeed = 0,
+		heardEpoch = 0,
 		seed = seed % 1000,
 		state = "",
 		stateAt = 0,

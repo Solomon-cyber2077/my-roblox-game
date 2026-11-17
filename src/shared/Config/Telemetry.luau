@@ -80,6 +80,15 @@ local Vocab = table.freeze({
 	LoadBucket = list({ "<5", "5-10", "10-20", "20-30", "30-60", "60+" }), -- seconds
 	ExperimentId = list({ "E1", "E2" }), -- Config/Experiments
 	Arm = list({ "A", "B" }), -- an experiment's arms[1], arms[2]
+	-- which save went wrong (Services/DataService): the profile load, the two-minute autosave, a save
+	-- asked for now, the save on leaving, the save at server shutdown
+	SaveKind = list({ "load", "autosave", "now", "leave", "shutdown" }),
+	-- error: every retry failed; refused: a newer session owns the profile; takeover: the load took
+	-- over a lock an earlier session never released (its last save may not have landed)
+	SaveReason = list({ "error", "refused", "takeover" }),
+	-- warning and threat sounds a player's own client played at a stop (Controllers/HealthController):
+	-- the departure bell (the T-30 warning or a rung bell), the T-10 whistle, a stalking Hollow's breath
+	Cue = list({ "bell", "whistle", "breath" }),
 })
 
 export type EventDef = { fields: { string | false } }
@@ -126,6 +135,14 @@ local Events: { [string]: EventDef } = table.freeze({
 	-- a junction ballot with a real choice closed (RouteService); value: seconds from opening to the last
 	-- counted vote (0 with none); the stop is the one the ballot leads to
 	route_vote = event("Stop", "VoteResult", "Turnout"),
+	-- a profile load or save failed (DataService); value: the attempts it made (lock age in seconds for
+	-- a takeover)
+	save_failed = event("SaveKind", "SaveReason", "Device"),
+	-- once per player, cue and stop, sent when the stop's departure ends; value: times it played
+	-- (breath: Hollows heard)
+	stop_cues = event("Stop", "Cue", "Device"),
+	-- seconds from a player's last loot at a stop to their last boarding before it left
+	loot_to_board = event("Stop", "Device", "Experience"),
 })
 
 -- Funnel name -> its step names, in order. `onboarding` goes through LogOnboardingFunnelStepEvent;

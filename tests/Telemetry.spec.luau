@@ -36,6 +36,9 @@ describe("Telemetry vocabulary", function()
 				"client_load",
 				"cohort_assigned",
 				"invite_prompted",
+				"save_failed",
+				"stop_cues",
+				"loot_to_board",
 			}
 		do
 			expect(Config.Events[name] ~= nil).toBe(true)

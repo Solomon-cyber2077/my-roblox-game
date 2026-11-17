@@ -80,6 +80,9 @@ type Participant = {
 	terminal: boolean, -- player_progress sent
 	eliminations: number,
 	cashedOut: boolean, -- took the stop-five cash-out: their run ended there, not at run end
+	lootAt: number?, -- their last loot at the open stop (LootService)
+	aboard: boolean, -- aboard at the last poll
+	lootToBoard: number?, -- seconds from that loot to their latest boarding after it
 }
 
 type Run = {
@@ -95,6 +98,8 @@ type Run = {
 	villageAt: number?, -- the Emergency Village's doors, while it is open
 	logged: number,
 	stopsReached: number,
+	cueStop: string?, -- the stop (or village) whose doors opened last: stop_cues reports land on it
+	cueOpenings: number, -- doors opened this run, so a second village visit is its own report
 }
 
 local TelemetryService = {}
@@ -355,6 +360,7 @@ local function participate(current: Run, player: Player, entry: string): Partici
 		terminal = false,
 		eliminations = 0,
 		cashedOut = false,
+		aboard = false,
 	}
 	current.byPlayer[player] = participant
 	table.insert(current.order, participant)
@@ -380,6 +386,7 @@ local function beginRun()
 		order = {},
 		byPlayer = {},
 		logged = 0,
+		cueOpenings = 0,
 		stopsReached = 0,
 	}
 	run = current
@@ -405,11 +412,17 @@ local function beginRun()
 end
 
 local function openStop(current: Run)
+	for _, participant in current.order do
+		participant.lootAt, participant.lootToBoard = nil, nil
+	end
+	current.cueOpenings += 1
 	if Registry.RunDirector.IsVillageStop() then
 		current.villageAt = os.clock()
+		current.cueStop = "village"
 		return
 	end
 	local stop = Registry.RunDirector.NextStop()
+	current.cueStop = Telemetry.stop(stop)
 	local info = StateService.Get({ "run", "station" }) :: Types.StationInfo?
 	current.stop, current.openAt, current.closedAt = stop, os.clock(), nil
 	current.dwell = if info then info.dwell else nil
@@ -457,6 +470,20 @@ local function stopResolved(current: Run, entry: Types.LogEntry)
 				round(doors, 1),
 				playerFields(participant, stop)
 			)
+			-- boarded since the last poll: the last second before the train left still counts
+			if participant.lootAt and not participant.aboard and Registry.CrewService.IsAboard(player) then
+				participant.lootToBoard = os.clock() - participant.lootAt
+			end
+			local lootToBoard = participant.lootToBoard
+			if lootToBoard and Registry.CrewService.IsAlive(player) then
+				TelemetryService.Event(
+					player,
+					"loot_to_board",
+					round(lootToBoard, 1),
+					playerFields(participant, stop)
+				)
+			end
+			participant.lootAt, participant.lootToBoard = nil, nil
 			if
 				entry.stop == 1
 				and outcome == "cleared"
@@ -617,6 +644,65 @@ function TelemetryService.RouteVote(stop: number, seconds: number, result: strin
 	end
 	local field = Telemetry.stop(stop, Registry.RunDirector.StopCount())
 	crewEvent(current, "route_vote", round(seconds, 1), { field, result, turnout })
+end
+
+-- A player took loot at the open stop: a search that found something, or a pickup (LootService).
+function TelemetryService.Looted(player: Player)
+	local current = run
+	local participant = current and current.byPlayer[player]
+	if current and participant and current.stop and current.openAt and current.villageAt == nil then
+		participant.lootAt = os.clock()
+	end
+end
+
+-- The warning sounds a player's client played at the stop that just left (Controllers/HealthController):
+-- one stop_cues event per cue, once per player and stop. Counts are the client's own, so capped.
+function TelemetryService.StopCues(player: Player, bells: number, whistles: number, breaths: number)
+	local current = run
+	local participant = current and current.byPlayer[player]
+	local stop = current and current.cueStop
+	if
+		current == nil
+		or participant == nil
+		or stop == nil
+		or not once(`cues|{current.id}|{current.cueOpenings}|{player.UserId}`)
+	then
+		return
+	end
+	local device = TelemetryService.Device(player)
+	local counts = { bell = bells, whistle = whistles, breath = breaths }
+	for _, cue in Config.Vocab.Cue do
+		local count = math.clamp(math.floor(counts[cue] or 0), 0, T.CueMaxCount)
+		TelemetryService.Event(player, "stop_cues", count, { stop, cue, device })
+	end
+end
+
+-- A profile load or save failed (DataService.SaveFailed). A player who has already left is counted
+-- through anyone still in the server (the fields name no one); with nobody left it goes in their own
+-- sink buffer if that is still open, and is otherwise lost.
+function TelemetryService.SaveFailed(player: Player, kind: string, reason: string, value: number)
+	local fields: Fields = { kind, reason, TelemetryService.Device(player) }
+	if connected(player) then
+		TelemetryService.Event(player, "save_failed", round(value, 1), fields)
+		return
+	end
+	for _, other in Players:GetPlayers() do
+		TelemetryService.Event(other, "save_failed", round(value, 1), fields)
+		return
+	end
+	local ok, why = Telemetry.check("save_failed", fields)
+	if ok then
+		local visitor = visitors[player] or departed[player]
+		if visitor and sinkStore then
+			TelemetrySink.add(
+				visitor.buffer,
+				TelemetrySink.record(os.clock() - visitor.joinedAt, "save_failed", round(value, 1), fields)
+			)
+		end
+		diagnose(player, "event", "save_failed", value, fields)
+	else
+		warn(`[Telemetry] dropped: {why}`)
+	end
 end
 
 -- AGAIN accepted on the run card (LobbyService), once per player per card: seconds after the card
@@ -1040,6 +1126,17 @@ end
 local function poll()
 	local current = run
 	local phase = Registry.RunDirector.Phase()
+	if current then
+		-- loot_to_board: the latest boarding after a stop's last loot
+		for _, participant in current.order do
+			local player = participant.player
+			local aboard = connected(player) and Registry.CrewService.IsAboard(player)
+			if aboard and not participant.aboard and participant.lootAt then
+				participant.lootToBoard = os.clock() - participant.lootAt
+			end
+			participant.aboard = aboard
+		end
+	end
 	if current and STOP_PHASES[phase] then
 		for _, participant in current.order do
 			local player = participant.player
@@ -1079,6 +1176,12 @@ end
 function TelemetryService.Start()
 	Registry.NetService.Handle("ClientHealth", function(player, fps, lowFps, memoryMb, loadSeconds)
 		TelemetryService.ClientHealth(player, fps, lowFps, memoryMb, loadSeconds)
+	end)
+	Registry.NetService.Handle("StopCues", function(player, bells, whistles, breaths)
+		TelemetryService.StopCues(player, bells, whistles, breaths)
+	end)
+	DataService.SaveFailed:Connect(function(player: Player, kind: string, reason: string, value: number)
+		Safe.call("Telemetry.SaveFailed", TelemetryService.SaveFailed, player, kind, reason, value)
 	end)
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	Players.PlayerRemoving:Connect(onPlayerRemoving)

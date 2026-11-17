@@ -43,6 +43,14 @@ local Remotes: { [string]: RemoteDef } = {
 		rate = 1 / 20,
 		burst = 2,
 	},
+	-- warning sounds this client played at the stop that just left: bells, whistles, Hollows heard
+	-- breathing (telemetry only; Services/TelemetryService caps and dedupes it)
+	StopCues = {
+		direction = "ToServer",
+		args = { "reading", "reading", "reading" },
+		rate = 1 / 15,
+		burst = 2,
+	},
 	SetReady = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
 	-- the run card: true AGAIN (ready the same crew), false DEPOT (stay unready); Logic/Again
 	Again = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },

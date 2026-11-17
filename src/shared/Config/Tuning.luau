@@ -717,6 +717,7 @@ local Tuning = {
 		HealthEverySeconds = 300, -- then one report this often
 		HealthMaxReports = 12, -- reports the server keeps per player per server
 		HealthMinSeconds = 10, -- a shorter frame sample is not reported (the window lost focus)
+		CueMaxCount = 99, -- stop_cues: a client's count above this is capped
 	},
 
 	-- The train's residents (Config/Npcs) and their errands (Config/NpcQuests).

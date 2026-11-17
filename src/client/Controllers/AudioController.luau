@@ -812,6 +812,9 @@ function AudioController.Play(
 		end
 	end
 	sound:Play()
+	if Registry.HealthController then
+		Registry.HealthController.Heard(cueName) -- the stop's warning-sound tally (telemetry)
+	end
 	if cue.voices then
 		cueVoices[cueName] = (cueVoices[cueName] or 0) + 1
 		local counted = true
