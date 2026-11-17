@@ -234,8 +234,8 @@ local Cues: { [string]: Cue } = {
 		gap = 1.5,
 		mix = "Ambience",
 	},
-	-- Satie, Gnossienne No. 3 (APM Music), from the lobby piano (Builders/LobbyBuilder)
-	LobbyPiano = { id = 1837474268, volume = 3.45, loop = true, spatial = true, mix = "Piano" },
+	-- Satie, Gnossienne No. 3 (own recording, tools/piano), from the lobby piano (Builders/LobbyBuilder)
+	LobbyPiano = { id = 118676662376743, volume = 0.67, loop = true, spatial = true, mix = "Piano" },
 
 	-- The stops' soundscape: the same recordings slowed and shaped (AudioController
 	-- adds the filters and reverb), so nothing new needs clearing.
