@@ -14,7 +14,7 @@ def socket(layer, cx, cy, w, h, alpha):
     d.ellipse((cx - w, cy - h, cx + w, cy + h), fill=(40, 26, 24, alpha))
 
 def face(name, eye_y=230, eye_dx=62, eye_r=11, sock=(40, 30, 120), mouth='flat', mouth_y=330,
-         mouth_w=46, brow=None, closed=False, lines=False, out=None):
+         mouth_w=46, brow=None, closed=False, lines=False, out=None, moustache=False):
     img = Image.new('RGBA', (S, S), (0, 0, 0, 0))
     # sunken sockets: a soft dark wash around each eye
     shade = Image.new('RGBA', (S, S), (0, 0, 0, 0))
@@ -44,6 +44,10 @@ def face(name, eye_y=230, eye_dx=62, eye_r=11, sock=(40, 30, 120), mouth='flat',
     elif mouth == 'thin':
         d.line((cx - mouth_w, mouth_y + 4, cx - 6, mouth_y), fill=INK, width=5)
         d.line((cx - 6, mouth_y, cx + mouth_w, mouth_y + 6), fill=INK, width=5)
+    if moustache:  # a heavy walrus moustache hanging over the mouth
+        d.polygon([(cx - 70, mouth_y - 8), (cx - 40, mouth_y - 34), (cx, mouth_y - 26), (cx + 40, mouth_y - 34),
+                   (cx + 70, mouth_y - 8), (cx + 52, mouth_y + 6), (cx, mouth_y - 6), (cx - 52, mouth_y + 6)],
+                  fill=(58, 48, 42, 255))
     img.save((out or OUT) / f'{name}-face.png')
 
 OUT.mkdir(parents=True, exist_ok=True)
@@ -60,3 +64,4 @@ face('tearoom', eye_r=10, eye_dx=60, mouth='thin', mouth_w=36, brow=-3, lines=Tr
 face('outfitter', eye_r=8, eye_dx=56, mouth='flat', mouth_w=34, brow=5, sock=(38, 28, 130), out=STAFF)
 face('ticketclerk', eye_r=11, mouth='down', mouth_w=40, sock=(42, 32, 135), lines=True, out=STAFF)
 face('linemastery', eye_r=9, eye_dx=64, mouth='flat', mouth_w=52, brow=8, sock=(44, 32, 145), lines=True, out=STAFF)
+face('guard', eye_r=9, mouth='flat', mouth_w=40, brow=7, sock=(44, 32, 140), lines=True, moustache=True, out=STAFF)

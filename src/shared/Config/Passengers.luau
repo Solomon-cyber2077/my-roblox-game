@@ -289,6 +289,8 @@ export type WearPiece = {
 -- place of the kit's sculpted head and whiskers (owner, 11-10: "roblox heads with the same eerie tone")
 -- `head`: the sculpted hair, whiskers and hat stand in for every kit piece on the head
 export type Wear = { shirt: number?, pants: number?, face: number?, head: boolean?, pieces: { WearPiece } }
+-- a kit figure that keeps its pose but wears this kind of head: a Roblox head with a painted face and pieces
+export type KitHead = { face: number, pieces: { WearPiece } }
 
 -- Mabel's uploaded skirt mesh (Config/Npcs), worn in each woman's own cloth
 local function skirt(texture: number?): WearPiece
@@ -465,7 +467,12 @@ WEAR.TicketClerk = { shirt = 72247674941511, pants = 114713283061429, face = 123
 WEAR.LineMastery = { shirt = 96525135691204, pants = 124210362610200, face = 75741414994992, pieces = {} }
 -- their hair and hats are the passengers' sculpted pieces (same atlas): a Roblox head with a painted face
 -- (passenger_faces.py) and the kit's ball head left off, as the passengers wear them
-HEAD_PIECES.TeaRoom = { HEAD_PIECES.Mother[1] } -- her hair up in a bun, no bonnet behind the counter
+-- her hair up in a bun, no bonnet behind the counter: the Mother's hair, a touch larger and higher, since
+-- with no bonnet over it the head showed through
+local pellHair = table.clone(HEAD_PIECES.Mother[1])
+pellHair.size = { pellHair.size[1] * 1.07, pellHair.size[2] * 1.07, pellHair.size[3] * 1.07 }
+pellHair.offset = { pellHair.offset[1], pellHair.offset[2] + 0.04, pellHair.offset[3] }
+HEAD_PIECES.TeaRoom = { pellHair }
 HEAD_PIECES.Outfitter = { HEAD_PIECES.Clerk[1] }
 HEAD_PIECES.TicketClerk = { HEAD_PIECES.Porter[1], HEAD_PIECES.Porter[3] } -- hair under a peaked cap
 HEAD_PIECES.LineMastery = { HEAD_PIECES.Gentleman[1], HEAD_PIECES.Gentleman[3] } -- hair under a silk top hat
@@ -480,6 +487,12 @@ for id, wear in WEAR do
 	end
 end
 Passengers.Wear = table.freeze(WEAR)
+-- The Guard lies over the van rail (a pose a standing body would lose), so he keeps the kit figure and only
+-- his head is swapped (Builders/LobbyBuilder): a painted face (passenger_faces.py) under the porter's hair
+-- and peaked cap.
+Passengers.KitHeads = table.freeze({
+	Guard = { face = 80112965317258, pieces = { HEAD_PIECES.Porter[1], HEAD_PIECES.Porter[3] } } :: KitHead,
+})
 
 -- Whether `id` is dressed in its sheets and pieces: every id is bound.
 function Passengers.wearReady(id: string): boolean

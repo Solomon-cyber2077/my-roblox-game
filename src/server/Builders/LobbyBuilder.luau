@@ -2092,6 +2092,74 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	-- by the honours board, and the guard lying over his van's veranda rail on the display train
 	local people = Kit.model("People", model)
 	-- staff behind a counter stand on a step, as behind any shop counter
+	-- A kit figure that keeps its pose but wears the passengers' kind of head (Config/Passengers KitHeads): a
+	-- Roblox head with a painted face and the sculpted hair and hat; the kit's ball head, features and hat are
+	-- hidden, before Builders/FaceKit's sculpted head arrives (it gives up on a hidden head)
+	local function kitHead(figure: OutfitKit.Figure, spec: Passengers.KitHead)
+		local scheduler: any = task
+		local okAssets, service = pcall(game.GetService, game, "AssetService")
+		if not scheduler or not okAssets then
+			return -- headless: the kit head stays
+		end
+		local frame = figure.head.CFrame
+		for _, d in figure.model:GetDescendants() do
+			if d:IsA("BasePart") then
+				local p = frame:PointToObjectSpace(d.Position)
+				if p.Y > -0.45 and p.Magnitude < 1.25 then
+					d.Transparency = 1
+				end
+			end
+		end
+		local head = Instance.new("Part")
+		head.Name = "RobloxHead"
+		head.Size = Vector3.new(2, 1, 1)
+		head.Color = figure.head.Color
+		head.Material = Enum.Material.Plastic
+		head.Anchored = true
+		head.CanCollide = false
+		head.CanQuery = false
+		head.CanTouch = false
+		head.CastShadow = false
+		head.CFrame = frame
+		local shape = Instance.new("SpecialMesh")
+		shape.MeshType = Enum.MeshType.Head
+		shape.Scale = Vector3.new(1.25, 1.25, 1.25)
+		shape.Parent = head
+		local decal = Instance.new("Decal")
+		decal.Name = "face"
+		decal.Face = Enum.NormalId.Front
+		decal.Texture = `rbxassetid://{spec.face}`
+		decal.Parent = head
+		head.Parent = figure.model
+		scheduler.spawn(function()
+			for _, wearPiece in spec.pieces do
+				local loaded, mesh = pcall(function(): any
+					return (service :: AssetService):CreateMeshPartAsync(
+						Content.fromAssetId(wearPiece.mesh :: number)
+					)
+				end)
+				if not loaded or mesh == nil then
+					warn(`LobbyBuilder: kit head piece {wearPiece.name} did not load: {mesh}`)
+					continue
+				end
+				local part = mesh :: MeshPart
+				part.Name = wearPiece.name
+				part.TextureID = `rbxassetid://{wearPiece.texture}`
+				part.Size = Vector3.new(wearPiece.size[1], wearPiece.size[2], wearPiece.size[3])
+				local o = wearPiece.offset
+				part.CFrame = frame
+					* CFrame.new(o[1], o[2], o[3])
+					* CFrame.Angles(0, math.rad(wearPiece.yaw), 0)
+				part.Anchored = true
+				part.CanCollide = false
+				part.CanQuery = false
+				part.CanTouch = false
+				part.CastShadow = false
+				part.Parent = figure.model
+			end
+		end)
+	end
+
 	local function resident(id: string, x: number, z: number, yaw: number, step: number?): OutfitKit.Figure
 		local who = Outfits.Lobby[id]
 		local lift = step or 0
@@ -2138,7 +2206,7 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	resident("TeaRoom", 109.5, 50, 90, 1)
 	resident("Outfitter", 52, 39.6, 0, 1)
 	resident("TicketClerk", 34, 68.2 + 6.5, 0, 1)
-	resident("Guard", -96 + 2.4, TRACK_Z + 1.5, 90) -- over the end balustrade, looking down the line
+	kitHead(resident("Guard", -96 + 2.4, TRACK_Z + 1.5, 90), Passengers.KitHeads.Guard) -- over the end balustrade, looking down the line
 	local superintendent = resident("LineMastery", -44.5, 37, 18)
 	-- he says what the board is to anyone who comes close
 	local card = Instance.new("BillboardGui")
