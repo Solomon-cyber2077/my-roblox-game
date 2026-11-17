@@ -454,10 +454,21 @@ local WEAR: { [string]: Wear } = {
 -- The hall's four counter staff (Config/Outfits Lobby, built by Builders/LobbyBuilder) wear the same way
 -- (tools/crew-clothing/staff_textures.py; sources in assets/crew-clothing/staff-r6). Mrs. Pell's apron
 -- is painted on her bodice and skirt. The Guard stays the kit figure: he lies over the van rail.
-WEAR.TeaRoom = { shirt = 136454033997001, pants = 73936474684832, pieces = { skirt(78916595955479) } }
-WEAR.Outfitter = { shirt = 117382765805625, pants = 115467531170476, pieces = {} }
-WEAR.TicketClerk = { shirt = 72247674941511, pants = 114713283061429, pieces = {} }
-WEAR.LineMastery = { shirt = 96525135691204, pants = 124210362610200, pieces = {} }
+WEAR.TeaRoom = {
+	shirt = 136454033997001,
+	pants = 73936474684832,
+	face = 85998261097145,
+	pieces = { skirt(78916595955479) },
+}
+WEAR.Outfitter = { shirt = 117382765805625, pants = 115467531170476, face = 83342295243624, pieces = {} }
+WEAR.TicketClerk = { shirt = 72247674941511, pants = 114713283061429, face = 123389714950775, pieces = {} }
+WEAR.LineMastery = { shirt = 96525135691204, pants = 124210362610200, face = 75741414994992, pieces = {} }
+-- their hair and hats are the passengers' sculpted pieces (same atlas): a Roblox head with a painted face
+-- (passenger_faces.py) and the kit's ball head left off, as the passengers wear them
+HEAD_PIECES.TeaRoom = { HEAD_PIECES.Mother[1] } -- her hair up in a bun, no bonnet behind the counter
+HEAD_PIECES.Outfitter = { HEAD_PIECES.Clerk[1] }
+HEAD_PIECES.TicketClerk = { HEAD_PIECES.Porter[1], HEAD_PIECES.Porter[3] } -- hair under a peaked cap
+HEAD_PIECES.LineMastery = { HEAD_PIECES.Gentleman[1], HEAD_PIECES.Gentleman[3] } -- hair under a silk top hat
 
 for id, wear in WEAR do
 	local extra = HEAD_PIECES[id]

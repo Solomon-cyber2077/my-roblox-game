@@ -14,7 +14,7 @@ def socket(layer, cx, cy, w, h, alpha):
     d.ellipse((cx - w, cy - h, cx + w, cy + h), fill=(40, 26, 24, alpha))
 
 def face(name, eye_y=230, eye_dx=62, eye_r=11, sock=(40, 30, 120), mouth='flat', mouth_y=330,
-         mouth_w=46, brow=None, closed=False, lines=False):
+         mouth_w=46, brow=None, closed=False, lines=False, out=None):
     img = Image.new('RGBA', (S, S), (0, 0, 0, 0))
     # sunken sockets: a soft dark wash around each eye
     shade = Image.new('RGBA', (S, S), (0, 0, 0, 0))
@@ -44,7 +44,7 @@ def face(name, eye_y=230, eye_dx=62, eye_r=11, sock=(40, 30, 120), mouth='flat',
     elif mouth == 'thin':
         d.line((cx - mouth_w, mouth_y + 4, cx - 6, mouth_y), fill=INK, width=5)
         d.line((cx - 6, mouth_y, cx + mouth_w, mouth_y + 6), fill=INK, width=5)
-    img.save(OUT / f'{name}-face.png')
+    img.save((out or OUT) / f'{name}-face.png')
 
 OUT.mkdir(parents=True, exist_ok=True)
 face('clerk', mouth='thin', brow=4, lines=True)
@@ -53,3 +53,10 @@ face('gentleman', eye_r=8, mouth='flat', mouth_w=40, brow=6, lines=True)
 face('porter', eye_r=12, mouth='flat', mouth_w=50, sock=(44, 32, 140))
 face('widow', closed=True, mouth='down', mouth_w=30, sock=(46, 34, 150), lines=True)
 face('newsboy', eye_r=14, eye_dx=58, mouth='open', sock=(36, 30, 100))
+
+# the hall's four counter staff, in the same tone (assets/crew-clothing/staff-r6)
+STAFF = OUT.parent / 'staff-r6'
+face('tearoom', eye_r=10, eye_dx=60, mouth='thin', mouth_w=36, brow=-3, lines=True, out=STAFF)
+face('outfitter', eye_r=8, eye_dx=56, mouth='flat', mouth_w=34, brow=5, sock=(38, 28, 130), out=STAFF)
+face('ticketclerk', eye_r=11, mouth='down', mouth_w=40, sock=(42, 32, 135), lines=True, out=STAFF)
+face('linemastery', eye_r=9, eye_dx=64, mouth='flat', mouth_w=52, brow=8, sock=(44, 32, 145), lines=True, out=STAFF)
