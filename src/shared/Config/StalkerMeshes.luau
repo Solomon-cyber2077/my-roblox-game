@@ -62,4 +62,13 @@ local StalkerMeshes: { [string]: Piece } = {
 	},
 }
 
+-- Off: the close-up pieces stay out of the game until a rebuild passes review, so every Stalker keeps its
+-- block build. The ids above are kept for that rebuild; set this to true to bring them back.
+local ENABLED = false
+if not ENABLED then
+	for _, piece in StalkerMeshes do
+		piece.id = nil
+	end
+end
+
 return StalkerMeshes
