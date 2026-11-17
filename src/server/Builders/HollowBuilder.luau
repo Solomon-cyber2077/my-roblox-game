@@ -273,7 +273,7 @@ local function meshPiece(
 	part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3])
 	part.Color = color
 	part.Material = material
-	part.TextureID = ""
+	part.TextureID = if piece.texture then `rbxassetid://{piece.texture}` else ""
 	part.CastShadow = false
 	loose(part)
 	part.CFrame = to.CFrame * CFrame.new(piece.center[1], piece.center[2], piece.center[3])
@@ -301,20 +301,25 @@ local function stalker(model: Model, root: BasePart)
 	local skin = Enum.Material.SmoothPlastic
 
 	-- blocks a mesh replaces: tagged DetailFallback once that mesh is in (see meshPiece)
-	local blocks: { [string]: { BasePart } } = { head = {}, hand = {}, forearm = {}, sleeve = {}, coat = {} }
+	-- the skull that comes with the jaw mesh carries its own cap, mouth and teeth, so those blocks go with "jaw"
+	local blocks: { [string]: { BasePart } } =
+		{ head = {}, jaw = {}, torso = {}, hand = {}, forearm = {}, sleeve = {}, coat = {} }
 	local function mark(group: string, part: BasePart): BasePart
 		table.insert(blocks[group], part)
 		return part
 	end
-	local pelvis = block(model, "Pelvis", Vector3.new(1.5, 0.9, 0.95), COAT, cloth)
-	local chest = block(model, "Chest", Vector3.new(1.45, 2.8, 0.95), COAT, cloth)
+	local pelvis = mark("torso", block(model, "Pelvis", Vector3.new(1.5, 0.9, 0.95), COAT, cloth))
+	local chest = mark("torso", block(model, "Chest", Vector3.new(1.45, 2.8, 0.95), COAT, cloth))
 	local head = mark("head", block(model, "Head", Vector3.new(0.82, 1.4, 0.98), FACE, skin))
-	local jaw = block(
-		model,
-		"Jaw",
-		if meshCache.head then Vector3.new(0.46, 0.34, 0.6) else Vector3.new(0.62, 0.46, 0.8),
-		SKIN_DARK,
-		skin
+	local jaw = mark(
+		"jaw",
+		block(
+			model,
+			"Jaw",
+			if meshCache.head then Vector3.new(0.46, 0.34, 0.6) else Vector3.new(0.62, 0.46, 0.8),
+			SKIN_DARK,
+			skin
+		)
 	)
 	joint("RootJoint", root, pelvis, CFrame.new(0, -0.65, 0), CFrame.new())
 	joint("Waist", pelvis, chest, CFrame.new(0, 0.42, 0) * Kit.angles(-27, 0, 0), CFrame.new(0, -1.4, 0))
@@ -331,20 +336,32 @@ local function stalker(model: Model, root: BasePart)
 	) -- a long bare neck
 
 	-- the open coat over a starved ribcage
-	local ribs = deco(model, chest, Vector3.new(0.72, 2.0, 0.1), CFrame.new(0, 0.2, -0.575), SKIN_DARK, skin)
+	local ribs = mark(
+		"torso",
+		deco(model, chest, Vector3.new(0.72, 2.0, 0.1), CFrame.new(0, 0.2, -0.575), SKIN_DARK, skin)
+	)
 	for i = 0, 4 do
-		decoRod(model, ribs, 0.78 - i * 0.05, 0.09, CFrame.new(0, 0.7 - i * 0.34, -0.06), SKIN, skin)
+		mark(
+			"torso",
+			decoRod(model, ribs, 0.78 - i * 0.05, 0.09, CFrame.new(0, 0.7 - i * 0.34, -0.06), SKIN, skin)
+		)
 	end
 	for _, side in { -1, 1 } do
-		decoWedge(
-			model,
-			chest,
-			Vector3.new(0.12, 2.3, 0.5),
-			CFrame.new(side * 0.52, 0.05, -0.6) * Kit.angles(0, side * 90, 0),
-			LAPEL,
-			cloth
+		mark(
+			"torso",
+			decoWedge(
+				model,
+				chest,
+				Vector3.new(0.12, 2.3, 0.5),
+				CFrame.new(side * 0.52, 0.05, -0.6) * Kit.angles(0, side * 90, 0),
+				LAPEL,
+				cloth
+			)
 		)
-		decoBall(model, chest, 0.14, CFrame.new(side * 0.62, -0.75, -0.6), BRASS, Enum.Material.Metal)
+		mark(
+			"torso",
+			decoBall(model, chest, 0.14, CFrame.new(side * 0.62, -0.75, -0.6), BRASS, Enum.Material.Metal)
+		)
 	end
 	-- coat tails in tatters, hanging past the knees
 	for i, x in { -0.72, -0.34, 0.02, 0.36, 0.7 } do
@@ -374,34 +391,46 @@ local function stalker(model: Model, root: BasePart)
 				cloth
 			)
 		)
-		decoWedge(
-			model,
-			chest,
-			Vector3.new(0.36, 1.5, 0.08),
-			CFrame.new(side * 0.98, 0.3, 0.1) * Kit.angles(0, 0, side * 7),
-			LAPEL,
-			cloth
+		mark(
+			"torso",
+			decoWedge(
+				model,
+				chest,
+				Vector3.new(0.36, 1.5, 0.08),
+				CFrame.new(side * 0.98, 0.3, 0.1) * Kit.angles(0, 0, side * 7),
+				LAPEL,
+				cloth
+			)
 		)
 	end
 
 	-- a crushed porter's cap and the skull behind the face
 	mark("head", decoBall(model, head, 1.08, CFrame.new(0, 0.32, 0.12), SKIN_DARK, skin))
-	decoRod(model, head, 0.34, 1.16, CFrame.new(0.08, 0.92, 0.08) * Kit.angles(0, 0, 106), LAPEL, cloth)
-	decoWedge(
-		model,
-		head,
-		Vector3.new(1.0, 0.12, 0.4),
-		CFrame.new(0.05, 0.72, -0.62) * Kit.angles(0, 180, 0),
-		LAPEL,
-		cloth
+	mark(
+		"jaw",
+		decoRod(model, head, 0.34, 1.16, CFrame.new(0.08, 0.92, 0.08) * Kit.angles(0, 0, 106), LAPEL, cloth)
 	)
-	deco(
-		model,
-		head,
-		Vector3.new(0.22, 0.16, 0.05),
-		CFrame.new(0.05, 0.86, -0.53),
-		BRASS,
-		Enum.Material.Metal
+	mark(
+		"jaw",
+		decoWedge(
+			model,
+			head,
+			Vector3.new(1.0, 0.12, 0.4),
+			CFrame.new(0.05, 0.72, -0.62) * Kit.angles(0, 180, 0),
+			LAPEL,
+			cloth
+		)
+	)
+	mark(
+		"jaw",
+		deco(
+			model,
+			head,
+			Vector3.new(0.22, 0.16, 0.05),
+			CFrame.new(0.05, 0.86, -0.53),
+			BRASS,
+			Enum.Material.Metal
+		)
 	)
 
 	-- no eyes: dark sockets with a pinprick of shine deep inside
@@ -439,30 +468,46 @@ local function stalker(model: Model, root: BasePart)
 			)
 		)
 	end
-	deco(
-		model,
-		head,
-		if meshCache.head then Vector3.new(0.3, 0.17, 0.08) else Vector3.new(0.5, 0.26, 0.08),
-		CFrame.new(0, if meshCache.head then -0.43 else -0.5, if meshCache.head then -0.2 else -0.49),
-		GAPE,
-		skin
-	)
-	for i = -2, 2 do
-		decoWedge(
+	mark(
+		"jaw",
+		deco(
 			model,
 			head,
-			if meshCache.head then Vector3.new(0.045, 0.14, 0.05) else Vector3.new(0.07, 0.2, 0.05),
-			CFrame.new(
-				i * (if meshCache.head then 0.055 else 0.095),
-				if meshCache.head then -0.4 else -0.46,
-				if meshCache.head then -0.27 else -0.55
-			) * Kit.angles(0, 0, 180),
-			TOOTH,
+			if meshCache.head then Vector3.new(0.3, 0.17, 0.08) else Vector3.new(0.5, 0.26, 0.08),
+			CFrame.new(0, if meshCache.head then -0.43 else -0.5, if meshCache.head then -0.2 else -0.49),
+			GAPE,
 			skin
+		)
+	)
+	for i = -2, 2 do
+		mark(
+			"jaw",
+			decoWedge(
+				model,
+				head,
+				if meshCache.head then Vector3.new(0.045, 0.14, 0.05) else Vector3.new(0.07, 0.2, 0.05),
+				CFrame.new(
+					i * (if meshCache.head then 0.055 else 0.095),
+					if meshCache.head then -0.4 else -0.46,
+					if meshCache.head then -0.27 else -0.55
+				) * Kit.angles(0, 0, 180),
+				TOOTH,
+				skin
+			)
 		)
 	end
 	for i = -1, 1 do
-		decoWedge(model, jaw, Vector3.new(0.07, 0.18, 0.05), CFrame.new(i * 0.16, 0.24, -0.38), TOOTH, skin)
+		mark(
+			"jaw",
+			decoWedge(
+				model,
+				jaw,
+				Vector3.new(0.07, 0.18, 0.05),
+				CFrame.new(i * 0.16, 0.24, -0.38),
+				TOOTH,
+				skin
+			)
+		)
 	end
 
 	-- arms far too long, with fingers to match
@@ -538,9 +583,11 @@ local function stalker(model: Model, root: BasePart)
 		local _ = foot
 	end
 
-	-- the close-up skull and coat in place of their blocks (the arm pieces went on with the arms)
+	-- the close-up skull, jaw, coat and torso in place of their blocks (the arm pieces went on with the arms)
 	meshPiece(model, "head", head, FACE, skin)
 	meshPiece(model, "coat", pelvis, COAT, cloth)
+	meshPiece(model, "jaw", jaw, SKIN_DARK, skin)
+	meshPiece(model, "torso", chest, COAT, cloth)
 	for group, parts in blocks do
 		if meshCache[group] ~= nil then
 			for _, part in parts do

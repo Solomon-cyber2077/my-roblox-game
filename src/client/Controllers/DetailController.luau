@@ -8,7 +8,8 @@
 	Hidden, not removed: doors and anything else that moves or tracks these parts keep working,
 	and parts that stream in later are caught as they arrive. A SurfaceGui tagged DetailFallback
 	is the plain version of a Detail mesh laid over it (Builders/SignArt): it shows only while
-	the details are hidden.
+	the details are hidden. A part tagged DetailFallback is the same for a mesh (a passenger's lighter
+	phone hair or hat, Builders/PassengerFigure): drawn only under Performance.
 ]]
 
 local CollectionService = game:GetService("CollectionService")
@@ -35,6 +36,8 @@ end
 local function applyFallback(gui: Instance)
 	if gui:IsA("SurfaceGui") then
 		gui.Enabled = hidden
+	elseif gui:IsA("BasePart") then
+		gui.LocalTransparencyModifier = if hidden then 0 else 1
 	end
 end
 

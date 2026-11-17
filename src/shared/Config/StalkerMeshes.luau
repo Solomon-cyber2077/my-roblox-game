@@ -3,19 +3,63 @@
 	Close-up meshes for the Stalker (tools/stalker/build.py, assets/stalker/*.fbx), uploaded under the
 	owner's account. `size` is the mesh's box in studs and `center` where that box's middle sits in the
 	frame of the part it is welded to (the head, a hand, a forearm bone, an upper-arm bone, the pelvis).
-	A mesh with no id yet leaves the block build in place (Builders/HollowBuilder); the blocks also stay
-	as the Performance setting's lighter version.
+	`texture` is the colour image's id (tools/stalker/out/<name>.png, sRGB); without one the part keeps its flat
+	colour. A mesh with no id yet leaves the block build in place (Builders/HollowBuilder); the blocks also
+	stay as the Performance setting's lighter version.
 ]]
 
-export type Piece = { id: number?, size: { number }, center: { number } }
+export type Piece = { id: number?, texture: number?, size: { number }, center: { number } }
 
 local StalkerMeshes: { [string]: Piece } = {
-	head = { id = 123906462924166, size = { 0.765, 1.469, 1.061 }, center = { -0.003, 0.005, -0.035 } },
-	hand = { id = 103415365644746, size = { 0.542, 1.689, 0.336 }, center = { 0.069, -0.624, -0.064 } },
-	handL = { id = 81276671935458, size = { 0.542, 1.689, 0.336 }, center = { -0.069, -0.624, -0.064 } }, -- the right hand, thumb inward
-	forearm = { id = 71731572612543, size = { 2.75, 0.342, 0.304 }, center = { 0, 0, -0.004 } },
-	sleeve = { id = 123969143830111, size = { 3.523, 0.452, 0.408 }, center = { -0.311, 0, 0 } },
-	coat = { id = 87378685938379, size = { 1.86, 4.118, 1.429 }, center = { 0, -2.459, 0.105 } },
+	head = {
+		id = 136370457738629,
+		texture = 129299439692086,
+		size = { 0.807, 1.499, 1.061 },
+		center = { -0.004, 0.049, -0.003 },
+	},
+	jaw = {
+		id = 135718368796987,
+		texture = 89978575412475,
+		size = { 0.541, 0.362, 0.501 },
+		center = { -0.001, 0.099, -0.05 },
+	},
+	torso = {
+		id = 71264569548769,
+		texture = 120459886516923,
+		size = { 1.889, 3.006, 1.076 },
+		center = { -0.008, 0.099, 0.042 },
+	},
+	coat = {
+		id = 108380113004910,
+		texture = 119369364077842,
+		size = { 2.274, 4.263, 1.593 },
+		center = { 0, -1.781, 0.125 },
+	},
+	sleeve = {
+		id = 114040160893582,
+		texture = 120717393588382,
+		size = { 3.573, 0.426, 0.452 },
+		center = { -0.336, 0, 0 },
+	},
+	forearm = {
+		id = 135215404458869,
+		texture = 106116602677876,
+		size = { 2.75, 0.338, 0.304 },
+		center = { 0, 0, 0.014 },
+	},
+	hand = {
+		id = 92188242389961,
+		texture = 76243631586705,
+		size = { 0.53, 1.492, 0.635 },
+		center = { 0.068, -0.495, -0.208 },
+	},
+	-- both hands share one colour image
+	handL = {
+		id = 116194316652302,
+		texture = 76243631586705,
+		size = { 0.53, 1.492, 0.635 },
+		center = { -0.068, -0.495, -0.208 },
+	},
 }
 
 return StalkerMeshes

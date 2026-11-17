@@ -50,6 +50,14 @@ local function keep(h: Handle, object: Instance)
 	table.insert(h.objects, object)
 end
 
+-- Dressing on a block that a close-up mesh replaces (Builders/HollowBuilder tags it DetailFallback) goes with
+-- that block: drawn only under Performance (Controllers/DetailController), never over the mesh.
+local function fallback(parent: BasePart, p: BasePart)
+	if parent:HasTag("DetailFallback") then
+		p:AddTag("DetailFallback")
+	end
+end
+
 local function part(
 	h: Handle,
 	parent: BasePart,
@@ -77,6 +85,7 @@ local function part(
 	weld.Part0 = parent
 	weld.Part1 = p
 	weld.Parent = p
+	fallback(parent, p)
 	p.Parent = h.model
 	keep(h, p)
 	return p
@@ -110,6 +119,7 @@ local function strip(
 	weld.C0 = hem
 	weld.C1 = CFrame.new(0, p.Size.Y / 2, 0) -- hung from its top edge
 	weld.Parent = p
+	fallback(chest, p)
 	p.Parent = h.model
 	keep(h, p)
 	table.insert(h.strips, { part = p, weld = weld, hem = hem, side = side })
