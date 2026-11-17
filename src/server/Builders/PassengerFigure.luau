@@ -281,7 +281,9 @@ function PassengerFigure.build(person: Passengers.Person, cframe: CFrame, parent
 	rig:SetAttribute("Procedural", true)
 	rig:SetAttribute("Passenger", person.id)
 	rig.Parent = parent
-	root:SetNetworkOwner(nil)
+	if root:IsDescendantOf(workspace) then -- a hall resident is built before the hall is parented (and anchored)
+		root:SetNetworkOwner(nil)
+	end
 	CollectionService:AddTag(rig, RIG_TAG)
 	CollectionService:AddTag(rig, TAG)
 	return rig

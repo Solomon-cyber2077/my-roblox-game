@@ -2106,10 +2106,12 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		local stand = at(x, lift, z) * Kit.angles(0, yaw, 0)
 		local figure = OutfitKit.figure(people, stand, who.look, who.pose)
 		figure.model.Name = who.id
-		if Passengers.wearReady(id) then
+		-- the headless audit has no task scheduler (nor a body to build): it keeps the kit figure
+		local scheduler: any = task
+		if Passengers.wearReady(id) and scheduler then
 			-- once their sheets are uploaded: the R6 body in them, rooted to the spot (it breathes and turns
 			-- to you, CharacterAnimator); the kit figure stays, hidden, for collision and the speech card
-			task.spawn(function()
+			scheduler.spawn(function()
 				-- loaded here: the headless audit has no Players service for its R6 body
 				local PassengerFigure = require(script.Parent.PassengerFigure) :: any
 				local rig = PassengerFigure.build({ id = id, look = who.look } :: any, stand, figure.model)

@@ -1,0 +1,26 @@
+{
+  "status": "source assets; uploads and a Studio arm's-length check pending (HUMAN pending)",
+  "sheets": {
+    "TeaRoom": {
+      "shirt": "tearoom-shirt.png",
+      "pants": "tearoom-pants.png",
+      "skirtTexture": "tearoom-skirt.png",
+      "skirtMesh": "Mabel skirt 96135756126639"
+    },
+    "Outfitter": {
+      "shirt": "outfitter-shirt.png",
+      "pants": "outfitter-pants.png"
+    },
+    "TicketClerk": {
+      "shirt": "ticketclerk-shirt.png",
+      "pants": "ticketclerk-pants.png"
+    },
+    "LineMastery": {
+      "shirt": "linemastery-shirt.png",
+      "pants": "linemastery-pants.png"
+    }
+  },
+  "units": "studs, limb space, -Z is the front",
+  "totalTriangles": 0,
+  "pieces": []
+}

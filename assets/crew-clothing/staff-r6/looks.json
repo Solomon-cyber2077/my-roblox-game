@@ -1,0 +1,134 @@
+{
+ "TeaRoom": {
+  "cut": "Bodice",
+  "skin": [
+   236,
+   200,
+   172
+  ],
+  "coat": [
+   46,
+   40,
+   58
+  ],
+  "trim": [
+   180,
+   148,
+   88
+  ],
+  "lower": [
+   52,
+   44,
+   60
+  ],
+  "skirt": "Plain",
+  "apron": [
+   226,
+   220,
+   206
+  ],
+  "prop": "Cloth"
+ },
+ "Outfitter": {
+  "cut": "Frock",
+  "skin": [
+   224,
+   188,
+   160
+  ],
+  "coat": [
+   30,
+   32,
+   38
+  ],
+  "trim": [
+   180,
+   148,
+   88
+  ],
+  "waistcoat": [
+   108,
+   36,
+   34
+  ],
+  "neck": [
+   34,
+   30,
+   32
+  ],
+  "lower": [
+   72,
+   68,
+   64
+  ],
+  "prop": "Tape",
+  "tape": true
+ },
+ "TicketClerk": {
+  "cut": "Reefer",
+  "skin": [
+   214,
+   176,
+   150
+  ],
+  "coat": [
+   28,
+   36,
+   60
+  ],
+  "trim": [
+   180,
+   148,
+   88
+  ],
+  "waistcoat": [
+   28,
+   36,
+   60
+  ],
+  "lower": [
+   34,
+   36,
+   48
+  ],
+  "prop": "Punch",
+  "oversleeves": true,
+  "chain": true
+ },
+ "LineMastery": {
+  "cut": "Frock",
+  "skin": [
+   230,
+   196,
+   170
+  ],
+  "coat": [
+   22,
+   24,
+   30
+  ],
+  "trim": [
+   180,
+   148,
+   88
+  ],
+  "waistcoat": [
+   62,
+   66,
+   72
+  ],
+  "neck": [
+   118,
+   30,
+   34
+  ],
+  "lower": [
+   40,
+   40,
+   46
+  ],
+  "prop": "Pointer",
+  "chain": true,
+  "badge": true
+ }
+}
