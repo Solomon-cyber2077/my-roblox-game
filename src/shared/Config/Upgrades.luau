@@ -24,7 +24,7 @@ local Upgrades: { [string]: UpgradeDef } = {
 		id = "CoalBunker",
 		name = "Coal Bunker",
 		description = "The bunker holds 25 more coal, per level.",
-		costs = { 5, 9 },
+		costs = { 4, 9 }, -- level 1 matches a first run's starting parts (Train.StartParts)
 		order = 2,
 	},
 	SteamWhistle = {
