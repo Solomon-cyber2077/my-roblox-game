@@ -255,6 +255,9 @@ local function preloadMeshes()
 	end
 end
 
+-- the close-up pieces' finishes (src/server/StalkerLooks.model.json); nil in a headless build
+local looks = script.Parent.Parent:FindFirstChild("StalkerLooks")
+
 -- A copy of a loaded mesh welded to `to`, or nil when it has no mesh yet. Drawn on Quality only.
 local function meshPiece(
 	model: Model,
@@ -273,7 +276,15 @@ local function meshPiece(
 	part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3])
 	part.Color = color
 	part.Material = material
-	part.TextureID = if piece.texture then `rbxassetid://{piece.texture}` else ""
+	-- the colour as a SurfaceAppearance with a rough finish (src/server/StalkerLooks.model.json), so the skin and
+	-- cloth read matte instead of plastic; without it, the plain TextureID
+	local look = looks and looks:FindFirstChild(name)
+	if look then
+		part.TextureID = ""
+		look:Clone().Parent = part
+	else
+		part.TextureID = if piece.texture then `rbxassetid://{piece.texture}` else ""
+	end
 	part.CastShadow = false
 	loose(part)
 	part.CFrame = to.CFrame * CFrame.new(piece.center[1], piece.center[2], piece.center[3])
