@@ -169,16 +169,23 @@ end
 function Wounds.sever(character: Model, area: Grabs.Area): number
 	local broken = 0
 	for _, name in JOINTS[area] do
+		-- a Motor6D, or an AnimationConstraint where the place upgrades avatar joints
 		local motor = character:FindFirstChild(name, true)
-		if motor == nil or not motor:IsA("Motor6D") then
+		local torso: BasePart?, limb: BasePart?, joint: CFrame? = nil, nil, nil
+		if motor and motor:IsA("Motor6D") then
+			torso, limb = motor.Part0, motor.Part1
+			joint = if torso then torso.CFrame * motor.C0 else nil
+		elseif motor and motor:IsA("AnimationConstraint") then
+			local a0, a1 = motor.Attachment0, motor.Attachment1
+			local p0 = a0 and a0.Parent
+			local p1 = a1 and a1.Parent
+			torso = if p0 and p0:IsA("BasePart") then p0 else nil
+			limb = if p1 and p1:IsA("BasePart") then p1 else nil
+			joint = if a0 then a0.WorldCFrame else nil
+		end
+		if motor == nil or torso == nil or limb == nil or joint == nil then
 			continue
 		end
-		local torso = motor.Part0
-		local limb = motor.Part1
-		if torso == nil or limb == nil then
-			continue
-		end
-		local joint = torso.CFrame * motor.C0
 		local direction = limb.Position - torso.Position
 		local out = if direction.Magnitude > 0.001 then direction.Unit else -torso.CFrame.UpVector
 		motor:Destroy()
