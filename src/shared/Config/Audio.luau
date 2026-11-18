@@ -307,6 +307,44 @@ local Cues: { [string]: Cue } = {
 	-- (2026-10-30): at 0.6 it peaked about 30x under the cry and below the rain bed, then the shock's
 	-- muffle dulled it further; 2.4 (+12 dB) puts it level with the bed as the muffle lets go.
 	TornBreath = { id = 77836944589790, volume = 2.4, maxSeconds = 2.4, mix = "Feedback" },
+	-- A Tonic restoring an arm (Controllers/InjuryController, numbers in Config/Injury Restore): the same
+	-- three voices held to a low, short groan through the teeth, and the torn-arm panting heard from the
+	-- body, so crewmates nearby hear it too
+	RestoreGroan1 = {
+		id = 9116454870,
+		start = 0.18,
+		volume = 1.4,
+		maxSeconds = 1.1,
+		spatial = true,
+		rollOff = 70,
+		mix = "Cues",
+	},
+	RestoreGroan2 = {
+		id = 9116454961,
+		start = 0.57,
+		volume = 1.5,
+		maxSeconds = 1.1,
+		spatial = true,
+		rollOff = 70,
+		mix = "Cues",
+	},
+	RestoreGroan3 = {
+		id = 9116455270,
+		start = 0.85,
+		volume = 1.0,
+		maxSeconds = 1.1,
+		spatial = true,
+		rollOff = 70,
+		mix = "Cues",
+	},
+	RestoreBreath = {
+		id = 77836944589790,
+		volume = 2.0,
+		maxSeconds = 2.6,
+		spatial = true,
+		rollOff = 50,
+		mix = "Feedback",
+	},
 	-- Accelerating Tone Piercing High Pitch Ring 1: its rising first seconds, shaped by the shock
 	ShockRing = { id = 9113031196, volume = 8.49, maxSeconds = 4, group = "Warnings" },
 	-- a rail joint under the wheels: one metal hit, low and short ("Prison Bar Hits 8"), not the UI click

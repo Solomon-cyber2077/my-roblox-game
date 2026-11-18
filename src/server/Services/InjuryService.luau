@@ -164,12 +164,7 @@ function InjuryService.Tear(player: Player, arm: Injury.Arm)
 		)
 	elseif not toldArm[player] then
 		toldArm[player] = true -- said once a session; the empty sleeve says it after that
-		NetService.Fire(
-			"Notify",
-			player,
-			"Warning",
-			"You lost an arm. You carry less; a Tonic grows it back."
-		)
+		NetService.Fire("Notify", player, "Warning", "You lost an arm. You carry less; a Tonic restores it.")
 	end
 end
 

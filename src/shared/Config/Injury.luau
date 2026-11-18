@@ -60,6 +60,20 @@ return table.freeze({
 	-- Pain and panic, short of gore: a wet tear and a bone snap, a cry, the view whiting out and
 	-- flooding dark from the torn side, the world going muffled under a ringing in the ears, a racing
 	-- heart and gasps. Crewmates nearby hear it where it happened and see a dark burst at the shoulder.
+	-- the sound of a Tonic restoring an arm: a groan as it starts, heavy breathing through it, a second
+	-- groan near the end
+	Restore = table.freeze({
+		GroanPitch = 0.78, -- times the player's own voice pitch: lower, held in, not a scream
+		SecondGroanAt = 1.2, -- seconds into the treatment
+		BreathAt = 0.25,
+		-- what it looks like: no glow and no light, only the Tonic itself. Green drops run off the
+		-- shoulder as it is poured, a thin sharp vapour rises off the wound, and a pale puff as the arm
+		-- comes back. Performance keeps every beat with fewer particles.
+		Splash = 12, -- drops per pour (at the start and at the second groan)
+		Vapor = 5, -- wisps per pour
+		Puff = 9, -- the puff as the arm returns
+		PerformanceScale = 0.4,
+	}),
 	Tear = table.freeze({
 		ShockSeconds = 3.4, -- how long the shock (muffle, ring, tunnel) lasts on the victim
 		CryDelay = 0.07, -- the cry starts this long after the tear (the snap first)

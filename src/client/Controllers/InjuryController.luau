@@ -393,6 +393,81 @@ local function shoulderOf(character: Model, arm: string, from: CFrame?): Vector3
 		else nil
 end
 
+-- A Tonic restoring an arm (Config/Injury Restore): `beat` "pour" while it is applied, "return" as the
+-- arm comes back. Lit like the world (LightInfluence 1), never glowing.
+local TONIC = Color3.fromRGB(92, 168, 104) -- the bottle's green (Config/Items Tonic)
+local TONIC_DARK = Color3.fromRGB(46, 88, 54)
+local VAPOR = Color3.fromRGB(206, 214, 200)
+local function restoreFx(character: Model, arm: string, beat: "pour" | "return")
+	local at = shoulderOf(character, arm, nil)
+	local torso = character:FindFirstChild("UpperTorso") :: BasePart?
+	if at == nil or torso == nil then
+		return
+	end
+	local R = Config.Restore
+	local scale = if Players.LocalPlayer:GetAttribute("GraphicsQuality") == "Performance"
+		then R.PerformanceScale
+		else 1
+	local outward = if arm == "L" then -torso.CFrame.RightVector else torso.CFrame.RightVector
+	local holder = Instance.new("Part")
+	holder.Name = "TonicFx"
+	holder.Size = Vector3.one * 0.2
+	holder.Transparency = 1
+	holder.Anchored = true
+	holder.CanCollide = false
+	holder.CanQuery = false
+	holder.CanTouch = false
+	holder.CastShadow = false
+	holder.CFrame = CFrame.lookAt(at, at + outward + Vector3.yAxis * 0.6)
+	local vapor = emitter({
+		Color = ColorSequence.new(VAPOR),
+		Lifetime = NumberRange.new(0.7, 1.3),
+		Speed = NumberRange.new(0.8, 2),
+		SpreadAngle = Vector2.new(25, 25),
+		EmissionDirection = Enum.NormalId.Top,
+		Acceleration = Vector3.new(0, 1.2, 0),
+		Drag = 2,
+		Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.25),
+			NumberSequenceKeypoint.new(1, if beat == "return" then 1.6 else 1),
+		}),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, if beat == "return" then 0.55 else 0.7),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+		Rotation = NumberRange.new(0, 360),
+		RotSpeed = NumberRange.new(-30, 30),
+	})
+	vapor.Parent = holder
+	if beat == "pour" then
+		local drops = emitter({
+			Color = ColorSequence.new(TONIC, TONIC_DARK),
+			Lifetime = NumberRange.new(0.4, 0.8),
+			Speed = NumberRange.new(0.6, 2.2),
+			SpreadAngle = Vector2.new(30, 30),
+			EmissionDirection = Enum.NormalId.Front,
+			Acceleration = Vector3.new(0, -Workspace.Gravity * 0.4, 0),
+			Drag = 1.5,
+			Size = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.12),
+				NumberSequenceKeypoint.new(1, 0.05),
+			}),
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.15),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+		})
+		drops.Parent = holder
+		holder.Parent = Workspace
+		drops:Emit(math.max(1, math.round(R.Splash * scale)))
+		vapor:Emit(math.max(1, math.round(R.Vapor * scale)))
+	else
+		holder.Parent = Workspace
+		vapor:Emit(math.max(1, math.round(R.Puff * scale)))
+	end
+	Debris:AddItem(holder, 2)
+end
+
 -- Every client: a dark burst where the arm came away and a brief drip from the shoulder.
 local function burst(character: Model, arm: string, at: Vector3)
 	local torso = character:FindFirstChild("UpperTorso") :: BasePart?
@@ -663,6 +738,7 @@ local function onFx(kind: string, data: any)
 			else
 				motion.restored = serverNow()
 				motion.torn = nil
+				restoreFx(character, data.arm, "return")
 			end
 		end
 	end
@@ -717,7 +793,53 @@ local function trainPosition(): Vector3?
 	return if train and train:IsA("Model") then train:GetPivot().Position else nil
 end
 
+-- A Tonic restoring an arm: the patient groans and breathes hard through it, heard by everyone near.
+local RESTORE = Config.Restore
+local RESTORE_GROANS = { "RestoreGroan1", "RestoreGroan2", "RestoreGroan3" }
+local treating: { [Player]: number } = {} -- the Healing deadline each patient's sounds were started for
+
+local function restoreSounds(player: Player, character: Model, doneAt: number)
+	local head = character:FindFirstChild("Head") :: BasePart?
+	if head == nil then
+		return
+	end
+	local index, pitch = TearFeedback.voice(player.UserId, #RESTORE_GROANS)
+	local groan = RESTORE_GROANS[index]
+	local voice = pitch * RESTORE.GroanPitch
+	play(groan, head.Position, 1, voice)
+	local missing = character:GetAttribute("MissingArms")
+	local arm = if missing == "L" then "L" else "R" -- with both gone either shoulder reads the same
+	restoreFx(character, arm, "pour")
+	task.delay(RESTORE.BreathAt, function()
+		if character.Parent and character:GetAttribute("Healing") == doneAt then
+			play("RestoreBreath", head.Position, 1, 1 + (pitch - 1) * TEAR.BreathVoiceFollow)
+		end
+	end)
+	task.delay(RESTORE.SecondGroanAt, function()
+		if character.Parent and character:GetAttribute("Healing") == doneAt then
+			play(groan, head.Position, 0.8, voice * 0.96)
+			restoreFx(character, arm, "pour")
+		end
+	end)
+end
+
+local function watchTreatment()
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local doneAt = character and character:GetAttribute("Healing")
+		if character and typeof(doneAt) == "number" then
+			if treating[player] ~= doneAt then
+				treating[player] = doneAt
+				restoreSounds(player, character, doneAt)
+			end
+		else
+			treating[player] = nil
+		end
+	end
+end
+
 local function step()
+	watchTreatment()
 	local session = active
 	if session then
 		local u = (serverNow() - session.startsAt) / math.max(session.endsAt - session.startsAt, 0.01)
