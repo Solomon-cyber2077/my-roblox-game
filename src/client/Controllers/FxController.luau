@@ -346,8 +346,12 @@ local function onPhase(phase: string?)
 	local station = Registry.StateController.Get({ "run", "station" })
 	if phase == "Arrival" then
 		local sub: { string } = {}
-		if station and station.stop then
-			table.insert(sub, `STOP {station.stop}`)
+		-- the station info carries no stop number; the run's nextStop is this stop while it docks (as on
+		-- the HUD ticket)
+		local run = Registry.StateController.Get({ "run" })
+		local stop = run and run.nextStop
+		if stop then
+			table.insert(sub, `STOP {stop}`)
 		end
 		if station and station.tier and station.tier > 0 then
 			local tier = math.clamp(station.tier, 0, 3)
