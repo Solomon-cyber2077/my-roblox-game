@@ -13,6 +13,9 @@
 	The train's residents built as R15 bodies (Builders/NpcFigure, tag ResidentRig) are played the
 	same way, standing: they breathe and shift, and turn their head to you when you come near. The
 	hall's passengers (Builders/PassengerFigure) share the tag: they walk, sit and wave (WaveAt).
+
+	A body's joints are Motor6Ds or, where the place upgrades avatar joints, AnimationConstraints of
+	the same names; both are driven through Transform, from the joint's own rest frame.
 ]]
 
 local CollectionService = game:GetService("CollectionService")
@@ -25,12 +28,14 @@ local CrewPoses = require(script.Parent.Parent.Animation.CrewPoses)
 local R15Pose = require(script.Parent.Parent.Animation.R15Pose)
 local Passengers = require(game:GetService("ReplicatedStorage").Shared.Config.Passengers)
 
+type Joint = Motor6D | AnimationConstraint
+
 type Rig = {
 	player: Player?, -- nil for a resident
 	model: Model,
 	root: BasePart,
 	humanoid: Humanoid,
-	motors: { [string]: Motor6D },
+	motors: { [string]: Joint },
 	pose: CrewPoses.Pose,
 	phase: number,
 	seed: number,
@@ -70,6 +75,15 @@ local RESIDENT_TAG = "ResidentRig"
 local RESIDENT_LOOK = 12 -- studs within which a resident turns its head to you
 local WAVE = Passengers.Walk.waveSeconds
 
+-- The joint's rest frame on its first part: a Motor6D's C0, an AnimationConstraint's first attachment.
+local function restFrame(joint: Joint): CFrame
+	if joint:IsA("Motor6D") then
+		return joint.C0
+	end
+	local attachment = (joint :: AnimationConstraint).Attachment0
+	return if attachment then attachment.CFrame else I
+end
+
 local function register(player: Player?, character: Model)
 	if rigs[character] then
 		return
@@ -80,11 +94,11 @@ local function register(player: Player?, character: Model)
 	if root == nil or humanoid == nil or torso == nil or character:GetAttribute("Procedural") ~= true then
 		return
 	end
-	local motors: { [string]: Motor6D } = {}
+	local motors: { [string]: Joint } = {}
 	for _, name in JOINTS do
 		local motor = character:FindFirstChild(name, true)
-		if motor and motor:IsA("Motor6D") then
-			motors[name] = motor
+		if motor and (motor:IsA("Motor6D") or motor:IsA("AnimationConstraint")) then
+			motors[name] = motor :: Joint
 		end
 	end
 	rigs[character] = {
@@ -286,9 +300,13 @@ local function animate(rig: Rig, dt: number, now: number)
 				continue
 			end
 		end
-		local value = (rig.pose[name] or I):Lerp(R15Pose.inJoint(target[name] or I, motor.C0), alpha)
+		local value = (rig.pose[name] or I):Lerp(R15Pose.inJoint(target[name] or I, restFrame(motor)), alpha)
 		rig.pose[name] = value
-		motor.Transform = value
+		if motor:IsA("Motor6D") then
+			motor.Transform = value
+		else
+			(motor :: AnimationConstraint).Transform = value
+		end
 	end
 end
 
