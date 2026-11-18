@@ -484,6 +484,9 @@ Enter.Dwell = function()
 	end
 	Registry.HazardDirector.Begin(plan, info)
 	Registry.CrewService.SpawnPendingJoiners()
+	if info.emergency == nil then
+		Registry.CrewService.MarkStopReached(state.nextStop)
+	end
 	if state.nextStop == 1 and info.emergency == nil then
 		-- E2's exposure: the players present as stop 1's doors open, in either arm (A.4)
 		exposeArm(

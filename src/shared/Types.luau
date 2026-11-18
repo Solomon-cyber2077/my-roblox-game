@@ -187,6 +187,7 @@ export type CrewTally = {
 	clutchBoards: number,
 	closeCalls: number, -- not aboard at T-0, aboard when the stop resolved
 	reachedEnd: boolean,
+	deepestStop: number, -- the deepest stop whose doors opened while they were alive in the run
 }
 
 -- lobby.line: the hall's route choice (LobbyService, Logic/Routes). fixed: a new Hand is in the

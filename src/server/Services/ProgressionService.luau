@@ -178,7 +178,7 @@ local function settle(player: Player, tally: Types.CrewTally, run: Settlement)
 				-- a Short Line victory counts above; this one is the Long Line's alone
 				s.longVictories = (s.longVictories or 0) + (if arrived and route ~= "Short" then 1 else 0)
 				s.stationsDeparted = (s.stationsDeparted or 0) + tally.stationsDeparted
-				s.bestStation = math.max(s.bestStation or 0, tally.stationsDeparted)
+				s.bestStation = math.max(s.bestStation or 0, Economy.deepestStop(tally))
 				s.coalDelivered = (s.coalDelivered or 0) + tally.coalDelivered
 				s.partsDelivered = (s.partsDelivered or 0) + tally.partsDelivered
 				s.relicsBanked = (s.relicsBanked or 0) + tally.relicsBanked

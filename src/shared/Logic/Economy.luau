@@ -87,7 +87,14 @@ function Economy.emptyTally(): Types.CrewTally
 		clutchBoards = 0,
 		closeCalls = 0,
 		reachedEnd = false,
+		deepestStop = 0,
 	}
+end
+
+-- The run's record for stats.bestStation ("the deepest stop reached"): the deepest stop whose doors
+-- opened while the player was alive, never less than the stops they left alive.
+function Economy.deepestStop(tally: Types.CrewTally): number
+	return math.max(tally.deepestStop or 0, tally.stationsDeparted)
 end
 
 return table.freeze(Economy)

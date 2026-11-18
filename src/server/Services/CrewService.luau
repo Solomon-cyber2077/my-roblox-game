@@ -729,6 +729,15 @@ function CrewService.SpawnPendingJoiners()
 	end
 end
 
+-- A numbered stop's doors are open: everyone alive in the run has reached it (stats.bestStation).
+function CrewService.MarkStopReached(stop: number)
+	for _, member in members do
+		if isAliveStatus(member.status) then
+			member.tally.deepestStop = math.max(member.tally.deepestStop, stop)
+		end
+	end
+end
+
 -- The route's last stop has departed: everyone still in the run rode the line to its end.
 function CrewService.MarkLineEnd()
 	for _, member in members do
