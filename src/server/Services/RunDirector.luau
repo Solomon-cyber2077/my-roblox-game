@@ -615,13 +615,6 @@ Enter.RunEnd = function(previous, outcome)
 		state.route,
 		state.runId
 	)
-	local text = {
-		Victory = "The last stop is behind you. The strongbox is opened and the haul paid out.",
-		Wiped = "The whole crew was lost.",
-		CashedOut = "The last of the crew cashed out. The line closes behind them.",
-		Derailed = "The train broke down for good and was lost.",
-	}
-	NetService.FireAll("Notify", "RunEnd", text[finalOutcome])
 end
 
 -- Transitions --------------------------------------------------------------------------------

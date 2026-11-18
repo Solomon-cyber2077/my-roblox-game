@@ -772,6 +772,38 @@ function Hud.mount(gui: ScreenGui)
 		ZIndex = 3,
 		Parent = coalMeter,
 	})
+	-- "+X" over the coal gauge's full end when coal comes aboard (anyone's delivery): it rises and fades
+	local coalGain = Ui.text({
+		Name = "CoalGain",
+		Text = "",
+		Font = Theme.Font.display,
+		TextSize = 15,
+		Color = Theme.Color.brassLight,
+		Size = UDim2.fromOffset(48, 14),
+		Position = UDim2.new(1, -48, 0, -12),
+		XAlign = Enum.TextXAlignment.Right,
+	})
+	coalGain.TextStrokeTransparency = 0.4
+	coalGain.TextTransparency = 1
+	coalGain.Parent = coalMeter.Parent
+	local coalGainToken = 0
+	local function showCoalGain(amount: number)
+		coalGainToken += 1
+		local token = coalGainToken
+		coalGain.Text = `+{amount}`
+		coalGain.Position = UDim2.new(1, -48, 0, -6)
+		coalGain.TextTransparency = 0
+		Ui.tween(
+			coalGain,
+			{ Position = UDim2.new(1, -48, 0, -14) },
+			TweenInfo.new(0.35, Enum.EasingStyle.Quad)
+		)
+		task.delay(1.4, function()
+			if token == coalGainToken then
+				Ui.tween(coalGain, { TextTransparency = 1 }, TweenInfo.new(0.5))
+			end
+		end)
+	end
 	local warning = Ui.text({
 		Text = "",
 		Font = Theme.Font.display,
@@ -1291,10 +1323,22 @@ function Hud.mount(gui: ScreenGui)
 		renderBackpack(inv)
 		wake(backpackFade)
 	end)
+	local lastCoal: number? = nil
+	local lastCoalRun: string? = nil
 	function renderTrain(train: any)
 		if train == nil then
 			return
 		end
+		local runId = (State.Get({ "run" }) or {}).runId
+		local coal = math.floor(train.coal)
+		if runId ~= lastCoalRun then
+			lastCoalRun = runId
+			lastCoal = nil -- a new run's starting coal is not a delivery
+		end
+		if lastCoal and coal > lastCoal and runId then
+			showCoalGain(coal - lastCoal)
+		end
+		lastCoal = coal
 		setCoal(train.coal / math.max(train.coalMax, 1))
 		coalValue.Text = `{math.floor(train.coal)}/{train.coalMax}`
 		partsValue.Text = tostring(train.parts)

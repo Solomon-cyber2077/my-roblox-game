@@ -192,9 +192,7 @@ local function onFx(kind: string, data: { [string]: any }?)
 		return
 	end
 	if kind == "Deposit" then
-		if (d.coal or 0) > 0 then
-			Overlay.popup(`+{d.coal} COAL`, Theme.Color.brassLight)
-		end
+		-- coal shows as "+X" on the HUD's coal gauge (UI/Hud), for every crewmate's delivery
 		if (d.parts or 0) > 0 then
 			Overlay.popup(`+{d.parts} PARTS`, Theme.Color.parts)
 		end

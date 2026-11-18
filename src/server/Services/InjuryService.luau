@@ -50,6 +50,7 @@ local heals: { [Player]: Heal } = {}
 local prompts: { [Model]: ProximityPrompt } = {}
 local chestPrompt: ProximityPrompt? = nil
 local wasAboard: { [Player]: boolean } = {}
+local toldArm: { [Player]: boolean } = {}
 
 local ARMS: { [string]: { string } } = {
 	L = { "LeftUpperArm", "LeftLowerArm", "LeftHand" },
@@ -161,12 +162,13 @@ function InjuryService.Tear(player: Player, arm: Injury.Arm)
 			"Warning",
 			`No arms left. Get back aboard within {Config.ReturnSeconds}s. A crewmate's Tonic or the crew chest can help.`
 		)
-	else
+	elseif not toldArm[player] then
+		toldArm[player] = true -- said once a session; the empty sleeve says it after that
 		NetService.Fire(
 			"Notify",
 			player,
 			"Warning",
-			"You lost an arm. You carry less; a Tonic brings it back."
+			"You lost an arm. You carry less; a Tonic grows it back."
 		)
 	end
 end
@@ -434,6 +436,7 @@ function InjuryService.Start()
 		end
 		injuries[player] = nil
 		wasAboard[player] = nil
+		toldArm[player] = nil
 	end)
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function()

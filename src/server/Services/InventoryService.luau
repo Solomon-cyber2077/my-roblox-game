@@ -202,19 +202,6 @@ function InventoryService.DepositCargo(player: Player, withRelics: boolean?)
 	local receipt = Registry.TrainService.Deposit(cargo)
 	Registry.CrewService.RecordDeposit(player, receipt)
 	NetService.Fire("Fx", player, "Deposit", receipt)
-	local parts: { string } = {}
-	if receipt.coal > 0 then
-		table.insert(parts, `{receipt.coal} coal`)
-	end
-	if receipt.parts > 0 then
-		table.insert(parts, `{receipt.parts} parts`)
-	end
-	if receipt.relics > 0 then
-		table.insert(parts, `{receipt.relics} relic{if receipt.relics > 1 then "s" else ""}`)
-	end
-	if #parts > 0 then
-		NetService.FireAll("Notify", "Crew", `{player.DisplayName} loaded {table.concat(parts, ", ")}.`)
-	end
 	if receipt.coalWasted > 0 then
 		NetService.FireAll("Notify", "Warning", `Bunker full: {receipt.coalWasted} coal spilled.`)
 	end
