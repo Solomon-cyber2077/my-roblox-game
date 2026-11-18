@@ -49,7 +49,6 @@ local Handlers: { [string]: (def: TimedEvents.Def) -> () -> () } = {
 	Surge = function(def)
 		Registry.HollowService.Alert(def.duration)
 		local extra = Registry.HazardDirector.SpawnExtra()
-		Registry.NetService.FireAll("Notify", "Alarm", "Surge! The Hollows are coming for you!")
 		return function()
 			Registry.HollowService.EndAlert()
 			if extra and extra.Parent then

@@ -275,8 +275,9 @@ function Struggle.coach(text: string)
 end
 
 -- `crewmates`: another living crewmate is in the run, so the check says they can pull you free.
-function Struggle.show(name: string, _kind: string, crewmates: boolean)
-	title.Text = name
+-- The grab's name is not shown: the camera, the hold and the sound already say what has you.
+function Struggle.show(_name: string, _kind: string, crewmates: boolean)
+	title.Text = ""
 	title.TextTransparency = 0
 	keyLabel.Text = keyText()
 	helpers.Text = if crewmates then "your crew can pull you free" else ""

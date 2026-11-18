@@ -254,7 +254,6 @@ local function complete(heal: Heal)
 	set(patient, Injury.restore(InjuryService.Get(patient)))
 	NetService.FireAll("Fx", "ArmRestored", { userId = patient.UserId, arm = arm })
 	NetService.Fire("Fx", patient, "Heal", {})
-	NetService.Fire("Notify", patient, "Crew", "Your arm grows back.")
 end
 
 -- One step of a heal: interrupted, still going, or done.

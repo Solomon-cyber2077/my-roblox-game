@@ -692,8 +692,6 @@ local function onFx(kind: string, data: any)
 		}
 		if data.rescuer == me then
 			startRescue(data)
-		elseif data.victim == me then
-			Overlay.alert(`{string.upper(nameOf(data.rescuer))} IS PULLING YOU FREE`, Theme.Color.caution, 2)
 		end
 	elseif kind == "RescueBeat" and type(data) == "table" then
 		local session = active

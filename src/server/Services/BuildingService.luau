@@ -157,7 +157,6 @@ local function brace(player: Player, leaf: BasePart)
 	end
 	if Doors.hold(f.episode) then
 		f.hold.Enabled = false
-		NetService.Fire("Notify", player, "Info", "You brace the door. It will hold a little longer.")
 	end
 end
 

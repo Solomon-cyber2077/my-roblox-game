@@ -60,12 +60,6 @@ local GrabController = {}
 local ACTION = "LTO_Struggle"
 local LOOK_STEP = "LTO_GrabLook"
 local MIN_EYE_DISTANCE = 6 -- studs: the frozen view never sits inside your own head
-local OUTCOMES: { [string]: { text: string, color: Color3 } } = {
-	Escaped = { text = "YOU TORE FREE. RUN!", color = Theme.Color.go },
-	Flash = { text = "IT LET GO. RUN!", color = Theme.Color.sky },
-	Timeout = { text = "IT DROPPED YOU. RUN!", color = Theme.Color.caution },
-}
-
 local held = false
 local struggle = 0 -- 0..1 how hard you have been fighting lately
 local escapeShown = 0
@@ -286,7 +280,6 @@ local function finish(model: Model)
 	end
 	safely("hide struggle", Struggle.hide)
 	safely("unlock", unlock)
-	local outcome = OUTCOMES[(model:GetAttribute("GrabOutcome") :: string?) or ""]
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	local alive = humanoid ~= nil and humanoid.Health > 0
 	if alive then
@@ -294,9 +287,6 @@ local function finish(model: Model)
 		gaspAt = os.clock() + 0.3
 	else
 		Trauma.died()
-	end
-	if outcome and alive then
-		Overlay.alert(outcome.text, outcome.color, 2.4)
 	end
 end
 

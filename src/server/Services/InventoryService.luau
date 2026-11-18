@@ -149,12 +149,6 @@ function InventoryService.Refit(player: Player)
 	end
 	set(player, nextInv)
 	if #placed > 0 then
-		local names: { string } = {}
-		for _, itemId in placed do
-			local def = Items[itemId]
-			table.insert(names, if def then def.name else itemId)
-		end
-		NetService.Fire("Notify", player, "Warning", `Dropped where you stand: {table.concat(names, ", ")}.`)
 		NetService.Fire("Fx", player, "DropReceipt", { items = placed })
 	end
 	if #keep > 0 and #dropped > 0 then

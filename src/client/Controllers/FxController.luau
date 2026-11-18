@@ -13,9 +13,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Cosmetics = require(Shared.Config.Cosmetics)
 local Foley = require(Shared.Logic.Foley)
-local Items = require(Shared.Config.Items)
 local Tuning = require(Shared.Config.Tuning)
-local Format = require(Shared.Util.Format)
 
 local Net = require(script.Parent.Parent.Net)
 local Registry = require(script.Parent.Parent.Registry)
@@ -209,13 +207,6 @@ local function onFx(kind: string, data: { [string]: any }?)
 			audio(cue)
 		end
 	elseif kind == "Found" then
-		local names = {}
-		for _, itemId in d.items or {} do
-			table.insert(names, Items[itemId] and Items[itemId].name or itemId)
-		end
-		if #names > 0 then
-			Overlay.popup(table.concat(names, " · "), Theme.Color.paper)
-		end
 		if d.leftovers and #d.leftovers > 0 then
 			Overlay.feed(
 				"Warning",
@@ -288,15 +279,11 @@ local function onFx(kind: string, data: { [string]: any }?)
 		end
 	elseif kind == "Rescued" then
 		Overlay.blink(0.4)
-		task.delay(0.8, function()
-			Overlay.alert("BACK ON THE LINE. RUN!", Theme.Color.sky, 3)
-		end)
 		Spectate.hide()
 	elseif kind == "Flare" then
 		flare(d.position)
 	elseif kind == "Clutch" then
 		if d.userId == Players.LocalPlayer.UserId then
-			Overlay.alert("BY A WHISKER!", Theme.Color.brassLight, 2.2)
 			Registry.CameraController.ShakeFor(0.35, Tuning.Grasp.CameraKickSeconds)
 			audio("Clutch")
 		end
@@ -359,9 +346,7 @@ local function onPhase(phase: string?)
 		return
 	end
 	local station = Registry.StateController.Get({ "run", "station" })
-	if phase == "Junction" then
-		Overlay.alert("JUNCTION AHEAD: CHOOSE A LINE", Theme.Color.brassLight, 2.6)
-	elseif phase == "Arrival" then
+	if phase == "Arrival" then
 		local sub: { string } = {}
 		if station and station.stop then
 			table.insert(sub, `STOP {station.stop}`)
@@ -373,7 +358,6 @@ local function onPhase(phase: string?)
 		Overlay.title(string.upper(station and station.name or "STATION"), table.concat(sub, "  ·  "), 2)
 		audio("Brakes")
 	elseif phase == "Dwell" then
-		Overlay.alert(`DOORS OPEN  ·  {Format.clock(station and station.dwell or 0)}`, Theme.Color.go, 2.6)
 		audio("DoorsOpen")
 		if Registry.AudioController then
 			Registry.AudioController.ArrivalHush() -- the brakes are done: the stop's silence first
@@ -392,8 +376,6 @@ local function onDeparted()
 	local status = Session.status()
 	if status == "Afield" or status == "Straggler" then
 		Overlay.alert("THE TRAIN IS LEAVING. RUN!", Theme.Color.alarm, 3)
-	else
-		Overlay.alert("DOORS CLOSING", Theme.Color.caution, 2)
 	end
 	Registry.CameraController.Shake(0.35)
 end

@@ -103,7 +103,6 @@ local function lose()
 	clearPrompts()
 	toast(false)
 	publish()
-	NetService.FireAll("Notify", "Alarm", "The train has broken down for good. It is lost.")
 	Registry.RunDirector.EndRun("Derailed")
 end
 
@@ -132,7 +131,6 @@ local function onRepair(player: Player, prompt: ProximityPrompt)
 		clearPrompts()
 		toast(false)
 		Registry.TrainService.SetIntegrity(C.RallyRestore)
-		NetService.FireAll("Notify", "Upgrade", "Repaired! The train limps on.")
 	end
 	publish()
 end
@@ -191,9 +189,6 @@ local function step(dt: number)
 			local village = state.count == 0 and BreakdownService.requestVillageStop()
 			local broken = Breakdown.onFloor(state, now(), village)
 			state = broken
-			if broken.phase == "Stopped" then
-				NetService.FireAll("Notify", "Alarm", "The train has broken down!")
-			end
 		end
 	end
 	state = Breakdown.tick(state, now())

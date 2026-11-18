@@ -503,11 +503,6 @@ Enter.Dwell = function()
 		)
 		return
 	end
-	NetService.FireAll(
-		"Notify",
-		"Station",
-		`{info.name}. Doors open. Departure in {Format.clock(info.dwell)}.`
-	)
 end
 
 Enter.LastCall = function()

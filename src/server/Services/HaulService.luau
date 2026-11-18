@@ -227,11 +227,6 @@ local function deliver(player: Player)
 			supply:Destroy()
 		end
 	end)
-	Registry.NetService.FireAll(
-		"Notify",
-		"Station",
-		"Seal broken: payroll, a burnt railway ticket, scrap and tonic recovered."
-	)
 	clearCrate()
 	Builder.stack(stores, valuables)
 end

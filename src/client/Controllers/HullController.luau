@@ -27,9 +27,8 @@ local CREAK_EVERY = { 9, 6, 4 } -- seconds between creaks at tiers 1, 2, 3
 local ALARM_EVERY = 3.4
 local EMERGENCY = Color3.fromRGB(255, 58, 40)
 local WARNINGS = {
-	"HULL BELOW 75%: SHE'S STARTING TO GIVE",
-	"HULL BELOW 50%: THE LIGHTS ARE FAILING",
-	"HULL BELOW 25%: EMERGENCY! REPAIR AT THE WORKBENCH",
+	-- 75% and 50% are shown by the creaks and the failing lights; only the last tells you where to repair
+	[3] = "HULL BELOW 25%: EMERGENCY! REPAIR AT THE WORKBENCH",
 }
 
 local tier = 0
@@ -65,7 +64,10 @@ local function onTrain(train: any)
 		if tier >= 3 then
 			alarmsLeft = ALARM_STRIKES
 		end
-		Overlay.alert(WARNINGS[tier], if tier >= 3 then Theme.Color.alarm else Theme.Color.caution, 3)
+		local warning = WARNINGS[tier]
+		if warning then
+			Overlay.alert(warning, Theme.Color.alarm, 3)
+		end
 	elseif tier < warned then
 		warned = tier -- repaired: crossing down again warns again
 	end
