@@ -81,6 +81,10 @@ local function apply(part: BasePart)
 	end
 	local kind = part:GetAttribute("LobbySurface")
 	local maps: { Texture }? = surfaces[part]
+	-- a dado wearing a painted or built-in look (Config/LobbyTiles) has its own joints: no grid over it
+	if kind == "Tile" and (part.MaterialVariant ~= "" or part.Material ~= Enum.Material.CeramicTiles) then
+		kind = nil
+	end
 	if not maps and detailed and typeof(kind) == "string" and images[kind] then
 		local added: { Texture } = {}
 		local faces: { Enum.NormalId } = if kind == "Stone"

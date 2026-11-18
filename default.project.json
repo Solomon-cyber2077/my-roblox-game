@@ -58,6 +58,15 @@
         "FallenPartsDestroyHeight": -500
       }
     },
+    "MaterialService": {
+      "$className": "MaterialService",
+      "LobbyQuarry": {
+        "$path": "src/materials/LobbyQuarry.model.json"
+      },
+      "LobbyDado": {
+        "$path": "src/materials/LobbyDado.model.json"
+      }
+    },
     "Players": {
       "$properties": {
         "CharacterAutoLoads": false

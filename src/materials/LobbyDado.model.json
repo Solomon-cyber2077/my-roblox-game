@@ -1,0 +1,7 @@
+{
+ "className": "MaterialVariant",
+ "properties": {
+  "BaseMaterial": "CeramicTiles",
+  "StudsPerTile": 4
+ }
+}

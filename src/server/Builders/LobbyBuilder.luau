@@ -21,6 +21,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Audio = require(ReplicatedStorage.Shared.Config.Audio)
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local LobbyTiles = require(ReplicatedStorage.Shared.Logic.LobbyTiles)
+local TileLooks = require(ReplicatedStorage.Shared.Config.LobbyTiles)
 local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
 local IL = InteriorLight
 local Outfits = require(ReplicatedStorage.Shared.Config.Outfits)
@@ -152,6 +154,24 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	local function decor(size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?): BasePart
 		return block(size, cf, color, material, { collide = false, shadow = false })
 	end
+	-- The hall's tile surfaces take their look from Config/LobbyTiles: today's CeramicTiles until the
+	-- painted maps are uploaded. Only material, variant and tint change.
+	local tileLook = LobbyTiles.look()
+	local function tiled(part: BasePart, key: string): BasePart
+		if tileLook == "today" then
+			return part
+		end
+		local c = part.Color
+		local pick = LobbyTiles.pick(key, part.Material.Name, {
+			math.floor(c.R * 255 + 0.5),
+			math.floor(c.G * 255 + 0.5),
+			math.floor(c.B * 255 + 0.5),
+		})
+		part.Material = (Enum.Material :: any)[pick.material]
+		part.MaterialVariant = pick.variant or ""
+		part.Color = Color3.fromRGB(pick.color[1], pick.color[2], pick.color[3])
+		return part
+	end
 	-- Every chair and bench gets unseen Seats (the sitter faces the frame's -Z); LobbyService puts a
 	-- Sit prompt on each, as TrainService does aboard
 	local seats: { Seat } = {}
@@ -201,12 +221,26 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 		)
 	end
 	local fx0, fx1 = floorX0 + BORDER, floorX1 - BORDER
-	block(
-		Vector3.new(fx1 - fx0, 1, WALK1 - WALK0),
-		at(0, -0.5, (WALK0 + WALK1) / 2),
-		C.quarry,
-		Enum.Material.CeramicTiles
+	local walk = tiled(
+		block(
+			Vector3.new(fx1 - fx0, 1, WALK1 - WALK0),
+			at(0, -0.5, (WALK0 + WALK1) / 2),
+			C.quarry,
+			Enum.Material.CeramicTiles
+		),
+		"quarry"
 	)
+	local pathImage = TileLooks.Path.image
+	if tileLook == "painted" and pathImage then
+		-- the worn path down the middle of the walk, dirt banked along both sides
+		local path = Instance.new("Texture")
+		path.Name = "WornPath"
+		path.Face = Enum.NormalId.Top
+		path.Texture = pathImage
+		path.StudsPerTileU = TileLooks.Path.along
+		path.StudsPerTileV = TileLooks.Path.across
+		path.Parent = walk
+	end
 	local rosette = Vector3.new(0, 0, 24)
 	-- the line's roundel, wordless: rails running away into a tunnel mouth, the red tail lamp of the
 	-- last train going out inside it. Each layer's top sits at its own height (top = 0.04 * ring).
@@ -468,20 +502,26 @@ function LobbyBuilder.build(origin: CFrame, parent: Instance): Built
 	-- The decorative cream bullnose caps were removed with the other white trim.
 	local DADO_LOW, DADO_TOP = 1.2, 5.2
 	backStrip(function(x0, x1)
-		local dado = decor(
-			Vector3.new(x1 - x0, DADO_TOP - DADO_LOW, 0.15),
-			at((x0 + x1) / 2, (DADO_LOW + DADO_TOP) / 2, BACK_Z - 0.095),
-			C.SHELL_GREEN,
-			Enum.Material.CeramicTiles
+		local dado = tiled(
+			decor(
+				Vector3.new(x1 - x0, DADO_TOP - DADO_LOW, 0.15),
+				at((x0 + x1) / 2, (DADO_LOW + DADO_TOP) / 2, BACK_Z - 0.095),
+				C.SHELL_GREEN,
+				Enum.Material.CeramicTiles
+			),
+			"dado"
 		)
 		dado:SetAttribute("LobbySurface", "Tile")
 	end)
 	for _, side in { -1, 1 } do
-		local dado = decor(
-			Vector3.new(0.15, DADO_TOP - DADO_LOW, BACK_Z - 0.17 - EDGE_Z),
-			at(side * (HALF_X - 0.095), (DADO_LOW + DADO_TOP) / 2, (EDGE_Z + BACK_Z - 0.17) / 2),
-			C.SHELL_GREEN,
-			Enum.Material.CeramicTiles
+		local dado = tiled(
+			decor(
+				Vector3.new(0.15, DADO_TOP - DADO_LOW, BACK_Z - 0.17 - EDGE_Z),
+				at(side * (HALF_X - 0.095), (DADO_LOW + DADO_TOP) / 2, (EDGE_Z + BACK_Z - 0.17) / 2),
+				C.SHELL_GREEN,
+				Enum.Material.CeramicTiles
+			),
+			"dado"
 		)
 		dado:SetAttribute("LobbySurface", "Tile")
 	end
