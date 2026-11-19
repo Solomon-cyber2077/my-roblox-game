@@ -248,18 +248,25 @@ local function preloadMeshes()
 	if not ok then
 		return
 	end
+	local function load(key: string, id: number?)
+		if id == nil then
+			return
+		end
+		local loaded, mesh = pcall(function(): any
+			return (service :: AssetService):CreateMeshPartAsync(Content.fromAssetId(id :: number))
+		end)
+		if loaded and mesh then
+			meshCache[key] = mesh :: MeshPart
+		else
+			warn(`HollowBuilder: Hollow mesh {key} ({id}) did not load: {mesh}`)
+		end
+	end
 	for prefix, pieces in MESH_TABLES do
 		for name, piece in pieces do
-			if piece.id == nil then
-				continue
-			end
-			local loaded, mesh = pcall(function(): any
-				return (service :: AssetService):CreateMeshPartAsync(Content.fromAssetId(piece.id :: number))
-			end)
-			if loaded and mesh then
-				meshCache[prefix .. name] = mesh :: MeshPart
-			else
-				warn(`HollowBuilder: Hollow mesh {prefix .. name} ({piece.id}) did not load: {mesh}`)
+			load(prefix .. name, piece.id)
+			-- its lighter Performance version, cached as "<name>.perf" (only beside a close-up mesh)
+			if piece.id then
+				load(prefix .. name .. ".perf", piece.perf)
 			end
 		end
 	end
@@ -311,6 +318,29 @@ local function meshPiece(
 	weld.Parent = part
 	part:AddTag("Detail")
 	part.Parent = model
+	-- its lighter version for Performance, in the same place: drawn only while the close-up one is hidden
+	local light = meshCache[name .. ".perf"]
+	if light then
+		local lite = light:Clone()
+		lite.Name = "Light" .. (if brute then string.sub(name, 7) else name)
+		lite.Size = part.Size
+		lite.Color = color
+		lite.Material = material
+		lite.TextureID = if piece.perfTexture
+			then `rbxassetid://{piece.perfTexture}`
+			elseif piece.texture then `rbxassetid://{piece.texture}`
+			else ""
+		lite.CastShadow = false
+		loose(lite)
+		lite.CFrame = part.CFrame
+		local hold = Instance.new("Weld")
+		hold.Part0 = to
+		hold.Part1 = lite
+		hold.C0 = weld.C0
+		hold.Parent = lite
+		lite:AddTag("DetailFallback")
+		lite.Parent = model
+	end
 	return part
 end
 
@@ -1172,7 +1202,12 @@ local function brute(model: Model, root: BasePart)
 		end
 	end
 	for group, parts in blocks do
-		if meshCache["brute." .. group] ~= nil then
+		if meshCache["brute." .. group .. ".perf"] ~= nil then
+			-- a light mesh stands in under Performance: the blocks are never drawn (they stay for the skeleton)
+			for _, part in parts do
+				part.Transparency = 1
+			end
+		elseif meshCache["brute." .. group] ~= nil then
 			for _, part in parts do
 				part:AddTag("DetailFallback")
 			end

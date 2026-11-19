@@ -8,7 +8,16 @@
 	stay as the Performance setting's lighter version.
 ]]
 
-export type Piece = { id: number?, texture: number?, size: { number }, center: { number } }
+export type Piece = {
+	id: number?,
+	texture: number?,
+	size: { number },
+	center: { number },
+	-- a lighter mesh (and its colour image) drawn in this piece's place under Performance; with one, the
+	-- piece's blocks are never drawn at all (Builders/HollowBuilder)
+	perf: number?,
+	perfTexture: number?,
+}
 
 local StalkerMeshes: { [string]: Piece } = {
 	head = {
