@@ -43,6 +43,7 @@ local Shared = ReplicatedStorage.Shared
 local Audio = require(Shared.Config.Audio)
 local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
+local Tuning = require(Shared.Config.Tuning)
 local RunRules = require(Shared.Logic.RunRules)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 local Grab = require(Shared.Logic.Grab)
@@ -451,8 +452,16 @@ end
 -- The shovel is coming down on you, alone (Config/Grabs crush): you see it rise and fall, and the screen
 -- goes black the instant it lands (the crunch is heard, nothing is shown).
 function GrabController.Crushed(landsIn: number)
-	task.delay(landsIn, function()
+	-- black just before the blade lands, so the blow is never seen; in the black it is felt where it lands,
+	-- in the chest: a hard jolt down, a body thud and the breath knocked out, under the crunch everyone near
+	-- hears (FxController)
+	task.delay(math.max(landsIn - Tuning.Grab.Crush.BlackLead, 0), function()
 		Trauma.blackout()
+	end)
+	task.delay(landsIn, function()
+		Registry.CameraController.Shake(1.2)
+		audio("LimbThud", 1, 0.85)
+		audio("Winded", 0.9, 0.7)
 	end)
 end
 

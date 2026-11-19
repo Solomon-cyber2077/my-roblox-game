@@ -1,4 +1,5 @@
 local ReachIn = require(Shared.Logic.ReachIn)
+local Difficulty = require(Shared.Config.Difficulty)
 local BuildingGen = require(Shared.Logic.BuildingGen)
 local Buildings = require(Shared.Config.Buildings)
 local Grabs = require(Shared.Config.Grabs)
@@ -170,8 +171,16 @@ describe("ReachIn: the late return", function()
 		for seed = 1, 50 do
 			expect(ReachIn.returns(seed, 10, 2, 1)).toBe(false)
 			expect(ReachIn.returns(seed, 1, nil, 0)).toBe(false)
-			expect(ReachIn.returns(seed, 5, nil, 1)).toBe(false)
+			local first = Difficulty.BruteReturn.FirstStop[2]
+			expect(ReachIn.returns(seed, first - 1, nil, 1)).toBe(false)
 		end
+	end)
+
+	it("reaches the Short Line through its levels (stops 4 and 5 read levels 6 and 8)", function()
+		local levels = Tuning.Run.ShortLevels
+		local first = Difficulty.BruteReturn.FirstStop[1]
+		expect(levels[4] >= first).toBe(true) -- stop 4 (level 6) can roll him
+		expect(4 < first).toBe(true) -- which reading the raw stop number would not
 	end)
 
 	it("comes at about Chance of late stops", function()

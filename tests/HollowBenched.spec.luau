@@ -16,6 +16,10 @@ describe("Benched Hollow kinds", function()
 				left += 1
 			end
 		end
+		-- the Stoker (Brute) still comes, benched, by his late return when it is on (Logic/ReachIn.returns)
+		if Tuning.HollowBenched.Brute and Tuning.BruteRemake.Enabled and Tuning.BruteRemake.Returns then
+			left += 1
+		end
 		expect(left >= 2).toBe(true)
 	end)
 

@@ -282,7 +282,7 @@ function ReachIn.step(track: Track, input: Input, cfg: Config?): (Track, string?
 end
 
 --[[
-	Whether stop `stop` of a run rolls the late Brute: past the tutorial runs, from FirstStop (by
+	Whether a stop at Long Line level `stop` rolls the late Brute: past the tutorial runs, from FirstStop (by
 	difficulty), with Chance, from the stop's own seed so every server agrees.
 ]]
 function ReachIn.returns(seed: number, stop: number?, tutorial: number?, difficulty: number): boolean

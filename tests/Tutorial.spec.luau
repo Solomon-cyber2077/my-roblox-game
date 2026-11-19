@@ -92,7 +92,7 @@ describe("Tutorial stop 1 in the bigger stations", function()
 	local Stations = require(Shared.Config.Stations)
 	local T = Difficulty.Tutorial
 
-	it("lights the way out in safe pools at the stop the teaching Crawler comes", function()
+	it("lights the way out in safe pools at the stop the teaching Hollow comes", function()
 		expect(T.SafeLight.YardLampsAtStop).toBe(T.ScriptedGrab.Stop)
 		for _, id in Stations.Order do
 			local arch = Stations.List[id]
@@ -107,7 +107,7 @@ describe("Tutorial stop 1 in the bigger stations", function()
 							rails += 1
 						end
 					end
-					-- pools across the yard, and the dark between them for the Crawler
+					-- pools across the yard, and the dark between them for the teaching Hollow
 					expect(pools).toBeAtLeast(6)
 					expect(pools).toBeAtMost(Stations.Lamps.YardMax)
 					expect(rails).toBeGreaterThan(20)

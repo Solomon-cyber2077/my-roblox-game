@@ -685,6 +685,10 @@ local Tuning = {
 		-- the Stoker's finish (Config/Grabs crush): the shovel's swing, from the raise to the blow landing
 		Crush = {
 			Seconds = 0.55,
+			-- solo, the screen goes black this long before the blow lands, so it is never seen (owner 2026-11-18:
+			-- "screen goes black just before impact, solo players know they were hit and where they were hit but
+			-- they never see it")
+			BlackLead = 0.12,
 		},
 		-- the Stoker's pin is the skill check's second stage (owner 2026-11-18): faster checks, then the check
 		-- fades out; fully faded, or MaxMisses more misses, and the death begins (Logic/Grab.pinStage)

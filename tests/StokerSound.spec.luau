@@ -104,6 +104,12 @@ describe("The Stoker's sound set", function()
 		expect(StokerSound.drag(4, "Hunt", 0.5)).toBe("StokerDrag1")
 	end)
 
+	it("goes black just before the solo crush lands, never after it", function()
+		local crush = Tuning.Grab.Crush
+		expect(crush.BlackLead > 0).toBe(true)
+		expect(crush.BlackLead < crush.Seconds).toBe(true)
+	end)
+
 	it("breathes once out and once in a breath, faster on the hunt", function()
 		local function count(rate: number, seconds: number): (number, number)
 			local outs, ins = 0, 0

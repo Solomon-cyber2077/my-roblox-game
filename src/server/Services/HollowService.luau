@@ -10,7 +10,7 @@
 	Tutorial (Config/Tutorial, by HazardParams.tutorial): nobody is hunted until they have been
 	off the train the tier's `grace` seconds at this stop. A first run (Design step 5): at stop 1 a
 	harmless scripted Stalker is sighted at the edge of the light and withdraws (Logic/Sighting);
-	at stop 2 a scripted Crawler comes for one player to teach the skill check (an oversized zone,
+	at stop 2 a scripted Stalker comes for one player to teach the skill check (an oversized zone,
 	the first-strike guard, and its hold cannot kill); at stop 3 one Stalker wanders and stalks
 	only a player 20+ studs from the train.
 
@@ -164,7 +164,7 @@ type Hollow = {
 	stirAt: number, -- seconds into the dwell when a sleeper wakes by itself
 	checkAt: number,
 	hold: Hold?,
-	scripted: Player?, -- the tutorial's teaching Crawler: it hunts only this player
+	scripted: Player?, -- the tutorial's teaching Hollow: it hunts only this player
 	stalk: StalkRun?, -- the stalk under way
 	exposure: { [Player]: number }, -- warning seconds each target has had from this Hollow
 	stalked: { [Player]: number }, -- os.clock() it stalked each target this stop (the budget)
@@ -231,7 +231,7 @@ local lightScale = 0 -- the tutorial tier's safeLightScale; 0 past the tutorial
 local bruteDue = false -- this stop rolled the giant Brute's late return and it hasn't come yet
 local stokerStop = false -- this stop rolled it at all (stays true after he comes: the Flashbulb boost)
 local offTrainAt: { [Player]: number } = {} -- os.clock() each player first stood off the train this stop
--- the first run's teaching grab at its stop: pending until the Crawler has come and gone
+-- the first run's teaching grab at its stop: pending until the teaching Hollow has come and gone
 local scripted: { pending: boolean, hollow: Hollow? } = { pending = false, hollow = nil }
 -- stop 1's scripted sighting on a first run (E2's treatment arm): pending until it appears
 local sightingPending = false
@@ -1761,7 +1761,7 @@ local function think(hollow: Hollow)
 			local stalker = hollow.model:GetAttribute("StalkWanderer") == true
 			-- the giant Brute never stalks: watching it does nothing (B8)
 			local commitsDirectly = (wanderer and not stalker) or hollow.scripted ~= nil or giant(hollow)
-			-- straight to Hunt: wanderers, alerts and the scripted Crawler, prey already close, a stun's
+			-- straight to Hunt: wanderers, alerts and the scripted teacher, prey already close, a stun's
 			-- after-effect, a spent budget, or prey another Hollow already hunts (the pack fans out)
 			if
 				commitsDirectly
@@ -2161,7 +2161,7 @@ end
 
 -- Tutorial ------------------------------------------------------------------------------------
 
--- Open ground of the stop for the teaching Crawler: the yard's own floor (not a roof, not a
+-- Open ground of the stop for the teaching Hollow: the yard's own floor (not a roof, not a
 -- building, not a fallen slab), inside the edge's hazard rail and clear of the platform.
 local function openGround(position: Vector3): boolean
 	local plan = StationService.Plan()
@@ -2182,7 +2182,7 @@ local function openGround(position: Vector3): boolean
 	return slab ~= nil and slab.kind == "Floor" and not StationService.IsCollapsed(slab.id)
 end
 
--- Claws a slow Crawler up behind `player` to teach the skill check (Config/Tutorial ScriptedGrab),
+-- Brings the teaching Hollow (a Stalker) up behind `player` to teach the skill check (Config/Tutorial ScriptedGrab),
 -- out of the dark on the stop's open ground: behind first, then the sides, then ahead.
 local function spawnScripted(player: Player): Hollow?
 	local root = characterRoot(player)
@@ -2364,7 +2364,7 @@ sightingThink = function(hollow: Hollow, dt: number)
 	moveToward(hollow, run.away :: Vector3, false)
 end
 
--- Notes who has stepped off the train at this stop, and sends the teaching Crawler when due.
+-- Notes who has stepped off the train at this stop, and sends the teaching Hollow when due.
 local function tutorialStep()
 	local clock = os.clock()
 	for _, player in Registry.CrewService.AlivePlayers() do
@@ -2515,7 +2515,13 @@ function HollowService.Configure(hazards: Types.HazardParams)
 		and info.emergency == nil
 		and not hazards.dormantStart
 		and not hazards.scriptedOnly
-		and ReachIn.returns(info.layoutSeed, hazards.stop, hazards.tutorial, hazards.difficulty)
+		-- the Long Line level, like every stop-indexed input: Short Line stops 4 and 5 read levels 6 and 8
+		and ReachIn.returns(
+			info.layoutSeed,
+			hazards.level or hazards.stop,
+			hazards.tutorial,
+			hazards.difficulty
+		)
 	stokerStop = bruteDue
 end
 

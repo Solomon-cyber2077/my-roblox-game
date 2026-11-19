@@ -71,10 +71,12 @@ return table.freeze({
 		Crawler = table.freeze({ 0.18, 0.32 }),
 		Brute = table.freeze({ 0.04, 0.2 }),
 	}),
-	-- the giant Brute's late return (Tuning.BruteRemake.Returns): the first stop of the run it can come at
-	-- (stop 6 at every difficulty, owner 2026-11-18: in the simulator few Long Line crews reach stop 7)
+	-- the giant Brute's late return (Tuning.BruteRemake.Returns): the first Long Line level of the run it can come at
+	-- (Logic/ReachIn.returns reads the level, so the Short Line's stops 4 and 5 count as levels 6 and 8). Level 5
+	-- at every difficulty: owner 2026-11-18 ("yes" to an earlier stop and a Short Line rule for the Test Launch);
+	-- in the playtest simulator [sim] about 28% of Long and 43% of Short runs then meet him (stop 6: 11% and 0%)
 	BruteReturn = table.freeze({
-		FirstStop = table.freeze({ 6, 6 }),
+		FirstStop = table.freeze({ 5, 5 }),
 	}),
 	-- bigger stops take longer and hold more Hollows: per tile of enterable building
 	SizeCapPerTile = 0.025, -- Hollow cap multiplier added per building tile
