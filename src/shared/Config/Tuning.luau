@@ -580,20 +580,21 @@ local Tuning = {
 	},
 	-- Kinds kept out of play: never rolled, and a sleeper of that kind wakes as a Stalker instead (owner,
 	-- 2026-11-09: the Brute sits out the Test Launch until its remake). Studio dev commands still spawn them.
-	HollowBenched = { Brute = true } :: { [string]: boolean },
+	-- Test Launch (owner 2026-11-18): the Crawler is put off to the Official Release; the Stoker comes only by his return
+	HollowBenched = { Brute = true, Crawler = true } :: { [string]: boolean },
 	-- the screen while a Hollow holds you (owner 2026-11-18): the HUD fades back to HudTransparency, phones get
 	-- no dark vignette (it hides the game), and the veins reach PhoneVeins as far in on a phone
-	GrabScreen = { Enabled = false, HudTransparency = 0.85, PhoneVeins = 0.78 },
+	GrabScreen = { Enabled = true, HudTransparency = 0.85, PhoneVeins = 0.78 },
 	-- what players read for each kind (the code keeps its ids): the Brute is "the Stoker" (owner 2026-11-18;
 	-- name check in IP-REGISTER)
 	HollowNames = { Stalker = "Stalker", Crawler = "Crawler", Brute = "Stoker" } :: { [string]: string },
 	-- The Brute's close-up remake (Config/BruteMeshes, tools/brute). Off: the block build, as today. On, it draws the
 	-- meshes once their ids are bound; the Brute itself stays benched above until its rule is built.
 	BruteRemake = {
-		Enabled = false,
+		Enabled = true,
 		-- The giant's late-run return (Logic/ReachIn.returns): with Enabled on, the Brute leaves the bench only at
 		-- late stops past the tutorial runs, at most one a stop. Off: benched as above.
-		Returns = false,
+		Returns = true,
 		-- Flashbulbs (a flash makes a Hollow let go) turn up this much more often at a stop he comes to
 		FlashbulbBoost = 2.5,
 		-- with a crewmate to save the held player: one shovel strike for crewmates at a distance (within Strike,
