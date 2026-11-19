@@ -99,10 +99,8 @@ local Giant: Body = {
 	neckC0 = { 0, 1.75, -0.8 },
 	neckTilt = 16,
 	headC1 = { 0, -0.55, 0 },
-	-- the jaw is the firebox door grown into his skull, hinged at its bottom edge (the scan rebuild's
-	-- door_hinge.json); the rest pose is the old one (jawC0 - jawC1 unchanged), an open jaw drops the door
-	jawC0 = { -0.006, -1.268, -0.441 },
-	jawC1 = { -0.006, -0.334, -0.261 },
+	jawC0 = { 0, -0.79, 0.36 },
+	jawC1 = { 0, 0.144, 0.54 },
 	shoulder = { 1.5, 1.05, 0.05 },
 	upper = 2.35,
 	fore = 2.15,

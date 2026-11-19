@@ -1224,7 +1224,7 @@ local function brute(model: Model, root: BasePart)
 		local right = up:Cross(Vector3.zAxis).Unit
 		local flue = Instance.new("Attachment")
 		flue.Name = "Flue"
-		flue.CFrame = CFrame.fromMatrix(Vector3.new(-0.624, 2.623, 1.378), right, up)
+		flue.CFrame = CFrame.fromMatrix(Vector3.new(-0.608, 2.643, 1.368), right, up)
 		flue.Parent = chest
 		local smoke = Instance.new("ParticleEmitter")
 		smoke.Name = "FlueSmoke"

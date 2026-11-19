@@ -3,23 +3,21 @@
 	Close-up meshes for the Brute (tools/brute/build.py, out/brute_<name>.fbx and .png), to be uploaded under the
 	owner's account. Same rules as Config/StalkerMeshes: `size` is the mesh's box in studs, `center` where that
 	box's middle sits in the frame of the part it is welded to, `id` the mesh and `texture` its colour image.
-	A row with no id leaves the block build in place. `perf` (with perfSize, perfCenter) is the lighter mesh drawn
-	under Performance; without one the blocks stay as the Performance setting's version.
+	A row with no id leaves the block build in place, and the blocks stay as the Performance setting's version.
 	`eyes` and `embers` are drawn in Neon (no texture). The arm and leg pieces are one per side (L, R).
 	Nothing is drawn while Tuning.BruteRemake.Enabled is off, ids or not.
-	Sizes for the 12-stud skeleton (Config/BruteBody Giant), from the scan rebuild's out-scan/report.json (23302 triangles for the whole figure;
-	"the engine took him", 2026-11-19: `jaw` is the firebox door, `eyes` the coal bed behind its slots).
+	Sizes for the 12-stud skeleton (Config/BruteBody Giant), from the scan rebuild's out-scan/report.json (round 5, 2026-11-19, 23082 triangles for the whole figure).
 ]]
 
 local StalkerMeshes = require(script.Parent.StalkerMeshes)
 local Tuning = require(script.Parent.Tuning)
 
 local BruteMeshes: { [string]: StalkerMeshes.Piece } = {
-	head = { size = { 1.417, 1.935, 1.954 }, center = { 0.01, -0.381, 0.319 } },
-	jaw = { size = { 0.757, 1.033, 0.315 }, center = { -0.005, 0.151, -0.367 } },
-	eyes = { size = { 0.529, 0.734, 0.245 }, center = { -0.016, -0.686, -0.186 } },
-	torso = { size = { 3.846, 4.91, 2.935 }, center = { 0.008, 0.283, 0.117 } },
-	embers = { size = { 1.382, 3.431, 1.811 }, center = { -0.939, 0.717, 0.401 } },
+	head = { size = { 1.42, 1.783, 2.045 }, center = { -0.003, -0.141, 0.337 } },
+	jaw = { size = { 0.877, 0.443, 0.648 }, center = { 0, 0.078, 0.196 } },
+	eyes = { size = { 0.521, 0.055, 0.019 }, center = { -0, -0.443, -0.315 } },
+	torso = { size = { 3.846, 4.939, 2.923 }, center = { 0.008, 0.298, 0.114 } },
+	embers = { size = { 1.392, 3.448, 1.799 }, center = { -0.934, 0.728, 0.397 } },
 	apron = { size = { 3.02, 4.257, 2.413 }, center = { 0.051, -1.2, -0.081 } },
 	upperarmL = { size = { 2.706, 1.023, 1.433 }, center = { -0.038, -0.064, 0.235 } },
 	upperarmR = { size = { 2.626, 1.326, 1.721 }, center = { 0.015, 0.105, 0.205 } },
