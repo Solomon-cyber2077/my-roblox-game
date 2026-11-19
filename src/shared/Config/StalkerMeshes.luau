@@ -17,6 +17,8 @@ export type Piece = {
 	-- piece's blocks are never drawn at all (Builders/HollowBuilder)
 	perf: number?,
 	perfTexture: number?,
+	perfSize: { number }?, -- the lighter mesh's own box and centre, when they differ from the close-up one's
+	perfCenter: { number }?,
 }
 
 local StalkerMeshes: { [string]: Piece } = {

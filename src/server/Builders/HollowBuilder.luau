@@ -323,7 +323,10 @@ local function meshPiece(
 	if light then
 		local lite = light:Clone()
 		lite.Name = "Light" .. (if brute then string.sub(name, 7) else name)
-		lite.Size = part.Size
+		local size = piece.perfSize or piece.size
+		local center = piece.perfCenter or piece.center
+		local at = CFrame.new(center[1], center[2], center[3])
+		lite.Size = Vector3.new(size[1], size[2], size[3])
 		lite.Color = color
 		lite.Material = material
 		lite.TextureID = if piece.perfTexture
@@ -332,11 +335,11 @@ local function meshPiece(
 			else ""
 		lite.CastShadow = false
 		loose(lite)
-		lite.CFrame = part.CFrame
+		lite.CFrame = to.CFrame * at
 		local hold = Instance.new("Weld")
 		hold.Part0 = to
 		hold.Part1 = lite
-		hold.C0 = weld.C0
+		hold.C0 = at
 		hold.Parent = lite
 		lite:AddTag("DetailFallback")
 		lite.Parent = model
