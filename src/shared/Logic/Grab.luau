@@ -80,7 +80,12 @@ end
 -- The kind's grabs in the order this Hollow tries them: each one has a favourite.
 -- A kind with a pin (the Brute) uses only its pins.
 function Grab.order(kindName: string, seed: number): { Grabs.Def }
-	local list = table.clone(Grabs.Kinds[kindName] or Grabs.Kinds.Stalker)
+	local list = {}
+	for _, def in Grabs.Kinds[kindName] or Grabs.Kinds.Stalker do
+		if not def.reach then -- a reach-in is the opening rule's, never an ordinary strike's
+			table.insert(list, def)
+		end
+	end
 	local pins = {}
 	for _, def in list do
 		if def.pin then

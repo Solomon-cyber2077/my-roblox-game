@@ -25,10 +25,21 @@ local function holdOut(def, params, kindName: string, finish: number): number
 end
 
 describe("Grab", function()
+	it("never picks a reach-in for an ordinary strike", function()
+		for _, kind in KINDS do
+			for seed = 1, 20 do
+				for _, def in Grab.order(kind, seed) do
+					expect(def.reach == true).toBe(false)
+				end
+			end
+		end
+		expect(Grabs.ById.Reach.reach).toBe(true)
+	end)
+
 	it("gives every kind three grabs with distinct ids", function()
 		for _, kind in KINDS do
 			local list = Grabs.Kinds[kind]
-			expect(#list).toBe(if kind == "Brute" then 4 else 3)
+			expect(#list).toBe(if kind == "Brute" then 5 else 3) -- the Brute's fifth is its reach-in
 			local seen = {}
 			for _, def in list do
 				expect(seen[def.id]).toBe(nil)

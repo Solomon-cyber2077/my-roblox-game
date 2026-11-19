@@ -23,6 +23,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
 local StalkerMeshes = require(ReplicatedStorage.Shared.Config.StalkerMeshes)
+local BruteMeshes = require(ReplicatedStorage.Shared.Config.BruteMeshes)
+local BruteBody = require(ReplicatedStorage.Shared.Config.BruteBody)
 
 local HollowBuilder = {}
 
@@ -36,7 +38,10 @@ type Spec = {
 local SPECS: { [string]: Spec } = {
 	Stalker = { hip = 3.9, root = Vector3.new(2.4, 2.6, 1.4) },
 	Crawler = { hip = 2.6, root = Vector3.new(3.4, 1.8, 6.0) },
-	Brute = { hip = 4.1, root = Vector3.new(3.4, 3.2, 2.0) },
+	Brute = {
+		hip = BruteBody.current.hip,
+		root = Vector3.new(BruteBody.current.root[1], BruteBody.current.root[2], BruteBody.current.root[3]),
+	},
 }
 
 local ICHOR = rgb(18, 12, 14)
@@ -231,26 +236,31 @@ local function emitter(parent: BasePart, props: { [string]: any }): ParticleEmit
 	return e
 end
 
--- Close-up meshes (Config/StalkerMeshes), loaded once in the background: a Stalker built before they
--- arrive, or with a piece that has no id, keeps its blocks. Under Performance the blocks come back.
+-- Close-up meshes (Config/StalkerMeshes, Config/BruteMeshes), loaded once in the background: a Hollow
+-- built before they arrive, or with a piece that has no id, keeps its blocks. Under Performance the blocks
+-- come back. Brute pieces are cached as "brute.<name>".
 local meshCache: { [string]: MeshPart? } = {}
+local MESH_TABLES: { [string]: { [string]: StalkerMeshes.Piece } } =
+	{ [""] = StalkerMeshes, ["brute."] = BruteMeshes }
 
 local function preloadMeshes()
 	local ok, service = pcall(game.GetService, game, "AssetService")
 	if not ok then
 		return
 	end
-	for name, piece in StalkerMeshes do
-		if piece.id == nil then
-			continue
-		end
-		local loaded, mesh = pcall(function(): any
-			return (service :: AssetService):CreateMeshPartAsync(Content.fromAssetId(piece.id :: number))
-		end)
-		if loaded and mesh then
-			meshCache[name] = mesh :: MeshPart
-		else
-			warn(`HollowBuilder: Stalker mesh {name} ({piece.id}) did not load: {mesh}`)
+	for prefix, pieces in MESH_TABLES do
+		for name, piece in pieces do
+			if piece.id == nil then
+				continue
+			end
+			local loaded, mesh = pcall(function(): any
+				return (service :: AssetService):CreateMeshPartAsync(Content.fromAssetId(piece.id :: number))
+			end)
+			if loaded and mesh then
+				meshCache[prefix .. name] = mesh :: MeshPart
+			else
+				warn(`HollowBuilder: Hollow mesh {prefix .. name} ({piece.id}) did not load: {mesh}`)
+			end
 		end
 	end
 end
@@ -270,9 +280,10 @@ local function meshPiece(
 	if source == nil then
 		return nil
 	end
-	local piece = StalkerMeshes[name]
+	local brute = string.sub(name, 1, 6) == "brute."
+	local piece = if brute then BruteMeshes[string.sub(name, 7)] else StalkerMeshes[name]
 	local part = source:Clone()
-	part.Name = "Close" .. name
+	part.Name = "Close" .. (if brute then string.sub(name, 7) else name)
 	part.Size = Vector3.new(piece.size[1], piece.size[2], piece.size[3])
 	part.Color = color
 	part.Material = material
@@ -913,30 +924,72 @@ local function brute(model: Model, root: BasePart)
 	local EMBER = rgb(255, 122, 42)
 	local skin = Enum.Material.Slate
 	local leather = Enum.Material.Leather
+	-- the skeleton (Config/BruteBody): today's build, or the 12-stud remake while Tuning.BruteRemake is on
+	local b = BruteBody.current
+	local function v3(t: { number }): Vector3
+		return Vector3.new(t[1], t[2], t[3])
+	end
+	local function offset(t: { number }): CFrame
+		return CFrame.new(t[1], t[2], t[3])
+	end
+	-- the decorations were placed on the Block build's parts: they follow each part's size
+	local cs = v3(b.chest) / Vector3.new(3.6, 3.2, 2.1)
+	local ps = v3(b.pelvis) / Vector3.new(2.5, 1.3, 1.6)
+	local hs = v3(b.head) / Vector3.new(1.15, 1.15, 1.2)
+	local function on(scale: Vector3, x: number, y: number, z: number): CFrame
+		return CFrame.new(x * scale.X, y * scale.Y, z * scale.Z)
+	end
 
-	local pelvis = block(model, "Pelvis", Vector3.new(2.5, 1.3, 1.6), APRON, leather)
-	local chest = block(model, "Chest", Vector3.new(3.6, 3.2, 2.1), SOOT, skin)
-	local head = block(model, "Head", Vector3.new(1.15, 1.15, 1.2), SOOT, skin)
-	local jaw = block(model, "Jaw", Vector3.new(1.0, 0.38, 1.0), BURN, skin)
-	joint("RootJoint", root, pelvis, CFrame.new(0, -0.85, 0), CFrame.new())
-	joint("Waist", pelvis, chest, CFrame.new(0, 0.62, 0) * Kit.angles(-24, 0, 0), CFrame.new(0, -1.6, 0))
-	joint("Neck", chest, head, CFrame.new(0, 1.42, -0.75) * Kit.angles(20, 0, 0), CFrame.new(0, -0.35, 0))
-	joint("Jaw", head, jaw, CFrame.new(0, -0.55, 0.3), CFrame.new(0, 0.12, 0.45))
+	-- blocks a close-up mesh replaces (Config/BruteMeshes): tagged DetailFallback once that mesh is in
+	local blocks: { [string]: { BasePart } } = {}
+	local function mark(group: string, part: BasePart): BasePart
+		blocks[group] = blocks[group] or {}
+		table.insert(blocks[group], part)
+		return part
+	end
+	local function hide(group: string, part: BasePart)
+		mark(group, part) -- a joint part: it stays for the skeleton; only its look is swapped
+	end
+
+	local pelvis = mark("apron", block(model, "Pelvis", v3(b.pelvis), APRON, leather))
+	local chest = mark("torso", block(model, "Chest", v3(b.chest), SOOT, skin))
+	local head = mark("head", block(model, "Head", v3(b.head), SOOT, skin))
+	local jaw = mark("jaw", block(model, "Jaw", v3(b.jaw), BURN, skin))
+	joint("RootJoint", root, pelvis, offset(b.rootC0), CFrame.new())
+	joint("Waist", pelvis, chest, offset(b.waistC0) * Kit.angles(b.lean, 0, 0), offset(b.chestC1))
+	joint("Neck", chest, head, offset(b.neckC0) * Kit.angles(b.neckTilt, 0, 0), offset(b.headC1))
+	joint("Jaw", head, jaw, offset(b.jawC0), offset(b.jawC1))
 
 	-- hunched shoulders, burn scars and the leather apron
 	for _, side in { -1, 1 } do
-		decoBall(model, chest, 1.9, CFrame.new(side * 1.45, 1.15, 0.2), SOOT, skin)
-		deco(
-			model,
-			chest,
-			Vector3.new(0.3, 3.5, 0.12),
-			CFrame.new(side * 0.75, 0.1, -1.23) * Kit.angles(0, 0, side * -8),
-			STRAP,
-			leather
+		mark("torso", decoBall(model, chest, 1.9 * cs.X, on(cs, side * 1.45, 1.15, 0.2), SOOT, skin))
+		mark(
+			"torso",
+			deco(
+				model,
+				chest,
+				Vector3.new(0.3, 3.5 * cs.Y, 0.12),
+				on(cs, side * 0.75, 0.1, -1.23) * Kit.angles(0, 0, side * -8),
+				STRAP,
+				leather
+			)
 		)
 	end
-	deco(model, chest, Vector3.new(2.2, 2.3, 0.14), CFrame.new(0, -0.45, -1.12), APRON, leather)
-	deco(model, pelvis, Vector3.new(2.3, 2.2, 0.14), CFrame.new(0, -1.25, -0.86), APRON, leather)
+	mark(
+		"torso",
+		deco(model, chest, Vector3.new(2.2 * cs.X, 2.3 * cs.Y, 0.14), on(cs, 0, -0.45, -1.12), APRON, leather)
+	)
+	mark(
+		"apron",
+		deco(
+			model,
+			pelvis,
+			Vector3.new(2.3 * ps.X, 2.2 * ps.Y, 0.14),
+			on(ps, 0, -1.25, -0.86),
+			APRON,
+			leather
+		)
+	)
 
 	-- embers in the cracks of its chest: the only warm thing about it
 	local cracks = {
@@ -948,8 +1001,13 @@ local function brute(model: Model, root: BasePart)
 	}
 	local core: BasePart? = nil
 	for _, crack in cracks do
-		local glow = stick(chest, Kit.neon(model, crack.size, CFrame.new(), EMBER), crack.at)
+		local glow = stick(
+			chest,
+			Kit.neon(model, crack.size, CFrame.new(), EMBER),
+			on(cs, crack.at.X, crack.at.Y, crack.at.Z) * crack.at.Rotation
+		)
 		glow.Name = "Ember"
+		mark("embers", glow)
 		core = core or glow
 	end
 	local warmth = Kit.pointLight(chest, EMBER, 1.1, 11, false)
@@ -958,84 +1016,162 @@ local function brute(model: Model, root: BasePart)
 		local slit = stick(
 			head,
 			Kit.neon(model, Vector3.new(0.24, 0.07, 0.06), CFrame.new(), EMBER),
-			CFrame.new(side, 0.12, -0.6)
+			on(hs, side, 0.12, -0.6)
 		)
 		slit.Name = "Eye"
+		mark("eyes", slit)
 	end
 	for i = -1, 1 do
-		decoWedge(
-			model,
-			jaw,
-			Vector3.new(0.12, 0.2, 0.08),
-			CFrame.new(i * 0.28, 0.27, -0.42),
-			TOOTH,
-			Enum.Material.SmoothPlastic
+		mark(
+			"jaw",
+			decoWedge(
+				model,
+				jaw,
+				Vector3.new(0.12, 0.2, 0.08),
+				on(hs, i * 0.28, 0.27, -0.42),
+				TOOTH,
+				Enum.Material.SmoothPlastic
+			)
 		)
 	end
 
 	for _, side in { "L", "R" } do
 		local s = if side == "L" then -1 else 1
-		local _, forearm, hand = limb(
+		local upperArm, forearm, hand = limb(
 			model,
 			side,
 			{ "UpperArm", "Forearm", "Hand" },
 			{ "Shoulder", "Elbow", "Wrist" },
 			chest,
-			CFrame.new(s * 2.05, 1.0, 0.1),
-			2.5,
-			2.4,
-			1.05,
+			CFrame.new(s * b.shoulder[1], b.shoulder[2], b.shoulder[3]),
+			b.upper,
+			b.fore,
+			b.armThick,
 			SOOT,
 			SOOT,
 			skin,
 			skin,
-			if side == "L" then Vector3.new(1.15, 0.95, 1.0) else Vector3.new(0.5, 0.5, 0.5),
+			if side == "L" then v3(b.handL) else v3(b.handR),
 			if side == "L" then SOOT else IRON
 		)
+		-- each side has its own arm and leg meshes, so the burnt left and the strapped right differ
+		if meshPiece(model, "brute.upperarm" .. side, upperArm, SOOT, skin) then
+			hide("upperarm" .. side, upperArm)
+		end
+		if meshPiece(model, "brute.forearm" .. side, forearm, SOOT, skin) then
+			hide("forearm" .. side, forearm)
+		end
 		if side == "R" then
 			-- the shovel it was stoking with, grown into the arm
-			decoRod(model, forearm, 0.5, 1.2, CFrame.new(-1.15, 0, 0), RUST, Enum.Material.CorrodedMetal)
+			mark(
+				"shovel",
+				decoRod(
+					model,
+					forearm,
+					0.5,
+					1.2,
+					CFrame.new(-b.fore / 2 + 0.05, 0, 0),
+					RUST,
+					Enum.Material.CorrodedMetal
+				)
+			)
 			local blade = deco(
 				model,
 				hand,
-				Vector3.new(1.7, 2.3, 0.16),
-				CFrame.new(0, -1.35, 0),
+				v3(b.blade.size),
+				CFrame.new(0, b.blade.y, 0),
 				IRON,
 				Enum.Material.CorrodedMetal
 			)
 			blade.Name = "Blade"
-			deco(
-				model,
-				blade,
-				Vector3.new(1.5, 0.4, 0.2),
-				CFrame.new(0, -1.0, 0),
-				RUST,
-				Enum.Material.CorrodedMetal
+			mark("shovel", blade)
+			mark(
+				"shovel",
+				deco(
+					model,
+					blade,
+					Vector3.new(b.blade.size[1] - 0.2, 0.4, 0.2),
+					CFrame.new(0, -b.blade.size[2] / 2 + 0.15, 0),
+					RUST,
+					Enum.Material.CorrodedMetal
+				)
 			)
+			if meshPiece(model, "brute.shovel", hand, IRON, Enum.Material.CorrodedMetal) then
+				hide("shovel", hand)
+			end
 		else
 			for k = -1, 1 do
-				decoBall(model, hand, 0.42, CFrame.new(k * 0.36, -0.42, -0.4), BURN, skin)
+				mark(
+					"fist",
+					decoBall(
+						model,
+						hand,
+						0.42,
+						CFrame.new(k * 0.36, -0.42 * b.handL[2] / 0.95, -0.4),
+						BURN,
+						skin
+					)
+				)
+			end
+			if meshPiece(model, "brute.fist", hand, SOOT, skin) then
+				hide("fist", hand)
 			end
 		end
-		local _, shin, boot = limb(
+		local thigh, shin, boot = limb(
 			model,
 			side,
 			{ "Thigh", "Shin", "Foot" },
 			{ "Hip", "Knee", "Ankle" },
 			pelvis,
-			CFrame.new(s * 0.75, -0.55, 0),
-			2.0,
-			1.85,
-			0.95,
+			CFrame.new(s * b.hipAt[1], b.hipAt[2], b.hipAt[3]),
+			b.thigh,
+			b.shin,
+			b.legThick,
 			APRON,
 			SOOT,
 			leather,
 			skin,
-			Vector3.new(1.0, 0.55, 1.5),
+			v3(b.foot),
 			STRAP
 		)
-		decoRod(model, shin, 0.5, 0.95, CFrame.new(-0.7, 0, 0), STRAP, leather)
-		local _ = boot
+		mark(
+			"shin" .. side,
+			decoRod(model, shin, 0.5, b.legThick, CFrame.new(-0.7 * b.shin / 1.85, 0, 0), STRAP, leather)
+		)
+		local legs: { [string]: BasePart } = { thigh = thigh, shin = shin, boot = boot }
+		for name, part in legs do
+			if
+				meshPiece(
+					model,
+					"brute." .. name .. side,
+					part,
+					if name == "boot" then STRAP else APRON,
+					leather
+				)
+			then
+				hide(name .. side, part)
+			end
+		end
+	end
+
+	-- the close-up body: head, jaw, torso and apron over their blocks; ember slits and cracks as Neon meshes
+	local body: { [string]: BasePart } = { head = head, jaw = jaw, torso = chest, apron = pelvis }
+	for name, at in body do
+		meshPiece(model, "brute." .. name, at, SOOT, skin)
+	end
+	local glows: { [string]: BasePart } = { eyes = head, embers = chest }
+	for name, at in glows do
+		local glow = meshPiece(model, "brute." .. name, at, EMBER, Enum.Material.Neon)
+		if glow then
+			glow.Name = if name == "eyes" then "Eye" else "Ember"
+		end
+	end
+	for group, parts in blocks do
+		if meshCache["brute." .. group] ~= nil then
+			for _, part in parts do
+				part:AddTag("DetailFallback")
+			end
+		end
 	end
 
 	emitter(chest, {

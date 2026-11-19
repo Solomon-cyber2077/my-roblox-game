@@ -25,6 +25,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
 local Grabs = require(Shared.Config.Grabs)
+local BruteBody = require(Shared.Config.BruteBody)
 local Difficulty = require(Shared.Config.Difficulty)
 local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
@@ -245,7 +246,10 @@ local CONTACTS: { [string]: { [string]: Vector3 } } = {
 	Shovel = { R = Vector3.new(0, 0.3, -2.9) },
 	Slam = { R = Vector3.new(0, 0.3, 2.9) }, -- face down: the blade on their back
 	Bearhug = { L = Vector3.new(0.8, 0.25, 0.8), R = Vector3.new(-0.8, 0.25, 0.8) },
+	Reach = { L = Vector3.new(0, 0.7, -0.9) }, -- by the collar
 }
+-- how far the Brute's poses move: its skeleton (Config/BruteBody) is 1.26 times the Block build's as a giant
+local BS = BruteBody.current.scale
 HollowPoses.Contacts = CONTACTS
 
 local function stalkerGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: number, seed: number)
@@ -347,7 +351,7 @@ local function bruteGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: nu
 	local heave = math.sin(now * 2.4 + seed) * 0.04
 	if def.id == "Fist" then
 		-- lifts them in its fist to its face and closes its hand
-		out.RootJoint = CFrame.new(0, -0.2, 0.2) * A(0.05, 0, 0.05)
+		out.RootJoint = CFrame.new(0, -0.2 * BS, 0.2 * BS) * A(0.05, 0, 0.05)
 		out.Waist = A(0.1 + heave, 0.25, 0)
 		out.LHip, out.RHip = A(0.2, 0, -0.1), A(-0.15, 0, 0.1)
 		out.LKnee, out.RKnee = A(-0.3, 0, 0), A(-0.2, 0, 0)
@@ -358,7 +362,7 @@ local function bruteGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: nu
 			out,
 			"L",
 			"Arm",
-			v * c.L + Vector3.new(0, 0.5, 0),
+			v * c.L + Vector3.new(0, 0.5 * BS, 0),
 			Vector3.new(-0.8, -0.6, 0.4),
 			LEVEL
 		)
@@ -368,7 +372,7 @@ local function bruteGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: nu
 	elseif def.id == "Shovel" or def.id == "Slam" then
 		-- pins them under the shovel blade and leans its weight on it
 		local lean = 0.35 * k
-		out.RootJoint = CFrame.new(0, -1.1 - lean, -0.2) * A(-0.2, 0, -0.08)
+		out.RootJoint = CFrame.new(0, (-1.1 - lean) * BS, -0.2 * BS) * A(-0.2, 0, -0.08)
 		out.Waist = A(-0.55 - 0.25 * k, -0.15, 0)
 		out.LHip, out.RHip = A(0.7, 0, -0.25), A(0.2, 0, 0.25)
 		out.LKnee, out.RKnee = A(-1.1, 0, 0), A(-0.5, 0, 0)
@@ -379,7 +383,7 @@ local function bruteGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: nu
 			out,
 			"R",
 			"Arm",
-			v * c.R - Vector3.new(0, 0.3 * k, 0),
+			v * c.R - Vector3.new(0, 0.3 * k * BS, 0),
 			Vector3.new(0.8, 0.3, 0.4),
 			LEVEL
 		)
@@ -389,13 +393,27 @@ local function bruteGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: nu
 			out,
 			"L",
 			"Arm",
-			Vector3.new(-2.6, rig.ground + 1.4 + 1.6 * (1 - k), -3.4),
+			Vector3.new(-2.6 * BS, rig.ground + (1.4 + 1.6 * (1 - k)) * BS, -3.4 * BS),
 			Vector3.new(-0.8, 0.2, 0.5),
 			LEVEL
 		)
+	elseif def.id == "Reach" then
+		-- in through a door or window: bent at the hips and back the way a man reaches for something
+		-- low, knees soft, head up to watch them, hauling them out a little on every beat
+		local haul = 0.25 * k
+		out.RootJoint = CFrame.new(0, -0.7 * BS, (0.55 + haul) * BS) * A(-0.5 + 0.1 * k, 0, 0.04)
+		out.Waist = A(-0.65 + 0.15 * k + heave, 0.05, 0)
+		out.LHip, out.RHip = A(0.62, 0, -0.12), A(0.5, 0, 0.12)
+		out.LKnee, out.RKnee = A(-0.45, 0, 0), A(-0.35, 0, 0)
+		out.Neck = A(0.6, 0.05, 0)
+		out.Jaw = A(-0.3 - 0.5 * k, 0, 0)
+		HollowPoses.reach(rig, out, "L", "Arm", v * c.L, Vector3.new(-1, -0.3, 0.3), LEVEL)
+		-- the shovel hand braced high on the frame above the opening
+		out.RShoulder = A(-2.6, 0, 0.12)
+		out.RElbow = A(-0.3, 0, 0)
 	else
 		-- crushes them to the embers in its chest, roaring over their head
-		out.RootJoint = CFrame.new(0, -0.3, 0.15) * A(0.12 + 0.08 * k, 0, 0)
+		out.RootJoint = CFrame.new(0, -0.3 * BS, 0.15 * BS) * A(0.12 + 0.08 * k, 0, 0)
 		out.Waist = A(-0.05 + heave, 0, 0)
 		out.LHip, out.RHip = A(0.25, 0, -0.15), A(0.2, 0, 0.15)
 		out.LKnee, out.RKnee = A(-0.45, 0, 0), A(-0.4, 0, 0)
@@ -742,7 +760,8 @@ local function bruteGait(out: Pose, p: number, stride: number, hunt: boolean, no
 	out.RHip = A(r * 0.45 * stride, 0, 0.05)
 	out.LKnee = A(-math.max(0, math.cos(p)) * 0.8 * stride - 0.1, 0, 0)
 	out.RKnee = A(-math.max(0, math.cos(p + math.pi)) * 0.8 * stride - 0.1, 0, 0)
-	out.RootJoint = CFrame.new(0, -math.abs(l) * 0.25 * stride, 0) * A(0, l * 0.1 * stride, l * 0.12 * stride)
+	out.RootJoint = CFrame.new(0, -math.abs(l) * 0.25 * stride * BS, 0)
+		* A(0, l * 0.1 * stride, l * 0.12 * stride)
 	out.Waist = A((if hunt then -0.25 else 0) + math.sin(now * 1.2 + seed) * 0.03, -l * 0.15 * stride, 0)
 	-- the fist swings; the shovel arm hangs heavy and scrapes
 	out.LShoulder = A(-r * 0.5 * stride, 0, -0.2)
@@ -757,7 +776,7 @@ local function bipedDormant(kind: string, now: number, seed: number): Pose
 	local breathe = math.sin(now * 1.3 + seed) * 0.04
 	if kind == "Brute" then
 		return {
-			RootJoint = CFrame.new(0, -2.3, 0.4) * A(-0.1, 0, 0),
+			RootJoint = CFrame.new(0, -2.3 * BS, 0.4 * BS) * A(-0.1, 0, 0),
 			LHip = A(1.3, 0, -0.1),
 			RHip = A(0.4, 0, 0.1),
 			LKnee = A(-1.6, 0, 0),

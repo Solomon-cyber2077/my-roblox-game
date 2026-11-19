@@ -581,6 +581,11 @@ local Tuning = {
 	-- Kinds kept out of play: never rolled, and a sleeper of that kind wakes as a Stalker instead (owner,
 	-- 2026-11-09: the Brute sits out the Test Launch until its remake). Studio dev commands still spawn them.
 	HollowBenched = { Brute = true } :: { [string]: boolean },
+	-- The Brute's close-up remake (Config/BruteMeshes, tools/brute). Off: the block build, as today. On, it draws the
+	-- meshes once their ids are bound; the Brute itself stays benched above until its rule is built.
+	BruteRemake = {
+		Enabled = false,
+	},
 	HollowKinds = {
 		Stalker = {
 			walk = 1,
