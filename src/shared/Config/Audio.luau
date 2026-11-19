@@ -279,6 +279,7 @@ local Cues: { [string]: Cue } = {
 	-- deep wood-and-ground blow; the same licensed takes as LimbSnap and HollowSlam, nothing new uploaded
 	StokerCrunch = {
 		id = 9113542363,
+		start = 0.09,
 		volume = 1.9,
 		pitch = 0.72,
 		maxSeconds = 0.9,
@@ -539,6 +540,8 @@ local Cues: { [string]: Cue } = {
 	-- The Stoker (code id Brute) while Tuning.BruteRemake is on: his own steps, shovel, breath and embers
 	-- (Logic/StokerSound picks them, HollowAnimator plays them). Every take is Pro Sound Effects from Roblox's
 	-- licensed library, cut and pitched here; nothing of our own is uploaded for him.
+	-- Start offsets measured in Studio (an AudioAnalyzer over each take, 2026-11-18): drag, bellows, wheeze,
+	-- snow, sear, pin, strike and crunch open on silence, so each starts just before its sound does.
 	-- A heel on every footfall: the stiff burnt left leg lands lower and harder than the right ("Foot Stomp
 	-- 3" and "4", hard floor), with the deep thud under it ("Boomy Footsteps Giant", short and low)
 	StokerHeelL = {
@@ -615,7 +618,8 @@ local Cues: { [string]: Cue } = {
 	},
 	StokerGroundSnow1 = {
 		id = 9114166137,
-		volume = 1.3,
+		start = 0.15,
+		volume = 3,
 		pitch = 0.85,
 		maxSeconds = 0.9,
 		spatial = true,
@@ -625,7 +629,8 @@ local Cues: { [string]: Cue } = {
 	},
 	StokerGroundSnow2 = {
 		id = 9114165461,
-		volume = 1.3,
+		start = 0.15,
+		volume = 3,
 		pitch = 0.85,
 		maxSeconds = 0.9,
 		spatial = true,
@@ -638,6 +643,7 @@ local Cues: { [string]: Cue } = {
 	-- it carries further than his steps, so he is heard before he is seen
 	StokerDrag1 = {
 		id = 9116816549,
+		start = 0.28,
 		volume = 1.1,
 		pitch = 0.62,
 		maxSeconds = 1.3,
@@ -649,6 +655,7 @@ local Cues: { [string]: Cue } = {
 	},
 	StokerDrag2 = {
 		id = 9116816810,
+		start = 0.28,
 		volume = 1.1,
 		pitch = 0.62,
 		maxSeconds = 1.3,
@@ -660,6 +667,7 @@ local Cues: { [string]: Cue } = {
 	},
 	StokerDrag3 = {
 		id = 9116816796,
+		start = 0.21,
 		volume = 1.1,
 		pitch = 0.62,
 		maxSeconds = 1.3,
@@ -671,6 +679,7 @@ local Cues: { [string]: Cue } = {
 	},
 	StokerDragGrit = {
 		id = 9114657970,
+		start = 0.07,
 		volume = 0.9,
 		pitch = 0.7,
 		maxSeconds = 1,
@@ -716,6 +725,7 @@ local Cues: { [string]: Cue } = {
 	-- ("Wheezing Strained Breathing 1"); faster on the hunt (Tuning.BruteRemake.Sound.BreathRate)
 	StokerBellowsOut = {
 		id = 9113419331,
+		start = 0.66,
 		volume = 1.5,
 		pitch = 0.7,
 		maxSeconds = 1.4,
@@ -737,6 +747,7 @@ local Cues: { [string]: Cue } = {
 	},
 	StokerWheeze = {
 		id = 9120658787,
+		start = 0.11,
 		volume = 0.8,
 		pitch = 0.5,
 		maxSeconds = 1.6,
@@ -753,9 +764,10 @@ local Cues: { [string]: Cue } = {
 	-- breaking ("Rock Impacts Deep Crunchy Hits 11", chopping into earth) and the old slam under it
 	StokerStrike = {
 		id = 9119645362,
+		start = 1.36,
 		volume = 1.8,
 		pitch = 0.7,
-		maxSeconds = 1.4,
+		maxSeconds = 0.8,
 		spatial = true,
 		rollOff = 180,
 		mix = "Cues",
@@ -786,6 +798,7 @@ local Cues: { [string]: Cue } = {
 	},
 	StokerSnuffSear = {
 		id = 9119165650,
+		start = 0.19,
 		volume = 0.7,
 		pitch = 0.8,
 		maxSeconds = 0.6,
@@ -796,6 +809,7 @@ local Cues: { [string]: Cue } = {
 	-- his pin lands (FxController Pinned): a body slammed into dirt ("Body Fall Dirt 1") over the old slam
 	StokerPin = {
 		id = 9113469691,
+		start = 0.47,
 		volume = 1.7,
 		pitch = 0.75,
 		maxSeconds = 1,
