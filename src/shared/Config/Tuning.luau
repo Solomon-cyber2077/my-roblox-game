@@ -601,6 +601,27 @@ local Tuning = {
 		-- beyond Pull); closer, his heat pulls their lantern flames (Pull); at rescue distance they go out (Snuff,
 		-- the rescue reach of Config/Injury plus 2); a snuffed lantern relights Relight seconds after leaving
 		Heat = { Strike = 34, Pull = 18, Snuff = 8, Relight = 3 },
+		-- cunning, not snapping (owner 2026-11-19: "he might see someone but will take another path and catch them
+		-- off guard (in these moments only his footsteps sound because he lifts his shovel slightly off the
+		-- ground)"): having seen prey Min-Max studs off, he sometimes (Chance) swings wide and comes at them from
+		-- the side or behind (Logic/StokerFlank), at Pace of his chase, the shovel lifted so it doesn't scrape.
+		-- It ends when he is round (Arrive), when they turn and see him (Seen, the cosine of their view cone)
+		-- inside SeenRange, or after Seconds; then he comes on as usual. One try per prey per Cooldown seconds
+		Flank = {
+			Enabled = true,
+			Chance = 0.6,
+			Min = 18,
+			Max = 70,
+			Swing = 0.55, -- how far out the first leg bows, as a share of the distance to the prey
+			Behind = 2.2, -- radians off their facing that he comes round to (about 125 degrees: side-behind)
+			Radius = 9, -- studs from them, where he comes round to
+			Pace = 0.8,
+			Arrive = 4,
+			Seen = 0.75,
+			SeenRange = 40,
+			Seconds = 12,
+			Cooldown = 25,
+		},
 		-- his sound set (Logic/StokerSound, Config/Audio Stoker*)
 		Sound = {
 			-- each footfall: the stiff burnt left leg lands harder and lower than the right, with more of

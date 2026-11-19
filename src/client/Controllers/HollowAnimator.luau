@@ -413,7 +413,8 @@ local function plantStep(rig: Rig, speed: number, foot: string)
 		audio("StokerThud", at, step.thud, step.pitch)
 		audio(step.ground, at, 1, step.pitch)
 		shakeNear(position, 16, 0.25 * step.gain)
-		if StokerSound.drags(foot) then
+		-- coming round on someone (Logic/StokerFlank) he carries the shovel off the ground: only his steps
+		if StokerSound.drags(foot) and not rig.model:GetAttribute("ShovelUp") then
 			rig.dragCount += 1
 			local blade = at + rig.root.CFrame.RightVector * 3
 			local drag, gain, rust = StokerSound.drag(rig.dragCount, rig.state, math.random())
@@ -650,6 +651,13 @@ local function animate(
 	end
 	if twitching then
 		target.Neck = (target.Neck or I) * rig.twitch
+	end
+	-- the Stoker coming round on someone (Logic/StokerFlank): the shovel arm bent to carry the blade off the
+	-- ground, and he walks a little lower and more carefully; the rig eases into it like any pose
+	if rig.kind == "Brute" and STOKER and model:GetAttribute("ShovelUp") and not grabId then
+		target.RElbow = (target.RElbow or I) * CFrame.Angles(0.55, 0, 0)
+		target.RShoulder = (target.RShoulder or I) * CFrame.Angles(-0.12, 0, 0)
+		target.Neck = (target.Neck or I) * CFrame.Angles(0.12, 0, 0)
 	end
 
 	-- attention and weight: the head follows its prey (or scans), the torso leans into its speed

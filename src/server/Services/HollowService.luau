@@ -62,6 +62,7 @@ local Grab = require(Shared.Logic.Grab)
 local Injury = require(Shared.Logic.Injury)
 local InjuryConfig = require(Shared.Config.Injury)
 local ReachIn = require(Shared.Logic.ReachIn)
+local StokerFlank = require(Shared.Logic.StokerFlank)
 local Rescue = require(Shared.Logic.Rescue)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 local Sighting = require(Shared.Logic.Sighting)
@@ -174,6 +175,8 @@ type Hollow = {
 	door: BasePart?, -- the shut door it is forcing
 	sighting: SightingRun?, -- stop 1's scripted sighting: never hunts, strikes or grabs
 	reach: ReachRun?, -- the giant Brute's reach-in at the building its prey is in (Logic/ReachIn)
+	flank: StokerFlank.Flank?, -- the Stoker coming round to their side or back, shovel lifted (Logic/StokerFlank)
+	flankTried: { [Player]: number }, -- when he last tried coming round on each prey
 }
 
 type ReachRun = {
@@ -284,6 +287,9 @@ local function setState(hollow: Hollow, state: string)
 	hollow.stateAt = os.clock()
 	if state ~= "Hunt" then
 		hollow.model:SetAttribute("Intent", nil) -- the committed approach ends with the hunt
+		-- and so does the Stoker's coming round (Logic/StokerFlank): the shovel goes back down
+		hollow.flank = nil
+		hollow.model:SetAttribute("ShovelUp", nil)
 	end
 	hollow.model:SetAttribute("State", state)
 	hollow.model:SetAttribute("StateAt", serverNow())
@@ -1479,6 +1485,63 @@ local function strikeAttempt(hollow: Hollow, target: Player, targetRoot: BasePar
 	setState(hollow, "Windup")
 end
 
+-- The Stoker's flank is over: the shovel comes down onto the ground again.
+local function endFlank(hollow: Hollow)
+	if hollow.flank then
+		hollow.flank = nil
+		hollow.model:SetAttribute("ShovelUp", nil)
+	end
+end
+
+--[[
+	The Stoker, having seen prey in the open, sometimes swings wide and comes round to their side or back with
+	the shovel lifted (Logic/StokerFlank): true while he is doing that, false when he comes on as usual.
+]]
+local function flank(
+	hollow: Hollow,
+	prey: Player,
+	preyRoot: BasePart,
+	distance: number,
+	visible: boolean,
+	chase: number
+): boolean
+	local clock = os.clock()
+	local run = hollow.flank
+	if run == nil then
+		if
+			clock - (hollow.flankTried[prey] or -math.huge) < Tuning.BruteRemake.Flank.Cooldown
+			or not visible
+		then
+			return false
+		end
+		hollow.flankTried[prey] = clock
+		if not StokerFlank.tries(distance, rng:NextNumber()) then
+			return false
+		end
+		run = StokerFlank.plan(clock, rng:NextNumber())
+		hollow.flank = run
+		hollow.model:SetAttribute("ShovelUp", true)
+	end
+	local current = run :: StokerFlank.Flank
+	local position = hollow.root.Position
+	local own = { x = position.X, z = position.Z }
+	local at = { x = preyRoot.Position.X, z = preyRoot.Position.Z }
+	local look = preyRoot.CFrame.LookVector
+	local facing = { x = look.X, z = look.Z }
+	if StokerFlank.ends(current, clock, own, at, facing, visible) then
+		endFlank(hollow)
+		return false
+	end
+	if StokerFlank.advance(current, own, StokerFlank.goal(current, own, at, facing)) == "Round" then
+		endFlank(hollow)
+		return false
+	end
+	local goal = StokerFlank.goal(current, own, at, facing)
+	hollow.humanoid.WalkSpeed = chase * Tuning.BruteRemake.Flank.Pace
+	moveToward(hollow, spaced(hollow, Vector3.new(goal.x, position.Y, goal.z)), false)
+	return true
+end
+
 --[[
 	The giant Brute's prey is inside a building: it can't follow, so it makes for a door or window near
 	them (Logic/ReachIn), holds the tell at the frame and reaches in. True while it is doing that; false
@@ -1863,6 +1926,14 @@ local function think(hollow: Hollow)
 
 		setState(hollow, "Hunt")
 		if giant(hollow) and reachIn(hollow, best, bestRoot, dt, chase) then
+			endFlank(hollow)
+			return
+		end
+		if
+			giant(hollow)
+			and Tuning.BruteRemake.Enabled
+			and flank(hollow, best, bestRoot, bestDistance, bestVisible, chase)
+		then
 			return
 		end
 		local exposure = hollow.exposure[best] or 0
@@ -1937,6 +2008,7 @@ local function think(hollow: Hollow)
 	elseif hollow.lastSeen and clock - hollow.lastSeenAt < A.Persistence and hollow.state ~= "Stalk" then
 		-- lost sight: search where it saw them last
 		setState(hollow, "Hunt")
+		endFlank(hollow)
 		hollow.model:SetAttribute("WarningCoil", nil)
 		hollow.humanoid.WalkSpeed = chase * H.SearchPace
 		moveToward(hollow, spaced(hollow, hollow.lastSeen :: Vector3), false)
@@ -2110,6 +2182,7 @@ local function add(at: CFrame, kind: string, state: string, emerge: string?): Ho
 		exposure = {},
 		stalked = {},
 		lostUntil = {},
+		flankTried = {},
 		noStalkUntil = 0,
 		lastThink = os.clock(),
 		door = nil,
