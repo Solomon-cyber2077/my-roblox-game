@@ -2,6 +2,7 @@ local Difficulty = require(Shared.Config.Difficulty)
 local DifficultyModel = require(Shared.Logic.DifficultyModel)
 local Grab = require(Shared.Logic.Grab)
 local Grabs = require(Shared.Config.Grabs)
+local BruteBody = require(Shared.Config.BruteBody)
 local Stations = require(Shared.Config.Stations)
 local Tuning = require(Shared.Config.Tuning)
 
@@ -25,6 +26,19 @@ local function holdOut(def, params, kindName: string, finish: number): number
 end
 
 describe("Grab", function()
+	it("turns the Stoker's lift into the slam and pin on a miss, and crushes only from the pin", function()
+		local lift = Grabs.ById.Lift
+		if BruteBody.current.lift then
+			expect(lift.opens).toBe(true)
+			expect(lift.onMiss).toBe("Slam")
+			expect(Grabs.ById.Slam.crush).toBe(true)
+			expect(lift.hold.pos[2]).toBeGreaterThan(BruteBody.current.holds.Fist[2]) -- held higher than any other
+		else
+			expect(lift).toBe(nil) -- today's Brute: no lift, no crush
+			expect(Grabs.ById.Slam.crush).toBe(nil)
+		end
+	end)
+
 	it("never picks a reach-in for an ordinary strike", function()
 		for _, kind in KINDS do
 			for seed = 1, 20 do
@@ -39,7 +53,8 @@ describe("Grab", function()
 	it("gives every kind three grabs with distinct ids", function()
 		for _, kind in KINDS do
 			local list = Grabs.Kinds[kind]
-			expect(#list).toBe(if kind == "Brute" then 5 else 3) -- the Brute's fifth is its reach-in
+			-- the Brute's fifth is its reach-in; the Stoker (Tuning.BruteRemake) adds his lift
+			expect(#list).toBe(if kind == "Brute" then (if BruteBody.current.lift then 6 else 5) else 3)
 			local seen = {}
 			for _, def in list do
 				expect(seen[def.id]).toBe(nil)
@@ -109,8 +124,11 @@ describe("Grab", function()
 	it("makes every Brute strike a face-down slam and pin", function()
 		for seed = 1, 20 do
 			local order = Grab.order("Brute", seed)
-			expect(#order).toBe(1)
-			expect(order[1].id).toBe("Slam")
+			-- the Stoker opens with his lift (it turns into this pin on a missed press); where there is no
+			-- headroom to lift, the pin stands in
+			expect(#order).toBe(if BruteBody.current.lift then 2 else 1)
+			expect(order[1].id).toBe(if BruteBody.current.lift then "Lift" else "Slam")
+			expect(order[#order].id).toBe("Slam")
 		end
 		local slam = Grabs.ById.Slam
 		expect(slam.pin).toBe(true)

@@ -581,6 +581,12 @@ local Tuning = {
 	-- Kinds kept out of play: never rolled, and a sleeper of that kind wakes as a Stalker instead (owner,
 	-- 2026-11-09: the Brute sits out the Test Launch until its remake). Studio dev commands still spawn them.
 	HollowBenched = { Brute = true } :: { [string]: boolean },
+	-- the screen while a Hollow holds you (owner 2026-11-18): the HUD fades back to HudTransparency, phones get
+	-- no dark vignette (it hides the game), and the veins reach PhoneVeins as far in on a phone
+	GrabScreen = { Enabled = false, HudTransparency = 0.85, PhoneVeins = 0.78 },
+	-- what players read for each kind (the code keeps its ids): the Brute is "the Stoker" (owner 2026-11-18;
+	-- name check in IP-REGISTER)
+	HollowNames = { Stalker = "Stalker", Crawler = "Crawler", Brute = "Stoker" } :: { [string]: string },
 	-- The Brute's close-up remake (Config/BruteMeshes, tools/brute). Off: the block build, as today. On, it draws the
 	-- meshes once their ids are bound; the Brute itself stays benched above until its rule is built.
 	BruteRemake = {
@@ -588,6 +594,12 @@ local Tuning = {
 		-- The giant's late-run return (Logic/ReachIn.returns): with Enabled on, the Brute leaves the bench only at
 		-- late stops past the tutorial runs, at most one a stop. Off: benched as above.
 		Returns = false,
+		-- Flashbulbs (a flash makes a Hollow let go) turn up this much more often at a stop he comes to
+		FlashbulbBoost = 2.5,
+		-- with a crewmate to save the held player: one shovel strike for crewmates at a distance (within Strike,
+		-- beyond Pull); closer, his heat pulls their lantern flames (Pull); at rescue distance they go out (Snuff,
+		-- the rescue reach of Config/Injury plus 2); a snuffed lantern relights Relight seconds after leaving
+		Heat = { Strike = 34, Pull = 18, Snuff = 8, Relight = 3 },
 		Return = {
 			Chance = 0.35, -- of an eligible stop (from Difficulty.BruteReturn.FirstStop) rolling one
 			LightScale = 1, -- share of a SafeLight's Radius that holds it, in every run (not Config/Tutorial's)
@@ -652,6 +664,19 @@ local Tuning = {
 		Pin = {
 			Tick = 1, -- seconds between damage ticks while pinned (damage: Difficulty.GrabDamage)
 			SlamSeconds = 0.35, -- the body is driven from standing to the ground over this long
+		},
+		-- the Stoker's finish (Config/Grabs crush): the shovel's swing, from the raise to the blow landing
+		Crush = {
+			Seconds = 0.55,
+		},
+		-- the Stoker's pin is the skill check's second stage (owner 2026-11-18): faster checks, then the check
+		-- fades out; fully faded, or MaxMisses more misses, and the death begins (Logic/Grab.pinStage)
+		PinStage = {
+			Speed = 0.62, -- each turn of the marker takes this share of an ordinary turn
+			Gap = 0.55, -- and the next one comes this much sooner
+			FadeDelay = 2.4, -- seconds of fast checks before the check starts to fade
+			FadeSeconds = 4.0, -- from the first fade to gone
+			MaxMisses = 3, -- misses after the pin that end it at once
 		},
 	},
 

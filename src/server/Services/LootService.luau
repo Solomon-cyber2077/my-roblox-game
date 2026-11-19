@@ -12,6 +12,7 @@ local Items = require(Shared.Config.Items)
 local Loot = require(Shared.Config.Loot)
 local Stations = require(Shared.Config.Stations)
 local LayoutGen = require(Shared.Logic.LayoutGen)
+local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local LootRoll = require(Shared.Logic.LootRoll)
 local RunRules = require(Shared.Logic.RunRules)
 
@@ -151,7 +152,9 @@ local function onSearch(
 		handle.def.kind,
 		handle.def.zone,
 		archetype,
-		LootRoll.seedFor(stationSeed, handle.def.id)
+		LootRoll.seedFor(stationSeed, handle.def.id),
+		-- the Stoker comes to this stop: more Flashbulbs to save someone from his grip
+		if Registry.HollowService.StokerDue() then { Flashbulb = Tuning.BruteRemake.FlashbulbBoost } else nil
 	)
 	local leftovers = Registry.InventoryService.Give(player, items)
 	if #items > 0 then

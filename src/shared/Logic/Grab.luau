@@ -79,12 +79,43 @@ end
 
 -- The kind's grabs in the order this Hollow tries them: each one has a favourite.
 -- A kind with a pin (the Brute) uses only its pins.
+-- The Stoker's pin stage from the moment he pinned you (server time): when the check starts to fade and
+-- when it is gone (the death begins then).
+function Grab.pinStage(pinnedAt: number): (number, number)
+	local P = Tuning.Grab.PinStage
+	local from = pinnedAt + P.FadeDelay
+	return from, from + P.FadeSeconds
+end
+
+-- How faded the check is at `now`: 0 clear, 1 gone.
+function Grab.pinFade(now: number, from: number, to: number): number
+	if to <= from then
+		return if now >= to then 1 else 0
+	end
+	return math.clamp((now - from) / (to - from), 0, 1)
+end
+
 function Grab.order(kindName: string, seed: number): { Grabs.Def }
 	local list = {}
 	for _, def in Grabs.Kinds[kindName] or Grabs.Kinds.Stalker do
 		if not def.reach then -- a reach-in is the opening rule's, never an ordinary strike's
 			table.insert(list, def)
 		end
+	end
+	local opening = {}
+	for _, def in list do
+		if def.opens then
+			table.insert(opening, def)
+		end
+	end
+	if #opening > 0 then
+		-- the Stoker opens with his lift; under a low roof, where there is no room to lift, his pin instead
+		for _, def in list do
+			if def.pin then
+				table.insert(opening, def)
+			end
+		end
+		return opening
 	end
 	local pins = {}
 	for _, def in list do

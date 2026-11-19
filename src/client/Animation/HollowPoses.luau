@@ -59,6 +59,8 @@ export type Input = {
 	coil: boolean?, -- Hunt with Intent or the first-strike warning: the coil pose
 	frozen: boolean?, -- Stalk under a look: still, swaying and breathing
 	tilt: number?, -- frozen, the head's slow roll to one side (Logic/HollowMotion.frozenTilt)
+	crush: number?, -- seconds since the Stoker's shovel began to come down (Config/Grabs crush)
+	strike: number?, -- seconds since his one shovel strike at crewmates coming (Tuning.BruteRemake.Heat)
 }
 
 local HollowPoses = {}
@@ -247,6 +249,8 @@ local CONTACTS: { [string]: { [string]: Vector3 } } = {
 	Slam = { R = Vector3.new(0, 0.3, 2.9) }, -- face down: the blade on their back
 	Bearhug = { L = Vector3.new(0.8, 0.25, 0.8), R = Vector3.new(-0.8, 0.25, 0.8) },
 	Reach = { L = Vector3.new(0, 0.7, -0.9) }, -- by the collar
+	Lift = { L = Vector3.new(0, 0.35, -1.0) }, -- the Stoker's burnt hand round their chest, held up high
+	PinL = { L = Vector3.new(0, 0.3, 1.0) }, -- the same hand flat on their back, pressing them down
 }
 -- how far the Brute's poses move: its skeleton (Config/BruteBody) is 1.26 times the Block build's as a giant
 local BS = BruteBody.current.scale
@@ -344,12 +348,68 @@ local function stalkerGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: 
 	end
 end
 
-local function bruteGrab(rig: Rig, out: Pose, def: Grabs.Def, t: number, now: number, seed: number)
+-- The Stoker's shovel driven flat into the ground once, over his hold: up, then down hard (0.6 s).
+local function shovelStrike(out: Pose, strike: number?)
+	if strike == nil or strike < 0 or strike > 0.6 then
+		return
+	end
+	local u = strike / 0.6
+	local lift = if u < 0.45 then smooth(u / 0.45) else 1 - smooth((u - 0.45) / 0.2)
+	out.RShoulder = A(-0.2 - 2.2 * lift, 0, 0.3)
+	out.RElbow = A(-0.4 * lift, 0, 0)
+end
+
+local function bruteGrab(
+	rig: Rig,
+	out: Pose,
+	def: Grabs.Def,
+	t: number,
+	now: number,
+	seed: number,
+	crush: number?,
+	strike: number?
+)
 	local v = HollowPoses.holdFrame(def)
 	local k = Grab.squeeze(def, t)
 	local c = CONTACTS[def.id]
 	local heave = math.sin(now * 2.4 + seed) * 0.04
-	if def.id == "Fist" then
+	if def.id == "Lift" then
+		-- the Stoker: hoisted high in the burnt left hand, leaning back under the weight, looking up at them
+		out.RootJoint = CFrame.new(0, 0.1 * BS, 0.15 * BS) * A(0.12, 0, -0.06)
+		out.Waist = A(0.18 + heave, 0.3, 0)
+		out.LHip, out.RHip = A(0.15, 0, -0.12), A(-0.2, 0, 0.1)
+		out.LKnee, out.RKnee = A(-0.25, 0, 0), A(-0.3, 0, 0)
+		out.Neck = A(-0.3 - 0.1 * k, 0.35, 0)
+		out.Jaw = A(-0.4 - 0.5 * k, 0, 0)
+		HollowPoses.reach(rig, out, "L", "Arm", v * CONTACTS.Lift.L, Vector3.new(-0.8, -0.6, 0.4), LEVEL)
+		-- the shovel hangs from the other hand, its blade on the ground
+		out.RShoulder = A(0.15, 0, 0.22)
+		out.RElbow = A(0.35, 0, 0)
+		shovelStrike(out, strike)
+	elseif def.crush then
+		-- pinned under the burnt hand while the shovel climbs over its shoulder; when the clock runs out it
+		-- comes down (crush: seconds into the swing). Implied only: the blade lands, nothing is shown
+		-- down on one knee over them: a giant has to kneel to press a body on the ground
+		local lean = 0.25 * k
+		out.RootJoint = CFrame.new(0, (-2.3 - lean) * BS, -0.4 * BS) * A(-0.35, 0, 0.08)
+		out.Waist = A(-0.75 - 0.15 * k, 0.18, 0)
+		out.LHip, out.RHip = A(1.4, 0, -0.25), A(0.6, 0, 0.25)
+		out.LKnee, out.RKnee = A(-2.2, 0, 0), A(-1.2, 0, 0)
+		out.Neck = A(0.3, 0.1, 0)
+		out.Jaw = A(-0.25 - 0.5 * k, 0, 0)
+		HollowPoses.reach(rig, out, "L", "Arm", v * CONTACTS.PinL.L, Vector3.new(-0.8, 0.3, 0.4), LEVEL)
+		local raised = math.min(t / 1.6, 1)
+		local swing = if crush then clamp01(crush / Tuning.Grab.Crush.Seconds) else 0
+		local up = -0.4 - 2.4 * smooth(raised)
+		out.RShoulder = A(up + (-0.95 - up) * swing * swing, 0, 0.25)
+		out.RElbow = A(-0.5 * raised * (1 - swing), 0, 0)
+		if swing >= 1 then
+			out.Waist *= A(-0.18, 0, 0) -- its weight behind the blow
+		end
+		if crush == nil then
+			shovelStrike(out, strike)
+		end
+	elseif def.id == "Fist" then
 		-- lifts them in its fist to its face and closes its hand
 		out.RootJoint = CFrame.new(0, -0.2 * BS, 0.2 * BS) * A(0.05, 0, 0.05)
 		out.Waist = A(0.1 + heave, 0.25, 0)
@@ -770,6 +830,13 @@ local function bruteGait(out: Pose, p: number, stride: number, hunt: boolean, no
 	out.RElbow = A(0.2, 0, 0)
 	out.Neck = A(if hunt then 0.3 else 0.1, math.sin(now * 0.6 + seed) * 0.2, 0)
 	out.Jaw = A(if hunt then -0.3 else -0.1, 0, 0)
+	if BruteBody.current.lift then
+		-- the Stoker, built lopsided by the work: the burnt left arm held stiff and close, barely swinging,
+		-- the spine bent down toward the heavy shovel side
+		out.LShoulder = A(-0.12 - r * 0.12 * stride, 0, 0.1)
+		out.LElbow = A(1.15, 0, 0)
+		out.Waist = (out.Waist :: CFrame) * A(-0.12, 0, -0.09)
+	end
 end
 
 local function bipedDormant(kind: string, now: number, seed: number): Pose
@@ -1040,7 +1107,7 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 			if crawler then
 				crawlerGrab(rig, out, def, input.grabTime, input.now, input.seed)
 			elseif kind == "Brute" then
-				bruteGrab(rig, out, def, input.grabTime, input.now, input.seed)
+				bruteGrab(rig, out, def, input.grabTime, input.now, input.seed, input.crush, input.strike)
 			else
 				stalkerGrab(rig, out, def, input.grabTime, input.now, input.seed)
 			end

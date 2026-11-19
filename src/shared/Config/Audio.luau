@@ -275,6 +275,27 @@ local Cues: { [string]: Cue } = {
 	},
 	LimbSnap = { id = 9113542363, volume = 1.45, spatial = true, rollOff = 110, mix = "Cues" }, -- Bone Cracks 10
 	LimbThud = { id = 9113570506, volume = 1.82, maxSeconds = 0.5, pitch = 0.55, mix = "Feedback" },
+	-- the Stoker's shovel coming down (Config/Grabs crush): the Bone Cracks 10 take low and short over a
+	-- deep wood-and-ground blow; the same licensed takes as LimbSnap and HollowSlam, nothing new uploaded
+	StokerCrunch = {
+		id = 9113542363,
+		volume = 1.9,
+		pitch = 0.72,
+		maxSeconds = 0.9,
+		spatial = true,
+		rollOff = 120,
+		mix = "Cues",
+		with = "StokerCrunchBlow",
+	},
+	StokerCrunchBlow = {
+		id = 9120900308,
+		start = 0.45,
+		volume = 1.4,
+		pitch = 0.6,
+		spatial = true,
+		rollOff = 160,
+		mix = "Cues",
+	},
 	-- Male Screams In Pain Injury Yells Agony 1, 3, 6; each player keeps one, at a pitch of their own
 	PainCry1 = {
 		id = 9116454870,
@@ -502,6 +523,27 @@ local Cues: { [string]: Cue } = {
 		spatial = true,
 		rollOff = 70,
 		maxSeconds = 0.8,
+		mix = "Steps",
+	},
+	-- the Stoker's shovel blade dragged over the ground on every other step (HollowAnimator): the gravel step
+	-- slowed and stretched under a low iron knock ("Prison Bar Hits 8"); licensed takes already in the game
+	ShovelScrape = {
+		id = 123584170083299,
+		volume = 1.3,
+		pitch = 0.55,
+		spatial = true,
+		rollOff = 90,
+		maxSeconds = 1.1,
+		mix = "Steps",
+		with = "ShovelKnock",
+	},
+	ShovelKnock = {
+		id = 9117905219,
+		volume = 2.2,
+		maxSeconds = 0.3,
+		pitch = 0.42,
+		spatial = true,
+		rollOff = 90,
 		mix = "Steps",
 	},
 	StepGravel2 = {

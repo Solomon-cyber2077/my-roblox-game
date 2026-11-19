@@ -42,6 +42,7 @@ export type Body = {
 	foot: { number },
 	blade: { size: { number }, y: number }, -- the shovel blade's block, under the right hand
 	holds: { [string]: { number } }, -- each grab's hold position (Config/Grabs hold.pos)
+	lift: boolean, -- the Stoker's grab: lifted high in the burnt left hand, pinned on a miss, then the shovel
 }
 
 local Block: Body = {
@@ -80,6 +81,7 @@ local Block: Body = {
 		Slam = { 0.9, -5.15, -5.2 },
 		Reach = { 0.4, -3.0, -4.6 },
 	},
+	lift = false,
 }
 
 local Giant: Body = {
@@ -115,10 +117,13 @@ local Giant: Body = {
 		Fist = { -1.7, 1.2, -4.2 },
 		Shovel = { 0.9, -6.6, -4.9 },
 		Bearhug = { 0, -0.2, -2.5 },
-		Slam = { 0.9, -6.6, -4.9 },
+		Slam = { -0.9, -6.6, -4.9 }, -- under the burnt left hand (the Stoker's pin)
 		-- hauled out through the opening: held up in front of it at a sill's height, both hands on them
 		Reach = { 0.3, -2.6, -5.0 },
+		-- held up in the burnt left hand, higher than any other Hollow lifts its prey
+		Lift = { -1.3, 1.5, -3.7 },
 	},
+	lift = true,
 }
 
 return {

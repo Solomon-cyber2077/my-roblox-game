@@ -45,6 +45,7 @@ local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
 local RunRules = require(Shared.Logic.RunRules)
 local SkillCheck = require(Shared.Logic.SkillCheck)
+local Grab = require(Shared.Logic.Grab)
 
 local FrameTime = require(script.Parent.Parent.FrameTime)
 local Net = require(script.Parent.Parent.Net)
@@ -400,6 +401,10 @@ function GrabController.Start()
 		if current then
 			Struggle.zone(SkillCheck.zoneStartAt(current, now), current.zoneWidth, current.greatWidth)
 		end
+		-- the Stoker's pin: the check fades out over its second stage (Logic/Grab.pinFade)
+		local fadeFrom = model:GetAttribute("PinFadeFrom") :: number?
+		local fadeTo = model:GetAttribute("PinFadeTo") :: number?
+		Struggle.fade(if fadeFrom and fadeTo then Grab.pinFade(now, fadeFrom, fadeTo) else 0)
 		-- your heart, quickening as the hold wears you down
 		local humanoid = model:FindFirstChildOfClass("Humanoid")
 		local life = if humanoid then humanoid.Health / math.max(humanoid.MaxHealth, 1) else 1
@@ -435,6 +440,20 @@ function GrabController.Bite(damage: number?)
 	Registry.CameraController.Shake(0.45 + 0.4 * strength)
 	Trauma.hit(strength)
 	audio("Hit", 0.75, 0.85)
+end
+
+-- The Stoker pinned you (his lift turned into a pin on a missed press).
+function GrabController.Pinned()
+	Registry.CameraController.Shake(1.2)
+	Trauma.pinned()
+end
+
+-- The shovel is coming down on you, alone (Config/Grabs crush): you see it rise and fall, and the screen
+-- goes black the instant it lands (the crunch is heard, nothing is shown).
+function GrabController.Crushed(landsIn: number)
+	task.delay(landsIn, function()
+		Trauma.blackout()
+	end)
 end
 
 -- It just seized you.

@@ -267,6 +267,9 @@ end
 
 -- the close-up pieces' finishes (src/server/StalkerLooks.model.json); nil in a headless build
 local looks = script.Parent.Parent:FindFirstChild("StalkerLooks")
+-- the Stoker's: colour, normal and roughness maps (src/server/StokerLooks.model.json, written by
+-- tools/brute/looks_json.py once the maps are uploaded), so sweat shines and soot stays matte
+local stokerLooks = script.Parent.Parent:FindFirstChild("StokerLooks")
 
 -- A copy of a loaded mesh welded to `to`, or nil when it has no mesh yet. Drawn on Quality only.
 local function meshPiece(
@@ -289,7 +292,9 @@ local function meshPiece(
 	part.Material = material
 	-- the colour as a SurfaceAppearance with a rough finish (src/server/StalkerLooks.model.json), so the skin and
 	-- cloth read matte instead of plastic; without it, the plain TextureID
-	local look = looks and looks:FindFirstChild(name)
+	local look = if brute
+		then stokerLooks and stokerLooks:FindFirstChild(string.sub(name, 7))
+		else looks and looks:FindFirstChild(name)
 	if look then
 		part.TextureID = ""
 		look:Clone().Parent = part

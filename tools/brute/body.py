@@ -30,6 +30,8 @@ def burn_paint(m, C, burn, cav):
     scar = mixc(np.tile(SCAR, (len(m.V), 1)), SCAR_RIM, S(0.6, 0.15, burn) * 0.8)
     scar = mixc(scar, SCAR_RIDGE, S(-0.15, -0.7, cav) * 0.25)
     scar = mixc(scar, SOOT, np.clip(0.4 + 0.5 * np.clip(cav, 0, 1), 0, 1))
+    if getattr(m, "R", None) is not None:
+        m.R = m.R + (0.4 - m.R) * S(0.1, 0.45, burn) * 0.8
     return mixc(C, scar, S(0.1, 0.45, burn) * 0.4)
 
 
@@ -114,7 +116,7 @@ def torso_body():
     for pts, wd in FISSURES:
         path = snap(surf, L.smooth_path(pts, 28, 0.012, int(rng.integers(99))), 0.0, 1)[0]
         b.ridge(path, 0.12 * wd, 0.03 * wd)
-        b.crease(path, 0.05 * wd, 0.075 * wd, 0.5, key="fissure")
+        b.crease(path, 0.055 * wd, 0.11 * wd, 0.5, key="fissure")
         lines.append((path, wd))
     b.masks["burn"] = burn
     b.fissures = lines
@@ -209,6 +211,7 @@ def bib(body):
         C = mixc(C, CHAR, S(r * 2.6, r * 1.2, d) * 0.7)
         C = mixc(C, (0.02, 0.015, 0.012), S(r, r * 0.6, d))
     m.C = C
+    m.R = np.clip(0.62 + 0.25 * np.clip(cav, 0, 1) - 0.2 * S(-0.15, -0.7, cav), 0.35, 0.95)  # rubbed shiny
     corners = {}
     for name, (cu, cv) in {"tl": (0.06, 0.02), "tr": (0.94, 0.02)}.items():
         i = np.argmin((u - cu) ** 2 + (v - cv) ** 2)
@@ -359,8 +362,8 @@ def embers(fissures):
         n = len(P)
         cen = np.array((0.0, 0.0, 0.0))
         dirs = L.unit(P - np.stack([np.zeros(n), P[:, 1], np.full(n, 0.1)], 1))
-        P2 = P - dirs * 0.018 * wd
-        radii = 0.032 * wd * np.sin(np.linspace(0.15, math.pi - 0.15, n)) ** 0.6
+        P2 = P - dirs * 0.03 * wd
+        radii = 0.036 * wd * np.sin(np.linspace(0.15, math.pi - 0.15, n)) ** 0.6
         out.append(L.tube(P2, radii, sides=5))
     return L.join(*out)
 
@@ -398,6 +401,12 @@ def apron_skirt():
     C = mixc(C, MOLESKIN * 1.35, S(-0.1, -0.6, cav) * 0.4)
     C = mixc(C, SOOT, 0.35 + 0.15 * L.fbm(hips.V, 8, 2, 3))
     C = mixc(C, STITCH * 0.7, hips.masks["seam"] * S(0.2, 0.5, np.sin(hips.V[:, 1] * 120)) * 0.5)
+    # a patch sewn over the worn-through seat, one side only
+    P = hips.V
+    inpatch = (P[:, 2] > 0.35) & (P[:, 0] > 0.08) & (P[:, 0] < 0.62) & (P[:, 1] > -0.55) & (P[:, 1] < 0.05)
+    d_edge = np.minimum.reduce([P[:, 0] - 0.08, 0.62 - P[:, 0], P[:, 1] + 0.55, 0.05 - P[:, 1]])
+    C[inpatch] = mixc(C[inpatch], MOLESKIN * 0.7, 0.75)
+    C = mixc(C, STITCH, (inpatch * stitch_mask(d_edge, P[:, 0] + P[:, 1], 0.03, 0.05, 0.01)) * 0.8)
     hips.C = C
     # belt round the waist
     ring = []
@@ -453,6 +462,7 @@ def apron_skirt():
         C = mixc(C, CHAR, S(r * 2.6, r * 1.2, d) * 0.7)
         C = mixc(C, (0.02, 0.015, 0.012), S(r, r * 0.6, d))
     sk.C = C
+    sk.R = np.clip(0.62 + 0.25 * np.clip(cav, 0, 1) - 0.2 * S(-0.15, -0.7, cav), 0.35, 0.95)
     skirt = L.slab(sk, 0.035, colour_rim=LEATHER_DARK * 0.5)
     # the waist thongs: from the skirt's top corners round the hips to a knot at the back, two ends hanging
     thongs = []
@@ -589,30 +599,35 @@ def fist():
     m.ell((-0.06, 0.12, 0.0), (0.17, 0.3, 0.31))  # the back of the hand
     m.cap((-0.02, 0.5, 0.0), (-0.04, 0.2, 0.0), 0.26)  # wrist
     fingers = [(-0.27, 0.095, 0.0), (-0.09, 0.09, -0.01), (0.09, 0.085, 0.0), (0.25, 0.075, 0.04)]
+    # burnt into a claw that cannot open or close: fingers hooked, the index and middle webbed by scar
+    tips = []
     for z, r, dy in fingers:
         k0 = (-0.13, -0.2 + dy, z)
-        k1 = (0.05, -0.43 + dy, z * 1.02)
-        k2 = (0.22, -0.3 + dy, z * 1.02)
-        k3 = (0.17, -0.14 + dy, z)
+        k1 = (-0.06, -0.47 + dy, z * 1.05)
+        k2 = (0.07, -0.63 + dy, z * 1.08)
+        k3 = (0.18, -0.6 + dy, z * 1.08)
         m.ball(k0, r * 1.05)
-        m.chain([k0, k1, k2, k3], [r, r * 0.92, r * 0.82, r * 0.75])
-    m.chain([(0.1, 0.22, -0.2), (0.07, 0.0, -0.36), (0.02, -0.2, -0.36), (0.08, -0.32, -0.24)], [0.11, 0.095, 0.08, 0.07])  # thumb
+        m.chain([k0, k1, k2, k3], [r, r * 0.9, r * 0.78, r * 0.62])
+        tips.append(k3)
+    m.chain([(-0.08, -0.45, -0.17), (0.02, -0.55, -0.17)], [0.06, 0.05])  # the scar web
+    m.chain([(0.1, 0.22, -0.2), (0.12, 0.0, -0.36), (0.16, -0.18, -0.38), (0.23, -0.28, -0.3)], [0.11, 0.095, 0.08, 0.065])  # thumb
     h = m.mesh(0.014)
     h.smooth(it=2)
     surf = L.Surface(h)
     sp = lambda pts, n=16: snap(surf, L.smooth_path(pts, n), 0.0, 0)[0]
-    for z0, z1 in ((-0.27, -0.09), (-0.09, 0.09), (0.09, 0.25)):  # the gaps between the fingers
+    for z0, z1 in ((-0.09, 0.09), (0.09, 0.25)):  # the gaps between the fingers (the first two are webbed)
         zm = (z0 + z1) / 2
-        h.crease(sp([(-0.14, -0.28, zm), (0.0, -0.45, zm), (0.14, -0.42, zm), (0.24, -0.25, zm)]), 0.025, 0.035, 0.8, key="gap")
+        h.crease(sp([(-0.14, -0.28, zm), (-0.07, -0.5, zm), (0.06, -0.64, zm), (0.17, -0.62, zm)]), 0.025, 0.035, 0.8, key="gap")
     for z, r, dy in fingers:  # skin folds over each knuckle, the tendons on the back of the hand
         for k in (-0.03, 0.03):
             h.crease(sp([(-0.2, -0.22 + dy + k, z - 0.05), (-0.22, -0.22 + dy + k, z), (-0.2, -0.22 + dy + k, z + 0.05)], 6), 0.012, 0.006, 0.5)
         h.ridge(sp([(-0.2, 0.35, z * 0.5), (-0.21, 0.05, z * 0.8), (-0.19, -0.15 + dy, z)]), 0.022, 0.012)
     h.crease(sp([(0.05, 0.15, -0.28), (0.02, -0.05, -0.42), (0.0, -0.22, -0.43)]), 0.02, 0.02, 0.7, key="gap")  # thumb against the fist
     # the thumbnail
-    tn = h.ell((0.0, -0.3, -0.3), (0.05, 0.06, 0.06))
+    tn = h.ell((0.22, -0.28, -0.3), (0.05, 0.05, 0.06))
     h.flatten(tn, 0.6)
-    burn = S(0.15, 0.55, h.ell((-0.2, 0.25, 0.0), (0.15, 0.3, 0.3)) * (1 + 0.7 * L.fbm(h.V, 5, 2, 7)))
+    burn = S(0.15, 0.55, np.maximum(h.ell((-0.2, 0.25, 0.0), (0.2, 0.4, 0.35)), h.ell((0.0, -0.45, 0.0), (0.3, 0.25, 0.35)))
+             * (1 + 0.7 * L.fbm(h.V, 5, 2, 7)))
     plaques(h, burn, rng0(45), 5, 0.1, 0.012)
     cav = h.cavity(2)
     C = soot_skin(h, cav, seed=61, coverage=0.72, streaks=False)
@@ -657,6 +672,9 @@ def shovel():
     C = soot_skin(h, cav, seed=63, coverage=0.72, streaks=False)
     C = burn_paint(h, C, np.maximum(grown, 0.0), cav)
     C = mixc(C, (0.03, 0.02, 0.018), h.masks["gap"] * 0.6)
+    # the shaft's grain still shows through the skin that grew over it
+    grain = S(-0.1, 0.5, L.vnoise(h.V, 28.0, 17, stretch=(1, 0.05, 1)))
+    C = mixc(C, WOOD * 0.55, grown * grain * 0.55)
     h.C = C
     # the shaft
     ys = np.linspace(0.2, -1.0, 24)
@@ -703,6 +721,7 @@ def shovel():
     C = mixc(C, RUST, S(0.82, 1.0, np.abs(u - 0.5) * 2) * 0.6 + S(0.15, 0.0, v) * 0.4)
     C = mixc(C, SOOT, 0.3)
     bl.C = C
+    bl.R = np.clip(0.32 + 0.55 * S(0.82, 1.0, np.abs(u - 0.5) * 2) + 0.3 * S(0.15, 0.0, v), 0.25, 0.9)
     blade = L.slab(bl, 0.035, colour_back=RUST * 0.8, colour_rim=IRON_BRIGHT * 0.8)
     rivets = []
     for x in (axis_x - 0.06, axis_x + 0.06):
@@ -738,6 +757,14 @@ def thigh(side):
     C = mixc(C, MOLESKIN * 1.4, S(-0.1, -0.6, cav) * 0.4 + S(-0.4, -0.9, P[:, 0]) * S(-0.1, -0.4, P[:, 2]) * 0.3)
     C = mixc(C, SOOT, 0.35 + 0.15 * L.fbm(P, 8, 2, 3 + o))
     C = mixc(C, STITCH * 0.7, t.masks["seam"] * S(0.2, 0.5, np.sin(P[:, 0] * 120)) * 0.5)
+    # spark burns: charred holes with a singed ring, a few on each leg
+    for k in range(4):
+        c = np.array((rng.uniform(-0.8, 0.8), rng.uniform(-1, 1), rng.uniform(-1, 0.2)))
+        c = surf.nearest(c * np.array((1, 0.5, 0.6)))[0]
+        d = np.linalg.norm(P - c, axis=1)
+        r = rng.uniform(0.025, 0.05)
+        C = mixc(C, (0.25, 0.17, 0.1), S(r * 2.4, r * 1.2, d) * 0.6)
+        C = mixc(C, (0.02, 0.016, 0.012), S(r, r * 0.5, d))
     t.C = C
     extra = []
     if side == "L":  # a patch over the knee, sewn on with big stitches
@@ -800,7 +827,11 @@ def shin(side):
     C = mixc(C, MOLESKIN_DARK, np.clip(cav, 0, 1) * 0.8 + 0.15)
     C = mixc(C, SOOT, 0.38 + 0.15 * L.fbm(P, 8, 2, 13 + o))
     C = mixc(C, (0.2, 0.17, 0.13), S(-0.3, -0.9, P[:, 0]) * 0.4)  # dust and mud low down
+    caked = S(-0.45, -0.85, P[:, 0]) * S(-0.2, 0.4, L.vnoise(P, 14.0, 23 + o))  # coal dust caked on at the hem
+    C = mixc(C, (0.045, 0.04, 0.038), caked * 0.85)
+    s_.V += s_.N() * (0.022 * caked * S(0.0, 0.6, L.vnoise(P, 30.0, 24 + o)))[:, None]
     s_.C = C
+    s_.R = np.clip(0.9 + 0.05 * caked, 0, 1)
     rp = ring(0.45, 0.03)
     rp = np.vstack([rp, rp[:1]])
     N = L.unit(rp - np.stack([rp[:, 0], np.zeros(len(rp)), np.zeros(len(rp))], 1))

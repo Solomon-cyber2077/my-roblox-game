@@ -250,6 +250,39 @@ local function onFx(kind: string, data: { [string]: any }?)
 		audio(d.cue, d.position)
 	elseif kind == "Grabbed" then
 		Registry.GrabController.Seized()
+	elseif kind == "ShovelStrike" then
+		-- the Stoker's blade driven flat into the ground: a rush of air and ash dims the screen for a moment
+		-- (flat, no vignette) and the lantern shudders, for crewmates within reach of it
+		audio("HollowSlam", d.position)
+		local character = Players.LocalPlayer.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if
+			root
+			and typeof(d.position) == "Vector3"
+			and (root.Position - d.position).Magnitude <= (d.radius or 34)
+		then
+			Overlay.dim(0.45, 0.7)
+			Registry.VisibilityController.Shudder(0.8)
+		end
+	elseif kind == "Veins" then
+		Registry.GrabController.Pinned()
+	elseif kind == "Pinned" or kind == "Crush" then
+		-- the Stoker: his pin lands, or his shovel comes down (the crunch where it lands, for everyone near)
+		local victim = Players:GetPlayerByUserId(tonumber(d.victim) or 0)
+		local character = victim and victim.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local at = if root then root.Position else nil
+		if kind == "Pinned" then
+			audio("HollowSlam", at)
+		else
+			local landsIn = tonumber(d.landsIn) or 0.55
+			if victim == Players.LocalPlayer then
+				Registry.GrabController.Crushed(landsIn)
+			end
+			task.delay(landsIn, function()
+				audio("StokerCrunch", at)
+			end)
+		end
 	elseif kind == "Bite" then
 		Registry.GrabController.Bite(
 			if type(d) == "table" and type(d.damage) == "number" then d.damage else nil

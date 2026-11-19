@@ -12,6 +12,10 @@
 	lying  the victim is on the ground (the room check uses a body lying down)
 	name   what the struggle prompt calls it
 	pin    a slam and pin: the Hollow uses only its pins, which tick at Tuning.Grab.Pin
+	opens  the kind's only opening grab while it exists (the Stoker's Lift)
+	onMiss the grab it turns into on the victim's first missed skill check (the Lift pins: Slam)
+	crush  when the clock runs out and no rescue saves them, the shovel comes down (implied: camera,
+	       sound and body, nothing torn; HollowService.finishHold)
 	reach  taken only through a door or window from outside (the Brute's Reach), never in an
 	       ordinary strike (Logic/Grab.order leaves it out)
 	area   the part of the victim it is working on: its bites mark that limb, and a death in
@@ -38,6 +42,9 @@ export type Def = {
 	lying: boolean,
 	pin: boolean?,
 	reach: boolean?,
+	opens: boolean?,
+	onMiss: string?,
+	crush: boolean?,
 }
 
 local Tuning = require(script.Parent.Tuning)
@@ -158,6 +165,27 @@ local Grabs: { [string]: { Def } } = {
 		},
 	},
 }
+
+-- the Stoker (the 12-stud remake, Tuning.BruteRemake): his burnt left hand lifts you first; a missed press
+-- pins you under it; the clock running out brings the shovel down
+if BruteBody.current.lift then
+	for _, def in Grabs.Brute do
+		if def.id == "Slam" then
+			def.crush = true
+		end
+	end
+	local lift: Def = {
+		id = "Lift",
+		area = "Torso",
+		name = "", -- grab titles are not shown on screen
+		hold = { pos = BRUTE.Lift, up = STANDING, face = TOWARD },
+		bite = 1.2,
+		lying = false,
+		opens = true,
+		onMiss = "Slam",
+	}
+	table.insert(Grabs.Brute, 1, lift)
+end
 
 local ById: { [string]: Def } = {}
 for _, list in Grabs do

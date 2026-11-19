@@ -39,6 +39,7 @@ local AudioPriority = require(Shared.Config.AudioPriority)
 local Foley = require(Shared.Config.Foley)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
+local STOKER = Tuning.BruteRemake.Enabled -- the 12-stud remake's behaviour (Config/BruteBody Giant)
 local Safe = require(Shared.Util.Safe)
 local GrimeLevel = require(Shared.Logic.GrimeLevel)
 
@@ -71,6 +72,7 @@ type Rig = {
 	lungeAt: number,
 	bites: number, -- bites of the current hold already sounded
 	embers: PointLight?,
+	flareAt: number?, -- os.clock() of the last bite: the embers flare and settle
 	quietStep: boolean, -- a stalking Hollow sounds every other footfall
 	breath: Sound?, -- its stalk breath
 	heardEpoch: number, -- HealthController.StopEpoch when its breath was last counted
@@ -330,7 +332,9 @@ local function onBite(rig: Rig, def: Grabs.Def)
 	else
 		audio("HollowSwipe", position, 0.8, 0.75)
 	end
-	if rig.embers then
+	if rig.embers and STOKER then
+		rig.flareAt = os.clock() -- the breath loop flares it (below)
+	elseif rig.embers then
 		local embers = rig.embers :: PointLight
 		embers.Brightness = 3.2
 		TweenService:Create(embers, TweenInfo.new(0.5), { Brightness = 1.1 }):Play()
@@ -345,6 +349,10 @@ local function plantStep(rig: Rig, speed: number)
 	if rig.kind == "Brute" then
 		audio("HollowStep", position, 1, 0.9 + rig.stepSide * 0.08)
 		shakeNear(position, 16, 0.25)
+		-- the Stoker's rhythm: step, swing, scrape (you hear him before you see him)
+		if STOKER and rig.stepSide > 0 then
+			audio("ShovelScrape", position, 1, 0.95 + math.random() * 0.1)
+		end
 	elseif rig.kind == "Crawler" then
 		audio(if speed > 10 then "HollowScrabble" else "HollowStep", position, 0.3, 1.9)
 	else
@@ -484,6 +492,24 @@ local function animate(
 		end
 	end
 
+	-- the Stoker's embers breathe like a bellows, brighten while he holds someone and flare on every bite
+	if STOKER and rig.embers then
+		local breath = 0.5 + 0.5 * math.sin(now * (if state == "Hunt" then 2.6 else 1.5) + rig.seed)
+		local flare = if rig.flareAt then math.max(0, 1 - (clock - rig.flareAt) / 0.6) else 0
+		local held = if state == "Grab" then 0.7 else 0
+		-- his embers flare brighter as the lanterns coming at him weaken (Tuning.BruteRemake.Heat)
+		if state == "Grab" then
+			local mine = Players.LocalPlayer.Character
+			local mineRoot = mine and mine:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if mineRoot then
+				local heat = Tuning.BruteRemake.Heat
+				local d = (mineRoot.Position - rig.root.Position).Magnitude
+				held += 1.4 * math.clamp((heat.Pull - d) / (heat.Pull - heat.Snuff), 0, 1)
+			end
+		end
+		(rig.embers :: PointLight).Brightness = 0.8 + 0.7 * breath + held + 2.2 * flare
+	end
+
 	-- random head twitches: snap, hold, release
 	if not dressing and clock >= rig.twitchNext then
 		local twitchAngle = Tuning.HollowMotion.TwitchAngle
@@ -509,6 +535,12 @@ local function animate(
 		windup = windup,
 		grab = grabId,
 		grabTime = grabTime,
+		strike = if grabId and model:GetAttribute("ShovelStrike")
+			then now - (model:GetAttribute("ShovelStrike") :: number)
+			else nil,
+		crush = if grabId and model:GetAttribute("Crush")
+			then now - (model:GetAttribute("Crush") :: number)
+			else nil,
 		grime = grime,
 		coil = coiled,
 		frozen = frozen,

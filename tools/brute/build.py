@@ -66,9 +66,9 @@ SKIN = np.array((0.46, 0.35, 0.29))  # a labourer's weathered skin under the dus
 SKIN_SHADE = np.array((0.30, 0.21, 0.18))
 SOOT = np.array((0.095, 0.085, 0.08))
 ASH = np.array((0.36, 0.35, 0.33))
-SCAR = np.array((0.56, 0.43, 0.39))  # healed burn: pale, pinkish
+SCAR = np.array((0.44, 0.35, 0.32))  # healed burn: dull, pinkish brown; it reads by its gloss
 SCAR_RIM = np.array((0.30, 0.20, 0.19))
-SCAR_RIDGE = np.array((0.64, 0.51, 0.46))
+SCAR_RIDGE = np.array((0.52, 0.42, 0.38))
 LIP = np.array((0.28, 0.18, 0.16))
 WET = np.array((0.05, 0.035, 0.03))
 STUBBLE = np.array((0.13, 0.12, 0.12))
@@ -102,6 +102,8 @@ def soot_skin(m, cav, seed=0, base=SKIN, coverage=0.62, streaks=True):
         cover = cover - 0.38 * run
     C = mixc(C, SOOT, np.clip(cover, 0, 0.93))
     C = mixc(C, ASH, S(0.55, 0.95, n[:, 1]) * 0.22)
+    # where it shines: skin the sweat has washed (low cover) is wet; soot and ash stay dry and matte
+    m.R = np.clip(0.42 + 0.52 * np.clip(cover, 0, 1) + 0.08 * np.clip(cav, 0, 1), 0.28, 0.97)
     return C
 
 
@@ -144,8 +146,8 @@ def head_sculpt():
     m.ell((0, -0.3, 0.33), (0.39, 0.22, 0.18))  # nape fat
     m.ell((0.48, -0.02, 0.07), (0.035, 0.125, 0.085))  # right ear (lumps added below)
     m.ell((-0.475, -0.035, 0.07), (0.04, 0.07, 0.06))  # left ear burnt to a nub
-    h = m.mesh(0.0105)
-    h.smooth(it=4)
+    h = m.mesh(0.0072)  # fine enough for pores in the normal map
+    h.smooth(it=6)
     g = lambda c, r, v: h.move(h.ball(c, r), v)
     # brow shelf forward and down, glabella
     g((0, 0.16, -0.45), 0.4, (0, -0.02, -0.085))
@@ -302,6 +304,14 @@ def head_sculpt():
     h.masks["burn"] = burn
     h.move(h.ball((-0.17, -0.45, -0.52), 0.07), (-0.008, 0.01, 0.01))  # mouth corner drawn toward the scar
     h.smooth(it=1, lam=0.3)
+    # cut every line deeper and harder (no clay: a weathered face has sharp folds), then pores on the skin
+    n = h.N()
+    lines = np.clip(h.masks.get("lines", 0) * 1.0, 0, 1)
+    h.V -= n * (0.009 * lines ** 0.7)[:, None]
+    skin = (1 - S(0.2, 0.6, h.masks.get("tache", 0))) * (1 - S(0.2, 0.6, h.masks.get("eye", 0)))
+    skin = skin * (1 - 0.7 * S(0.2, 0.6, h.masks.get("burn", 0)))  # scar tissue has no pores
+    pores = np.clip(L.vnoise(h.V, 150.0, 31) - 0.35, 0, 1) * 0.0045 + L.vnoise(h.V, 60.0, 32) * 0.0012
+    h.V -= n * (pores * skin)[:, None]
     return h
 
 
@@ -333,6 +343,12 @@ def head_colour(h):
     C = mixc(C, scar, S(0.1, 0.45, burn) * 0.7)
     C = mixc(C, SCAR * 0.8, m.get("cut", 0) * 0.7)
     h.C = C
+    R = h.R
+    R = R + (0.4 - R) * S(0.1, 0.45, m["burn"]) * 0.8  # keloid is glossy
+    R = R + (0.15 - R) * S(0.25, 0.7, m["eye"])  # wet eyes
+    R = R + (0.45 - R) * m["lip"] * 0.6
+    R = R + (0.8 - R) * S(0.1, 0.6, m["tache"])
+    h.R = R
     return h
 
 
@@ -595,10 +611,15 @@ def blocks_giant(f):
 
 def fit_giant(name, m):
     """Each piece of this pass refitted to the giant's skeleton: lengths to its bones, girth to its size."""
+    # lopsided from the work: the shovel arm huge and corded, the burnt left one shrunken
     if name in ("upperarmL", "upperarmR"):
-        m.V *= np.array((G["upper"] / 2.5, 1.3, 1.3))
+        g = 1.46 if name == "upperarmR" else 1.12
+        m.V *= np.array((G["upper"] / 2.5, g, g))
     elif name in ("forearmL", "forearmR"):
-        m.V *= np.array((G["fore"] / 2.4, 1.25, 1.25))
+        g = 1.45 if name == "forearmR" else 1.08
+        m.V *= np.array((G["fore"] / 2.4, g, g))
+    elif name == "torso":
+        m.V[:, 0] *= np.where(m.V[:, 0] > 0, 1.05, 0.95)  # the shovel side heavier
     elif name in ("thighL", "thighR"):
         m.V *= np.array((G["thigh"] / 2.0, 1.4, 1.4))
     elif name in ("shinL", "shinR"):
@@ -659,6 +680,10 @@ def renders(pieces, kind, tag, quick=False):
              ("gaslight", lambda: L.gaslight(head), head + Vector((1.4, -0.3, -4.2)), head + Vector((0, -0.5, 0)), 34),
              ("back", lambda: L.daylight(Vector((0, 4.5, 0))), Vector((-6.5, 7.0, 7.5)) * big, Vector((0, 5.0, 0)) * big, 50),
              ("low", lambda: L.gaslight(Vector((0.5, 3.0, -1.0))), Vector((-3.2, 2.2, -6.0)), Vector((0.2, 2.2, 0)), 40)]
+    if GIANT:  # the grab camera: lifted in his left hand, a stud from his face
+        rootp = Vector((0, G["hip"] + G["root"][1] / 2, 0))
+        eye = rootp + Vector((-0.7, 1.5 + 1.4, -3.6))
+        shots.append(("grab", lambda: L.gaslight(head), eye, head + Vector((0, -0.3, 0)), 50))
     for name, lights, eye, at, fov in shots:
         L.clear_lights()
         ember_light(f)
@@ -749,6 +774,20 @@ def import_old(shelf=None, names=OLD_NAMES):
             t = mat.node_tree.nodes.new("ShaderNodeTexImage")
             t.image = img
             mat.node_tree.links.new(t.outputs["Color"], b.inputs["Base Color"])
+            for suffix in ("normal", "rough"):  # the SurfaceAppearance maps, when this pass baked them
+                fp = shelf / f"brute_{name}_{suffix}.png"
+                if not fp.exists():
+                    continue
+                im = bpy.data.images.load(str(fp))
+                im.colorspace_settings.name = "Non-Color"
+                tn = mat.node_tree.nodes.new("ShaderNodeTexImage")
+                tn.image = im
+                if suffix == "normal":
+                    nm = mat.node_tree.nodes.new("ShaderNodeNormalMap")
+                    mat.node_tree.links.new(tn.outputs["Color"], nm.inputs["Color"])
+                    mat.node_tree.links.new(nm.outputs["Normal"], b.inputs["Normal"])
+                else:
+                    mat.node_tree.links.new(tn.outputs["Color"], b.inputs["Roughness"])
         else:
             b.inputs["Base Color"].default_value = (1.0, 0.2, 0.03, 1)
             b.inputs["Emission Color"].default_value = (1.0, 0.2, 0.03, 1)

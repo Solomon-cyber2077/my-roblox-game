@@ -137,6 +137,7 @@ class Mesh:
         self.V = np.asarray(V, dtype=float)
         self.F = np.asarray(F, dtype=np.int64)
         self.C = None if C is None else np.asarray(C, dtype=float)
+        self.R = None  # roughness per vertex (0 wet and shining .. 1 dry and matte), baked to a roughness map
         self._E = None
         self.masks = {}
 
@@ -246,13 +247,16 @@ class Mesh:
 
 
 def join(*meshes):
-    V, F, C, off = [], [], [], 0
+    V, F, C, Rg, off = [], [], [], [], 0
     for m in meshes:
         V.append(m.V)
         F.append(m.F + off)
         C.append(m.C if m.C is not None else np.full((len(m.V), 3), 0.5))
+        Rg.append(m.R if getattr(m, "R", None) is not None else np.full(len(m.V), 0.85))
         off += len(m.V)
-    return Mesh(np.vstack(V), np.vstack(F), np.vstack(C))
+    out = Mesh(np.vstack(V), np.vstack(F), np.vstack(C))
+    out.R = np.concatenate(Rg)
+    return out
 
 
 def transform(m, M):
@@ -402,6 +406,8 @@ def slab(m, thick, colour_back=None, colour_rim=None):
             C[edge] = mixc(C[edge], colour_rim, 0.6)
     out = Mesh(V, F, C)
     out.masks = {k: np.concatenate([v, v]) for k, v in m.masks.items()}
+    if getattr(m, "R", None) is not None:
+        out.R = np.concatenate([m.R, m.R])
     return out
 
 
@@ -562,6 +568,10 @@ def to_object(name, m):
         c = np.clip(m.C, 0, None) ** 2.2
         rgba = np.hstack([c, np.ones((len(c), 1))]).astype(np.float32)
         attr.data.foreach_set("color", rgba.ravel())
+    if getattr(m, "R", None) is not None and len(me.vertices) == len(m.R):
+        ra = me.color_attributes.new("rgh", "FLOAT_COLOR", "POINT")
+        r = np.clip(m.R, 0, 1)
+        ra.data.foreach_set("color", np.stack([r, r, r, np.ones_like(r)], 1).astype(np.float32).ravel())
     me.shade_smooth()
     o = bpy.data.objects.new(name, me)
     bpy.context.scene.collection.objects.link(o)
@@ -693,8 +703,44 @@ def piece(name, m, target, size, ao_dist, ao_mix=0.7):
     high.data.materials.clear()
     high.data.materials.append(vc_material())
     bpy.ops.object.bake(type="AO", use_selected_to_active=True, cage_extrusion=0.03, max_ray_distance=0.12, margin=6)
+    # the surface for a SurfaceAppearance: the high mesh's folds, pores and seams as a tangent-space normal
+    # map, and where it shines (sweat, wet eyes, keloid, worn leather) as a roughness map
+    img_n = bpy.data.images.new(name + "_n", size, size, float_buffer=True)
+    img_n.colorspace_settings.name = "Non-Color"
+    img_r = bpy.data.images.new(name + "_r", size, size, float_buffer=True)
+    img_r.colorspace_settings.name = "Non-Color"
+    node.image = img_n
+    sc.cycles.samples = 4
+    bpy.ops.object.bake(type="NORMAL", normal_space="TANGENT", use_selected_to_active=True, cage_extrusion=0.03,
+                        max_ray_distance=0.12, margin=6)
+    if "rgh" in high.data.color_attributes:
+        rm = emit_vc_material().copy()
+        for nd in rm.node_tree.nodes:
+            if nd.type == "ATTRIBUTE":
+                nd.attribute_name = "rgh"
+        high.data.materials.clear()
+        high.data.materials.append(rm)
+        node.image = img_r
+        sc.cycles.samples = 1
+        bpy.ops.object.bake(type="EMIT", use_selected_to_active=True, cage_extrusion=0.03, max_ray_distance=0.12, margin=6)
+    else:
+        img_r.pixels.foreach_set(np.full(size * size * 4, 0.85, dtype=np.float32))
     for o in others:
         o.hide_render = False
+    for img, suffix in ((img_n, "normal"), (img_r, "rough")):
+        px = np.empty(size * size * 4, dtype=np.float32)
+        img.pixels.foreach_get(px)
+        px = px.reshape(-1, 4)
+        px[:, 3] = 1
+        if suffix == "rough":
+            px[:, 1] = px[:, 2] = px[:, 0]
+        out_img = bpy.data.images.new(f"{name}_{suffix}_png", size, size)
+        out_img.colorspace_settings.name = "Non-Color"
+        out_img.pixels.foreach_set(np.clip(px, 0, 1).ravel())
+        out_img.filepath_raw = str(OUT / f"{name}_{suffix}.png")
+        out_img.file_format = "PNG"
+        out_img.save()
+        bpy.data.images.remove(out_img)
 
     c = np.empty(size * size * 4, dtype=np.float32)
     a = np.empty(size * size * 4, dtype=np.float32)
@@ -716,6 +762,15 @@ def piece(name, m, target, size, ao_dist, ao_mix=0.7):
     bpy.data.images.remove(png)
     node.image = tex
     nt.links.new(node.outputs["Color"], bsdf.inputs["Base Color"])
+    # preview the SurfaceAppearance: normal and roughness on the low mesh, as Roblox will draw it
+    nn = nt.nodes.new("ShaderNodeTexImage")
+    nn.image = img_n
+    nmap = nt.nodes.new("ShaderNodeNormalMap")
+    nt.links.new(nn.outputs["Color"], nmap.inputs["Color"])
+    nt.links.new(nmap.outputs["Normal"], bsdf.inputs["Normal"])
+    nr = nt.nodes.new("ShaderNodeTexImage")
+    nr.image = img_r
+    nt.links.new(nr.outputs["Color"], bsdf.inputs["Roughness"])
     bpy.data.images.remove(img_c)
     bpy.data.images.remove(img_a)
     me = high.data
