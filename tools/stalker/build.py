@@ -182,114 +182,347 @@ def resample(pts, radii, n):
 
 
 def teeth(bm, col, specs):
-    """Thin uneven teeth: (root, direction, length, radius). Yellowed bone, dark at the root."""
+    """Uneven teeth: (root, direction, length, radius). Yellowed, dark at the root, worn blunt and flat at the
+    edge (a person's teeth, not fangs)."""
     for root, d, length, r in specs:
         root, d = Vector(root), Vector(d).normalized()
-        pts = [root + d * (length * f) for f in (0.0, 0.35, 0.75, 1.0)]
-        rad = [r * 0.9, r, r * 0.7, r * 0.18]
+        pts = [root + d * (length * f) for f in (0.0, 0.35, 0.8, 1.0)]
+        rad = [r * 0.85, r, r * 0.95, r * 0.75]
         rings = tube_rings(bm, col, pts, rad, 6, flat=0.62,
                            colour=lambda i, s, co: mix(TOOTH_ROOT, TOOTH, i / 2.0) if i < 3 else mul(TOOTH, 0.8))
         loft(bm, rings, cap0=True, cap1=True)
 
 
 # ------------------------------------------------------------------ head
-SOCKETS = (-0.185, 0.185)
-SOCKET_Y = 0.165
+# A man first: the face is built as flesh, not carved bone. Overlapping solid shapes (skull, face, brow,
+# cheekbones, orbits, nose, lips, ears, neck) are merged into one skin by a voxel remesh and smoothed so the joins
+# read as soft tissue; the lids and the parted lips are cut; then the fine forms (sunken temples, hollow cheeks,
+# lid creases, the folds beside the mouth, neck cords) are pushed in and out. Asymmetric on purpose: the right
+# eye sits lower, the nose is bent, the left ear is torn, the lip is drawn up further on the left.
+EYES = ((-0.2, 0.168, -0.318), (0.2, 0.146, -0.32))  # eyeball centres in the Head frame
+EYE_R = 0.068
+PINPRICK_Z = -0.374  # the pinpricks sit on the pupils (HollowBuilder: StalkerMeshes.eyes)
+MOUTH_Y = -0.445  # the lips part here: above it the head piece, below it the jaw piece
+VOXEL = 0.0065
+
+
+def blob(bm, c, r, rot=(0.0, 0.0, 0.0), seg=28):
+    """A solid ellipsoid: centre c, radii r, turned by rot (degrees, like CFrame.Angles)."""
+    m = Matrix.Translation(Vector(c)) @ A(*rot)
+    geom = bmesh.ops.create_uvsphere(bm, u_segments=seg, v_segments=seg // 2 + 2, radius=1.0)
+    for v in geom["verts"]:
+        v.co = m @ Vector((v.co.x * r[0], v.co.y * r[1], v.co.z * r[2]))
+
+
+def rod(bm, a, b, r, rb=None, seg=20):
+    """A solid ellipsoid stretched from a to b (radius r across, rb at most)."""
+    a, b = Vector(a), Vector(b)
+    q = (b - a).to_track_quat("Y", "Z").to_matrix().to_4x4()
+    m = Matrix.Translation((a + b) / 2) @ q
+    half = (b - a).length / 2 + r
+    geom = bmesh.ops.create_uvsphere(bm, u_segments=seg, v_segments=seg // 2 + 2, radius=1.0)
+    for v in geom["verts"]:
+        v.co = m @ Vector((v.co.x * r, v.co.y * half, v.co.z * (rb or r)))
+
+
+def box(bm, lo, hi):
+    geom = bmesh.ops.create_cube(bm, size=1.0)
+    lo, hi = Vector(lo), Vector(hi)
+    for v in geom["verts"]:
+        v.co = Vector(((lo.x, hi.x)[v.co.x > 0], (lo.y, hi.y)[v.co.y > 0], (lo.z, hi.z)[v.co.z > 0]))
+
+
+def raw_object(name, bm):
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    return obj
+
+
+def flesh(name, build, cuts, smooth=5):
+    """build(bm) lays the solid shapes; cuts is a list of build functions for what to take away. Returns a
+    bmesh (Roblox axes) with a colour layer, one closed skin."""
+    bm = bmesh.new()
+    build(bm)
+    obj = raw_object(name, bm)
+    apply_mod(obj, "REMESH", mode="VOXEL", voxel_size=VOXEL)
+    apply_mod(obj, "SMOOTH", factor=0.5, iterations=smooth)
+    for cut in cuts:
+        cbm = bmesh.new()
+        cut(cbm)
+        cobj = raw_object("cut", cbm)
+        apply_mod(obj, "BOOLEAN", object=cobj, operation="DIFFERENCE")
+        me = cobj.data
+        bpy.data.objects.remove(cobj)
+        bpy.data.meshes.remove(me)
+    apply_mod(obj, "REMESH", mode="VOXEL", voxel_size=VOXEL)
+    apply_mod(obj, "SMOOTH", factor=0.6, iterations=3)
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    me = obj.data
+    bpy.data.objects.remove(obj)
+    bpy.data.meshes.remove(me)
+    col = bm.verts.layers.float_color.new("col")
+    bm.normal_update()
+    return bm, col
+
+
+def eye_space(x, y, i):
+    """Distance from eye i in the face plane, in lid units (1 = the lid's edge), and the height above it."""
+    ex, ey, _ = EYES[i]
+    dx, dy = x - ex, y - ey
+    out = -1 if ex < 0 else 1
+    a = math.radians(-9) * out  # the outer corners droop
+    u = dx * math.cos(a) + dy * math.sin(a)
+    w = -dx * math.sin(a) + dy * math.cos(a)
+    return math.sqrt((u / 0.085) ** 2 + (w / 0.06) ** 2), w
+
+
+def seg_dist(p, a, b):
+    ab = b - a
+    t = max(0.0, min(1.0, (p - a).dot(ab) / ab.length_squared))
+    return (p - (a + ab * t)).length, t
+
+
+def head_shapes(bm):
+    blob(bm, (0, 0.22, 0.06), (0.305, 0.41, 0.38))  # cranium
+    blob(bm, (0, 0.18, 0.15), (0.28, 0.32, 0.27))  # the back of the skull
+    blob(bm, (0, -0.02, -0.16), (0.262, 0.40, 0.30))  # face
+    blob(bm, (0, -0.27, -0.2), (0.215, 0.23, 0.22))  # lower face, narrowing
+    blob(bm, (0, 0.40, -0.21), (0.25, 0.17, 0.22))  # forehead
+    blob(bm, (0, 0.285, -0.345), (0.25, 0.062, 0.115))  # brow
+    for sx, dy in ((-1, 0.0), (1, -0.016)):
+        blob(bm, (sx * 0.165, 0.262 + dy, -0.37), (0.1, 0.045, 0.068), (0, 0, sx * -10))  # brow over each eye
+    for (ex, ey, ez) in EYES:
+        blob(bm, (ex, ey + 0.004, -0.335), (0.1, 0.068, 0.06))  # the orbit and lids round the eyeball
+        blob(bm, (ex, ey + 0.03, -0.352), (0.076, 0.034, 0.04))  # the upper lid, heavy over the iris
+    for sx in (-1, 1):
+        blob(bm, (sx * 0.212, 0.035, -0.245), (0.074, 0.05, 0.13), (0, sx * 28, sx * 8))  # cheekbone
+        blob(bm, (sx * 0.262, 0.045, -0.08), (0.04, 0.036, 0.14))  # the arch running back to the ear
+    blob(bm, (0, -0.335, -0.335), (0.15, 0.12, 0.11))  # the gum under the lip
+    blob(bm, (0.0, -0.392, -0.432), (0.128, 0.022, 0.038), (0, 0, -4))  # upper lip, thin, drawn up on the left
+    # the nose: a long thin bridge with a hump, the tip hooked down and bent to the right
+    rod(bm, (0, 0.15, -0.41), (0.011, -0.07, -0.54), 0.035, 0.046)
+    blob(bm, (0.004, 0.06, -0.48), (0.031, 0.045, 0.035))
+    blob(bm, (0.016, -0.1, -0.542), (0.034, 0.034, 0.032))
+    blob(bm, (0.056, -0.135, -0.5), (0.03, 0.026, 0.03))
+    blob(bm, (-0.034, -0.137, -0.502), (0.031, 0.027, 0.03))
+    blob(bm, (0.012, -0.14, -0.522), (0.022, 0.018, 0.03))
+    # ears, a little low, set back behind the jaw's hinge
+    for sx in (-1, 1):
+        blob(bm, (sx * 0.312, 0.035, 0.07), (0.026, 0.125, 0.075), (-12, sx * 10, 0))
+        blob(bm, (sx * 0.318, -0.078, 0.048), (0.022, 0.032, 0.032))  # lobe
+        blob(bm, (sx * 0.30, 0.03, 0.06), (0.03, 0.08, 0.05))  # root
+    hair_shapes(bm)
+    rod(bm, (0, -0.22, 0.12), (0, -0.64, 0.15), 0.118, 0.13)  # neck
+    for sx in (-1, 1):  # the cords of the neck, from behind the ear to the throat
+        rod(bm, (sx * 0.17, -0.2, 0.09), (sx * 0.05, -0.74, -0.0), 0.022)
+
+
+SKULL = (((0, 0.22, 0.06), (0.305, 0.41, 0.38)), ((0, 0.18, 0.15), (0.28, 0.32, 0.27)))
+
+
+def hair_shapes(bm):
+    """What is left of the hair, grown into the same skin: a thin mat over the back of the skull under the cap and
+    lank clumps hanging from it to the collar, thicker on the left, a gap on the right."""
+    blob(bm, (0, 0.22, 0.15), (0.316, 0.425, 0.322))
+    rnd = random.Random(11)
+    for k in range(24):
+        th = math.radians(-74 + 148 * k / 23 + rnd.uniform(-4, 4))
+        if 0.3 < math.sin(th) < 0.7:
+            continue  # a thin patch on the right
+        root = (math.sin(th) * 0.29, 0.44, 0.16 + math.cos(th) * 0.29)
+        drop = rnd.uniform(0.45, 0.8) * (1.1 if th < 0 else 0.9)
+        tip = (math.sin(th) * (0.24 + 0.04 * rnd.random()), 0.44 - drop, 0.13 + math.cos(th) * (0.2 + 0.06 * rnd.random()))
+        if abs(math.sin(th)) > 0.75:  # over the ears: hang behind them
+            tip = (math.copysign(0.27, th), tip[1], max(tip[2], 0.2))
+        rod(bm, root, tip, rnd.uniform(0.022, 0.03), rnd.uniform(0.012, 0.018), seg=12)
+
+
+def is_hair(p):
+    x, y, z = p.x, p.y, p.z
+    if z < 0.02:
+        return 0.0
+    if y < -0.1 and seg_dist(Vector((x, y, z)), Vector((0, -0.22, 0.12)), Vector((0, -0.64, 0.15)))[0] < 0.145:
+        return 0.0  # the neck
+    k = min(((x - c[0]) / r[0]) ** 2 + ((y - c[1]) / r[1]) ** 2 + ((z - c[2]) / r[2]) ** 2 for c, r in SKULL)
+    near_ear = math.hypot(abs(x) - 0.31, y - 0.0, z - 0.07) < 0.15 and abs(x) > 0.27
+    return 0.0 if near_ear else S(1.02, 1.08, k)
+
+
+def head_cuts():
+    cuts = []
+
+    def mouth(bm):
+        box(bm, (-0.142, -0.9, -0.8), (0.142, MOUTH_Y, -0.18))
+        box(bm, (-0.6, -1.2, -0.8), (0.6, -0.52, -0.02))  # the chin and the lower face are the jaw piece's
+    cuts.append(mouth)
+    for i, (ex, ey, ez) in enumerate(EYES):
+        out = -1 if ex < 0 else 1
+        open_h = 0.03 if out > 0 else 0.023  # the right eye stares, the left lid hangs heavier
+
+        def fissure(bm, ex=ex, ey=ey, out=out, open_h=open_h):
+            blob(bm, (ex, ey - 0.008, -0.38), (0.07, open_h, 0.064), (0, 0, out * -9), seg=32)
+        cuts.append(fissure)
+
+    def torn_ear(bm):
+        blob(bm, (-0.345, 0.155, 0.075), (0.05, 0.035, 0.04), (0, 0, 30))
+    cuts.append(torn_ear)
+    return cuts
+
+
+def head_fields(p, n):
+    """Push along the normal (studs) and the colour (sRGB) for a point of the head skin."""
+    x, y, z = p.x, p.y, p.z
+    ax = abs(x)
+    sgn = 1 if x >= 0 else -1
+    F = S(-0.05, -0.28, z) * S(-0.2, 0.3, -n.z + 0.3)  # front of the face
+    d = 0.0
+    lid, under, rim, crease, eye_core, socket = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+    for i in range(2):
+        e, w = eye_space(x, y, i)
+        rim = max(rim, G(e - 1.0, 0.18) * F)
+        if w > 0:  # above: the lid, then its crease sunk under the brow
+            d -= 0.016 * G(e - 1.45, 0.3) * F
+            crease = max(crease, G(e - 1.45, 0.25) * F)
+            d += 0.004 * G(e - 1.05, 0.15) * F
+        else:  # below: a bag, then the hollow under it
+            d += 0.006 * G(e - 1.15, 0.15) * F
+            d -= 0.014 * G(e - 1.6, 0.3) * F
+            under = max(under, G(e - 1.6, 0.35) * F)
+        eye_core = max(eye_core, S(1.0, 0.85, e) * F)
+        socket = max(socket, S(1.9, 1.1, e) * F * (1.0 if w > -0.02 else 0.7))
+        if e > 1.4 and e < 2.6 and abs(math.atan2(w, x - EYES[i][0]) - (0 if EYES[i][0] > 0 else math.pi)) < 0.6:
+            d -= 0.0016 * max(0.0, math.sin(e * 40)) * F  # crow's feet at the outer corner
+    tp = G(y - 0.24, 0.12) * G(z + 0.1, 0.14) * S(0.2, 0.3, ax)
+    d -= 0.035 * tp  # temples
+    ch = G(ax - 0.19, 0.07) * G(y + 0.22, 0.1) * F
+    d -= 0.045 * ch  # the cheek fallen in under the bone
+    # the folds from the nose's wings to the corners of the mouth, cheek skin sagging over them
+    fold = 0.0
+    q = Vector((ax, y, 0))
+    dist, t = seg_dist(q, Vector((0.07 + 0.012 * sgn, -0.155, 0)), Vector((0.168, -0.44, 0)))
+    side = (ax - (0.07 + 0.098 * t))
+    fold = G(dist, 0.012) * F
+    d -= 0.007 * fold
+    d += 0.007 * G(dist - 0.03, 0.02) * S(-0.01, 0.02, side) * F
+    # forehead creases, uneven
+    fh = S(0.33, 0.4, y) * S(0.56, 0.5, y) * F
+    d -= 0.0022 * fh * max(0.0, math.sin(y * 105 + 4 * nz(p, 3) + 0.6 * x))
+    # nostrils and the corners of the mouth
+    nostril = 0.0
+    for nx in (-0.03, 0.05):
+        nostril = max(nostril, G(math.hypot((x - nx) / 0.017, (y + 0.155) / 0.01), 1.0) * S(-0.45, -0.55, z))
+    d -= 0.012 * nostril
+    corner = G(ax - 0.163, 0.015) * G(y - MOUTH_Y - 0.01, 0.02) * F
+    d -= 0.01 * corner
+    # neck cords and the hollow at the base of the skull
+    d -= 0.02 * G(x, 0.04) * G(y + 0.2, 0.08) * S(0.1, 0.25, z)
+    d += 0.0015 * nz(p, 30)  # skin, uneven
+
+    # colour
+    c = mul(SKIN, 0.9 + 0.14 * nz(p, 6, 3))
+    c = mix(c, (0.56, 0.52, 0.42), 0.35 * S(0.0, 0.6, nz(p, 2.5, 2)))  # yellowed patches
+    c = mix(c, SKIN_HOLLOW, min(1.0, 0.9 * tp + 0.8 * ch + 0.7 * under + 0.7 * crease + 0.9 * fold))
+    c = mix(c, BRUISE, 0.6 * rim * (1 - eye_core))
+    c = mix(c, (0.17, 0.14, 0.13), 0.75 * socket)  # the sockets in shadow
+    c = mix(c, BRUISE, 0.35 * G(ax - 0.21, 0.08) * G(y + 0.02, 0.06) * F)  # broken veins on the cheek
+    if (tp > 0.2 or fh > 0.3) and abs(nz(p * Vector((1, 0.35, 1)), 12)) < 0.045:
+        c = mix(c, VEIN, 0.6)
+    nose_tip = G(math.hypot(x - 0.016, y + 0.11), 0.05) * S(-0.5, -0.58, z)
+    c = mix(c, (0.48, 0.33, 0.30), 0.55 * nose_tip)  # the cold nose
+    c = mix(c, VOID, 0.85 * nostril)
+    ear = S(0.27, 0.31, ax) * G(y - 0.0, 0.16) * S(-0.08, 0.0, z)
+    c = mix(c, (0.44, 0.36, 0.32), 0.35 * ear)
+    c = mix(c, mul(SKIN_HOLLOW, 0.6), 0.6 * ear * S(0.0, 0.5, -(n.x * sgn)))  # the dark inside of the ear
+    lip = G(y + 0.393, 0.02) * S(0.15, 0.11, ax) * S(-0.38, -0.43, z)
+    c = mix(c, LIP, 0.85 * lip)
+    if lip > 0.4 and math.sin(x * 160 + 3 * nz(p, 9)) > 0.75:
+        c = mul(c, 0.55)  # cracks
+    gum = S(-0.4, -0.415, y) * S(0.15, 0.12, ax) * S(-0.33, -0.39, z)
+    c = mix(c, GUM, 0.9 * gum)
+    if y < MOUTH_Y + 0.006 and n.y < -0.5 and z < -0.15:
+        c = MOUTH  # the inside of the mouth
+    c = mix(c, (0.20, 0.19, 0.16), 0.5 * S(0.25, 0.7, nz(p, 4, 2)))  # grime
+    h = is_hair(p)
+    if h > 0:  # lank, grey-brown, darker in the clumps' shadow
+        strand = 0.75 + 0.35 * max(0.0, math.sin(x * 260 + z * 120 + 6 * nz(p, 6)))
+        c = mix(c, mul(HAIR, strand * (0.85 + 0.3 * nz(p, 9))), h)
+        d += 0.0015 * h * math.sin(x * 260 + z * 120)
+    if F > 0.3 and -0.44 < y < -0.18 and ax < 0.16 and nz(p, 70) > 0.42:
+        c = mul(c, 0.72)  # grey stubble
+    c = mul(c, 0.88 + 0.12 * S(-0.6, 0.0, y))
+    if y < -0.3 and z > -0.05:
+        c = mix(c, SKIN_HOLLOW, 0.4 * S(-0.3, -0.6, y))  # the neck going down into the collar's shadow
+    return d, c
+
+
+def displace(bm, col, fields):
+    moves = []
+    for v in bm.verts:
+        d, c = fields(v.co, v.normal)
+        moves.append((v, v.normal * d))
+        paint(v, col, c)
+    for v, m in moves:
+        v.co += m
 
 
 def head_high():
-    """In the Head part's frame (block 0.82 x 1.4 x 0.98, face -Z). Pinpricks sit at (+-0.2, 0.16, -0.14)."""
-    bm, col = new_bm()
-    bmesh.ops.create_uvsphere(bm, u_segments=128, v_segments=96, radius=0.5)
-    for v in bm.verts:
-        n = v.co / 0.5
-        x, y, z = n.x * 0.37, n.y * 0.70, n.z * 0.49
-        if z > 0:  # the cranium swells behind
-            z *= 1.0 + 0.12 * S(-0.2, 0.5, y)
-        k = S(-0.05, -0.70, y)  # the lower face narrows to a long thin maxilla
-        x *= 1 - 0.38 * k
-        if z < 0:
-            z *= 1 - 0.12 * k
-        F = S(-0.02, -0.30, z)
-        sgn = 1.0 if x >= 0 else -1.0
-        ax = abs(x)
-        z += 0.07 * S(0.36, 0.72, y) * F  # forehead slopes back
-        z -= 0.06 * G(y - 0.315, 0.05) * G(x, 0.30) * F  # brow ridge
-        z += 0.012 * G(x, 0.04) * G(y - 0.31, 0.06) * F  # glabella dip
-        sock, rim, under = 0.0, 0.0, 0.0
-        for sx in SOCKETS:
-            dx, dy = x - sx, y - SOCKET_Y
-            a = 0.18 if sx > 0 else -0.18  # the outer corners droop
-            u = dx * math.cos(a) + dy * math.sin(a)
-            w = -dx * math.sin(a) + dy * math.cos(a)
-            e = math.sqrt((u / 0.12) ** 2 + (w / 0.104) ** 2)
-            if e < 1:
-                b = 1 - e ** 6
-                z += 0.36 * b * F
-                sock = max(sock, b)
-            z -= 0.022 * G(e - 1.12, 0.14) * F  # the bony rim
-            rim = max(rim, G(e - 1.0, 0.45) * (1 if e > 0.85 else 0))
-            under = max(under, G(dx, 0.1) * G(dy + 0.13, 0.05))  # the shadow under the lower rim
-        # nose: a stub of bone, then the cavity where it fell in
-        z -= 0.025 * G(x, 0.035) * G(y - 0.05, 0.05) * F
-        ny = y + 0.075
-        wn = 0.028 + 0.25 * max(0.0, min(0.08, 0.04 - ny))
-        en = math.sqrt((x / wn) ** 2 + (ny / 0.065) ** 2)
-        nose = 0.0
-        if en < 1:
-            nose = 1 - en ** 3
-            z += 0.14 * nose * F
-        # cheekbones, the arch running back, and the cheek fallen in below
-        cb = G(ax - 0.235, 0.06) * G(y - 0.03, 0.045)
-        z -= 0.035 * cb * F
-        x += sgn * 0.05 * G(y - 0.03, 0.04) * S(0.15, -0.15, z) * S(0.2, 0.3, ax)
-        ch = G(ax - 0.2, 0.085) * G(y + 0.27, 0.12)
-        z += 0.12 * ch * F
-        chs = G(y + 0.25, 0.14) * S(0.2, 0.3, ax) * S(0.2, -0.2, z)
-        x -= sgn * 0.07 * chs
-        # temples sunk behind the outer rim
-        tp = G(y - 0.22, 0.11) * G(z + 0.1, 0.16) * S(0.18, 0.3, ax)
-        x -= sgn * 0.085 * tp
-        # the mouth: lips gone back from a receded gum, a dark pit behind the teeth
-        mm = S(0.19, 0.14, ax) * S(-0.385, -0.42, y)
-        zb = -0.27 + 1.3 * x * x
-        if z < zb:
-            z += (zb - z) * mm
-        z -= 0.02 * G(y + 0.405, 0.015) * S(0.17, 0.12, ax) * F  # the gum ledge
-        tuck = S(-0.56, -0.62, y) * S(0.27, 0.2, ax)  # the chin belongs to the jaw: tuck in behind it
-        if z < -0.18:
-            z += (-0.18 - z) * tuck
-        p = Vector((x, y, z))
-        p += n * (0.004 * nz(p, 14))
-        v.co = p
-
-        c = mul(SKIN, 0.9 + 0.16 * nz(p, 7, 3))
-        c = mix(c, SKIN_HOLLOW, 0.95 * ch + 0.9 * tp + 0.6 * chs + 0.6 * under + 0.5 * G(ax - 0.3, 0.06) * G(y + 0.1, 0.08))
-        c = mul(c, 0.86 + 0.14 * S(0.0, 0.5, cb))  # light only on the bone
-        if tp > 0.15 and abs(nz(p * Vector((1, 0.35, 1)), 11)) < 0.06:
-            c = mix(c, VEIN, 0.55)
-        if 0.36 < y < 0.62 and F > 0.5 and math.sin(y * 95 + 3 * nz(p, 4)) > 0.8:
-            c = mul(c, 0.7)  # forehead creases
-        if nz(p * Vector((1, 3, 1)), 18) > 0.3:
-            c = mul(c, 0.8)  # skin drawn into fine lines
-        c = mix(c, (0.30, 0.27, 0.22), 0.45 * S(0.1, 0.6, nz(p, 3, 2)))  # old grime
-        c = mix(c, BRUISE, 0.8 * rim * F)
-        c = mix(c, VOID, S(0.05, 0.4, sock))
-        for sx, length in ((-0.185, 0.36), (0.185, 0.52)):  # an ichor run from each socket
-            streak = G(x - sx - 0.018 * math.sin(y * 21 + sx * 9), 0.013) * S(0.1, 0.06, y) * S(0.1 - length, 0.05 - length * 0.6, y)
-            c = mix(c, ICHOR, 0.85 * streak * F)
-        c = mix(c, VOID, S(0.0, 0.5, nose))
-        if mm > 0.3:
-            c = mix(c, LIP, S(-0.37, -0.40, y))
-            c = mix(c, GUM, S(-0.395, -0.415, y))
-            c = mix(c, MOUTH, S(-0.43, -0.46, y))
-        if z > 0 and 0.28 < y < 0.58 and nz(p * Vector((5, 0.6, 5)), 6) > 0.1:
-            c = mix(c, HAIR, 0.85)  # what is left of the hair, under the cap
-        c = mul(c, 0.82 + 0.18 * S(-0.7, -0.35, y))  # grime toward the chin
-        paint(v, col, c)
-
+    """In the Head part's frame (block 0.82 x 1.4 x 0.98, face -Z)."""
+    bm, col = flesh("head_flesh", head_shapes, head_cuts())
+    displace(bm, col, head_fields)
     cap(bm, col)
     return bm
+
+
+def eyeballs(bm, col):
+    """Wet, yellowed eyeballs with a dark iris; the pinprick (HollowBuilder) sits on each pupil."""
+    for i, (ex, ey, ez) in enumerate(EYES):
+        geom = bmesh.ops.create_uvsphere(bm, u_segments=14, v_segments=9, radius=EYE_R)
+        look = Vector((0.03 * (1 if i == 0 else -1), 0.0, -1)).normalized()  # a slight inward stare
+        for v in geom["verts"]:
+            nrm = v.co.normalized()
+            v.co = v.co + Vector((ex, ey, ez))
+            a = math.acos(max(-1.0, min(1.0, nrm.dot(look))))
+            c = mix((0.42, 0.38, 0.28), (0.24, 0.18, 0.15), S(0.4, 1.1, a))
+            if abs(nz(v.co, 60)) < 0.08 and a > 0.45:
+                c = mix(c, BLOOD, 0.7)  # burst veins
+            c = mix(c, (0.20, 0.09, 0.07), S(0.5, 0.42, a))  # the iris
+            c = mix(c, VOID, S(0.2, 0.12, a))
+            paint(v, col, c)
+
+
+def hair(bm, col):
+    """What is left of the hair: lank strands from under the cap at the sides and back, more on the left."""
+    rnd = random.Random(11)
+
+    def skull(y):  # the skull's half-width and half-depth at height y (widest below 0.22)
+        k = math.sqrt(max(0.0, 1 - ((max(y, 0.22) - 0.22) / 0.42) ** 2))
+        return 0.315 * k, 0.43 * k
+
+    for k in range(30):
+        th = math.radians(rnd.uniform(-72, 72))  # the back half (+Z)
+        if math.sin(th) > 0.2 and rnd.random() < 0.45:
+            continue  # thinner on the right
+        length = rnd.uniform(0.28, 0.62)
+        pts, rad = [], []
+        for j in range(6):
+            t = j / 5
+            y = 0.47 - t * length
+            hw, hd = skull(y)
+            push = 1.06 + 0.04 * t + 0.03 * nz((k, t, 0), 2)
+            px = math.sin(th) * hw * push + 0.03 * t * nz((k, 0, t), 1)
+            pz = 0.05 + math.cos(th) * hd * push
+            if abs(px) > 0.26 and -0.12 < y < 0.2:
+                px = math.copysign(max(abs(px), 0.37), px)  # over the ear, not through it
+            pts.append((px, y, pz))
+            rad.append(0.02 * (1 - 0.7 * t) + 0.003)
+        rings = tube_rings(bm, col, pts, rad, 3, flat=0.4,
+                           colour=lambda i, s, co: mul(HAIR, 0.8 + 0.4 * nz(co, 20)))
+        loft(bm, rings, cap0=True, cap1=True)
+
 
 
 def cap(bm, col):
@@ -356,17 +589,17 @@ def cap(bm, col):
             bm.faces.new((g0[r][c], g0[r + 1][c], g1[r + 1][c], g1[r][c]))
 
 
-UPPER_TEETH = [  # x, length, tilt, radius: uneven, one missing, one broken
-    (-0.118, 0.085, -0.10, 0.014), (-0.080, 0.105, -0.04, 0.016), (-0.034, 0.12, 0.02, 0.018),
-    (0.012, 0.115, 0.05, 0.017), (0.058, 0.05, 0.0, 0.016), (0.112, 0.095, 0.12, 0.014),
+UPPER_TEETH = [  # x, length, tilt, radius: two long front teeth, the rest short, one gone, one broken
+    (-0.105, 0.04, -0.12, 0.013), (-0.068, 0.05, -0.05, 0.014), (-0.024, 0.088, 0.0, 0.019),
+    (0.02, 0.082, 0.04, 0.018), (0.063, 0.03, 0.02, 0.014), (0.112, 0.055, 0.1, 0.014),
 ]
 
 
 def upper_teeth(bm, col):
     specs = []
     for x, length, tilt, r in UPPER_TEETH:
-        z = -0.305 + 1.3 * x * x
-        specs.append(((x, -0.41, z), (tilt, -1, -0.12), length, r))
+        z = -0.408 + 1.5 * x * x
+        specs.append(((x, -0.418, z), (tilt, -1, -0.1), length, r))
     teeth(bm, col, specs)
 
 
@@ -374,52 +607,68 @@ def upper_teeth(bm, col):
 JAW_FRAME = Vector((0, -0.80, -0.12))  # the Jaw part's centre in the Head frame at rest (HollowBuilder Jaw joint)
 
 
+def jaw_shapes(bm):
+    """A mandible, not a ball: the jaw line from the chin back to each angle, the ramus rising under the cheek
+    (hidden in the head), the chin, the lower lip, and loose skin slung between the jaw lines."""
+    for sx in (-1, 1):
+        rod(bm, (sx * 0.05, -0.75, -0.33), (sx * 0.172, -0.615, -0.02), 0.042, 0.05)  # the jaw line
+        rod(bm, (sx * 0.172, -0.615, -0.02), (sx * 0.19, -0.42, 0.02), 0.04, 0.05)  # the ramus
+        blob(bm, (sx * 0.125, -0.56, -0.29), (0.04, 0.06, 0.05))  # jowl, sagging
+    blob(bm, (0.01, -0.70, -0.31), (0.085, 0.075, 0.07))  # chin
+    blob(bm, (0.012, -0.755, -0.325), (0.055, 0.032, 0.045))  # the chin's point
+    blob(bm, (0, -0.55, -0.27), (0.15, 0.1, 0.12))  # under the lower lip
+    blob(bm, (0, -0.5, -0.16), (0.17, 0.08, 0.16))  # inside, to close the mouth's floor
+    blob(bm, (0.0, -0.48, -0.395), (0.105, 0.024, 0.036), (0, 0, 3))  # lower lip
+    blob(bm, (0, -0.52, -0.37), (0.12, 0.05, 0.05))
+    blob(bm, (0, -0.71, -0.15), (0.11, 0.04, 0.12))  # loose skin under the chin
+    blob(bm, (0, -0.655, -0.12), (0.15, 0.06, 0.17))  # the floor between the jaw lines
+
+
+def jaw_cuts():
+    def top(bm):
+        box(bm, (-0.136, -0.462, -0.8), (0.136, 0.2, 0.3))  # the mouth
+        box(bm, (-0.6, -0.40, -0.8), (0.6, 0.2, 0.3))  # beyond the mouth, hidden under the cheeks
+    return [top]
+
+
+def jaw_fields(p, n):
+    x, y, z = p.x, p.y, p.z
+    ax = abs(x)
+    F = S(-0.05, -0.25, z)
+    d = 0.0
+    d -= 0.012 * G(y + 0.6, 0.04) * G(ax - 0.07, 0.04) * F  # the dip under the lip
+    d -= 0.02 * G(ax - 0.16, 0.05) * G(y + 0.52, 0.06) * S(0.0, -0.15, z)  # the hollow under the cheek
+    d += 0.003 * nz(p, 30)
+    c = mul(SKIN, 0.86 + 0.14 * nz(p, 7, 3))
+    c = mix(c, SKIN_HOLLOW, 0.6 * G(ax - 0.16, 0.06) * G(y + 0.52, 0.07) + 0.5 * S(-0.7, -0.78, y))
+    lip = G(y + 0.476, 0.016) * S(0.13, 0.09, ax) * S(-0.35, -0.41, z)
+    c = mix(c, LIP, 0.85 * lip)
+    if lip > 0.4 and math.sin(x * 150 + 3 * nz(p, 9)) > 0.75:
+        c = mul(c, 0.55)
+    if y > -0.47 and n.y > 0.5:
+        c = MOUTH
+    c = mix(c, (0.20, 0.19, 0.16), 0.5 * S(0.25, 0.7, nz(p, 4, 2)))
+    if F > 0.2 and y < -0.5 and nz(p, 70) > 0.4:
+        c = mul(c, 0.72)  # grey stubble
+    return d, mul(c, 0.82)  # in the shadow of the face
+
+
 def jaw_high():
-    """Built in the Head frame (moved to the Jaw frame by to_jaw_frame). A narrow chin, the mandible's angle
-    under the cheek, the lower lip gone back from thin lower teeth."""
-    bm, col = new_bm()
-    bmesh.ops.create_uvsphere(bm, u_segments=64, v_segments=40, radius=0.5)
-    for v in bm.verts:
-        n = v.co / 0.5
-        x, y, z = n.x * 0.27, n.y * 0.17, n.z * 0.25
-        y += -0.71
-        z += -0.17
-        F = S(-0.12, -0.36, z)
-        x *= 1 - 0.5 * S(-0.15, -0.42, z)  # a narrow pointed chin
-        sgn = 1.0 if x >= 0 else -1.0
-        ax = abs(x)
-        z -= 0.045 * G(x, 0.07) * G(y + 0.83, 0.05)  # the chin knob
-        x += sgn * 0.022 * G(y + 0.78, 0.04) * S(-0.05, 0.08, z)  # the jaw's angle
-        x -= sgn * 0.03 * G(y + 0.69, 0.05) * S(-0.1, 0.0, z) * S(0.12, 0.2, ax)  # hollow under the cheek
-        lipm = S(-0.64, -0.59, y) * F
-        z += 0.07 * lipm  # the lower lip drawn back
-        if y > -0.57:
-            y = -0.57 + (y + 0.57) * 0.35  # flat top where it meets the head
-        p = Vector((x, y, z))
-        p += n * (0.003 * nz(p, 16))
-        v.co = p
-        c = mul(SKIN, 0.86 + 0.16 * nz(p, 8, 3))
-        c = mix(c, SKIN_HOLLOW, 0.6 * G(y + 0.69, 0.05) * S(0.12, 0.2, ax))
-        c = mix(c, LIP, lipm * S(-0.61, -0.59, y))
-        c = mix(c, GUM, lipm * S(-0.595, -0.58, y))
-        c = mix(c, MOUTH, S(-0.585, -0.575, y))
-        if nz(p, 60) > 0.35 and y < -0.62:
-            c = mul(c, 0.7)  # grey stubble
-        drip = G(x + 0.03 + 0.01 * math.sin(y * 30), 0.018) * S(-0.6, -0.66, y) * F  # ichor run off the lip
-        c = mix(c, ICHOR, 0.8 * drip)
-        paint(v, col, mul(mix(c, SKIN_HOLLOW, 0.3), 0.75))  # in the shadow of the face
+    """Built in the Head frame (moved to the Jaw frame by to_jaw_frame)."""
+    bm, col = flesh("jaw_flesh", jaw_shapes, jaw_cuts())
+    displace(bm, col, jaw_fields)
     return bm
 
 
-LOWER_TEETH = [(-0.085, 0.07, 0.10, 0.013), (-0.04, 0.085, 0.0, 0.015), (0.0, 0.04, -0.05, 0.015),
-               (0.042, 0.09, -0.06, 0.014), (0.088, 0.065, -0.14, 0.012)]
+LOWER_TEETH = [(-0.07, 0.035, 0.10, 0.012), (-0.035, 0.045, 0.0, 0.013), (0.0, 0.028, -0.05, 0.013),
+               (0.04, 0.045, -0.06, 0.012), (0.078, 0.03, -0.14, 0.011)]
 
 
 def lower_teeth(bm, col):
     specs = []
     for x, length, tilt, r in LOWER_TEETH:
-        z = -0.29 + 1.3 * x * x
-        specs.append(((x, -0.61, z), (tilt, 1, -0.08), length, r))
+        z = -0.375 + 1.5 * x * x
+        specs.append(((x, -0.475, z), (tilt, 1, -0.06), length, r))
     teeth(bm, col, specs)
 
 
@@ -613,40 +862,78 @@ def ring_x(bm, col, x, sides, radius, colour):
 
 
 def forearm_high(length=2.75, d=0.32 * 0.82):
-    """Along X, wrist at -X, elbow at +X."""
+    """Along X, wrist at -X, elbow at +X. The coat's lower sleeve hangs loose to a frayed cuff a little above the
+    wrist, so only the bony wrist shows (a bare forearm read as a pale rod): the cloth tube, the cuff turning
+    inward, then the wrist with its tendons and knob."""
     bm, col = new_bm()
+    rnd = random.Random(5)
+    sides = 18
+    CUFF = 0.24  # where the cuff ends (t from the wrist)
+    jag = [rnd.uniform(-0.035, 0.035) + (0.05 if k % 5 == 2 else 0.0) for k in range(sides)]
 
-    def radius(t, phi):
-        r = d / 2 * (0.62 + 0.55 * t)
-        r *= 1 + 0.1 * math.cos(2 * phi)
-        r *= 1 + 0.035 * max(0.0, math.cos(6 * phi)) * S(0.35, 0.05, t)  # tendons
-        r *= 1 - 0.06 * G(angd(phi, math.pi / 2), 0.5) * G(t - 0.5, 0.25)  # wasted between the bones
-        r *= 1 + 0.25 * G(t - 0.96, 0.04) * G(angd(phi, math.pi / 2), 0.7)  # elbow
-        r *= 1 + 0.18 * G(t - 0.04, 0.04) * G(angd(phi, -math.pi / 2), 0.7)  # wrist knob
+    def cloth_r(t, phi):
+        r = d / 2 * (1.15 + 0.12 * S(1.0, CUFF, t))  # hanging loose, the cuff a little open
+        r *= 1 + 0.07 * math.sin(t * 46 + 1.4 * math.sin(phi)) * S(0.45, 0.25, t)  # folds slumped at the cuff
+        r *= 1 + 0.05 * math.sin(3 * phi + t * 9)
         return r
 
-    def colour(t, co):
-        c = mul(SKIN, 0.85 + 0.15 * nz(co, 7, 3))
+    def skin_r(t, phi):
+        r = d / 2 * (0.6 + 0.4 * t / CUFF)
+        r *= 1 + 0.1 * math.cos(2 * phi)
+        r *= 1 + 0.05 * max(0.0, math.cos(6 * phi))  # tendons
+        r *= 1 + 0.2 * G(t - 0.04, 0.04) * G(angd(phi, -math.pi / 2), 0.7)  # the wrist knob
+        return r
+
+    def cloth_c(t, phi, co):
+        c = wool(co)
+        c = mix(c, WOOL_WORN, 0.55 * G(t - 0.95, 0.08) * G(angd(phi, math.pi / 2), 0.8))  # the worn elbow
+        if abs(angd(phi, math.pi)) < 0.06:
+            c = STITCH if int(t * 120) % 2 else SEAM
+        c = mix(c, MUD, 0.5 * S(0.4, CUFF, t) * S(0.0, 0.6, nz(co, 5)))
+        return mix(c, WOOL_WORN, 0.5 * S(CUFF + 0.06, CUFF, t))
+
+    def skin_c(co):
+        c = mul(SKIN, 0.8 + 0.15 * nz(co, 7, 3))
         if abs(nz(co * Vector((0.3, 1, 1)), 9)) < 0.05:
             c = mix(c, VEIN, 0.5)
-        c = mix(c, BLOOD, S(0.3, 0.0, t) * S(-0.2, 0.3, nz(co, 4)))
-        return mul(c, 0.9)
+        return mix(c, (0.20, 0.16, 0.12), 0.4 * S(0.0, 0.6, nz(co, 4)))  # grime
 
+    x_of = lambda t: -length / 2 + t * length
     rings = []
-    for i in range(40):
-        t = i / 39
-        rings.append(ring_x(bm, col, -length / 2 + t * length, 16, lambda phi: radius(t, phi), lambda phi, co: colour(t, co)))
+    for i in range(30):  # cloth, elbow to cuff
+        t = 1 - (1 - CUFF) * i / 29
+        rings.append(ring_x(bm, col, x_of(t), sides, lambda phi: cloth_r(t, phi), lambda phi, co: cloth_c(t, phi, co)))
+    # the frayed lip, turning in to the arm
+    lip = []
+    for k in range(sides):
+        phi = k / sides * TAU
+        r = cloth_r(CUFF, phi) * 0.96
+        co = Vector((x_of(CUFF) - jag[k] * length, math.cos(phi) * r, math.sin(phi) * r))
+        v = bm.verts.new(co)
+        paint(v, col, mul(mix(WOOL, WOOL_WORN, 0.6), 0.8))
+        lip.append(v)
+    rings.append(lip)
+    inner = []
+    for k in range(sides):
+        phi = k / sides * TAU
+        r = skin_r(CUFF, phi) * 1.12
+        co = Vector((x_of(CUFF) + 0.05, math.cos(phi) * r, math.sin(phi) * r))
+        v = bm.verts.new(co)
+        paint(v, col, VOID)  # the dark inside of the sleeve
+        inner.append(v)
+    rings.append(inner)
+    for i in range(12):  # the wrist, from inside the cuff to the hand
+        t = CUFF * (1 - i / 11)
+        rings.append(ring_x(bm, col, x_of(t) + (0.05 if i == 0 else 0.0), sides, lambda phi: skin_r(t, phi), lambda phi, co: skin_c(co)))
     loft(bm, rings, cap0=True, cap1=True)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     return bm
 
 
 def sleeve_high(length=2.9, d=0.32):
-    """Along X, shoulder at +X, the open cuff at -X: down the outside, round the frayed lip, a little way up
-    the inside. Shreds hang off the cuff."""
+    """Along X, shoulder at +X, the elbow at -X, where the forearm's lower sleeve carries on."""
     bm, col = new_bm()
-    rnd = random.Random(7)
     sides = 20
-    jag = [rnd.uniform(0.05, 0.38) * (1 if k % 2 else 0.4) for k in range(sides)]
 
     def outer(t, phi):
         r = d / 2 * (0.9 + 0.45 * t)
@@ -661,40 +948,15 @@ def sleeve_high(length=2.9, d=0.32):
             c = STITCH if int(t * 120) % 2 else SEAM
         if math.hypot(t - 0.22, angd(phi, 0.6) * 0.15) < 0.035:
             c = VOID  # worn through
-        return mix(c, WOOL_WORN, 0.6 * S(0.06, 0.0, t))
+        return c
 
     rings = []
     for i in range(36):
         t = 1 - i / 35
         rings.append(ring_x(bm, col, -length / 2 + t * length, sides, lambda phi: outer(t, phi), lambda phi, co: colour(t, phi, co)))
 
-    def frayed(r_k, back, shade):
-        ring = []
-        for s in range(sides):
-            phi = s / sides * TAU
-            r = d / 2 * 0.9 * r_k
-            co = Vector((-length / 2 - jag[s] + back, math.cos(phi) * r, math.sin(phi) * r))
-            vert = bm.verts.new(co)
-            paint(vert, col, mul(mix(WOOL, WOOL_WORN, 0.5), shade))
-            ring.append(vert)
-        return ring
-
-    rings.append(frayed(1.0, 0.0, 1.0))
-    rings.append(frayed(0.86, 0.0, 0.6))
-    rings.append(frayed(0.86, 0.35 + max(jag), 0.25))
     loft(bm, rings, cap0=True, cap1=True)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    for k in (1, 6, 11, 15):  # two-sided shreds
-        phi = k / sides * TAU
-        r = d / 2 * 0.95
-        base = Vector((-length / 2 - jag[k] * 0.8, math.cos(phi) * r, math.sin(phi) * r))
-        side = Vector((0, -math.sin(phi), math.cos(phi))) * 0.05
-        tip = base + Vector((-rnd.uniform(0.3, 0.6), math.cos(phi) * 0.04, math.sin(phi) * 0.04))
-        for flip in (False, True):
-            vs = [bm.verts.new(p) for p in (base - side, base + side, tip + side * 0.3, tip - side * 0.3)]
-            for vv in vs:
-                paint(vv, col, mix(WOOL, WOOL_WORN, 0.5))
-            bm.faces.new(vs[::-1] if flip else vs)
     return bm
 
 
@@ -704,10 +966,10 @@ FINGERS = [(-0.135, 0.85), (-0.045, 1.0), (0.045, 0.96), (0.135, 0.78)]
 
 def hand_colour(co, nail=-1.0):
     c = mul(SKIN, 0.82 + 0.15 * nz(co, 9, 2))
-    stain = S(-0.15, -0.85, co.y) * (0.55 + 0.45 * nz(co, 5, 2)) + 0.4 * S(0.0, -0.05, co.z) * S(0.1, -0.2, co.y)
-    c = mix(c, BLOOD, stain)
-    if nz(co, 22) > 0.4:
-        c = mix(c, BLOOD_WET, 0.6 * stain)
+    stain = S(-0.3, -1.0, co.y) * (0.45 + 0.45 * nz(co, 5, 2)) + 0.25 * S(0.0, -0.05, co.z) * S(0.1, -0.2, co.y)
+    c = mix(c, (0.16, 0.12, 0.10), min(1.0, stain))  # grime worked into the fingers and the creases
+    if abs(nz(co * Vector((1, 0.4, 1)), 12)) < 0.05:
+        c = mix(c, VEIN, 0.4)
     if nail >= 0:
         c = mix(NAIL, VOID, nail)  # the claw, black at the point
     return c
@@ -1101,8 +1363,8 @@ def figure(pieces, extras, reach=(25, 50)):
         prim("box", (0.46, 2.1, 0.46), f["thigh" + side], GAME["TROUSER"])
         prim("box", (0.3, 1.85, 0.3), f["shin" + side], GAME["SKIN"])
         prim("box", (0.4, 0.2, 0.9), f["foot" + side], GAME["SKIN_DARK"])
-    for sx in (-0.2, 0.2):  # the pinpricks (HollowBuilder shine)
-        prim("ball", (0.045,), f["head"] @ T(sx, 0.16, -0.14), (0.75, 0.09, 0.07), emit=6.0)
+    for (ex, ey, ez) in EYES:  # the pinpricks (HollowBuilder shine, at StalkerMeshes.eyes)
+        prim("ball", (0.045,), f["head"] @ T(ex, ey, PINPRICK_Z), (0.75, 0.09, 0.07), emit=6.0)
     extras(f)
     return f
 
@@ -1183,33 +1445,54 @@ def daylight(at):
     light("SUN", Vector((3, 9, -6)), 3.0, (1, 0.97, 0.92), at_r=at)
 
 
-def renders(pieces, extras, prefix, outdir):
-    """front: the whole figure. face: arm's length, plain light. gaslight: the same in a dim warm lamp.
-    phone: the grab framing in gaslight at a phone's 640 x 360, arms reaching."""
-    f = figure(pieces, extras)
-    daylight(Vector((0, 4, 0)))
-    camera(Vector((2.6, 5.2, -11.5)), Vector((0, 4.2, 0)), fov=48)
-    render(outdir / f"{prefix}front.png", 1000, 1400)
-    head = f["head"].translation
-    look = head + Vector((0, -0.12, 0))
+def lights_off():
     for o in list(bpy.context.scene.objects):
         if o.type in ("LIGHT", "CAMERA"):
             bpy.data.objects.remove(o)
+
+
+def renders(pieces, extras, prefix, outdir, full=True):
+    """front, side, back: the whole figure in plain light. face: arm's length (a grab), plain light; gaslight:
+    the same in a dim warm lamp. phone: the grab framing at a phone's 640 x 360, arms reaching. far: 28 studs
+    off down a dark platform under one lamp. silhouette: the shape alone, flat black on fog at 30 studs."""
+    f = figure(pieces, extras)
+    shots = [("front", Vector((2.6, 5.2, -11.5))), ("side", Vector((11.5, 5.0, -0.5))), ("back", Vector((-2.6, 5.4, 11.5)))]
+    for name, eye in shots if full else shots[:1]:
+        daylight(Vector((0, 4, 0)))
+        camera(eye, Vector((0, 4.2, 0)), fov=48)
+        render(outdir / f"{prefix}{name}.png", 1000, 1400)
+        lights_off()
+    head = f["head"].translation
+    look = head + Vector((0, -0.12, 0))
     daylight(head)
     camera(head + Vector((0.9, -0.2, -3.2)), look, fov=30)
     render(outdir / f"{prefix}face.png", 1000, 1000)
-    for o in list(bpy.context.scene.objects):
-        if o.type in ("LIGHT", "CAMERA"):
-            bpy.data.objects.remove(o)
+    lights_off()
     gaslight(head)
     camera(head + Vector((0.9, -0.2, -3.2)), look, fov=30)
     render(outdir / f"{prefix}gaslight.png", 1000, 1000)
-    clear_figure()
-    f = figure(pieces, extras, reach=(62, 80))
-    head = f["head"].translation
-    gaslight(head)
-    camera(head + Vector((0.1, -0.35, -2.4)), head + Vector((0, -0.3, 0)), fov=70)
-    render(outdir / f"{prefix}phone.png", 1280, 720, samples=32)
+    lights_off()
+    if full:
+        world((0.004, 0.005, 0.008), 1.0)
+        light("POINT", Vector((-3.0, 9.0, -4.0)), 900, (1.0, 0.62, 0.30), size=0.3)
+        camera(Vector((1.5, 5.2, -28.0)), Vector((0, 4.5, 0)), fov=70)
+        render(outdir / f"{prefix}far.png", 1280, 720, samples=48)
+        lights_off()
+        sc = bpy.context.scene
+        black = flat_material((0.0, 0.0, 0.0))
+        sc.view_layers[0].material_override = black
+        world((0.55, 0.57, 0.6), 1.0)
+        camera(Vector((0, 5.0, -30.0)), Vector((0, 4.5, 0)), fov=70)
+        render(outdir / f"{prefix}silhouette.png", 1280, 720, samples=8)
+        sc.view_layers[0].material_override = None
+        lights_off()
+        clear_figure()
+        f = figure(pieces, extras, reach=(62, 80))
+        head = f["head"].translation
+        gaslight(head)
+        camera(head + Vector((0.1, -0.35, -2.4)), head + Vector((0, -0.3, 0)), fov=70)
+        render(outdir / f"{prefix}phone.png", 1280, 720, samples=32)
+        lights_off()
     clear_figure()
 
 
@@ -1228,42 +1511,124 @@ def sheet(objs):
     clear_figure()
 
 
+def colour_material():
+    m = bpy.data.materials.get("vcol")
+    if m:
+        return m
+    m = bpy.data.materials.new("vcol")
+    m.use_nodes = True
+    nt = m.node_tree
+    attr = nt.nodes.new("ShaderNodeAttribute")
+    attr.attribute_name = "col"
+    b = nt.nodes["Principled BSDF"]
+    b.inputs["Roughness"].default_value = 0.75
+    nt.links.new(attr.outputs["Color"], b.inputs["Base Color"])
+    return m
+
+
+def preview(outdir):
+    """The head and jaw straight from the high meshes (vertex colours, no bake): front, three-quarter, profile
+    and gaslight, for working on the face."""
+    parts = []
+    hb = head_high()
+    parts.append((make_object("pv_head", hb, closed=True), Matrix()))
+    for build in (upper_teeth, eyeballs):
+        bm, col = new_bm()
+        build(bm, col)
+        parts.append((make_object("pv_x", bm, closed=True), Matrix()))
+    jb = jaw_high()
+    lt, ltc = new_bm()
+    lower_teeth(lt, ltc)
+    parts.append((make_object("pv_jaw", jb, closed=True), Matrix()))
+    parts.append((make_object("pv_lt", lt, closed=True), Matrix()))
+    root = T(0, 5, 0)
+    for o, M in parts:
+        o.data.materials.append(colour_material())
+        place(o, root @ M)
+        o.hide_render = True
+    for (ex, ey, ez) in EYES:
+        prim("ball", (0.045,), root @ T(ex, ey, PINPRICK_Z), (0.75, 0.09, 0.07), emit=6.0)
+    head = Vector((0, 5, 0))
+    shots = [("pv_front", Vector((0, 0.05, -3.4)), 26), ("pv_34", Vector((1.9, 0.1, -2.8)), 26),
+             ("pv_side", Vector((3.4, 0.05, 0)), 26), ("pv_back", Vector((-1.5, 0.3, 3.0)), 26)]
+    for name, eye, fov in shots:
+        daylight(head)
+        camera(head + eye, head + Vector((0, -0.05, 0)), fov=fov)
+        render(outdir / f"{name}.png", 900, 900, samples=24)
+        for o in list(bpy.context.scene.objects):
+            if o.type in ("LIGHT", "CAMERA"):
+                bpy.data.objects.remove(o)
+    gaslight(head)
+    camera(head + Vector((0.9, -0.2, -3.2)), head + Vector((0, -0.1, 0)), fov=30)
+    render(outdir / "pv_gas.png", 900, 900, samples=32)
+
+
+PIECES = [  # name, high mesh, triangles (close-up, Performance), texture (close-up, Performance), occlusion distance
+    ("stalker_head", "head", (4200, 1800), (1024, 512), 0.25),
+    ("stalker_jaw", "jaw", (900, 320), (512, 256), 0.15),
+    ("stalker_torso", "torso", (820, 420), (512, 256), 0.5),
+    ("stalker_coat", "coat", (720, 380), (512, 256), 0.5),
+    ("stalker_sleeve", "sleeve", (300, 140), (256, 128), 0.25),
+    ("stalker_forearm", "forearm", (360, 160), (256, 128), 0.2),
+    ("stalker_hand", "hand", (340, 170), (256, 128), 0.15),
+]
+
+
+def build_set(tier, report):
+    """Every piece at one tier (0: close-up, 1: Performance). The high meshes are rebuilt for each tier."""
+    suffix = "" if tier == 0 else "_perf"
+    objs = []
+    for name, kind, targets, sizes, ao in PIECES:
+        extra, solid, closed = None, 0.0, True
+        if kind == "head":
+            bm, col = new_bm()
+            upper_teeth(bm, col)
+            eyeballs(bm, col)
+            extra = make_object("head_x", bm, closed=True)
+            high = head_high()
+        elif kind == "jaw":
+            bm, col = new_bm()
+            lower_teeth(bm, col)
+            to_jaw_frame(bm)
+            extra = make_object("jaw_x", bm, closed=True)
+            high = jaw_high()
+            to_jaw_frame(high)
+        elif kind in ("torso", "coat"):
+            high, solid, closed = (torso_high() if kind == "torso" else coat_high()), 0.035, False
+        elif kind == "sleeve":
+            high, closed = sleeve_high(), False
+        else:
+            high = forearm_high() if kind == "forearm" else hand_high()
+        objs.append(piece(name + suffix, high, targets[tier], sizes[tier], ao, extra=extra, solid=solid, closed=closed))
+    objs.append(mirror_x(objs[-1], "stalker_handL" + suffix))
+    for o in objs:
+        export(o, report, o.name.replace("stalker_handL", "stalker_hand") + ".png")
+        o.hide_render = True  # the renders use placed copies
+    return objs
+
+
 def main():
     clear()
     if bpy.context.scene.world is None:
         bpy.context.scene.world = bpy.data.worlds.new("w")
-    report = {}
-    bm, col = new_bm()
-    upper_teeth(bm, col)
-    up_teeth = make_object("teeth_up", bm, closed=True)
-    bm, col = new_bm()
-    lower_teeth(bm, col)
-    to_jaw_frame(bm)
-    lo_teeth = make_object("teeth_lo", bm, closed=True)
-    jaw_bm = jaw_high()
-    to_jaw_frame(jaw_bm)
-
-    objs = [
-        piece("stalker_head", head_high(), 1650, 1024, 0.25, extra=up_teeth, closed=True),
-        piece("stalker_jaw", jaw_bm, 520, 256, 0.15, extra=lo_teeth, closed=True),
-        piece("stalker_torso", torso_high(), 820, 512, 0.5, solid=0.035),
-        piece("stalker_coat", coat_high(), 720, 512, 0.5, solid=0.035),
-        piece("stalker_sleeve", sleeve_high(), 280, 256, 0.25),
-        piece("stalker_forearm", forearm_high(), 170, 256, 0.2, closed=True),
-        piece("stalker_hand", hand_high(), 340, 256, 0.15, closed=True),
-    ]
-    objs.append(mirror_x(objs[-1], "stalker_handL"))
-    for o in objs:
-        export(o, report, ("stalker_hand" if o.name == "stalker_handL" else o.name) + ".png")
+    if "--preview" in sys.argv:
+        preview(OUT)
+        return
+    report = {"eyes": [[ex, ey, PINPRICK_Z] for (ex, ey, ez) in EYES]}
+    close = build_set(0, report)
+    perf = build_set(1, report) if "--no-perf" not in sys.argv else []
     twice = {"stalker_sleeve", "stalker_forearm"}  # one mesh on each arm
-    report["figure_tris"] = sum(v["tris"] * (2 if k in twice else 1) for k, v in report.items())
+    for perf_tier in (False, True):
+        report["figure_tris" + ("_perf" if perf_tier else "")] = sum(
+            v["tris"] * (2 if k.removesuffix("_perf") in twice else 1)
+            for k, v in report.items() if isinstance(v, dict) and k.endswith("_perf") == perf_tier)
     (OUT / "report.json").write_text(json.dumps(report, indent=1))
     print(json.dumps(report))
-    for o in objs:
-        o.hide_render = True  # the renders use placed copies
     if "--no-render" not in sys.argv:
-        sheet(objs)
-        renders({o.name.replace("stalker_", ""): o for o in objs}, no_extras, "", OUT)
+        sheet(close)
+        renders({o.name.replace("stalker_", ""): o for o in close}, no_extras, "", OUT)
+        if perf:
+            renders({o.name.replace("stalker_", "").replace("_perf", ""): o for o in perf}, no_extras, "perf_", OUT, full=False)
 
 
 if __name__ == "__main__":
