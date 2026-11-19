@@ -585,6 +585,17 @@ local function release(hollow: Hollow, why: string)
 				local away = hold.root.Position - hollow.root.Position
 				local flat = Vector3.new(away.X, 0, away.Z)
 				local direction = if flat.Magnitude > 0.1 then flat.Unit else -hollow.root.CFrame.LookVector
+				if hold.def.reach then
+					-- hauled out through a door or window, they hang between him and the wall: straight away
+					-- from him is back into the frame they came through, where they wedge. Fling them along
+					-- the wall instead, to whichever side has more room
+					local side = level(hollow.root).RightVector
+					local function room(d: Vector3): number
+						local hit = Workspace:Raycast(hold.root.Position, d * 12, sightParams)
+						return if hit then hit.Distance else 12
+					end
+					direction = if room(side) >= room(-side) then side else -side
+				end
 				NetService.Fire("Fx", hold.victim, "Escaped", {
 					why = why,
 					kind = hollow.kind,
