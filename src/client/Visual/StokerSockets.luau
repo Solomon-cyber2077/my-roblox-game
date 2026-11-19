@@ -72,10 +72,10 @@ end
 -- The sockets on `head` (the block or the part the head mesh is welded to).
 function StokerSockets.attach(head: BasePart): Handle
 	local handle: Handle = { emitters = { Frost = {}, Fog = {}, Embers = {} }, rates = {}, mode = "" }
-	for _, side in { -1, 1 } do
+	for _, mouth in { S.L, S.R } do
 		local at = Instance.new("Attachment")
 		at.Name = "Socket"
-		at.Position = Vector3.new(side * S.X, S.Y, S.Z)
+		at.Position = Vector3.new(mouth[1], mouth[2], mouth[3])
 		at.Parent = head
 		for mode, list in handle.emitters do
 			local e = make(at, mode)

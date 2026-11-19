@@ -53,8 +53,8 @@ describe("Grab", function()
 	it("gives every kind three grabs with distinct ids", function()
 		for _, kind in KINDS do
 			local list = Grabs.Kinds[kind]
-			-- the Brute's fifth is its reach-in; the Stoker (Tuning.BruteRemake) adds his lift
-			expect(#list).toBe(if kind == "Brute" then (if BruteBody.current.lift then 6 else 5) else 3)
+			-- the Brute's fifth is its reach-in; the Stoker (Tuning.BruteRemake) has only his own: lift, pin, reach-in
+			expect(#list).toBe(if kind == "Brute" then (if BruteBody.current.lift then 3 else 5) else 3)
 			local seen = {}
 			for _, def in list do
 				expect(seen[def.id]).toBe(nil)
@@ -114,7 +114,8 @@ describe("Grab", function()
 
 	it("still hurts: a long hold takes most of a full-health crew member", function()
 		local params = DifficultyModel.params(0.8, Stations.List.Market, 4, nil)
-		local left = holdOut(Grabs.ById.Bearhug, params, "Brute", 9)
+		-- the block giant's bear hug, or the Stoker's lift when he replaces it
+		local left = holdOut(Grabs.ById.Bearhug or Grabs.ById.Lift, params, "Brute", 9)
 		expect(left).toBeLessThan(Tuning.Crew.MaxHealth / 2)
 		expect(Grab.survivable(50, 30)).toBe(30 - Grab.BiteFloor)
 		expect(Grab.survivable(5, 30)).toBe(5)

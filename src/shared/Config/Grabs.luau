@@ -169,11 +169,18 @@ local Grabs: { [string]: { Def } } = {
 -- the Stoker (the 12-stud remake, Tuning.BruteRemake): his burnt left hand lifts you first; a missed press
 -- pins you under it; the clock running out brings the shovel down
 if BruteBody.current.lift then
+	-- his grabs are only his own: the lift, the pin and the reach-in. The block giant's fist, shovel pin and
+	-- bear hug never open for him (Logic/Grab.order), so they are dropped rather than kept as unused poses
+	local own = {}
 	for _, def in Grabs.Brute do
 		if def.id == "Slam" then
 			def.crush = true
 		end
+		if def.id ~= "Fist" and def.id ~= "Shovel" and def.id ~= "Bearhug" then
+			table.insert(own, def)
+		end
 	end
+	Grabs.Brute = own
 	local lift: Def = {
 		id = "Lift",
 		area = "Torso",

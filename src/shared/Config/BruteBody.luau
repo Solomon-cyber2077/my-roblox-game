@@ -32,6 +32,8 @@ export type Body = {
 	shoulder: { number },
 	upper: number,
 	fore: number,
+	upperL: number?, -- the left arm's own lengths, when it differs from the right
+	foreL: number?,
 	armThick: number,
 	handL: { number },
 	handR: { number },
@@ -104,6 +106,9 @@ local Giant: Body = {
 	shoulder = { 1.5, 1.05, 0.05 },
 	upper = 2.35,
 	fore = 2.15,
+	-- the burnt left arm is shorter (owner 2026-11-19: "his left arm shorter"; the scan rebuild's round 7)
+	upperL = 1.95,
+	foreL = 1.78,
 	armThick = 1.1,
 	handL = { 1.2, 1.05, 1.1 },
 	handR = { 0.55, 0.6, 0.55 },
