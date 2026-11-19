@@ -600,6 +600,23 @@ local Tuning = {
 		-- beyond Pull); closer, his heat pulls their lantern flames (Pull); at rescue distance they go out (Snuff,
 		-- the rescue reach of Config/Injury plus 2); a snuffed lantern relights Relight seconds after leaving
 		Heat = { Strike = 34, Pull = 18, Snuff = 8, Relight = 3 },
+		-- his sound set (Logic/StokerSound, Config/Audio Stoker*)
+		Sound = {
+			-- each footfall: the stiff burnt left leg lands harder and lower than the right, with more of
+			-- the deep thud under it (gain and pitch on the heel, gain on the thud)
+			Left = { gain = 1.15, pitch = 0.92, thud = 1 },
+			Right = { gain = 0.9, pitch = 1.04, thud = 0.45 },
+			Jitter = 0.05, -- +- share of pitch on every heel and drag, so no two land alike
+			RustShare = 0.3, -- share of shovel drags that shed dry rust as well
+			-- the drag's level by state: loudest on the hunt, so it swells as he comes for you
+			Drag = { Hunt = 1.25, Prowl = 0.85, Other = 1 } :: { [string]: number },
+			-- the embers' breathing (radians a second, HollowAnimator): bellows out on the brightest, in on
+			-- the dimmest
+			BreathRate = { Hunt = 2.6, Rest = 1.5 },
+			-- the ember crackle on his body: full within EmberNear studs, gone at EmberReach
+			EmberNear = 6,
+			EmberReach = 24,
+		},
 		Return = {
 			Chance = 0.35, -- of an eligible stop (from Difficulty.BruteReturn.FirstStop) rolling one
 			LightScale = 1, -- share of a SafeLight's Radius that holds it, in every run (not Config/Tutorial's)

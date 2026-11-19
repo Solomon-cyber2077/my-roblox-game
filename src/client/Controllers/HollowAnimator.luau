@@ -34,6 +34,8 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local HollowMotion = require(Shared.Logic.HollowMotion)
+local Footsteps = require(Shared.Logic.Footsteps)
+local StokerSound = require(Shared.Logic.StokerSound)
 local Audio = require(Shared.Config.Audio)
 local AudioPriority = require(Shared.Config.AudioPriority)
 local Foley = require(Shared.Config.Foley)
@@ -75,6 +77,10 @@ type Rig = {
 	flareAt: number?, -- os.clock() of the last bite: the embers flare and settle
 	quietStep: boolean, -- a stalking Hollow sounds every other footfall
 	breath: Sound?, -- its stalk breath
+	stepCount: number, -- the Stoker's footfalls so far (his takes in turn)
+	dragCount: number, -- his shovel drags so far
+	breathAt: number?, -- the time his bellows breathing was last checked
+	crackle: Sound?, -- the ember crackle on his body
 	heardEpoch: number, -- HealthController.StopEpoch when its breath was last counted
 	frozenAt: number?, -- clock when a look froze it, nil while it moves
 	intent: boolean, -- its replicated Intent last frame (the hush starts on the rising edge)
@@ -341,18 +347,84 @@ local function onBite(rig: Rig, def: Grabs.Def)
 	end
 end
 
+-- The ground under the Stoker's feet, as the crew's steps read it (Logic/Footsteps): gravel when
+-- nothing is found.
+local groundRay = RaycastParams.new()
+groundRay.FilterType = Enum.RaycastFilterType.Exclude
+local function surfaceUnder(rig: Rig): Footsteps.Surface
+	local skip: { Instance } = { rig.model }
+	local hollows = Workspace:FindFirstChild("Hollows")
+	if hollows then
+		table.insert(skip, hollows)
+	end
+	groundRay.FilterDescendantsInstances = skip
+	local hit = Workspace:Raycast(rig.root.Position, Vector3.new(0, rig.skeleton.ground - 3, 0), groundRay)
+	if hit == nil then
+		return "Gravel"
+	end
+	local train = Workspace:FindFirstChild("Train")
+	return Footsteps.surface({
+		material = hit.Material.Name,
+		onTrain = train ~= nil and hit.Instance:IsDescendantOf(train),
+		slabKind = if hit.Instance.Name == "Top"
+			then hit.Instance:GetAttribute("SlabKind") :: string?
+			else nil,
+		snowy = false,
+	})
+end
+
+-- The embers crackling in the Stoker's burns: a loop on his body, heard only close (Config/Audio
+-- StokerEmbers, Tuning.BruteRemake.Sound EmberNear..EmberReach), in the Steps group so it never
+-- ducks the mix.
+local function emberCrackle(rig: Rig)
+	if rig.crackle then
+		return
+	end
+	local cue = Audio.StokerEmbers
+	local S = Tuning.BruteRemake.Sound
+	local made = Instance.new("Sound")
+	made.Name = "EmberCrackle"
+	made.SoundId = `rbxassetid://{cue.id}`
+	made.Looped = true
+	made.Volume = cue.volume
+	made.PlaybackSpeed = 0.9 + (rig.seed % 20) / 100
+	made.RollOffMode = Enum.RollOffMode.Linear
+	made.RollOffMinDistance = S.EmberNear
+	made.RollOffMaxDistance = S.EmberReach
+	made.SoundGroup = if Registry.AudioController then Registry.AudioController.Group("Steps") else nil
+	made.Parent = rig.root
+	made.TimePosition = (rig.seed % 30)
+	made:Play()
+	rig.crackle = made
+end
+
 local STALK_NOISE = 0.25 -- share of a stalking Hollow's footfalls that also creak or skip a pebble
 -- A foot comes down (Logic/HollowMotion.plants): the Brute shakes the ground, the Stalker's step is
 -- soft, the Crawler's a skitter.
-local function plantStep(rig: Rig, speed: number)
+local function plantStep(rig: Rig, speed: number, foot: string)
 	local position = rig.root.Position
-	if rig.kind == "Brute" then
+	if rig.kind == "Brute" and STOKER then
+		-- the Stoker's own steps (Logic/StokerSound): a heel and its thud over the ground's crunch, the
+		-- burnt left leg heavier; on the shovel-arm step the blade drags, now and then shedding rust
+		rig.stepCount += 1
+		local at = ground(rig)
+		local step = StokerSound.step(foot, surfaceUnder(rig), rig.stepCount, math.random())
+		audio(step.heel, at, step.gain, step.pitch)
+		audio("StokerThud", at, step.thud, step.pitch)
+		audio(step.ground, at, 1, step.pitch)
+		shakeNear(position, 16, 0.25 * step.gain)
+		if StokerSound.drags(foot) then
+			rig.dragCount += 1
+			local blade = at + rig.root.CFrame.RightVector * 3
+			local drag, gain, rust = StokerSound.drag(rig.dragCount, rig.state, math.random())
+			audio(drag, blade, gain, 1 + (math.random() * 2 - 1) * Tuning.BruteRemake.Sound.Jitter)
+			if rust then
+				audio(rust, blade, 1, 0.9 + math.random() * 0.2)
+			end
+		end
+	elseif rig.kind == "Brute" then
 		audio("HollowStep", position, 1, 0.9 + rig.stepSide * 0.08)
 		shakeNear(position, 16, 0.25)
-		-- the Stoker's rhythm: step, swing, scrape (you hear him before you see him)
-		if STOKER and rig.stepSide > 0 then
-			audio("ShovelScrape", position, 1, 0.95 + math.random() * 0.1)
-		end
 	elseif rig.kind == "Crawler" then
 		audio(if speed > 10 then "HollowScrabble" else "HollowStep", position, 0.3, 1.9)
 	else
@@ -459,14 +531,14 @@ local function animate(
 	rig.phase += dt * HollowPoses.cadence(rig.kind, animationSpeed)
 	-- steps sound on the plants (no timer): every other plant while stalking, none while frozen
 	if animationSpeed > 1.5 and not frozen and state ~= "Grab" then
-		for _ in HollowMotion.plants(rig.kind, before, rig.phase) do
+		for _, foot in HollowMotion.plants(rig.kind, before, rig.phase) do
 			local sounds = true
 			if stalking then
 				rig.quietStep = not rig.quietStep
 				sounds = rig.quietStep
 			end
 			if sounds then
-				plantStep(rig, animationSpeed)
+				plantStep(rig, animationSpeed, foot)
 			end
 		end
 	end
@@ -494,7 +566,22 @@ local function animate(
 
 	-- the Stoker's embers breathe like a bellows, brighten while he holds someone and flare on every bite
 	if STOKER and rig.embers then
-		local breath = 0.5 + 0.5 * math.sin(now * (if state == "Hunt" then 2.6 else 1.5) + rig.seed)
+		local rate = StokerSound.breathRate(state)
+		local breath = 0.5 + 0.5 * math.sin(now * rate + rig.seed)
+		-- a bellows stroke at each turn of that breathing (out on the brightest), and the embers crackling
+		-- on his body; quiet while he holds someone (the hold has its own sounds)
+		if rig.breathAt and state ~= "Grab" then
+			for _, stroke in StokerSound.breaths(rig.breathAt, now, rate, rig.seed) do
+				audio(
+					if stroke == "Out" then "StokerBellowsOut" else "StokerBellowsIn",
+					rig.root.Position,
+					1,
+					0.95 + math.random() * 0.1
+				)
+			end
+		end
+		rig.breathAt = now
+		emberCrackle(rig)
 		local flare = if rig.flareAt then math.max(0, 1 - (clock - rig.flareAt) / 0.6) else 0
 		local held = if state == "Grab" then 0.7 else 0
 		-- his embers flare brighter as the lanterns coming at him weaken (Tuning.BruteRemake.Heat)
@@ -667,6 +754,10 @@ local function register(model: Instance)
 		embers = if chest then chest:FindFirstChild("EmberGlow") :: PointLight? else nil,
 		quietStep = false,
 		breath = nil,
+		stepCount = 0,
+		dragCount = 0,
+		breathAt = nil,
+		crackle = nil,
 		frozenAt = nil,
 		intent = false,
 		aim = 0,

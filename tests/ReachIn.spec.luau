@@ -191,9 +191,13 @@ describe("ReachIn: the late return", function()
 end)
 
 describe("ReachIn: switches", function()
-	it("ships off", function()
-		expect(Tuning.BruteRemake.Enabled).toBe(false)
-		expect(Tuning.BruteRemake.Returns).toBe(false)
+	-- The Stoker goes into the Test Launch (owner, 2026-11-18): the switches may be on, but only as one set.
+	-- The late return needs the remake on, and he stays on the bench otherwise (the return is his only way in).
+	it("ships as one set: the late return only with the remake, benched otherwise", function()
+		if Tuning.BruteRemake.Returns then
+			expect(Tuning.BruteRemake.Enabled).toBe(true)
+		end
+		expect(Tuning.HollowBenched.Brute).toBe(true)
 	end)
 
 	it("an ordinary strike never picks the reach-in", function()

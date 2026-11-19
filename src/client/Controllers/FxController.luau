@@ -252,8 +252,9 @@ local function onFx(kind: string, data: { [string]: any }?)
 		Registry.GrabController.Seized()
 	elseif kind == "ShovelStrike" then
 		-- the Stoker's blade driven flat into the ground: a rush of air and ash dims the screen for a moment
-		-- (flat, no vignette) and the lantern shudders, for crewmates within reach of it
-		audio("HollowSlam", d.position)
+		-- (flat, no vignette) and the lantern shudders, for crewmates within reach of it; it lands like a
+		-- firebox door slammed (Config/Audio StokerStrike)
+		audio("StokerStrike", d.position)
 		local character = Players.LocalPlayer.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if
@@ -273,7 +274,7 @@ local function onFx(kind: string, data: { [string]: any }?)
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		local at = if root then root.Position else nil
 		if kind == "Pinned" then
-			audio("HollowSlam", at)
+			audio("StokerPin", at)
 		else
 			local landsIn = tonumber(d.landsIn) or 0.55
 			if victim == Players.LocalPlayer then

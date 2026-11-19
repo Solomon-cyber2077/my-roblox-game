@@ -47,6 +47,7 @@ local Tells = require(Shared.Logic.Tells)
 local Visibility = require(Shared.Logic.Visibility)
 
 local Session = require(script.Parent.Parent.Session)
+local Registry = require(script.Parent.Parent.Registry)
 
 local VisibilityController = {}
 
@@ -378,6 +379,10 @@ local function heatOn(owner: Model, at: Vector3, stoker: Vector3?, clock: number
 	end
 	local d = Vector3.new(at.X - stoker.X, 0, at.Z - stoker.Z).Magnitude
 	if d <= heat.Snuff then
+		-- the flame goes out with a breath and a sear of the hot wick, once as it goes (Config/Audio StokerSnuff)
+		if clock >= (snuffedUntil[owner] or 0) and Registry.AudioController then
+			Registry.AudioController.Play("StokerSnuff", at + Vector3.new(0, 2, 0))
+		end
 		snuffedUntil[owner] = clock + heat.Relight
 	end
 	if clock < (snuffedUntil[owner] or 0) then
