@@ -601,6 +601,30 @@ local Tuning = {
 		-- beyond Pull); closer, his heat pulls their lantern flames (Pull); at rescue distance they go out (Snuff,
 		-- the rescue reach of Config/Injury plus 2); a snuffed lantern relights Relight seconds after leaving
 		Heat = { Strike = 34, Pull = 18, Snuff = 8, Relight = 3 },
+		-- the uncanny weight of him (owner 2026-11-19, all five: "his head and neck, other movements should help avoid
+		-- a mechanical feel"), Logic/StokerMotion and HollowAnimator:
+		--   his head stays level while his body stomps and sways (Steady: share of the bob it soaks up), gazing a
+		--   little down (Gaze, radians), with a slow drift of its own so it never locks
+		--   losing his prey, his head keeps turning past a neck's limit (up to LookMax radians at LookSpeed a
+		--   second), holds LookHold seconds, then eases back at LookBack; his shoulders take ShoulderShare of it
+		--   he walks stooped (Stoop radians at the waist, Knee at the knees); standing still StillAfter seconds he
+		--   unfolds to his full height (UnfoldRate a second; folds again at FoldRate) and goes quiet: no
+		--   bellows, the crackle fades out and the embers dim to EmberHush of their glow
+		Uncanny = {
+			Steady = 0.8,
+			Gaze = 0.18,
+			LookMax = 2.4,
+			LookSpeed = 0.7,
+			LookHold = 2.5,
+			LookBack = 0.6,
+			ShoulderShare = 0.25,
+			Stoop = 0.45,
+			Knee = 0.15,
+			StillAfter = 0.8,
+			UnfoldRate = 0.4,
+			FoldRate = 1.5,
+			EmberHush = 0.3,
+		},
 		-- his eyes are hollow sockets that breathe out what is around him (owner 2026-11-19: "have fog, ember particles
 		-- (very faint), or frost air come out the sockets depending on the situation. If neither fog or snow is
 		-- present, then use the embers"): frost while snow falls or lies at the stop, fog within FogNear studs of the

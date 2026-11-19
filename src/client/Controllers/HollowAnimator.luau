@@ -50,6 +50,7 @@ local HollowPoses = require(script.Parent.Parent.Animation.HollowPoses)
 local HollowCosmetics = require(script.Parent.Parent.Visual.HollowCosmetics)
 local StokerSockets = require(script.Parent.Parent.Visual.StokerSockets)
 local StokerSocketMode = require(Shared.Logic.StokerSockets)
+local StokerMotion = require(Shared.Logic.StokerMotion)
 local StationFog = require(script.Parent.Parent.Scenery.StationFog)
 local StationSnow = require(script.Parent.Parent.Scenery.StationSnow)
 local cosmetics: { [Model]: HollowCosmetics.Handle } = {}
@@ -87,6 +88,11 @@ type Rig = {
 	crackle: Sound?, -- the ember crackle on his body
 	sockets: StokerSockets.Handle?, -- what breathes out of his hollow eye sockets (Visual/StokerSockets)
 	socketAt: number, -- when the sockets last looked round for snow and fog
+	stillFor: number, -- the Stoker: seconds he has stood still (Logic/StokerMotion)
+	unfold: number, -- 0 stooped .. 1 drawn up to his full height, standing still
+	lastTarget: number?, -- the prey he last had (the Target attribute)
+	lostAt: number?, -- when he lost them: his head keeps turning past a neck's limit
+	lostSide: number,
 	heardEpoch: number, -- HealthController.StopEpoch when its breath was last counted
 	frozenAt: number?, -- clock when a look froze it, nil while it moves
 	intent: boolean, -- its replicated Intent last frame (the hush starts on the rising edge)
@@ -577,7 +583,12 @@ local function animate(
 		local breath = 0.5 + 0.5 * math.sin(now * rate + rig.seed)
 		-- a bellows stroke at each turn of that breathing (out on the brightest), and the embers crackling
 		-- on his body; quiet while he holds someone (the hold has its own sounds)
-		if rig.breathAt and state ~= "Grab" then
+		-- standing still and drawn up, he goes quiet: no bellows, the crackle fades out, the embers dim
+		local hush = rig.unfold
+		if rig.crackle then
+			rig.crackle.Volume = Audio.StokerEmbers.volume * (1 - hush)
+		end
+		if rig.breathAt and state ~= "Grab" and hush < 0.5 then
 			for _, stroke in StokerSound.breaths(rig.breathAt, now, rate, rig.seed) do
 				audio(
 					if stroke == "Out" then "StokerBellowsOut" else "StokerBellowsIn",
@@ -614,7 +625,9 @@ local function animate(
 				held += 1.4 * math.clamp((heat.Pull - d) / (heat.Pull - heat.Snuff), 0, 1)
 			end
 		end
-		(rig.embers :: PointLight).Brightness = 0.8 + 0.7 * breath + held + 2.2 * flare
+		local glow = (0.8 + 0.7 * breath) * (1 - (1 - Tuning.BruteRemake.Uncanny.EmberHush) * hush)
+		local light = rig.embers :: PointLight
+		light.Brightness = glow + held + 2.2 * flare
 	end
 
 	-- random head twitches: snap, hold, release
@@ -706,6 +719,49 @@ local function animate(
 	end
 	rig.lastVelocity = velocity
 
+	-- the Stoker's uncanny weight (Tuning.BruteRemake.Uncanny): stooped as he walks, unfolding to his full height
+	-- when he stands; his head level and steady over the stomping body, drifting slowly on its own; losing his
+	-- prey, the head turns on past a neck's limit and the shoulders come round after it
+	if STOKER and rig.kind == "Brute" and (state == "Hunt" or state == "Prowl") and not grabId then
+		local U = Tuning.BruteRemake.Uncanny
+		rig.stillFor = StokerMotion.still(rig.stillFor, Vector3.new(velocity.X, 0, velocity.Z).Magnitude, dt)
+		rig.unfold = StokerMotion.unfold(rig.unfold, rig.stillFor, dt)
+		local targetId = model:GetAttribute("Target")
+		if rig.lastTarget ~= nil and targetId == nil then
+			rig.lostAt = clock
+			rig.lostSide = if rig.aim < 0 then -1 else 1
+		elseif targetId ~= nil then
+			rig.lostAt = nil
+		end
+		rig.lastTarget = targetId :: number?
+		local over = if rig.lostAt then StokerMotion.overturn(clock - rig.lostAt, rig.lostSide) else nil
+		if over == nil then
+			rig.lostAt = nil
+		end
+		local fold = 1 - rig.unfold
+		local waist = (target.Waist or I) * A(-U.Stoop * fold, 0, 0)
+		if over then
+			waist = A(0, over * U.ShoulderShare, 0) * waist
+		end
+		target.Waist = waist
+		target.LKnee = (target.LKnee or I) * A(-U.Knee * fold, 0, 0)
+		target.RKnee = (target.RKnee or I) * A(-U.Knee * fold, 0, 0)
+		local chain = (target.RootJoint or I) * waist
+		local drift = A(
+			math.sin(clock * 0.37 + rig.seed) * 0.03,
+			math.sin(clock * 0.23 + rig.seed * 2) * 0.05,
+			math.sin(clock * 0.31 + rig.seed * 3) * 0.04
+		)
+		target.Neck = CFrame.new(0, -chain.Position.Y * U.Steady, 0)
+			* chain.Rotation:Inverse()
+			* A(0, rig.aim + (over or 0), 0)
+			* A(-U.Gaze, 0, 0)
+			* drift
+	elseif rig.kind == "Brute" then
+		rig.stillFor = 0
+		rig.unfold = StokerMotion.unfold(rig.unfold, 0, dt)
+	end
+
 	-- a blended change eases out over its BlendSeconds; a snap jumps; otherwise smooth toward the
 	-- target, fast through strikes and grabs
 	local rate = if poseKey == "Coil"
@@ -787,6 +843,11 @@ local function register(model: Instance)
 		crackle = nil,
 		sockets = nil,
 		socketAt = 0,
+		stillFor = 0,
+		unfold = 0,
+		lastTarget = nil,
+		lostAt = nil,
+		lostSide = 1,
 		frozenAt = nil,
 		intent = false,
 		aim = 0,
