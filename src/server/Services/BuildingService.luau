@@ -292,6 +292,23 @@ function BuildingService.IsLitAt(_position: Vector3): boolean
 	return false
 end
 
+-- The building whose outer walls stand round `position` (on any floor; not the ground beside it),
+-- for the giant Brute's reach-in (Logic/ReachIn). Nil outside every building.
+function BuildingService.BuildingAt(position: Vector3): LayoutGen.Building?
+	local localPos = StationService.ToLocal(position)
+	for _, state in active do
+		local building = state.building
+		local plan = building.plan
+		if
+			math.abs(localPos.X - building.x) < plan.outerX
+			and math.abs(localPos.Z - building.z) < plan.outerZ
+		then
+			return building
+		end
+	end
+	return nil
+end
+
 -- A point just outside the nearest door of the building around `position`.
 function BuildingService.ExitPoint(position: Vector3): Vector3?
 	local localPos = StationService.ToLocal(position)

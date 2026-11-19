@@ -585,6 +585,26 @@ local Tuning = {
 	-- meshes once their ids are bound; the Brute itself stays benched above until its rule is built.
 	BruteRemake = {
 		Enabled = false,
+		-- The giant's late-run return (Logic/ReachIn.returns): with Enabled on, the Brute leaves the bench only at
+		-- late stops past the tutorial runs, at most one a stop. Off: benched as above.
+		Returns = false,
+		Return = {
+			Chance = 0.35, -- of an eligible stop (from Difficulty.BruteReturn.FirstStop) rolling one
+			LightScale = 1, -- share of a SafeLight's Radius that holds it, in every run (not Config/Tutorial's)
+		},
+		-- Reaching in at doors and windows (Logic/ReachIn, Config/Grabs "Reach"), while Enabled is on
+		Reach = {
+			Depth = 4, -- studs inside an opening's inner face a player can be taken from
+			Slack = 0.5, -- studs past each side of the opening still in reach
+			MaxFloor = 1, -- only openings on the ground floor (studs above its lowest room)
+			Stand = 5.4, -- studs out from the wall's face where it stands (its Reach hold sits 5 in front)
+			Arrive = 2, -- within this of the stand point counts as there
+			Tell = 1.2, -- seconds at the frame (bent, hands on it, looking in) before it reaches
+			Cooldown = 6, -- seconds before the same opening is used again
+			Search = 2, -- openings nearest the prey it waits at when none reaches them
+			Lurk = 8, -- seconds it waits at one before going round to the next
+			Through = { Door = true, Broken = true, Glass = true, Boarded = false } :: { [string]: boolean },
+		},
 	},
 	HollowKinds = {
 		Stalker = {

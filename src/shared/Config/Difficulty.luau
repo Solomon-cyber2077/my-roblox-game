@@ -71,6 +71,11 @@ return table.freeze({
 		Crawler = table.freeze({ 0.18, 0.32 }),
 		Brute = table.freeze({ 0.04, 0.2 }),
 	}),
+	-- the giant Brute's late return (Tuning.BruteRemake.Returns): the first stop of the run it can come at
+	-- (stop 6 at every difficulty, owner 2026-11-18: in the simulator few Long Line crews reach stop 7)
+	BruteReturn = table.freeze({
+		FirstStop = table.freeze({ 6, 6 }),
+	}),
 	-- bigger stops take longer and hold more Hollows: per tile of enterable building
 	SizeCapPerTile = 0.025, -- Hollow cap multiplier added per building tile
 	SizeCapTiles = 48, -- at most this many tiles count toward the cap

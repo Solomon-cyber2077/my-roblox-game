@@ -61,6 +61,7 @@ local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 local Injury = require(Shared.Logic.Injury)
 local InjuryConfig = require(Shared.Config.Injury)
+local ReachIn = require(Shared.Logic.ReachIn)
 local Rescue = require(Shared.Logic.Rescue)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 local Sighting = require(Shared.Logic.Sighting)
@@ -166,6 +167,14 @@ type Hollow = {
 	lastThink: number,
 	door: BasePart?, -- the shut door it is forcing
 	sighting: SightingRun?, -- stop 1's scripted sighting: never hunts, strikes or grabs
+	reach: ReachRun?, -- the giant Brute's reach-in at the building its prey is in (Logic/ReachIn)
+}
+
+type ReachRun = {
+	building: number,
+	openings: { ReachIn.Opening },
+	track: ReachIn.Track,
+	telling: boolean, -- it has turned to the frame for this tell
 }
 
 type SightingRun = {
@@ -213,6 +222,7 @@ local alertUntil = 0 -- os.clock() until which every Hollow hunts the crew (a Su
 local T = Difficulty.Tutorial
 local safeLights: { BasePart } = {} -- parts tagged SafeLight
 local lightScale = 0 -- the tutorial tier's safeLightScale; 0 past the tutorial
+local bruteDue = false -- this stop rolled the giant Brute's late return and it hasn't come yet
 local offTrainAt: { [Player]: number } = {} -- os.clock() each player first stood off the train this stop
 -- the first run's teaching grab at its stop: pending until the Crawler has come and gone
 local scripted: { pending: boolean, hollow: Hollow? } = { pending = false, hollow = nil }
@@ -278,12 +288,13 @@ local function safeEdge(): number
 end
 
 -- The tutorial's safe light whose radius covers `position`, if any.
-local function safeLightAt(position: Vector3): BasePart?
-	if lightScale <= 0 then
+local function safeLightAt(position: Vector3, scale: number?): BasePart?
+	local s = scale or lightScale
+	if s <= 0 then
 		return nil
 	end
 	for _, part in safeLights do
-		local radius = ((part:GetAttribute("Radius") :: number?) or 0) * lightScale
+		local radius = ((part:GetAttribute("Radius") :: number?) or 0) * s
 		if radius > 0 and part.Parent then
 			local d = part.Position - position
 			if Vector3.new(d.X, 0, d.Z).Magnitude < radius then
@@ -294,9 +305,20 @@ local function safeLightAt(position: Vector3): BasePart?
 	return nil
 end
 
-local function isLit(position: Vector3): boolean
+local function isLit(position: Vector3, scale: number?): boolean
 	local buildings = Registry.BuildingService
-	return (buildings ~= nil and buildings.IsLitAt(position)) or safeLightAt(position) ~= nil
+	return (buildings ~= nil and buildings.IsLitAt(position)) or safeLightAt(position, scale) ~= nil
+end
+
+-- The remade giant Brute (Tuning.BruteRemake): it can't fit a door, so it reaches in (Logic/ReachIn).
+local function giant(hollow: Hollow): boolean
+	return Tuning.BruteRemake.Enabled and hollow.kind == "Brute"
+end
+
+-- The share of a SafeLight's radius that holds `hollow` off: the giant is held in every run, the rest only
+-- in the tutorial runs (Config/Tutorial safeLightScale).
+local function lightFor(hollow: Hollow): number
+	return if giant(hollow) then Tuning.BruteRemake.Return.LightScale else lightScale
 end
 
 local function tutorialTier(): Tutorial.Def?
@@ -614,7 +636,7 @@ local function release(hollow: Hollow, why: string)
 end
 
 -- Seizes `target` with the first of this Hollow's grabs that has room. False on a miss.
-local function seize(hollow: Hollow, target: Player): boolean
+local function seize(hollow: Hollow, target: Player, through: { def: Grabs.Def, base: CFrame }?): boolean
 	local character = target.Character
 	local root = characterRoot(target)
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -632,7 +654,14 @@ local function seize(hollow: Hollow, target: Player): boolean
 		else level(hollow.root)
 	local chosen: Grabs.Def? = nil
 	local frame = base
-	for _, def in hollow.order do
+	if through then
+		-- a reach-in: it stands outside the opening and hauls them out to the spot before it, where it stands
+		base = through.base
+		position = base.Position
+		chosen, frame = through.def, holdFrame(base, through.def)
+	end
+	local tries: { Grabs.Def } = if through then {} else hollow.order
+	for _, def in tries do
 		local candidate = holdFrame(base, def)
 		if roomFor(base, candidate) then
 			chosen, frame = def, candidate
@@ -662,7 +691,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 	humanoid.Sit = false
 	root.Anchored = true
 	-- a pin starts from where they stood and is slammed down over the first ticks
-	local slamFrom = if def.pin then root.CFrame else nil
+	local slamFrom = if def.pin or def.reach then root.CFrame else nil
 	root.CFrame = slamFrom or frame
 	root.AssemblyLinearVelocity = Vector3.zero
 
@@ -1315,6 +1344,95 @@ local function strikeAttempt(hollow: Hollow, target: Player, targetRoot: BasePar
 	setState(hollow, "Windup")
 end
 
+--[[
+	The giant Brute's prey is inside a building: it can't follow, so it makes for a door or window near
+	them (Logic/ReachIn), holds the tell at the frame and reaches in. True while it is doing that; false
+	when the prey isn't inside, so the ordinary hunt goes on.
+]]
+local FEET = 3 -- a crew member's root above their feet (R6)
+local function reachIn(hollow: Hollow, prey: Player, preyRoot: BasePart, dt: number, chase: number): boolean
+	local buildings = Registry.BuildingService
+	local found = if buildings and buildings.BuildingAt then buildings.BuildingAt(preyRoot.Position) else nil
+	if found == nil then
+		hollow.reach = nil
+		hollow.model:SetAttribute("ReachTell", nil)
+		return false
+	end
+	local building = found :: any
+	local run = hollow.reach
+	if run == nil or run.building ~= building.id then
+		run = {
+			building = building.id,
+			openings = ReachIn.openings(building.plan),
+			track = ReachIn.newTrack(),
+			telling = false,
+		}
+		hollow.reach = run
+	end
+	local reach = run :: ReachRun
+	local position = hollow.root.Position
+	local own = StationService.ToLocal(position)
+	local preyLocal = StationService.ToLocal(preyRoot.Position)
+	local px, pz = preyLocal.X - building.x, preyLocal.Z - building.z
+	local opening, covered = ReachIn.choose(
+		reach.openings,
+		px,
+		preyLocal.Y - FEET,
+		pz,
+		own.X - building.x,
+		own.Z - building.z,
+		reach.track.cooldown
+	)
+	reach.track = ReachIn.aim(reach.track, opening)
+	if opening == nil then
+		-- no way in from anywhere near them: it waits outside
+		hollow.model:SetAttribute("ReachTell", nil)
+		hollow.humanoid.WalkSpeed = 0
+		hollow.humanoid:MoveTo(position)
+		return true
+	end
+	local o = opening :: ReachIn.Opening
+	local sx, sz = ReachIn.stand(o)
+	local standAt = StationService.ToWorld(building.x + sx, own.Y, building.z + sz)
+	local frameAt = StationService.ToWorld(building.x + o.x, o.sill + 2, building.z + o.z)
+	local there = flat(standAt - position).Magnitude <= ReachIn.Config.Arrive
+	local before = reach.track.phase
+	local fired
+	reach.track, fired = ReachIn.step(reach.track, {
+		dt = dt,
+		covered = covered,
+		there = there,
+		lit = isLit(frameAt, lightFor(hollow)) or isLit(preyRoot.Position, lightFor(hollow)),
+	})
+	local phase = reach.track.phase
+	local telling = phase == "Tell"
+	hollow.model:SetAttribute("ReachTell", if telling then o.kind else nil)
+	if fired == "Reach" then
+		hollow.model:SetAttribute("ReachTell", nil)
+		local face = Vector3.new(frameAt.X, position.Y, frameAt.Z)
+		local base = CFrame.lookAt(Vector3.new(standAt.X, position.Y, standAt.Z), face)
+		hollow.lastStrike = os.clock()
+		-- the tell is the warning this target had (an opportunity, not proof it was seen)
+		Registry.TelemetryService.Tell(prey, ReachIn.Config.Tell, 0)
+		seize(hollow, prey, { def = Grabs.ById.Reach, base = base })
+		return true
+	end
+	if telling or phase == "Lurk" then
+		-- at the frame: still, turned to the opening (the client bends it over and puts its hands on it)
+		hollow.humanoid.WalkSpeed = 0
+		hollow.humanoid:MoveTo(position)
+		if telling and (before ~= "Tell" or not reach.telling) then
+			hollow.root.CFrame = CFrame.lookAt(position, Vector3.new(frameAt.X, position.Y, frameAt.Z))
+		end
+		reach.telling = telling
+		return true
+	end
+	reach.telling = false
+	hollow.humanoid.WalkSpeed = chase
+	moveToward(hollow, standAt, false)
+	return true
+end
+
 local function think(hollow: Hollow)
 	local clock = os.clock()
 	local position = hollow.root.Position
@@ -1369,7 +1487,8 @@ local function think(hollow: Hollow)
 	end
 
 	-- caught inside a building as its lights come on: cower, then get out
-	if isLit(position) then
+	local scale = lightFor(hollow)
+	if isLit(position, scale) then
 		endStalk(hollow)
 		leaveDoor(hollow)
 		if hollow.state ~= "Repelled" then
@@ -1380,11 +1499,11 @@ local function think(hollow: Hollow)
 			hollow.humanoid:MoveTo(position)
 		else
 			hollow.humanoid.WalkSpeed = walk
-			local light = safeLightAt(position)
+			local light = safeLightAt(position, scale)
 			local exit = if light then nil else Registry.BuildingService.ExitPoint(position)
 			if light then
 				local away = Vector3.new(position.X - light.Position.X, 0, position.Z - light.Position.Z)
-				local radius = ((light:GetAttribute("Radius") :: number?) or 0) * lightScale
+				local radius = ((light:GetAttribute("Radius") :: number?) or 0) * scale
 				local out = if away.Magnitude > 0.1 then away.Unit else Vector3.zAxis
 				exit = Vector3.new(light.Position.X, position.Y, light.Position.Z) + out * (radius + 4)
 			end
@@ -1500,7 +1619,7 @@ local function think(hollow: Hollow)
 		hollow.lastSeen = bestRoot.Position
 		hollow.lastSeenAt = clock
 		local targetLocal = StationService.ToLocal(bestRoot.Position)
-		if targetLocal.Z < edge or isLit(bestRoot.Position) then
+		if targetLocal.Z < edge or isLit(bestRoot.Position, scale) then
 			endStalk(hollow)
 			setState(hollow, "Repelled")
 			hollow.humanoid.WalkSpeed = walk
@@ -1516,7 +1635,8 @@ local function think(hollow: Hollow)
 		local settings = Stalk.settings((params :: Types.HazardParams).difficulty)
 		if hollow.state ~= "Stalk" and hollow.state ~= "Hunt" then
 			local stalker = hollow.model:GetAttribute("StalkWanderer") == true
-			local commitsDirectly = (wanderer and not stalker) or hollow.scripted ~= nil
+			-- the giant Brute never stalks: watching it does nothing (B8)
+			local commitsDirectly = (wanderer and not stalker) or hollow.scripted ~= nil or giant(hollow)
 			-- straight to Hunt: wanderers, alerts and the scripted Crawler, prey already close, a stun's
 			-- after-effect, a spent budget, or prey another Hollow already hunts (the pack fans out)
 			if
@@ -1607,6 +1727,9 @@ local function think(hollow: Hollow)
 		end
 
 		setState(hollow, "Hunt")
+		if giant(hollow) and reachIn(hollow, best, bestRoot, dt, chase) then
+			return
+		end
 		local exposure = hollow.exposure[best] or 0
 		local guarded = Stalk.guarded(exposure)
 		if guarded then
@@ -1772,6 +1895,11 @@ end
 
 local function pickKind(): string
 	local p = params :: Types.HazardParams
+	if bruteDue then
+		-- this stop's late Brute (Tuning.BruteRemake.Returns): the first Hollow to come is it, and only one
+		bruteDue = false
+		return "Brute"
+	end
 	local options: { { kind: string, weight: number } } = {}
 	local total = 0
 	for kind, pair in Difficulty.HollowKinds :: { [string]: { number } } do
@@ -2256,6 +2384,14 @@ function HollowService.Configure(hazards: Types.HazardParams)
 	-- E2's arm when it runs (hazards.sighting), else the Config/Tutorial flag
 	local sightingOn = if hazards.sighting ~= nil then hazards.sighting else T.Sighting.Enabled
 	sightingPending = tier ~= nil and tier.sighting and sightingOn and (hazards.stop or 1) == 1
+	local info = StationService.Info()
+	bruteDue = Tuning.BruteRemake.Enabled
+		and Tuning.BruteRemake.Returns
+		and info ~= nil
+		and info.emergency == nil
+		and not hazards.dormantStart
+		and not hazards.scriptedOnly
+		and ReachIn.returns(info.layoutSeed, hazards.stop, hazards.tutorial, hazards.difficulty)
 end
 
 -- Retain planned sleepers and fill larger buildings with distinct, clear interior spots.
@@ -2556,6 +2692,7 @@ function HollowService.Clear()
 		hollow.model:Destroy()
 	end
 	table.clear(hollows)
+	bruteDue = false
 	table.clear(graceUntil)
 	table.clear(budgetAt)
 	table.clear(offTrainAt)
