@@ -446,7 +446,8 @@ local function stalker(model: Model, root: BasePart)
 
 	-- no eyes: dark sockets with a pinprick of shine deep inside
 	mark("head", deco(model, head, Vector3.new(0.78, 0.13, 0.16), CFrame.new(0, 0.3, -0.53), SKIN_DARK, skin)) -- the brow, over them
-	for _, side in { -0.2, 0.2 } do
+	local eyes = StalkerMeshes.head.eyes
+	for i, side in { -0.2, 0.2 } do
 		mark(
 			"head",
 			deco(
@@ -458,11 +459,15 @@ local function stalker(model: Model, root: BasePart)
 				skin
 			)
 		)
-		-- the pinprick sits deep in the carved socket when the close-up skull is on
+		-- with the close-up head the pinprick sits on that mesh's pupil (StalkerMeshes.head.eyes), or deep in
+		-- the carved socket of a head without eyes
+		local pupil = if meshCache.head and eyes then eyes[i] else nil
 		shine(
 			model,
 			head,
-			CFrame.new(side, 0.16, if meshCache.head then -0.14 else -0.54),
+			if pupil
+				then CFrame.new(pupil[1], pupil[2], pupil[3])
+				else CFrame.new(side, 0.16, if meshCache.head then -0.14 else -0.54),
 			if meshCache.head then 0.045 else 0.06,
 			GLINT
 		)

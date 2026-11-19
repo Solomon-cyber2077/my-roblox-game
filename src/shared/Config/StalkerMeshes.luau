@@ -8,7 +8,14 @@
 	stay as the Performance setting's lighter version.
 ]]
 
-export type Piece = { id: number?, texture: number?, size: { number }, center: { number } }
+export type Piece = {
+	id: number?,
+	texture: number?,
+	size: { number },
+	center: { number },
+	-- head only: where each pupil's pinprick sits in the Head frame (left, right), for a mesh with eyes
+	eyes: { { number } }?,
+}
 
 local StalkerMeshes: { [string]: Piece } = {
 	head = {
