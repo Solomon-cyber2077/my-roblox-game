@@ -1217,6 +1217,34 @@ local function brute(model: Model, root: BasePart)
 		end
 	end
 
+	-- the flue out of his hump (the close-up torso carries it; the scan rebuild's flue.json, chest frame): coal
+	-- smoke breathed up and back from its mouth
+	if meshCache["brute.torso"] then
+		local up = Vector3.new(-0.121, 0.856, 0.503).Unit
+		local right = up:Cross(Vector3.zAxis).Unit
+		local flue = Instance.new("Attachment")
+		flue.Name = "Flue"
+		flue.CFrame = CFrame.fromMatrix(Vector3.new(-0.624, 2.623, 1.378), right, up)
+		flue.Parent = chest
+		local smoke = Instance.new("ParticleEmitter")
+		smoke.Name = "FlueSmoke"
+		smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		smoke.Color = ColorSequence.new(rgb(24, 22, 22), rgb(70, 66, 62))
+		smoke.Rate = 7
+		smoke.Lifetime = NumberRange.new(2, 3.5)
+		smoke.Speed = NumberRange.new(2.5, 4)
+		smoke.SpreadAngle = Vector2.new(12, 12)
+		smoke.EmissionDirection = Enum.NormalId.Top
+		smoke.Acceleration = Vector3.new(0, 1.5, 0)
+		smoke.RotSpeed = NumberRange.new(-30, 30)
+		smoke.Size =
+			NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 3.5) })
+		smoke.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.45),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		smoke.Parent = flue
+	end
 	emitter(chest, {
 		Name = "Soot",
 		Texture = "rbxasset://textures/particles/smoke_main.dds",

@@ -3,34 +3,36 @@
 	Close-up meshes for the Brute (tools/brute/build.py, out/brute_<name>.fbx and .png), to be uploaded under the
 	owner's account. Same rules as Config/StalkerMeshes: `size` is the mesh's box in studs, `center` where that
 	box's middle sits in the frame of the part it is welded to, `id` the mesh and `texture` its colour image.
-	A row with no id leaves the block build in place, and the blocks stay as the Performance setting's version.
+	A row with no id leaves the block build in place. `perf` (with perfSize, perfCenter) is the lighter mesh drawn
+	under Performance; without one the blocks stay as the Performance setting's version.
 	`eyes` and `embers` are drawn in Neon (no texture). The arm and leg pieces are one per side (L, R).
 	Nothing is drawn while Tuning.BruteRemake.Enabled is off, ids or not.
-	Sizes for the 12-stud skeleton (Config/BruteBody Giant), from tools/brute/out-giant/report.json (19979 triangles for the whole figure).
+	Sizes for the 12-stud skeleton (Config/BruteBody Giant), from the scan rebuild's out-scan/report.json (23302 triangles for the whole figure;
+	"the engine took him", 2026-11-19: `jaw` is the firebox door, `eyes` the coal bed behind its slots).
 ]]
 
 local StalkerMeshes = require(script.Parent.StalkerMeshes)
 local Tuning = require(script.Parent.Tuning)
 
 local BruteMeshes: { [string]: StalkerMeshes.Piece } = {
-	head = { size = { 1.239, 2.198, 1.562 }, center = { 0.007, -0.688, -0.06 } },
-	jaw = { size = { 0.991, 0.53, 0.82 }, center = { 0.001, 0.073, -0.146 } },
-	eyes = { size = { 0.546, 0.056, 0.024 }, center = { 0.001, -0.093, -0.576 } },
-	torso = { size = { 3.662, 4.128, 2.458 }, center = { 0.121, 0.265, -0.081 } },
-	embers = { size = { 2.737, 1.92, 1.877 }, center = { -0.012, 0.154, 0.157 } },
-	apron = { size = { 2.497, 3.545, 2.356 }, center = { 0.002, -0.834, -0.156 } },
-	upperarmL = { size = { 3.031, 0.922, 1.005 }, center = { 0.082, 0.014, 0.038 } },
-	upperarmR = { size = { 3.07, 1.261, 1.371 }, center = { 0.086, -0.011, 0.044 } },
-	forearmL = { size = { 2.778, 0.895, 0.873 }, center = { 0.075, 0.005, -0.032 } },
-	forearmR = { size = { 2.806, 1.245, 1.22 }, center = { 0.08, -0.005, -0.041 } },
-	fist = { size = { 0.62, 1.567, 0.87 }, center = { 0.012, 0.007, -0.069 } },
-	shovel = { size = { 1.879, 4.839, 0.578 }, center = { 0, -1.883, -0.043 } },
-	thighL = { size = { 3.917, 1.352, 1.344 }, center = { 0.096, -0.004, -0.025 } },
-	thighR = { size = { 3.917, 1.341, 1.352 }, center = { 0.096, -0.001, -0.028 } },
-	shinL = { size = { 3.648, 1.337, 1.248 }, center = { 0.047, 0.049, 0.002 } },
-	shinR = { size = { 3.656, 1.316, 1.244 }, center = { 0.043, -0.032, -0.001 } },
-	bootL = { size = { 0.962, 1.381, 1.686 }, center = { 0.001, 0.311, -0.095 } },
-	bootR = { size = { 0.966, 1.381, 1.686 }, center = { -0.001, 0.311, -0.095 } },
+	head = { size = { 1.417, 1.935, 1.954 }, center = { 0.01, -0.381, 0.319 } },
+	jaw = { size = { 0.757, 1.033, 0.315 }, center = { -0.005, 0.151, -0.367 } },
+	eyes = { size = { 0.529, 0.734, 0.245 }, center = { -0.016, -0.686, -0.186 } },
+	torso = { size = { 3.846, 4.91, 2.935 }, center = { 0.008, 0.283, 0.117 } },
+	embers = { size = { 1.382, 3.431, 1.811 }, center = { -0.939, 0.717, 0.401 } },
+	apron = { size = { 3.02, 4.257, 2.413 }, center = { 0.051, -1.2, -0.081 } },
+	upperarmL = { size = { 2.706, 1.023, 1.433 }, center = { -0.038, -0.064, 0.235 } },
+	upperarmR = { size = { 2.626, 1.326, 1.721 }, center = { 0.015, 0.105, 0.205 } },
+	forearmL = { size = { 2.563, 0.883, 0.889 }, center = { 0.106, -0.03, 0.014 } },
+	forearmR = { size = { 2.651, 1.234, 1.302 }, center = { 0.123, 0.036, 0.179 } },
+	fist = { size = { 1.358, 1.953, 1.053 }, center = { 0.199, 0.118, -0.342 } },
+	shovel = { size = { 2.392, 5.954, 2.044 }, center = { 0.173, -1.972, -0.506 } },
+	thighL = { size = { 2.413, 1.497, 1.802 }, center = { -0.153, 0.005, -0.015 } },
+	thighR = { size = { 2.506, 2.052, 1.911 }, center = { -0.111, 0.202, 0.004 } },
+	shinL = { size = { 2.831, 1.296, 1.507 }, center = { 0.091, 0.034, 0.197 } },
+	shinR = { size = { 2.853, 1.096, 1.65 }, center = { 0.101, 0.169, 0.104 } },
+	bootL = { size = { 1.195, 0.961, 2.436 }, center = { -0.485, 0.011, -0.597 } },
+	bootR = { size = { 1.37, 0.982, 2.395 }, center = { -0.003, 0.055, -0.713 } },
 }
 
 if not Tuning.BruteRemake.Enabled then
