@@ -601,6 +601,12 @@ local Tuning = {
 		-- beyond Pull); closer, his heat pulls their lantern flames (Pull); at rescue distance they go out (Snuff,
 		-- the rescue reach of Config/Injury plus 2); a snuffed lantern relights Relight seconds after leaving
 		Heat = { Strike = 34, Pull = 18, Snuff = 8, Relight = 3 },
+		-- his eyes are hollow sockets that breathe out what is around him (owner 2026-11-19: "have fog, ember particles
+		-- (very faint), or frost air come out the sockets depending on the situation. If neither fog or snow is
+		-- present, then use the embers"): frost while snow falls or lies at the stop, fog within FogNear studs of the
+		-- fog front, else faint embers (Logic/StokerSockets). Socket points in the head's frame (x either side);
+		-- Performance plays them at PerfShare of the rate
+		Sockets = { X = 0.17, Y = -0.445, Z = -0.32, FogNear = 24, PerfShare = 0.5 },
 		-- cunning, not snapping (owner 2026-11-19: "he might see someone but will take another path and catch them
 		-- off guard (in these moments only his footsteps sound because he lifts his shovel slightly off the
 		-- ground)"): having seen prey Min-Max studs off, he sometimes (Chance) swings wide and comes at them from

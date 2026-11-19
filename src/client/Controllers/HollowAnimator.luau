@@ -48,6 +48,10 @@ local GrimeLevel = require(Shared.Logic.GrimeLevel)
 local Registry = require(script.Parent.Parent.Registry)
 local HollowPoses = require(script.Parent.Parent.Animation.HollowPoses)
 local HollowCosmetics = require(script.Parent.Parent.Visual.HollowCosmetics)
+local StokerSockets = require(script.Parent.Parent.Visual.StokerSockets)
+local StokerSocketMode = require(Shared.Logic.StokerSockets)
+local StationFog = require(script.Parent.Parent.Scenery.StationFog)
+local StationSnow = require(script.Parent.Parent.Scenery.StationSnow)
 local cosmetics: { [Model]: HollowCosmetics.Handle } = {}
 
 type Pose = HollowPoses.Pose
@@ -81,6 +85,8 @@ type Rig = {
 	dragCount: number, -- his shovel drags so far
 	breathAt: number?, -- the time his bellows breathing was last checked
 	crackle: Sound?, -- the ember crackle on his body
+	sockets: StokerSockets.Handle?, -- what breathes out of his hollow eye sockets (Visual/StokerSockets)
+	socketAt: number, -- when the sockets last looked round for snow and fog
 	heardEpoch: number, -- HealthController.StopEpoch when its breath was last counted
 	frozenAt: number?, -- clock when a look froze it, nil while it moves
 	intent: boolean, -- its replicated Intent last frame (the hush starts on the rising edge)
@@ -583,6 +589,19 @@ local function animate(
 		end
 		rig.breathAt = now
 		emberCrackle(rig)
+		-- his hollow sockets breathe out what is round him: frost in the snow, fog by the fog bank, else embers
+		local sockets = rig.sockets
+		if sockets and clock - rig.socketAt > 0.5 then
+			rig.socketAt = clock
+			local gap, archetype = StationFog.gap(rig.root.Position)
+			local atmosphere = Registry.AtmosphereController
+			local mode = StokerSocketMode.mode(
+				if atmosphere then atmosphere.Weather("Snow") else 0,
+				archetype ~= nil and StationSnow.snowy(archetype),
+				gap
+			)
+			StokerSockets.set(sockets, mode)
+		end
 		local flare = if rig.flareAt then math.max(0, 1 - (clock - rig.flareAt) / 0.6) else 0
 		local held = if state == "Grab" then 0.7 else 0
 		-- his embers flare brighter as the lanterns coming at him weaken (Tuning.BruteRemake.Heat)
@@ -766,6 +785,8 @@ local function register(model: Instance)
 		dragCount = 0,
 		breathAt = nil,
 		crackle = nil,
+		sockets = nil,
+		socketAt = 0,
 		frozenAt = nil,
 		intent = false,
 		aim = 0,
@@ -778,6 +799,12 @@ local function register(model: Instance)
 		snap = true,
 	}
 	makeTrails(rig)
+	if STOKER and rig.kind == "Brute" then
+		local head = model:FindFirstChild("Head") :: BasePart?
+		if head then
+			rig.sockets = StokerSockets.attach(head)
+		end
+	end
 	rigs[model] = rig
 	if rig.kind == "Stalker" or rig.kind == "Crawler" then
 		cosmetics[model] = HollowCosmetics.attach(model, root)

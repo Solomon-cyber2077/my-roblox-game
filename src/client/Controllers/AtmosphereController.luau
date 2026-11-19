@@ -91,6 +91,7 @@ local sheltered = false
 local shelterCheckAt = 0
 local rainNow = 0
 local rainShown = 0
+local weatherRates: { [string]: number } = {} -- what falls round the train now, by kind (Weather)
 local flareUntil = 0
 local hour = LOBBY_HOUR
 local omenNow: Omens.Omen? = nil
@@ -635,6 +636,7 @@ function AtmosphereController.Start()
 			rates[a.weather] = (rates[a.weather] or 0) + a.weatherRate * (1 - w) * exposed
 			rates[b.weather] = (rates[b.weather] or 0) + b.weatherRate * w * exposed
 		end
+		weatherRates = rates
 		updateWeather(around, rates, speed)
 		local ground = if root then root.Position.Y - 3 else camera.CFrame.Position.Y - 5
 		updateRain(dt, camera.CFrame.Position, ground, rainNow, speed)
@@ -668,6 +670,11 @@ function AtmosphereController.Omen(): Omens.Omen?
 end
 
 -- How hard it is raining on the run right now, 0..1 (sheltered or not).
+-- How thick `kind` ("Snow", "Rain", "Ash", "Embers") is falling round the train now: 0 when none.
+function AtmosphereController.Weather(kind: string): number
+	return weatherRates[kind] or 0
+end
+
 function AtmosphereController.Rain(): number
 	return rainNow
 end
