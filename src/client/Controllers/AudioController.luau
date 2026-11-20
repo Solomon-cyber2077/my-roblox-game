@@ -341,6 +341,27 @@ function AudioController.Start()
 			end)
 		end)
 	end
+	-- the Stoker's takes, fetched in the background: his first drag is the warning that he is near, and a
+	-- take that is still loading when it is played starts late or is cut off by its maxSeconds
+	if Tuning.BruteRemake.Enabled then
+		task.spawn(function()
+			-- Sound instances, not bare ids: a bare id is fetched as an image and fails
+			local sounds: { Instance } = {}
+			for name, cue in Audio do
+				if string.sub(name, 1, 6) == "Stoker" then
+					local sound = Instance.new("Sound")
+					sound.SoundId = `rbxassetid://{cue.id}`
+					table.insert(sounds, sound)
+				end
+			end
+			pcall(function()
+				ContentProvider:PreloadAsync(sounds)
+			end)
+			for _, sound in sounds do
+				sound:Destroy()
+			end
+		end)
+	end
 	-- every other button on the screen sounds the same typewriter key as Ui.button's (which marks
 	-- itself Keyed and taps on its own): the hotbar, tabs, slots and the door chips. Movement stays
 	-- silent: the stick and jump (Roblox's TouchGui) and the RUN, LOOK and PING buttons

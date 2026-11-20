@@ -1616,8 +1616,13 @@ function Hud.mount(gui: ScreenGui)
 		tutorialFrame.Visible = leakFrame.Visible
 
 		local clock = os.clock()
+		-- held: the whole HUD falls back so the grab and the check fill the screen (Tuning.GrabScreen)
+		local grabFade = Tuning.GrabScreen.Enabled and held
 		for _, f in faders do
-			local target = if clock < f.untilAt then 0 else f.idle
+			local target = if grabFade
+				then math.max(f.idle, Tuning.GrabScreen.HudTransparency)
+				elseif clock < f.untilAt then 0
+				else f.idle
 			f.shown = MathX.approach(f.shown, target, dt * FADE_RATE)
 			f.group.GroupTransparency = f.shown
 		end

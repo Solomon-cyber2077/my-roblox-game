@@ -185,6 +185,38 @@ function SettingsUi.mount(gui: ScreenGui)
 			end
 		end
 	end
+	-- credits for licensed work the game uses (each licence asks for its line where the work is used)
+	local credits = Ui.new("Frame", {
+		Size = UDim2.new(1, -8, 0, 96),
+		BackgroundColor3 = Theme.Color.leather,
+		BackgroundTransparency = 0.08,
+		LayoutOrder = #choices + 1,
+		ZIndex = 32,
+		Parent = list,
+	})
+	Ui.corner(2).Parent = credits
+	local creditsTitle = Ui.text({
+		Text = "CREDITS",
+		Font = Theme.Font.displayMedium,
+		TextSize = 26,
+		Color = Theme.Color.brassLight,
+		Position = UDim2.fromOffset(16, 10),
+		Size = UDim2.new(1, -32, 0, 30),
+	})
+	creditsTitle.ZIndex = 33
+	creditsTitle.Parent = credits
+	local creditsText = Ui.text({
+		Text = "3D scan: Ten24 (ten24.info)",
+		Font = Theme.Font.body,
+		TextSize = 19,
+		Wrapped = true,
+		Color = Theme.Color.white,
+		Position = UDim2.fromOffset(16, 44),
+		Size = UDim2.new(1, -32, 0, 40),
+	})
+	creditsText.ZIndex = 33
+	creditsText.Parent = credits
+
 	for _, choice in choices do
 		player:GetAttributeChangedSignal(choice.key):Connect(repaint)
 	end

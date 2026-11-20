@@ -12,6 +12,12 @@
 	lying  the victim is on the ground (the room check uses a body lying down)
 	name   what the struggle prompt calls it
 	pin    a slam and pin: the Hollow uses only its pins, which tick at Tuning.Grab.Pin
+	opens  the kind's only opening grab while it exists (the Stoker's Lift)
+	onMiss the grab it turns into on the victim's first missed skill check (the Lift pins: Slam)
+	crush  when the clock runs out and no rescue saves them, the shovel comes down (implied: camera,
+	       sound and body, nothing torn; HollowService.finishHold)
+	reach  taken only through a door or window from outside (the Brute's Reach), never in an
+	       ordinary strike (Logic/Grab.order leaves it out)
 	area   the part of the victim it is working on: its bites mark that limb, and a death in
 	       this grip takes it (Builders/Wounds)
 
@@ -35,9 +41,16 @@ export type Def = {
 	bite: number,
 	lying: boolean,
 	pin: boolean?,
+	reach: boolean?,
+	opens: boolean?,
+	onMiss: string?,
+	crush: boolean?,
 }
 
 local Tuning = require(script.Parent.Tuning)
+local BruteBody = require(script.Parent.BruteBody)
+
+local BRUTE = BruteBody.current.holds -- where the Brute holds its prey depends on its skeleton
 
 local STANDING = { 0, 1, 0 }
 local TOWARD = { 0, 0, 1 } -- facing the Hollow
@@ -109,7 +122,7 @@ local Grabs: { [string]: { Def } } = {
 			id = "Fist",
 			area = "LeftArm",
 			name = "CAUGHT IN ITS FIST",
-			hold = { pos = { -1.6, 0.4, -3.8 }, up = STANDING, face = TOWARD },
+			hold = { pos = BRUTE.Fist, up = STANDING, face = TOWARD },
 			bite = 1.2,
 			lying = false,
 		},
@@ -117,7 +130,7 @@ local Grabs: { [string]: { Def } } = {
 			id = "Shovel",
 			area = "Torso",
 			name = "UNDER THE SHOVEL",
-			hold = { pos = { 0.9, -5.15, -5.2 }, up = AWAY, face = UP },
+			hold = { pos = BRUTE.Shovel, up = AWAY, face = UP },
 			bite = 1.0,
 			lying = true,
 		},
@@ -125,7 +138,7 @@ local Grabs: { [string]: { Def } } = {
 			id = "Bearhug",
 			area = "Torso",
 			name = "HELD TO THE EMBERS",
-			hold = { pos = { 0, -1.1, -2.9 }, up = STANDING, face = TOWARD },
+			hold = { pos = BRUTE.Bearhug, up = STANDING, face = TOWARD },
 			bite = 1.3,
 			lying = false,
 		},
@@ -134,13 +147,52 @@ local Grabs: { [string]: { Def } } = {
 			id = "Slam",
 			area = "RightLeg",
 			name = "THE BRUTE HAS YOU",
-			hold = { pos = { 0.9, -5.15, -5.2 }, up = AWAY, face = DOWN },
+			hold = { pos = BRUTE.Slam, up = AWAY, face = DOWN },
 			bite = Tuning.Grab.Pin.Tick,
 			lying = true,
 			pin = true,
 		},
+		-- through a door or window: it bends at the hips and back, braces on the frame, reaches in with its
+		-- fist and hauls you out by the collar
+		{
+			id = "Reach",
+			area = "Head",
+			name = "", -- grab titles are not shown on screen
+			hold = { pos = BRUTE.Reach, up = STANDING, face = TOWARD },
+			bite = 1.1,
+			lying = false,
+			reach = true,
+		},
 	},
 }
+
+-- the Stoker (the 12-stud remake, Tuning.BruteRemake): his burnt left hand lifts you first; a missed press
+-- pins you under it; the clock running out brings the shovel down
+if BruteBody.current.lift then
+	-- his grabs are only his own: the lift, the pin and the reach-in. The block giant's fist, shovel pin and
+	-- bear hug never open for him (Logic/Grab.order), so they are dropped rather than kept as unused poses
+	local own = {}
+	for _, def in Grabs.Brute do
+		if def.id == "Slam" then
+			def.crush = true
+		end
+		if def.id ~= "Fist" and def.id ~= "Shovel" and def.id ~= "Bearhug" then
+			table.insert(own, def)
+		end
+	end
+	Grabs.Brute = own
+	local lift: Def = {
+		id = "Lift",
+		area = "Torso",
+		name = "", -- grab titles are not shown on screen
+		hold = { pos = BRUTE.Lift, up = STANDING, face = TOWARD },
+		bite = 1.2,
+		lying = false,
+		opens = true,
+		onMiss = "Slam",
+	}
+	table.insert(Grabs.Brute, 1, lift)
+end
 
 local ById: { [string]: Def } = {}
 for _, list in Grabs do

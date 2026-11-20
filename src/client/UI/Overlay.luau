@@ -623,6 +623,12 @@ function Overlay.fade(toBlack: boolean, seconds: number?)
 	)
 end
 
+-- A flat dim over the whole screen that clears over `seconds` (no darker edges: fine on phones).
+function Overlay.dim(strength: number, seconds: number)
+	fadeFrame.BackgroundTransparency = 1 - strength
+	Ui.tween(fadeFrame, { BackgroundTransparency = 1 }, TweenInfo.new(seconds, Enum.EasingStyle.Quad))
+end
+
 -- Fades out, waits, and fades back in; used around teleports.
 function Overlay.blink(hold: number?)
 	task.spawn(function()

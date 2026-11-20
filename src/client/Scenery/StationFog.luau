@@ -83,6 +83,7 @@ local wisps: { Wisp } = {}
 local tintShown = ""
 local random = Random.new()
 local active = false
+local last: Frame? = nil -- the latest frame drawn (StationFog.gap)
 
 local function decor(part: BasePart)
 	part.Anchored = true
@@ -334,6 +335,7 @@ end
 
 function StationFog.update(f: Frame, dt: number)
 	active = true
+	last = f
 	tint(f.archetype)
 	local station, now = f.station, f.now
 	local half = f.length / 2 + 20
@@ -452,6 +454,16 @@ function StationFog.update(f: Frame, dt: number)
 end
 
 -- The part a sound of the fog can hang from (its middle segment).
+-- How far `position` stands in front of the fog (studs; 0 or less inside it) and the stop's archetype, or nil
+-- with no stop's fog drawn.
+function StationFog.gap(position: Vector3): (number?, string?)
+	local f = last
+	if f == nil or not active then
+		return nil, nil
+	end
+	return f.front - f.station:PointToObjectSpace(position).Z, f.archetype
+end
+
 function StationFog.anchor(): BasePart?
 	local segment = segments[math.ceil(SEGMENTS / 2)]
 	return if segment then segment.wall else nil

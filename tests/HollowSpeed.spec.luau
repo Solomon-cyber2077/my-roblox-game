@@ -65,20 +65,22 @@ describe("Hollow speed", function()
 		end
 	end)
 
-	it("keeps the first scripted Crawler absolute and scoped to tier 1 stop 2", function()
+	it("keeps the first scripted teaching Hollow (a Stalker) absolute and scoped to tier 1 stop 2", function()
+		local kind = Tutorial.ScriptedGrab.Kind
+		expect(kind).toBe("Stalker") -- owner, 2026-11-18: the Crawler is put off to the Official Release
 		for _, base in { 25, 26 } do
 			for _, pace in { 0.94, 1.06 } do
-				local chase, lunge, duration = HollowSpeed.resolve(base, "Crawler", pace, true, 1, 2)
+				local chase, lunge, duration = HollowSpeed.resolve(base, kind, pace, true, 1, 2)
 				expect(chase).toBe(24)
 				expect(lunge).toBe(40)
 				expect(duration).toBe(0.55)
 			end
 		end
-		assert(Tutorial.FirstCrawler.WarningSeconds >= 1.5, "first Crawler needs a readable warning")
-		expect(HollowSpeed.isFirstCrawler("Crawler", false, 1, 2)).toBe(false)
-		expect(HollowSpeed.isFirstCrawler("Stalker", true, 1, 2)).toBe(false)
-		expect(HollowSpeed.isFirstCrawler("Crawler", true, 2, 1)).toBe(false)
-		local legacy = HollowSpeed.resolve(25, "Crawler", 1, true, 2, 1)
+		assert(Tutorial.FirstCrawler.WarningSeconds >= 1.5, "the teaching Hollow needs a readable warning")
+		expect(HollowSpeed.isFirstCrawler(kind, false, 1, 2)).toBe(false)
+		expect(HollowSpeed.isFirstCrawler("Crawler", true, 1, 2)).toBe(false)
+		expect(HollowSpeed.isFirstCrawler(kind, true, 2, 1)).toBe(false)
+		local legacy = HollowSpeed.resolve(25, kind, 1, true, 2, 1)
 		expect(legacy).toBe(25 * Tutorial.ScriptedGrab.ChaseScale)
 	end)
 end)

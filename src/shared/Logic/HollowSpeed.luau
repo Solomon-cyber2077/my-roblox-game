@@ -4,9 +4,10 @@ local Tuning = require(script.Parent.Parent.Config.Tuning)
 local Tutorial = require(script.Parent.Parent.Config.Tutorial)
 local HollowSpeed = {}
 
+-- The first run's teaching Hollow (Config/Tutorial ScriptedGrab.Kind) at its stop: absolute speeds.
 function HollowSpeed.isFirstCrawler(kind: string, scripted: boolean, tier: number?, stop: number?): boolean
 	local first = Tutorial.FirstCrawler
-	return scripted and kind == "Crawler" and tier == first.Tier and stop == first.Stop
+	return scripted and kind == Tutorial.ScriptedGrab.Kind and tier == first.Tier and stop == first.Stop
 end
 
 function HollowSpeed.resolve(

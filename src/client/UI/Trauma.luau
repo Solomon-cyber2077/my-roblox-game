@@ -11,6 +11,9 @@
 	              and slowly settles and you gasp for breath, for Tuning.Trauma.AdrenalineSeconds
 	  death       in its grip: the tunnel shuts to black-red, holds while the elimination card is
 	              up, then opens so a dead player can watch the crew (Logic/Grab.deathTunnel)
+	  pinned      the Stoker pins you (Config/Grabs Lift -> Slam): thin red capillaries branch in from every
+	              edge like the veins of a bloodshot eye and stay while it holds you, over a short red tint
+	              (UI only; nothing is drawn in the world)
 	  torn        an arm comes away (InjuryController): the view whites out for an instant, the
 	              dark floods in hardest from the torn side, the colour all but goes and the world
 	              swims, veins crack in from that side; it ebbs over the shock (Config/Injury Tear)
@@ -35,6 +38,8 @@ local T = Tuning.Trauma
 local TUNNEL = Color3.fromRGB(26, 3, 5) -- the tunnel's dark: oxblood, nearly black
 local VEIN = Color3.fromRGB(92, 8, 12) -- dark, dried rather than bright red
 local STRESS_TINT = Color3.fromRGB(255, 206, 198)
+local EYE_VEIN = Color3.fromRGB(150, 16, 22) -- the bloodshot eye's capillaries: brighter and thinner
+local PIN_TINT = Color3.fromRGB(255, 150, 146)
 local RUSH_TINT = Color3.fromRGB(255, 244, 232)
 local EDGE_SPECS = {
 	{ anchor = Vector2.new(0, 0), pos = UDim2.fromScale(0, 0), horizontal = true, rotation = 90 },
@@ -46,6 +51,9 @@ local EDGE_SPECS = {
 local layer: Frame
 local edges: { { frame: Frame, horizontal: boolean, side: number } } = {}
 local veins: Frame
+local pinned = false -- the Stoker has you pinned: every vein is the eye kind, and they stay
+local gui: ScreenGui? = nil
+local black: Frame -- the solo crush's cut to black
 local grade: ColorCorrectionEffect? = nil
 local blur: BlurEffect? = nil
 
@@ -58,6 +66,7 @@ local dead = 0 -- 0..1, the tunnel shut by a death in its grip
 local diedAt: number? = nil -- os.clock() of that death (its curve: Logic/Grab.deathTunnel)
 local tornAt: number? = nil -- os.clock() an arm came away (its shock: Logic/TearFeedback.shock)
 local flash = 0 -- 0..1, its white-out instant, gone in a fraction of a second
+local pinTint = 0 -- 0..1, the red tint of being pinned, gone in under a second
 local tornSide = 0 -- -1 the left arm, 1 the right (the screen edge the dark floods from)
 local nextRushBeat = 0
 local rng = Random.new()
@@ -84,6 +93,17 @@ end
 
 -- A dark vein crack that reaches in from a random point on the screen's edge and fades.
 -- One vein cracking in from a screen edge (1 top, 2 bottom, 3 left, 4 right; random if nil).
+-- A phone (the compact layout): no dark vignette there, and the veins reach a little less far in.
+local function phone(): boolean
+	return Tuning.GrabScreen.Enabled and gui ~= nil and (gui :: ScreenGui):GetAttribute("Compact") == true
+end
+
+local function reachScale(): number
+	return if phone() then Tuning.GrabScreen.PhoneVeins else 1
+end
+
+local capillary: (Vector2, number, number, number, number, number) -> ()
+
 local function crack(from: number?)
 	local side = from or rng:NextInteger(1, 4)
 	local along = rng:NextNumber(0.1, 0.9)
@@ -94,7 +114,14 @@ local function crack(from: number?)
 		else UDim2.fromScale(1, along)
 	-- pointing into the screen, splayed a little either way
 	local inward = ({ 90, -90, 0, 180 })[side] + rng:NextNumber(-35, 35)
-	local length = rng:NextNumber(0.16, 0.3)
+	local length = rng:NextNumber(0.16, 0.3) * reachScale()
+	if pinned then
+		-- pinned: the veins turn the red of a bloodshot eye, finer and branching, and stay until it lets go
+		local view = Workspace.CurrentCamera.ViewportSize
+		local at = Vector2.new(pos.X.Scale * view.X, pos.Y.Scale * view.Y)
+		capillary(at, inward, length * 0.8 * math.min(view.X, view.Y), rng:NextNumber(2, 4), 0, 0)
+		return
+	end
 	for branch = 0, rng:NextInteger(1, 2) do
 		local vein = Ui.new("Frame", {
 			Name = "Vein",
@@ -126,6 +153,46 @@ local function crack(from: number?)
 	end
 end
 
+-- One capillary: a chain of short, thinning segments that wander inward from `p` and fork, each
+-- growing in after the one before it.
+function capillary(p: Vector2, angle: number, length: number, width: number, delay: number, depth: number)
+	local segments = rng:NextInteger(4, 7)
+	local step = length / segments
+	for i = 1, segments do
+		angle += rng:NextNumber(-24, 24)
+		local dir = Vector2.new(math.cos(math.rad(angle)), math.sin(math.rad(angle)))
+		local seg = Ui.new("Frame", {
+			Name = "PinnedVein",
+			AnchorPoint = Vector2.new(0, 0.5),
+			Position = UDim2.fromOffset(p.X, p.Y),
+			Size = UDim2.fromOffset(0, width),
+			Rotation = angle,
+			BackgroundColor3 = EYE_VEIN,
+			BackgroundTransparency = math.clamp(0.1 + 0.09 * i + 0.12 * depth, 0, 0.85),
+			BorderSizePixel = 0,
+			ZIndex = 18,
+			Parent = veins,
+		})
+		Ui.tween(
+			seg,
+			{ Size = UDim2.fromOffset(step + 1, width) },
+			TweenInfo.new(0.16, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, 0, false, delay + i * 0.09)
+		)
+		p += dir * step
+		if depth < 2 and i >= 2 and rng:NextNumber() < 0.42 then
+			capillary(
+				p,
+				angle + rng:NextNumber(-55, 55),
+				length * 0.45,
+				math.max(width * 0.7, 1),
+				delay + i * 0.09,
+				depth + 1
+			)
+		end
+		width = math.max(width * 0.84, 1)
+	end
+end
+
 local function step(dt: number)
 	stress += (stressTarget - stress) * math.min(dt * 3, 1)
 	hit *= math.exp(-dt * 5)
@@ -146,6 +213,7 @@ local function step(dt: number)
 		end
 	end
 	flash *= math.exp(-dt * 6)
+	pinTint *= math.exp(-dt * 3.5)
 	local shock = if tornAt then TearFeedback.shock(os.clock() - tornAt) else 0
 	if tornAt and shock <= 0 and os.clock() - tornAt > 0.1 then
 		tornAt = nil
@@ -157,10 +225,10 @@ local function step(dt: number)
 	for _, edge in edges do
 		-- the torn side floods deepest; the rest closes in a little
 		local flood = if edge.side ~= 0 and edge.side == tornSide then 0.42 else 0.13
-		local r = reach + flood * shock
-		local a = math.clamp(alpha + (0.35 + flood) * shock, 0, 1)
+		local r = reach + flood * shock + 0.07 * pinTint
+		local a = math.clamp(alpha + (0.35 + flood) * shock + 0.4 * pinTint, 0, 1)
 		edge.frame.Size = if edge.horizontal then UDim2.fromScale(1, r) else UDim2.fromScale(r, 1)
-		edge.frame.BackgroundTransparency = 1 - a
+		edge.frame.BackgroundTransparency = if phone() then 1 else 1 - a
 	end
 	layer.Visible = alpha > 0.005 or shock > 0.005 or #veins:GetChildren() > 0
 
@@ -168,20 +236,31 @@ local function step(dt: number)
 	g.Saturation = math.max(-0.45 * stress - 0.3 * hit + 0.28 * rush - 0.6 * dead - 0.75 * shock, -1)
 	g.Contrast = 0.22 * stress + 0.18 * hit + 0.16 * rush + 0.25 * shock
 	g.Brightness = 0.22 * hit + 0.05 * rush * beat - 0.1 * dead + 0.55 * flash - 0.06 * shock
-	g.TintColor = Color3.new(1, 1, 1):Lerp(STRESS_TINT, stress):Lerp(RUSH_TINT, rush):Lerp(STRESS_TINT, shock)
-	g.Enabled = stress > 0.01 or hit > 0.01 or rush > 0.01 or dead > 0.005 or shock > 0.01 or flash > 0.01
+	g.TintColor = Color3.new(1, 1, 1)
+		:Lerp(STRESS_TINT, stress)
+		:Lerp(RUSH_TINT, rush)
+		:Lerp(STRESS_TINT, shock)
+		:Lerp(PIN_TINT, pinTint)
+	g.Enabled = stress > 0.01
+		or hit > 0.01
+		or rush > 0.01
+		or dead > 0.005
+		or shock > 0.01
+		or flash > 0.01
+		or pinTint > 0.01
 	b.Size = T.StressBlur * stress + T.HitBlur * hit + T.TornBlur * (0.35 * shock + flash)
 	b.Enabled = b.Size > 0.2
 end
 
-function Trauma.mount(gui: ScreenGui)
+function Trauma.mount(screen: ScreenGui)
+	gui = screen
 	layer = Ui.new("Frame", {
 		Name = "Trauma",
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		Visible = false,
 		ZIndex = 18, -- under the struggle check and the alerts, over the world
-		Parent = gui,
+		Parent = screen,
 	})
 	for _, spec in EDGE_SPECS do
 		local frame = Ui.new("Frame", {
@@ -214,7 +293,48 @@ function Trauma.mount(gui: ScreenGui)
 		ZIndex = 18,
 		Parent = layer,
 	})
+	black = Ui.new("Frame", {
+		Name = "Blackout",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 19,
+		Parent = screen,
+	})
 	RunService.RenderStepped:Connect(step)
+end
+
+local function clearEye(fade: number)
+	pinned = false
+	for _, seg in veins:GetChildren() do
+		if fade > 0 then
+			Ui.tween(seg :: Frame, { BackgroundTransparency = 1 }, TweenInfo.new(fade))
+			task.delay(fade + 0.05, function()
+				seg:Destroy()
+			end)
+		else
+			seg:Destroy()
+		end
+	end
+end
+
+-- The Stoker pinned you: the grab's veins turn red, dense and eye-shaped and stay; a short red tint.
+function Trauma.pinned()
+	pinned = true
+	for k = 1, 26 do
+		crack((k - 1) % 4 + 1)
+	end
+	pinTint = 1
+	hit = math.max(hit, 0.6)
+end
+
+-- The solo crush lands: black at once (the crunch is the only thing left).
+function Trauma.blackout()
+	black.BackgroundTransparency = 0
+	task.delay(T.DeathHoldSeconds, function()
+		Ui.tween(black, { BackgroundTransparency = 1 }, TweenInfo.new(1.2))
+	end)
 end
 
 -- It has you: the stress rises and holds until `release`.
@@ -256,6 +376,7 @@ end
 -- The hold ended. `alive`: you tore free (the adrenaline rush) rather than died in its grip.
 function Trauma.release(alive: boolean)
 	stressTarget = 0
+	clearEye(0.6)
 	if alive then
 		rush = 1
 		nextRushBeat = 0
@@ -265,6 +386,7 @@ end
 -- You died in its grip: the tunnel shuts, then opens again (a dead player stays dead and watches).
 function Trauma.died()
 	stressTarget = 0
+	clearEye(1.2)
 	rush = 0
 	if diedAt == nil then
 		diedAt = os.clock()
@@ -279,6 +401,9 @@ function Trauma.clear()
 	for _, vein in veins:GetChildren() do
 		vein:Destroy()
 	end
+	pinTint = 0
+	clearEye(0)
+	black.BackgroundTransparency = 1
 end
 
 -- 0..1 how strongly the rush is on you now (for the breath sound).

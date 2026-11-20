@@ -356,7 +356,7 @@ function CrewPoses.grabbed(
 		)
 		out.RootJoint = body(0.45 + 0.12 * k + 0.08 * writhe, 0.1 * writhe, 0.15 * writhe)
 		out.Neck = head(0.25, 0, -0.6 + 0.2 * math.sin(t * 3))
-	elseif style == "Fist" then
+	elseif style == "Fist" or style == "Reach" or style == "Lift" then
 		-- in its fist: pushing at its fingers, legs kicking high above the ground
 		local shove = math.sin(t * 5.7 + seed) * 0.2 * amp
 		set(

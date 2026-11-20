@@ -43,8 +43,10 @@ local Shared = ReplicatedStorage.Shared
 local Audio = require(Shared.Config.Audio)
 local Difficulty = require(Shared.Config.Difficulty)
 local Grabs = require(Shared.Config.Grabs)
+local Tuning = require(Shared.Config.Tuning)
 local RunRules = require(Shared.Logic.RunRules)
 local SkillCheck = require(Shared.Logic.SkillCheck)
+local Grab = require(Shared.Logic.Grab)
 
 local FrameTime = require(script.Parent.Parent.FrameTime)
 local Net = require(script.Parent.Parent.Net)
@@ -77,6 +79,7 @@ local dying: RBXScriptConnection? = nil
 type Saved = { humanoid: Humanoid?, autoRotate: boolean }
 local saved: Saved? = nil
 local eyeOffset = Vector3.new(0, 4, 10)
+local faceLight: Attachment? = nil -- the Stoker's face light while he holds you (Tuning.BruteRemake.FaceLight)
 
 local function audio(cue: string, gain: number?, pitch: number?)
 	if Registry.AudioController then
@@ -135,6 +138,39 @@ local function holderHead(model: Model): Vector3?
 		end
 	end
 	return nil
+end
+
+-- A faint cool light in front of the Stoker's face, on your screen only, so his hollow sockets read
+-- from the grab camera. Gone when the grab ends.
+local function lightFace(model: Model, kind: string)
+	local def = Tuning.BruteRemake.FaceLight
+	if kind ~= "Brute" or not Tuning.BruteRemake.Enabled or not def.Enabled or faceLight then
+		return
+	end
+	local link = model:FindFirstChild("GrabbedBy")
+	local hollow = if link and link:IsA("ObjectValue") then link.Value else nil
+	local head = hollow and hollow:FindFirstChild("Head")
+	if not (head and head:IsA("BasePart")) then
+		return
+	end
+	local spot = Instance.new("Attachment")
+	spot.Name = "GrabFaceLight"
+	spot.Position = Vector3.new(0, 0, -def.Ahead)
+	local light = Instance.new("PointLight")
+	light.Range = def.Range
+	light.Brightness = def.Brightness
+	light.Color = Color3.fromRGB(def.Color[1], def.Color[2], def.Color[3])
+	light.Shadows = false
+	light.Parent = spot
+	spot.Parent = head
+	faceLight = spot
+end
+
+local function unlightFace()
+	if faceLight then
+		faceLight:Destroy()
+		faceLight = nil
+	end
 end
 
 local function hidePry(model: Model)
@@ -259,14 +295,21 @@ local function begin(model: Model, style: string)
 		lock(model)
 	end)
 	hidePry(model)
+	safely("face light", function()
+		lightFace(model, kind)
+	end)
 	task.delay(0.1, function()
 		if held then
 			hidePry(model)
+			safely("face light", function()
+				lightFace(model, kind)
+			end)
 		end
 	end)
 end
 
 local function finish(model: Model)
+	safely("face light", unlightFace)
 	if not held then
 		safely("unlock", unlock)
 		return
@@ -400,6 +443,10 @@ function GrabController.Start()
 		if current then
 			Struggle.zone(SkillCheck.zoneStartAt(current, now), current.zoneWidth, current.greatWidth)
 		end
+		-- the Stoker's pin: the check fades out over its second stage (Logic/Grab.pinFade)
+		local fadeFrom = model:GetAttribute("PinFadeFrom") :: number?
+		local fadeTo = model:GetAttribute("PinFadeTo") :: number?
+		Struggle.fade(if fadeFrom and fadeTo then Grab.pinFade(now, fadeFrom, fadeTo) else 0)
 		-- your heart, quickening as the hold wears you down
 		local humanoid = model:FindFirstChildOfClass("Humanoid")
 		local life = if humanoid then humanoid.Health / math.max(humanoid.MaxHealth, 1) else 1
@@ -435,6 +482,28 @@ function GrabController.Bite(damage: number?)
 	Registry.CameraController.Shake(0.45 + 0.4 * strength)
 	Trauma.hit(strength)
 	audio("Hit", 0.75, 0.85)
+end
+
+-- The Stoker pinned you (his lift turned into a pin on a missed press).
+function GrabController.Pinned()
+	Registry.CameraController.Shake(1.2)
+	Trauma.pinned()
+end
+
+-- The shovel is coming down on you, alone (Config/Grabs crush): you see it rise and fall, and the screen
+-- goes black the instant it lands (the crunch is heard, nothing is shown).
+function GrabController.Crushed(landsIn: number)
+	-- black just before the blade lands, so the blow is never seen; in the black it is felt where it lands,
+	-- in the chest: a hard jolt down, a body thud and the breath knocked out, under the crunch everyone near
+	-- hears (FxController)
+	task.delay(math.max(landsIn - Tuning.Grab.Crush.BlackLead, 0), function()
+		Trauma.blackout()
+	end)
+	task.delay(landsIn, function()
+		Registry.CameraController.Shake(1.2)
+		audio("LimbThud", 1, 0.85)
+		audio("Winded", 0.9, 0.7)
+	end)
 end
 
 -- It just seized you.

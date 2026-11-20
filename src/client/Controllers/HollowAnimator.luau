@@ -34,17 +34,25 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local HollowMotion = require(Shared.Logic.HollowMotion)
+local Footsteps = require(Shared.Logic.Footsteps)
+local StokerSound = require(Shared.Logic.StokerSound)
 local Audio = require(Shared.Config.Audio)
 local AudioPriority = require(Shared.Config.AudioPriority)
 local Foley = require(Shared.Config.Foley)
 local Grabs = require(Shared.Config.Grabs)
 local Tuning = require(Shared.Config.Tuning)
+local STOKER = Tuning.BruteRemake.Enabled -- the 12-stud remake's behaviour (Config/BruteBody Giant)
 local Safe = require(Shared.Util.Safe)
 local GrimeLevel = require(Shared.Logic.GrimeLevel)
 
 local Registry = require(script.Parent.Parent.Registry)
 local HollowPoses = require(script.Parent.Parent.Animation.HollowPoses)
 local HollowCosmetics = require(script.Parent.Parent.Visual.HollowCosmetics)
+local StokerSockets = require(script.Parent.Parent.Visual.StokerSockets)
+local StokerSocketMode = require(Shared.Logic.StokerSockets)
+local StokerMotion = require(Shared.Logic.StokerMotion)
+local StationFog = require(script.Parent.Parent.Scenery.StationFog)
+local StationSnow = require(script.Parent.Parent.Scenery.StationSnow)
 local cosmetics: { [Model]: HollowCosmetics.Handle } = {}
 
 type Pose = HollowPoses.Pose
@@ -71,8 +79,20 @@ type Rig = {
 	lungeAt: number,
 	bites: number, -- bites of the current hold already sounded
 	embers: PointLight?,
+	flareAt: number?, -- os.clock() of the last bite: the embers flare and settle
 	quietStep: boolean, -- a stalking Hollow sounds every other footfall
 	breath: Sound?, -- its stalk breath
+	stepCount: number, -- the Stoker's footfalls so far (his takes in turn)
+	dragCount: number, -- his shovel drags so far
+	breathAt: number?, -- the time his bellows breathing was last checked
+	crackle: Sound?, -- the ember crackle on his body
+	sockets: StokerSockets.Handle?, -- what breathes out of his hollow eye sockets (Visual/StokerSockets)
+	socketAt: number, -- when the sockets last looked round for snow and fog
+	stillFor: number, -- the Stoker: seconds he has stood still (Logic/StokerMotion)
+	unfold: number, -- 0 stooped .. 1 drawn up to his full height, standing still
+	lastTarget: number?, -- the prey he last had (the Target attribute)
+	lostAt: number?, -- when he lost them: his head keeps turning past a neck's limit
+	lostSide: number,
 	heardEpoch: number, -- HealthController.StopEpoch when its breath was last counted
 	frozenAt: number?, -- clock when a look froze it, nil while it moves
 	intent: boolean, -- its replicated Intent last frame (the hush starts on the rising edge)
@@ -330,19 +350,92 @@ local function onBite(rig: Rig, def: Grabs.Def)
 	else
 		audio("HollowSwipe", position, 0.8, 0.75)
 	end
-	if rig.embers then
+	if rig.embers and STOKER then
+		rig.flareAt = os.clock() -- the breath loop flares it (below)
+	elseif rig.embers then
 		local embers = rig.embers :: PointLight
 		embers.Brightness = 3.2
 		TweenService:Create(embers, TweenInfo.new(0.5), { Brightness = 1.1 }):Play()
 	end
 end
 
+-- The ground under the Stoker's feet, as the crew's steps read it (Logic/Footsteps): gravel when
+-- nothing is found.
+local groundRay = RaycastParams.new()
+groundRay.FilterType = Enum.RaycastFilterType.Exclude
+local function surfaceUnder(rig: Rig): Footsteps.Surface
+	local skip: { Instance } = { rig.model }
+	local hollows = Workspace:FindFirstChild("Hollows")
+	if hollows then
+		table.insert(skip, hollows)
+	end
+	groundRay.FilterDescendantsInstances = skip
+	local hit = Workspace:Raycast(rig.root.Position, Vector3.new(0, rig.skeleton.ground - 3, 0), groundRay)
+	if hit == nil then
+		return "Gravel"
+	end
+	local train = Workspace:FindFirstChild("Train")
+	return Footsteps.surface({
+		material = hit.Material.Name,
+		onTrain = train ~= nil and hit.Instance:IsDescendantOf(train),
+		slabKind = if hit.Instance.Name == "Top"
+			then hit.Instance:GetAttribute("SlabKind") :: string?
+			else nil,
+		snowy = false,
+	})
+end
+
+-- The embers crackling in the Stoker's burns: a loop on his body, heard only close (Config/Audio
+-- StokerEmbers, Tuning.BruteRemake.Sound EmberNear..EmberReach), in the Steps group so it never
+-- ducks the mix.
+local function emberCrackle(rig: Rig)
+	if rig.crackle then
+		return
+	end
+	local cue = Audio.StokerEmbers
+	local S = Tuning.BruteRemake.Sound
+	local made = Instance.new("Sound")
+	made.Name = "EmberCrackle"
+	made.SoundId = `rbxassetid://{cue.id}`
+	made.Looped = true
+	made.Volume = cue.volume
+	made.PlaybackSpeed = 0.9 + (rig.seed % 20) / 100
+	made.RollOffMode = Enum.RollOffMode.Linear
+	made.RollOffMinDistance = S.EmberNear
+	made.RollOffMaxDistance = S.EmberReach
+	made.SoundGroup = if Registry.AudioController then Registry.AudioController.Group("Steps") else nil
+	made.Parent = rig.root
+	made.TimePosition = (rig.seed % 30)
+	made:Play()
+	rig.crackle = made
+end
+
 local STALK_NOISE = 0.25 -- share of a stalking Hollow's footfalls that also creak or skip a pebble
 -- A foot comes down (Logic/HollowMotion.plants): the Brute shakes the ground, the Stalker's step is
 -- soft, the Crawler's a skitter.
-local function plantStep(rig: Rig, speed: number)
+local function plantStep(rig: Rig, speed: number, foot: string)
 	local position = rig.root.Position
-	if rig.kind == "Brute" then
+	if rig.kind == "Brute" and STOKER then
+		-- the Stoker's own steps (Logic/StokerSound): a heel and its thud over the ground's crunch, the
+		-- burnt left leg heavier; on the shovel-arm step the blade drags, now and then shedding rust
+		rig.stepCount += 1
+		local at = ground(rig)
+		local step = StokerSound.step(foot, surfaceUnder(rig), rig.stepCount, math.random())
+		audio(step.heel, at, step.gain, step.pitch)
+		audio("StokerThud", at, step.thud, step.pitch)
+		audio(step.ground, at, 1, step.pitch)
+		shakeNear(position, 16, 0.25 * step.gain)
+		-- coming round on someone (Logic/StokerFlank) he carries the shovel off the ground: only his steps
+		if StokerSound.drags(foot) and not rig.model:GetAttribute("ShovelUp") then
+			rig.dragCount += 1
+			local blade = at + rig.root.CFrame.RightVector * 3
+			local drag, gain, rust = StokerSound.drag(rig.dragCount, rig.state, math.random())
+			audio(drag, blade, gain, 1 + (math.random() * 2 - 1) * Tuning.BruteRemake.Sound.Jitter)
+			if rust then
+				audio(rust, blade, 1, 0.9 + math.random() * 0.2)
+			end
+		end
+	elseif rig.kind == "Brute" then
 		audio("HollowStep", position, 1, 0.9 + rig.stepSide * 0.08)
 		shakeNear(position, 16, 0.25)
 	elseif rig.kind == "Crawler" then
@@ -451,14 +544,14 @@ local function animate(
 	rig.phase += dt * HollowPoses.cadence(rig.kind, animationSpeed)
 	-- steps sound on the plants (no timer): every other plant while stalking, none while frozen
 	if animationSpeed > 1.5 and not frozen and state ~= "Grab" then
-		for _ in HollowMotion.plants(rig.kind, before, rig.phase) do
+		for _, foot in HollowMotion.plants(rig.kind, before, rig.phase) do
 			local sounds = true
 			if stalking then
 				rig.quietStep = not rig.quietStep
 				sounds = rig.quietStep
 			end
 			if sounds then
-				plantStep(rig, animationSpeed)
+				plantStep(rig, animationSpeed, foot)
 			end
 		end
 	end
@@ -482,6 +575,59 @@ local function animate(
 				onBite(rig, def)
 			end
 		end
+	end
+
+	-- the Stoker's embers breathe like a bellows, brighten while he holds someone and flare on every bite
+	if STOKER and rig.embers then
+		local rate = StokerSound.breathRate(state)
+		local breath = 0.5 + 0.5 * math.sin(now * rate + rig.seed)
+		-- a bellows stroke at each turn of that breathing (out on the brightest), and the embers crackling
+		-- on his body; quiet while he holds someone (the hold has its own sounds)
+		-- standing still and drawn up, he goes quiet: no bellows, the crackle fades out, the embers dim
+		local hush = rig.unfold
+		if rig.crackle then
+			rig.crackle.Volume = Audio.StokerEmbers.volume * (1 - hush)
+		end
+		if rig.breathAt and state ~= "Grab" and hush < 0.5 then
+			for _, stroke in StokerSound.breaths(rig.breathAt, now, rate, rig.seed) do
+				audio(
+					if stroke == "Out" then "StokerBellowsOut" else "StokerBellowsIn",
+					rig.root.Position,
+					1,
+					0.95 + math.random() * 0.1
+				)
+			end
+		end
+		rig.breathAt = now
+		emberCrackle(rig)
+		-- his hollow sockets breathe out what is round him: frost in the snow, fog by the fog bank, else embers
+		local sockets = rig.sockets
+		if sockets and clock - rig.socketAt > 0.5 then
+			rig.socketAt = clock
+			local gap, archetype = StationFog.gap(rig.root.Position)
+			local atmosphere = Registry.AtmosphereController
+			local mode = StokerSocketMode.mode(
+				if atmosphere then atmosphere.Weather("Snow") else 0,
+				archetype ~= nil and StationSnow.snowy(archetype),
+				gap
+			)
+			StokerSockets.set(sockets, mode)
+		end
+		local flare = if rig.flareAt then math.max(0, 1 - (clock - rig.flareAt) / 0.6) else 0
+		local held = if state == "Grab" then 0.7 else 0
+		-- his embers flare brighter as the lanterns coming at him weaken (Tuning.BruteRemake.Heat)
+		if state == "Grab" then
+			local mine = Players.LocalPlayer.Character
+			local mineRoot = mine and mine:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if mineRoot then
+				local heat = Tuning.BruteRemake.Heat
+				local d = (mineRoot.Position - rig.root.Position).Magnitude
+				held += 1.4 * math.clamp((heat.Pull - d) / (heat.Pull - heat.Snuff), 0, 1)
+			end
+		end
+		local glow = (0.8 + 0.7 * breath) * (1 - (1 - Tuning.BruteRemake.Uncanny.EmberHush) * hush)
+		local light = rig.embers :: PointLight
+		light.Brightness = glow + held + 2.2 * flare
 	end
 
 	-- random head twitches: snap, hold, release
@@ -509,6 +655,12 @@ local function animate(
 		windup = windup,
 		grab = grabId,
 		grabTime = grabTime,
+		strike = if grabId and model:GetAttribute("ShovelStrike")
+			then now - (model:GetAttribute("ShovelStrike") :: number)
+			else nil,
+		crush = if grabId and model:GetAttribute("Crush")
+			then now - (model:GetAttribute("Crush") :: number)
+			else nil,
 		grime = grime,
 		coil = coiled,
 		frozen = frozen,
@@ -531,6 +683,25 @@ local function animate(
 	end
 	if twitching then
 		target.Neck = (target.Neck or I) * rig.twitch
+	end
+	-- the Stoker coming round on someone (Logic/StokerFlank): the shovel arm bent to carry the blade off the
+	-- ground, and he walks a little lower and more carefully; the rig eases into it like any pose
+	if rig.kind == "Brute" and STOKER and model:GetAttribute("ShovelUp") and not grabId then
+		target.RElbow = (target.RElbow or I) * CFrame.Angles(0.55, 0, 0)
+		target.RShoulder = (target.RShoulder or I) * CFrame.Angles(-0.12, 0, 0)
+		target.Neck = (target.Neck or I) * CFrame.Angles(0.12, 0, 0)
+	end
+	-- the dead left arm: held stiff and bent, no walk swing, until a grab or its windup needs it
+	if
+		rig.kind == "Brute"
+		and STOKER
+		and Tuning.BruteRemake.Uncanny.DeadClaw
+		and not grabId
+		and state ~= "Windup"
+	then
+		target.LShoulder = I
+		target.LElbow = CFrame.Angles(Tuning.BruteRemake.Uncanny.DeadElbow, 0, 0)
+		target.LWrist = I
 	end
 
 	-- attention and weight: the head follows its prey (or scans), the torso leans into its speed
@@ -559,6 +730,49 @@ local function animate(
 		rig.lean = 0
 	end
 	rig.lastVelocity = velocity
+
+	-- the Stoker's uncanny weight (Tuning.BruteRemake.Uncanny): stooped as he walks, unfolding to his full height
+	-- when he stands; his head level and steady over the stomping body, drifting slowly on its own; losing his
+	-- prey, the head turns on past a neck's limit and the shoulders come round after it
+	if STOKER and rig.kind == "Brute" and (state == "Hunt" or state == "Prowl") and not grabId then
+		local U = Tuning.BruteRemake.Uncanny
+		rig.stillFor = StokerMotion.still(rig.stillFor, Vector3.new(velocity.X, 0, velocity.Z).Magnitude, dt)
+		rig.unfold = StokerMotion.unfold(rig.unfold, rig.stillFor, dt)
+		local targetId = model:GetAttribute("Target")
+		if rig.lastTarget ~= nil and targetId == nil then
+			rig.lostAt = clock
+			rig.lostSide = if rig.aim < 0 then -1 else 1
+		elseif targetId ~= nil then
+			rig.lostAt = nil
+		end
+		rig.lastTarget = targetId :: number?
+		local over = if rig.lostAt then StokerMotion.overturn(clock - rig.lostAt, rig.lostSide) else nil
+		if over == nil then
+			rig.lostAt = nil
+		end
+		local fold = 1 - rig.unfold
+		local waist = (target.Waist or I) * A(-U.Stoop * fold, 0, 0)
+		if over then
+			waist = A(0, over * U.ShoulderShare, 0) * waist
+		end
+		target.Waist = waist
+		target.LKnee = (target.LKnee or I) * A(-U.Knee * fold, 0, 0)
+		target.RKnee = (target.RKnee or I) * A(-U.Knee * fold, 0, 0)
+		local chain = (target.RootJoint or I) * waist
+		local drift = A(
+			math.sin(clock * 0.37 + rig.seed) * 0.03,
+			math.sin(clock * 0.23 + rig.seed * 2) * 0.05,
+			math.sin(clock * 0.31 + rig.seed * 3) * 0.04
+		)
+		target.Neck = CFrame.new(0, -chain.Position.Y * U.Steady, 0)
+			* chain.Rotation:Inverse()
+			* A(0, rig.aim + (over or 0), 0)
+			* A(-U.Gaze, 0, 0)
+			* drift
+	elseif rig.kind == "Brute" then
+		rig.stillFor = 0
+		rig.unfold = StokerMotion.unfold(rig.unfold, 0, dt)
+	end
 
 	-- a blended change eases out over its BlendSeconds; a snap jumps; otherwise smooth toward the
 	-- target, fast through strikes and grabs
@@ -635,6 +849,17 @@ local function register(model: Instance)
 		embers = if chest then chest:FindFirstChild("EmberGlow") :: PointLight? else nil,
 		quietStep = false,
 		breath = nil,
+		stepCount = 0,
+		dragCount = 0,
+		breathAt = nil,
+		crackle = nil,
+		sockets = nil,
+		socketAt = 0,
+		stillFor = 0,
+		unfold = 0,
+		lastTarget = nil,
+		lostAt = nil,
+		lostSide = 1,
 		frozenAt = nil,
 		intent = false,
 		aim = 0,
@@ -647,6 +872,12 @@ local function register(model: Instance)
 		snap = true,
 	}
 	makeTrails(rig)
+	if STOKER and rig.kind == "Brute" then
+		local head = model:FindFirstChild("Head") :: BasePart?
+		if head then
+			rig.sockets = StokerSockets.attach(head)
+		end
+	end
 	rigs[model] = rig
 	if rig.kind == "Stalker" or rig.kind == "Crawler" then
 		cosmetics[model] = HollowCosmetics.attach(model, root)

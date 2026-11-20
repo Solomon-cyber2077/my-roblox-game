@@ -47,6 +47,7 @@ local Tells = require(Shared.Logic.Tells)
 local Visibility = require(Shared.Logic.Visibility)
 
 local Session = require(script.Parent.Parent.Session)
+local Registry = require(script.Parent.Parent.Registry)
 
 local VisibilityController = {}
 
@@ -348,6 +349,48 @@ end
 
 -- The tells now, eased (Logic/Tells): lean strength and direction, flicker, the watch's stutter.
 local tell = { strength = 0, leanX = 0, leanZ = 0, flicker = 0, stutter = 0 }
+local shudderUntil = 0 -- the Stoker's shovel strike made the lantern shudder until then
+local snuffedUntil: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+
+-- The Stoker holding someone (Tuning.BruteRemake.Heat): where he stands, or nil.
+local function holdingStoker(): Vector3?
+	if not Tuning.BruteRemake.Enabled then
+		return nil
+	end
+	local folder = Workspace:FindFirstChild("Hollows")
+	if folder then
+		for _, hollow in folder:GetChildren() do
+			local body = hollow:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if body and hollow:GetAttribute("Kind") == "Brute" and hollow:GetAttribute("State") == "Grab" then
+				return body.Position
+			end
+		end
+	end
+	return nil
+end
+
+-- How a lantern carried at `at` fares beside him: 1 burning, falling toward 0.4 as his heat pulls the flame,
+-- 0 snuffed (at rescue distance; it relights Relight seconds after leaving, or when he lets go).
+local function heatOn(owner: Model, at: Vector3, stoker: Vector3?, clock: number): number
+	local heat = Tuning.BruteRemake.Heat
+	if stoker == nil then
+		snuffedUntil[owner] = nil
+		return 1
+	end
+	local d = Vector3.new(at.X - stoker.X, 0, at.Z - stoker.Z).Magnitude
+	if d <= heat.Snuff then
+		-- the flame goes out with a breath and a sear of the hot wick, once as it goes (Config/Audio StokerSnuff)
+		if clock >= (snuffedUntil[owner] or 0) and Registry.AudioController then
+			Registry.AudioController.Play("StokerSnuff", at + Vector3.new(0, 2, 0))
+		end
+		snuffedUntil[owner] = clock + heat.Relight
+	end
+	if clock < (snuffedUntil[owner] or 0) then
+		return 0
+	end
+	local pull = math.clamp((heat.Pull - d) / (heat.Pull - heat.Snuff), 0, 1)
+	return 1 - 0.6 * pull * (0.75 + 0.25 * math.sin(clock * 23 + d))
+end
 local lastTellAt = os.clock()
 
 local function stalkers(): { Tells.Source }
@@ -393,6 +436,11 @@ local function updateTells(root: BasePart?, clock: number)
 		local yaw = -math.rad(Tuning.Stalk.LeanDegrees) * tell.strength * math.clamp(away.X, -1, 1)
 		holder.CFrame = CFrame.new(holder.Position) * CFrame.Angles(0, yaw, 0)
 	end
+end
+
+-- The Stoker's shovel strike: the local lantern shudders for `seconds`.
+function VisibilityController.Shudder(seconds: number)
+	shudderUntil = os.clock() + seconds
 end
 
 -- The stalk tells now: `stutter` true while the pocket watch should stutter.
@@ -477,6 +525,7 @@ function VisibilityController.Start()
 		local reach = radius * MathX.lerp(1, CHASE.LightRange, look.dim)
 		local simple = performance()
 		local eye = Workspace.CurrentCamera.CFrame.Position
+		local stoker = holdingStoker()
 		for _, entry in lanterns do
 			local light = entry.light
 			if light:GetAttribute("PayrollAttached") then
@@ -490,12 +539,21 @@ function VisibilityController.Start()
 			end
 			local lens = light.Parent
 			if lens and lens:IsA("BasePart") then
-				light.Range = reach
+				local burn = if ownerRoot and ownerRoot:IsA("BasePart")
+					then heatOn(entry.character, ownerRoot.Position, stoker, clock)
+					else 1
+				if clock < shudderUntil and light == ownLantern then
+					burn *= 0.55 + 0.45 * math.abs(math.sin(clock * 31))
+				end
+				light.Range = reach * math.max(burn, 0.25)
 				light.Shadows = false
 				-- Performance: a crewmate's lantern far off is one dynamic light too many
-				light.Enabled = not simple
-					or light == ownLantern
-					or (lens.Position - eye).Magnitude <= BUDGET.LanternCull
+				light.Enabled = burn > 0
+					and (
+						not simple
+						or light == ownLantern
+						or (lens.Position - eye).Magnitude <= BUDGET.LanternCull
+					)
 			end
 		end
 		if
@@ -505,9 +563,10 @@ function VisibilityController.Start()
 			and not root.Parent:GetAttribute("PayrollCarriers")
 		then
 			local light = coneFor(root)
-			light.Enabled = true
+			local burn = heatOn(root.Parent :: Model, root.Position, stoker, clock)
+			light.Enabled = burn > 0
 			light.Color = lanternColor
-			light.Brightness = LAMP.ConeBrightness
+			light.Brightness = LAMP.ConeBrightness * burn
 			light.Range = math.max(if simple then BUDGET.ConeRangePerformance else LAMP.ConeRange, radius)
 			light.Shadows = not simple and BUDGET.Shadows > 0
 		elseif cone then

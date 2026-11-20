@@ -22,7 +22,8 @@ end
 function LootRoll.weights(
 	containerKind: string,
 	zone: string,
-	archetype: Archetype?
+	archetype: Archetype?,
+	boost: { [string]: number }?
 ): { Rng.Weighted<string> }
 	local def = Loot.Containers[containerKind]
 	assert(def, `unknown container {containerKind}`)
@@ -39,14 +40,23 @@ function LootRoll.weights(
 		if item.value >= Loot.RareValue then
 			weight *= zoneDef.rareMultiplier
 		end
+		if boost and boost[entry.item] then
+			weight *= boost[entry.item]
+		end
 		table.insert(out, { weight = weight, value = entry.item })
 	end
 	return out
 end
 
-function LootRoll.roll(containerKind: string, zone: string, archetype: Archetype?, seed: number): { string }
+function LootRoll.roll(
+	containerKind: string,
+	zone: string,
+	archetype: Archetype?,
+	seed: number,
+	boost: { [string]: number }?
+): { string }
 	local rng = Rng.new(seed)
-	local weights = LootRoll.weights(containerKind, zone, archetype)
+	local weights = LootRoll.weights(containerKind, zone, archetype, boost)
 	local rolls = Loot.Zones[zoneKey(zone)].rolls
 	local found: { string } = {}
 	for _ = 1, rolls do

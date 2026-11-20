@@ -98,8 +98,14 @@ local function run(): string
 		return {}
 	end)
 	roblox.implementMethod("Workspace", "Raycast", function(_, origin, direction)
-		if direction.Y < -6 then
-			return { Position = roblox.Vector3.new(origin.X, 0, origin.Z), Normal = roblox.Vector3.yAxis }
+		-- flat ground at y = 0: only a ray that reaches it hits it (a tall Hollow's sight line to a pinned
+		-- victim drops more than 6 studs without touching the ground)
+		if direction.Y < 0 and origin.Y + direction.Y <= 0 then
+			local t = origin.Y / -direction.Y
+			return {
+				Position = roblox.Vector3.new(origin.X + direction.X * t, 0, origin.Z + direction.Z * t),
+				Normal = roblox.Vector3.yAxis,
+			}
 		end
 		return nil
 	end)

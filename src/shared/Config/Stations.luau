@@ -793,7 +793,7 @@ return table.freeze({
 	}),
 	VillageFill = 0.55, -- the share of the Far/Village boundary closed off
 	-- The sinkhole edge (props EdgeMark on every open edge tile): an unseen stop RailBack in
-	-- from the edge; TapeBack is the margin HollowService keeps its teaching Crawler inside.
+	-- from the edge; TapeBack is the margin HollowService keeps its teaching Hollow inside.
 	Edge = table.freeze({ RailBack = 4.5, TapeBack = 6.6 }),
 	DressingCount = 6, -- things scattered round the yard
 	-- Where loot lies by depth (LayoutGen): 0 near the platform, the nearer the likelier; n at

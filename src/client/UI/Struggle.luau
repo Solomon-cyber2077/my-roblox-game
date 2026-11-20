@@ -37,6 +37,7 @@ local helpers: TextLabel
 local coach: TextLabel? = nil
 local onPress: (() -> ())? = nil
 local verdictUntil = 0
+local fadeBase: { { inst: Frame, base: number } } = {} -- what Struggle.fade thins (their background)
 
 local WIDTH = 320
 local BAR_Y, BAR_W, BAR_H = 44, WIDTH, 16
@@ -265,6 +266,18 @@ function Struggle.mount(gui: ScreenGui, press: () -> ())
 	hint.ZIndex = 21
 	hint.Parent = root
 	coach = hint
+	for _, inst in { bar, zoneFrame, greatFrame, needle, fill } do
+		table.insert(fadeBase, { inst = inst, base = inst.BackgroundTransparency })
+	end
+end
+
+-- The Stoker's pin stage: the check thins away (0 clear, 1 gone). Call after `set` each frame.
+function Struggle.fade(alpha: number)
+	local a = math.clamp(alpha, 0, 1)
+	for _, f in fadeBase do
+		f.inst.BackgroundTransparency = f.base + (1 - f.base) * a
+	end
+	keyLabel.TextTransparency += (1 - keyLabel.TextTransparency) * a
 end
 
 -- The tutorial's line under the check (Controllers/TutorialController), "" for none.

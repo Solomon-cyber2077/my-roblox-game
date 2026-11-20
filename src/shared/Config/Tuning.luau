@@ -580,7 +580,126 @@ local Tuning = {
 	},
 	-- Kinds kept out of play: never rolled, and a sleeper of that kind wakes as a Stalker instead (owner,
 	-- 2026-11-09: the Brute sits out the Test Launch until its remake). Studio dev commands still spawn them.
-	HollowBenched = { Brute = true } :: { [string]: boolean },
+	-- Test Launch (owner 2026-11-18): the Crawler is put off to the Official Release; the Stoker comes only by his return
+	HollowBenched = { Brute = true, Crawler = true } :: { [string]: boolean },
+	-- the screen while a Hollow holds you (owner 2026-11-18): the HUD fades back to HudTransparency, phones get
+	-- no dark vignette (it hides the game), and the veins reach PhoneVeins as far in on a phone
+	GrabScreen = { Enabled = true, HudTransparency = 0.85, PhoneVeins = 0.78 },
+	-- what players read for each kind (the code keeps its ids): the Brute is "the Stoker" (owner 2026-11-18;
+	-- name check in IP-REGISTER)
+	HollowNames = { Stalker = "Stalker", Crawler = "Crawler", Brute = "Stoker" } :: { [string]: string },
+	-- The Brute's close-up remake (Config/BruteMeshes, tools/brute). Off: the block build, as today. On, it draws the
+	-- meshes once their ids are bound; the Brute itself stays benched above until its rule is built.
+	BruteRemake = {
+		Enabled = true,
+		-- The giant's late-run return (Logic/ReachIn.returns): with Enabled on, the Brute leaves the bench only at
+		-- late stops past the tutorial runs, at most one a stop. Off: benched as above.
+		Returns = true,
+		-- Flashbulbs (a flash makes a Hollow let go) turn up this much more often at a stop he comes to
+		FlashbulbBoost = 2.5,
+		-- with a crewmate to save the held player: one shovel strike for crewmates at a distance (within Strike,
+		-- beyond Pull); closer, his heat pulls their lantern flames (Pull); at rescue distance they go out (Snuff,
+		-- the rescue reach of Config/Injury plus 2); a snuffed lantern relights Relight seconds after leaving
+		Heat = { Strike = 34, Pull = 18, Snuff = 8, Relight = 3 },
+		-- the uncanny weight of him (owner 2026-11-19, all five: "his head and neck, other movements should help avoid
+		-- a mechanical feel"), Logic/StokerMotion and HollowAnimator:
+		--   his head stays level while his body stomps and sways (Steady: share of the bob it soaks up), gazing a
+		--   little down (Gaze, radians), with a slow drift of its own so it never locks
+		--   losing his prey, his head keeps turning past a neck's limit (up to LookMax radians at LookSpeed a
+		--   second), holds LookHold seconds, then eases back at LookBack; his shoulders take ShoulderShare of it
+		--   he walks stooped (Stoop radians at the waist, Knee at the knees); standing still StillAfter seconds he
+		--   unfolds to his full height (UnfoldRate a second; folds again at FoldRate) and goes quiet: no
+		--   bellows, the crackle fades out and the embers dim to EmberHush of their glow
+		Uncanny = {
+			Steady = 0.8,
+			Gaze = 0.18,
+			LookMax = 2.4,
+			LookSpeed = 0.7,
+			LookHold = 2.5,
+			LookBack = 0.6,
+			ShoulderShare = 0.25,
+			Stoop = 0.45,
+			Knee = 0.15,
+			StillAfter = 0.8,
+			UnfoldRate = 0.4,
+			FoldRate = 1.5,
+			EmberHush = 0.3,
+			-- the short burnt left arm is dead (owner 2026-11-20, "Claw only"): it hangs stiff, the forearm held
+			-- DeadElbow radians forward of straight down, and never swings; his grabs still use it
+			DeadClaw = true,
+			DeadElbow = 0.61,
+		},
+		-- his eyes are hollow sockets that breathe out what is around him (owner 2026-11-19: "have fog, ember particles
+		-- (very faint), or frost air come out the sockets depending on the situation. If neither fog or snow is
+		-- present, then use the embers"): frost while snow falls or lies at the stop, fog within FogNear studs of the
+		-- fog front, else faint embers (Logic/StokerSockets). Socket mouths in the head's frame;
+		-- Performance plays them at PerfShare of the rate
+		Sockets = {
+			-- the socket mouths (the scan rebuild's round 7 sockets.json): wide apart, the burnt left one lower
+			R = { 0.249, -0.451, -0.362 },
+			L = { -0.249, -0.488, -0.355 },
+			FogNear = 24,
+			PerfShare = 0.5,
+		},
+		-- your side only, while he holds you: a faint cool light just in front of his face so the hollow sockets
+		-- read from the grab camera under orange lamps (studs in front of the head, colour 0-255)
+		FaceLight = { Enabled = true, Ahead = 2.4, Range = 5, Brightness = 0.7, Color = { 170, 188, 214 } },
+		-- cunning, not snapping (owner 2026-11-19: "he might see someone but will take another path and catch them
+		-- off guard (in these moments only his footsteps sound because he lifts his shovel slightly off the
+		-- ground)"): having seen prey Min-Max studs off, he sometimes (Chance) swings wide and comes at them from
+		-- the side or behind (Logic/StokerFlank), at Pace of his chase, the shovel lifted so it doesn't scrape.
+		-- It ends when he is round (Arrive), when they turn and see him (Seen, the cosine of their view cone)
+		-- inside SeenRange, or after Seconds; then he comes on as usual. One try per prey per Cooldown seconds
+		Flank = {
+			Enabled = true,
+			Chance = 0.6,
+			Min = 18,
+			Max = 70,
+			Swing = 0.55, -- how far out the first leg bows, as a share of the distance to the prey
+			Behind = 2.2, -- radians off their facing that he comes round to (about 125 degrees: side-behind)
+			Radius = 9, -- studs from them, where he comes round to
+			Pace = 0.8,
+			Arrive = 4,
+			Seen = 0.75,
+			SeenRange = 40,
+			Seconds = 12,
+			Cooldown = 25,
+		},
+		-- his sound set (Logic/StokerSound, Config/Audio Stoker*)
+		Sound = {
+			-- each footfall: the stiff burnt left leg lands harder and lower than the right, with more of
+			-- the deep thud under it (gain and pitch on the heel, gain on the thud)
+			Left = { gain = 1.15, pitch = 0.92, thud = 1 },
+			Right = { gain = 0.9, pitch = 1.04, thud = 0.45 },
+			Jitter = 0.05, -- +- share of pitch on every heel and drag, so no two land alike
+			RustShare = 0.3, -- share of shovel drags that shed dry rust as well
+			-- the drag's level by state: loudest on the hunt, so it swells as he comes for you
+			Drag = { Hunt = 1.25, Prowl = 0.85, Other = 1 } :: { [string]: number },
+			-- the embers' breathing (radians a second, HollowAnimator): bellows out on the brightest, in on
+			-- the dimmest
+			BreathRate = { Hunt = 2.6, Rest = 1.5 },
+			-- the ember crackle on his body: full within EmberNear studs, gone at EmberReach
+			EmberNear = 6,
+			EmberReach = 24,
+		},
+		Return = {
+			Chance = 0.35, -- of an eligible stop (from Difficulty.BruteReturn.FirstStop) rolling one
+			LightScale = 1, -- share of a SafeLight's Radius that holds it, in every run (not Config/Tutorial's)
+		},
+		-- Reaching in at doors and windows (Logic/ReachIn, Config/Grabs "Reach"), while Enabled is on
+		Reach = {
+			Depth = 4, -- studs inside an opening's inner face a player can be taken from
+			Slack = 0.5, -- studs past each side of the opening still in reach
+			MaxFloor = 1, -- only openings on the ground floor (studs above its lowest room)
+			Stand = 5.4, -- studs out from the wall's face where it stands (its Reach hold sits 5 in front)
+			Arrive = 2, -- within this of the stand point counts as there
+			Tell = 1.2, -- seconds at the frame (bent, hands on it, looking in) before it reaches
+			Cooldown = 6, -- seconds before the same opening is used again
+			Search = 2, -- openings nearest the prey it waits at when none reaches them
+			Lurk = 8, -- seconds it waits at one before going round to the next
+			Through = { Door = true, Broken = true, Glass = true, Boarded = false } :: { [string]: boolean },
+		},
+	},
 	HollowKinds = {
 		Stalker = {
 			walk = 1,
@@ -627,6 +746,23 @@ local Tuning = {
 		Pin = {
 			Tick = 1, -- seconds between damage ticks while pinned (damage: Difficulty.GrabDamage)
 			SlamSeconds = 0.35, -- the body is driven from standing to the ground over this long
+		},
+		-- the Stoker's finish (Config/Grabs crush): the shovel's swing, from the raise to the blow landing
+		Crush = {
+			Seconds = 0.55,
+			-- solo, the screen goes black this long before the blow lands, so it is never seen (owner 2026-11-18:
+			-- "screen goes black just before impact, solo players know they were hit and where they were hit but
+			-- they never see it")
+			BlackLead = 0.12,
+		},
+		-- the Stoker's pin is the skill check's second stage (owner 2026-11-18): faster checks, then the check
+		-- fades out; fully faded, or MaxMisses more misses, and the death begins (Logic/Grab.pinStage)
+		PinStage = {
+			Speed = 0.62, -- each turn of the marker takes this share of an ordinary turn
+			Gap = 0.55, -- and the next one comes this much sooner
+			FadeDelay = 2.4, -- seconds of fast checks before the check starts to fade
+			FadeSeconds = 4.0, -- from the first fade to gone
+			MaxMisses = 3, -- misses after the pin that end it at once
 		},
 	},
 

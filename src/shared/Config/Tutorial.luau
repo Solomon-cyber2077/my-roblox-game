@@ -13,7 +13,7 @@
 	grace           seconds after you step off the train before any Hollow comes for you
 	zoneDegrees     skill-check zone width for the whole run (nil: Difficulty.SkillCheck.ZoneByStop)
 	postGrab        immunity and stagger after breaking free, at every stop
-	scriptedGrab    the scripted Crawler at ScriptedGrab.Stop, to teach the skill check
+	scriptedGrab    the scripted Hollow (ScriptedGrab.Kind) at ScriptedGrab.Stop, to teach the skill check
 	quietUntilStop  stops 1..this: no wanderer and no timed events (no Surge), so only the
 	                planned first-run encounters happen (docs/FINAL-DESIGN.md Design step 5)
 	sighting        stop 1's scripted Stalker sighting (Sighting below; E2's treatment arm)
@@ -21,7 +21,7 @@
 	                Stop3.AwayStuds or more from the train, and nothing else
 
 	First run (tier 1, Design step 5): stop 1 no attacks and the sighting, no leak on the first cruise;
-	stop 2 the scripted Crawler (pursuit 24, lunge 40, the first-strike guard); stop 3 the
+	stop 2 the scripted Stalker (pursuit 24, lunge 40, the first-strike guard); stop 3 the
 	stalking wanderer. Tier 2 keeps zone 100 and grace 15 without a scripted grab.
 ]]
 
@@ -110,12 +110,13 @@ return table.freeze({
 		Tag = "SafeLight",
 		TrainRadius = 34,
 		LampRadius = 16,
-		-- where the teaching Crawler comes (ScriptedGrab.Stop) the yard's lamp pools are SafeLights
+		-- where the teaching Hollow comes (ScriptedGrab.Stop) the yard's lamp pools are SafeLights
 		-- too: a lit way out across the bigger stop, darkness between the pools (StationService)
 		YardLampsAtStop = 2,
 	}),
 
-	-- Design step 5 installs this tier-1 stop-2 encounter; absolute speeds ignore normal scaling.
+	-- Design step 5 installs this tier-1 stop-2 encounter; absolute speeds ignore normal scaling. The id keeps
+	-- its old name; the encounter is ScriptedGrab.Kind's (a Stalker since 2026-11-18).
 	FirstCrawler = table.freeze({
 		Tier = 1,
 		Stop = 2,
@@ -125,15 +126,16 @@ return table.freeze({
 		WarningSeconds = 1.5,
 	}),
 
-	-- The first run's teaching Crawler (tier 1, stop 2): it comes for the first player who is off
+	-- The first run's teaching Hollow (tier 1, stop 2): it comes for the first player who is off
 	-- the train once their grace is over, at FirstCrawler's absolute speeds behind the
 	-- first-strike guard; its hold has the oversized zone and cannot kill. Sprinting away works.
 	ScriptedGrab = table.freeze({
 		Stop = 2,
-		Kind = "Crawler",
+		-- a Stalker (owner, 2026-11-18: "switch to stalker"): the Crawler is put off to the Official Release
+		Kind = "Stalker",
 		AfterGrace = 4, -- seconds after the player's grace ends
 		Distance = 18, -- studs from the player it claws up
-		ChaseScale = 0.55, -- only if a scripted Crawler ever runs outside FirstCrawler's stop
+		ChaseScale = 0.55, -- only if a scripted Hollow ever runs outside FirstCrawler's stop
 		ZoneDegrees = 100,
 	}),
 

@@ -10,7 +10,7 @@
 	Tutorial (Config/Tutorial, by HazardParams.tutorial): nobody is hunted until they have been
 	off the train the tier's `grace` seconds at this stop. A first run (Design step 5): at stop 1 a
 	harmless scripted Stalker is sighted at the edge of the light and withdraws (Logic/Sighting);
-	at stop 2 a scripted Crawler comes for one player to teach the skill check (an oversized zone,
+	at stop 2 a scripted Stalker comes for one player to teach the skill check (an oversized zone,
 	the first-strike guard, and its hold cannot kill); at stop 3 one Stalker wanders and stalks
 	only a player 20+ studs from the train.
 
@@ -61,6 +61,8 @@ local Tuning = require(Shared.Config.Tuning)
 local Grab = require(Shared.Logic.Grab)
 local Injury = require(Shared.Logic.Injury)
 local InjuryConfig = require(Shared.Config.Injury)
+local ReachIn = require(Shared.Logic.ReachIn)
+local StokerFlank = require(Shared.Logic.StokerFlank)
 local Rescue = require(Shared.Logic.Rescue)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 local Sighting = require(Shared.Logic.Sighting)
@@ -101,6 +103,12 @@ type Hold = {
 	root: BasePart,
 	humanoid: Humanoid,
 	frame: CFrame, -- where the victim's root is held
+	base: CFrame, -- the Hollow's frame when it seized them (a grab that turns into another is placed from it)
+	slamAt: number?, -- os.clock() a later grab began driving the body from `slamFrom` (the Stoker's pin)
+	crushAt: number?, -- os.clock() the Stoker's shovel lands and finishes them
+	pinnedAt: number?, -- server time he pinned them: the skill check's fast, fading second stage
+	pinMisses: number?, -- misses since the pin
+	struck: boolean?, -- his one shovel strike for crewmates at a distance has been made
 	slamFrom: CFrame?, -- a pin drives the body from here down to `frame` (Tuning.Grab.Pin)
 	progress: number, -- skill-check progress toward SkillCheck.Required (crewmates' pries add to it)
 	zone: number, -- skill-check zone width in degrees
@@ -157,7 +165,7 @@ type Hollow = {
 	stirAt: number, -- seconds into the dwell when a sleeper wakes by itself
 	checkAt: number,
 	hold: Hold?,
-	scripted: Player?, -- the tutorial's teaching Crawler: it hunts only this player
+	scripted: Player?, -- the tutorial's teaching Hollow: it hunts only this player
 	stalk: StalkRun?, -- the stalk under way
 	exposure: { [Player]: number }, -- warning seconds each target has had from this Hollow
 	stalked: { [Player]: number }, -- os.clock() it stalked each target this stop (the budget)
@@ -166,6 +174,16 @@ type Hollow = {
 	lastThink: number,
 	door: BasePart?, -- the shut door it is forcing
 	sighting: SightingRun?, -- stop 1's scripted sighting: never hunts, strikes or grabs
+	reach: ReachRun?, -- the giant Brute's reach-in at the building its prey is in (Logic/ReachIn)
+	flank: StokerFlank.Flank?, -- the Stoker coming round to their side or back, shovel lifted (Logic/StokerFlank)
+	flankTried: { [Player]: number }, -- when he last tried coming round on each prey
+}
+
+type ReachRun = {
+	building: number,
+	openings: { ReachIn.Opening },
+	track: ReachIn.Track,
+	telling: boolean, -- it has turned to the frame for this tell
 }
 
 type SightingRun = {
@@ -213,8 +231,10 @@ local alertUntil = 0 -- os.clock() until which every Hollow hunts the crew (a Su
 local T = Difficulty.Tutorial
 local safeLights: { BasePart } = {} -- parts tagged SafeLight
 local lightScale = 0 -- the tutorial tier's safeLightScale; 0 past the tutorial
+local bruteDue = false -- this stop rolled the giant Brute's late return and it hasn't come yet
+local stokerStop = false -- this stop rolled it at all (stays true after he comes: the Flashbulb boost)
 local offTrainAt: { [Player]: number } = {} -- os.clock() each player first stood off the train this stop
--- the first run's teaching grab at its stop: pending until the Crawler has come and gone
+-- the first run's teaching grab at its stop: pending until the teaching Hollow has come and gone
 local scripted: { pending: boolean, hollow: Hollow? } = { pending = false, hollow = nil }
 -- stop 1's scripted sighting on a first run (E2's treatment arm): pending until it appears
 local sightingPending = false
@@ -267,6 +287,9 @@ local function setState(hollow: Hollow, state: string)
 	hollow.stateAt = os.clock()
 	if state ~= "Hunt" then
 		hollow.model:SetAttribute("Intent", nil) -- the committed approach ends with the hunt
+		-- and so does the Stoker's coming round (Logic/StokerFlank): the shovel goes back down
+		hollow.flank = nil
+		hollow.model:SetAttribute("ShovelUp", nil)
 	end
 	hollow.model:SetAttribute("State", state)
 	hollow.model:SetAttribute("StateAt", serverNow())
@@ -278,12 +301,13 @@ local function safeEdge(): number
 end
 
 -- The tutorial's safe light whose radius covers `position`, if any.
-local function safeLightAt(position: Vector3): BasePart?
-	if lightScale <= 0 then
+local function safeLightAt(position: Vector3, scale: number?): BasePart?
+	local s = scale or lightScale
+	if s <= 0 then
 		return nil
 	end
 	for _, part in safeLights do
-		local radius = ((part:GetAttribute("Radius") :: number?) or 0) * lightScale
+		local radius = ((part:GetAttribute("Radius") :: number?) or 0) * s
 		if radius > 0 and part.Parent then
 			local d = part.Position - position
 			if Vector3.new(d.X, 0, d.Z).Magnitude < radius then
@@ -294,9 +318,20 @@ local function safeLightAt(position: Vector3): BasePart?
 	return nil
 end
 
-local function isLit(position: Vector3): boolean
+local function isLit(position: Vector3, scale: number?): boolean
 	local buildings = Registry.BuildingService
-	return (buildings ~= nil and buildings.IsLitAt(position)) or safeLightAt(position) ~= nil
+	return (buildings ~= nil and buildings.IsLitAt(position)) or safeLightAt(position, scale) ~= nil
+end
+
+-- The remade giant Brute (Tuning.BruteRemake): it can't fit a door, so it reaches in (Logic/ReachIn).
+local function giant(hollow: Hollow): boolean
+	return Tuning.BruteRemake.Enabled and hollow.kind == "Brute"
+end
+
+-- The share of a SafeLight's radius that holds `hollow` off: the giant is held in every run, the rest only
+-- in the tutorial runs (Config/Tutorial safeLightScale).
+local function lightFor(hollow: Hollow): number
+	return if giant(hollow) then Tuning.BruteRemake.Return.LightScale else lightScale
 end
 
 local function tutorialTier(): Tutorial.Def?
@@ -556,6 +591,17 @@ local function release(hollow: Hollow, why: string)
 				local away = hold.root.Position - hollow.root.Position
 				local flat = Vector3.new(away.X, 0, away.Z)
 				local direction = if flat.Magnitude > 0.1 then flat.Unit else -hollow.root.CFrame.LookVector
+				if hold.def.reach then
+					-- hauled out through a door or window, they hang between him and the wall: straight away
+					-- from him is back into the frame they came through, where they wedge. Fling them along
+					-- the wall instead, to whichever side has more room
+					local side = level(hollow.root).RightVector
+					local function room(d: Vector3): number
+						local hit = Workspace:Raycast(hold.root.Position, d * 12, sightParams)
+						return if hit then hit.Distance else 12
+					end
+					direction = if room(side) >= room(-side) then side else -side
+				end
 				NetService.Fire("Fx", hold.victim, "Escaped", {
 					why = why,
 					kind = hollow.kind,
@@ -597,10 +643,18 @@ local function release(hollow: Hollow, why: string)
 		-- staggered: it reels back, shoved hard at first, and cannot strike until it recovers
 		hollow.reelUntil = os.clock() + Difficulty.PostGrab.StaggerSeconds
 		setState(hollow, "Reel")
-		NetService.FireAll("Notify", "Crew", `{hold.victim.DisplayName} fought free of a {hollow.kind}!`)
+		NetService.FireAll(
+			"Notify",
+			"Crew",
+			`{hold.victim.DisplayName} fought free of a {Tuning.HollowNames[hollow.kind] or hollow.kind}!`
+		)
 	elseif why == "Escaped" then
 		setState(hollow, "Recover")
-		NetService.FireAll("Notify", "Crew", `{hold.victim.DisplayName} fought free of a {hollow.kind}!`)
+		NetService.FireAll(
+			"Notify",
+			"Crew",
+			`{hold.victim.DisplayName} fought free of a {Tuning.HollowNames[hollow.kind] or hollow.kind}!`
+		)
 	elseif why == "Rescued" then
 		-- the crew tore them loose: it reels with what it kept
 		hollow.reelUntil = os.clock() + InjuryConfig.Rescue.Stagger
@@ -614,7 +668,7 @@ local function release(hollow: Hollow, why: string)
 end
 
 -- Seizes `target` with the first of this Hollow's grabs that has room. False on a miss.
-local function seize(hollow: Hollow, target: Player): boolean
+local function seize(hollow: Hollow, target: Player, through: { def: Grabs.Def, base: CFrame }?): boolean
 	local character = target.Character
 	local root = characterRoot(target)
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -632,7 +686,14 @@ local function seize(hollow: Hollow, target: Player): boolean
 		else level(hollow.root)
 	local chosen: Grabs.Def? = nil
 	local frame = base
-	for _, def in hollow.order do
+	if through then
+		-- a reach-in: it stands outside the opening and hauls them out to the spot before it, where it stands
+		base = through.base
+		position = base.Position
+		chosen, frame = through.def, holdFrame(base, through.def)
+	end
+	local tries: { Grabs.Def } = if through then {} else hollow.order
+	for _, def in tries do
 		local candidate = holdFrame(base, def)
 		if roomFor(base, candidate) then
 			chosen, frame = def, candidate
@@ -662,7 +723,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 	humanoid.Sit = false
 	root.Anchored = true
 	-- a pin starts from where they stood and is slammed down over the first ticks
-	local slamFrom = if def.pin then root.CFrame else nil
+	local slamFrom = if def.pin or def.reach or def.opens then root.CFrame else nil
 	root.CFrame = slamFrom or frame
 	root.AssemblyLinearVelocity = Vector3.zero
 
@@ -684,6 +745,8 @@ local function seize(hollow: Hollow, target: Player): boolean
 	character:SetAttribute("GrabEscape", 0)
 	character:SetAttribute("GrabFinishAt", finishAt)
 	character:SetAttribute("GrabStyle", def.id)
+	character:SetAttribute("PinFadeFrom", nil)
+	character:SetAttribute("PinFadeTo", nil)
 	Registry.CrewService.TagDamage(character, "Hollow")
 	hollow.model:SetAttribute("GrabStyle", def.id)
 	hollow.model:SetAttribute("GrabAt", now)
@@ -692,7 +755,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 	-- the crew can tear at it to pull them free
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = "Pull free"
-	prompt.ObjectText = if def.pin then `{target.DisplayName} (pinned by the Brute)` else target.DisplayName
+	prompt.ObjectText = if def.pin then `{target.DisplayName} (pinned by the Stoker)` else target.DisplayName
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 11
 	prompt.RequiresLineOfSight = false
@@ -708,6 +771,7 @@ local function seize(hollow: Hollow, target: Player): boolean
 		root = root,
 		humanoid = humanoid,
 		frame = frame,
+		base = base,
 		slamFrom = slamFrom,
 		progress = 0,
 		zone = zone,
@@ -766,6 +830,50 @@ local function seize(hollow: Hollow, target: Player): boolean
 end
 
 -- Applies one skill-check result to the hold: progress, the clock, the next check.
+-- The Stoker's lift turns into his pin on the first missed press: slammed down under the burnt hand, and
+-- the victim's screen starts to bleed in at the edges (UI/Veins; no blood in the world).
+-- Nobody else alive in the crew: the Stoker's shovel finishes a lone player (black at the impact); with
+-- crewmates it is the ordinary kill, like every other Hollow.
+local function soloHold(hold: Hold): boolean
+	for _, ally in Registry.CrewService.AlivePlayers() do
+		if ally ~= hold.victim then
+			return false
+		end
+	end
+	return true
+end
+
+local function pinHold(hollow: Hollow, final: boolean?)
+	local hold = hollow.hold :: Hold
+	local def = Grabs.ById[hold.def.onMiss :: string]
+	if def == nil then
+		return
+	end
+	hold.def = def
+	hold.slamFrom = hold.root.CFrame
+	hold.slamAt = os.clock()
+	hold.frame = holdFrame(hold.base, def)
+	hold.character:SetAttribute("GrabStyle", def.id)
+	hollow.model:SetAttribute("GrabStyle", def.id)
+	hollow.model:SetAttribute("GrabAt", serverNow())
+	if hold.prompt then
+		hold.prompt.ObjectText = `{hold.victim.DisplayName} (pinned by the Stoker)`
+	end
+	NetService.Fire("Fx", hold.victim, "Veins", { at = serverNow() })
+	if not final then
+		-- the check runs faster, then fades out; when it is gone the death begins (Logic/Grab.pinStage)
+		local now = serverNow()
+		local from, to = Grab.pinStage(now)
+		hold.pinnedAt = now
+		hold.pinMisses = 0
+		hold.finishAt = to
+		hold.character:SetAttribute("GrabFinishAt", to)
+		hold.character:SetAttribute("PinFadeFrom", from)
+		hold.character:SetAttribute("PinFadeTo", to)
+	end
+	NetService.FireAll("Fx", "Pinned", { victim = hold.victim.UserId })
+end
+
 local function judgeCheck(hollow: Hollow, result: SkillCheck.Result)
 	local hold = hollow.hold
 	local check = hold and hold.check
@@ -777,9 +885,11 @@ local function judgeCheck(hollow: Hollow, result: SkillCheck.Result)
 	hold.progress = progress
 	hold.finishAt -= penalty
 	hold.check = nil
-	hold.nextCheckAt = serverNow() + SkillCheck.gap(function(lo, hi)
-		return rng:NextNumber(lo, hi)
-	end)
+	hold.nextCheckAt = serverNow()
+		+ SkillCheck.gap(function(lo, hi)
+				return rng:NextNumber(lo, hi)
+			end)
+			* (if hold.pinnedAt then G.PinStage.Gap else 1)
 	hold.character:SetAttribute("GrabFinishAt", hold.finishAt)
 	publishEscape(hold)
 	NetService.Fire("Fx", hold.victim, "SkillResult", {
@@ -789,6 +899,14 @@ local function judgeCheck(hollow: Hollow, result: SkillCheck.Result)
 	})
 	if SkillCheck.freed(progress) then
 		release(hollow, "Escaped")
+	elseif result == "Miss" and hold.def.onMiss then
+		pinHold(hollow)
+	elseif result == "Miss" and hold.pinnedAt then
+		hold.pinMisses = (hold.pinMisses or 0) + 1
+		if (hold.pinMisses :: number) >= G.PinStage.MaxMisses then
+			hold.finishAt = serverNow() -- too many misses: the death begins now
+			hold.character:SetAttribute("GrabFinishAt", hold.finishAt)
+		end
 	end
 end
 
@@ -948,7 +1066,7 @@ function rescueTick(hollow: Hollow)
 		NetService.FireAll(
 			"Notify",
 			"Crew",
-			`{if rescuer then rescuer.DisplayName else "The crew"} tore {victim.DisplayName} free of a {hollow.kind}!`
+			`{if rescuer then rescuer.DisplayName else "The crew"} tore {victim.DisplayName} free of a {Tuning.HollowNames[hollow.kind] or hollow.kind}!`
 		)
 	elseif phase == "Failed" then
 		endRescue(hold, session)
@@ -963,7 +1081,24 @@ function finishHold(hollow: Hollow)
 		release(hollow, "Timeout")
 		return
 	end
+	if hold.def.onMiss then
+		pinHold(hollow, true) -- still lifted: down under his hand first, so a crewmate can reach them
+	end
 	if hold.rescue == nil and openRescue(hollow) then
+		return
+	end
+	if hold.def.crush and soloHold(hold) then
+		-- the shovel comes down: the client plays the swing, the crunch and the camera; the body goes still
+		-- when it lands. Implied only: nothing is torn away (moderation, the 10-28 pass)
+		if hold.crushAt == nil then
+			hold.crushAt = os.clock() + Tuning.Grab.Crush.Seconds
+			hollow.model:SetAttribute("Crush", serverNow())
+			NetService.FireAll(
+				"Fx",
+				"Crush",
+				{ victim = hold.victim.UserId, landsIn = Tuning.Grab.Crush.Seconds }
+			)
+		end
 		return
 	end
 	Registry.CrewService.TagDamage(hold.character, "Hollow")
@@ -1015,9 +1150,41 @@ local function holdTick(hollow: Hollow)
 	local elapsed = clock - hold.startedAt
 	-- keep the victim where the Hollow holds them (a pin slams them there first)
 	hold.root.Anchored = true
+	if
+		not hold.struck
+		and hold.def.id ~= "Reach"
+		and hollow.kind == "Brute"
+		and Tuning.BruteRemake.Enabled
+	then
+		-- crewmates coming at a distance: one strike of the blade flat into the ground, like a firebox door
+		local heat = Tuning.BruteRemake.Heat
+		for _, ally in Registry.CrewService.AlivePlayers() do
+			local allyRoot = if ally ~= hold.victim then characterRoot(ally) else nil
+			local gap = if allyRoot then allyRoot.Position - hollow.root.Position else nil
+			local d = if gap then Vector3.new(gap.X, 0, gap.Z).Magnitude else math.huge
+			if d <= heat.Strike and d > heat.Pull then
+				hold.struck = true
+				hollow.model:SetAttribute("ShovelStrike", serverNow())
+				NetService.FireAll(
+					"Fx",
+					"ShovelStrike",
+					{ position = hollow.root.Position, radius = heat.Strike }
+				)
+				break
+			end
+		end
+	end
+	if hold.crushAt then
+		if clock >= (hold.crushAt :: number) then
+			Registry.CrewService.TagDamage(character, "Hollow")
+			hold.humanoid.Health = 0
+		end
+		return
+	end
 	local slamFrom = hold.slamFrom
-	if slamFrom and elapsed < G.Pin.SlamSeconds then
-		local u = elapsed / G.Pin.SlamSeconds
+	local since = clock - (hold.slamAt or hold.startedAt)
+	if slamFrom and since < G.Pin.SlamSeconds then
+		local u = since / G.Pin.SlamSeconds
 		hold.root.CFrame = slamFrom:Lerp(hold.frame, u * u)
 	else
 		hold.root.CFrame = hold.frame
@@ -1046,6 +1213,9 @@ local function holdTick(hollow: Hollow)
 		local fresh = SkillCheck.new(hold.checkSeq, now, hold.zone, function(lo, hi)
 			return rng:NextNumber(lo, hi)
 		end)
+		if hold.pinnedAt then
+			fresh.sweep *= G.PinStage.Speed -- the second stage: faster
+		end
 		hold.check = fresh
 		hold.judged = false
 		NetService.Fire("Fx", hold.victim, "SkillCheck", fresh)
@@ -1315,6 +1485,152 @@ local function strikeAttempt(hollow: Hollow, target: Player, targetRoot: BasePar
 	setState(hollow, "Windup")
 end
 
+-- The Stoker's flank is over: the shovel comes down onto the ground again.
+local function endFlank(hollow: Hollow)
+	if hollow.flank then
+		hollow.flank = nil
+		hollow.model:SetAttribute("ShovelUp", nil)
+	end
+end
+
+--[[
+	The Stoker, having seen prey in the open, sometimes swings wide and comes round to their side or back with
+	the shovel lifted (Logic/StokerFlank): true while he is doing that, false when he comes on as usual.
+]]
+local function flank(
+	hollow: Hollow,
+	prey: Player,
+	preyRoot: BasePart,
+	distance: number,
+	visible: boolean,
+	chase: number
+): boolean
+	local clock = os.clock()
+	local run = hollow.flank
+	if run == nil then
+		if
+			clock - (hollow.flankTried[prey] or -math.huge) < Tuning.BruteRemake.Flank.Cooldown
+			or not visible
+		then
+			return false
+		end
+		hollow.flankTried[prey] = clock
+		if not StokerFlank.tries(distance, rng:NextNumber()) then
+			return false
+		end
+		run = StokerFlank.plan(clock, rng:NextNumber())
+		hollow.flank = run
+		hollow.model:SetAttribute("ShovelUp", true)
+	end
+	local current = run :: StokerFlank.Flank
+	local position = hollow.root.Position
+	local own = { x = position.X, z = position.Z }
+	local at = { x = preyRoot.Position.X, z = preyRoot.Position.Z }
+	local look = preyRoot.CFrame.LookVector
+	local facing = { x = look.X, z = look.Z }
+	if StokerFlank.ends(current, clock, own, at, facing, visible) then
+		endFlank(hollow)
+		return false
+	end
+	if StokerFlank.advance(current, own, StokerFlank.goal(current, own, at, facing)) == "Round" then
+		endFlank(hollow)
+		return false
+	end
+	local goal = StokerFlank.goal(current, own, at, facing)
+	hollow.humanoid.WalkSpeed = chase * Tuning.BruteRemake.Flank.Pace
+	moveToward(hollow, spaced(hollow, Vector3.new(goal.x, position.Y, goal.z)), false)
+	return true
+end
+
+--[[
+	The giant Brute's prey is inside a building: it can't follow, so it makes for a door or window near
+	them (Logic/ReachIn), holds the tell at the frame and reaches in. True while it is doing that; false
+	when the prey isn't inside, so the ordinary hunt goes on.
+]]
+local FEET = 3 -- a crew member's root above their feet (R6)
+local function reachIn(hollow: Hollow, prey: Player, preyRoot: BasePart, dt: number, chase: number): boolean
+	local buildings = Registry.BuildingService
+	local found = if buildings and buildings.BuildingAt then buildings.BuildingAt(preyRoot.Position) else nil
+	if found == nil then
+		hollow.reach = nil
+		hollow.model:SetAttribute("ReachTell", nil)
+		return false
+	end
+	local building = found :: any
+	local run = hollow.reach
+	if run == nil or run.building ~= building.id then
+		run = {
+			building = building.id,
+			openings = ReachIn.openings(building.plan),
+			track = ReachIn.newTrack(),
+			telling = false,
+		}
+		hollow.reach = run
+	end
+	local reach = run :: ReachRun
+	local position = hollow.root.Position
+	local own = StationService.ToLocal(position)
+	local preyLocal = StationService.ToLocal(preyRoot.Position)
+	local px, pz = preyLocal.X - building.x, preyLocal.Z - building.z
+	local opening, covered = ReachIn.choose(
+		reach.openings,
+		px,
+		preyLocal.Y - FEET,
+		pz,
+		own.X - building.x,
+		own.Z - building.z,
+		reach.track.cooldown
+	)
+	reach.track = ReachIn.aim(reach.track, opening)
+	if opening == nil then
+		-- no way in from anywhere near them: it waits outside
+		hollow.model:SetAttribute("ReachTell", nil)
+		hollow.humanoid.WalkSpeed = 0
+		hollow.humanoid:MoveTo(position)
+		return true
+	end
+	local o = opening :: ReachIn.Opening
+	local sx, sz = ReachIn.stand(o)
+	local standAt = StationService.ToWorld(building.x + sx, own.Y, building.z + sz)
+	local frameAt = StationService.ToWorld(building.x + o.x, o.sill + 2, building.z + o.z)
+	local there = flat(standAt - position).Magnitude <= ReachIn.Config.Arrive
+	local before = reach.track.phase
+	local fired
+	reach.track, fired = ReachIn.step(reach.track, {
+		dt = dt,
+		covered = covered,
+		there = there,
+		lit = isLit(frameAt, lightFor(hollow)) or isLit(preyRoot.Position, lightFor(hollow)),
+	})
+	local phase = reach.track.phase
+	local telling = phase == "Tell"
+	hollow.model:SetAttribute("ReachTell", if telling then o.kind else nil)
+	if fired == "Reach" then
+		hollow.model:SetAttribute("ReachTell", nil)
+		local face = Vector3.new(frameAt.X, position.Y, frameAt.Z)
+		local base = CFrame.lookAt(Vector3.new(standAt.X, position.Y, standAt.Z), face)
+		hollow.lastStrike = os.clock()
+		-- the tell is the warning this target had (an opportunity, not proof it was seen)
+		Registry.TelemetryService.Tell(prey, ReachIn.Config.Tell, 0)
+		seize(hollow, prey, { def = Grabs.ById.Reach, base = base })
+		return true
+	end
+	if telling or phase == "Lurk" then
+		-- at the frame: still, turned to the opening (the client bends it over and puts its hands on it)
+		hollow.humanoid.WalkSpeed = 0
+		hollow.humanoid:MoveTo(position)
+		if telling and (before ~= "Tell" or not reach.telling) then
+			hollow.root.CFrame = CFrame.lookAt(position, Vector3.new(frameAt.X, position.Y, frameAt.Z))
+		end
+		reach.telling = telling
+		return true
+	end
+	reach.telling = false
+	hollow.humanoid.WalkSpeed = chase
+	moveToward(hollow, standAt, false)
+	return true
+end
+
 local function think(hollow: Hollow)
 	local clock = os.clock()
 	local position = hollow.root.Position
@@ -1369,7 +1685,8 @@ local function think(hollow: Hollow)
 	end
 
 	-- caught inside a building as its lights come on: cower, then get out
-	if isLit(position) then
+	local scale = lightFor(hollow)
+	if isLit(position, scale) then
 		endStalk(hollow)
 		leaveDoor(hollow)
 		if hollow.state ~= "Repelled" then
@@ -1380,11 +1697,11 @@ local function think(hollow: Hollow)
 			hollow.humanoid:MoveTo(position)
 		else
 			hollow.humanoid.WalkSpeed = walk
-			local light = safeLightAt(position)
+			local light = safeLightAt(position, scale)
 			local exit = if light then nil else Registry.BuildingService.ExitPoint(position)
 			if light then
 				local away = Vector3.new(position.X - light.Position.X, 0, position.Z - light.Position.Z)
-				local radius = ((light:GetAttribute("Radius") :: number?) or 0) * lightScale
+				local radius = ((light:GetAttribute("Radius") :: number?) or 0) * scale
 				local out = if away.Magnitude > 0.1 then away.Unit else Vector3.zAxis
 				exit = Vector3.new(light.Position.X, position.Y, light.Position.Z) + out * (radius + 4)
 			end
@@ -1500,7 +1817,7 @@ local function think(hollow: Hollow)
 		hollow.lastSeen = bestRoot.Position
 		hollow.lastSeenAt = clock
 		local targetLocal = StationService.ToLocal(bestRoot.Position)
-		if targetLocal.Z < edge or isLit(bestRoot.Position) then
+		if targetLocal.Z < edge or isLit(bestRoot.Position, scale) then
 			endStalk(hollow)
 			setState(hollow, "Repelled")
 			hollow.humanoid.WalkSpeed = walk
@@ -1516,8 +1833,9 @@ local function think(hollow: Hollow)
 		local settings = Stalk.settings((params :: Types.HazardParams).difficulty)
 		if hollow.state ~= "Stalk" and hollow.state ~= "Hunt" then
 			local stalker = hollow.model:GetAttribute("StalkWanderer") == true
-			local commitsDirectly = (wanderer and not stalker) or hollow.scripted ~= nil
-			-- straight to Hunt: wanderers, alerts and the scripted Crawler, prey already close, a stun's
+			-- the giant Brute never stalks: watching it does nothing (B8)
+			local commitsDirectly = (wanderer and not stalker) or hollow.scripted ~= nil or giant(hollow)
+			-- straight to Hunt: wanderers, alerts and the scripted teacher, prey already close, a stun's
 			-- after-effect, a spent budget, or prey another Hollow already hunts (the pack fans out)
 			if
 				commitsDirectly
@@ -1607,6 +1925,17 @@ local function think(hollow: Hollow)
 		end
 
 		setState(hollow, "Hunt")
+		if giant(hollow) and reachIn(hollow, best, bestRoot, dt, chase) then
+			endFlank(hollow)
+			return
+		end
+		if
+			giant(hollow)
+			and Tuning.BruteRemake.Enabled
+			and flank(hollow, best, bestRoot, bestDistance, bestVisible, chase)
+		then
+			return
+		end
 		local exposure = hollow.exposure[best] or 0
 		local guarded = Stalk.guarded(exposure)
 		if guarded then
@@ -1679,6 +2008,7 @@ local function think(hollow: Hollow)
 	elseif hollow.lastSeen and clock - hollow.lastSeenAt < A.Persistence and hollow.state ~= "Stalk" then
 		-- lost sight: search where it saw them last
 		setState(hollow, "Hunt")
+		endFlank(hollow)
 		hollow.model:SetAttribute("WarningCoil", nil)
 		hollow.humanoid.WalkSpeed = chase * H.SearchPace
 		moveToward(hollow, spaced(hollow, hollow.lastSeen :: Vector3), false)
@@ -1772,6 +2102,11 @@ end
 
 local function pickKind(): string
 	local p = params :: Types.HazardParams
+	if bruteDue then
+		-- this stop's late Brute (Tuning.BruteRemake.Returns): the first Hollow to come is it, and only one
+		bruteDue = false
+		return "Brute"
+	end
 	local options: { { kind: string, weight: number } } = {}
 	local total = 0
 	for kind, pair in Difficulty.HollowKinds :: { [string]: { number } } do
@@ -1847,6 +2182,7 @@ local function add(at: CFrame, kind: string, state: string, emerge: string?): Ho
 		exposure = {},
 		stalked = {},
 		lostUntil = {},
+		flankTried = {},
 		noStalkUntil = 0,
 		lastThink = os.clock(),
 		door = nil,
@@ -1909,7 +2245,7 @@ end
 
 -- Tutorial ------------------------------------------------------------------------------------
 
--- Open ground of the stop for the teaching Crawler: the yard's own floor (not a roof, not a
+-- Open ground of the stop for the teaching Hollow: the yard's own floor (not a roof, not a
 -- building, not a fallen slab), inside the edge's hazard rail and clear of the platform.
 local function openGround(position: Vector3): boolean
 	local plan = StationService.Plan()
@@ -1930,7 +2266,7 @@ local function openGround(position: Vector3): boolean
 	return slab ~= nil and slab.kind == "Floor" and not StationService.IsCollapsed(slab.id)
 end
 
--- Claws a slow Crawler up behind `player` to teach the skill check (Config/Tutorial ScriptedGrab),
+-- Brings the teaching Hollow (a Stalker) up behind `player` to teach the skill check (Config/Tutorial ScriptedGrab),
 -- out of the dark on the stop's open ground: behind first, then the sides, then ahead.
 local function spawnScripted(player: Player): Hollow?
 	local root = characterRoot(player)
@@ -2112,7 +2448,7 @@ sightingThink = function(hollow: Hollow, dt: number)
 	moveToward(hollow, run.away :: Vector3, false)
 end
 
--- Notes who has stepped off the train at this stop, and sends the teaching Crawler when due.
+-- Notes who has stepped off the train at this stop, and sends the teaching Hollow when due.
 local function tutorialStep()
 	local clock = os.clock()
 	for _, player in Registry.CrewService.AlivePlayers() do
@@ -2256,6 +2592,21 @@ function HollowService.Configure(hazards: Types.HazardParams)
 	-- E2's arm when it runs (hazards.sighting), else the Config/Tutorial flag
 	local sightingOn = if hazards.sighting ~= nil then hazards.sighting else T.Sighting.Enabled
 	sightingPending = tier ~= nil and tier.sighting and sightingOn and (hazards.stop or 1) == 1
+	local info = StationService.Info()
+	bruteDue = Tuning.BruteRemake.Enabled
+		and Tuning.BruteRemake.Returns
+		and info ~= nil
+		and info.emergency == nil
+		and not hazards.dormantStart
+		and not hazards.scriptedOnly
+		-- the Long Line level, like every stop-indexed input: Short Line stops 4 and 5 read levels 6 and 8
+		and ReachIn.returns(
+			info.layoutSeed,
+			hazards.level or hazards.stop,
+			hazards.tutorial,
+			hazards.difficulty
+		)
+	stokerStop = bruteDue
 end
 
 -- Retain planned sleepers and fill larger buildings with distinct, clear interior spots.
@@ -2470,6 +2821,12 @@ function HollowService.LetGo()
 end
 
 -- Studio: a Hollow of `kind` appears in front of `player` and seizes them at once.
+-- Whether the Stoker comes to this stop (his late return was rolled for it): LootService drops more
+-- Flashbulbs then.
+function HollowService.StokerDue(): boolean
+	return stokerStop
+end
+
 function HollowService.DevGrab(player: Player, kind: string?): boolean
 	local root = characterRoot(player)
 	if params == nil or root == nil or StationService.Plan() == nil then
@@ -2556,6 +2913,7 @@ function HollowService.Clear()
 		hollow.model:Destroy()
 	end
 	table.clear(hollows)
+	bruteDue = false
 	table.clear(graceUntil)
 	table.clear(budgetAt)
 	table.clear(offTrainAt)
