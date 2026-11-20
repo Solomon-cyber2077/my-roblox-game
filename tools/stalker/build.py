@@ -81,6 +81,7 @@ SKIN = (0.50, 0.49, 0.42)  # waxy pallor
 SKIN_HOLLOW = (0.25, 0.26, 0.22)  # grey-green in the hollows
 BRUISE = (0.24, 0.16, 0.16)
 VEIN = (0.30, 0.32, 0.40)
+BONE_TEAR = (0.549, 0.529, 0.431)  # RGB 140, 135, 110: dry bone where the skin has split
 VOID = (0.012, 0.009, 0.009)
 ICHOR = (0.06, 0.035, 0.03)
 GUM = (0.30, 0.15, 0.14)
@@ -277,7 +278,7 @@ def eye_space(x, y, i):
     a = math.radians(-9) * out  # the outer corners droop
     u = dx * math.cos(a) + dy * math.sin(a)
     w = -dx * math.sin(a) + dy * math.cos(a)
-    return math.sqrt((u / 0.085) ** 2 + (w / 0.06) ** 2), w
+    return math.sqrt((u / 0.089) ** 2 + (w / 0.06) ** 2), w
 
 
 def seg_dist(p, a, b):
@@ -361,10 +362,10 @@ def head_cuts():
     cuts.append(mouth)
     for i, (ex, ey, ez) in enumerate(EYES):
         out = -1 if ex < 0 else 1
-        open_h = 0.03 if out > 0 else 0.023  # the right eye stares, the left lid hangs heavier
+        open_h = 0.028 if out > 0 else 0.0235  # narrowed (38% of the eyeball, both eyes together); the left lid hangs heavier
 
         def fissure(bm, ex=ex, ey=ey, out=out, open_h=open_h):
-            blob(bm, (ex, ey - 0.008, -0.38), (0.07, open_h, 0.064), (0, 0, out * -9), seg=32)
+            blob(bm, (ex, ey - 0.008, -0.38), (0.0735, open_h, 0.064), (0, 0, out * -9), seg=32)
         cuts.append(fissure)
 
     def torn_ear(bm):
@@ -385,19 +386,30 @@ def head_fields(p, n):
         e, w = eye_space(x, y, i)
         rim = max(rim, G(e - 1.0, 0.18) * F)
         if w > 0:  # above: the lid, then its crease sunk under the brow
-            d -= 0.016 * G(e - 1.45, 0.3) * F
+            d -= 0.0184 * G(e - 1.45, 0.3) * F
             crease = max(crease, G(e - 1.45, 0.25) * F)
             d += 0.004 * G(e - 1.05, 0.15) * F
         else:  # below: a bag, then the hollow under it
             d += 0.006 * G(e - 1.15, 0.15) * F
-            d -= 0.014 * G(e - 1.6, 0.3) * F
+            d -= 0.0161 * G(e - 1.6, 0.3) * F
             under = max(under, G(e - 1.6, 0.35) * F)
         eye_core = max(eye_core, S(1.0, 0.85, e) * F)
         socket = max(socket, S(1.9, 1.1, e) * F * (1.0 if w > -0.02 else 0.7))
+        d -= 0.005 * G(e - 1.3, 0.35) * F  # the socket sunk deeper round the lids, a cage over the eye
         if e > 1.4 and e < 2.6 and abs(math.atan2(w, x - EYES[i][0]) - (0 if EYES[i][0] > 0 else math.pi)) < 0.6:
             d -= 0.0016 * max(0.0, math.sin(e * 40)) * F  # crow's feet at the outer corner
     tp = G(y - 0.24, 0.12) * G(z + 0.1, 0.14) * S(0.2, 0.3, ax)
     d -= 0.035 * tp  # temples
+    # a dry, jagged split in the skin over the left temple, old and bloodless, the yellowed bone showing
+    tear, tear_rim = 0.0, 0.0
+    if x < -0.18 and n.x < -0.25:
+        tdist, tt = seg_dist(Vector((0, y, z)), Vector((0, 0.33, -0.14)), Vector((0, 0.16, -0.02)))
+        half = (0.024 + 0.01 * nz(p, 45) + 0.007 * nz(p, 110)) * math.sqrt(max(0.0, math.sin(math.pi * tt)))
+        if half > 0:
+            tear = S(half, half * 0.55, tdist)
+            tear_rim = G(tdist - half, 0.011) * (1 - tear)
+    d -= 0.011 * tear
+    d += 0.005 * tear_rim  # the skin's edge curled up and dried
     ch = G(ax - 0.19, 0.07) * G(y + 0.22, 0.1) * F
     d -= 0.045 * ch  # the cheek fallen in under the bone
     # the folds from the nose's wings to the corners of the mouth, cheek skin sagging over them
@@ -427,7 +439,7 @@ def head_fields(p, n):
     c = mix(c, (0.56, 0.52, 0.42), 0.35 * S(0.0, 0.6, nz(p, 2.5, 2)))  # yellowed patches
     c = mix(c, SKIN_HOLLOW, min(1.0, 0.9 * tp + 0.8 * ch + 0.7 * under + 0.7 * crease + 0.9 * fold))
     c = mix(c, BRUISE, 0.6 * rim * (1 - eye_core))
-    c = mix(c, (0.17, 0.14, 0.13), 0.75 * socket)  # the sockets in shadow
+    c = mix(c, (0.136, 0.112, 0.104), 0.9 * socket)  # the sockets in deep shadow
     c = mix(c, BRUISE, 0.35 * G(ax - 0.21, 0.08) * G(y + 0.02, 0.06) * F)  # broken veins on the cheek
     if (tp > 0.2 or fh > 0.3) and abs(nz(p * Vector((1, 0.35, 1)), 12)) < 0.045:
         c = mix(c, VEIN, 0.6)
@@ -451,6 +463,12 @@ def head_fields(p, n):
         strand = 0.75 + 0.35 * max(0.0, math.sin(x * 260 + z * 120 + 6 * nz(p, 6)))
         c = mix(c, mul(HAIR, strand * (0.85 + 0.3 * nz(p, 9))), h)
         d += 0.0015 * h * math.sin(x * 260 + z * 120)
+    if tear > 0 or tear_rim > 0:
+        bone = mul(BONE_TEAR, 0.9 + 0.12 * nz(p, 30))
+        if abs(nz(p, 22)) < 0.03:
+            bone = mul(bone, 0.6)  # hairline cracks in the bone
+        c = mix(c, (0.16, 0.12, 0.10), 0.9 * tear_rim)  # the dried edge
+        c = mix(c, bone, tear)
     if F > 0.3 and -0.44 < y < -0.18 and ax < 0.16 and nz(p, 70) > 0.42:
         c = mul(c, 0.72)  # grey stubble
     c = mul(c, 0.88 + 0.12 * S(-0.6, 0.0, y))
@@ -489,7 +507,7 @@ def eyeballs(bm, col):
             c = mix((0.42, 0.38, 0.28), (0.24, 0.18, 0.15), S(0.4, 1.1, a))
             if abs(nz(v.co, 60)) < 0.08 and a > 0.45:
                 c = mix(c, BLOOD, 0.7)  # burst veins
-            c = mix(c, (0.20, 0.09, 0.07), S(0.5, 0.42, a))  # the iris
+            c = mix(c, (0.045, 0.035, 0.03), S(0.5, 0.42, a))  # the iris, a black void round the pinprick
             c = mix(c, VOID, S(0.2, 0.12, a))
             paint(v, col, c)
 
@@ -1550,7 +1568,7 @@ def preview(outdir):
         prim("ball", (0.045,), root @ T(ex, ey, PINPRICK_Z), (0.75, 0.09, 0.07), emit=6.0)
     head = Vector((0, 5, 0))
     shots = [("pv_front", Vector((0, 0.05, -3.4)), 26), ("pv_34", Vector((1.9, 0.1, -2.8)), 26),
-             ("pv_side", Vector((3.4, 0.05, 0)), 26), ("pv_back", Vector((-1.5, 0.3, 3.0)), 26)]
+             ("pv_side", Vector((3.4, 0.05, 0)), 26), ("pv_back", Vector((-1.5, 0.3, 3.0)), 26), ("pv_left34", Vector((-2.2, 0.25, -2.4)), 24)]
     for name, eye, fov in shots:
         daylight(head)
         camera(head + eye, head + Vector((0, -0.05, 0)), fov=fov)
