@@ -15,7 +15,7 @@ local Tuning = require(script.Parent.Tuning)
 local BruteMeshes: { [string]: StalkerMeshes.Piece } = {
 	head = { size = { 1.385, 1.678, 1.984 }, center = { -0.014, -0.192, 0.368 } },
 	jaw = { size = { 0.835, 0.427, 0.649 }, center = { 0.003, 0.07, 0.196 } },
-	eyes = { size = { 0.506, 0.431, 0.158 }, center = { 0, -0.547, -0.215 } },
+	eyes = { size = { 0.509, 0.507, 0.311 }, center = { -0.001, -0.51, -0.138 } },
 	torso = { size = { 3.894, 4.939, 2.919 }, center = { -0.017, 0.298, 0.113 } },
 	embers = { size = { 1.316, 3.448, 1.797 }, center = { -0.897, 0.728, 0.398 } },
 	apron = { size = { 3.02, 3.692, 2.406 }, center = { 0.051, -0.918, -0.071 } },
