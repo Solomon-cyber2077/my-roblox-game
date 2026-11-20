@@ -596,7 +596,12 @@ local function stalker(model: Model, root: BasePart)
 	meshPiece(model, "jaw", jaw, SKIN_DARK, skin)
 	meshPiece(model, "torso", chest, COAT, cloth)
 	for group, parts in blocks do
-		if meshCache[group] ~= nil then
+		if meshCache[group .. ".perf"] ~= nil then
+			-- a light mesh stands in under Performance: the blocks are never drawn (they stay for the skeleton)
+			for _, part in parts do
+				part.Transparency = 1
+			end
+		elseif meshCache[group] ~= nil then
 			for _, part in parts do
 				part:AddTag("DetailFallback")
 			end

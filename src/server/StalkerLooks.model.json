@@ -5,7 +5,7 @@
    "name": "head",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://129299439692086",
+    "ColorMap": "rbxassetid://138576579037625",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -13,7 +13,7 @@
    "name": "jaw",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://89978575412475",
+    "ColorMap": "rbxassetid://126782591064875",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -21,7 +21,7 @@
    "name": "torso",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://120459886516923",
+    "ColorMap": "rbxassetid://76768072324317",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -29,7 +29,7 @@
    "name": "coat",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://119369364077842",
+    "ColorMap": "rbxassetid://74287727162863",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -37,7 +37,7 @@
    "name": "sleeve",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://120717393588382",
+    "ColorMap": "rbxassetid://99444660649735",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -45,7 +45,7 @@
    "name": "forearm",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://106116602677876",
+    "ColorMap": "rbxassetid://134664391499905",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -53,7 +53,7 @@
    "name": "hand",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://76243631586705",
+    "ColorMap": "rbxassetid://102938202928120",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -61,7 +61,7 @@
    "name": "handL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://76243631586705",
+    "ColorMap": "rbxassetid://102938202928120",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   }
