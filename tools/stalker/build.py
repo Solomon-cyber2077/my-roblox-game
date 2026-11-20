@@ -2,8 +2,8 @@
 
 The lost porter: too tall, too thin, in the rags of a railway greatcoat. Seen at arm's length in a grab, on a
 phone, under gaslight, so the read has to come from shape and value, not from small parts:
-  head     a long skull under skin drawn tight: brow ridge, two separate deep sockets (the red pinprick sits on
-           each socket floor), cheekbones over fallen cheeks, sunken temples, a collapsed nose, thin uneven
+  head     a long skull under skin drawn tight: brow ridge, two deep sockets with wide, clouded
+           eyes, cheekbones over fallen cheeks, sunken temples, a collapsed nose, thin uneven
            upper teeth set in a receded gum, and the crushed porter's cap with its peak and badge
   jaw      a narrow mandible and chin with its own thin lower teeth; it rides the Jaw joint, so the gape opens
   torso    the coat's upper body (hunched back, torn lapels, double row of tarnished buttons, stand collar)
@@ -81,6 +81,7 @@ SKIN = (0.50, 0.49, 0.42)  # waxy pallor
 SKIN_HOLLOW = (0.25, 0.26, 0.22)  # grey-green in the hollows
 BRUISE = (0.24, 0.16, 0.16)
 VEIN = (0.30, 0.32, 0.40)
+EYE_MURK = (0.25, 0.26, 0.22)  # one clouded grey-green for the whole eye
 BONE_TEAR = (0.549, 0.529, 0.431)  # RGB 140, 135, 110: dry bone where the skin has split
 VOID = (0.012, 0.009, 0.009)
 ICHOR = (0.06, 0.035, 0.03)
@@ -200,9 +201,8 @@ def teeth(bm, col, specs):
 # read as soft tissue; the lids and the parted lips are cut; then the fine forms (sunken temples, hollow cheeks,
 # lid creases, the folds beside the mouth, neck cords) are pushed in and out. Asymmetric on purpose: the right
 # eye sits lower, the nose is bent, the left ear is torn, the lip is drawn up further on the left.
-EYES = ((-0.2, 0.168, -0.318), (0.2, 0.146, -0.32))  # eyeball centres in the Head frame
-EYE_R = 0.068
-PINPRICK_Z = -0.374  # the pinpricks sit on the pupils (HollowBuilder: StalkerMeshes.eyes)
+EYES = ((-0.2, 0.168, -0.314), (0.2, 0.146, -0.316))  # eyeball centres in the Head frame
+EYE_R = (0.082, 0.07, 0.072)  # wider than tall
 MOUTH_Y = -0.445  # the lips part here: above it the head piece, below it the jaw piece
 VOXEL = 0.0065
 
@@ -278,7 +278,7 @@ def eye_space(x, y, i):
     a = math.radians(-9) * out  # the outer corners droop
     u = dx * math.cos(a) + dy * math.sin(a)
     w = -dx * math.sin(a) + dy * math.cos(a)
-    return math.sqrt((u / 0.089) ** 2 + (w / 0.06) ** 2), w
+    return math.sqrt((u / 0.102) ** 2 + (w / 0.06) ** 2), w
 
 
 def seg_dist(p, a, b):
@@ -297,8 +297,8 @@ def head_shapes(bm):
     for sx, dy in ((-1, 0.0), (1, -0.016)):
         blob(bm, (sx * 0.165, 0.262 + dy, -0.37), (0.1, 0.045, 0.068), (0, 0, sx * -10))  # brow over each eye
     for (ex, ey, ez) in EYES:
-        blob(bm, (ex, ey + 0.004, -0.335), (0.1, 0.068, 0.06))  # the orbit and lids round the eyeball
-        blob(bm, (ex, ey + 0.03, -0.352), (0.076, 0.034, 0.04))  # the upper lid, heavy over the iris
+        blob(bm, (ex, ey + 0.004, -0.335), (0.114, 0.068, 0.06))  # the orbit and lids round the eyeball
+        blob(bm, (ex, ey + 0.03, -0.352), (0.088, 0.034, 0.04))  # the upper lid, heavy over the eye
     for sx in (-1, 1):
         blob(bm, (sx * 0.212, 0.035, -0.245), (0.074, 0.05, 0.13), (0, sx * 28, sx * 8))  # cheekbone
         blob(bm, (sx * 0.262, 0.045, -0.08), (0.04, 0.036, 0.14))  # the arch running back to the ear
@@ -365,7 +365,7 @@ def head_cuts():
         open_h = 0.028 if out > 0 else 0.0235  # narrowed (38% of the eyeball, both eyes together); the left lid hangs heavier
 
         def fissure(bm, ex=ex, ey=ey, out=out, open_h=open_h):
-            blob(bm, (ex, ey - 0.008, -0.38), (0.0735, open_h, 0.064), (0, 0, out * -9), seg=32)
+            blob(bm, (ex, ey - 0.008, -0.38), (0.087, open_h, 0.064), (0, 0, out * -9), seg=32)
         cuts.append(fissure)
 
     def torn_ear(bm):
@@ -496,19 +496,17 @@ def head_high():
 
 
 def eyeballs(bm, col):
-    """Wet, yellowed eyeballs with a dark iris; the pinprick (HollowBuilder) sits on each pupil."""
+    """Wide, clouded eyeballs in one murky grey-green: no pupil, only a faint darker iris in the same hue."""
     for i, (ex, ey, ez) in enumerate(EYES):
-        geom = bmesh.ops.create_uvsphere(bm, u_segments=14, v_segments=9, radius=EYE_R)
+        geom = bmesh.ops.create_uvsphere(bm, u_segments=16, v_segments=10, radius=1.0)
         look = Vector((0.03 * (1 if i == 0 else -1), 0.0, -1)).normalized()  # a slight inward stare
         for v in geom["verts"]:
             nrm = v.co.normalized()
-            v.co = v.co + Vector((ex, ey, ez))
+            v.co = Vector((nrm.x * EYE_R[0], nrm.y * EYE_R[1], nrm.z * EYE_R[2])) + Vector((ex, ey, ez))
             a = math.acos(max(-1.0, min(1.0, nrm.dot(look))))
-            c = mix((0.42, 0.38, 0.28), (0.24, 0.18, 0.15), S(0.4, 1.1, a))
-            if abs(nz(v.co, 60)) < 0.08 and a > 0.45:
-                c = mix(c, BLOOD, 0.7)  # burst veins
-            c = mix(c, (0.045, 0.035, 0.03), S(0.5, 0.42, a))  # the iris, a black void round the pinprick
-            c = mix(c, VOID, S(0.2, 0.12, a))
+            c = mix(EYE_MURK, mul(EYE_MURK, 0.5), S(0.45, 1.2, a))  # darker towards the lids
+            c = mix(c, mul(EYE_MURK, 0.62), 0.85 * S(0.5, 0.36, a))  # the iris, faint, the same murk
+            c = mul(c, 0.9 + 0.16 * nz(v.co, 45))  # cloudy
             paint(v, col, c)
 
 
@@ -1381,8 +1379,6 @@ def figure(pieces, extras, reach=(25, 50)):
         prim("box", (0.46, 2.1, 0.46), f["thigh" + side], GAME["TROUSER"])
         prim("box", (0.3, 1.85, 0.3), f["shin" + side], GAME["SKIN"])
         prim("box", (0.4, 0.2, 0.9), f["foot" + side], GAME["SKIN_DARK"])
-    for (ex, ey, ez) in EYES:  # the pinpricks (HollowBuilder shine, at StalkerMeshes.eyes)
-        prim("ball", (0.045,), f["head"] @ T(ex, ey, PINPRICK_Z), (0.75, 0.09, 0.07), emit=6.0)
     extras(f)
     return f
 
@@ -1564,8 +1560,6 @@ def preview(outdir):
         o.data.materials.append(colour_material())
         place(o, root @ M)
         o.hide_render = True
-    for (ex, ey, ez) in EYES:
-        prim("ball", (0.045,), root @ T(ex, ey, PINPRICK_Z), (0.75, 0.09, 0.07), emit=6.0)
     head = Vector((0, 5, 0))
     shots = [("pv_front", Vector((0, 0.05, -3.4)), 26), ("pv_34", Vector((1.9, 0.1, -2.8)), 26),
              ("pv_side", Vector((3.4, 0.05, 0)), 26), ("pv_back", Vector((-1.5, 0.3, 3.0)), 26), ("pv_left34", Vector((-2.2, 0.25, -2.4)), 24)]
@@ -1632,7 +1626,7 @@ def main():
     if "--preview" in sys.argv:
         preview(OUT)
         return
-    report = {"eyes": [[ex, ey, PINPRICK_Z] for (ex, ey, ez) in EYES]}
+    report = {}
     close = build_set(0, report)
     perf = build_set(1, report) if "--no-perf" not in sys.argv else []
     twice = {"stalker_sleeve", "stalker_forearm"}  # one mesh on each arm
