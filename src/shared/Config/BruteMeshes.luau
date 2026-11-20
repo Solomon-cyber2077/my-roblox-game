@@ -23,7 +23,7 @@ local BruteMeshes: { [string]: StalkerMeshes.Piece } = {
 	upperarmR = { size = { 2.648, 1.298, 1.694 }, center = { 0.027, 0.107, 0.208 } },
 	forearmL = { size = { 2.128, 0.879, 0.881 }, center = { 0.093, -0.023, 0.007 } },
 	forearmR = { size = { 2.582, 1.232, 1.29 }, center = { 0.112, 0.053, 0.182 } },
-	fist = { size = { 1.363, 1.873, 1.044 }, center = { 0.196, 0.032, -0.348 } },
+	fist = { size = { 1.6, 1.893, 0.953 }, center = { 0.079, 0.022, -0.302 } },
 	shovel = { size = { 3.558, 5.573, 3.761 }, center = { 0.78, -1.782, -1.364 } },
 	thighL = { size = { 2.338, 1.427, 1.874 }, center = { -0.191, -0.015, -0.064 } },
 	thighR = { size = { 2.453, 2.041, 1.949 }, center = { -0.137, 0.208, 0.015 } },
