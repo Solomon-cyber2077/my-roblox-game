@@ -1244,6 +1244,9 @@ local function brute(model: Model, root: BasePart)
 			NumberSequenceKeypoint.new(0, 0.45),
 			NumberSequenceKeypoint.new(1, 1),
 		})
+		-- Performance keeps the smoke at a lower rate and a shorter trail (Client DetailController)
+		smoke:SetAttribute("LiteScale", 0.35)
+		smoke:AddTag("DetailEmitter")
 		smoke.Parent = flue
 	end
 	emitter(chest, {
