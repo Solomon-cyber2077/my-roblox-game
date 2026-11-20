@@ -107,8 +107,8 @@ local Giant: Body = {
 	upper = 2.35,
 	fore = 2.15,
 	-- the burnt left arm is shorter (owner 2026-11-19: "his left arm shorter"; the scan rebuild's round 7)
-	upperL = 1.95,
-	foreL = 1.78,
+	upperL = 1.82,
+	foreL = 1.66,
 	armThick = 1.1,
 	handL = { 1.2, 1.05, 1.1 },
 	handR = { 0.55, 0.6, 0.55 },
@@ -122,11 +122,11 @@ local Giant: Body = {
 		Fist = { -1.7, 1.2, -4.2 },
 		Shovel = { 0.9, -6.6, -4.9 },
 		Bearhug = { 0, -0.2, -2.5 },
-		Slam = { -0.9, -6.6, -4.9 }, -- under the burnt left hand (the Stoker's pin)
+		Slam = { -0.9, -6.4, -4.6 }, -- under the burnt left hand (the Stoker's pin)
 		-- hauled out through the opening: held up in front of it at a sill's height, both hands on them
 		Reach = { 0.3, -2.6, -5.0 },
 		-- held up in the burnt left hand, higher than any other Hollow lifts its prey
-		Lift = { -1.3, 1.5, -3.7 },
+		Lift = { -1.2, 1.6, -3.4 },
 	},
 	lift = true,
 }
