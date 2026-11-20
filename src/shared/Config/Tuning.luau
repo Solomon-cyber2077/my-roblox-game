@@ -624,6 +624,10 @@ local Tuning = {
 			UnfoldRate = 0.4,
 			FoldRate = 1.5,
 			EmberHush = 0.3,
+			-- the short burnt left arm is dead (owner 2026-11-20, "Claw only"): it hangs stiff, the forearm held
+			-- DeadElbow radians forward of straight down, and never swings; his grabs still use it
+			DeadClaw = true,
+			DeadElbow = 0.61,
 		},
 		-- his eyes are hollow sockets that breathe out what is around him (owner 2026-11-19: "have fog, ember particles
 		-- (very faint), or frost air come out the sockets depending on the situation. If neither fog or snow is

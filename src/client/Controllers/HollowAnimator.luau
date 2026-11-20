@@ -691,6 +691,18 @@ local function animate(
 		target.RShoulder = (target.RShoulder or I) * CFrame.Angles(-0.12, 0, 0)
 		target.Neck = (target.Neck or I) * CFrame.Angles(0.12, 0, 0)
 	end
+	-- the dead left arm: held stiff and bent, no walk swing, until a grab or its windup needs it
+	if
+		rig.kind == "Brute"
+		and STOKER
+		and Tuning.BruteRemake.Uncanny.DeadClaw
+		and not grabId
+		and state ~= "Windup"
+	then
+		target.LShoulder = I
+		target.LElbow = CFrame.Angles(Tuning.BruteRemake.Uncanny.DeadElbow, 0, 0)
+		target.LWrist = I
+	end
 
 	-- attention and weight: the head follows its prey (or scans), the torso leans into its speed
 	if full and SECONDARY[state] and not stunned then
