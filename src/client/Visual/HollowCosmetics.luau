@@ -248,14 +248,16 @@ local function build(h: Handle)
 		eye.Material = Enum.Material.Neon
 		table.insert(h.eyes, eye)
 	end
-	local light = Instance.new("PointLight")
-	light.Name = "CosmeticEyeGlow"
-	light.Color = color("Eye", 1)
-	light.Range = C.LightRange
-	light.Shadows = false
-	light.Enabled = false
-	light.Parent = h.eyes[1] or head
-	h.light = light
+	if not ownEyes then -- the close-up Stalker head's clouded eyes give off no glow
+		local light = Instance.new("PointLight")
+		light.Name = "CosmeticEyeGlow"
+		light.Color = color("Eye", 1)
+		light.Range = C.LightRange
+		light.Shadows = false
+		light.Enabled = false
+		light.Parent = h.eyes[1] or head
+		h.light = light
+	end
 	for i = 1, 3 do
 		stain(
 			h,
