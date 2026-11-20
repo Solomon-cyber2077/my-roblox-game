@@ -79,6 +79,7 @@ local dying: RBXScriptConnection? = nil
 type Saved = { humanoid: Humanoid?, autoRotate: boolean }
 local saved: Saved? = nil
 local eyeOffset = Vector3.new(0, 4, 10)
+local faceLight: Attachment? = nil -- the Stoker's face light while he holds you (Tuning.BruteRemake.FaceLight)
 
 local function audio(cue: string, gain: number?, pitch: number?)
 	if Registry.AudioController then
@@ -137,6 +138,39 @@ local function holderHead(model: Model): Vector3?
 		end
 	end
 	return nil
+end
+
+-- A faint cool light in front of the Stoker's face, on your screen only, so his hollow sockets read
+-- from the grab camera. Gone when the grab ends.
+local function lightFace(model: Model, kind: string)
+	local def = Tuning.BruteRemake.FaceLight
+	if kind ~= "Brute" or not Tuning.BruteRemake.Enabled or not def.Enabled or faceLight then
+		return
+	end
+	local link = model:FindFirstChild("GrabbedBy")
+	local hollow = if link and link:IsA("ObjectValue") then link.Value else nil
+	local head = hollow and hollow:FindFirstChild("Head")
+	if not (head and head:IsA("BasePart")) then
+		return
+	end
+	local spot = Instance.new("Attachment")
+	spot.Name = "GrabFaceLight"
+	spot.Position = Vector3.new(0, 0, -def.Ahead)
+	local light = Instance.new("PointLight")
+	light.Range = def.Range
+	light.Brightness = def.Brightness
+	light.Color = Color3.fromRGB(def.Color[1], def.Color[2], def.Color[3])
+	light.Shadows = false
+	light.Parent = spot
+	spot.Parent = head
+	faceLight = spot
+end
+
+local function unlightFace()
+	if faceLight then
+		faceLight:Destroy()
+		faceLight = nil
+	end
 end
 
 local function hidePry(model: Model)
@@ -261,14 +295,21 @@ local function begin(model: Model, style: string)
 		lock(model)
 	end)
 	hidePry(model)
+	safely("face light", function()
+		lightFace(model, kind)
+	end)
 	task.delay(0.1, function()
 		if held then
 			hidePry(model)
+			safely("face light", function()
+				lightFace(model, kind)
+			end)
 		end
 	end)
 end
 
 local function finish(model: Model)
+	safely("face light", unlightFace)
 	if not held then
 		safely("unlock", unlock)
 		return

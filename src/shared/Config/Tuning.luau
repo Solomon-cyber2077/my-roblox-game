@@ -637,6 +637,9 @@ local Tuning = {
 			FogNear = 24,
 			PerfShare = 0.5,
 		},
+		-- your side only, while he holds you: a faint cool light just in front of his face so the hollow sockets
+		-- read from the grab camera under orange lamps (studs in front of the head, colour 0-255)
+		FaceLight = { Enabled = true, Ahead = 2.4, Range = 5, Brightness = 0.7, Color = { 170, 188, 214 } },
 		-- cunning, not snapping (owner 2026-11-19: "he might see someone but will take another path and catch them
 		-- off guard (in these moments only his footsteps sound because he lifts his shovel slightly off the
 		-- ground)"): having seen prey Min-Max studs off, he sometimes (Chance) swings wide and comes at them from
