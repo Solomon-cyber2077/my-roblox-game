@@ -1186,7 +1186,7 @@ def thigh_high():
     return bm
 
 
-RAG = (0.30, 0.27, 0.21)  # the wrappings: linen gone grey-brown
+RAG = (0.15, 0.13, 0.10)  # the wrappings: linen gone dirty grey-brown
 
 
 def shin_high(variant=0):
@@ -1215,7 +1215,7 @@ def shin_high(variant=0):
             return 0.0  # slipped: a band of bare shin between the turns
         turn = (x / 0.085 + phi / TAU) % 1.0
         bulk = 0.045 + 0.012 * nz(Vector((x * 3, phi, variant)), 1.0)  # wound thick and uneven
-        return bulk + 0.014 * S(0.72, 0.95, turn) - 0.006 * S(0.0, 0.25, turn) - 0.018 * S(-0.36, -0.55, x)
+        return bulk + 0.014 * S(0.72, 0.95, turn) - 0.006 * S(0.0, 0.25, turn) - 0.04 * S(-0.3, -0.48, x)  # in the boot
 
     def radius(x, phi):
         return bare(x, phi) + wrap(x, phi)

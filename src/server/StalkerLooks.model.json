@@ -77,7 +77,7 @@
    "name": "shin",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://109691250481272",
+    "ColorMap": "rbxassetid://131027415184348",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -85,7 +85,7 @@
    "name": "shinL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://78868097151448",
+    "ColorMap": "rbxassetid://84729147108364",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
