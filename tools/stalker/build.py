@@ -1073,7 +1073,7 @@ def thigh_high():
 
     def radius(x, phi):
         t = (top - x) / (top - bot)  # 0 at the hip, 1 at the knee
-        r = 0.31 - 0.062 * t
+        r = 0.31 - 0.062 * t + 0.12 * S(0.55, top, x)  # full at the seat, so the two legs meet at the fork
         calm = S(bot, bot + 0.35, x)  # the folds die away where it meets the shin
         r *= 1 + 0.05 * calm * math.sin(5 * phi + 2.5 * nz(Vector((x, phi, 0)), 1.3))  # the drape, hanging slack
         r *= 1 + 0.035 * math.sin(3 * phi + x * 4.0) * S(1.1, 0.2, x)  # creases pulled down from the fork
@@ -1106,7 +1106,7 @@ def thigh_high():
 
 def shin_high(variant=0):
     """Knee at +X, the trousers too long for him: concertina folds above a frayed hem that hangs over the boot
-    top. Variant 0: the front seam split above the hem, the shin bone pale in the gap. Variant 1: the hem torn
+    top. Variant 0: a rip up from the hem at the front. Variant 1: the hem torn
     ragged, longer at the back, and caked in mud."""
     bm, col = new_bm()
     rnd = random.Random(11 + variant)
@@ -1120,6 +1120,8 @@ def shin_high(variant=0):
 
     jag = [rnd.uniform(-0.03, 0.03) + ((0.07 if k % 4 == 1 else -0.02) if variant == 1 else 0.0)
            for k in range(sides)]
+    if variant == 0:
+        jag[sides * 3 // 4] -= 0.09  # a rip up from the hem at the front
 
     def radius(x, phi):
         r = 0.243 - 0.012 * S(top - 0.26, top, x) - 0.01 * S(0.6, -0.3, x) + 0.035 * S(-0.3, hem, x)
@@ -1130,11 +1132,7 @@ def shin_high(variant=0):
 
     def colour(x, phi, co):
         c = trouser_colour(co, phi)
-        c = mix(c, MUD, (0.45 + 0.4 * variant) * S(-0.15, hem, x) * S(-0.1, 0.6, nz(co, 6)))
-        if variant == 0:
-            gap = abs(angd(phi, -math.pi / 2 - 0.2)) * 0.25  # the split, a little off the front
-            if gap < 0.03 * S(hem + 0.38, hem, x):
-                c = mix(SKIN_HOLLOW, SKIN, 0.4 + 0.3 * nz(co * 3, 7)) if gap < 0.018 else VOID
+        c = mix(c, mul(MUD, 0.7), (0.3 + 0.2 * variant) * S(-0.15, hem, x) * S(0.0, 0.8, nz(co, 4)))
         return c
 
     rings = []
@@ -1151,7 +1149,7 @@ def shin_high(variant=0):
         r = radius(hem, phi) * 0.97
         co = Vector((hem_x(phi) - jag[k], math.cos(phi) * r, math.sin(phi) * r))
         v = bm.verts.new(co)
-        paint(v, col, mix(mul(mix(WOOL, WOOL_WORN, 0.6), 0.8), MUD, 0.5 + 0.3 * variant))
+        paint(v, col, mix(mul(mix(WOOL, WOOL_WORN, 0.4), 0.75), mul(MUD, 0.7), 0.25 + 0.15 * variant))
         lip.append(v)
     rings.append(lip)
     inner = []
@@ -1862,8 +1860,8 @@ PIECES = [  # name, high mesh, triangles (close-up, Performance), texture (close
     ("stalker_sleeve", "sleeve", (300, 140), (256, 128), 0.25),
     ("stalker_forearm", "forearm", (360, 160), (256, 128), 0.2),
     ("stalker_thigh", "thigh", (320, 140), (256, 128), 0.25),
-    ("stalker_shin", "shin", (380, 170), (256, 128), 0.2),
-    ("stalker_shinL", "shinL", (380, 170), (256, 128), 0.2),
+    ("stalker_shin", "shin", (380, 170), (512, 256), 0.2),
+    ("stalker_shinL", "shinL", (380, 170), (512, 256), 0.2),
     ("stalker_boot", "boot", (700, 300), (512, 256), 0.12),
     ("stalker_bootL", "bootL", (700, 300), (512, 256), 0.12),
     ("stalker_hand", "hand", (340, 170), (256, 128), 0.15),
