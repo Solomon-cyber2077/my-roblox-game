@@ -21,7 +21,7 @@
    "name": "torso",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://76768072324317",
+    "ColorMap": "rbxassetid://98276305606517",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -29,7 +29,7 @@
    "name": "coat",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://74287727162863",
+    "ColorMap": "rbxassetid://126544317308747",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -37,7 +37,7 @@
    "name": "sleeve",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://99444660649735",
+    "ColorMap": "rbxassetid://74552075972933",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -45,7 +45,7 @@
    "name": "forearm",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://134664391499905",
+    "ColorMap": "rbxassetid://89597958500374",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   },
@@ -62,6 +62,46 @@
    "className": "SurfaceAppearance",
    "properties": {
     "ColorMap": "rbxassetid://102938202928120",
+    "RoughnessMap": "rbxassetid://98021532985007"
+   }
+  },
+  {
+   "name": "thigh",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "ColorMap": "rbxassetid://120863291098937",
+    "RoughnessMap": "rbxassetid://98021532985007"
+   }
+  },
+  {
+   "name": "shin",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "ColorMap": "rbxassetid://109691250481272",
+    "RoughnessMap": "rbxassetid://98021532985007"
+   }
+  },
+  {
+   "name": "shinL",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "ColorMap": "rbxassetid://78868097151448",
+    "RoughnessMap": "rbxassetid://98021532985007"
+   }
+  },
+  {
+   "name": "boot",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "ColorMap": "rbxassetid://137369386871807",
+    "RoughnessMap": "rbxassetid://98021532985007"
+   }
+  },
+  {
+   "name": "bootL",
+   "className": "SurfaceAppearance",
+   "properties": {
+    "ColorMap": "rbxassetid://136068418693337",
     "RoughnessMap": "rbxassetid://98021532985007"
    }
   }
