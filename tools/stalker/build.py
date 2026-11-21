@@ -105,6 +105,8 @@ LEATHER = (0.035, 0.032, 0.03)
 SHIRT = (0.13, 0.12, 0.10)
 WAISTCOAT = (0.07, 0.06, 0.05)
 HAIR = (0.13, 0.13, 0.12)
+PATCH = (0.27, 0.23, 0.17)  # sewn-on patches: a coarser, browner cloth than the serge
+PATCH2 = (0.2, 0.21, 0.17)
 
 
 def clear():
@@ -714,8 +716,24 @@ def body_point(theta, w, d, n=2.6):
 
 
 def wool(co, k=1.0):
-    c = mul(WOOL, (0.8 + 0.35 * nz(co, 6, 3)) * k)
-    return mix(c, MILDEW, 0.5 * S(0.35, 0.7, nz(co * Vector((3, 0.25, 3)), 3)))
+    """Serge: a fine diagonal twill, mottled with wear, mildew in the folds and old wet stains."""
+    twill = 0.07 * math.sin((co.x + co.y + 0.6 * co.z) * TAU * 34)
+    c = mul(WOOL, (0.78 + 0.38 * nz(co, 6, 3) + twill) * k)
+    c = mix(c, MILDEW, 0.55 * S(0.33, 0.68, nz(co * Vector((3, 0.25, 3)), 3)))
+    c = mix(c, mul(WOOL, 0.4), 0.6 * S(0.45, 0.7, nz(co * 0.8, 13)))  # dark, dried-in stains
+    return mix(c, mul(WOOL_WORN, 1.15), 0.6 * S(0.55, 0.78, nz(co * 2.2, 17)))  # threadbare, gone shiny-grey
+
+
+def patch(co, cc, centre, half, tilt=0.0):
+    """A sewn-on patch on a flat-ish region: coarse browner cloth, a dark stitched border, corners lifting."""
+    dx, dy = co.x - centre[0], co.y - centre[1]
+    u = dx * math.cos(tilt) - dy * math.sin(tilt)
+    v = dx * math.sin(tilt) + dy * math.cos(tilt)
+    if abs(u) < half[0] and abs(v) < half[1]:
+        if abs(u) > half[0] - 0.014 or abs(v) > half[1] - 0.014:
+            return STITCH if int((u + v) * 220) % 2 else SEAM
+        return mul(PATCH if (int(centre[0] * 10) % 2) else PATCH2, 0.8 + 0.3 * nz(co * 6, 41))
+    return cc
 
 
 def torso_high():
@@ -727,7 +745,7 @@ def torso_high():
         for by in (-0.95, -0.45, 0.05, 0.55):
             if rnd.random() > 0.3:
                 buttons.append((side, by, rnd.random() > 0.5))
-    rows, cols = 46, 72
+    rows, cols = 170, 260  # fine enough that buttons, stitching and patches survive into the bake
     rings = []
     for r in range(rows):
         y = -1.4 + 3.0 * r / (rows - 1)  # up to 1.6: the stand collar
@@ -751,17 +769,41 @@ def torso_high():
                 z += 0.09 * G(y - 0.75, 0.45)  # the hunch
             co = Vector((x, y, z - 0.03 * lapel))
             cc = wool(co)
-            cc = mix(cc, WOOL_WORN, 0.6 * S(0.08, 0.0, edge) + 0.35 * G(y - 1.15, 0.1) * S(0.5, 0.8, abs(x)))
+            cc = mix(cc, mul(WOOL_WORN, 1.2), 0.75 * S(0.08, 0.0, edge) + 0.8 * G(y - 1.15, 0.14) * S(0.4, 0.8, abs(x)))
+            if z < 0:
+                cc = patch(co, cc, (0.5, 0.05), (0.13, 0.11), 0.15)  # front, low on his right
+            else:
+                cc = patch(co, cc, (-0.25, 0.55), (0.17, 0.14), -0.2)  # across the back
+                cc = patch(co, cc, (0.3, -0.6), (0.11, 0.12), 0.3)
+            # the chest pockets: flap outline stitched, the flap's lower edge rubbed pale
+            for px in (-0.42, 0.42):
+                u, v = abs(x - px), y - 0.62
+                if z < 0 and u < 0.17 and -0.05 < v < 0.06:
+                    edge_p = u > 0.155 or v < -0.04 or v > 0.05
+                    if edge_p:
+                        cc = STITCH if int((x + y) * 160) % 2 else SEAM
+                    elif v < -0.025:
+                        cc = mix(cc, WOOL_WORN, 0.6)
             if abs(abs(theta - math.pi) - math.pi / 2) < 0.02 or abs(theta - math.pi) < 0.015 or abs(y - 1.2) < 0.012:
                 cc = STITCH if int(y * 40 + theta * 40) % 3 == 0 else SEAM
             for side, by, missing in buttons:
                 bt = o + 0.13 if side > 0 else TAU - o - 0.13
-                if math.hypot((theta - bt) * 0.7, y - by) < 0.035:
+                dist = math.hypot((theta - bt) * 0.7, y - by)
+                if dist < 0.035:
                     cc = SEAM if missing else mix(BRASS, VERDIGRIS, S(0.0, 0.6, nz(co, 50)))
-            if nz(co, 3.5) > 0.42 and edge > 0.3:
+                    if missing and (int(theta * 300) + int(y * 300)) % 3 == 0:
+                        cc = STITCH  # the torn thread tuft where it hung
+            rent = nz(co, 3.5)
+            if rent > 0.36 and edge > 0.3:
                 cc = VOID  # a rent in the cloth
-            if y < -1.05:
-                cc = mix(cc, MUD, 0.4 * S(-1.05, -1.4, y))
+            elif rent > 0.29 and edge > 0.3:
+                cc = mix(cc, mul(WOOL_WORN, 1.2), 0.8)  # its frayed lip
+            if y < -0.8:
+                cc = mix(cc, MUD, 0.75 * S(-0.8, -1.4, y) * (0.5 + 0.5 * nz(co, 9)))
+            # pocket flaps stand a little proud
+            for px in (-0.42, 0.42):
+                if z < 0 and abs(x - px) < 0.16 and -0.04 < y - 0.62 < 0.05:
+                    co.z -= 0.012
             vert = bm.verts.new(co)
             paint(vert, col, cc)
             ring.append(vert)
@@ -770,14 +812,14 @@ def torso_high():
 
     # the starved chest inside the open coat
     rings = []
-    for r in range(40):
-        y = -1.35 + 2.7 * r / 39
+    for r in range(130):
+        y = -1.35 + 2.7 * r / 129
         o = keys(OPEN, y) + 0.32
         w = keys(TORSO_W, y) * 0.84
         d = keys(TORSO_D, y) * 0.9
         ring = []
-        for c in range(30):
-            theta = -o + 2 * o * c / 29
+        for c in range(96):
+            theta = -o + 2 * o * c / 95
             x, z = body_point(theta, w, d)
             ph = y + 0.18 * abs(x)  # the ribs sweep down to the sides
             rib = max(0.0, math.sin(ph * math.pi / 0.27)) ** 2 * S(-0.75, -0.45, y) * S(0.95, 0.7, y)
@@ -813,10 +855,10 @@ def coat_high():
     vent, the hem ragged and muddy. Two buttons at the top of the vent."""
     bm, col = new_bm()
     rnd = random.Random(11)
-    cols, rows = 84, 44
+    cols, rows = 336, 176
     o = 0.42
     tear_start = [rnd.uniform(0.38, 0.58) for _ in TEARS]
-    hem = [1 - 0.22 * (0.5 + 0.5 * nz((c * 0.45, 3, 0), 1)) - 0.06 * rnd.random() for c in range(cols)]
+    hem = [1 - 0.22 * (0.5 + 0.5 * nz((c * 0.1125, 3, 0), 1)) - 0.06 * rnd.random() for c in range(cols)]
     holes = [(rnd.uniform(1.0, 5.3), rnd.uniform(0.3, 0.7), rnd.uniform(0.03, 0.06)) for _ in range(5)]
     grid = []
     for r in range(rows):
@@ -839,7 +881,9 @@ def coat_high():
                 cc = STITCH if r % 2 else SEAM
             if abs(abs(theta - math.pi) - 0.09) < 0.02 and abs(y + 0.45) < 0.035:
                 cc = mix(BRASS, VERDIGRIS, 0.4)  # the two tail buttons
-            cc = mix(cc, MUD, 0.85 * S(hem[c] - 0.3, hem[c] - 0.02, t) * (0.6 + 0.4 * nz(co, 7)))
+            cc = patch(co, cc, (-0.62, -1.6), (0.16, 0.2), 0.1) if z > -0.2 else cc
+            cc = mix(cc, MUD, 0.95 * S(hem[c] - 0.45, hem[c] - 0.02, t) * (0.6 + 0.4 * nz(co, 7)))
+            cc = mix(cc, mul(WOOL, 0.4), 0.5 * S(hem[c] - 0.5, hem[c] - 0.2, t) * S(0.2, 0.6, nz(co, 3)))  # wet
             vert = bm.verts.new(co)
             paint(vert, col, cc)
             row.append(vert)
@@ -883,7 +927,7 @@ def forearm_high(length=2.75, d=0.32 * 0.82):
     inward, then the wrist with its tendons and knob."""
     bm, col = new_bm()
     rnd = random.Random(5)
-    sides = 18
+    sides = 48
     CUFF = 0.24  # where the cuff ends (t from the wrist)
     jag = [rnd.uniform(-0.035, 0.035) + (0.05 if k % 5 == 2 else 0.0) for k in range(sides)]
 
@@ -916,8 +960,8 @@ def forearm_high(length=2.75, d=0.32 * 0.82):
 
     x_of = lambda t: -length / 2 + t * length
     rings = []
-    for i in range(30):  # cloth, elbow to cuff
-        t = 1 - (1 - CUFF) * i / 29
+    for i in range(90):  # cloth, elbow to cuff
+        t = 1 - (1 - CUFF) * i / 89
         rings.append(ring_x(bm, col, x_of(t), sides, lambda phi: cloth_r(t, phi), lambda phi, co: cloth_c(t, phi, co)))
     # the frayed lip, turning in to the arm
     lip = []
@@ -949,11 +993,11 @@ def forearm_high(length=2.75, d=0.32 * 0.82):
 def sleeve_high(length=2.9, d=0.32):
     """Along X, shoulder at +X, the elbow at -X, where the forearm's lower sleeve carries on."""
     bm, col = new_bm()
-    sides = 20
+    sides = 56
 
     def outer(t, phi):
         r = d / 2 * (0.9 + 0.45 * t)
-        r *= 1 + 0.06 * math.sin(t * 70 + 1.3 * math.sin(phi)) * S(0.4, 0.05, t)
+        r *= 1 + 0.1 * math.sin(t * 70 + 1.3 * math.sin(phi)) * S(0.4, 0.05, t)  # the elbow bunched
         r *= 1 + 0.04 * math.sin(2 * phi + t * 12)
         return r
 
@@ -962,13 +1006,21 @@ def sleeve_high(length=2.9, d=0.32):
         c = mix(c, WOOL_WORN, 0.6 * G(t - 0.08, 0.08) * G(angd(phi, math.pi / 2), 0.8))  # the worn elbow
         if abs(angd(phi, math.pi)) < 0.06:
             c = STITCH if int(t * 120) % 2 else SEAM
+        hole = math.hypot(t - 0.1, angd(phi, math.pi / 2) * 0.12)
+        if hole < 0.03:
+            c = mix(SKIN_HOLLOW, SKIN, 0.5 * S(0.03, 0.0, hole))  # the elbow worn through to the bone
+        elif hole < 0.042:
+            c = mix(WOOL_WORN, STITCH, 0.4)  # frayed edge
         if math.hypot(t - 0.22, angd(phi, 0.6) * 0.15) < 0.035:
             c = VOID  # worn through
+        u, v = angd(phi, -0.5) * 0.16, t - 0.55  # a darned patch on the upper arm
+        if abs(u) < 0.05 and abs(v) < 0.08:
+            c = (STITCH if int(t * 200) % 2 else SEAM) if (abs(u) > 0.04 or abs(v) > 0.07) else mul(PATCH, 0.9)
         return c
 
     rings = []
-    for i in range(36):
-        t = 1 - i / 35
+    for i in range(120):
+        t = 1 - i / 119
         rings.append(ring_x(bm, col, -length / 2 + t * length, sides, lambda phi: outer(t, phi), lambda phi, co: colour(t, phi, co)))
 
     loft(bm, rings, cap0=True, cap1=True)
@@ -1065,98 +1117,66 @@ def trouser_colour(co, phi, worn=0.0):
 
 
 def thigh_high():
-    """Hip at +X (under the coat), knee at -X. Loose wool with the bony knee pressing through at the front, sag
-    folds behind the knee and a darned patch above it."""
+    """Hip at +X (under the coat), the trousers torn off a hand below the knee: a ragged hem with strips hanging,
+    the bony knee showing through a hole worn in the front, the cloth sagging on legs gone to bone."""
     bm, col = new_bm()
-    sides = 22
-    top, bot = THIGH_LEN / 2 + 0.1, -THIGH_LEN / 2 - 0.12
+    rnd = random.Random(7)
+    sides = 80
+    top = THIGH_LEN / 2 + 0.1
+    hem = -THIGH_LEN / 2 - 0.2  # the tear line, below the knee
+    strips = [(rnd.uniform(0, TAU), rnd.uniform(0.1, 0.2), rnd.uniform(0.18, 0.3)) for _ in range(4)]
+
+    def tear(phi):
+        """The torn edge's offset from the tear line: soft scallops, a few strips hanging below."""
+        j = 0.035 * math.sin(3 * phi + 1.0) + 0.02 * math.sin(7 * phi + 2.3) + 0.01 * math.sin(13 * phi)
+        for at, depth, w in strips:
+            j -= depth * G(angd(phi, at), w * 0.5)
+        return j
+
+    jag = [-tear(k / sides * TAU) for k in range(sides)]
 
     def radius(x, phi):
-        t = (top - x) / (top - bot)  # 0 at the hip, 1 at the knee
-        r = 0.31 - 0.062 * t + 0.12 * S(0.55, top, x)  # full at the seat, so the two legs meet at the fork
-        calm = S(bot, bot + 0.35, x)  # the folds die away where it meets the shin
-        r *= 1 + 0.05 * calm * math.sin(5 * phi + 2.5 * nz(Vector((x, phi, 0)), 1.3))  # the drape, hanging slack
-        r *= 1 + 0.035 * math.sin(3 * phi + x * 4.0) * S(1.1, 0.2, x)  # creases pulled down from the fork
-        r *= 1 + 0.13 * G(x + 0.9, 0.12) * G(angd(phi, -math.pi / 2), 0.55)  # the knee, through the cloth
-        r *= 1 + 0.05 * math.sin(x * 38) * G(angd(phi, math.pi / 2), 0.8) * G(x + 0.78, 0.22)  # behind the knee
-        r *= 1 - 0.07 * G(angd(phi, 0.0), 0.5) * G(x - 0.1, 0.5)  # the bone shows where the cloth falls in
+        t = (top - x) / (top - hem)
+        r = 0.31 - 0.05 * t + 0.12 * S(0.55, top, x)  # full at the seat, so the two legs meet at the fork
+        r *= 1 + 0.06 * math.sin(5 * phi + 2.5 * nz(Vector((x, phi, 0)), 1.3))  # the drape, hanging slack
+        r *= 1 + 0.04 * math.sin(3 * phi + x * 4.0) * S(1.1, 0.2, x)  # creases pulled down from the fork
+        r *= 1 + 0.14 * G(x + 0.95, 0.12) * G(angd(phi, -math.pi / 2), 0.55)  # the knee, through the cloth
+        r *= 1 + 0.06 * math.sin(x * 38) * G(angd(phi, math.pi / 2), 0.8) * G(x + 0.8, 0.22)  # behind the knee
+        r *= 1 - 0.08 * G(angd(phi, 0.0), 0.5) * G(x - 0.1, 0.5)  # the bone shows where the cloth falls in
+        r *= 1 + 0.05 * S(-0.9, hem, x)  # the torn end flares loose
         return r
 
     def colour(x, phi, co):
-        c = trouser_colour(co, phi, worn=0.35 * G(x + 0.9, 0.15))
-        u, v = angd(phi, -math.pi / 2 + 0.45) * 0.3, x + 0.55  # the darn, front and a little inside
+        c = trouser_colour(co, phi, worn=0.4 * G(x + 0.95, 0.15))
+        u, v = angd(phi, -math.pi / 2 + 0.45) * 0.3, x + 0.5  # an old darn above the knee
         if abs(u) < 0.075 and abs(v) < 0.1:
             edge = abs(u) > 0.06 or abs(v) > 0.085
             c = (STITCH if int(v * 90) % 2 else SEAM) if edge else mul(WOOL_WORN, 0.75 + 0.2 * nz(co * 4, 9))
-        c = mix(c, MUD, 0.35 * S(-0.5, -1.1, x) * S(0.2, 0.7, nz(co, 5)))
+        hole = math.hypot(angd(phi, -math.pi / 2 + 0.1) * 0.24, x + 0.97)  # the knee worn through
+        if hole < 0.075:
+            c = mix(SKIN_HOLLOW, SKIN, 0.55 + 0.25 * nz(co * 4, 7)) if hole < 0.06 else mix(WOOL_WORN, STITCH, 0.5)
+        c = mix(c, mul(MUD, 0.8), 0.6 * S(-0.6, hem, x) * (0.5 + 0.5 * nz(co, 5)))
         return c
 
     rings = []
-    n = 44
+    n = 170
     for i in range(n):
-        x = top - (top - bot) * i / (n - 1)
-        rings.append(ring_x(bm, col, x, sides, lambda phi: radius(x, phi), lambda phi, co: colour(x, phi, co)))
-    for dx, k in ((0.012, 0.93), (0.03, 0.8)):  # the end turned in under itself
-        rings.append(ring_x(bm, col, bot + dx, sides, lambda phi: radius(bot, phi) * k,
-                            lambda phi, co: mul(colour(bot, phi, co), 0.6)))
-    loft(bm, rings, cap0=True, cap1=True)
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    return bm
-
-
-def shin_high(variant=0):
-    """Knee at +X, the trousers too long for him: concertina folds above a frayed hem that hangs over the boot
-    top. Variant 0: a rip up from the hem at the front. Variant 1: the hem torn
-    ragged, longer at the back, and caked in mud."""
-    bm, col = new_bm()
-    rnd = random.Random(11 + variant)
-    sides = 22
-    top = SHIN_LEN / 2 + 0.12
-    hem = -SHIN_LEN / 2 + 0.22
-
-    def hem_x(phi):
-        drop = 0.06 * G(angd(phi, math.pi / 2), 0.9) if variant == 1 else 0.0  # longer at the back
-        return hem - drop
-
-    jag = [rnd.uniform(-0.03, 0.03) + ((0.07 if k % 4 == 1 else -0.02) if variant == 1 else 0.0)
-           for k in range(sides)]
-    if variant == 0:
-        jag[sides * 3 // 4] -= 0.09  # a rip up from the hem at the front
-
-    def radius(x, phi):
-        r = 0.243 - 0.012 * S(top - 0.26, top, x) - 0.01 * S(0.6, -0.3, x) + 0.035 * S(-0.3, hem, x)
-        r *= 1 + 0.05 * S(top, top - 0.4, x) * math.sin(4 * phi + 1.7 * nz(Vector((x, phi, 1)), 1.1))
-        r *= 1 + 0.08 * math.sin(x * 52 + 1.6 * math.sin(phi)) * S(-0.2, hem + 0.1, x)  # bunched folds
-        r *= 1 - 0.06 * G(angd(phi, -math.pi / 2), 0.4) * G(x - 0.1, 0.35)  # cloth falls onto the shin bone
-        return r
-
-    def colour(x, phi, co):
-        c = trouser_colour(co, phi)
-        c = mix(c, mul(MUD, 0.7), (0.3 + 0.2 * variant) * S(-0.15, hem, x) * S(0.0, 0.8, nz(co, 4)))
-        return c
-
-    rings = []
-    for dx, k in ((0.03, 0.8), (0.012, 0.93)):  # the top turned in, inside the thigh's end
-        rings.append(ring_x(bm, col, top - dx, sides, lambda phi: radius(top, phi) * k,
-                            lambda phi, co: mul(trouser_colour(co, phi), 0.6)))
-    n = 40
-    for i in range(n):
-        x = top - (top - (hem + 0.02)) * i / (n - 1)
+        x = top - (top - hem) * i / (n - 1)
         rings.append(ring_x(bm, col, x, sides, lambda phi: radius(x, phi), lambda phi, co: colour(x, phi, co)))
     lip = []
     for k in range(sides):
         phi = k / sides * TAU
-        r = radius(hem, phi) * 0.97
-        co = Vector((hem_x(phi) - jag[k], math.cos(phi) * r, math.sin(phi) * r))
+        r = radius(hem, phi) * 0.98
+        co = Vector((hem - jag[k], math.cos(phi) * r, math.sin(phi) * r))
         v = bm.verts.new(co)
-        paint(v, col, mix(mul(mix(WOOL, WOOL_WORN, 0.4), 0.75), mul(MUD, 0.7), 0.25 + 0.15 * variant))
+        paint(v, col, mix(mul(WOOL_WORN, 0.8), mul(MUD, 0.8), 0.5))  # the frayed edge, caked
         lip.append(v)
     rings.append(lip)
     inner = []
     for k in range(sides):
         phi = k / sides * TAU
-        r = radius(hem, phi) * 0.78
-        co = Vector((hem + 0.06, math.cos(phi) * r, math.sin(phi) * r))
+        r = radius(hem, phi) * 0.82
+        co = Vector((hem + 0.1, math.cos(phi) * r, math.sin(phi) * r))
         v = bm.verts.new(co)
         paint(v, col, VOID)  # the dark inside of the trouser leg
         inner.append(v)
@@ -1166,7 +1186,80 @@ def shin_high(variant=0):
     return bm
 
 
-BOOT_TOP = 0.46  # the shaft's open top, in the Foot frame (the ankle sits at +0.1)
+RAG = (0.30, 0.27, 0.21)  # the wrappings: linen gone grey-brown
+
+
+def shin_high(variant=0):
+    """Knee at +X (inside the torn trouser end), the ankle at -X (inside the boot). The shin bare and starved:
+    a sharp shin bone, the calf wasted to a cord, tendons at the ankle; bound from the boot up in filthy cloth
+    wrappings, wound in a spiral. Variant 0: wound high, tight and wet-stained. Variant 1: wound lower, its top
+    turn come loose and hanging."""
+    bm, col = new_bm()
+    sides = 64
+    top = SHIN_LEN / 2 + 0.12
+    bot = -SHIN_LEN / 2 - 0.08
+    wrap_top = 0.9
+
+    def bare(x, phi):
+        r = 0.12 + 0.012 * S(-0.6, 0.6, x) - 0.02 * S(-0.5, -0.9, x)
+        r *= 1 + 0.18 * G(angd(phi, math.pi / 2), 0.7) * G(x - 0.35, 0.35)  # what's left of the calf
+        r *= 1 + 0.1 * G(angd(phi, -math.pi / 2), 0.25)  # the shin bone, a ridge down the front
+        r *= 1 - 0.07 * G(angd(phi, -math.pi / 2 + 0.6), 0.35)  # the hollow beside it
+        return r
+
+    def wrap(x, phi):
+        """How far the wrappings stand off the skin: the winding, each turn's edge raised."""
+        if x > wrap_top:
+            return 0.0
+        if variant == 1 and abs(x - 0.18 - 0.05 * math.sin(phi)) < 0.11:
+            return 0.0  # slipped: a band of bare shin between the turns
+        turn = (x / 0.085 + phi / TAU) % 1.0
+        bulk = 0.045 + 0.012 * nz(Vector((x * 3, phi, variant)), 1.0)  # wound thick and uneven
+        return bulk + 0.014 * S(0.72, 0.95, turn) - 0.006 * S(0.0, 0.25, turn) - 0.018 * S(-0.36, -0.55, x)
+
+    def radius(x, phi):
+        return bare(x, phi) + wrap(x, phi)
+
+    def colour(x, phi, co):
+        if wrap(x, phi) > 0:
+            turn = (x / 0.085 + phi / TAU) % 1.0
+            c = mul(RAG, 0.7 + 0.35 * nz(co * 3, 11, 2))
+            c = mix(c, mul(RAG, 0.55), 0.6 * S(0.8, 0.95, turn))  # the shadowed edge of each turn
+            c = mix(c, MUD, (0.5 + 0.3 * variant) * S(-0.1, -0.8, x) * (0.5 + 0.5 * nz(co, 6)))
+            c = mix(c, mul(ICHOR, 2.5), 0.5 * S(0.55, 0.75, nz(co * 2, 23)))  # old dark seepage
+            if variant == 0:
+                c = mix(c, mul(MUD, 0.6), 0.35 * S(-0.2, -0.7, x))  # wet through
+            return c
+        c = mul(SKIN, 0.72 + 0.12 * nz(co, 8, 2))
+        c = mix(c, SKIN_HOLLOW, 0.6 * G(angd(phi, -math.pi / 2 + 0.6), 0.4) + 0.3 * G(angd(phi, math.pi / 2), 0.5))
+        if abs(nz(co * Vector((0.3, 1, 1)), 9)) < 0.04:
+            c = mix(c, VEIN, 0.45)
+        c = mix(c, BRUISE, 0.5 * S(0.6, 0.8, nz(co * 2, 31)))  # blotched
+        return mix(c, (0.20, 0.16, 0.12), 0.35 * S(0.0, 0.6, nz(co, 4)))  # grime
+
+    rings = []
+    n = 200
+    for i in range(n):
+        x = top - (top - bot) * i / (n - 1)
+        rings.append(ring_x(bm, col, x, sides, lambda phi: radius(x, phi), lambda phi, co: colour(x, phi, co)))
+    loft(bm, rings, cap0=True, cap1=True)
+    if variant == 1:  # the loose end of the top turn, hanging down the outside of the shin
+        pts, radii = [], []
+        for i in range(14):
+            t = i / 13
+            phi = 0.15 + 0.5 * t
+            x = 0.07 - 0.4 * t
+            r = 0.185 + 0.03 * t + 0.01 * math.sin(t * 9)
+            pts.append((x, math.cos(phi) * r, math.sin(phi) * r))
+            radii.append(0.035 * (1 - 0.35 * t))
+        rg = tube_rings(bm, col, pts, radii, 8, flat=0.22,
+                        colour=lambda i, k, co: mix(mul(RAG, 0.75 + 0.3 * nz(co * 3, 11)), MUD, 0.4 * i / 13))
+        loft(bm, rg, cap0=True, cap1=True)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return bm
+
+
+BOOT_TOP = 0.62  # the shaft's open top, in the Foot frame (the ankle sits at +0.1)
 
 
 def keyed(table, z):
@@ -1196,10 +1289,10 @@ def section_loft(bm, zs, width, bottom, top, n=2.6, sides=28):
     loft(bm, rings, cap0=True, cap1=True)
 
 
-BOOT_W = [(-0.53, 0.025), (-0.5, 0.07), (-0.44, 0.1), (-0.32, 0.125), (-0.2, 0.13), (-0.05, 0.118), (0.1, 0.104),
-          (0.22, 0.112), (0.31, 0.105), (0.36, 0.07), (0.375, 0.03)]
-BOOT_TOPLINE = [(-0.53, -0.045), (-0.46, -0.01), (-0.32, 0.035), (-0.16, 0.09), (0.0, 0.17), (0.14, 0.2),
-                (0.26, 0.17), (0.34, 0.11), (0.375, 0.05)]
+BOOT_W = [(-0.53, 0.04), (-0.51, 0.095), (-0.45, 0.13), (-0.32, 0.142), (-0.2, 0.14), (-0.05, 0.128), (0.1, 0.118),
+          (0.22, 0.125), (0.31, 0.118), (0.36, 0.08), (0.375, 0.035)]
+BOOT_TOPLINE = [(-0.53, -0.03), (-0.49, 0.02), (-0.4, 0.06), (-0.3, 0.075), (-0.16, 0.11), (0.0, 0.2), (0.14, 0.24),
+                (0.26, 0.2), (0.34, 0.13), (0.375, 0.06)]
 
 
 def boot_shapes(variant):
@@ -1208,18 +1301,19 @@ def boot_shapes(variant):
         # the upper, on its last: low pointed toe, high instep, the heel counter
         section_loft(bm, zs, lambda z: keyed(BOOT_W, z), lambda z: -0.065, lambda z: keyed(BOOT_TOPLINE, z))
         # the sole, a little proud of the upper all round
-        section_loft(bm, [-0.535 + 0.915 * i / 40 for i in range(41)], lambda z: keyed(BOOT_W, z) + 0.012,
-                     lambda z: -0.1, lambda z: -0.058, n=5)
+        section_loft(bm, [-0.535 + 0.915 * i / 40 for i in range(41)], lambda z: keyed(BOOT_W, z) + 0.016,
+                     lambda z: -0.112, lambda z: -0.055, n=5)
         # the heel, stacked under the back
-        section_loft(bm, [0.17 + 0.2 * i / 10 for i in range(11)], lambda z: keyed(BOOT_W, z) * 0.95,
-                     lambda z: -0.122, lambda z: -0.09, n=5)
-        rod(bm, (0, 0.08, 0.13), (0, BOOT_TOP, 0.1), 0.128)  # the shaft, round the ankle
+        section_loft(bm, [0.16 + 0.21 * i / 10 for i in range(11)], lambda z: keyed(BOOT_W, z) * 0.97,
+                     lambda z: -0.145, lambda z: -0.1, n=5)
+        rod(bm, (0, 0.06, 0.15), (0, BOOT_TOP, 0.09), 0.132)  # the shaft, round the ankle and up the calf
+        rod(bm, (0, BOOT_TOP - 0.14, 0.095), (0, BOOT_TOP - 0.02, 0.09), 0.138)  # the top, a little flared
     return build
 
 
 def boot_cuts(variant):
     def shaft(bm):
-        rod(bm, (0, BOOT_TOP - 0.09, 0.1), (0, BOOT_TOP + 0.3, 0.1), 0.1)
+        rod(bm, (0, BOOT_TOP - 0.1, 0.09), (0, BOOT_TOP + 0.3, 0.09), 0.112)
     cuts = [shaft]
     if variant == 1:
         def split(bm):  # the sole come away from the upper at the toe
@@ -1229,7 +1323,7 @@ def boot_cuts(variant):
 
 
 def boot_fields(variant):
-    broken = 0.24 if variant == 0 else 9.0  # variant 0's laces end here, the tongue lolling out above
+    broken = 0.34 if variant == 0 else 9.0  # variant 0's laces end here, the tongue lolling out above
 
     def fields(p, n):
         d = 0.0
@@ -1245,12 +1339,12 @@ def boot_fields(variant):
         c = mix(c, (0.16, 0.13, 0.10), 0.6 * G(p.z + 0.48, 0.1) * S(0.0, 0.6, nz(p * 2, 4)))
         c = mix(c, (0.14, 0.12, 0.09), 0.4 * G(p.z - 0.33, 0.06))
         # the toe cap seam
-        if abs(p.z + 0.3 + 0.03 * math.cos(p.x * 9)) < 0.007 and p.y > -0.055:
+        if abs(p.z + 0.33 + 0.04 * math.cos(p.x * 9)) < 0.007 and p.y > -0.052:  # the toe cap's seam
             c = STITCH if int((p.x + 1) * 70) % 2 else SEAM
         # the sole and welt, mud on the edges
-        if p.y < -0.055:
-            c = mix((0.07, 0.06, 0.05), MUD, 0.6 * S(0.0, 0.6, nz(p * 4, 8)))
-            if abs(p.y + 0.06) < 0.005:
+        if p.y < -0.052:
+            c = mix((0.07, 0.06, 0.05), MUD, 0.7 * S(0.0, 0.6, nz(p * 4, 8)))
+            if abs(p.y + 0.058) < 0.005:
                 c = STITCH if int((p.z + 1) * 80) % 2 else SEAM
         # laces and eyelets up the front of the shaft
         if front > 0.3 and 0.0 < p.y < BOOT_TOP - 0.03 and p.z < 0.06:
@@ -1279,6 +1373,8 @@ def boot_fields(variant):
 def boot_high(variant=0):
     bm, col = flesh("boot_flesh%d" % variant, boot_shapes(variant), boot_cuts(variant), smooth=4)
     displace(bm, col, boot_fields(variant))
+    for v in bm.verts:  # the game's ankle sits over the Foot block's middle: bring the shaft over it
+        v.co.z -= 0.09
     return bm
 
 
@@ -1749,6 +1845,15 @@ def renders(pieces, extras, prefix, outdir, full=True):
         camera(Vector((2.4, 3.8, -4.4)), Vector((0, 1.6, 0)), fov=44)
         render(outdir / f"{prefix}legs.png", 1000, 1000)
         lights_off()
+        chest = f["chest"].translation
+        daylight(chest)
+        camera(chest + Vector((1.4, 0.4, -3.4)), chest + Vector((0, -0.3, 0)), fov=40)
+        render(outdir / f"{prefix}chest.png", 1000, 1000)
+        lights_off()
+        daylight(chest)
+        camera(chest + Vector((-1.2, 0.2, 3.6)), chest + Vector((0, -0.6, 0)), fov=44)
+        render(outdir / f"{prefix}coatback.png", 1000, 1000)
+        lights_off()
         clear_figure()
         f = figure(pieces, extras, reach=(62, 80))
         head = f["head"].translation
@@ -1855,10 +1960,10 @@ def legs_preview(outdir):
 PIECES = [  # name, high mesh, triangles (close-up, Performance), texture (close-up, Performance), occlusion distance
     ("stalker_head", "head", (4200, 1800), (1024, 512), 0.25),
     ("stalker_jaw", "jaw", (900, 320), (512, 256), 0.15),
-    ("stalker_torso", "torso", (820, 420), (512, 256), 0.5),
-    ("stalker_coat", "coat", (720, 380), (512, 256), 0.5),
-    ("stalker_sleeve", "sleeve", (300, 140), (256, 128), 0.25),
-    ("stalker_forearm", "forearm", (360, 160), (256, 128), 0.2),
+    ("stalker_torso", "torso", (1100, 480), (1024, 256), 0.5),
+    ("stalker_coat", "coat", (1200, 480), (1024, 256), 0.5),
+    ("stalker_sleeve", "sleeve", (360, 160), (512, 128), 0.25),
+    ("stalker_forearm", "forearm", (400, 170), (512, 128), 0.2),
     ("stalker_thigh", "thigh", (320, 140), (256, 128), 0.25),
     ("stalker_shin", "shin", (380, 170), (512, 256), 0.2),
     ("stalker_shinL", "shinL", (380, 170), (512, 256), 0.2),
