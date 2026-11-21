@@ -1047,6 +1047,243 @@ def hand_high():
     return bm
 
 
+
+# ------------------------------------------------------------------ legs
+# The railwayman's serge trousers, cut for the man he was, hanging loose on legs gone to bone, over cracked lace-up
+# boots. The thigh and shin pieces sit on HollowBuilder's leg bones (frames along X, hip or knee end at +X, front
+# -Z); the boot on the Foot block (0.4 x 0.2 x 0.9, Y up, toe to -Z). The two shins and two boots differ.
+THIGH_LEN, SHIN_LEN = 2.1, 1.85
+
+
+def trouser_colour(co, phi, worn=0.0):
+    c = wool(co)
+    c = mix(c, WOOL_WORN, (0.25 + worn) * G(angd(phi, -math.pi / 2), 0.3))  # the front crease, rubbed shiny
+    for seam in (0.0, math.pi):  # outside and inside seams: one piece serves either leg
+        if abs(angd(phi, seam)) < 0.045:
+            c = mix(c, STITCH if int((co.x + 3) * 55) % 2 else SEAM, 0.45)
+    return c
+
+
+def thigh_high():
+    """Hip at +X (under the coat), knee at -X. Loose wool with the bony knee pressing through at the front, sag
+    folds behind the knee and a darned patch above it."""
+    bm, col = new_bm()
+    sides = 22
+    top, bot = THIGH_LEN / 2 + 0.1, -THIGH_LEN / 2 - 0.12
+
+    def radius(x, phi):
+        t = (top - x) / (top - bot)  # 0 at the hip, 1 at the knee
+        r = 0.31 - 0.062 * t
+        calm = S(bot, bot + 0.35, x)  # the folds die away where it meets the shin
+        r *= 1 + 0.05 * calm * math.sin(5 * phi + 2.5 * nz(Vector((x, phi, 0)), 1.3))  # the drape, hanging slack
+        r *= 1 + 0.035 * math.sin(3 * phi + x * 4.0) * S(1.1, 0.2, x)  # creases pulled down from the fork
+        r *= 1 + 0.13 * G(x + 0.9, 0.12) * G(angd(phi, -math.pi / 2), 0.55)  # the knee, through the cloth
+        r *= 1 + 0.05 * math.sin(x * 38) * G(angd(phi, math.pi / 2), 0.8) * G(x + 0.78, 0.22)  # behind the knee
+        r *= 1 - 0.07 * G(angd(phi, 0.0), 0.5) * G(x - 0.1, 0.5)  # the bone shows where the cloth falls in
+        return r
+
+    def colour(x, phi, co):
+        c = trouser_colour(co, phi, worn=0.35 * G(x + 0.9, 0.15))
+        u, v = angd(phi, -math.pi / 2 + 0.45) * 0.3, x + 0.55  # the darn, front and a little inside
+        if abs(u) < 0.075 and abs(v) < 0.1:
+            edge = abs(u) > 0.06 or abs(v) > 0.085
+            c = (STITCH if int(v * 90) % 2 else SEAM) if edge else mul(WOOL_WORN, 0.75 + 0.2 * nz(co * 4, 9))
+        c = mix(c, MUD, 0.35 * S(-0.5, -1.1, x) * S(0.2, 0.7, nz(co, 5)))
+        return c
+
+    rings = []
+    n = 44
+    for i in range(n):
+        x = top - (top - bot) * i / (n - 1)
+        rings.append(ring_x(bm, col, x, sides, lambda phi: radius(x, phi), lambda phi, co: colour(x, phi, co)))
+    for dx, k in ((0.012, 0.93), (0.03, 0.8)):  # the end turned in under itself
+        rings.append(ring_x(bm, col, bot + dx, sides, lambda phi: radius(bot, phi) * k,
+                            lambda phi, co: mul(colour(bot, phi, co), 0.6)))
+    loft(bm, rings, cap0=True, cap1=True)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return bm
+
+
+def shin_high(variant=0):
+    """Knee at +X, the trousers too long for him: concertina folds above a frayed hem that hangs over the boot
+    top. Variant 0: the front seam split above the hem, the shin bone pale in the gap. Variant 1: the hem torn
+    ragged, longer at the back, and caked in mud."""
+    bm, col = new_bm()
+    rnd = random.Random(11 + variant)
+    sides = 22
+    top = SHIN_LEN / 2 + 0.12
+    hem = -SHIN_LEN / 2 + 0.22
+
+    def hem_x(phi):
+        drop = 0.06 * G(angd(phi, math.pi / 2), 0.9) if variant == 1 else 0.0  # longer at the back
+        return hem - drop
+
+    jag = [rnd.uniform(-0.03, 0.03) + ((0.07 if k % 4 == 1 else -0.02) if variant == 1 else 0.0)
+           for k in range(sides)]
+
+    def radius(x, phi):
+        r = 0.243 - 0.012 * S(top - 0.26, top, x) - 0.01 * S(0.6, -0.3, x) + 0.035 * S(-0.3, hem, x)
+        r *= 1 + 0.05 * S(top, top - 0.4, x) * math.sin(4 * phi + 1.7 * nz(Vector((x, phi, 1)), 1.1))
+        r *= 1 + 0.08 * math.sin(x * 52 + 1.6 * math.sin(phi)) * S(-0.2, hem + 0.1, x)  # bunched folds
+        r *= 1 - 0.06 * G(angd(phi, -math.pi / 2), 0.4) * G(x - 0.1, 0.35)  # cloth falls onto the shin bone
+        return r
+
+    def colour(x, phi, co):
+        c = trouser_colour(co, phi)
+        c = mix(c, MUD, (0.45 + 0.4 * variant) * S(-0.15, hem, x) * S(-0.1, 0.6, nz(co, 6)))
+        if variant == 0:
+            gap = abs(angd(phi, -math.pi / 2 - 0.2)) * 0.25  # the split, a little off the front
+            if gap < 0.03 * S(hem + 0.38, hem, x):
+                c = mix(SKIN_HOLLOW, SKIN, 0.4 + 0.3 * nz(co * 3, 7)) if gap < 0.018 else VOID
+        return c
+
+    rings = []
+    for dx, k in ((0.03, 0.8), (0.012, 0.93)):  # the top turned in, inside the thigh's end
+        rings.append(ring_x(bm, col, top - dx, sides, lambda phi: radius(top, phi) * k,
+                            lambda phi, co: mul(trouser_colour(co, phi), 0.6)))
+    n = 40
+    for i in range(n):
+        x = top - (top - (hem + 0.02)) * i / (n - 1)
+        rings.append(ring_x(bm, col, x, sides, lambda phi: radius(x, phi), lambda phi, co: colour(x, phi, co)))
+    lip = []
+    for k in range(sides):
+        phi = k / sides * TAU
+        r = radius(hem, phi) * 0.97
+        co = Vector((hem_x(phi) - jag[k], math.cos(phi) * r, math.sin(phi) * r))
+        v = bm.verts.new(co)
+        paint(v, col, mix(mul(mix(WOOL, WOOL_WORN, 0.6), 0.8), MUD, 0.5 + 0.3 * variant))
+        lip.append(v)
+    rings.append(lip)
+    inner = []
+    for k in range(sides):
+        phi = k / sides * TAU
+        r = radius(hem, phi) * 0.78
+        co = Vector((hem + 0.06, math.cos(phi) * r, math.sin(phi) * r))
+        v = bm.verts.new(co)
+        paint(v, col, VOID)  # the dark inside of the trouser leg
+        inner.append(v)
+    rings.append(inner)
+    loft(bm, rings, cap0=True, cap1=True)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return bm
+
+
+BOOT_TOP = 0.46  # the shaft's open top, in the Foot frame (the ankle sits at +0.1)
+
+
+def keyed(table, z):
+    """Linear interpolation through (z, value) pairs."""
+    if z <= table[0][0]:
+        return table[0][1]
+    for (z0, a), (z1, b) in zip(table, table[1:]):
+        if z <= z1:
+            return a + (b - a) * (z - z0) / (z1 - z0)
+    return table[-1][1]
+
+
+def section_loft(bm, zs, width, bottom, top, n=2.6, sides=28):
+    """A closed solid lofted along Z through rounded-box sections: half-width width(z), from bottom(z) to top(z)."""
+    rings = []
+    for z in zs:
+        w, b, t = width(z), bottom(z), top(z)
+        mid, hh = (b + t) / 2, max(0.004, (t - b) / 2)
+        ring = []
+        for k in range(sides):
+            a = k / sides * TAU
+            ca, sa = math.cos(a), math.sin(a)
+            x = w * math.copysign(abs(ca) ** (2 / n), ca)
+            y = mid + hh * math.copysign(abs(sa) ** (2 / n), sa)
+            ring.append(bm.verts.new((x, y, z)))
+        rings.append(ring)
+    loft(bm, rings, cap0=True, cap1=True)
+
+
+BOOT_W = [(-0.53, 0.025), (-0.5, 0.07), (-0.44, 0.1), (-0.32, 0.125), (-0.2, 0.13), (-0.05, 0.118), (0.1, 0.104),
+          (0.22, 0.112), (0.31, 0.105), (0.36, 0.07), (0.375, 0.03)]
+BOOT_TOPLINE = [(-0.53, -0.045), (-0.46, -0.01), (-0.32, 0.035), (-0.16, 0.09), (0.0, 0.17), (0.14, 0.2),
+                (0.26, 0.17), (0.34, 0.11), (0.375, 0.05)]
+
+
+def boot_shapes(variant):
+    def build(bm):
+        zs = [-0.53 + 0.905 * i / 40 for i in range(41)]
+        # the upper, on its last: low pointed toe, high instep, the heel counter
+        section_loft(bm, zs, lambda z: keyed(BOOT_W, z), lambda z: -0.065, lambda z: keyed(BOOT_TOPLINE, z))
+        # the sole, a little proud of the upper all round
+        section_loft(bm, [-0.535 + 0.915 * i / 40 for i in range(41)], lambda z: keyed(BOOT_W, z) + 0.012,
+                     lambda z: -0.1, lambda z: -0.058, n=5)
+        # the heel, stacked under the back
+        section_loft(bm, [0.17 + 0.2 * i / 10 for i in range(11)], lambda z: keyed(BOOT_W, z) * 0.95,
+                     lambda z: -0.122, lambda z: -0.09, n=5)
+        rod(bm, (0, 0.08, 0.13), (0, BOOT_TOP, 0.1), 0.128)  # the shaft, round the ankle
+    return build
+
+
+def boot_cuts(variant):
+    def shaft(bm):
+        rod(bm, (0, BOOT_TOP - 0.09, 0.1), (0, BOOT_TOP + 0.3, 0.1), 0.1)
+    cuts = [shaft]
+    if variant == 1:
+        def split(bm):  # the sole come away from the upper at the toe
+            box(bm, (-0.2, -0.068, -0.62), (0.2, -0.05, -0.32))
+        cuts.append(split)
+    return cuts
+
+
+def boot_fields(variant):
+    broken = 0.24 if variant == 0 else 9.0  # variant 0's laces end here, the tongue lolling out above
+
+    def fields(p, n):
+        d = 0.0
+        c = mul(LEATHER, 0.85 + 0.45 * nz(p * 3, 7, 3))
+        front = S(-0.2, -0.75, n.z)
+        # creases across the instep where it flexed, and the cracks along them
+        flex = G(p.z + 0.17, 0.12) * S(-0.07, 0.05, p.y)
+        crease = max(0.0, math.sin(p.z * 60 + 3 * nz(p * 2, 3)))
+        d -= 0.006 * crease * flex
+        if abs(nz(p * Vector((1.4, 1, 0.35)), 21)) < 0.035 * flex + 0.008:
+            c = mix(c, (0.13, 0.11, 0.09), 0.7)
+        # scuffed toe and heel, gone grey-brown
+        c = mix(c, (0.16, 0.13, 0.10), 0.6 * G(p.z + 0.48, 0.1) * S(0.0, 0.6, nz(p * 2, 4)))
+        c = mix(c, (0.14, 0.12, 0.09), 0.4 * G(p.z - 0.33, 0.06))
+        # the toe cap seam
+        if abs(p.z + 0.3 + 0.03 * math.cos(p.x * 9)) < 0.007 and p.y > -0.055:
+            c = STITCH if int((p.x + 1) * 70) % 2 else SEAM
+        # the sole and welt, mud on the edges
+        if p.y < -0.055:
+            c = mix((0.07, 0.06, 0.05), MUD, 0.6 * S(0.0, 0.6, nz(p * 4, 8)))
+            if abs(p.y + 0.06) < 0.005:
+                c = STITCH if int((p.z + 1) * 80) % 2 else SEAM
+        # laces and eyelets up the front of the shaft
+        if front > 0.3 and 0.0 < p.y < BOOT_TOP - 0.03 and p.z < 0.06:
+            row = (p.y - 0.0) / 0.055
+            near = abs(row - round(row))
+            for sx in (-0.055, 0.055):
+                if abs(p.x - sx) < 0.012 and near < 0.12:
+                    c = (0.30, 0.27, 0.21) if p.y < broken else (0.10, 0.09, 0.08)  # tarnished eyelets
+                    d += 0.003
+            u = (p.y - 0.0) / 0.055 % 1.0
+            cross = abs(p.x - (-0.055 + 0.11 * u)) < 0.008 or abs(p.x - (0.055 - 0.11 * u)) < 0.008
+            if cross and abs(p.x) < 0.05 and p.y < broken:
+                c, d = (0.06, 0.055, 0.05), d + 0.004
+            if p.y >= broken and abs(p.x) < 0.04:
+                c = mix(c, (0.11, 0.09, 0.07), 0.6)  # the tongue, paler where it shows
+                d += 0.01 * S(broken, BOOT_TOP, p.y)
+        # the open top: dark inside
+        if p.y > BOOT_TOP - 0.05 and n.y < 0.3:
+            c = mix(c, VOID, S(BOOT_TOP - 0.05, BOOT_TOP - 0.1, p.y))
+        if variant == 1 and -0.07 < p.y < -0.03 and p.z < -0.28:
+            c = VOID  # the split's dark mouth
+        return d, c
+    return fields
+
+
+def boot_high(variant=0):
+    bm, col = flesh("boot_flesh%d" % variant, boot_shapes(variant), boot_cuts(variant), smooth=4)
+    displace(bm, col, boot_fields(variant))
+    return bm
+
+
 # ------------------------------------------------------------------ the pipeline
 def swap_to_blender(obj):
     """Built in Roblox axes (+Y up, front -Z); relabel to Blender's (+Z up, front -Y) so the exporter maps it back.
@@ -1356,7 +1593,7 @@ def frames(reach):
         f["hand" + side] = T(*wrist) @ A(reach[1] + 8) @ T(0, -0.25, 0)
         hip = (pelvis @ T(s * 0.5, -0.4, 0)).translation
         f["thigh" + side] = T(hip.x, hip.y - 1.05, hip.z + 0.1) @ A(-4)
-        f["shin" + side] = T(hip.x, hip.y - 3.0, hip.z + 0.2)
+        f["shin" + side] = f["thigh" + side] @ T(0, -1.975, 0)  # straight on from the thigh, as the knee joint has it
         f["foot" + side] = T(hip.x, 0.1, hip.z - 0.25)
     return f
 
@@ -1376,9 +1613,19 @@ def figure(pieces, extras, reach=(25, 50)):
             place(pieces["hand" if side == "R" else "handL"], f["hand" + side])
     prim("rod", (0.62, 0.34, 0.34), f["chest"] @ T(0, 1.5, -0.34) @ A(0, 0, 90) @ A(0, 16, 0), GAME["SKIN_DARK"])
     for side in ("L", "R"):
-        prim("box", (0.46, 2.1, 0.46), f["thigh" + side], GAME["TROUSER"])
-        prim("box", (0.3, 1.85, 0.3), f["shin" + side], GAME["SKIN"])
-        prim("box", (0.4, 0.2, 0.9), f["foot" + side], GAME["SKIN_DARK"])
+        bone = A(0, 0, 90)  # a leg bone's frame runs along X, hip end up
+        if "thigh" in pieces:
+            place(pieces["thigh"], f["thigh" + side] @ bone)
+        else:
+            prim("box", (0.46, 2.1, 0.46), f["thigh" + side], GAME["TROUSER"])
+        if "shin" in pieces:
+            place(pieces["shin" if side == "R" else "shinL"], f["shin" + side] @ bone)
+        else:
+            prim("box", (0.3, 1.85, 0.3), f["shin" + side], GAME["SKIN"])
+        if "boot" in pieces:
+            place(pieces["boot" if side == "R" else "bootL"], f["foot" + side] @ T(0, 0, 0.25))
+        else:
+            prim("box", (0.4, 0.2, 0.9), f["foot" + side], GAME["SKIN_DARK"])
     extras(f)
     return f
 
@@ -1500,6 +1747,10 @@ def renders(pieces, extras, prefix, outdir, full=True):
         render(outdir / f"{prefix}silhouette.png", 1280, 720, samples=8)
         sc.view_layers[0].material_override = None
         lights_off()
+        daylight(Vector((0, 1.6, 0)))
+        camera(Vector((2.4, 3.8, -4.4)), Vector((0, 1.6, 0)), fov=44)
+        render(outdir / f"{prefix}legs.png", 1000, 1000)
+        lights_off()
         clear_figure()
         f = figure(pieces, extras, reach=(62, 80))
         head = f["head"].translation
@@ -1516,6 +1767,8 @@ def sheet(objs):
              "stalker_coat": (0.0, 1.5), "stalker_sleeve": (2.2, 0.0), "stalker_forearm": (3.0, 0.0),
              "stalker_hand": (3.9, 0.6), "stalker_handL": (4.7, 0.6)}
     for o in objs:
+        if o.name not in spots:
+            continue  # the legs have their own renders
         x, y = spots[o.name]
         long = o.name in ("stalker_forearm", "stalker_sleeve")
         place(o, T(x, y, 0) @ (A(0, 0, -90) if long else Matrix()))
@@ -1575,6 +1828,32 @@ def preview(outdir):
     render(outdir / "pv_gas.png", 900, 900, samples=32)
 
 
+def legs_preview(outdir):
+    """The legs straight from the high meshes (vertex colours, no bake) on the figure's frames: front
+    three-quarter, side and back of the knees down, and the boots close, for working on the trousers and boots."""
+    f = frames((25, 50))
+    for side in ("L", "R"):
+        for build, frame in ((thigh_high(), f["thigh" + side] @ A(0, 0, 90)),
+                             (shin_high(0 if side == "R" else 1), f["shin" + side] @ A(0, 0, 90)),
+                             (boot_high(0 if side == "R" else 1), f["foot" + side] @ T(0, 0, 0.25))):
+            o = make_object("pv_leg", build, closed=True)
+            o.data.materials.append(colour_material())
+            place(o, frame)
+            o.hide_render = True
+    at = Vector((0, 1.6, 0))
+    shots = [("legs_front34", Vector((2.4, 2.2, -4.4)), 44, at), ("legs_side", Vector((4.6, 1.8, -0.3)), 44, at),
+             ("legs_back", Vector((-2.0, 2.0, 4.4)), 44, at),
+             ("legs_boots", Vector((1.3, 0.75, -1.9)), 40, Vector((0, 0.2, -0.1)))]
+    for name, eye, fov, look in shots:
+        daylight(look)
+        camera(look + eye, look, fov=fov)
+        render(outdir / f"{name}.png", 900, 900, samples=24)
+        lights_off()
+    gaslight(Vector((0, 1.2, 0)))
+    camera(Vector((1.6, 1.4, -3.2)), Vector((0, 0.9, 0)), fov=44)
+    render(outdir / "legs_gas.png", 900, 900, samples=32)
+
+
 PIECES = [  # name, high mesh, triangles (close-up, Performance), texture (close-up, Performance), occlusion distance
     ("stalker_head", "head", (4200, 1800), (1024, 512), 0.25),
     ("stalker_jaw", "jaw", (900, 320), (512, 256), 0.15),
@@ -1582,6 +1861,11 @@ PIECES = [  # name, high mesh, triangles (close-up, Performance), texture (close
     ("stalker_coat", "coat", (720, 380), (512, 256), 0.5),
     ("stalker_sleeve", "sleeve", (300, 140), (256, 128), 0.25),
     ("stalker_forearm", "forearm", (360, 160), (256, 128), 0.2),
+    ("stalker_thigh", "thigh", (320, 140), (256, 128), 0.25),
+    ("stalker_shin", "shin", (380, 170), (256, 128), 0.2),
+    ("stalker_shinL", "shinL", (380, 170), (256, 128), 0.2),
+    ("stalker_boot", "boot", (700, 300), (512, 256), 0.12),
+    ("stalker_bootL", "bootL", (700, 300), (512, 256), 0.12),
     ("stalker_hand", "hand", (340, 170), (256, 128), 0.15),
 ]
 
@@ -1609,6 +1893,12 @@ def build_set(tier, report):
             high, solid, closed = (torso_high() if kind == "torso" else coat_high()), 0.035, False
         elif kind == "sleeve":
             high, closed = sleeve_high(), False
+        elif kind == "thigh":
+            high = thigh_high()
+        elif kind in ("shin", "shinL"):
+            high = shin_high(1 if kind == "shinL" else 0)
+        elif kind in ("boot", "bootL"):
+            high = boot_high(1 if kind == "bootL" else 0)
         else:
             high = forearm_high() if kind == "forearm" else hand_high()
         objs.append(piece(name + suffix, high, targets[tier], sizes[tier], ao, extra=extra, solid=solid, closed=closed))
@@ -1626,10 +1916,13 @@ def main():
     if "--preview" in sys.argv:
         preview(OUT)
         return
+    if "--legs" in sys.argv:
+        legs_preview(OUT)
+        return
     report = {}
     close = build_set(0, report)
     perf = build_set(1, report) if "--no-perf" not in sys.argv else []
-    twice = {"stalker_sleeve", "stalker_forearm"}  # one mesh on each arm
+    twice = {"stalker_sleeve", "stalker_forearm", "stalker_thigh"}  # one mesh on each arm or leg
     for perf_tier in (False, True):
         report["figure_tris" + ("_perf" if perf_tier else "")] = sum(
             v["tris"] * (2 if k.removesuffix("_perf") in twice else 1)

@@ -362,8 +362,18 @@ local function stalker(model: Model, root: BasePart)
 
 	-- blocks a mesh replaces: tagged DetailFallback once that mesh is in (see meshPiece)
 	-- the skull that comes with the jaw mesh carries its own cap, mouth and teeth, so those blocks go with "jaw"
-	local blocks: { [string]: { BasePart } } =
-		{ head = {}, jaw = {}, torso = {}, hand = {}, forearm = {}, sleeve = {}, coat = {} }
+	local blocks: { [string]: { BasePart } } = {
+		head = {},
+		jaw = {},
+		torso = {},
+		hand = {},
+		forearm = {},
+		sleeve = {},
+		coat = {},
+		thigh = {},
+		shin = {},
+		boot = {},
+	}
 	local function mark(group: string, part: BasePart): BasePart
 		table.insert(blocks[group], part)
 		return part
@@ -633,10 +643,15 @@ local function stalker(model: Model, root: BasePart)
 			Vector3.new(0.4, 0.2, 0.9),
 			SKIN_DARK
 		)
-		local _ = thigh
+		mark("thigh", thigh)
+		mark("shin", shin)
 		-- trousers torn off at the knee
-		decoRod(model, shin, 0.32, 0.5, CFrame.new(0.72, 0, 0), TROUSER, cloth)
-		local _ = foot
+		mark("shin", decoRod(model, shin, 0.32, 0.5, CFrame.new(0.72, 0, 0), TROUSER, cloth))
+		mark("boot", foot)
+		-- the close-up trousers and boots: one thigh piece serves both legs, the shins and boots differ
+		meshPiece(model, "thigh", thigh, TROUSER, cloth)
+		meshPiece(model, if side == "L" then "shinL" else "shin", shin, TROUSER, cloth)
+		meshPiece(model, if side == "L" then "bootL" else "boot", foot, SKIN_DARK, Enum.Material.Leather)
 	end
 
 	-- the close-up skull, jaw, coat and torso in place of their blocks (the arm pieces went on with the arms)
