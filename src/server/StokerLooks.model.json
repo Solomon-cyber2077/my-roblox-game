@@ -5,144 +5,144 @@
    "name": "apron",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://106631428583111",
+    "ColorMap": "rbxassetid://101987746577019",
     "NormalMap": "rbxassetid://132135988503794",
-    "RoughnessMap": "rbxassetid://87467285679304"
+    "RoughnessMap": "rbxassetid://134095026372444"
    }
   },
   {
    "name": "bootL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://88066109316746",
+    "ColorMap": "rbxassetid://130022625810184",
     "NormalMap": "rbxassetid://120086230660743",
-    "RoughnessMap": "rbxassetid://132012766488253"
+    "RoughnessMap": "rbxassetid://100584639741186"
    }
   },
   {
    "name": "bootR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://84594300304800",
+    "ColorMap": "rbxassetid://112722129468327",
     "NormalMap": "rbxassetid://84344291035570",
-    "RoughnessMap": "rbxassetid://121373892029953"
+    "RoughnessMap": "rbxassetid://84634408633030"
    }
   },
   {
    "name": "fist",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://103069387758732",
+    "ColorMap": "rbxassetid://76696589992024",
     "NormalMap": "rbxassetid://77152100067829",
-    "RoughnessMap": "rbxassetid://76894972242245"
+    "RoughnessMap": "rbxassetid://114064477809566"
    }
   },
   {
    "name": "forearmL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://104523700336836",
+    "ColorMap": "rbxassetid://76503237653590",
     "NormalMap": "rbxassetid://111011308594345",
-    "RoughnessMap": "rbxassetid://124858090063630"
+    "RoughnessMap": "rbxassetid://108593689456513"
    }
   },
   {
    "name": "forearmR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://98207864761813",
+    "ColorMap": "rbxassetid://74246459118206",
     "NormalMap": "rbxassetid://113250633739482",
-    "RoughnessMap": "rbxassetid://106626445847247"
+    "RoughnessMap": "rbxassetid://116734205891570"
    }
   },
   {
    "name": "head",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://90153797429576",
+    "ColorMap": "rbxassetid://100745144446519",
     "NormalMap": "rbxassetid://136208405367622",
-    "RoughnessMap": "rbxassetid://84982023629777"
+    "RoughnessMap": "rbxassetid://107952925721210"
    }
   },
   {
    "name": "jaw",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://100474934958559",
+    "ColorMap": "rbxassetid://138485208874100",
     "NormalMap": "rbxassetid://74475417041048",
-    "RoughnessMap": "rbxassetid://80241199602545"
+    "RoughnessMap": "rbxassetid://138103840589564"
    }
   },
   {
    "name": "shinL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://105435520364594",
+    "ColorMap": "rbxassetid://127618327883482",
     "NormalMap": "rbxassetid://116266668968342",
-    "RoughnessMap": "rbxassetid://114603874963908"
+    "RoughnessMap": "rbxassetid://95621781315120"
    }
   },
   {
    "name": "shinR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://90562658515971",
+    "ColorMap": "rbxassetid://91605448090225",
     "NormalMap": "rbxassetid://72482087029333",
-    "RoughnessMap": "rbxassetid://134656954620921"
+    "RoughnessMap": "rbxassetid://125681956506372"
    }
   },
   {
    "name": "shovel",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://73155662864170",
+    "ColorMap": "rbxassetid://71651576751056",
     "NormalMap": "rbxassetid://72909945830323",
-    "RoughnessMap": "rbxassetid://101841313307836"
+    "RoughnessMap": "rbxassetid://114311225011315"
    }
   },
   {
    "name": "thighL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://134399586913719",
+    "ColorMap": "rbxassetid://87331216311580",
     "NormalMap": "rbxassetid://116201296886194",
-    "RoughnessMap": "rbxassetid://118159133215169"
+    "RoughnessMap": "rbxassetid://84184110131178"
    }
   },
   {
    "name": "thighR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://126759719098886",
+    "ColorMap": "rbxassetid://121018580211964",
     "NormalMap": "rbxassetid://109385207668458",
-    "RoughnessMap": "rbxassetid://134737438275519"
+    "RoughnessMap": "rbxassetid://107902960332951"
    }
   },
   {
    "name": "torso",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://91206612995880",
+    "ColorMap": "rbxassetid://98653368348547",
     "NormalMap": "rbxassetid://97772821844096",
-    "RoughnessMap": "rbxassetid://106842950923581"
+    "RoughnessMap": "rbxassetid://74331265910148"
    }
   },
   {
    "name": "upperarmL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://79965152164930",
+    "ColorMap": "rbxassetid://140060553093133",
     "NormalMap": "rbxassetid://105652331014501",
-    "RoughnessMap": "rbxassetid://137289981951840"
+    "RoughnessMap": "rbxassetid://90470894285471"
    }
   },
   {
    "name": "upperarmR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://114468369039257",
+    "ColorMap": "rbxassetid://106350588545898",
     "NormalMap": "rbxassetid://99082892079982",
-    "RoughnessMap": "rbxassetid://119078768147330"
+    "RoughnessMap": "rbxassetid://104101573845899"
    }
   }
  ]
