@@ -5,144 +5,144 @@
    "name": "apron",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://101987746577019",
-    "NormalMap": "rbxassetid://132135988503794",
-    "RoughnessMap": "rbxassetid://134095026372444"
+    "ColorMap": "rbxassetid://108434563714010",
+    "NormalMap": "rbxassetid://126686478613207",
+    "RoughnessMap": "rbxassetid://103760509170493"
    }
   },
   {
    "name": "bootL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://130022625810184",
-    "NormalMap": "rbxassetid://120086230660743",
-    "RoughnessMap": "rbxassetid://100584639741186"
+    "ColorMap": "rbxassetid://78167829069892",
+    "NormalMap": "rbxassetid://139993673934156",
+    "RoughnessMap": "rbxassetid://133743045480716"
    }
   },
   {
    "name": "bootR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://112722129468327",
-    "NormalMap": "rbxassetid://84344291035570",
-    "RoughnessMap": "rbxassetid://84634408633030"
+    "ColorMap": "rbxassetid://70810271461946",
+    "NormalMap": "rbxassetid://135436960118832",
+    "RoughnessMap": "rbxassetid://117492203713343"
    }
   },
   {
    "name": "fist",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://76696589992024",
-    "NormalMap": "rbxassetid://77152100067829",
-    "RoughnessMap": "rbxassetid://114064477809566"
+    "ColorMap": "rbxassetid://83128396681453",
+    "NormalMap": "rbxassetid://73408120698653",
+    "RoughnessMap": "rbxassetid://71812907175583"
    }
   },
   {
    "name": "forearmL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://76503237653590",
-    "NormalMap": "rbxassetid://111011308594345",
-    "RoughnessMap": "rbxassetid://108593689456513"
+    "ColorMap": "rbxassetid://133238853812468",
+    "NormalMap": "rbxassetid://134301530310300",
+    "RoughnessMap": "rbxassetid://80366083769025"
    }
   },
   {
    "name": "forearmR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://74246459118206",
-    "NormalMap": "rbxassetid://113250633739482",
-    "RoughnessMap": "rbxassetid://116734205891570"
+    "ColorMap": "rbxassetid://92056853571399",
+    "NormalMap": "rbxassetid://126968075835985",
+    "RoughnessMap": "rbxassetid://113253788801634"
    }
   },
   {
    "name": "head",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://100745144446519",
-    "NormalMap": "rbxassetid://136208405367622",
-    "RoughnessMap": "rbxassetid://107952925721210"
+    "ColorMap": "rbxassetid://70566477812151",
+    "NormalMap": "rbxassetid://73745746100843",
+    "RoughnessMap": "rbxassetid://134884969941604"
    }
   },
   {
    "name": "jaw",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://138485208874100",
-    "NormalMap": "rbxassetid://74475417041048",
-    "RoughnessMap": "rbxassetid://138103840589564"
+    "ColorMap": "rbxassetid://114176753212872",
+    "NormalMap": "rbxassetid://74852805228137",
+    "RoughnessMap": "rbxassetid://73296207417166"
    }
   },
   {
    "name": "shinL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://127618327883482",
-    "NormalMap": "rbxassetid://116266668968342",
-    "RoughnessMap": "rbxassetid://95621781315120"
+    "ColorMap": "rbxassetid://85178763659356",
+    "NormalMap": "rbxassetid://87922001226680",
+    "RoughnessMap": "rbxassetid://116183469851432"
    }
   },
   {
    "name": "shinR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://91605448090225",
-    "NormalMap": "rbxassetid://72482087029333",
-    "RoughnessMap": "rbxassetid://125681956506372"
+    "ColorMap": "rbxassetid://112957134516985",
+    "NormalMap": "rbxassetid://121054963159672",
+    "RoughnessMap": "rbxassetid://115789289742423"
    }
   },
   {
    "name": "shovel",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://71651576751056",
-    "NormalMap": "rbxassetid://72909945830323",
-    "RoughnessMap": "rbxassetid://114311225011315"
+    "ColorMap": "rbxassetid://115439809337775",
+    "NormalMap": "rbxassetid://125963105783370",
+    "RoughnessMap": "rbxassetid://108151826119509"
    }
   },
   {
    "name": "thighL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://87331216311580",
-    "NormalMap": "rbxassetid://116201296886194",
-    "RoughnessMap": "rbxassetid://84184110131178"
+    "ColorMap": "rbxassetid://94215570548484",
+    "NormalMap": "rbxassetid://96750394964491",
+    "RoughnessMap": "rbxassetid://73481844748257"
    }
   },
   {
    "name": "thighR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://121018580211964",
-    "NormalMap": "rbxassetid://109385207668458",
-    "RoughnessMap": "rbxassetid://107902960332951"
+    "ColorMap": "rbxassetid://98083171172987",
+    "NormalMap": "rbxassetid://127767223878553",
+    "RoughnessMap": "rbxassetid://95347893194184"
    }
   },
   {
    "name": "torso",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://98653368348547",
-    "NormalMap": "rbxassetid://97772821844096",
-    "RoughnessMap": "rbxassetid://74331265910148"
+    "ColorMap": "rbxassetid://120593481515108",
+    "NormalMap": "rbxassetid://140661284056139",
+    "RoughnessMap": "rbxassetid://84611762200941"
    }
   },
   {
    "name": "upperarmL",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://140060553093133",
-    "NormalMap": "rbxassetid://105652331014501",
-    "RoughnessMap": "rbxassetid://90470894285471"
+    "ColorMap": "rbxassetid://76445351850028",
+    "NormalMap": "rbxassetid://87297938301895",
+    "RoughnessMap": "rbxassetid://77728703779856"
    }
   },
   {
    "name": "upperarmR",
    "className": "SurfaceAppearance",
    "properties": {
-    "ColorMap": "rbxassetid://106350588545898",
-    "NormalMap": "rbxassetid://99082892079982",
-    "RoughnessMap": "rbxassetid://104101573845899"
+    "ColorMap": "rbxassetid://98955510175935",
+    "NormalMap": "rbxassetid://99878157929544",
+    "RoughnessMap": "rbxassetid://80272093144549"
    }
   }
  ]
