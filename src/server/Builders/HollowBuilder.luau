@@ -1203,10 +1203,17 @@ local function brute(model: Model, root: BasePart)
 		local glow = meshPiece(model, "brute." .. name, at, EMBER, Enum.Material.Neon)
 		if glow then
 			glow.Name = if name == "eyes" then "Eye" else "Ember"
+			if name == "eyes" then
+				-- the eye glow mesh is tiny and Neon: it stays under Performance too
+				glow:RemoveTag("Detail")
+			end
 		end
 	end
 	for group, parts in blocks do
-		if meshCache["brute." .. group .. ".perf"] ~= nil then
+		-- the ember and eye block slits sit on the old block body and float off the light meshes: once their
+		-- close-up mesh loaded they are never drawn (Performance keeps the eye glow mesh and has no chest embers)
+		local glowGroup = (group == "embers" or group == "eyes") and meshCache["brute." .. group] ~= nil
+		if glowGroup or meshCache["brute." .. group .. ".perf"] ~= nil then
 			-- a light mesh stands in under Performance: the blocks are never drawn (they stay for the skeleton)
 			for _, part in parts do
 				part.Transparency = 1
