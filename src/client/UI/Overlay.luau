@@ -77,6 +77,8 @@ local wounds: { Frame } = {}
 local breath: { Frame } = {}
 local vitalsGrade: ColorCorrectionEffect? = nil
 local WOUND_COLOR = Color3.fromRGB(86, 8, 6)
+-- the wound edges' colour now (Overlay.woundTone: a cold grab turns blood to a frozen wine)
+local woundTone: Color3 = WOUND_COLOR
 local BREATH_COLOR = Color3.fromRGB(18, 20, 26)
 -- they stay out at the rim, clear of the middle of the view
 local VITAL_SPECS = {
@@ -592,6 +594,16 @@ function Overlay.dread(level: number)
 	grade.Saturation = -SHADE_DESATURATE * level
 	grade.TintColor = Color3.new(1, 1, 1):Lerp(SHADE_TINT, level)
 	grade.Enabled = level > 0.005
+end
+
+-- The colour wounds bleed in with: nil for the ordinary blood red. The Stalker's cold grab (Tuning.GrabLook)
+-- turns it to a frozen wine so the hurt still reads as blood but sits with the cold instead of clashing
+-- (owner 2026-11-22: the cold and the red did not mix on screen).
+function Overlay.woundTone(color: Color3?)
+	woundTone = color or WOUND_COLOR
+	for _, edge in wounds do
+		edge.BackgroundColor3 = woundTone
+	end
 end
 
 -- Wound 0..1 (missing health) and winded 0..1 (spent stamina), set every frame.

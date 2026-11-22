@@ -94,6 +94,11 @@ local swayKickAt = 0
 local swayKickDir = Vector3.zero
 local lookRng = Random.new()
 local CLOSE_LOOP = "GrabClose"
+-- hurt inside the Stalker's cold grab: a frozen wine instead of blood red, for the wound edges and the bite
+-- flash, so the hurt still reads but does not clash with the cold (owner 2026-11-22)
+local FROZEN_BLOOD = Color3.fromRGB(58, 14, 36)
+local FROZEN_FLASH = Color3.fromRGB(98, 30, 64)
+local toneToken = 0 -- the latest grab's wound tone; a later grab's tone is never undone by an earlier one
 local watching: RBXScriptConnection? = nil
 local dying: RBXScriptConnection? = nil
 
@@ -277,7 +282,7 @@ local function pulseColor(): Color3
 	local look = lookKind
 		or (if kind then GrabLook.look(kind, Tuning.GrabLook.Enabled, Tuning.BruteRemake.Enabled) else nil)
 	if look == "Cold" then
-		return Color3.fromRGB(132, 150, 172)
+		return FROZEN_FLASH
 	elseif look == "Heat" then
 		return Color3.fromRGB(150, 62, 20)
 	end
@@ -407,6 +412,8 @@ local function begin(model: Model, style: string)
 			moveAt = os.clock()
 		end
 		Trauma.look(look, lookMove, if look then variant else nil, tierName())
+		toneToken += 1
+		Overlay.woundTone(if look == "Cold" then FROZEN_BLOOD else nil)
 		if Registry.AudioController then
 			Registry.AudioController.GrabMuffle(look ~= nil, lookMove == "Lifted")
 		end
@@ -460,6 +467,14 @@ local function finish(model: Model)
 	safely("face light", unlightFace)
 	if lookKind or lookMove then
 		lookKind, lookMove, variant = nil, nil, nil
+		-- the frozen wine fades back to blood once the screen has cleared (after the death tunnel if it got you)
+		local humanoid = model:FindFirstChildOfClass("Humanoid")
+		local token = toneToken
+		task.delay(if humanoid and humanoid.Health > 0 then 1.5 else 7, function()
+			if token == toneToken and not held then
+				Overlay.woundTone(nil)
+			end
+		end)
 		safely("look sound", function()
 			closeSound(nil)
 			if Registry.AudioController then

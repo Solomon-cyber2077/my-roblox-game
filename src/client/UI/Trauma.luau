@@ -56,6 +56,7 @@ local COLD_EDGE = Color3.fromRGB(120, 130, 142) -- fog grey, a little blue
 local COLD_TINT = Color3.fromRGB(205, 220, 242)
 local COLD_VEIN = Color3.fromRGB(196, 210, 226) -- frost-pale cracks
 local COLD_FOG = Color3.fromRGB(176, 186, 198)
+local COLD_TUNNEL = Color3.fromRGB(22, 8, 18) -- dying in the cold grip: the dark of frozen blood, not oxblood
 local HEAT_EDGE = Color3.fromRGB(30, 18, 10) -- soot
 local HEAT_TINT = Color3.fromRGB(255, 214, 176)
 local HEAT_FLARE = Color3.fromRGB(255, 176, 120)
@@ -349,7 +350,7 @@ local function step(dt: number)
 				1
 			)
 			edge.frame.BackgroundColor3 = if dead > 0.01
-				then TUNNEL
+				then (if look == "Cold" then COLD_TUNNEL else TUNNEL)
 				elseif look == "Cold" then COLD_EDGE
 				else HEAT_EDGE
 			edge.frame.Size = if edge.horizontal then UDim2.fromScale(1, r) else UDim2.fromScale(r, 1)
