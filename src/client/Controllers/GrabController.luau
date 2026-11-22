@@ -30,12 +30,21 @@
 	the K unstick key).
 
 	Your own "Pull free" prompt is the crew's, not yours: it is hidden on this client.
+	The grab remake (Tuning.GrabLook, Logic/GrabLook; off by default): for the Stalker and the Stoker the
+	screen is the Hollow's own (UI/Trauma look), the heartbeat is gone, the world muffles under the Hollow's
+	own sound in your ear, and each hold moves the camera its own way: lifted by the throat you look up at it
+	from under its arm; pressed into its ribs the view is crushed in close and lurches at each squeeze;
+	dragged by the ankle you are low to the ground looking back the way you came; the Stoker's lift raises
+	you as the ground falls away, his slam drops you hard in a puff of ash, and his reach-in hauls you in
+	short hard jolts. Each grab also rolls a variant (the dark's lean, how fast it closes, a shudder, a slow
+	roll or sparse kicks), never the one the grab before had.
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
@@ -47,6 +56,7 @@ local Tuning = require(Shared.Config.Tuning)
 local RunRules = require(Shared.Logic.RunRules)
 local SkillCheck = require(Shared.Logic.SkillCheck)
 local Grab = require(Shared.Logic.Grab)
+local GrabLook = require(Shared.Logic.GrabLook)
 
 local FrameTime = require(script.Parent.Parent.FrameTime)
 local Net = require(script.Parent.Parent.Net)
@@ -72,6 +82,18 @@ local pressed = false -- its one press has gone to the server
 local finishFrom = 0 -- server times the grab's clock runs between
 local finishAt = 0
 local inputWatch: RBXScriptConnection? = nil
+-- the grab remake (nil look: today's grab)
+local lookKind: string? = nil
+local lookMove: string? = nil
+local variant: GrabLook.Variant? = nil
+local lastKey: number? = nil -- the last grab's variant: the next never repeats it
+local moveAt = 0
+local kick = 0 -- 0..1 a bite's lurch (the ribs' squeeze, the reach-in's jolt), falling away fast
+local swayKick = 0 -- the "Kick" variant's sparse jolts
+local swayKickAt = 0
+local swayKickDir = Vector3.zero
+local lookRng = Random.new()
+local CLOSE_LOOP = "GrabClose"
 local watching: RBXScriptConnection? = nil
 local dying: RBXScriptConnection? = nil
 
@@ -186,6 +208,84 @@ end
 
 -- Freezes your own look and turn for the grab: Scriptable camera, no AutoRotate. (Shift lock is
 -- already off: MovementController sinks Shift, and DevEnableMouseLock is server-only.)
+local function tierName(): string
+	return GrabLook.tier(Players.LocalPlayer:GetAttribute("GraphicsQuality"))
+end
+
+-- The hold's camera move and the variant's sway (the grab remake): the eye and the point it looks at,
+-- reshaped, and a roll in radians. Today's grab passes straight through.
+local function shaped(eye: Vector3, target: Vector3, body: BasePart, dt: number): (Vector3, Vector3, number)
+	local v = variant
+	if lookMove == nil or v == nil then
+		return eye, target, 0
+	end
+	local since = os.clock() - moveAt
+	local ease = GrabLook.close(since, v.speed)
+	local sway = Tuning.GrabLook.Tiers[tierName()].sway
+	kick *= math.exp(-dt * 6)
+	local roll = 0
+	if lookMove == "Lifted" then
+		-- up off your feet by the throat: you look up at it from under its arm, a choking tremor
+		eye += (target - eye) * 0.3 * ease - Vector3.yAxis * 1.6 * ease
+		roll = math.rad(4) * math.sin(since * 1.3) * ease
+	elseif lookMove == "Pressed" then
+		-- crushed into its ribs: the view pressed close, lurching in at every squeeze
+		eye = eye:Lerp(target, 0.28 * ease + 0.12 * kick)
+	elseif lookMove == "Dragged" then
+		-- hauled by the ankle: low to the ground, looking back the way you came, scraping
+		local back = body.Position - target
+		back = Vector3.new(back.X, 0, back.Z)
+		back = if back.Magnitude > 0.1 then back.Unit else -body.CFrame.LookVector
+		eye = eye:Lerp(body.Position - back * 2.5 + Vector3.yAxis * 1.4, ease)
+		target = target:Lerp(body.Position + back * 30 + Vector3.yAxis * 1.5, ease)
+		eye += Vector3.yAxis * math.noise(since * 9, 1.3) * 0.14 * sway + Vector3.yAxis * 0.25 * kick
+	elseif lookMove == "Rise" then
+		-- lifted: you rise with his hand and the ground falls away under you
+		eye += Vector3.yAxis * 2.2 * ease
+		target = target:Lerp(body.Position - Vector3.yAxis * 8, 0.28 * ease)
+	elseif lookMove == "Drop" then
+		-- slammed: one hard drop, then low
+		local k = math.exp(-since * 9)
+		eye += Vector3.yAxis * (3 * k - 0.8 * (1 - k))
+	elseif lookMove == "Jolts" then
+		-- hauled through the opening in short hard jolts
+		eye += (target - eye).Unit * 0.9 * kick
+	end
+	if v.sway == "Shudder" then
+		eye += Vector3.new(math.noise(since * 14, 2.1), math.noise(since * 14, 3.7), 0) * 0.07 * sway
+	elseif v.sway == "Roll" then
+		roll += math.rad(3) * math.sin(since * 0.9) * sway
+	else
+		swayKick *= math.exp(-dt * 8)
+		if os.clock() >= swayKickAt then
+			swayKickAt = os.clock() + lookRng:NextNumber(0.9, 1.8)
+			swayKick = 1
+			swayKickDir = Vector3.new(lookRng:NextNumber(-1, 1), lookRng:NextNumber(-0.6, 0.6), 0)
+		end
+		eye += swayKickDir * 0.25 * swayKick * sway
+	end
+	return eye, target, roll
+end
+
+-- The Hollow's own sound in your ear while it holds you (the grab remake); stopped with nil.
+local function closeSound(kind: string?)
+	local audioCtl = Registry.AudioController
+	if audioCtl == nil then
+		return
+	end
+	audioCtl.StopLoop(CLOSE_LOOP)
+	if kind == nil then
+		return
+	end
+	local cue = if kind == "Cold" then "HollowBreath" else "FireboxRoar"
+	audioCtl.Loop(CLOSE_LOOP, cue, SoundService)
+	local sound = audioCtl.LoopSound(CLOSE_LOOP)
+	if sound then
+		sound.Volume *= Tuning.GrabLook.CloseVolume
+		sound.PlaybackSpeed = if kind == "Cold" then 0.82 else 0.46
+	end
+end
+
 local function lock(model: Model)
 	if saved then
 		return
@@ -220,7 +320,9 @@ local function lock(model: Model)
 		local eye = body.Position + eyeOffset
 		-- the view is dragged round to its face
 		local target = holderHead(own) or body.Position
-		local want = CFrame.lookAt(eye, target)
+		local roll
+		eye, target, roll = shaped(eye, target, body, dt)
+		local want = CFrame.lookAt(eye, target) * CFrame.Angles(0, 0, roll)
 		local turn = (cam.CFrame - cam.CFrame.Position):Lerp(want - want.Position, 1 - math.exp(-dt * 2.4))
 		cam.CFrame = CFrame.new(eye) * turn
 		cam.Focus = CFrame.new(target)
@@ -263,6 +365,7 @@ end
 local function begin(model: Model, style: string)
 	local def = Grabs.ById[style]
 	local kind = (model:GetAttribute("GrabKind") :: string?) or "Stalker"
+	local fresh = not held -- false: the hold changed while it has you (the Stoker's lift to his slam)
 	held = true
 	struggle = 0.6
 	escapeShown = 0
@@ -271,6 +374,34 @@ local function begin(model: Model, style: string)
 	finishFrom = Workspace:GetServerTimeNow()
 	finishAt = (model:GetAttribute("GrabFinishAt") :: number?) or finishFrom
 	Trauma.seize()
+	safely("look", function()
+		local look = GrabLook.look(kind, Tuning.GrabLook.Enabled, Tuning.BruteRemake.Enabled)
+		if look and (fresh or variant == nil) then
+			local rolled = GrabLook.roll(lastKey, function(n: number): number
+				return lookRng:NextInteger(1, n)
+			end)
+			variant = rolled
+			lastKey = rolled.key
+		end
+		local wasMove = lookMove
+		lookKind = look
+		lookMove = if look then GrabLook.move(style) else nil
+		if lookMove ~= wasMove then
+			moveAt = os.clock()
+		end
+		Trauma.look(look, lookMove, if look then variant else nil, tierName())
+		if Registry.AudioController then
+			Registry.AudioController.GrabMuffle(look ~= nil, lookMove == "Lifted")
+		end
+		if fresh or look == nil then
+			closeSound(look)
+		end
+		if lookMove == "Drop" then
+			Trauma.puff()
+			Registry.CameraController.Shake(1.1)
+			audio("StokerDrag1", 0.9, 0.9)
+		end
+	end)
 	local crew = Registry.StateController.Get({ "crew" }) or {}
 	Struggle.show(
 		if def then def.name else "IT HAS YOU",
@@ -310,6 +441,15 @@ end
 
 local function finish(model: Model)
 	safely("face light", unlightFace)
+	if lookKind or lookMove then
+		lookKind, lookMove, variant = nil, nil, nil
+		safely("look sound", function()
+			closeSound(nil)
+			if Registry.AudioController then
+				Registry.AudioController.GrabMuffle(false)
+			end
+		end)
+	end
 	if not held then
 		safely("unlock", unlock)
 		return
@@ -450,7 +590,8 @@ function GrabController.Start()
 		-- your heart, quickening as the hold wears you down
 		local humanoid = model:FindFirstChildOfClass("Humanoid")
 		local life = if humanoid then humanoid.Health / math.max(humanoid.MaxHealth, 1) else 1
-		if os.clock() >= heartAt then
+		-- the grab remake has no heartbeat (owner 2026-11-22: the heartbeat is redundant)
+		if lookKind == nil and os.clock() >= heartAt then
 			heartAt = os.clock() + 0.42 + 0.35 * life
 			audio("Heartbeat", 0.9, 1)
 			Registry.CameraController.Pulse(0.6)
@@ -482,6 +623,16 @@ function GrabController.Bite(damage: number?)
 	Registry.CameraController.Shake(0.45 + 0.4 * strength)
 	Trauma.hit(strength)
 	audio("Hit", 0.75, 0.85)
+	if lookMove == "Pressed" then
+		Trauma.squeeze()
+		kick = 1
+	elseif lookMove == "Jolts" then
+		kick = 1
+		Registry.CameraController.Shake(0.4)
+	elseif lookMove == "Dragged" then
+		kick = 1
+		audio("StokerDragGrit", 0.5, 1.35) -- dragged over the grit
+	end
 end
 
 -- The Stoker pinned you (his lift turned into a pin on a missed press).

@@ -585,6 +585,21 @@ local Tuning = {
 	-- the screen while a Hollow holds you (owner 2026-11-18): the HUD fades back to HudTransparency, phones get
 	-- no dark vignette (it hides the game), and the veins reach PhoneVeins as far in on a phone
 	GrabScreen = { Enabled = true, HudTransparency = 0.85, PhoneVeins = 0.78 },
+	-- The grab remake (owner 2026-11-22, Logic/GrabLook): each Hollow its own screen (Stalker cold, Stoker heat),
+	-- each hold its own camera move, the world muffled under the Hollow's own sound, no heartbeat, and a small
+	-- variation each grab that never repeats the last. Off: today's tunnel for every grab. The Crawler keeps
+	-- today's look either way.
+	GrabLook = {
+		Enabled = false,
+		Muffle = { MidDb = -14, HighDb = -30, AmbienceShare = 0.3, ChokedDb = -8 }, -- the world under a grab
+		CloseVolume = 0.55, -- the Hollow's own sound, in your ear, at this share of its cue volume
+		-- each setting: specks of fog or soot on screen, blur and camera sway scale (scaled, never removed)
+		Tiers = {
+			Quality = { specks = 34, fog = 10, blur = 1, sway = 1 },
+			Balanced = { specks = 20, fog = 6, blur = 0.6, sway = 1 },
+			Performance = { specks = 10, fog = 4, blur = 0, sway = 0.85 },
+		},
+	},
 	-- what players read for each kind (the code keeps its ids): the Brute is "the Stoker" (owner 2026-11-18;
 	-- name check in IP-REGISTER)
 	HollowNames = { Stalker = "Stalker", Crawler = "Crawler", Brute = "Stoker" } :: { [string]: string },

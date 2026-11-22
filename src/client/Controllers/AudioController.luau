@@ -66,6 +66,10 @@ local arrivalUntil = 0 -- the near-silence after the arrival brakes (Tuning.Foot
 -- the shock of losing an arm (Shock): the main mix dulled and dipped, a ring in the ears above it
 local shockAt: number? = nil
 local shockEq: EqualizerSoundEffect
+local grabEq: EqualizerSoundEffect -- the remade grab's muffle, on the world (Ambience), not on the Hollow
+local grabMuffle = 0 -- 0..1, eased toward grabWant
+local grabWant = 0
+local grabChoked = false
 local shockRing: Sound? = nil
 local tierOf: { [string]: number } = {} -- SoundGroup name -> its priority tier
 local voices: { [number]: number } = {} -- one-shots playing per tier
@@ -284,6 +288,11 @@ function AudioController.Init()
 	shockEq.LowGain, shockEq.MidGain, shockEq.HighGain = 0, 0, 0
 	shockEq.Enabled = false
 	shockEq.Parent = group
+	grabEq = Instance.new("EqualizerSoundEffect")
+	grabEq.Name = "GrabMuffle"
+	grabEq.LowGain, grabEq.MidGain, grabEq.HighGain = 0, 0, 0
+	grabEq.Enabled = false
+	grabEq.Parent = ambience
 	-- the other tiers' groups, under the main group (so the Hush still drains them); Warnings is a
 	-- group of its own beside the main one, so the Hush and the departure dip leave it alone
 	for _, name in { "Cues", "Steps", "Feedback", "Piano" } do
@@ -571,6 +580,17 @@ function AudioController.Start()
 		-- the Settings drone and ambience volume
 		local level = SettingsConfig.AmbienceLevels[Players.LocalPlayer:GetAttribute("Ambience") :: any]
 		mixes.Ambience.Volume = if type(level) == "number" then level else 1
+		-- a remade grab (Tuning.GrabLook): the world goes dull and the train falls away under the Hollow
+		grabMuffle += (grabWant - grabMuffle) * math.min(dt * (if grabWant > grabMuffle then 4 else 1.5), 1)
+		if grabMuffle > 0.001 then
+			local m = Tuning.GrabLook.Muffle
+			grabEq.Enabled = true
+			grabEq.MidGain = (m.MidDb + (if grabChoked then m.ChokedDb else 0)) * grabMuffle
+			grabEq.HighGain = m.HighDb * grabMuffle
+			mixes.Ambience.Volume *= 1 - (1 - m.AmbienceShare) * grabMuffle
+		elseif grabEq.Enabled then
+			grabEq.Enabled = false
+		end
 
 		local duck = if os.clock() < duckUntil then 1 - Tuning.Departure.DuckShare else 1
 		group.Volume = (1 - (1 - HUSH_FLOOR) * hush) * duck
@@ -942,6 +962,13 @@ function AudioController.Shock()
 		ring:Play()
 	end
 	shockRing = ring
+end
+
+-- A remade grab has you (GrabController, Tuning.GrabLook): the world muffles and the train falls away
+-- (`on`), harder by the throat (`choked`); the Hollow's own sounds are left clear.
+function AudioController.GrabMuffle(on: boolean, choked: boolean?)
+	grabWant = if on then 1 else 0
+	grabChoked = choked == true
 end
 
 -- Starts a keyed loop attached to a part (machinery, leaks). Stop it with StopLoop.
