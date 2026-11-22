@@ -20,7 +20,8 @@
 
 	look        the grab remake (Tuning.GrabLook, Logic/GrabLook), set by GrabController for the Stalker and
 	              the Stoker: no heartbeat throb, and each Hollow its own screen. Cold (the Stalker): pale fog
-	              creeping in like breath on glass, the colour going blue-grey, frost-pale cracks at a bite.
+	              creeping in like breath on glass, the colour draining to a grey with only a faint cool (owner
+	              2026-11-22: not blue); a bite still cracks red, as red is what players read as hurt.
 	              Heat (the Stoker): soot at the edges, ember sparks drifting up, a slow orange flare with his
 	              ember light, soot-dark cracks. The hold shapes it: by the throat the dark closes top and
 	              bottom like eyelids; in his ribs it squeezes in from the sides at every squeeze. Each grab's
@@ -52,10 +53,9 @@ local EYE_VEIN = Color3.fromRGB(150, 16, 22) -- the bloodshot eye's capillaries:
 local PIN_TINT = Color3.fromRGB(255, 150, 146)
 local RUSH_TINT = Color3.fromRGB(255, 244, 232)
 -- the grab remake's two screens (Tuning.GrabLook)
-local COLD_EDGE = Color3.fromRGB(120, 130, 142) -- fog grey, a little blue
-local COLD_TINT = Color3.fromRGB(205, 220, 242)
-local COLD_VEIN = Color3.fromRGB(196, 210, 226) -- frost-pale cracks
-local COLD_FOG = Color3.fromRGB(176, 186, 198)
+local COLD_EDGE = Color3.fromRGB(112, 115, 120) -- fog grey, barely cool
+local COLD_TINT = Color3.fromRGB(232, 236, 241) -- a faint cool only: the cold is the colour draining, not blue
+local COLD_FOG = Color3.fromRGB(184, 187, 191)
 local HEAT_EDGE = Color3.fromRGB(30, 18, 10) -- soot
 local HEAT_TINT = Color3.fromRGB(255, 214, 176)
 local HEAT_FLARE = Color3.fromRGB(255, 176, 120)
@@ -165,8 +165,8 @@ local function crack(from: number?)
 			Position = pos,
 			Size = UDim2.new(length * (1 - 0.3 * branch), 0, 0, rng:NextInteger(2, 4)),
 			Rotation = inward + (if branch == 0 then 0 else rng:NextNumber(-28, 28)),
-			BackgroundColor3 = if look == "Cold" then COLD_VEIN elseif look == "Heat" then HEAT_VEIN else VEIN,
-			BackgroundTransparency = if look == "Cold" then 0.35 else 0.2,
+			BackgroundColor3 = if look == "Heat" then HEAT_VEIN else VEIN, -- a bite stays red: red is hurt
+			BackgroundTransparency = 0.2,
 			BorderSizePixel = 0,
 			Parent = veins,
 		})
@@ -372,7 +372,7 @@ local function step(dt: number)
 		local tier = Tuning.GrabLook.Tiers[tierName]
 		local flare = if look == "Heat" then 0.5 + 0.5 * math.sin(os.clock() * 2.1 + flarePhase) else 0
 		if look == "Cold" then
-			g.Saturation = math.max(-0.6 * closed + 0.28 * rush - 0.3 * hit - 0.6 * dead - 0.75 * shock, -1)
+			g.Saturation = math.max(-0.5 * closed + 0.28 * rush - 0.3 * hit - 0.6 * dead - 0.75 * shock, -1)
 			g.Contrast = 0.08 * closed + 0.15 * hit + 0.25 * shock
 			g.Brightness = -0.03 * closed + 0.18 * hit - 0.1 * dead + 0.55 * flash
 			g.TintColor =
