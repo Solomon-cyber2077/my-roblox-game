@@ -236,7 +236,8 @@ local function shaped(eye: Vector3, target: Vector3, body: BasePart, dt: number)
 		local back = body.Position - target
 		back = Vector3.new(back.X, 0, back.Z)
 		back = if back.Magnitude > 0.1 then back.Unit else -body.CFrame.LookVector
-		eye = eye:Lerp(body.Position - back * 2.5 + Vector3.yAxis * 1.4, ease)
+		-- the eye sits just past your trailing head, so your own body is behind it
+		eye = eye:Lerp(body.Position + back * 2.2 + Vector3.yAxis * 1.1, ease)
 		target = target:Lerp(body.Position + back * 30 + Vector3.yAxis * 1.5, ease)
 		eye += Vector3.yAxis * math.noise(since * 9, 1.3) * 0.14 * sway + Vector3.yAxis * 0.25 * kick
 	elseif lookMove == "Rise" then
@@ -265,6 +266,22 @@ local function shaped(eye: Vector3, target: Vector3, body: BasePart, dt: number)
 		eye += swayKickDir * 0.25 * swayKick * sway
 	end
 	return eye, target, roll
+end
+
+-- The colour of the flash round the screen at the seize and at each bite: today's dark red, or with the
+-- grab remake the Hollow's own (a cold grey-blue for the Stalker, a burnt ember for the Stoker). The seize
+-- can arrive before the hold starts, so the look is read from the GrabKind already on your character.
+local function pulseColor(): Color3
+	local own = character()
+	local kind = own and own:GetAttribute("GrabKind") :: string?
+	local look = lookKind
+		or (if kind then GrabLook.look(kind, Tuning.GrabLook.Enabled, Tuning.BruteRemake.Enabled) else nil)
+	if look == "Cold" then
+		return Color3.fromRGB(132, 150, 172)
+	elseif look == "Heat" then
+		return Color3.fromRGB(150, 62, 20)
+	end
+	return Theme.Color.signalDark
 end
 
 -- The Hollow's own sound in your ear while it holds you (the grab remake); stopped with nil.
@@ -619,7 +636,7 @@ end
 -- A bite, squeeze or yank landed on you (Fx from HollowService): `damage` taken by it.
 function GrabController.Bite(damage: number?)
 	local strength = math.clamp((damage or 8) / 14, 0.45, 1)
-	Overlay.pulse(Theme.Color.signalDark, 0.9, 0.7)
+	Overlay.pulse(pulseColor(), 0.9, 0.7)
 	Registry.CameraController.Shake(0.45 + 0.4 * strength)
 	Trauma.hit(strength)
 	audio("Hit", 0.75, 0.85)
@@ -659,7 +676,7 @@ end
 
 -- It just seized you.
 function GrabController.Seized()
-	Overlay.pulse(Theme.Color.signalDark, 1, 1.1)
+	Overlay.pulse(pulseColor(), 1, 1.1)
 	Registry.CameraController.Shake(1)
 	audio("Hit", 1, 0.7)
 end
