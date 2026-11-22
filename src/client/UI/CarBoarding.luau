@@ -87,7 +87,8 @@ end
 
 function CarBoardingUi.mount(gui: ScreenGui)
 	local State = Registry.StateController
-	local touchOnly = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	-- Android reports KeyboardEnabled with no keyboard attached; a touch screen without a mouse is touch only
+	local touchOnly = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 
 	-- Countdown panel, where the hall's departure panel sits ------------------------------------
 	local panel = Ui.new("Frame", {

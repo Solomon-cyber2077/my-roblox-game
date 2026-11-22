@@ -1276,8 +1276,9 @@ function Hud.mount(gui: ScreenGui)
 		end
 		local hints = {}
 		if hasTool then
-			-- a touch screen has no E or number keys (owner, stage 4 round 2)
-			local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+			-- a touch screen has no E or number keys (owner, stage 4 round 2); Android reports
+			-- KeyboardEnabled with no keyboard attached, so go by the mouse instead
+			local touch = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 			table.insert(
 				hints,
 				if touch

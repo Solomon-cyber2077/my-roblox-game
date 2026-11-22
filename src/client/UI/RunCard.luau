@@ -40,9 +40,10 @@ local inviteButton: TextButton
 local inviteAllowed = false
 local hint: TextLabel
 
--- The H hint names a key: only where there is a keyboard (a phone has no H).
+-- The H hint names a key: only where there is a keyboard (a phone has no H). Android phones
+-- report KeyboardEnabled with no keyboard attached, so a touch screen without a mouse counts as none.
 local function hasKeyboard(): boolean
-	return UserInputService.KeyboardEnabled or not UserInputService.TouchEnabled
+	return not UserInputService.TouchEnabled or UserInputService.MouseEnabled
 end
 local ticket: ImageLabel? = nil
 local shownFor: string? = nil

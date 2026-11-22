@@ -122,10 +122,12 @@ export type Input = {
 }
 
 -- What a client reports, from what UserInputService and GuiService say once at start.
+-- The keyboard flag is not used for touch screens: Android phones report KeyboardEnabled with no
+-- keyboard attached (seen on a Pixel 9 Pro), so a touch screen without a mouse is a phone or tablet.
 function Telemetry.classify(input: Input): string
 	if input.tenFoot then
 		return "console"
-	elseif input.touch and not input.keyboard and not input.mouse then
+	elseif input.touch and not input.mouse then
 		local side = input.shortSide
 		if side == nil then
 			return "unknown"
