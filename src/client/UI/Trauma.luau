@@ -108,6 +108,8 @@ local flarePhase = 0
 local heartless = false -- the rush after a remade grab: no racing-heart throb either
 local specks: { Speck } = {}
 local speckLayer: Frame
+local FOG_RINGS = 12
+local FOG_RING_ALPHA = 0.03 -- per ring: about 0.36 at the middle of a patch, fading to nothing at its rim
 local underglow: Frame -- the Stoker's firebox heat rising from below
 local UNDERGLOW = Color3.fromRGB(255, 138, 62)
 
@@ -278,17 +280,23 @@ local function spawnSpeck(fog: boolean, burst: boolean?)
 		ZIndex = 18,
 		Parent = speckLayer,
 	})
-	Ui.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = frame })
 	if fog then
-		Ui.new("UIGradient", {
-			Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 0.2),
-				NumberSequenceKeypoint.new(0.5, 0.6),
-				NumberSequenceKeypoint.new(1, 1),
-			}),
-			Rotation = rng:NextNumber(0, 360),
-			Parent = frame,
-		})
+		-- a soft patch: stacked circles, thicker toward the middle, so it has no hard rim (owner 2026-11-22)
+		for i = 1, FOG_RINGS do
+			local ring = Ui.new("Frame", {
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
+				Size = UDim2.fromScale(1 - 0.8 * (i - 1) / FOG_RINGS, 1 - 0.8 * (i - 1) / FOG_RINGS),
+				BackgroundColor3 = color,
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				ZIndex = 18,
+				Parent = frame,
+			})
+			Ui.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = ring })
+		end
+	else
+		Ui.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = frame })
 	end
 	table.insert(specks, { frame = frame, pos = pos, vel = vel, age = 0, life = life, fog = fog })
 end
@@ -452,7 +460,13 @@ function stepSpecks(dt: number, on: boolean)
 		end
 		local fade = math.sin(math.pi * u) -- in, then out
 		s.frame.Position = UDim2.fromOffset(s.pos.X, s.pos.Y)
-		s.frame.BackgroundTransparency = 1 - fade * (if s.fog then 0.32 else 0.85)
+		if s.fog then
+			for _, ring in s.frame:GetChildren() do
+				(ring :: Frame).BackgroundTransparency = 1 - fade * FOG_RING_ALPHA
+			end
+		else
+			s.frame.BackgroundTransparency = 1 - fade * 0.85
+		end
 	end
 	speckLayer.Visible = #specks > 0
 end
