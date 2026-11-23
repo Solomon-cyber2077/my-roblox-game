@@ -939,7 +939,7 @@ local function bipedAttack(kind: string, out: Pose, windup: number?, strike: num
 	end
 end
 
-local function bipedCower(out: Pose, now: number, stunned: boolean, reeling: number?)
+local function bipedCower(out: Pose, kind: string, now: number, stunned: boolean, reeling: number?)
 	local shiver = math.sin(now * 40) * 0.05
 	if reeling then
 		-- thrown off its prey: it staggers back clutching at the air, head shaking
@@ -952,6 +952,20 @@ local function bipedCower(out: Pose, now: number, stunned: boolean, reeling: num
 		out.RElbow = A(0.8, 0, 0)
 		out.Neck = A(-0.3, math.sin(now * 14) * 0.5 * e, 0)
 		out.Jaw = A(-0.9, 0, 0)
+		return
+	end
+	if kind == "Stalker" then
+		-- hands pressed flat over its face, fingers splayed up over the brow, head bowed into them
+		out.LShoulder = A(1.6 + shiver, -0.6, 0.1)
+		out.RShoulder = A(1.6 - shiver, 0.6, -0.1)
+		out.LElbow = A(2.5, 0, 0)
+		out.RElbow = A(2.5, 0, 0)
+		out.LWrist = A(-0.4, 0, 0)
+		out.RWrist = A(-0.4, 0, 0)
+		out.Waist = A((if stunned then 0.35 else 0.25) + shiver, 0, 0)
+		out.Neck = A(0.35, shiver, 0)
+		out.Jaw = A(-0.5, 0, 0)
+		out.RootJoint = CFrame.new(0, -0.4, 0.3) * A(0, 0, shiver)
 		return
 	end
 	out.LShoulder = A(2.1 + shiver, 0, 0.55)
@@ -1159,7 +1173,7 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 		if crawler then
 			crawlerCower(rig, out, input.now, nil)
 		else
-			bipedCower(out, input.now, true, nil)
+			bipedCower(out, kind, input.now, true, nil)
 		end
 		return out
 	end
@@ -1169,7 +1183,7 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 			crawlerCower(rig, out, input.now, t)
 		else
 			gait(out, false)
-			bipedCower(out, input.now, false, t)
+			bipedCower(out, kind, input.now, false, t)
 		end
 		return out
 	end
@@ -1178,7 +1192,7 @@ function HollowPoses.pose(rig: Rig, input: Input): Pose
 			crawlerCower(rig, out, input.now, nil)
 		else
 			gait(out, false)
-			bipedCower(out, input.now, false, nil)
+			bipedCower(out, kind, input.now, false, nil)
 		end
 		return out
 	end
