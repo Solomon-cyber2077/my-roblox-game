@@ -431,7 +431,7 @@ local function step(dt: number)
 	local frostOn = look == "Cold" and frost.Image ~= ""
 	frost.Visible = frostOn
 	if frostOn then
-		frost.ImageTransparency = 1 - closed * (if phone() then 0.5 else 0.9)
+		frost.ImageTransparency = 1 - closed * (if phone() then 0.45 else 0.75)
 		local spread = 1 + 0.24 * (1 - closed) - 0.05 * squeeze
 		frost.Size = UDim2.fromScale(spread, spread)
 	end
@@ -564,6 +564,15 @@ function Trauma.mount(screen: ScreenGui)
 		local side = if spec.horizontal then 0 elseif spec.anchor.X > 0.5 then 1 else -1
 		table.insert(edges, { frame = frame, horizontal = spec.horizontal, side = side })
 	end
+	-- the frost has a screen of its own so it reaches the true edges of the screen (past the top bar and
+	-- a phone's safe-area margins), just under the HUD
+	local frostGui = Instance.new("ScreenGui")
+	frostGui.Name = "LastTrainOutFrost"
+	frostGui.IgnoreGuiInset = true
+	frostGui.ScreenInsets = Enum.ScreenInsets.None
+	frostGui.ResetOnSpawn = false
+	frostGui.DisplayOrder = screen.DisplayOrder - 1
+	frostGui.Parent = screen.Parent
 	frost = Ui.new("ImageLabel", {
 		Name = "Frost",
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -575,7 +584,7 @@ function Trauma.mount(screen: ScreenGui)
 		ScaleType = Enum.ScaleType.Stretch,
 		Visible = false,
 		ZIndex = 18,
-		Parent = layer,
+		Parent = frostGui,
 	})
 	underglow = Ui.new("Frame", {
 		Name = "Underglow",
