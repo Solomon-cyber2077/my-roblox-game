@@ -58,8 +58,8 @@ local COLD_VEIN = Color3.fromRGB(196, 210, 226) -- frost-pale cracks
 local COLD_FOG = Color3.fromRGB(176, 186, 198)
 local COLD_TUNNEL = Color3.fromRGB(22, 8, 18) -- dying in the cold grip: the dark of frozen blood, not oxblood
 local HEAT_EDGE = Color3.fromRGB(30, 18, 10) -- soot
-local HEAT_TINT = Color3.fromRGB(255, 214, 176)
-local HEAT_FLARE = Color3.fromRGB(255, 176, 120)
+local HEAT_TINT = Color3.fromRGB(255, 228, 206) -- a light warmth, not an orange wash (owner 2026-11-22: "too warm")
+local HEAT_FLARE = Color3.fromRGB(255, 200, 160)
 local HEAT_VEIN = Color3.fromRGB(70, 20, 8)
 local EMBER = Color3.fromRGB(255, 132, 48)
 local SOOT = Color3.fromRGB(34, 26, 22)
@@ -380,12 +380,12 @@ local function step(dt: number)
 				Color3.new(1, 1, 1):Lerp(COLD_TINT, closed):Lerp(RUSH_TINT, rush):Lerp(STRESS_TINT, shock)
 		else
 			g.Saturation = math.max(-0.12 * closed + 0.28 * rush - 0.3 * hit - 0.6 * dead - 0.75 * shock, -1)
-			g.Contrast = 0.24 * closed + 0.18 * hit + 0.25 * shock
+			g.Contrast = 0.18 * closed + 0.18 * hit + 0.25 * shock
 			g.Brightness = 0.04 * flare * closed + 0.2 * hit - 0.1 * dead + 0.55 * flash
 			g.TintColor = Color3.new(1, 1, 1)
 				:Lerp(HEAT_TINT, closed)
 				:Lerp(RUSH_TINT, rush)
-				:Lerp(HEAT_FLARE, 0.35 * flare * closed)
+				:Lerp(HEAT_FLARE, 0.25 * flare * closed)
 				:Lerp(STRESS_TINT, shock)
 				:Lerp(PIN_TINT, pinTint)
 		end
