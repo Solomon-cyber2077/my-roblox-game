@@ -57,11 +57,11 @@ local COLD_TINT = Color3.fromRGB(205, 220, 242)
 local COLD_VEIN = Color3.fromRGB(196, 210, 226) -- frost-pale cracks
 local COLD_FOG = Color3.fromRGB(176, 186, 198)
 local COLD_TUNNEL = Color3.fromRGB(22, 8, 18) -- dying in the cold grip: the dark of frozen blood, not oxblood
-local HEAT_EDGE = Color3.fromRGB(30, 18, 10) -- soot
-local HEAT_TINT = Color3.fromRGB(255, 228, 206) -- a light warmth, not an orange wash (owner 2026-11-22: "too warm")
-local HEAT_FLARE = Color3.fromRGB(255, 200, 160)
+local HEAT_EDGE = Color3.fromRGB(24, 20, 18) -- soot, near neutral
+local HEAT_TINT = Color3.fromRGB(255, 238, 224) -- only a hint of warmth (owner 2026-11-22: "too warm", twice)
+local HEAT_FLARE = Color3.fromRGB(255, 214, 184)
 local HEAT_VEIN = Color3.fromRGB(70, 20, 8)
-local EMBER = Color3.fromRGB(255, 132, 48)
+local EMBER = Color3.fromRGB(232, 132, 70)
 local SOOT = Color3.fromRGB(34, 26, 22)
 local ASH = Color3.fromRGB(150, 144, 138)
 local EDGE_SPECS = {
@@ -258,8 +258,8 @@ local function spawnSpeck(fog: boolean, burst: boolean?)
 		color = ASH
 		life = rng:NextNumber(0.8, 1.4)
 	else
-		local ember = rng:NextNumber() < 0.6
-		size = if ember then rng:NextNumber(2, 4.5) else rng:NextNumber(3, 6)
+		local ember = rng:NextNumber() < 0.4
+		size = if ember then rng:NextNumber(1.5, 3) else rng:NextNumber(2, 4)
 		vel = inward * rng:NextNumber(10, 30) + Vector2.new(rng:NextNumber(-12, 12), -rng:NextNumber(30, 70))
 		color = if ember then EMBER else SOOT
 		life = rng:NextNumber(1.4, 2.6)
@@ -387,7 +387,7 @@ local function step(dt: number)
 			g.TintColor = Color3.new(1, 1, 1)
 				:Lerp(HEAT_TINT, closed)
 				:Lerp(RUSH_TINT, rush)
-				:Lerp(HEAT_FLARE, 0.25 * flare * closed)
+				:Lerp(HEAT_FLARE, 0.15 * flare * closed)
 				:Lerp(STRESS_TINT, shock)
 				:Lerp(PIN_TINT, pinTint)
 		end
