@@ -343,9 +343,11 @@ local function step(dt: number)
 			if edge.side ~= 0 and lean ~= 0 then
 				weight *= if edge.side == lean then 1.4 else 0.7
 			end
-			local r = (0.15 * closed + 0.08 * hit) * weight + 0.5 * dead
+			-- the Stoker's soot stays near the rim (owner 2026-11-22: "goes to close to the center")
+			local lookReach = if look == "Heat" then 0.08 else 0.15
+			local r = (lookReach * closed + 0.08 * hit) * weight + 0.5 * dead
 			local a = math.clamp(
-				(if look == "Cold" then 0.42 else 0.6) * closed * math.min(weight, 1.3) + 0.3 * hit + dead,
+				(if look == "Cold" then 0.42 else 0.45) * closed * math.min(weight, 1.3) + 0.3 * hit + dead,
 				0,
 				1
 			)
