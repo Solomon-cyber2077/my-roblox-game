@@ -108,6 +108,8 @@ local flarePhase = 0
 local heartless = false -- the rush after a remade grab: no racing-heart throb either
 local specks: { Speck } = {}
 local speckLayer: Frame
+local underglow: Frame -- the Stoker's firebox heat rising from below
+local UNDERGLOW = Color3.fromRGB(255, 138, 62)
 
 local function effects(): (ColorCorrectionEffect, BlurEffect)
 	local camera = Workspace.CurrentCamera
@@ -371,6 +373,13 @@ local function step(dt: number)
 	layer.Visible = alpha > 0.005 or shock > 0.005 or #veins:GetChildren() > 0 or #specks > 0
 
 	stepSpecks(dt, lookOn)
+	-- the Stoker's heat breathing up from the bottom of the screen with his firebox (softer on phones)
+	local glow = 0
+	if look == "Heat" then
+		local breath = 0.5 + 0.5 * math.sin(os.clock() * 2.1 + flarePhase)
+		glow = (0.12 + 0.1 * breath) * closed * (if phone() then 0.6 else 1)
+	end
+	underglow.BackgroundTransparency = 1 - glow
 	local g, b = effects()
 	if lookOn then
 		local tier = Tuning.GrabLook.Tiers[tierName]
@@ -393,7 +402,10 @@ local function step(dt: number)
 				:Lerp(PIN_TINT, pinTint)
 		end
 		g.Enabled = true
-		b.Size = (T.StressBlur * closed + T.HitBlur * hit) * tier.blur + T.TornBlur * (0.35 * shock + flash)
+		-- a faint heat shimmer on the Stoker's breath (scaled by the setting's blur)
+		local shimmer = if look == "Heat" then 1.2 * flare * closed else 0
+		b.Size = (T.StressBlur * closed + T.HitBlur * hit + shimmer) * tier.blur
+			+ T.TornBlur * (0.35 * shock + flash)
 		b.Enabled = b.Size > 0.2
 		return
 	end
@@ -488,6 +500,26 @@ function Trauma.mount(screen: ScreenGui)
 		local side = if spec.horizontal then 0 elseif spec.anchor.X > 0.5 then 1 else -1
 		table.insert(edges, { frame = frame, horizontal = spec.horizontal, side = side })
 	end
+	underglow = Ui.new("Frame", {
+		Name = "Underglow",
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.fromScale(0, 1),
+		Size = UDim2.fromScale(1, 0.24),
+		BackgroundColor3 = UNDERGLOW,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 18,
+		Parent = layer,
+	})
+	Ui.new("UIGradient", {
+		Rotation = 90,
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.6, 0.7),
+			NumberSequenceKeypoint.new(1, 0),
+		}),
+		Parent = underglow,
+	})
 	speckLayer = Ui.new("Frame", {
 		Name = "Specks",
 		Size = UDim2.fromScale(1, 1),
