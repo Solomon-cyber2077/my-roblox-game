@@ -96,7 +96,15 @@ local nextRushBeat = 0
 local rng = Random.new()
 
 -- the grab remake (nil: today's tunnel)
-type Speck = { frame: Frame, pos: Vector2, vel: Vector2, age: number, life: number, fog: boolean }
+type Speck = {
+	frame: GuiObject,
+	pos: Vector2,
+	vel: Vector2,
+	age: number,
+	life: number,
+	fog: boolean,
+	spin: number,
+}
 local look: string? = nil
 local move: string? = nil
 local lean = 0
@@ -110,6 +118,8 @@ local specks: { Speck } = {}
 local speckLayer: Frame
 local FOG_RINGS = 12
 local FOG_RING_ALPHA = 0.03 -- per ring: about 0.36 at the middle of a patch, fading to nothing at its rim
+local MIST_ALPHA = 0.5 -- a breath-mist patch at its thickest
+local frost: ImageLabel -- the Stalker's frost creeping in from the edges of the screen
 local underglow: Frame -- the Stoker's firebox heat rising from below
 local UNDERGLOW = Color3.fromRGB(255, 138, 62)
 
@@ -269,6 +279,33 @@ local function spawnSpeck(fog: boolean, burst: boolean?)
 		color = if ember then EMBER else SOOT
 		life = rng:NextNumber(1.4, 2.6)
 	end
+	local mistImage = Tuning.GrabLook.Images.Mist
+	if fog and mistImage ~= "" then
+		-- breath mist: a wispy cloud texture, turned at random and drifting round as it fades
+		local mist = Ui.new("ImageLabel", {
+			Name = "Fog",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromOffset(pos.X, pos.Y),
+			Size = UDim2.fromOffset(size * 1.6, size * 1.6),
+			BackgroundTransparency = 1,
+			Image = mistImage,
+			ImageColor3 = color:Lerp(Color3.new(1, 1, 1), 0.4),
+			ImageTransparency = 1,
+			Rotation = rng:NextNumber(0, 360),
+			ZIndex = 18,
+			Parent = speckLayer,
+		})
+		table.insert(specks, {
+			frame = mist,
+			pos = pos,
+			vel = vel,
+			age = 0,
+			life = life,
+			fog = true,
+			spin = rng:NextNumber(-9, 9),
+		})
+		return
+	end
 	local frame = Ui.new("Frame", {
 		Name = if fog then "Fog" else "Speck",
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -298,7 +335,8 @@ local function spawnSpeck(fog: boolean, burst: boolean?)
 	else
 		Ui.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = frame })
 	end
-	table.insert(specks, { frame = frame, pos = pos, vel = vel, age = 0, life = life, fog = fog })
+	local speck: Speck = { frame = frame, pos = pos, vel = vel, age = 0, life = life, fog = fog, spin = 0 }
+	table.insert(specks, speck)
 end
 
 local stepSpecks: (number, boolean) -> ()
@@ -388,6 +426,15 @@ local function step(dt: number)
 		glow = (0.12 + 0.1 * breath) * closed * (if phone() then 0.6 else 1)
 	end
 	underglow.BackgroundTransparency = 1 - glow
+	-- the Stalker's frost: it creeps in from the rim as the cold closes, a little further at each squeeze
+	-- (lighter on phones, which have no dark edges)
+	local frostOn = look == "Cold" and frost.Image ~= ""
+	frost.Visible = frostOn
+	if frostOn then
+		frost.ImageTransparency = 1 - closed * (if phone() then 0.5 else 0.9)
+		local spread = 1 + 0.24 * (1 - closed) - 0.05 * squeeze
+		frost.Size = UDim2.fromScale(spread, spread)
+	end
 	local g, b = effects()
 	if lookOn then
 		local tier = Tuning.GrabLook.Tiers[tierName]
@@ -460,7 +507,10 @@ function stepSpecks(dt: number, on: boolean)
 		end
 		local fade = math.sin(math.pi * u) -- in, then out
 		s.frame.Position = UDim2.fromOffset(s.pos.X, s.pos.Y)
-		if s.fog then
+		if s.frame:IsA("ImageLabel") then
+			s.frame.ImageTransparency = 1 - fade * MIST_ALPHA
+			s.frame.Rotation += s.spin * dt
+		elseif s.fog then
 			for _, ring in s.frame:GetChildren() do
 				(ring :: Frame).BackgroundTransparency = 1 - fade * FOG_RING_ALPHA
 			end
@@ -514,6 +564,19 @@ function Trauma.mount(screen: ScreenGui)
 		local side = if spec.horizontal then 0 elseif spec.anchor.X > 0.5 then 1 else -1
 		table.insert(edges, { frame = frame, horizontal = spec.horizontal, side = side })
 	end
+	frost = Ui.new("ImageLabel", {
+		Name = "Frost",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(1.24, 1.24),
+		BackgroundTransparency = 1,
+		Image = Tuning.GrabLook.Images.Frost,
+		ImageTransparency = 1,
+		ScaleType = Enum.ScaleType.Stretch,
+		Visible = false,
+		ZIndex = 18,
+		Parent = layer,
+	})
 	underglow = Ui.new("Frame", {
 		Name = "Underglow",
 		AnchorPoint = Vector2.new(0, 1),

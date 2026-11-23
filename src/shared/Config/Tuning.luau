@@ -593,6 +593,8 @@ local Tuning = {
 		Enabled = false,
 		Muffle = { MidDb = -14, HighDb = -30, AmbienceShare = 0.3, ChokedDb = -8 }, -- the world under a grab
 		CloseVolume = 0.55, -- the Hollow's own sound, in your ear, at this share of its cue volume
+		-- the Stalker's frost edge and breath-mist textures (uploaded image ids); empty: plain shapes instead
+		Images = { Frost = "", Mist = "" },
 		-- each setting: specks of fog or soot on screen, blur and camera sway scale (scaled, never removed)
 		Tiers = {
 			Quality = { specks = 25, fog = 10, blur = 1, sway = 1 },
