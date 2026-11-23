@@ -118,8 +118,8 @@ local specks: { Speck } = {}
 local speckLayer: Frame
 local FOG_RINGS = 12
 local FOG_RING_ALPHA = 0.03 -- per ring: about 0.36 at the middle of a patch, fading to nothing at its rim
-local MIST_ALPHA = 0.5 -- a breath-mist patch at its thickest
-local frost: ImageLabel -- the Stalker's frost creeping in from the edges of the screen
+local MIST_ALPHA = 0.35 -- a breath-mist patch at its thickest
+local haze: ImageLabel -- the Stalker's grab: a soft haze gathering at the rim of the view, like breath on glass
 local underglow: Frame -- the Stoker's firebox heat rising from below
 local UNDERGLOW = Color3.fromRGB(255, 138, 62)
 
@@ -426,14 +426,13 @@ local function step(dt: number)
 		glow = (0.12 + 0.1 * breath) * closed * (if phone() then 0.6 else 1)
 	end
 	underglow.BackgroundTransparency = 1 - glow
-	-- the Stalker's frost: it creeps in from the rim as the cold closes, a little further at each squeeze
-	-- (lighter on phones, which have no dark edges)
-	local frostOn = look == "Cold" and frost.Image ~= ""
-	frost.Visible = frostOn
-	if frostOn then
-		frost.ImageTransparency = 1 - closed * (if phone() then 0.45 else 0.75)
-		local spread = 1 + 0.24 * (1 - closed) - 0.05 * squeeze
-		frost.Size = UDim2.fromScale(spread, spread)
+	-- the Stalker's haze: it gathers at the rim as his grip closes, a touch further at each squeeze (lighter on phones)
+	local hazeOn = look == "Cold" and haze.Image ~= ""
+	haze.Visible = hazeOn
+	if hazeOn then
+		haze.ImageTransparency = 1 - closed * (if phone() then 0.25 else 0.4)
+		local spread = 1 + 0.15 * (1 - closed) - 0.03 * squeeze
+		haze.Size = UDim2.fromScale(spread, spread)
 	end
 	local g, b = effects()
 	if lookOn then
@@ -564,27 +563,27 @@ function Trauma.mount(screen: ScreenGui)
 		local side = if spec.horizontal then 0 elseif spec.anchor.X > 0.5 then 1 else -1
 		table.insert(edges, { frame = frame, horizontal = spec.horizontal, side = side })
 	end
-	-- the frost has a screen of its own so it reaches the true edges of the screen (past the top bar and
+	-- the haze has a screen of its own so it reaches the true edges of the screen (past the top bar and
 	-- a phone's safe-area margins), just under the HUD
-	local frostGui = Instance.new("ScreenGui")
-	frostGui.Name = "LastTrainOutFrost"
-	frostGui.IgnoreGuiInset = true
-	frostGui.ScreenInsets = Enum.ScreenInsets.None
-	frostGui.ResetOnSpawn = false
-	frostGui.DisplayOrder = screen.DisplayOrder - 1
-	frostGui.Parent = screen.Parent
-	frost = Ui.new("ImageLabel", {
-		Name = "Frost",
+	local hazeGui = Instance.new("ScreenGui")
+	hazeGui.Name = "LastTrainOutHaze"
+	hazeGui.IgnoreGuiInset = true
+	hazeGui.ScreenInsets = Enum.ScreenInsets.None
+	hazeGui.ResetOnSpawn = false
+	hazeGui.DisplayOrder = screen.DisplayOrder - 1
+	hazeGui.Parent = screen.Parent
+	haze = Ui.new("ImageLabel", {
+		Name = "Haze",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromScale(1.24, 1.24),
+		Size = UDim2.fromScale(1.15, 1.15),
 		BackgroundTransparency = 1,
-		Image = Tuning.GrabLook.Images.Frost,
+		Image = Tuning.GrabLook.Images.Haze,
 		ImageTransparency = 1,
 		ScaleType = Enum.ScaleType.Stretch,
 		Visible = false,
 		ZIndex = 18,
-		Parent = frostGui,
+		Parent = hazeGui,
 	})
 	underglow = Ui.new("Frame", {
 		Name = "Underglow",
