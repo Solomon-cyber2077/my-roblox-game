@@ -33,6 +33,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local GuiService = game:GetService("GuiService")
 local Workspace = game:GetService("Workspace")
 
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
@@ -347,7 +348,7 @@ local function step(dt: number)
 			local lookReach = if look == "Heat" then 0.08 else 0.15
 			local r = (lookReach * closed + 0.08 * hit) * weight + 0.5 * dead
 			local a = math.clamp(
-				(if look == "Cold" then 0.42 else 0.45) * closed * math.min(weight, 1.3) + 0.3 * hit + dead,
+				(if look == "Cold" then 0.42 else 0.55) * closed * math.min(weight, 1.3) + 0.3 * hit + dead,
 				0,
 				1
 			)
@@ -381,9 +382,9 @@ local function step(dt: number)
 			g.TintColor =
 				Color3.new(1, 1, 1):Lerp(COLD_TINT, closed):Lerp(RUSH_TINT, rush):Lerp(STRESS_TINT, shock)
 		else
-			g.Saturation = math.max(-0.12 * closed + 0.28 * rush - 0.3 * hit - 0.6 * dead - 0.75 * shock, -1)
-			g.Contrast = 0.18 * closed + 0.18 * hit + 0.25 * shock
-			g.Brightness = 0.04 * flare * closed + 0.2 * hit - 0.1 * dead + 0.55 * flash
+			g.Saturation = math.max(-0.2 * closed + 0.28 * rush - 0.3 * hit - 0.6 * dead - 0.75 * shock, -1)
+			g.Contrast = 0.22 * closed + 0.18 * hit + 0.25 * shock
+			g.Brightness = (-0.07 + 0.03 * flare) * closed + 0.2 * hit - 0.1 * dead + 0.55 * flash
 			g.TintColor = Color3.new(1, 1, 1)
 				:Lerp(HEAT_TINT, closed)
 				:Lerp(RUSH_TINT, rush)
@@ -454,6 +455,15 @@ function Trauma.mount(screen: ScreenGui)
 		ZIndex = 18, -- under the struggle check and the alerts, over the world
 		Parent = screen,
 	})
+	-- reach up under the top bar too, or the tunnel's top edge starts below it and leaves a hard line
+	-- across the screen (owner 2026-11-22)
+	local function fitInset()
+		local inset = if screen.IgnoreGuiInset then Vector2.zero else GuiService:GetGuiInset()
+		layer.Position = UDim2.fromOffset(0, -inset.Y)
+		layer.Size = UDim2.new(1, 0, 1, inset.Y)
+	end
+	fitInset()
+	GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(fitInset)
 	for _, spec in EDGE_SPECS do
 		local frame = Ui.new("Frame", {
 			Name = "Tunnel",
