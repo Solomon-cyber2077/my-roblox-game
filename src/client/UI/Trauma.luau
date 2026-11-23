@@ -103,7 +103,6 @@ type Speck = {
 	age: number,
 	life: number,
 	fog: boolean,
-	spin: number,
 }
 local look: string? = nil
 local move: string? = nil
@@ -118,8 +117,14 @@ local specks: { Speck } = {}
 local speckLayer: Frame
 local FOG_RINGS = 12
 local FOG_RING_ALPHA = 0.03 -- per ring: about 0.36 at the middle of a patch, fading to nothing at its rim
-local MIST_ALPHA = 0.35 -- a breath-mist patch at its thickest
-local haze: ImageLabel -- the Stalker's grab: a soft haze gathering at the rim of the view, like breath on glass
+-- the Stalker's grab: his colour seeps in from the rim of the view, ring by ring, until the middle has
+-- turned too. Each ring is the same uneven haze texture at a smaller size, so the colour arrives in soft
+-- blotches rather than as one flat sheet (owner 2026-11-22). Phones keep only the outer ring, faintly.
+local SEEP_SIZES = { 1.15, 0.78, 0.5, 0.28, 0.12 }
+local SEEP_SECONDS = 6 -- from the seize to the colour reaching the middle
+local SEEP_ALPHA = 0.34 -- each ring at its thickest (PC)
+local SEEP_COLOR = Color3.fromRGB(150, 172, 206)
+local hazeLayers: { ImageLabel } = {}
 local underglow: Frame -- the Stoker's firebox heat rising from below
 local UNDERGLOW = Color3.fromRGB(255, 138, 62)
 
@@ -279,33 +284,6 @@ local function spawnSpeck(fog: boolean, burst: boolean?)
 		color = if ember then EMBER else SOOT
 		life = rng:NextNumber(1.4, 2.6)
 	end
-	local mistImage = Tuning.GrabLook.Images.Mist
-	if fog and mistImage ~= "" then
-		-- breath mist: a wispy cloud texture, turned at random and drifting round as it fades
-		local mist = Ui.new("ImageLabel", {
-			Name = "Fog",
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromOffset(pos.X, pos.Y),
-			Size = UDim2.fromOffset(size * 1.6, size * 1.6),
-			BackgroundTransparency = 1,
-			Image = mistImage,
-			ImageColor3 = color:Lerp(Color3.new(1, 1, 1), 0.4),
-			ImageTransparency = 1,
-			Rotation = rng:NextNumber(0, 360),
-			ZIndex = 18,
-			Parent = speckLayer,
-		})
-		table.insert(specks, {
-			frame = mist,
-			pos = pos,
-			vel = vel,
-			age = 0,
-			life = life,
-			fog = true,
-			spin = rng:NextNumber(-9, 9),
-		})
-		return
-	end
 	local frame = Ui.new("Frame", {
 		Name = if fog then "Fog" else "Speck",
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -335,7 +313,7 @@ local function spawnSpeck(fog: boolean, burst: boolean?)
 	else
 		Ui.new("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = frame })
 	end
-	local speck: Speck = { frame = frame, pos = pos, vel = vel, age = 0, life = life, fog = fog, spin = 0 }
+	local speck: Speck = { frame = frame, pos = pos, vel = vel, age = 0, life = life, fog = fog }
 	table.insert(specks, speck)
 end
 
@@ -426,13 +404,19 @@ local function step(dt: number)
 		glow = (0.12 + 0.1 * breath) * closed * (if phone() then 0.6 else 1)
 	end
 	underglow.BackgroundTransparency = 1 - glow
-	-- the Stalker's haze: it gathers at the rim as his grip closes, a touch further at each squeeze (lighter on phones)
-	local hazeOn = look == "Cold" and haze.Image ~= ""
-	haze.Visible = hazeOn
-	if hazeOn then
-		haze.ImageTransparency = 1 - closed * (if phone() then 0.25 else 0.4)
-		local spread = 1 + 0.15 * (1 - closed) - 0.03 * squeeze
-		haze.Size = UDim2.fromScale(spread, spread)
+	-- the Stalker's colour seeping in (see SEEP_SIZES)
+	local hazeOn = look == "Cold" and Tuning.GrabLook.Images.Haze ~= ""
+	local seep = if hazeOn then math.clamp((os.clock() - lookAt) / SEEP_SECONDS, 0, 1) else 0
+	for k, ring in hazeLayers do
+		local share = if phone()
+			then (if k == 1 then 0.25 * closed else 0)
+			else math.clamp(seep * #SEEP_SIZES - (k - 1), 0, 1) * SEEP_ALPHA * stress
+		ring.Visible = hazeOn and share > 0.005
+		if ring.Visible then
+			ring.ImageTransparency = 1 - share
+			local breathe = SEEP_SIZES[k] * (1 + 0.04 * math.sin(os.clock() * 0.7 + k) - 0.03 * squeeze)
+			ring.Size = UDim2.fromScale(breathe, breathe)
+		end
 	end
 	local g, b = effects()
 	if lookOn then
@@ -486,7 +470,9 @@ function stepSpecks(dt: number, on: boolean)
 	if on then
 		local tier = Tuning.GrabLook.Tiers[tierName]
 		-- held at the setting's count; fog only where a vignette may be drawn (not on phones)
-		local want = if look == "Cold" then (if phone() then 0 else tier.fog) else tier.specks
+		-- with the seeping colour (Images.Haze) the cold has no fog patches: it is colour, not smoke
+		local seeping = Tuning.GrabLook.Images.Haze ~= ""
+		local want = if look == "Cold" then (if phone() or seeping then 0 else tier.fog) else tier.specks
 		if #specks < want and rng:NextNumber() < dt * want * 1.5 then
 			spawnSpeck(look == "Cold")
 		end
@@ -506,10 +492,7 @@ function stepSpecks(dt: number, on: boolean)
 		end
 		local fade = math.sin(math.pi * u) -- in, then out
 		s.frame.Position = UDim2.fromOffset(s.pos.X, s.pos.Y)
-		if s.frame:IsA("ImageLabel") then
-			s.frame.ImageTransparency = 1 - fade * MIST_ALPHA
-			s.frame.Rotation += s.spin * dt
-		elseif s.fog then
+		if s.fog then
 			for _, ring in s.frame:GetChildren() do
 				(ring :: Frame).BackgroundTransparency = 1 - fade * FOG_RING_ALPHA
 			end
@@ -563,7 +546,7 @@ function Trauma.mount(screen: ScreenGui)
 		local side = if spec.horizontal then 0 elseif spec.anchor.X > 0.5 then 1 else -1
 		table.insert(edges, { frame = frame, horizontal = spec.horizontal, side = side })
 	end
-	-- the haze has a screen of its own so it reaches the true edges of the screen (past the top bar and
+	-- the seeping colour has a screen of its own so it reaches the true edges of the screen (past the top bar and
 	-- a phone's safe-area margins), just under the HUD
 	local hazeGui = Instance.new("ScreenGui")
 	hazeGui.Name = "LastTrainOutHaze"
@@ -572,19 +555,23 @@ function Trauma.mount(screen: ScreenGui)
 	hazeGui.ResetOnSpawn = false
 	hazeGui.DisplayOrder = screen.DisplayOrder - 1
 	hazeGui.Parent = screen.Parent
-	haze = Ui.new("ImageLabel", {
-		Name = "Haze",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromScale(1.15, 1.15),
-		BackgroundTransparency = 1,
-		Image = Tuning.GrabLook.Images.Haze,
-		ImageTransparency = 1,
-		ScaleType = Enum.ScaleType.Stretch,
-		Visible = false,
-		ZIndex = 18,
-		Parent = hazeGui,
-	})
+	for k, size in SEEP_SIZES do
+		hazeLayers[k] = Ui.new("ImageLabel", {
+			Name = "Seep" .. k,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromScale(size, size),
+			BackgroundTransparency = 1,
+			Image = Tuning.GrabLook.Images.Haze,
+			ImageColor3 = if k == 1 then Color3.new(1, 1, 1):Lerp(SEEP_COLOR, 0.6) else SEEP_COLOR,
+			ImageTransparency = 1,
+			Rotation = if k % 2 == 0 then 180 else 0, -- each ring's blotches fall differently
+			ScaleType = Enum.ScaleType.Stretch,
+			Visible = false,
+			ZIndex = 18,
+			Parent = hazeGui,
+		})
+	end
 	underglow = Ui.new("Frame", {
 		Name = "Underglow",
 		AnchorPoint = Vector2.new(0, 1),
