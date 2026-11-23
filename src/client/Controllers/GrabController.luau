@@ -284,7 +284,7 @@ local function pulseColor(): Color3
 	if look == "Cold" then
 		return FROZEN_FLASH
 	elseif look == "Heat" then
-		return Color3.fromRGB(52, 36, 28) -- dark soot: the edge ring keeps this colour through the hold (owner 2026-11-22: "too warm")
+		return Color3.fromRGB(68, 36, 22) -- dark burnt soot: the edge ring keeps this colour through the hold (owner 2026-11-22: "too warm")
 	end
 	return Theme.Color.signalDark
 end

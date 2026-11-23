@@ -595,9 +595,9 @@ local Tuning = {
 		CloseVolume = 0.55, -- the Hollow's own sound, in your ear, at this share of its cue volume
 		-- each setting: specks of fog or soot on screen, blur and camera sway scale (scaled, never removed)
 		Tiers = {
-			Quality = { specks = 16, fog = 10, blur = 1, sway = 1 },
-			Balanced = { specks = 10, fog = 6, blur = 0.6, sway = 1 },
-			Performance = { specks = 6, fog = 4, blur = 0, sway = 0.85 },
+			Quality = { specks = 25, fog = 10, blur = 1, sway = 1 },
+			Balanced = { specks = 15, fog = 6, blur = 0.6, sway = 1 },
+			Performance = { specks = 8, fog = 4, blur = 0, sway = 0.85 },
 		},
 	},
 	-- what players read for each kind (the code keeps its ids): the Brute is "the Stoker" (owner 2026-11-18;

@@ -58,11 +58,11 @@ local COLD_TINT = Color3.fromRGB(205, 220, 242)
 local COLD_VEIN = Color3.fromRGB(196, 210, 226) -- frost-pale cracks
 local COLD_FOG = Color3.fromRGB(176, 186, 198)
 local COLD_TUNNEL = Color3.fromRGB(22, 8, 18) -- dying in the cold grip: the dark of frozen blood, not oxblood
-local HEAT_EDGE = Color3.fromRGB(24, 20, 18) -- soot, near neutral
-local HEAT_TINT = Color3.fromRGB(255, 238, 224) -- only a hint of warmth (owner 2026-11-22: "too warm", twice)
-local HEAT_FLARE = Color3.fromRGB(255, 214, 184)
+local HEAT_EDGE = Color3.fromRGB(27, 19, 14) -- soot
+local HEAT_TINT = Color3.fromRGB(255, 233, 215) -- a light warmth (owner 2026-11-22: balanced between the two earlier rounds)
+local HEAT_FLARE = Color3.fromRGB(255, 207, 172)
 local HEAT_VEIN = Color3.fromRGB(70, 20, 8)
-local EMBER = Color3.fromRGB(232, 132, 70)
+local EMBER = Color3.fromRGB(244, 132, 59)
 local SOOT = Color3.fromRGB(34, 26, 22)
 local ASH = Color3.fromRGB(150, 144, 138)
 local EDGE_SPECS = {
@@ -259,8 +259,8 @@ local function spawnSpeck(fog: boolean, burst: boolean?)
 		color = ASH
 		life = rng:NextNumber(0.8, 1.4)
 	else
-		local ember = rng:NextNumber() < 0.4
-		size = if ember then rng:NextNumber(1.5, 3) else rng:NextNumber(2, 4)
+		local ember = rng:NextNumber() < 0.5
+		size = if ember then rng:NextNumber(1.75, 3.75) else rng:NextNumber(2.5, 5)
 		vel = inward * rng:NextNumber(10, 30) + Vector2.new(rng:NextNumber(-12, 12), -rng:NextNumber(30, 70))
 		color = if ember then EMBER else SOOT
 		life = rng:NextNumber(1.4, 2.6)
@@ -348,7 +348,7 @@ local function step(dt: number)
 			local lookReach = if look == "Heat" then 0.08 else 0.15
 			local r = (lookReach * closed + 0.08 * hit) * weight + 0.5 * dead
 			local a = math.clamp(
-				(if look == "Cold" then 0.42 else 0.55) * closed * math.min(weight, 1.3) + 0.3 * hit + dead,
+				(if look == "Cold" then 0.42 else 0.45) * closed * math.min(weight, 1.3) + 0.3 * hit + dead,
 				0,
 				1
 			)
@@ -382,13 +382,13 @@ local function step(dt: number)
 			g.TintColor =
 				Color3.new(1, 1, 1):Lerp(COLD_TINT, closed):Lerp(RUSH_TINT, rush):Lerp(STRESS_TINT, shock)
 		else
-			g.Saturation = math.max(-0.2 * closed + 0.28 * rush - 0.3 * hit - 0.6 * dead - 0.75 * shock, -1)
-			g.Contrast = 0.22 * closed + 0.18 * hit + 0.25 * shock
-			g.Brightness = (-0.07 + 0.03 * flare) * closed + 0.2 * hit - 0.1 * dead + 0.55 * flash
+			g.Saturation = math.max(-0.12 * closed + 0.28 * rush - 0.3 * hit - 0.6 * dead - 0.75 * shock, -1)
+			g.Contrast = 0.18 * closed + 0.18 * hit + 0.25 * shock
+			g.Brightness = 0.04 * flare * closed + 0.2 * hit - 0.1 * dead + 0.55 * flash
 			g.TintColor = Color3.new(1, 1, 1)
 				:Lerp(HEAT_TINT, closed)
 				:Lerp(RUSH_TINT, rush)
-				:Lerp(HEAT_FLARE, 0.15 * flare * closed)
+				:Lerp(HEAT_FLARE, 0.2 * flare * closed)
 				:Lerp(STRESS_TINT, shock)
 				:Lerp(PIN_TINT, pinTint)
 		end
