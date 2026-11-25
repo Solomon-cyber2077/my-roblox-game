@@ -122,8 +122,9 @@ local FOG_RING_ALPHA = 0.03 -- per ring: about 0.36 at the middle of a patch, fa
 -- blotches rather than as one flat sheet (owner 2026-11-22). Phones keep only the outer ring, faintly.
 local SEEP_SIZES = { 1.15, 0.8, 0.48, 0.26, 0.13 } -- the first is the edge haze, the rest the ring texture
 local seepSeconds = 4 -- from the seize to the colour reaching the middle (Trauma.seepFor sets it per grab)
-local SEEP_ALPHA = 0.34 -- each ring at its thickest (PC)
-local SEEP_COLOR = Color3.fromRGB(150, 172, 206)
+local SEEP_ALPHA = 0.42 -- each ring at its thickest (PC)
+local SEEP_COLOR = Color3.fromRGB(46, 70, 112) -- a deep blue that tints the view rather than whitening it
+local PHONE_HAZE = Color3.fromRGB(196, 206, 222) -- phones keep a pale haze at the rim only
 local hazeLayers: { ImageLabel } = {}
 local underglow: Frame -- the Stoker's firebox heat rising from below
 local UNDERGLOW = Color3.fromRGB(255, 138, 62)
@@ -414,6 +415,7 @@ local function step(dt: number)
 		ring.Visible = hazeOn and share > 0.005 and ring.Image ~= ""
 		if ring.Visible then
 			ring.ImageTransparency = 1 - share
+			ring.ImageColor3 = if phone() then PHONE_HAZE else SEEP_COLOR
 			local breathe = SEEP_SIZES[k] * (1 + 0.04 * math.sin(os.clock() * 0.7 + k) - 0.03 * squeeze)
 			ring.Size = UDim2.fromScale(breathe, breathe)
 		end
@@ -563,7 +565,7 @@ function Trauma.mount(screen: ScreenGui)
 			Size = UDim2.fromScale(size, size),
 			BackgroundTransparency = 1,
 			Image = if k == 1 then Tuning.GrabLook.Images.Haze else Tuning.GrabLook.Images.Ring,
-			ImageColor3 = if k == 1 then Color3.new(1, 1, 1):Lerp(SEEP_COLOR, 0.6) else SEEP_COLOR,
+			ImageColor3 = SEEP_COLOR,
 			ImageTransparency = 1,
 			Rotation = if k % 2 == 0 then 180 else 0, -- each ring's blotches fall differently
 			ScaleType = Enum.ScaleType.Stretch,
