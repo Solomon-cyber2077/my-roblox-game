@@ -8,7 +8,7 @@ local MIN = Cosmetics.LanternMinLuminance
 describe("Cosmetic lanterns cannot lose the crew", function()
 	it("gives every lantern a lens and a light bright enough to read at 3:1 on a dim screen", function()
 		local lanterns = 0
-		for _, item in Cosmetics.List do
+		for _, item in Cosmetics.All do
 			if item.category ~= "Lantern" then
 				continue
 			end

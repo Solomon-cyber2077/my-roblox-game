@@ -26,7 +26,7 @@ describe("Line Mastery record", function()
 	end)
 
 	it("gives every cosmetic one coherent unlock path", function()
-		for _, def in Cosmetics.List do
+		for _, def in Cosmetics.All do
 			local paths = 0
 			for _, key in { "default", "brass", "milestone", "robux", "gamePass", "charterStamps", "npc" } do
 				if (def :: any)[key] ~= nil then

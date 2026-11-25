@@ -385,6 +385,17 @@ for _, def in Catalog do
 end
 Defaults.Uniform = CrewClothing.Default
 
+-- The Robux items stay out of the shop until the Official Release (owner, 2026-11-24: "do not show
+-- them until we officially release"). Their prices are kept. Turn this on at the release, once each
+-- item has its product or pass id. List is what players are shown; All is every item.
+local PAID_ITEMS_SHOWN = false
+local Shown: { CosmeticDef } = {}
+for _, def in Catalog do
+	if PAID_ITEMS_SHOWN or (def.robux == nil and def.gamePass == nil) then
+		table.insert(Shown, def)
+	end
+end
+
 return table.freeze({
 	-- Virtual ownership for Studio, and for the developer's account in live servers while Live is on;
 	-- never persisted. Live is off for launch (owner, 2026-11-04) so that account shops like any other.
@@ -393,7 +404,9 @@ return table.freeze({
 	-- these linear Rec. 709 luminances, so a crewmate's lamp reads at 3:1 on a dim screen
 	-- (docs/visibility/gates_45_fix1.md; tests/LanternLuminance.spec)
 	LanternMinLuminance = table.freeze({ Glass = 0.5, Light = 0.3 }),
-	List = table.freeze(Catalog),
+	PaidItemsShown = PAID_ITEMS_SHOWN,
+	List = table.freeze(Shown),
+	All = table.freeze(Catalog),
 	ById = table.freeze(ById),
 	Defaults = table.freeze(Defaults),
 	Categories = table.freeze({ "Lantern", "Headwear", "Trail", "Livery", "Uniform" }),
