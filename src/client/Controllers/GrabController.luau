@@ -412,6 +412,10 @@ local function begin(model: Model, style: string)
 			moveAt = os.clock()
 		end
 		Trauma.look(look, lookMove, if look then variant else nil, tierName())
+		if fresh then
+			-- by the end of the hold, or sooner: unanswered bites can end it long before its clock
+			Trauma.seepFor(math.min(0.8 * (finishAt - finishFrom), 4.5))
+		end
 		toneToken += 1
 		Overlay.woundTone(if look == "Cold" then FROZEN_BLOOD else nil)
 		if Registry.AudioController then

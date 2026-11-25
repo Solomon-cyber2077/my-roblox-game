@@ -121,7 +121,7 @@ local FOG_RING_ALPHA = 0.03 -- per ring: about 0.36 at the middle of a patch, fa
 -- turned too. Each ring is the same uneven haze texture at a smaller size, so the colour arrives in soft
 -- blotches rather than as one flat sheet (owner 2026-11-22). Phones keep only the outer ring, faintly.
 local SEEP_SIZES = { 1.15, 0.78, 0.5, 0.28, 0.12 }
-local SEEP_SECONDS = 6 -- from the seize to the colour reaching the middle
+local seepSeconds = 4 -- from the seize to the colour reaching the middle (Trauma.seepFor sets it per grab)
 local SEEP_ALPHA = 0.34 -- each ring at its thickest (PC)
 local SEEP_COLOR = Color3.fromRGB(150, 172, 206)
 local hazeLayers: { ImageLabel } = {}
@@ -406,7 +406,7 @@ local function step(dt: number)
 	underglow.BackgroundTransparency = 1 - glow
 	-- the Stalker's colour seeping in (see SEEP_SIZES)
 	local hazeOn = look == "Cold" and Tuning.GrabLook.Images.Haze ~= ""
-	local seep = if hazeOn then math.clamp((os.clock() - lookAt) / SEEP_SECONDS, 0, 1) else 0
+	local seep = if hazeOn then math.clamp((os.clock() - lookAt) / seepSeconds, 0, 1) else 0
 	for k, ring in hazeLayers do
 		local share = if phone()
 			then (if k == 1 then 0.25 * closed else 0)
@@ -669,6 +669,12 @@ function Trauma.look(kind: string?, holdMove: string?, variant: GrabLook.Variant
 end
 
 -- The ribs squeeze (a bite in the Stalker's embrace): the sides press in.
+-- How long the seeping colour takes to reach the middle: set from the grab's own clock, so it arrives
+-- before the hold ends however long that is.
+function Trauma.seepFor(seconds: number)
+	seepSeconds = math.clamp(seconds, 1.5, 12)
+end
+
 function Trauma.squeeze()
 	squeeze = 1
 end
