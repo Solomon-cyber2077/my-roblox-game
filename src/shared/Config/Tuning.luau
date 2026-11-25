@@ -590,7 +590,7 @@ local Tuning = {
 	-- variation each grab that never repeats the last. Off: today's tunnel for every grab. The Crawler keeps
 	-- today's look either way.
 	GrabLook = {
-		Enabled = false,
+		Enabled = true,
 		Muffle = { MidDb = -14, HighDb = -30, AmbienceShare = 0.3, ChokedDb = -8 }, -- the world under a grab
 		CloseVolume = 0.55, -- the Hollow's own sound, in your ear, at this share of its cue volume
 		-- the Stalker's seeping colour: the edge haze and the inner ring textures (uploaded image ids); empty: plain fog patches instead
