@@ -162,6 +162,16 @@ end
 
 local capillary: (Vector2, number, number, number, number, number) -> ()
 
+-- The size of the screen in this layer's own units. The HUD is scaled (UIController's UIScale), so a
+-- position in screen pixels lands short of the bottom and right edges unless it is divided back out.
+local function uiScale(): number
+	local scale = gui and gui:FindFirstChildOfClass("UIScale")
+	return if scale and scale.Scale > 0 then scale.Scale else 1
+end
+local function canvas(): Vector2
+	return layer.AbsoluteSize / uiScale()
+end
+
 local function crack(from: number?)
 	local side = from or rng:NextInteger(1, 4)
 	local along = rng:NextNumber(0.1, 0.9)
@@ -175,7 +185,7 @@ local function crack(from: number?)
 	local length = rng:NextNumber(0.16, 0.3) * reachScale()
 	if pinned then
 		-- pinned: the veins turn the red of a bloodshot eye, finer and branching, and stay until it lets go
-		local view = Workspace.CurrentCamera.ViewportSize
+		local view = canvas()
 		local at = Vector2.new(pos.X.Scale * view.X, pos.Y.Scale * view.Y)
 		capillary(at, inward, length * 0.8 * math.min(view.X, view.Y), rng:NextNumber(2, 4), 0, 0)
 		return
@@ -254,7 +264,7 @@ end
 -- One speck of the remade grab's screen: a soft fog patch at an edge (Cold), an ember spark or a fleck of
 -- soot drifting up from an edge (Heat), or (`burst`) the slam's ash thrown up from the ground.
 local function spawnSpeck(fog: boolean, burst: boolean?)
-	local view = Workspace.CurrentCamera.ViewportSize
+	local view = canvas()
 	local side = rng:NextInteger(1, 4)
 	if lean ~= 0 and rng:NextNumber() < 0.35 then
 		side = if lean < 0 then 3 else 4
@@ -518,12 +528,18 @@ function Trauma.mount(screen: ScreenGui)
 	-- reach up under the top bar too, or the tunnel's top edge starts below it and leaves a hard line
 	-- across the screen (owner 2026-11-22)
 	local function fitInset()
-		local inset = if screen.IgnoreGuiInset then Vector2.zero else GuiService:GetGuiInset()
+		local scale = screen:FindFirstChildOfClass("UIScale")
+		local inset = (if screen.IgnoreGuiInset then Vector2.zero else GuiService:GetGuiInset())
+			/ (if scale and scale.Scale > 0 then scale.Scale else 1)
 		layer.Position = UDim2.fromOffset(0, -inset.Y)
 		layer.Size = UDim2.new(1, 0, 1, inset.Y)
 	end
 	fitInset()
 	GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(fitInset)
+	local hudScale = screen:FindFirstChildOfClass("UIScale")
+	if hudScale then
+		hudScale:GetPropertyChangedSignal("Scale"):Connect(fitInset)
+	end
 	for _, spec in EDGE_SPECS do
 		local frame = Ui.new("Frame", {
 			Name = "Tunnel",
