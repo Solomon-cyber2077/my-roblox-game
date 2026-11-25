@@ -120,7 +120,7 @@ local FOG_RING_ALPHA = 0.03 -- per ring: about 0.36 at the middle of a patch, fa
 -- the Stalker's grab: his colour seeps in from the rim of the view, ring by ring, until the middle has
 -- turned too. Each ring is the same uneven haze texture at a smaller size, so the colour arrives in soft
 -- blotches rather than as one flat sheet (owner 2026-11-22). Phones keep only the outer ring, faintly.
-local SEEP_SIZES = { 1.15, 0.78, 0.5, 0.28, 0.12 }
+local SEEP_SIZES = { 1.15, 0.8, 0.48, 0.26, 0.13 } -- the first is the edge haze, the rest the ring texture
 local seepSeconds = 4 -- from the seize to the colour reaching the middle (Trauma.seepFor sets it per grab)
 local SEEP_ALPHA = 0.34 -- each ring at its thickest (PC)
 local SEEP_COLOR = Color3.fromRGB(150, 172, 206)
@@ -411,7 +411,7 @@ local function step(dt: number)
 		local share = if phone()
 			then (if k == 1 then 0.25 * closed else 0)
 			else math.clamp(seep * #SEEP_SIZES - (k - 1), 0, 1) * SEEP_ALPHA * stress
-		ring.Visible = hazeOn and share > 0.005
+		ring.Visible = hazeOn and share > 0.005 and ring.Image ~= ""
 		if ring.Visible then
 			ring.ImageTransparency = 1 - share
 			local breathe = SEEP_SIZES[k] * (1 + 0.04 * math.sin(os.clock() * 0.7 + k) - 0.03 * squeeze)
@@ -562,7 +562,7 @@ function Trauma.mount(screen: ScreenGui)
 			Position = UDim2.fromScale(0.5, 0.5),
 			Size = UDim2.fromScale(size, size),
 			BackgroundTransparency = 1,
-			Image = Tuning.GrabLook.Images.Haze,
+			Image = if k == 1 then Tuning.GrabLook.Images.Haze else Tuning.GrabLook.Images.Ring,
 			ImageColor3 = if k == 1 then Color3.new(1, 1, 1):Lerp(SEEP_COLOR, 0.6) else SEEP_COLOR,
 			ImageTransparency = 1,
 			Rotation = if k % 2 == 0 then 180 else 0, -- each ring's blotches fall differently
