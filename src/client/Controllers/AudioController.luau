@@ -769,7 +769,8 @@ function AudioController.Start()
 
 		-- a heartbeat when a Hollow is near, lub and dub, faster the nearer it is; past
 		-- halfway the camera throbs with it
-		if dread > 0.12 and clock >= nextBeat then
+		-- (not while a remade grab holds you: its look has no heartbeat, owner 2026-11-22)
+		if dread > 0.12 and grabWant == 0 and clock >= nextBeat then
 			pooled("Heartbeat", dread)
 			task.delay(0.22, pooled, "Heartbeat", 0.7 * dread)
 			if dread > 0.45 and Registry.CameraController then
