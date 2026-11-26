@@ -19,6 +19,8 @@ local Shared = ReplicatedStorage.Shared
 local Tuning = require(Shared.Config.Tuning)
 local LightBudget = require(Shared.Logic.LightBudget)
 local HazardSchedule = require(Shared.Logic.HazardSchedule)
+local GrabLook = require(Shared.Logic.GrabLook)
+local GasFlame = require(Shared.Visual.GasFlame)
 
 local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
@@ -46,7 +48,16 @@ local station: Model? = nil
 -- The stop's gas lamps off the platform (Builders/StationDressing: YardLamp, HangingLantern):
 -- each breathes a little, and one of them, chosen by the stop, is failing and gutters now and
 -- then. Never a platform SafeLight: a safe pool always reads as safe.
-type Lamp = { light: PointLight, glass: BasePart, base: number, color: Color3, seed: number }
+-- A lamp with a flame (Visual/GasFlame) moves its flame and soots its glass; an older one without
+-- darkens its glowing glass instead.
+type Lamp = {
+	light: PointLight,
+	glass: BasePart,
+	base: number,
+	color: Color3,
+	seed: number,
+	flame: GasFlame.Flame?,
+}
 local lamps: { Lamp } = {}
 local failing: Lamp? = nil
 local guttering = false -- the failing lamp is in a fit right now (its sputter plays as one starts)
@@ -142,6 +153,7 @@ local function findLamps(model: Model)
 					base = light.Brightness,
 					color = d.Color,
 					seed = #lamps * 1.37,
+					flame = GasFlame.find(d, #lamps * 1.37),
 				}
 				table.insert(lamps, lamp)
 				if d.Name == "YardLamp" then
@@ -195,6 +207,7 @@ local function budgetLights(now: number)
 end
 
 local function updateLamps(now: number)
+	local tier = GrabLook.tier(Players.LocalPlayer:GetAttribute("GraphicsQuality"))
 	for _, lamp in lamps do
 		if lamp.glass.Parent == nil then
 			continue
@@ -220,7 +233,11 @@ local function updateLamps(now: number)
 			guttering = fit
 		end
 		lamp.light.Brightness = lamp.base * level
-		lamp.glass.Color = lamp.color:Lerp(SOOT, (1 - level) * 0.8)
+		if lamp.flame then
+			GasFlame.animate(lamp.flame, level, now, tier)
+		else
+			lamp.glass.Color = lamp.color:Lerp(SOOT, (1 - level) * 0.8)
+		end
 	end
 end
 

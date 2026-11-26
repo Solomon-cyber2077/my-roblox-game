@@ -26,6 +26,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Kit = require(ReplicatedStorage.Shared.Visual.Kit)
+local GasFlame = require(ReplicatedStorage.Shared.Visual.GasFlame)
 local PropMeshes = require(script.Parent.PropMeshes)
 local InteriorLight = require(ReplicatedStorage.Shared.Config.InteriorLight)
 local Paintings = require(ReplicatedStorage.Shared.Config.Paintings)
@@ -769,9 +770,9 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 		-- its lamp: a brass column under a green glass shade
 		disc(0.08, 0.6, at(tx, 3.0, side * 5.0), C.brass, M.Metal)
 		post(0.8, 0.1, at(tx, 3.44, side * 5.0), C.brass, M.Metal)
-		post(0.5, 0.95, at(tx, 4.05, side * 5.0), C.shade, M.Glass)
-		local bulb =
-			Kit.neon(model, Vector3.one * 0.3, at(tx, 3.85, side * 5.0), C.interiorWarm, Enum.PartType.Ball)
+		-- an oil flame on the column's burner, under the shade (Visual/GasFlame); the shade carries the light
+		local bulb = post(0.5, 0.95, at(tx, 4.05, side * 5.0), C.shade, M.Glass)
+		GasFlame.build(bulb, at(tx, 3.66, side * 5.0), 0.3, C.interiorWarm, { lean = true })
 		bulb.Name = "SaloonLamp" -- flickers and dips over the rail joints (Controllers/TrainVisualsController)
 		fixtureLight(bulb, IL.Train.Bulb)
 	end
@@ -1232,16 +1233,23 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	-- a lantern hung over the chairs
 	post(1.4, 0.06, at(-71.4, CEIL - 0.7, -2.4), C.iron, M.Metal)
 	disc(0.22, 0.7, at(-71.4, CEIL - 1.51, -2.4), C.brass, M.Metal)
-	Kit.post(
+	-- smoked glass round a burner and its flame (Visual/GasFlame); the glass carries the light
+	local flame = Kit.post(
 		model,
 		0.8,
 		0.55,
 		at(-71.4, CEIL - 2.02, -2.4),
-		rgb(200, 210, 210),
+		rgb(200, 210, 210):Lerp(C.ember, 0.3),
 		{ material = M.Glass, transparency = 0.45, collide = false, shadow = false }
 	)
-	local flame =
-		Kit.neon(model, Vector3.one * 0.2, at(-71.4, CEIL - 2.05, -2.4), C.ember, Enum.PartType.Ball)
+	post(0.12, 0.08, at(-71.4, CEIL - 2.33, -2.4), C.brass, M.Metal):AddTag("Detail")
+	GasFlame.build(flame, at(-71.4, CEIL - 2.27, -2.4), 0.3, C.ember, {
+		halo = Vector3.new(0.5, 0.76, 0.5),
+		haloAt = at(-71.4, CEIL - 2.02, -2.4),
+		round = true,
+		glass = flame,
+		lean = true,
+	})
 	flame.Name = "LanternFlame"
 	fixtureLight(flame, IL.Train.Flame)
 	disc(0.12, 0.62, at(-71.4, CEIL - 2.48, -2.4), C.brass, M.Metal)
@@ -1255,8 +1263,16 @@ function TrainInterior.furnish(model: Model, origin: CFrame, dims: Dims): Furnis
 	-- a lamp over the bench
 	post(1.6, 0.06, at(-6.0, CEIL - 0.8, -4.0), C.iron, M.Metal)
 	post(0.45, 1.3, at(-6.0, CEIL - 1.82, -4.0), rgb(46, 82, 62), M.Metal)
-	local benchLamp =
-		Kit.neon(model, Vector3.one * 0.32, at(-6.0, CEIL - 2.08, -4.0), C.interiorWarm, Enum.PartType.Ball)
+	-- a flame under the shade (Visual/GasFlame); the hidden part at its heart carries the light
+	post(0.1, 0.1, at(-6.0, CEIL - 2.33, -4.0), C.brass, M.Metal):AddTag("Detail")
+	local benchLamp = Kit.block(
+		model,
+		Vector3.one * 0.1,
+		at(-6.0, CEIL - 2.12, -4.0),
+		C.interiorWarm,
+		{ transparency = 1, collide = false, shadow = false }
+	)
+	GasFlame.build(benchLamp, at(-6.0, CEIL - 2.28, -4.0), 0.28, C.interiorWarm, { lean = true })
 	benchLamp.Name = "BenchLamp"
 	fixtureLight(benchLamp, IL.Train.BenchLamp)
 	-- the lathe

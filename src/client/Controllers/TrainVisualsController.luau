@@ -23,6 +23,8 @@ local MathX = require(ReplicatedStorage.Shared.Util.MathX)
 local Safe = require(ReplicatedStorage.Shared.Util.Safe)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Difficulty = require(ReplicatedStorage.Shared.Config.Difficulty)
+local GrabLook = require(ReplicatedStorage.Shared.Logic.GrabLook)
+local GasFlame = require(ReplicatedStorage.Shared.Visual.GasFlame)
 
 local Registry = require(script.Parent.Parent.Registry)
 local BrokenThingMarkers = require(script.Parent.Parent.UI.BrokenThingMarkers)
@@ -44,6 +46,7 @@ type Rig = {
 	firebox: PointLight?,
 	flames: { ParticleEmitter },
 	glows: { PointLight }, -- the stove and the lantern: they flicker on their own
+	gas: { GasLamp }, -- lamps with a flame (Visual/GasFlame): it follows its light's level
 	flare: number, -- 0..1 the fire roaring after a shovel of coal
 	lastFill: number,
 	breaches: { [BasePart]: ParticleEmitter },
@@ -58,6 +61,7 @@ type Rig = {
 }
 
 type Curtain = { part: BasePart, base: CFrame }
+type GasLamp = { flame: GasFlame.Flame, light: PointLight, base: number }
 
 local TrainVisualsController = {}
 
@@ -188,7 +192,27 @@ local function register(rig: Rig, part: Instance)
 			light:SetAttribute("Base", light.Brightness)
 			table.insert(rig.lamps, light)
 		end
-	elseif part.Name == "Curtain" then
+	end
+	-- a lamp's flame layers can arrive after the lamp itself: each one tries its lamp again
+	local holder = if string.sub(part.Name, 1, 5) == "Flame" then part.Parent else part
+	if holder and holder:IsA("BasePart") and holder:GetAttribute("GasFlame") == true then
+		for _, lamp in rig.gas do
+			if lamp.flame.holder == holder then
+				return
+			end
+		end
+		local light = holder:FindFirstChildOfClass("PointLight")
+		local flame = GasFlame.find(holder, #rig.gas * 2.17 + 0.5)
+		if light and flame then
+			local base = light:GetAttribute("Base")
+			table.insert(rig.gas, {
+				flame = flame,
+				light = light,
+				base = if type(base) == "number" then base else light.Brightness,
+			})
+		end
+	end
+	if part.Name == "Curtain" then
 		table.insert(rig.curtains, { part = part, base = part.CFrame })
 	elseif part.Name == "StoveGlow" or part.Name == "LanternFlame" then
 		local light = part:FindFirstChildOfClass("PointLight")
@@ -240,6 +264,9 @@ local function unregister(rig: Rig, part: Instance)
 	without(rig.lamps, function(light: PointLight)
 		return light.Parent == part
 	end)
+	without(rig.gas, function(lamp: GasLamp)
+		return lamp.flame.holder == part
+	end)
 	without(rig.curtains, function(curtain: Curtain)
 		return curtain.part == part
 	end)
@@ -270,6 +297,7 @@ local function rigFor(model: Model, live: boolean): Rig
 		firebox = nil,
 		flames = {},
 		glows = {},
+		gas = {},
 		flare = 0,
 		lastFill = -1,
 		breaches = {},
@@ -652,6 +680,17 @@ function TrainVisualsController.Start()
 				local scale = if hull then hull.LightScale(t, i) else 1
 				light.Brightness = base * (0.82 + 0.3 * math.noise(t * 4.5, i * 7.1)) * scale
 				light.Color = tint or (light:GetAttribute("BaseColor") :: Color3?) or light.Color
+			end
+			-- each lamp's flame follows its light: it dips with the joints, gutters with the hull, and
+			-- takes the emergency tint when the lights do
+			if #rig.gas > 0 then
+				local tier = GrabLook.tier(Players.LocalPlayer:GetAttribute("GraphicsQuality"))
+				for _, lamp in rig.gas do
+					local level = if lamp.light.Enabled
+						then lamp.light.Brightness / math.max(lamp.base, 0.01)
+						else 0
+					GasFlame.animate(lamp.flame, level, t, tier, tint)
+				end
 			end
 		end
 		if #spinParts > 0 then

@@ -122,7 +122,8 @@ function StationService.Spawn(plan: LayoutGen.Plan, info: Types.StationInfo)
 		for _, piece in built.model:GetChildren() do
 			if piece.Name == "YardLamp" then
 				for _, part in piece:GetDescendants() do
-					if part:IsA("BasePart") and part.Material == Enum.Material.Neon then
+					-- the lamp's glass, which carries its light (not the Neon layers of its flame)
+					if part:IsA("BasePart") and part.Name == "YardLamp" then
 						part:SetAttribute("Radius", light.LampRadius)
 						part:AddTag(light.Tag)
 					end

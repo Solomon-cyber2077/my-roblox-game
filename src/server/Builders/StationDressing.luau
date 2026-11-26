@@ -26,6 +26,7 @@ local Shared = ReplicatedStorage.Shared
 local Stations = require(Shared.Config.Stations)
 local Crowns = require(Shared.Visual.Crowns)
 local Kit = require(Shared.Visual.Kit)
+local GasFlame = require(Shared.Visual.GasFlame)
 local Lettering = require(script.Parent.Lettering)
 local SignArt = require(script.Parent.SignArt)
 local TreeCrowns = require(script.Parent.TreeCrowns)
@@ -785,23 +786,24 @@ Builders.Canopy = function(ctx)
 		local top = roofY(lz) - 0.3
 		post(ctx, top - 11.6, 0.08, f(ctx, x, (top + 11.6) / 2, lz), C.iron, M.Metal)
 		post(ctx, 0.3, 0.9, f(ctx, x, 11.45, lz), C.iron, M.Metal)
-		Kit.post(
+		-- smoked glass round a burner and its flame (Visual/GasFlame), lit in the stop's lamp colour
+		local glass = Kit.post(
 			ctx.parent,
 			1.1,
 			0.78,
 			f(ctx, x, 10.75, lz),
-			C.glass,
+			C.glass:Lerp(ctx.palette.light, 0.3),
 			{ material = M.Glass, transparency = 0.45, collide = false, shadow = false }
 		)
-		local flame = Kit.neon(
-			ctx.parent,
-			Vector3.one * 0.36,
-			f(ctx, x, 10.7, lz),
-			ctx.palette.light,
-			Enum.PartType.Ball
-		)
-		flame.Name = "HangingLantern" -- its gas flame breathes, or gutters (Controllers/StationVisualsController)
-		Kit.pointLight(flame, ctx.palette.light, 1.15, 24, false)
+		glass.Name = "HangingLantern" -- its gas flame breathes, or gutters (Controllers/StationVisualsController)
+		post(ctx, 0.16, 0.1, f(ctx, x, 10.33, lz), C.iron, M.Metal)
+		GasFlame.build(glass, f(ctx, x, 10.41, lz), 0.42, ctx.palette.light, {
+			halo = Vector3.new(0.7, 1.0, 0.7),
+			haloAt = f(ctx, x, 10.75, lz),
+			round = true,
+			glass = glass,
+		})
+		Kit.pointLight(glass, ctx.palette.light, 1.15, 24, false)
 		post(ctx, 0.2, 0.84, f(ctx, x, 10.1, lz), C.iron, M.Metal)
 	end
 	-- the station clock, double-faced, hung from the roof over the middle of the platform
@@ -1639,8 +1641,23 @@ Builders.YardLamp = function(ctx)
 	post(ctx, 9.4, 0.36, f(ctx, 0, 5, 0), C.iron, M.Metal, true)
 	block(ctx, Vector3.new(1.6, 0.2, 0.2), f(ctx, 0, 8.6, 0), C.iron, M.Metal)
 	block(ctx, Vector3.new(1.2, 0.3, 1.2), f(ctx, 0, 9.85, 0), C.iron, M.Metal)
-	local glass = Kit.neon(ctx.parent, Vector3.new(0.8, 1.1, 0.8), f(ctx, 0, 10.55, 0), ctx.palette.light)
+	-- smoked glass round a burner and its flame (Visual/GasFlame), lit in the stop's lamp colour; the
+	-- glass carries the light, so the kit's mesh (Builders/StationKit) leaves it showing
+	local glass = Kit.block(
+		ctx.parent,
+		Vector3.new(0.8, 1.1, 0.8),
+		f(ctx, 0, 10.55, 0),
+		C.glass:Lerp(ctx.palette.light, 0.35),
+		{ material = M.Glass, transparency = 0.5, collide = false, shadow = false }
+	)
 	glass.Name = "YardLamp" -- its gas flame breathes, or gutters (Controllers/StationVisualsController)
+	local burner = post(ctx, 0.2, 0.12, f(ctx, 0, 10.1, 0), C.iron, M.Metal)
+	burner:SetAttribute("KeepPrimitive", true)
+	GasFlame.build(glass, f(ctx, 0, 10.2, 0), 0.52, ctx.palette.light, {
+		halo = Vector3.new(0.72, 1.02, 0.72),
+		haloAt = f(ctx, 0, 10.55, 0),
+		glass = glass,
+	})
 	wedge(ctx, Vector3.new(1.3, 0.5, 0.65), f(ctx, 0, 11.35, -0.325), C.iron, M.Metal)
 	wedge(ctx, Vector3.new(1.3, 0.5, 0.65), f(ctx, 0, 11.35, 0.325) * Kit.angles(0, 180, 0), C.iron, M.Metal)
 	Kit.pointLight(glass, ctx.palette.light, 1.6, 30, false)

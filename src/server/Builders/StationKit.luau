@@ -59,7 +59,8 @@ function StationKit.dress(kind: string, piece: Model, frame: CFrame, length: num
 	local def = Config.Pieces[name]
 	for _, part in piece:GetDescendants() do
 		if part:IsA("BasePart") and part.Material ~= Enum.Material.Neon then
-			if part:FindFirstChildWhichIsA("Light") == nil then
+			-- parts that carry a light, or are marked to stay (a lamp's burner), keep showing
+			if part:FindFirstChildWhichIsA("Light") == nil and part:GetAttribute("KeepPrimitive") ~= true then
 				part.Transparency = 1
 			end
 		end
