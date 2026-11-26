@@ -519,6 +519,7 @@ function TrainService.BuyUpgrade(player: Player, upgradeId: string)
 		`{player.DisplayName} fitted {def.name}{if #def.costs > 1 then " " .. string.rep("I", level) else ""}.`
 	)
 	TrainService.UpgradeBought:Fire(upgradeId, level)
+	Registry.TelemetryService.Feature(player, "workbench", "bought")
 end
 
 -- The crew chest (Logic/CrewChest): only in a run, aboard and within reach of it.
@@ -552,6 +553,7 @@ function TrainService.ChestStow(player: Player, slot: number)
 	train = nextTrain
 	Registry.InventoryService.Set(player, inv)
 	publish(true)
+	Registry.TelemetryService.Feature(player, "crew_chest", "used")
 end
 
 function TrainService.ChestTake(player: Player, itemId: string)
@@ -570,6 +572,7 @@ function TrainService.ChestTake(player: Player, itemId: string)
 	train = nextTrain
 	Registry.InventoryService.Set(player, inv)
 	publish(true)
+	Registry.TelemetryService.Feature(player, "crew_chest", "used")
 end
 
 -- The crew chest's part (InjuryService puts "Treat wounds" on it) and its contents.
@@ -619,6 +622,7 @@ function TrainService.RepairHull(player: Player)
 	train = nextTrain
 	publish(true)
 	notifyAll("Upgrade", `{player.DisplayName} repaired the hull (+{hull.RepairAmount}%).`)
+	Registry.TelemetryService.Feature(player, "hull_repair", "used")
 end
 
 function TrainService.FireFlare(player: Player)

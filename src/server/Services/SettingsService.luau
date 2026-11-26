@@ -77,6 +77,7 @@ function SettingsService.Start()
 		Registry.DataService.Update(player, function(profile)
 			profile.settings[key] = Settings.clamp(key, value) or value
 		end)
+		Registry.TelemetryService.Feature(player, "settings", "changed")
 	end)
 end
 

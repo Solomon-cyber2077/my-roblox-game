@@ -89,6 +89,46 @@ local Vocab = table.freeze({
 	-- warning and threat sounds a player's own client played at a stop (Controllers/HealthController):
 	-- the departure bell (the T-30 warning or a rung bell), the T-10 whistle, a stalking Hollow's breath
 	Cue = list({ "bell", "whistle", "breath" }),
+	-- optional features a player can use or ignore (feature_use, feature_first, came_back): the
+	-- to-do ranking reads reach, repeat use and next-day return of users against non-users from these
+	Feature = list({
+		"quest", -- NPC errands (NpcService)
+		"npc_talk", -- talking to a resident
+		"outfitter", -- the Outfitter screen
+		"shop", -- a Brass purchase
+		"cosmetics", -- a cosmetic equipped
+		"workbench", -- the Workbench screen and its upgrades
+		"hull_repair", -- Workbench "Repair hull"
+		"crew_chest", -- stowing in or taking from the crew chest
+		"cashout", -- the stop-five cash-out (offered minus taken = rode on)
+		"route_vote", -- a junction ballot vote
+		"line_vote", -- the hall's Short/Long line vote
+		"run_tier", -- the host picked a run tier
+		"seat", -- sat on a hall or train seat
+		"spectate", -- switched who to watch after going down
+		"train_cam", -- the train camera
+		"settings", -- changed a setting
+		"invite", -- opened the invite prompt
+		"ping", -- the crew ping
+		"ticket_book", -- the ticket book screen
+		"ledger", -- the ledger screen
+		"again", -- AGAIN on the run card
+	}),
+	FeatureAction = list({
+		"opened",
+		"accepted",
+		"finished",
+		"abandoned",
+		"bought",
+		"equipped",
+		"used",
+		"offered",
+		"taken",
+		"changed",
+	}),
+	SinceFirstVisit = list({ "0", "1-6", "7+" }), -- days from a player's first visit to a first use
+	UsedFirstDay = list({ "yes", "no" }),
+	ReturnGap = list({ "1", "2-6", "7+" }), -- days from the first visit to the first visit on a later day
 })
 
 export type EventDef = { fields: { string | false } }
@@ -143,6 +183,25 @@ local Events: { [string]: EventDef } = table.freeze({
 	stop_cues = event("Stop", "Cue", "Device"),
 	-- seconds from a player's last loot at a stop to their last boarding before it left
 	loot_to_board = event("Stop", "Device", "Experience"),
+	-- a player used an optional feature (TelemetryService.Feature, one per player, feature and action
+	-- every FeatureCooldown seconds)
+	feature_use = event("Feature", "FeatureAction", "Device"),
+	-- the first time ever a player used a feature; value: runs they had played before it
+	feature_first = event("Feature", "Device", "SinceFirstVisit"),
+	-- once per player, on their first visit on a later UTC day than their first: one per feature,
+	-- saying whether they used it on that first day
+	came_back = event("Feature", "UsedFirstDay", "ReturnGap"),
+})
+
+-- Features the client reports itself (remote FeatureSeen): only screens and cameras the server never
+-- sees open. Feature -> its action.
+local ClientFeatures: { [string]: string } = table.freeze({
+	outfitter = "opened",
+	workbench = "opened",
+	spectate = "used",
+	train_cam = "used",
+	ticket_book = "opened",
+	ledger = "opened",
 })
 
 -- Funnel name -> its step names, in order. `onboarding` goes through LogOnboardingFunnelStepEvent;
@@ -171,6 +230,8 @@ local Buckets = table.freeze({
 	Fps = table.freeze({ 15, 25, 30, 45, 58 }),
 	MemoryMb = table.freeze({ 800, 1200, 1600, 2200, 3000 }),
 	LoadSeconds = table.freeze({ 5, 10, 20, 30, 60 }),
+	SinceFirstVisitDays = table.freeze({ 1, 7 }),
+	ReturnGapDays = table.freeze({ 2, 7 }),
 	CrewNearStuds = 20,
 })
 
@@ -178,6 +239,7 @@ return table.freeze({
 	Vocab = Vocab,
 	Events = Events,
 	Funnels = Funnels,
+	ClientFeatures = ClientFeatures,
 	Economy = Economy,
 	Buckets = Buckets,
 	MaxCombinations = 8000, -- Roblox's limit per custom event

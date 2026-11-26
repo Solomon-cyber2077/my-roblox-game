@@ -55,6 +55,21 @@ function Telemetry.load(seconds: number): string
 	return bucket(seconds, Config.Buckets.LoadSeconds, Config.Vocab.LoadBucket)
 end
 
+-- The UTC day number of a Unix time, for "first day" and "a later day".
+function Telemetry.day(unixSeconds: number): number
+	return math.floor(unixSeconds / 86400)
+end
+
+-- Days from the first visit to a feature's first use: 0, 1-6, 7+.
+function Telemetry.sinceFirstVisit(days: number): string
+	return bucket(math.max(days, 0), Config.Buckets.SinceFirstVisitDays, Config.Vocab.SinceFirstVisit)
+end
+
+-- Days from the first visit to the first return on a later day: 1, 2-6, 7+.
+function Telemetry.returnGap(days: number): string
+	return bucket(math.max(days, 1), Config.Buckets.ReturnGapDays, Config.Vocab.ReturnGap)
+end
+
 -- Where a run phase puts the player, for a client health report.
 function Telemetry.scene(phase: string): string
 	if phase == "Lobby" or phase == "Countdown" then

@@ -14,6 +14,7 @@ local Registry = require(script.Parent.Parent.Registry)
 local Modal = require(script.Parent.Modal)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
+local Net = require(script.Parent.Parent.Net)
 
 local Ledger = {}
 
@@ -172,6 +173,7 @@ end
 
 function Ledger.open()
 	modal:open()
+	Net.Fire("FeatureSeen", "ledger")
 end
 
 return Ledger

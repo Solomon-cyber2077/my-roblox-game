@@ -16,6 +16,8 @@ local Workspace = game:GetService("Workspace")
 local SeatStep = require(ReplicatedStorage.Shared.Logic.SeatStep)
 local Safe = require(ReplicatedStorage.Shared.Util.Safe)
 
+local Registry = require(script.Parent.Parent.Registry)
+
 local SeatWatch = {}
 
 local POLL = 5 -- times a second
@@ -64,6 +66,9 @@ function SeatWatch.watch(label: string, seats: { Seat }, retouch: number)
 				local f, size = seat.CFrame:PointToObjectSpace(hit.Position), seat.Size
 				if SeatStep.onCushion(f.X, f.Y, f.Z, size.X, size.Y, size.Z) then
 					seat:Sit(humanoid)
+					if Registry.TelemetryService then
+						Registry.TelemetryService.Feature(player, "seat", "used")
+					end
 					return
 				end
 			end

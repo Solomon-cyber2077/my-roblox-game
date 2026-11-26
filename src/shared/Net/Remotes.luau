@@ -51,6 +51,8 @@ local Remotes: { [string]: RemoteDef } = {
 		rate = 1 / 15,
 		burst = 2,
 	},
+	-- a screen or camera this client opened (telemetry only; Config/Telemetry ClientFeatures)
+	FeatureSeen = { direction = "ToServer", args = { "id" }, rate = 1, burst = 6 },
 	SetReady = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },
 	-- the run card: true AGAIN (ready the same crew), false DEPOT (stay unready); Logic/Again
 	Again = { direction = "ToServer", args = { "boolean" }, rate = 4, burst = 4 },

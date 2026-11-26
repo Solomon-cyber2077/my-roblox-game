@@ -250,6 +250,7 @@ function LobbyService.Start()
 		end
 		lineVotes[player] = route
 		publishLine()
+		Registry.TelemetryService.Feature(player, "line_vote", "used")
 	end, function(player)
 		local phase = Registry.RunDirector.Phase()
 		return (phase == "Lobby" or phase == "Countdown")
@@ -264,9 +265,10 @@ function LobbyService.Start()
 		end
 	end)
 
-	NetService.Handle("SetRunTier", function(_player, tier: number)
+	NetService.Handle("SetRunTier", function(player, tier: number)
 		selectedTier = RunTier.clamp(tier)
 		publishTier()
+		Registry.TelemetryService.Feature(player, "run_tier", "changed")
 	end, function(player)
 		local phase = Registry.RunDirector.Phase()
 		return (phase == "Lobby" or phase == "Countdown") and host() == player

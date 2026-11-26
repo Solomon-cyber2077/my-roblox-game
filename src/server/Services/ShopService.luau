@@ -135,6 +135,7 @@ function ShopService.Start()
 		end)
 		NetService.Fire("Fx", player, "Purchased", { id = itemId, price = price })
 		Registry.TelemetryService.Brass(player, "Sink", price, profile.brass, itemId)
+		Registry.TelemetryService.Feature(player, "shop", "bought")
 	end, canShop)
 
 	NetService.Handle("ShopEquip", function(player, itemId: string)
@@ -152,6 +153,7 @@ function ShopService.Start()
 		DataService.Update(player, function(p)
 			p.equipped[def.category] = itemId
 		end)
+		Registry.TelemetryService.Feature(player, "cosmetics", "equipped")
 		if isDev then
 			player:SetAttribute("DevCosmetic_" .. def.category, itemId)
 		end

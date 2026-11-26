@@ -312,6 +312,7 @@ Enter.Junction = function()
 		for _, player in Registry.CrewService.AlivePlayers() do
 			if Registry.CrewService.IsAboard(player) then
 				table.insert(ids, player.UserId)
+				Registry.TelemetryService.Feature(player, "cashout", "offered")
 			end
 		end
 		local seconds = RunRules.duration("Junction", context()) or Tuning.Run.JunctionSeconds

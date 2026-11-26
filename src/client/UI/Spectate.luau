@@ -16,6 +16,7 @@ local Registry = require(script.Parent.Parent.Registry)
 local Session = require(script.Parent.Parent.Session)
 local Theme = require(script.Parent.Theme)
 local Ui = require(script.Parent.Ui)
+local Net = require(script.Parent.Parent.Net)
 
 local Spectate = {}
 
@@ -65,6 +66,7 @@ local function refreshTarget()
 end
 
 local function cycle(step: number)
+	Net.Fire("FeatureSeen", "spectate")
 	targetIndex += step
 	refreshTarget()
 end

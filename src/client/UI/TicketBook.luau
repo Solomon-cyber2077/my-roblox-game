@@ -19,6 +19,7 @@ local Stamp = require(script.Parent.Stamp)
 local Theme = require(script.Parent.Theme)
 local Ticket = require(script.Parent.Ticket)
 local Ui = require(script.Parent.Ui)
+local Net = require(script.Parent.Parent.Net)
 
 local TicketBook = {}
 
@@ -289,6 +290,7 @@ end
 
 function TicketBook.open()
 	modal:open()
+	Net.Fire("FeatureSeen", "ticket_book")
 end
 
 return TicketBook

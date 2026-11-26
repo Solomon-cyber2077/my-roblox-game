@@ -335,6 +335,7 @@ function CrewService.Start()
 	-- whistles (FxController); never in the hall; NetService allows one every 3 s
 	NetService.Handle("Ping", function(player)
 		NetService.FireAll("Fx", "Ping", { userId = player.UserId })
+		Registry.TelemetryService.Feature(player, "ping", "used")
 	end, function(player)
 		local member = members[player]
 		return member ~= nil

@@ -871,6 +871,7 @@ local Tuning = {
 		TabletShortSide = 600, -- touch-only screens this many pixels or more on the short side are tablets
 		DeviceWaitSeconds = 5, -- the first device report waits at most this long (a phone can read 1x1 for over 2 s)
 		TakenGrabSeconds = 30, -- a Taken death this soon after a grab is that kind's (heldBy)
+		FeatureCooldown = 5, -- feature_use: at most one per player, feature and action this often (seconds)
 		FirstVisitMaxSeconds = 1800, -- a car server counts first-visit time from the hall join within this long
 		HealthFirstSeconds = 60, -- first client_health report, after this long in the server
 		HealthEverySeconds = 300, -- then one report this often

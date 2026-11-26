@@ -122,6 +122,7 @@ local function complete(rq: NpcQuest.RunQuest)
 						profile.owned[def.cosmetic] = true
 					end
 				end)
+				Registry.TelemetryService.Feature(player, "quest", "finished")
 				if credit.story then
 					NetService.Fire("Notify", player, "Info", credit.story)
 				end
@@ -206,6 +207,7 @@ local function endRun()
 			NpcQuest.finish(rq)
 			for _, player in Registry.CrewService.MemberPlayers() do
 				if stageOf(player, npcId) == rq.stage then
+					Registry.TelemetryService.Feature(player, "quest", "abandoned")
 					DataService.Update(player, function(profile)
 						progress(profile, npcId).failed = rq.quest
 					end)
@@ -326,7 +328,9 @@ local function talk(player: Player, npcId: string)
 	end
 	heardNow[line.id] = true
 	counts[npcId] = (counts[npcId] or 0) + 1
+	Registry.TelemetryService.Feature(player, "npc_talk", "used")
 	if rq and rq.status == "Offered" then
+		Registry.TelemetryService.Feature(player, "quest", "accepted")
 		NpcQuest.accept(rq)
 		publishAll()
 	end

@@ -217,3 +217,40 @@ describe("First session", function()
 		expect(Telemetry.firstSession(1, 1, true)).toBe(false)
 	end)
 end)
+
+describe("Feature use", function()
+	local Remotes = require(Shared.Net.Remotes)
+
+	it("declares feature_use, feature_first and came_back", function()
+		for _, name in { "feature_use", "feature_first", "came_back" } do
+			expect(Config.Events[name] ~= nil).toBe(true)
+		end
+		local ok = Telemetry.check("feature_use", { "quest", "accepted", "phone" })
+		expect(ok).toBe(true)
+		expect((Telemetry.check("feature_use", { "jetpack", "used", "phone" }))).toBe(false)
+		expect((Telemetry.check("came_back", { "seat", "yes", "1" }))).toBe(true)
+	end)
+
+	it("lets the client report only listed features, with listed actions and valid ids", function()
+		local def = Remotes.List.FeatureSeen
+		expect(def.direction).toBe("ToServer")
+		for feature, action in Config.ClientFeatures do
+			expect(table.find(Config.Vocab.Feature, feature) ~= nil).toBe(true)
+			expect(table.find(Config.Vocab.FeatureAction, action) ~= nil).toBe(true)
+			expect(Remotes.validate(def, feature)).toBe(true)
+		end
+		expect(Remotes.validate(def, "not a feature!")).toBe(false)
+	end)
+
+	it("buckets days since the first visit and the return gap", function()
+		expect(Telemetry.day(86399)).toBe(0)
+		expect(Telemetry.day(86400)).toBe(1)
+		expect(Telemetry.sinceFirstVisit(0)).toBe("0")
+		expect(Telemetry.sinceFirstVisit(1)).toBe("1-6")
+		expect(Telemetry.sinceFirstVisit(6)).toBe("1-6")
+		expect(Telemetry.sinceFirstVisit(7)).toBe("7+")
+		expect(Telemetry.returnGap(1)).toBe("1")
+		expect(Telemetry.returnGap(2)).toBe("2-6")
+		expect(Telemetry.returnGap(30)).toBe("7+")
+	end)
+end)

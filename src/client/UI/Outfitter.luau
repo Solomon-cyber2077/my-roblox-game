@@ -559,6 +559,7 @@ end
 
 function Outfitter.open()
 	modal:open()
+	Net.Fire("FeatureSeen", "outfitter")
 end
 
 return Outfitter

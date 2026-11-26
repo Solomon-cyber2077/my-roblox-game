@@ -225,7 +225,8 @@ export type TelemetryProfile = {
 	visits: number,
 	firstSeenAt: number?, -- Unix seconds of the first join, so a car server can time the whole first visit
 	onboarding: boolean, -- in the onboarding funnel: a new player, set on their first visit
-	steps: { [string]: boolean }, -- funnel steps already sent, "<funnel>/<step>"
+	steps: { [string]: boolean }, -- funnel steps already sent, "<funnel>/<step>"; also "feature/<name>",
+	-- "feature_day0/<name>" and "came_back" (TelemetryService.Feature)
 	funnels: { [string]: string }, -- funnel session ids, kept so a later visit can finish the funnel
 	cohorts: { [string]: string }, -- each experiment's first exposed arm, never changed (Logic/Experiments)
 }

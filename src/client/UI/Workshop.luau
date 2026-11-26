@@ -229,6 +229,7 @@ end
 function Workshop.open()
 	if Session.status() == "Aboard" then
 		modal:open()
+		Net.Fire("FeatureSeen", "workbench")
 	end
 end
 

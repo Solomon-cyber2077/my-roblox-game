@@ -708,6 +708,7 @@ end
 -- AGAIN accepted on the run card (LobbyService), once per player per card: seconds after the card
 -- opened, and the run it followed.
 function TelemetryService.AgainPressed(player: Player, secondsAfterCard: number, outcome: string)
+	TelemetryService.Feature(player, "again", "used")
 	TelemetryService.Event(player, "again_pressed", round(secondsAfterCard, 2), {
 		string.lower(outcome),
 		TelemetryService.Device(player),
@@ -751,8 +752,94 @@ function TelemetryService.CohortAssigned(player: Player, def: Experiments.Def, a
 	end
 end
 
+-- Optional features -------------------------------------------------------------------------
+
+-- A feature's first use ever, kept in profile.telemetry.steps ("feature/<name>", plus
+-- "feature_day0/<name>" when it fell on the first visit's UTC day) and logged as feature_first.
+-- A profile from before firstSeenAt was kept has no first day, so it is marked but not logged.
+local function firstUse(player: Player, feature: string)
+	local profile = DataService.GetProfile(player)
+	if profile == nil or (not DataService.IsLoaded(player) and not RunService:IsStudio()) then
+		return
+	end
+	local key = `feature/{feature}`
+	if profile.telemetry.steps[key] then
+		return
+	end
+	local firstSeenAt = profile.telemetry.firstSeenAt
+	local days = if firstSeenAt then Telemetry.day(os.time()) - Telemetry.day(firstSeenAt) else nil
+	DataService.Update(player, function(p)
+		p.telemetry.steps[key] = true
+		if days == 0 then
+			p.telemetry.steps[`feature_day0/{feature}`] = true
+		end
+	end)
+	if days ~= nil then
+		TelemetryService.Event(player, "feature_first", profile.stats.runs or 0, {
+			feature,
+			TelemetryService.Device(player),
+			Telemetry.sinceFirstVisit(days),
+		})
+	end
+end
+
+-- A player used an optional feature (Config/Telemetry Vocab.Feature): feature_use at most once per
+-- player, feature and action every FeatureCooldown seconds, and feature_first on the first use ever.
+local featureAt: { [Player]: { [string]: number } } = {}
+function TelemetryService.Feature(player: Player, feature: string, action: string)
+	local fields: Fields = { feature, action, TelemetryService.Device(player) }
+	local ok, why = Telemetry.check("feature_use", fields)
+	if not ok then
+		warn(`[Telemetry] dropped: {why}`)
+		return
+	end
+	if not connected(player) then
+		return
+	end
+	local now = os.clock()
+	local seen = featureAt[player] or {}
+	featureAt[player] = seen
+	local key = `{feature}|{action}`
+	if now - (seen[key] or -math.huge) < T.FeatureCooldown then
+		return
+	end
+	seen[key] = now
+	TelemetryService.Event(player, "feature_use", 1, fields)
+	task.spawn(firstUse, player, feature)
+end
+
+-- The first visit on a later UTC day than the first: came_back once per feature, used on the first
+-- day or not, so next-day return can be compared between users and non-users.
+local function cameBack(player: Player)
+	local profile = DataService.GetProfile(player)
+	if profile == nil then
+		return
+	end
+	local firstSeenAt = profile.telemetry.firstSeenAt
+	if firstSeenAt == nil or profile.telemetry.steps.came_back then
+		return
+	end
+	if not DataService.IsLoaded(player) and not RunService:IsStudio() then
+		return
+	end
+	local days = Telemetry.day(os.time()) - Telemetry.day(firstSeenAt)
+	if days < 1 then
+		return
+	end
+	DataService.Update(player, function(p)
+		p.telemetry.steps.came_back = true
+	end)
+	local gap = Telemetry.returnGap(days)
+	local steps = profile.telemetry.steps
+	for _, feature in Config.Vocab.Feature do
+		local used = if steps[`feature_day0/{feature}`] then "yes" else "no"
+		TelemetryService.Event(player, "came_back", 1, { feature, used, gap })
+	end
+end
+
 -- An INVITE button opened Roblox's invite prompt (UI/Lobby "depot", UI/RunCard "runcard").
 function TelemetryService.InvitePrompted(player: Player, source: string)
+	TelemetryService.Feature(player, "invite", "used")
 	TelemetryService.Event(player, "invite_prompted", 1, {
 		source,
 		TelemetryService.Device(player),
@@ -821,6 +908,7 @@ end
 
 -- A crew member took the stop-five cash-out (CrewService.CashOut, before it forgets them).
 function TelemetryService.CashedOut(player: Player)
+	TelemetryService.Feature(player, "cashout", "taken")
 	local current = run
 	local participant = current and current.byPlayer[player]
 	if current == nil or participant == nil then
@@ -1087,6 +1175,7 @@ local function onPlayerAdded(player: Player)
 		p.telemetry.visits += 1
 	end)
 	milestone(player, "onboarding", 1) -- joined
+	cameBack(player)
 	sendTimings(player)
 end
 
@@ -1094,6 +1183,7 @@ local function onPlayerRemoving(player: Player)
 	early[player] = nil
 	sessionCohorts[player] = nil
 	hollowSeen[player] = nil
+	featureAt[player] = nil
 	local visitor = visitors[player]
 	if visitor == nil then
 		return
@@ -1176,6 +1266,12 @@ end
 function TelemetryService.Start()
 	Registry.NetService.Handle("ClientHealth", function(player, fps, lowFps, memoryMb, loadSeconds)
 		TelemetryService.ClientHealth(player, fps, lowFps, memoryMb, loadSeconds)
+	end)
+	Registry.NetService.Handle("FeatureSeen", function(player, feature: string)
+		local action = Config.ClientFeatures[feature]
+		if action then
+			TelemetryService.Feature(player, feature, action)
+		end
 	end)
 	Registry.NetService.Handle("StopCues", function(player, bells, whistles, breaths)
 		TelemetryService.StopCues(player, bells, whistles, breaths)

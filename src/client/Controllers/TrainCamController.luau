@@ -37,6 +37,7 @@ local Menu = require(script.Parent.Parent.UI.Menu)
 local TrainFraming = require(script.Parent.Parent.Camera.TrainFraming)
 local Tuning = require(ReplicatedStorage.Shared.Config.Tuning)
 local Safe = require(ReplicatedStorage.Shared.Util.Safe)
+local Net = require(script.Parent.Parent.Net)
 
 type Shot = { name: string, fov: number }
 
@@ -190,6 +191,7 @@ local function toggle()
 		setActive(false)
 	elseif aboard() then
 		setActive(true)
+		Net.Fire("FeatureSeen", "train_cam")
 	end
 end
 

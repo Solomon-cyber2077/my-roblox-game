@@ -44,6 +44,7 @@ function RouteService.Start()
 		votes[key] = option
 		castAt[key] = os.clock() - openedAt
 		StateService.Set({ "run", "route", "votes" }, votes)
+		Registry.TelemetryService.Feature(player, "route_vote", "used")
 	end, function(player)
 		return Registry.RunDirector.Phase() == "Junction" and Registry.CrewService.IsAlive(player)
 	end)
